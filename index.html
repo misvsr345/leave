@@ -405,9 +405,9 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .home-header-name { font-size: 19px; font-weight: 700; color: #fff; }
 .home-header-sub { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 3px; line-height: 1.6; }
 .home-balance-row { display: flex; gap: 9px; margin-top: 13px; }
-.home-bal-box { flex: 1; background: rgba(255,255,255,0.15); border: 1px solid rgba(212,168,67,0.5); border-radius: 10px; padding: 9px 6px; text-align: center; }
-.home-bal-val { font-size: 20px; font-weight: 800; color: var(--gold2); line-height: 1; }
-.home-bal-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.7); margin-top: 3px; }
+.home-bal-box { flex: 1; min-width: 0; background: rgba(255,255,255,0.15); border: 1px solid rgba(212,168,67,0.5); border-radius: 10px; padding: 9px 4px; text-align: center; }
+.home-bal-val { font-size: 17px; font-weight: 800; color: var(--gold2); line-height: 1; }
+.home-bal-lbl { font-size: 7.8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: rgba(255,255,255,0.7); margin-top: 3px; line-height: 1.3; }
 
 .quick-actions-section { margin-bottom: 14px; }
 .quick-actions-title { font-size: 10.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
@@ -883,7 +883,7 @@ const DEFAULT_NOTICES =
 // ══════════════════════════════════════
 let state = {
   empId: '', empName: '', empDept: '', empCounter: '', empEmail: '', empDesig: '',
-  empBalance: 0, empQuota: 3, empUsed: 0, empLeaves: [],
+  empBalance: 0, empQuota: 3, empUsed: 0, empExtraLeave: 0, empLeaves: [],
   adminEmail: '', adminRole: '', isStoreManager: false,
   allLeaves: [], calEvents: [], calBirthdays: [],
   calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
@@ -1232,6 +1232,7 @@ async function loadEmpData() {
       state.empBalance = balRes.balance || 0;
       state.empQuota = balRes.quota || 3;
       state.empUsed = balRes.used || 0;
+      state.empExtraLeave = balRes.extraLeave || 0;
     }
     if(leavesRes.ok) state.empLeaves = leavesRes.leaves || [];
     if(calRes.ok) {
@@ -1268,9 +1269,10 @@ function renderEmpOverview() {
   const b = state.empBalance;
   const q = state.empQuota;
   const u = state.empUsed;
-  const pct = q > 0 ? Math.min(Math.round((u/q)*100),100) : 0;
-  const balColorHex = b <= 0 ? '#ff8080' : b <= 1 ? '#ffd080' : '#80ffb0';
-  const barColor = pct >= 80 ? 'var(--red)' : pct >= 50 ? 'var(--orange)' : 'var(--green)';
+  const ex = state.empExtraLeave || 0;
+  const pct = q > 0 ? Math.round((u/q)*100) : 0;
+  const balColorHex = b < 0 ? '#ff5050' : b === 0 ? '#ff8080' : b <= 1 ? '#ffd080' : '#80ffb0';
+  const barColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--red)' : pct >= 50 ? 'var(--orange)' : 'var(--green)';
 
   const empMeta = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
 
@@ -1282,6 +1284,7 @@ function renderEmpOverview() {
       <div class="home-balance-row">
         <div class="home-bal-box"><div class="home-bal-val" style="color:${balColorHex}">${b.toFixed(1)}</div><div class="home-bal-lbl">Balance</div></div>
         <div class="home-bal-box"><div class="home-bal-val" style="color:#ff8080">${u.toFixed(1)}</div><div class="home-bal-lbl">Used</div></div>
+        <div class="home-bal-box"><div class="home-bal-val" style="color:${ex>0?'#ff5050':'#c0c0d8'}">${ex.toFixed(1)}</div><div class="home-bal-lbl">Extra Leave</div></div>
         <div class="home-bal-box"><div class="home-bal-val" style="color:#80c8ff">${q.toFixed(1)}</div><div class="home-bal-lbl">Quota</div></div>
       </div>
     </div>
@@ -1296,8 +1299,9 @@ function renderEmpOverview() {
     </div>
     <div class="progress-wrap">
       <div class="progress-label"><span style="font-weight:600;color:var(--purple)">Leave Usage</span><span style="color:${barColor};font-weight:700">${pct}%</span></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
     </div>
+    ${ex > 0 ? `<div style="margin-top:10px;padding:9px 12px;background:var(--red-bg);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:12px;color:var(--red);font-weight:600;">⚠️ ${ex.toFixed(1)} day(s) taken beyond your monthly quota this month.</div>` : ''}
   `;
 
   const recent = state.empLeaves.slice(0,5);
@@ -2217,26 +2221,34 @@ async function renderBalance() {
       document.getElementById('balanceContainer').innerHTML = '<div class="empty-state"><span class="emoji">💰</span><p>No data found</p></div>';
       return;
     }
-    const zeroCount = balances.filter(b => b.balance <= 0).length;
-    const lowCount  = balances.filter(b => b.balance > 0 && b.balance <= 1).length;
-    const goodCount = balances.filter(b => b.balance > 1).length;
+    const zeroCount  = balances.filter(b => b.balance <= 0).length;
+    const lowCount   = balances.filter(b => b.balance > 0 && b.balance <= 1).length;
+    const goodCount  = balances.filter(b => b.balance > 1).length;
+    const extraCount = balances.filter(b => (b.extraLeave || 0) > 0).length;
 
     let html = `<div class="card" style="padding:12px 16px;margin-bottom:14px;">
       <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:700;">
         <span style="color:var(--text2)">👥 ${balances.length} emps</span>
-        <span style="color:var(--red)">🔴 Zero: ${zeroCount}</span>
+        <span style="color:var(--red)">🔴 Zero/Negative: ${zeroCount}</span>
         <span style="color:var(--orange)">🟡 Low: ${lowCount}</span>
         <span style="color:var(--green)">🟢 Good: ${goodCount}</span>
+        ${extraCount>0?`<span style="color:var(--red)">⚠️ Extra Leave: ${extraCount}</span>`:''}
       </div>
     </div>`;
 
     balances.forEach(b => {
       const cls = b.balance <= 0 ? 'bal-zero' : b.balance <= 1 ? 'bal-low' : 'bal-good';
       const dot = b.balance <= 0 ? '🔴' : b.balance <= 1 ? '🟡' : '🟢';
+      const ex = b.extraLeave || 0;
+      const used = b.used != null ? b.used : ((b.approved||0)+(b.absent||0));
       html += `<div class="card" style="padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div><div style="font-weight:700;font-size:14px;">${b.name}</div><div style="font-size:11px;color:var(--text3);">${b.empId}${b.dept?' · '+b.dept:''}</div></div>
           <div style="text-align:right;"><div class="${cls}" style="font-size:18px;font-weight:800;">${b.balance}</div><div style="font-size:10px;color:var(--text3);">${dot} of ${b.quota} quota</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font-size:11px;">
+          <span style="color:var(--text2);flex:1;">Used: <b>${used.toFixed(1)}</b></span>
+          ${ex>0?`<span style="color:var(--red);flex:1;font-weight:700;">Extra: ${ex.toFixed(1)}</span>`:'<span style="color:var(--text3);flex:1;">No extra</span>'}
         </div>
       </div>`;
     });
