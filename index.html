@@ -454,10 +454,19 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .bday-marquee-wrap {
   overflow: hidden; white-space: nowrap; border-radius: 12px; margin-bottom: 12px;
   background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));
-  padding: 10px 0; box-shadow: var(--shadow2); border: 2px solid var(--gold);
-  display: none;
+  padding: 10px 40px 10px 0; box-shadow: var(--shadow2); border: 2px solid var(--gold);
+  display: none; position: relative;
 }
 .bday-marquee-wrap.show { display: block; }
+.bday-marquee-refresh {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.2); color: #fff; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; z-index: 2; padding: 0;
+  transition: background 0.15s;
+}
+.bday-marquee-refresh:hover { background: rgba(255,255,255,0.35); }
+.bday-marquee-refresh:active { transform: translateY(-50%) rotate(180deg); }
 .bday-marquee-track {
   display: inline-block; padding-left: 100%;
   animation: bday-scroll 18s linear infinite;
@@ -593,6 +602,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <!-- OVERVIEW PAGE -->
     <div class="page-section active" id="emp-overview">
       <div class="bday-marquee-wrap" id="empEventScroller">
+        <button class="bday-marquee-refresh" onclick="populateEventScroller('empEventScroller','empEventScrollerInner')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="empEventScrollerInner"></div>
       </div>
       <div class="card" id="empBalanceCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -614,6 +624,10 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 
     <!-- APPLY LEAVE PAGE -->
     <div class="page-section" id="emp-apply">
+      <div class="bday-marquee-wrap" id="empBlockedScroller" style="background:linear-gradient(135deg, var(--red), #a02030);border-color:#fff;">
+        <button class="bday-marquee-refresh" onclick="populateBlockedScroller('empBlockedScroller','empBlockedScrollerInner',true)" title="Refresh">🔄</button>
+        <div class="bday-marquee-track" id="empBlockedScrollerInner"></div>
+      </div>
       <div class="card" id="applyNoticesCard">
         <div class="card-title">📢 Notices &amp; Rules</div>
         <div class="notice-render" id="noticeRenderBox">Loading notices...</div>
@@ -772,6 +786,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
       <button class="nav-btn" id="anav-onbehalf" onclick="showAdminPage('onbehalf')">📝 Apply Leave</button>
       <button class="nav-btn" id="anav-empwise" onclick="showAdminPage('empwise')">👤 Employee Wise</button>
       <button class="nav-btn" id="anav-notices" onclick="showAdminPage('notices')">📢 Notices</button>
+      <button class="nav-btn" id="anav-blocked" onclick="showAdminPage('blocked')">🚫 Blocked Dates</button>
     </div>
   </div>
 
@@ -780,6 +795,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <!-- DASHBOARD -->
     <div class="page-section active" id="admin-dashboard">
       <div class="bday-marquee-wrap" id="adminBdayMarquee">
+        <button class="bday-marquee-refresh" onclick="populateEventScroller('adminBdayMarquee','adminBdayMarqueeTrack')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="adminBdayMarqueeTrack"></div>
       </div>
       <div class="quick-actions-section" style="margin-bottom:14px;">
@@ -791,6 +807,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
           <div class="quick-action-btn" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
           <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
           <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
+          <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
         </div>
       </div>
       <div class="card" id="adminStatsCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -973,6 +990,10 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <!-- APPLY LEAVE ON BEHALF (any admin login) -->
     <div class="page-section" id="admin-onbehalf">
       <div class="section-hdr"><span class="section-title2">📝 Apply Leave on Behalf of Employee</span></div>
+      <div class="bday-marquee-wrap" id="adminBlockedScroller" style="background:linear-gradient(135deg, var(--red), #a02030);border-color:#fff;">
+        <button class="bday-marquee-refresh" onclick="populateBlockedScroller('adminBlockedScroller','adminBlockedScrollerInner',true)" title="Refresh">🔄</button>
+        <div class="bday-marquee-track" id="adminBlockedScrollerInner"></div>
+      </div>
       <div class="card">
         <div class="card-title">👤 Employee</div>
         <div class="form-group">
@@ -1052,6 +1073,36 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
       <div class="card">
         <div class="card-title">👁 Live Preview</div>
         <div class="notice-render" id="noticesPreviewBox"></div>
+      </div>
+    </div>
+
+    <!-- BLOCKED DATES & DAYS (MIS/Director only) -->
+    <div class="page-section" id="admin-blocked">
+      <div class="section-hdr"><span class="section-title2">🚫 Blocked Dates &amp; Days</span></div>
+      <div class="card" id="blockedAccessDenied" style="display:none;">
+        <div class="empty-state"><span class="emoji">🔒</span><p>This tool is for MIS/Director only.</p></div>
+      </div>
+      <div id="blockedManageWrap">
+        <div class="card">
+          <div class="card-title">📅 Add a Blocked Date</div>
+          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No leave can be approved on a blocked date — applications for that day will be auto-rejected.</p>
+          <div class="form-row">
+            <div class="form-group" style="flex:1;"><label>Date *</label><input type="date" id="blockDateInput"></div>
+            <div class="form-group" style="flex:1;"><label>Reason (optional)</label><input type="text" id="blockDateReason" placeholder="e.g. Diwali, Stock Audit"></div>
+          </div>
+          <button class="btn-primary" id="addBlockDateBtn" onclick="addBlockedDate()">🚫 Block This Date</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📆 Currently Blocked Dates</div>
+          <div id="blockedDatesList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🗓️ Blocked Weekdays</div>
+          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Toggle ON to block leave applications on that weekday every week (e.g. block Sundays).</p>
+          <div id="blockedDaysList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+        </div>
       </div>
     </div>
 
@@ -1605,7 +1656,7 @@ function showEmpPage(page) {
   if(page==='events') initEventsBrowser('emp');
   if(page==='trend') renderTrend();
   if(page==='myleaves') renderMyLeaves();
-  if(page==='apply') loadNoticesForEmployee();
+  if(page==='apply') { loadNoticesForEmployee(); populateBlockedScroller('empBlockedScroller', 'empBlockedScrollerInner'); }
 }
 
 // ══════════════════════════════════════
@@ -2464,6 +2515,133 @@ async function submitOnBehalfLeave() {
 }
 
 // ══════════════════════════════════════
+// BLOCKED DATES & DAYS (MIS/Director only)
+// ══════════════════════════════════════
+const WEEKDAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+async function loadBlockedDatesPage() {
+  const roleUp = (state.adminRole || '').toUpperCase();
+  const allowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  document.getElementById('blockedAccessDenied').style.display = allowed ? 'none' : 'block';
+  document.getElementById('blockedManageWrap').style.display = allowed ? '' : 'none';
+  if (!allowed) return;
+
+  document.getElementById('blockDateInput').value = todayYMD();
+  document.getElementById('blockDateReason').value = '';
+
+  await refreshBlockedDatesList();
+}
+
+async function refreshBlockedDatesList() {
+  const datesListEl = document.getElementById('blockedDatesList');
+  const daysListEl = document.getElementById('blockedDaysList');
+  datesListEl.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  daysListEl.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  try {
+    const res = await jsonpReliable({ page: 'getBlockedDatesAPI' });
+    if (!res.ok) throw new Error(res.error || 'Load failed');
+
+    // Invalidate the shared blocked-dates scroller cache so it picks up changes
+    blockedDatesCache = res;
+
+    const dates = res.blockedDates || [];
+    if (dates.length === 0) {
+      datesListEl.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No blocked dates right now</p></div>';
+    } else {
+      let html = '';
+      dates.forEach(d => {
+        html += `<div class="cal-event-item">
+          <div class="cal-event-dot" style="background:var(--red)"></div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:12px;">${fmtDMY(d.date)}</div>
+            <div style="font-size:11px;color:var(--text3)">${d.reason || 'No reason given'}</div>
+          </div>
+          <button class="btn-sm btn-reject" style="height:28px;" onclick="removeBlockedDate('${d.date}')">✕ Remove</button>
+        </div>`;
+      });
+      datesListEl.innerHTML = html;
+    }
+
+    const blockedDays = res.blockedDays || [];
+    let dayHtml = '';
+    WEEKDAY_NAMES.forEach(day => {
+      const isBlocked = blockedDays.includes(day);
+      dayHtml += `<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;">
+        <span style="font-size:13px;font-weight:600;color:var(--text2);">${day}</span>
+        <input type="checkbox" ${isBlocked?'checked':''} onchange="toggleBlockedDay('${day}', this.checked)" style="width:20px;height:20px;accent-color:var(--red);">
+      </label>`;
+    });
+    daysListEl.innerHTML = dayHtml;
+
+  } catch(e) {
+    datesListEl.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load blocked dates</p></div>';
+    daysListEl.innerHTML = '';
+  }
+}
+
+async function addBlockedDate() {
+  const date = document.getElementById('blockDateInput').value;
+  const reason = document.getElementById('blockDateReason').value.trim();
+  if (!date) { toast('Select a date', 'error'); return; }
+
+  await withButtonLock(document.getElementById('addBlockDateBtn'), '⏳ Blocking...', async () => {
+    try {
+      const res = await jsonpReliable({
+        page: 'manageBlockedDateAPI', action: 'add', date, reason,
+        role: state.adminRole, adminEmail: state.adminEmail
+      });
+      if (res.ok) {
+        toast('🚫 ' + res.message, 'success');
+        document.getElementById('blockDateReason').value = '';
+        refreshBlockedDatesList();
+      } else {
+        toast(res.error || 'Failed to add', 'error');
+      }
+    } catch(e) {
+      toast('Connection error. Try again.', 'error');
+    }
+  });
+}
+
+async function removeBlockedDate(date) {
+  if (!confirm(`Remove ${fmtDMY(date)} from blocked dates?`)) return;
+  try {
+    const res = await jsonpReliable({
+      page: 'manageBlockedDateAPI', action: 'remove', date,
+      role: state.adminRole, adminEmail: state.adminEmail
+    });
+    if (res.ok) {
+      toast('✅ ' + res.message, 'success');
+      refreshBlockedDatesList();
+    } else {
+      toast(res.error || 'Failed to remove', 'error');
+    }
+  } catch(e) {
+    toast('Connection error. Try again.', 'error');
+  }
+}
+
+async function toggleBlockedDay(day, enabled) {
+  try {
+    const res = await jsonpReliable({
+      page: 'manageBlockedDayAPI', day, enabled: enabled ? 'true' : 'false',
+      role: state.adminRole, adminEmail: state.adminEmail
+    });
+    if (res.ok) {
+      toast((enabled ? '🚫 ' : '✅ ') + res.message, 'success');
+      blockedDatesCache = null; // force scroller to refetch next time it renders
+    } else {
+      toast(res.error || 'Failed to update', 'error');
+      refreshBlockedDatesList(); // revert checkbox visually on failure
+    }
+  } catch(e) {
+    toast('Connection error. Try again.', 'error');
+    refreshBlockedDatesList();
+  }
+}
+
+// ══════════════════════════════════════
 // TREND
 // ══════════════════════════════════════
 function renderTrend() {
@@ -2500,7 +2678,8 @@ const SM_FEATURE_ELEMENTS = {
   direct:    ['anav-direct', 'adminQADirect'],
   onbehalf:  ['anav-onbehalf'],
   empwise:   ['anav-empwise'],
-  notices:   ['anav-notices', 'adminMoreNotices', 'adminQANotices']
+  notices:   ['anav-notices', 'adminMoreNotices', 'adminQANotices'],
+  blocked:   ['anav-blocked', 'adminQABlocked']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -2570,7 +2749,8 @@ async function openSMPermModal() {
     direct:    '🎯 Direct Action (Approve/Absent/Reject)',
     onbehalf:  '📝 Apply Leave on Behalf',
     empwise:   '👤 Employee Wise Profile',
-    notices:   '📢 Edit Notices & Rules'
+    notices:   '📢 Edit Notices & Rules',
+    blocked:   '🚫 Blocked Dates & Days'
   };
 
   try {
@@ -2592,7 +2772,7 @@ async function openSMPermModal() {
 }
 
 async function saveSMPermissions() {
-  const featureKeys = ['dashboard','allleaves','calendar','balance','direct','onbehalf','empwise','notices'];
+  const featureKeys = ['dashboard','allleaves','calendar','balance','direct','onbehalf','empwise','notices','blocked'];
   const payload = { page: 'saveSMPermissionsAPI', role: state.adminRole, adminEmail: state.adminEmail };
   featureKeys.forEach(key => {
     const cb = document.getElementById('smperm_' + key);
@@ -2625,7 +2805,8 @@ function showAdminPage(page) {
   if(page==='events') initEventsBrowser('admin');
   if(page==='balance') renderBalance();
   if(page==='direct') loadDirectActionPage();
-  if(page==='onbehalf') loadOnBehalfPage();
+  if(page==='blocked') loadBlockedDatesPage();
+  if(page==='onbehalf') { loadOnBehalfPage(); populateBlockedScroller('adminBlockedScroller', 'adminBlockedScrollerInner'); }
   if(page==='empwise') loadEmployeeWisePage();
   if(page==='pending') renderPending();
   if(page==='allleaves') renderAdminLeaves();
@@ -2660,6 +2841,42 @@ async function loadAdminData() {
 // Shows a blinking, right-to-left scrolling banner of Today/Tomorrow/
 // This-Week birthdays and anniversaries, company-wide, for everyone.
 // ══════════════════════════════════════
+let blockedDatesCache = null;
+async function populateBlockedScroller(wrapId, trackId, forceRefresh) {
+  const wrap = document.getElementById(wrapId);
+  const track = document.getElementById(trackId);
+  if (!wrap || !track) return;
+
+  if (blockedDatesCache === null || forceRefresh) {
+    try {
+      const res = await jsonpReliable({ page: 'getBlockedDatesAPI' });
+      blockedDatesCache = res.ok ? res : { blockedDates: [], blockedDays: [] };
+    } catch(e) {
+      blockedDatesCache = { blockedDates: [], blockedDays: [] };
+    }
+  }
+
+  const dates = (blockedDatesCache.blockedDates || []).slice(0, 10); // cap for readability
+  const days = blockedDatesCache.blockedDays || [];
+
+  if (dates.length === 0 && days.length === 0) {
+    wrap.classList.remove('show');
+    track.innerHTML = '';
+    return;
+  }
+
+  const parts = [];
+  dates.forEach(d => {
+    parts.push(`🚫 ${fmtDMY(d.date)}${d.reason ? ' — ' + d.reason : ''} is a Blocked Date`);
+  });
+  if (days.length > 0) {
+    parts.push(`🚫 Every ${days.join(', ')} ${days.length>1?'are':'is a'} Blocked Day`);
+  }
+
+  track.innerHTML = `<span class="bday-marquee-text">${parts.join('&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp;&nbsp;&nbsp;&nbsp;')}</span>`;
+  wrap.classList.add('show');
+}
+
 function populateEventScroller(wrapId, trackId) {
   const wrap = document.getElementById(wrapId);
   const track = document.getElementById(trackId);
@@ -3095,6 +3312,8 @@ function renderEmployeeWiseProfile() {
 function adminLeaveCardHTML(l) {
   const isPending = l.status==='Pending' || l.status==='MIS_Approved';
   const isFinal = l.status==='Approved' || l.status==='Absent';
+  const startYMD = normalizeDateStr(l.startDate);
+  const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const dateStr = l.startDate===l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate)+' → '+fmtDMY(l.endDate);
   let actions = '';
   if(isPending) {
@@ -3103,7 +3322,7 @@ function adminLeaveCardHTML(l) {
       <button class="btn-sm btn-reject" id="rejBtn_${l.leaveId}" onclick="openAdminReject(${l.row},'${l.leaveId}','${l.name}')">❌ Reject</button>
       <button class="btn-sm btn-absent" id="absBtn_${l.leaveId}" onclick="openAdminAbsent(${l.row},'${l.leaveId}','${l.name}')">⚠️ Mark Absent</button>
     `;
-  } else if (isFinal || l.status === 'Rejected') {
+  } else if ((isFinal || l.status === 'Rejected') && isTodayOrFuture) {
     actions = `<button class="btn-sm btn-cancel" id="cancelAdminBtn_${l.leaveId}" onclick="adminCancel('${l.leaveId}','${l.name}')">🚫 Cancel</button>`;
   }
   return `<div class="leave-card">
