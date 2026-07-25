@@ -1514,7 +1514,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGOPNayBJk1a5qcnu1oKX39teRHbIhnIuZy8oxrW0gJK1PtRNGl1jWTQzkLKByoIV_7Q/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwyl8X5Bq_ePciNHYZCtxCl15BZsdfzoe-VK0zX51wKVklrg-2lHjSypcVNfcIpZT99/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -1567,6 +1567,52 @@ function normalizeDateStr(s) {
   if (!s) return '';
   return s.toString().substring(0, 10);
 }
+
+// Safely escapes a value before it's embedded inside a single-quoted JS
+// string argument of an onclick="..." HTML attribute. Without this, a
+// name or reason containing an apostrophe (e.g. "O'Brien", "can't attend")
+// breaks out of the string and throws a JS syntax error — silently
+// killing that button's onclick entirely.
+function escJs(str) {
+  return String(str == null ? '' : str)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '&quot;')
+    .replace(/\r?\n/g, ' ');
+}
+
+// Splits a leave spanning multiple days into one entry per date. Adds
+// displayDate / dayIndex / dayTotal while keeping every other original
+// field intact. Used so All Leaves / My Leaves / Employee Wise show one
+// row per date instead of one row per date-range.
+function explodeLeavesByDate(leaves) {
+  const out = [];
+  leaves.forEach(l => {
+    const s = normalizeDateStr(l.startDate);
+    const e = normalizeDateStr(l.endDate || l.startDate);
+    if (!s) { out.push(Object.assign({}, l, { displayDate: s || '' })); return; }
+    const sd = new Date(s + 'T00:00:00');
+    const ed = new Date(e + 'T00:00:00');
+    if (isNaN(sd.getTime()) || isNaN(ed.getTime()) || ed < sd) {
+      out.push(Object.assign({}, l, { displayDate: s, dayIndex: 1, dayTotal: 1 }));
+      return;
+    }
+    const totalDays = Math.round((ed - sd) / 86400000) + 1;
+    let cur = new Date(sd);
+    let idx = 0;
+    while (cur <= ed) {
+      out.push(Object.assign({}, l, {
+        displayDate: toYMD(cur),
+        dayIndex: idx + 1,
+        dayTotal: totalDays
+      }));
+      cur.setDate(cur.getDate() + 1);
+      idx++;
+    }
+  });
+  return out;
+}
+
 function formatLeaveMode(mode, halfDay) {
   // 'Half Day' alone doesn't say WHICH half — always show the session
   // (First Half / Second Half) when the data has it.
@@ -1872,8 +1918,8 @@ function switchLoginTab(tab) {
 async function empLogin() {
   const empId = document.getElementById('empIdInput').value.trim();
   const pass  = document.getElementById('empPassInput').value.trim();
-  if(!empId) { toast('Employee ID enter చేయండి', 'error'); return; }
-  if(!pass)  { toast('Password enter చేయండి', 'error'); return; }
+  if(!empId) { toast('Please enter your Employee ID', 'error'); return; }
+  if(!pass)  { toast('Please enter your password', 'error'); return; }
   await withButtonLock(document.getElementById('empLoginBtn'), '⏳ Checking...', async () => {
     try {
       const res = await jsonpReliable({ page:'empLoginAPI', empId, password: pass });
@@ -1914,7 +1960,7 @@ async function empLogin() {
 async function adminLogin() {
   const email = document.getElementById('adminEmailInput').value.trim();
   const pass = document.getElementById('adminPassInput').value.trim();
-  if(!email || !pass) { toast('Email & Password enter చేయండి', 'error'); return; }
+  if(!email || !pass) { toast('Please enter email & password', 'error'); return; }
   await withButtonLock(document.getElementById('adminLoginBtn'), '⏳ Verifying...', async () => {
     try {
       const res = await jsonpReliable({ page:'validateAdminAPI', email, password: pass });
@@ -2013,7 +2059,7 @@ async function confirmChangePassword() {
   const oldPw = document.getElementById('pwOld').value.trim();
   const newPw = document.getElementById('pwNew').value.trim();
   const confirmPw = document.getElementById('pwConfirm').value.trim();
-  if(!newPw) { toast('New password enter చేయండి', 'error'); return; }
+  if(!newPw) { toast('Please enter a new password', 'error'); return; }
   if(newPw.length < 4) { toast('Password should be at least 4 characters', 'error'); return; }
   if(newPw !== confirmPw) { toast('New password & confirm password do not match', 'error'); return; }
 
@@ -2170,20 +2216,29 @@ function leaveCardHTML(l, showActions=true) {
   const startYMD = normalizeDateStr(l.startDate);
   const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const canAct = modifiableStatuses.indexOf(l.status) > -1 && isTodayOrFuture;
+  const idSuffix = l.leaveId + (l.displayDate ? '_' + l.displayDate : '');
   let actions = '';
   if(showActions && canAct) {
-    actions += `<button class="btn-sm btn-cancel" id="cancelBtn_${l.leaveId}" onclick="openCancelModal('${l.leaveId}')">🚫 Cancel</button>`;
-    actions += `<button class="btn-sm btn-modify" id="modifyBtn_${l.leaveId}" onclick="openModifyModal('${l.leaveId}','${l.startDate}','${l.endDate}','${formatLeaveMode(l.mode, l.halfDay)}')">✏️ Modify</button>`;
+    actions += `<button class="btn-sm btn-cancel" id="cancelBtn_${idSuffix}" onclick="openCancelModal('${escJs(l.leaveId)}')">🚫 Cancel</button>`;
+    actions += `<button class="btn-sm btn-modify" id="modifyBtn_${idSuffix}" onclick="openModifyModal('${escJs(l.leaveId)}','${escJs(l.startDate)}','${escJs(l.endDate)}','${escJs(formatLeaveMode(l.mode, l.halfDay))}')">✏️ Modify</button>`;
   }
-  const dateStr = l.startDate === l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate) + ' → ' + fmtDMY(l.endDate);
+  const dateStr = l.displayDate
+    ? fmtDMY(l.displayDate) + (l.dayTotal > 1 ? ` (Day ${l.dayIndex} of ${l.dayTotal})` : '')
+    : (l.startDate === l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate) + ' → ' + fmtDMY(l.endDate));
+  // If your backend uses a different field name for the rejection note,
+  // add it to this fallback chain (e.g. l.rejectionReason, l.remarks).
+  const rejectionBlock = l.status === 'Rejected'
+    ? `<div class="leave-card-reason" style="color:var(--red);border-left-color:var(--red);"><b>❌ Rejection Reason:</b> ${l.reason || l.rejectionReason || 'Not specified'}</div>`
+    : '';
   return `
     <div class="leave-card">
       <div class="leave-card-top">
         <div><div class="leave-card-title">${l.type}</div><div class="leave-card-id">${l.leaveId}</div></div>
         <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
       </div>
-      <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s)</div>
-      ${l.reason ? `<div class="leave-card-reason">${l.reason.substring(0,80)}${l.reason.length>80?'...':''}</div>` : ''}
+      <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
+      ${l.reason && l.status !== 'Rejected' ? `<div class="leave-card-reason">${l.reason.substring(0,80)}${l.reason.length>80?'...':''}</div>` : ''}
+      ${rejectionBlock}
       <div style="font-size:10px;color:var(--text3);margin-top:4px;">${fmtDMY(l.timestamp)}</div>
       ${actions ? `<div class="leave-card-actions">${actions}</div>` : ''}
     </div>
@@ -2200,17 +2255,18 @@ function filterLeavesByScopeAndTime(leaves, scope, timeFilter) {
   const today = todayYMD();
   let result = leaves;
   if (scope === 'month') {
-    result = result.filter(l => normalizeDateStr(l.startDate).substring(0, 7) === nowYM);
+    result = result.filter(l => (l.displayDate || normalizeDateStr(l.startDate)).substring(0, 7) === nowYM);
   }
   if (timeFilter === 'past') {
-    result = result.filter(l => normalizeDateStr(l.endDate || l.startDate) < today);
+    result = result.filter(l => (l.displayDate || normalizeDateStr(l.endDate || l.startDate)) < today);
   } else if (timeFilter === 'today') {
     result = result.filter(l => {
+      if (l.displayDate) return l.displayDate === today;
       const s = normalizeDateStr(l.startDate), e = normalizeDateStr(l.endDate || l.startDate);
       return s <= today && today <= e;
     });
   } else if (timeFilter === 'upcoming') {
-    result = result.filter(l => normalizeDateStr(l.startDate) > today);
+    result = result.filter(l => (l.displayDate || normalizeDateStr(l.startDate)) > today);
   }
   return result;
 }
@@ -2231,7 +2287,9 @@ function renderMyLeaves(filter) {
   } else {
     leaves = state.empLeaves.filter(l => l.status === state.currentFilter);
   }
+  leaves = explodeLeavesByDate(leaves);
   leaves = filterLeavesByScopeAndTime(leaves, state.empLeavesScope || 'month', state.empLeavesTime || 'all');
+  leaves.sort((a,b) => (b.displayDate||'').localeCompare(a.displayDate||''));
   let html = '';
   if(leaves.length === 0) {
     html = '<div class="empty-state"><span class="emoji">📭</span><p>No leaves found</p></div>';
@@ -2325,8 +2383,10 @@ async function confirmModify() {
   const mode = document.getElementById('modifyMode').value;
   const halfDay = mode === 'Half Day' ? document.getElementById('modifyHalfDay').value : '';
   const reason = document.getElementById('modifyReason').value.trim();
-  if(!reason) { toast('Reason enter చేయండి', 'error'); return; }
-  if(!newStart || !newEnd) { toast('Dates select చేయండి', 'error'); return; }
+  if(!reason) { toast('Please enter a reason', 'error'); return; }
+  if(!newStart || !newEnd) { toast('Please select the dates', 'error'); return; }
+  if(newEnd < newStart) { toast('End date cannot be before start date', 'error'); return; }
+  if(mode === 'Half Day' && newStart !== newEnd) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
 
   setLock('modify_' + leaveId, true);
   await withButtonLock(document.getElementById('modifyConfirmBtn'), '⏳...', async () => {
@@ -2400,13 +2460,25 @@ function calcDays() {
   showColleaguesOnLeave();
   if(!s || !e) return;
   const sd = new Date(s + 'T00:00:00'); const ed = new Date(e + 'T00:00:00');
-  if(ed < sd) { toast('End date must be after start date', 'error'); return; }
+  const box = document.getElementById('applyDaysInfo');
+  if(ed < sd) {
+    toast('End date must be after start date', 'error');
+    box.style.display = 'block';
+    box.textContent = '⚠️ End date must be on or after the start date';
+    return;
+  }
   const days = Math.floor((ed-sd)/(1000*60*60*24))+1;
   const mode = document.getElementById('applyLeaveMode').value;
-  const disp = mode==='Half Day' ? '0.5 day(s)' : days + ' day(s)';
-  const box = document.getElementById('applyDaysInfo');
   box.style.display = 'block';
-  box.textContent = '📅 ' + disp + ' leave applied';
+  if (mode === 'Half Day') {
+    if (days > 1) {
+      box.textContent = '⚠️ Half Day mode only applies to a single date — set the End Date equal to the Start Date';
+    } else {
+      box.textContent = '📅 0.5 day(s) leave applied';
+    }
+  } else {
+    box.textContent = '📅 ' + days + ' day(s) leave applied';
+  }
 }
 
 async function submitLeave() {
@@ -2425,7 +2497,9 @@ async function submitLeave() {
   const purpose = document.getElementById('applyPurpose').value.trim();
   const address = document.getElementById('applyAddress').value.trim();
 
-  if(!lt || !sd || !ed || !purpose) { toast('All required fields fill చేయండి', 'error'); return; }
+  if(!lt || !sd || !ed || !purpose) { toast('Please fill all required fields', 'error'); return; }
+  if(ed < sd) { toast('End date cannot be before start date', 'error'); return; }
+  if(lm === 'Half Day' && sd !== ed) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
 
   const data = {
     page: 'submitLeaveAPI', employeeNumber: state.empId, name: state.empName, email: state.empEmail,
@@ -2838,19 +2912,29 @@ async function submitDirectAction(outcome, evt) {
   if (!empId) { toast('Select an employee first', 'error'); return; }
   if (!startDate || !endDate) { toast('Select start and end dates', 'error'); return; }
   if (endDate < startDate) { toast('End date cannot be before start date', 'error'); return; }
+  if (leaveMode === 'Half Day' && startDate !== endDate) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
   if (outcome === 'Rejected' && !reason) {
     reason = prompt('Rejection reason (required):') || '';
     if (!reason.trim()) { toast('Rejection reason is required', 'error'); return; }
   }
+
+  // THE ACTUAL BUG FIX: locked with isLocked/setLock keyed by
+  // empId+startDate+endDate, exactly like adminApprove/confirmReject/
+  // confirmAbsent already do. This stops the triple-entry bug — repeat
+  // clicks on the same request while one is still in flight are now
+  // blocked, no matter how many times the button is physically clicked.
+  const lockKey = 'direct_' + empId + '_' + startDate + '_' + endDate;
+  if (isLocked(lockKey)) { toast('Already processing, please wait...', 'info'); return; }
 
   const emp = directEmpCache.find(e => e.empId === empId);
   const empName = emp ? emp.name : empId;
   const label = outcome === 'Approved' ? 'approve' : outcome === 'Absent' ? 'mark absent' : 'reject';
   if (!confirm(`${label.toUpperCase()}: ${empName}, ${fmtDMY(startDate)} to ${fmtDMY(endDate)} (${leaveType})?`)) return;
 
+  setLock(lockKey, true);
   // Lock all three outcome buttons together so a double-click can't submit twice
   const btns = document.querySelectorAll('#admin-direct .btn-approve, #admin-direct .btn-absent, #admin-direct .btn-reject');
-  btns.forEach(b => b.disabled = true);
+  btns.forEach(b => { b.disabled = true; b.style.pointerEvents = 'none'; });
   const clicked = evt && evt.target;
   const originalText = clicked ? clicked.textContent : '';
   if (clicked) clicked.textContent = '⏳ Processing...';
@@ -2872,8 +2956,9 @@ async function submitDirectAction(outcome, evt) {
   } catch(e) {
     toast('Connection error. Try again.', 'error');
   } finally {
-    btns.forEach(b => b.disabled = false);
+    btns.forEach(b => { b.disabled = false; b.style.pointerEvents = ''; });
     if (clicked) clicked.textContent = originalText;
+    setLock(lockKey, false);
   }
 }
 
@@ -3706,6 +3791,7 @@ async function manualRefreshPending() {
 function renderAdminLeaves(filter) {
   if(filter) state.adminCurrentFilter = filter;
   let leaves = state.adminCurrentFilter === 'all' ? state.allLeaves : state.allLeaves.filter(l => l.status === state.adminCurrentFilter);
+  leaves = explodeLeavesByDate(leaves);
   leaves = filterLeavesByScopeAndTime(leaves, state.adminLeavesScope || 'month', state.adminLeavesTime || 'all');
 
   const empBox = document.getElementById('allLeavesEmpFilter');
@@ -3721,15 +3807,16 @@ function renderAdminLeaves(filter) {
   const toBox = document.getElementById('allLeavesDateTo');
   const fromVal = fromBox ? fromBox.value : '';
   const toVal = toBox ? toBox.value : '';
-  if(fromVal) leaves = leaves.filter(l => normalizeDateStr(l.endDate) >= fromVal);
-  if(toVal) leaves = leaves.filter(l => normalizeDateStr(l.startDate) <= toVal);
+  if(fromVal) leaves = leaves.filter(l => (l.displayDate || normalizeDateStr(l.endDate)) >= fromVal);
+  if(toVal) leaves = leaves.filter(l => (l.displayDate || normalizeDateStr(l.startDate)) <= toVal);
 
+  leaves.sort((a,b) => (b.displayDate||'').localeCompare(a.displayDate||''));
   let html = '';
   if(leaves.length === 0) {
     html = '<div class="empty-state"><span class="emoji">📭</span><p>No leaves found</p></div>';
   } else {
     if(empQuery || fromVal || toVal) {
-      html += `<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">Showing ${leaves.length} of ${state.allLeaves.length} leaves</div>`;
+      html += `<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">Showing ${leaves.length} date-row(s)</div>`;
     }
     leaves.forEach(l => { html += adminLeaveCardHTML(l); });
   }
@@ -3843,7 +3930,9 @@ function renderEmployeeWiseProfile() {
     html += `</div>`;
   }
 
-  const filteredHistory = filterLeavesByScopeAndTime(empLeaves, state.empWiseScope || 'all', state.empWiseTime || 'all');
+  const explodedHistory = explodeLeavesByDate(empLeaves);
+  const filteredHistory = filterLeavesByScopeAndTime(explodedHistory, state.empWiseScope || 'all', state.empWiseTime || 'all')
+    .sort((a,b) => (b.displayDate||'').localeCompare(a.displayDate||''));
 
   html += `<div class="card"><div class="card-title">📋 Leave History (${filteredHistory.length})</div>`;
   if (filteredHistory.length === 0) {
@@ -3863,25 +3952,36 @@ function adminLeaveCardHTML(l) {
   const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const roleUp = (state.adminRole || '').toUpperCase();
   const canCancel = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1; // Store Manager never gets Cancel
-  const dateStr = l.startDate===l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate)+' → '+fmtDMY(l.endDate);
+  const idSuffix = l.leaveId + (l.displayDate ? '_' + l.displayDate : '');
+  const dateStr = l.displayDate
+    ? fmtDMY(l.displayDate) + (l.dayTotal > 1 ? ` (Day ${l.dayIndex} of ${l.dayTotal})` : '')
+    : (l.startDate===l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate)+' → '+fmtDMY(l.endDate));
   let actions = '';
   if(isPending) {
     actions = `
-      <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" onclick="adminApprove(${l.row},'${l.leaveId}','${l.empId}')">✅ Approve</button>
-      <button class="btn-sm btn-reject" id="rejBtn_${l.leaveId}" onclick="openAdminReject(${l.row},'${l.leaveId}','${l.name}')">❌ Reject</button>
-      <button class="btn-sm btn-absent" id="absBtn_${l.leaveId}" onclick="openAdminAbsent(${l.row},'${l.leaveId}','${l.name}')">⚠️ Mark Absent</button>
+      <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" onclick="adminApprove(${l.row},'${escJs(l.leaveId)}','${escJs(l.empId)}')">✅ Approve</button>
+      <button class="btn-sm btn-reject" id="rejBtn_${l.leaveId}" onclick="openAdminReject(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">❌ Reject</button>
+      <button class="btn-sm btn-absent" id="absBtn_${l.leaveId}" onclick="openAdminAbsent(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">⚠️ Mark Absent</button>
     `;
-  } else if ((isFinal || l.status === 'Rejected') && isTodayOrFuture && canCancel) {
-    actions = `<button class="btn-sm btn-cancel" id="cancelAdminBtn_${l.leaveId}" onclick="adminCancel('${l.leaveId}','${l.name}')">🚫 Cancel</button>`;
+  } else if (isFinal && isTodayOrFuture && canCancel) {
+    // Only Approved/Absent leaves are cancellable — a Rejected leave has
+    // nothing to cancel, so that case is intentionally excluded here.
+    actions = `<button class="btn-sm btn-cancel" id="cancelAdminBtn_${idSuffix}" onclick="adminCancel('${escJs(l.leaveId)}','${escJs(l.name)}')">🚫 Cancel</button>`;
   }
+  // If your backend uses a different field name for the rejection note,
+  // add it to this fallback chain (e.g. l.rejectionReason, l.remarks).
+  const rejectionBlock = l.status === 'Rejected'
+    ? `<div class="leave-card-reason" style="color:var(--red);border-left-color:var(--red);"><b>❌ Rejection Reason:</b> ${l.reason || l.rejectionReason || 'Not specified'}</div>`
+    : '';
   return `<div class="leave-card">
     <div class="leave-card-top">
       <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}</div></div>
       <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
     </div>
-    <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s)</div>
+    <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
+    ${rejectionBlock}
     ${actions?`<div class="leave-card-actions">${actions}</div>`:''}
   </div>`;
 }
@@ -3927,7 +4027,7 @@ async function confirmReject() {
   const leaveId = state.rejectLeaveId;
   if (isLocked('rej_' + leaveId)) return;
   const reason = document.getElementById('rejectReason').value.trim();
-  if(!reason) { toast('Reason enter చేయండి', 'error'); return; }
+  if(!reason) { toast('Please enter a reason', 'error'); return; }
   setLock('rej_' + leaveId, true);
   await withButtonLock(document.getElementById('rejectConfirmBtn'), '⏳...', async () => {
     closeModal('rejectModal');
@@ -3960,7 +4060,7 @@ async function confirmAbsent() {
   const leaveId = state.absentLeaveId;
   if (isLocked('abs_' + leaveId)) return;
   const reason = document.getElementById('absentReason').value.trim();
-  if(!reason) { toast('Reason enter చేయండి', 'error'); return; }
+  if(!reason) { toast('Please enter a reason', 'error'); return; }
   setLock('abs_' + leaveId, true);
   await withButtonLock(document.getElementById('absentConfirmBtn'), '⏳...', async () => {
     closeModal('absentModal');
