@@ -1400,6 +1400,53 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   </div>
 </div>
 
+<!-- Modal: Admin Modify (any status, today/future only) -->
+<div class="modal-overlay" id="adminModifyModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Modify Leave (Admin)</div>
+    <div class="modal-sub" id="adminModifyModalSub">Update dates, mode, or status</div>
+    <div style="background:var(--blue-bg);border-left:3px solid var(--blue);padding:9px 12px;border-radius:0 8px 8px 0;font-size:11.5px;color:var(--blue);font-weight:600;margin-bottom:14px;line-height:1.6;">
+      ℹ️ Changing only the dates/mode sends no email. Changing the status below will send the matching Approved/Rejected/Absent email automatically.
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>New Start Date</label><input type="date" id="adminModifyStart"></div>
+      <div class="form-row"><label>New End Date</label><input type="date" id="adminModifyEnd"></div>
+    </div>
+    <div class="form-row">
+      <label>Leave Mode</label>
+      <select id="adminModifyMode" onchange="onAdminModifyModeChange()">
+        <option value="Full Day">Full Day</option>
+        <option value="Half Day">Half Day</option>
+      </select>
+    </div>
+    <div class="form-row" id="adminModifyHalfDayRow" style="display:none;">
+      <label>Half Day Slot</label>
+      <select id="adminModifyHalfDay">
+        <option value="First Half (Morning)">First Half (Morning)</option>
+        <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Status</label>
+      <select id="adminModifyStatus" onchange="onAdminModifyStatusChange()">
+        <option value="">Keep Current Status</option>
+        <option value="Approved">Set to Approved</option>
+        <option value="Rejected">Set to Rejected</option>
+        <option value="Absent">Set to Absent</option>
+        <option value="Pending">Set to Pending</option>
+      </select>
+    </div>
+    <div class="form-row" id="adminModifyReasonRow" style="display:none;">
+      <label>Reason (required for Rejected / Absent)</label>
+      <textarea id="adminModifyReason" rows="2" placeholder="Enter reason — shown to the employee"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal('adminModifyModal')">Cancel</button>
+      <button class="btn-modal-confirm" id="adminModifyConfirmBtn" onclick="confirmAdminModify()" style="background:var(--blue);">✏️ Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Day Details (click a calendar date) -->
 <!-- Modal: Personalized Birthday Poster (shown ONLY to the birthday person, every login on their birthday) -->
 <!-- Modal: Theme Picker -->
@@ -1514,7 +1561,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwyl8X5Bq_ePciNHYZCtxCl15BZsdfzoe-VK0zX51wKVklrg-2lHjSypcVNfcIpZT99/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhvQNbkgasqW8ZDY6Rm7lkb-rLXsBIVP1SUWD3DELqybXKCGevK8vkk_-rIAY-Qa7Uyg/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -3951,14 +3998,22 @@ function adminLeaveCardHTML(l) {
   const startYMD = normalizeDateStr(l.startDate);
   const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const roleUp = (state.adminRole || '').toUpperCase();
-  const canCancel = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1; // Store Manager never gets Cancel
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const canCancel = isMisOrDirector; // Store Manager never gets Cancel
+  const canModify = isMisOrDirector && isTodayOrFuture; // any status, today/future only
   const idSuffix = l.leaveId + (l.displayDate ? '_' + l.displayDate : '');
   const dateStr = l.displayDate
     ? fmtDMY(l.displayDate) + (l.dayTotal > 1 ? ` (Day ${l.dayIndex} of ${l.dayTotal})` : '')
     : (l.startDate===l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate)+' → '+fmtDMY(l.endDate));
+
+  // Stash the raw leave object so openAdminModifyModal can read it back
+  // without cramming every field into an onclick string.
+  if (!window.__adminLeaveCache) window.__adminLeaveCache = {};
+  window.__adminLeaveCache[l.leaveId] = l;
+
   let actions = '';
   if(isPending) {
-    actions = `
+    actions += `
       <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" onclick="adminApprove(${l.row},'${escJs(l.leaveId)}','${escJs(l.empId)}')">✅ Approve</button>
       <button class="btn-sm btn-reject" id="rejBtn_${l.leaveId}" onclick="openAdminReject(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">❌ Reject</button>
       <button class="btn-sm btn-absent" id="absBtn_${l.leaveId}" onclick="openAdminAbsent(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">⚠️ Mark Absent</button>
@@ -3966,17 +4021,26 @@ function adminLeaveCardHTML(l) {
   } else if (isFinal && isTodayOrFuture && canCancel) {
     // Only Approved/Absent leaves are cancellable — a Rejected leave has
     // nothing to cancel, so that case is intentionally excluded here.
-    actions = `<button class="btn-sm btn-cancel" id="cancelAdminBtn_${idSuffix}" onclick="adminCancel('${escJs(l.leaveId)}','${escJs(l.name)}')">🚫 Cancel</button>`;
+    actions += `<button class="btn-sm btn-cancel" id="cancelAdminBtn_${idSuffix}" onclick="adminCancel('${escJs(l.leaveId)}','${escJs(l.name)}')">🚫 Cancel</button>`;
+  }
+  if (canModify) {
+    actions += `<button class="btn-sm btn-modify" id="adminModifyBtn_${idSuffix}" onclick="openAdminModifyModal(window.__adminLeaveCache['${escJs(l.leaveId)}'])">✏️ Modify</button>`;
   }
   // If your backend uses a different field name for the rejection note,
   // add it to this fallback chain (e.g. l.rejectionReason, l.remarks).
   const rejectionBlock = l.status === 'Rejected'
     ? `<div class="leave-card-reason" style="color:var(--red);border-left-color:var(--red);"><b>❌ Rejection Reason:</b> ${l.reason || l.rejectionReason || 'Not specified'}</div>`
     : '';
+  const modifiedBadge = (l.processed === 'Modified (Admin)' || l.processed === 'Modified')
+    ? `<span class="pill" style="background:var(--blue-bg);color:var(--blue);margin-left:6px;">✏️ Modified</span>`
+    : '';
   return `<div class="leave-card">
     <div class="leave-card-top">
       <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}</div></div>
-      <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
+      <div style="display:flex;align-items:center;">
+        <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
+        ${modifiedBadge}
+      </div>
     </div>
     <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
@@ -3985,6 +4049,91 @@ function adminLeaveCardHTML(l) {
     ${actions?`<div class="leave-card-actions">${actions}</div>`:''}
   </div>`;
 }
+
+// ══════════════════════════════════════
+// ADMIN MODIFY (any status, today/future only) — MIS/Director only.
+// Calls the new adminModifyLeaveAPI backend endpoint. A plain modify
+// (dates/mode only) sends no mail; changing the status also sends the
+// matching Approved/Rejected/Absent email automatically.
+// ══════════════════════════════════════
+function openAdminModifyModal(l) {
+  const roleUp = (state.adminRole || '').toUpperCase();
+  const isAllowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  if (!isAllowed) { toast('Only MIS or Director can modify leaves', 'error'); return; }
+
+  state.adminModifyLeaveId = l.leaveId;
+  document.getElementById('adminModifyModalSub').textContent =
+    'Leave ID: ' + l.leaveId + ' · ' + l.name + ' (currently ' + statusLabel(l.status) + ')';
+  document.getElementById('adminModifyStart').value = l.startDate;
+  document.getElementById('adminModifyEnd').value = l.endDate;
+  const isHalf = (l.mode || '').toLowerCase().indexOf('half') > -1;
+  document.getElementById('adminModifyMode').value = isHalf ? 'Half Day' : 'Full Day';
+  onAdminModifyModeChange();
+  document.getElementById('adminModifyStatus').value = '';
+  document.getElementById('adminModifyReason').value = '';
+  onAdminModifyStatusChange();
+  openModal('adminModifyModal');
+}
+
+function onAdminModifyModeChange() {
+  const m = document.getElementById('adminModifyMode').value;
+  document.getElementById('adminModifyHalfDayRow').style.display = m === 'Half Day' ? 'block' : 'none';
+}
+
+function onAdminModifyStatusChange() {
+  const s = document.getElementById('adminModifyStatus').value;
+  document.getElementById('adminModifyReasonRow').style.display =
+    (s === 'Rejected' || s === 'Absent') ? 'block' : 'none';
+}
+
+async function confirmAdminModify() {
+  const leaveId = state.adminModifyLeaveId;
+  if (isLocked('adminmodify_' + leaveId)) return;
+
+  const newStart = document.getElementById('adminModifyStart').value;
+  const newEnd = document.getElementById('adminModifyEnd').value;
+  const newMode = document.getElementById('adminModifyMode').value;
+  const newHalfDay = newMode === 'Half Day' ? document.getElementById('adminModifyHalfDay').value : '';
+  const newStatus = document.getElementById('adminModifyStatus').value;
+  const reason = document.getElementById('adminModifyReason').value.trim();
+
+  if (!newStart || !newEnd) { toast('Please select both dates', 'error'); return; }
+  if (newEnd < newStart) { toast('End date cannot be before start date', 'error'); return; }
+  if (newMode === 'Half Day' && newStart !== newEnd) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
+  if ((newStatus === 'Rejected' || newStatus === 'Absent') && !reason) {
+    toast('Please enter a reason for ' + newStatus, 'error');
+    return;
+  }
+
+  setLock('adminmodify_' + leaveId, true);
+  await withButtonLock(document.getElementById('adminModifyConfirmBtn'), '⏳ Saving...', async () => {
+    try {
+      const res = await jsonpReliable({
+        page: 'adminModifyLeaveAPI',
+        leaveId: leaveId,
+        newStart: newStart,
+        newEnd: newEnd,
+        newMode: newMode,
+        newHalfDay: newHalfDay,
+        newStatus: newStatus,
+        reason: reason,
+        adminEmail: state.adminEmail,
+        role: state.adminRole
+      });
+      if (res.ok) {
+        closeModal('adminModifyModal');
+        toast(res.message || 'Leave modified successfully', 'success');
+        loadAdminData();
+      } else {
+        toast(res.error || 'Modify failed', 'error');
+      }
+    } catch (e) {
+      toast('Connection error. Try again.', 'error');
+    }
+    setLock('adminmodify_' + leaveId, false);
+  });
+}
+
 
 // ══════════════════════════════════════
 // ADMIN ACTIONS — locked per-leaveId to stop duplicate/rapid clicks,
