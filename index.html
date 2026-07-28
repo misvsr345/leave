@@ -1722,9 +1722,10 @@ function jsonp(params, timeoutMs) {
   });
 }
 
-// One retry on timeout/network error — covers the "works sometimes, not
-// always" approve/reject bug, which is consistent with intermittent
-// slow-network JSONP timeouts rather than a server-side logic fault.
+// One retry on timeout/network error — ONLY safe for READ-ONLY calls
+// (balanceJSON, leavesJSON, allLeavesAPI, calendarDataAPI, etc). Retrying a
+// read is harmless because it doesn't change any data. NEVER use this for
+// write/action calls — see jsonpWriteOnce below for why.
 async function jsonpReliable(params) {
   try {
     return await jsonp(params);
@@ -1735,6 +1736,49 @@ async function jsonpReliable(params) {
       return await jsonp(params, 35000);
     }
   }
+}
+
+// ══════════════════════════════════════
+// WRITE-SAFE REQUEST HELPER — fixes the duplicate-entry bug (e.g. 3x
+// "Direct Approved" rows created ~9s apart for one click). jsonpReliable()
+// silently retries up to 3 times on timeout. For WRITE actions (approve,
+// reject, absent, direct action, cancel, modify, submit leave, save
+// notices, block/unblock dates, save settings, change password), a timeout
+// does NOT mean the request failed — the server may have already written
+// the row. Retrying then blindly repeats the same write, creating
+// duplicates. jsonpWriteOnce() makes exactly ONE network attempt with a
+// generous timeout and never auto-retries; on failure it tells the caller
+// to verify manually instead of silently resubmitting.
+async function jsonpWriteOnce(params, idempotencyKey) {
+  const payload = idempotencyKey ? Object.assign({}, params, { idempotencyKey: idempotencyKey }) : params;
+  return await jsonp(payload, 30000); // single attempt only — no retry loop
+}
+
+// Builds a stable idempotency key from a write action's identifying fields.
+// Sent to the server so that even a manual repeat click (after a timeout,
+// or from a second tab) can be recognized as "the same logical request"
+// and de-duplicated server-side, in addition to the client-side button
+// locks already in place. Server support for this key is optional but
+// recommended (Code.gs should check it against a short-lived cache before
+// writing a new row).
+function makeIdemKey(parts) {
+  return parts.filter(p => p !== undefined && p !== null && p !== '').join('|').replace(/\s+/g, '_');
+}
+
+// Extra safety net: a small in-memory registry of idempotency keys already
+// submitted THIS SESSION. Even if every other lock somehow failed (e.g. a
+// button re-rendered mid-flight and lost its disabled state), this catches
+// an exact-duplicate write attempt before it ever reaches the network.
+const __sentIdemKeys = new Set();
+function isDuplicateSubmission(idemKey) {
+  if (!idemKey) return false;
+  if (__sentIdemKeys.has(idemKey)) return true;
+  __sentIdemKeys.add(idemKey);
+  // Keys are only meaningful for a short window (a genuine retry of the
+  // same logical action minutes apart, e.g. re-approving after an earlier
+  // rejection was undone, should NOT be blocked forever) — expire after 2 min.
+  setTimeout(() => __sentIdemKeys.delete(idemKey), 120000);
+  return false;
 }
 
 function pillClass(status) {
@@ -2110,13 +2154,15 @@ async function confirmChangePassword() {
   if(newPw.length < 4) { toast('Password should be at least 4 characters', 'error'); return; }
   if(newPw !== confirmPw) { toast('New password & confirm password do not match', 'error'); return; }
 
+  const pwIdemKey = makeIdemKey(['pwchange', pwContext, pwContext==='emp'?state.empId:state.adminEmail, Date.now()]);
+  if (isDuplicateSubmission(pwIdemKey)) { toast('Already processing, please wait...', 'info'); return; }
   await withButtonLock(document.getElementById('pwConfirmBtn'), '⏳ Updating...', async () => {
     try {
       let res;
       if(pwContext === 'emp') {
-        res = await jsonpReliable({ page:'changeEmpPasswordAPI', empId: state.empId, oldPassword: oldPw, newPassword: newPw });
+        res = await jsonpWriteOnce({ page:'changeEmpPasswordAPI', empId: state.empId, oldPassword: oldPw, newPassword: newPw }, pwIdemKey);
       } else {
-        res = await jsonpReliable({ page:'changeAdminPasswordAPI', email: state.adminEmail, oldPassword: oldPw, newPassword: newPw });
+        res = await jsonpWriteOnce({ page:'changeAdminPasswordAPI', email: state.adminEmail, oldPassword: oldPw, newPassword: newPw }, pwIdemKey);
       }
       if(res.ok) {
         closeModal('pwModal');
@@ -2380,12 +2426,14 @@ function openCancelModal(leaveId) {
 async function confirmCancel() {
   const leaveId = state.cancelLeaveId;
   if (isLocked('cancel_' + leaveId)) return;
+  const idem = makeIdemKey(['cancel', leaveId, state.empId]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
   setLock('cancel_' + leaveId, true);
   closeModal('cancelModal');
   await withButtonLock(document.getElementById('cancelConfirmBtn'), '⏳...', async () => {
     toast('⏳ Cancelling...', 'info');
     try {
-      const res = await jsonpReliable({ page:'cancelLeaveJSON', leaveId, empId: state.empId });
+      const res = await jsonpWriteOnce({ page:'cancelLeaveJSON', leaveId, empId: state.empId }, idem);
       if(res.ok) {
         toast('Leave cancelled successfully!', 'success');
         loadEmpData(); // background — don't hold the lock hostage to a slow reload
@@ -2435,11 +2483,13 @@ async function confirmModify() {
   if(newEnd < newStart) { toast('End date cannot be before start date', 'error'); return; }
   if(mode === 'Half Day' && newStart !== newEnd) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
 
+  const idem = makeIdemKey(['modify', leaveId, state.empId, newStart, newEnd, mode]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
   setLock('modify_' + leaveId, true);
   await withButtonLock(document.getElementById('modifyConfirmBtn'), '⏳...', async () => {
     toast('⏳ Submitting modification...', 'info');
     try {
-      const res = await jsonpReliable({ page:'modifyLeave', leaveId, empId: state.empId, newStart, newEnd, mode, halfDay, reason });
+      const res = await jsonpWriteOnce({ page:'modifyLeave', leaveId, empId: state.empId, newStart, newEnd, mode, halfDay, reason }, idem);
       if(res.ok) {
         closeModal('modifyModal');
         toast('Modification submitted — sent for fresh MIS approval', 'success');
@@ -2558,9 +2608,12 @@ async function submitLeave() {
   updateConnStatus();
   if(!navigator.onLine) { submitLeaveOffline(data); return; }
 
+  const submitIdem = makeIdemKey(['submitleave', state.empId, sd, ed, lt, lm]);
+  if (isDuplicateSubmission(submitIdem)) { toast('Already submitting, please wait...', 'info'); return; }
+
   await withButtonLock(document.getElementById('applySubmitBtn'), '⏳ Submitting...', async () => {
     try {
-      const res = await jsonpReliable(data);
+      const res = await jsonpWriteOnce(data, submitIdem);
       if(res.status && res.status !== 'Error') {
         toast('Leave submitted! ID: ' + res.leaveId, 'success');
         resetApplyForm();
@@ -2570,10 +2623,25 @@ async function submitLeave() {
         toast(res.reason || 'Submission failed', 'error');
       }
     } catch(e) {
-      submitLeaveOffline(data);
+      if (!navigator.onLine) {
+        // Genuinely offline — this is the correct, intended use of the
+        // offline queue. Safe to auto-sync later.
+        submitLeaveOffline(data);
+      } else {
+        // We WERE online — the request likely already reached and was
+        // processed by the server; the client just didn't get the response
+        // back in time (slow script execution, not a lost request). Silently
+        // queuing this for automatic resubmission is what was creating
+        // duplicate Absent/Approved rows — including ones that reappeared
+        // right after being manually deleted from the sheet, since the
+        // browser has no idea the row already exists. Surface it instead of
+        // silently retrying.
+        toast('⚠️ No confirmation from server — check "My Leaves" before submitting again. Do NOT resubmit if it already appears there.', 'error');
+        loadEmpData(); // refresh in background so "My Leaves" reflects reality
+      }
     }
-  });
-}
+    });
+  }
 
 function resetApplyForm() {
   document.getElementById('applyLeaveType').value = '';
@@ -2965,11 +3033,18 @@ async function submitDirectAction(outcome, evt) {
     if (!reason.trim()) { toast('Rejection reason is required', 'error'); return; }
   }
 
-  // THE ACTUAL BUG FIX: locked with isLocked/setLock keyed by
-  // empId+startDate+endDate, exactly like adminApprove/confirmReject/
-  // confirmAbsent already do. This stops the triple-entry bug — repeat
-  // clicks on the same request while one is still in flight are now
-  // blocked, no matter how many times the button is physically clicked.
+  // THE ACTUAL BUG FIX (root cause): the OLD code used jsonpReliable(),
+  // which silently retries a write up to 2 extra times if the server is
+  // slow to respond (25s → 30s → 35s). A slow response does NOT mean the
+  // write failed — Apps Script may have already saved the row — so each
+  // retry created ANOTHER real, separate "Direct Approved" entry. That's
+  // exactly why 3 rows (LV5-260730-0165/0166/0167) appeared ~9s apart from
+  // ONE click. The click-lock below was already correct and never the
+  // problem; the network retry was. Fixed by:
+  //   1) jsonpWriteOnce() — exactly ONE network attempt, no auto-retry.
+  //   2) An idempotency key sent to the server so even a genuine manual
+  //      re-click after a timeout can be recognized & de-duplicated.
+  //   3) isDuplicateSubmission() as a same-session safety net.
   const lockKey = 'direct_' + empId + '_' + startDate + '_' + endDate;
   if (isLocked(lockKey)) { toast('Already processing, please wait...', 'info'); return; }
 
@@ -2977,6 +3052,9 @@ async function submitDirectAction(outcome, evt) {
   const empName = emp ? emp.name : empId;
   const label = outcome === 'Approved' ? 'approve' : outcome === 'Absent' ? 'mark absent' : 'reject';
   if (!confirm(`${label.toUpperCase()}: ${empName}, ${fmtDMY(startDate)} to ${fmtDMY(endDate)} (${leaveType})?`)) return;
+
+  const idem = makeIdemKey(['direct', outcome, empId, startDate, endDate, leaveType, leaveMode]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
 
   setLock(lockKey, true);
   // Lock all three outcome buttons together so a double-click can't submit twice
@@ -2987,10 +3065,10 @@ async function submitDirectAction(outcome, evt) {
   if (clicked) clicked.textContent = '⏳ Processing...';
 
   try {
-    const res = await jsonpReliable({
+    const res = await jsonpWriteOnce({
       page: 'directActionAPI', role: state.adminRole,
       empId, startDate, endDate, leaveType, leaveMode, halfDay, reason, outcome
-    });
+    }, idem);
     if (res.ok) {
       toast(`✅ ${empName} marked ${outcome}`, 'success');
       document.getElementById('directReason').value = '';
@@ -3001,7 +3079,12 @@ async function submitDirectAction(outcome, evt) {
       toast(res.error || 'Action failed', 'error');
     }
   } catch(e) {
-    toast('Connection error. Try again.', 'error');
+    // No auto-retry anymore — this could mean the request never reached the
+    // server, OR it succeeded server-side but the response was slow coming
+    // back. Refresh and tell the admin to verify before repeating, instead
+    // of silently resubmitting (which is what caused duplicate rows before).
+    toast('⚠️ No confirmation from server — check "All Leaves" before repeating this action. Do NOT click again if it already appears there.', 'error');
+    loadAdminData();
   } finally {
     btns.forEach(b => { b.disabled = false; b.style.pointerEvents = ''; });
     if (clicked) clicked.textContent = originalText;
@@ -3080,12 +3163,15 @@ async function addBlockedDate() {
   const reason = document.getElementById('blockDateReason').value.trim();
   if (!date) { toast('Select a date', 'error'); return; }
 
+  const idem = makeIdemKey(['blockdate', date, state.adminEmail]);
+  if (isLocked('addblock_' + date) || isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
+  setLock('addblock_' + date, true);
   await withButtonLock(document.getElementById('addBlockDateBtn'), '⏳ Blocking...', async () => {
     try {
-      const res = await jsonpReliable({
+      const res = await jsonpWriteOnce({
         page: 'manageBlockedDateAPI', action: 'add', date, reason,
         role: state.adminRole, adminEmail: state.adminEmail
-      });
+      }, idem);
       if (res.ok) {
         toast('🚫 ' + res.message, 'success');
         document.getElementById('blockDateReason').value = '';
@@ -3094,18 +3180,23 @@ async function addBlockedDate() {
         toast(res.error || 'Failed to add', 'error');
       }
     } catch(e) {
-      toast('Connection error. Try again.', 'error');
+      toast('⚠️ No confirmation from server — check the blocked dates list before repeating.', 'error');
+      refreshBlockedDatesList();
     }
+    setLock('addblock_' + date, false);
   });
 }
 
 async function removeBlockedDate(date) {
   if (!confirm(`Remove ${fmtDMY(date)} from blocked dates?`)) return;
+  const idem = makeIdemKey(['unblockdate', date, state.adminEmail]);
+  if (isLocked('rmblock_' + date) || isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
+  setLock('rmblock_' + date, true);
   try {
-    const res = await jsonpReliable({
+    const res = await jsonpWriteOnce({
       page: 'manageBlockedDateAPI', action: 'remove', date,
       role: state.adminRole, adminEmail: state.adminEmail
-    });
+    }, idem);
     if (res.ok) {
       toast('✅ ' + res.message, 'success');
       refreshBlockedDatesList();
@@ -3113,16 +3204,21 @@ async function removeBlockedDate(date) {
       toast(res.error || 'Failed to remove', 'error');
     }
   } catch(e) {
-    toast('Connection error. Try again.', 'error');
+    toast('⚠️ No confirmation from server — check the blocked dates list before repeating.', 'error');
+    refreshBlockedDatesList();
   }
+  setLock('rmblock_' + date, false);
 }
 
 async function toggleBlockedDay(day, enabled) {
+  const idem = makeIdemKey(['blockday', day, enabled, state.adminEmail]);
+  if (isLocked('toggleday_' + day) || isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
+  setLock('toggleday_' + day, true);
   try {
-    const res = await jsonpReliable({
+    const res = await jsonpWriteOnce({
       page: 'manageBlockedDayAPI', day, enabled: enabled ? 'true' : 'false',
       role: state.adminRole, adminEmail: state.adminEmail
-    });
+    }, idem);
     if (res.ok) {
       toast((enabled ? '🚫 ' : '✅ ') + res.message, 'success');
       blockedDatesCache = null; // force scroller to refetch next time it renders
@@ -3131,9 +3227,10 @@ async function toggleBlockedDay(day, enabled) {
       refreshBlockedDatesList(); // revert checkbox visually on failure
     }
   } catch(e) {
-    toast('Connection error. Try again.', 'error');
+    toast('⚠️ No confirmation from server — check the blocked days list before repeating.', 'error');
     refreshBlockedDatesList();
   }
+  setLock('toggleday_' + day, false);
 }
 
 // ══════════════════════════════════════
@@ -3199,16 +3296,18 @@ async function saveSMPermissionsFromSettings() {
     payload[key] = (btn && btn.dataset.state === 'unlocked') ? 'true' : 'false';
   });
 
+  const idem = makeIdemKey(['smperms', state.adminEmail, Date.now()]);
+  if (isDuplicateSubmission(idem)) { toast('Already saving, please wait...', 'info'); return; }
   await withButtonLock(document.getElementById('settingsSaveSMBtn'), '⏳ Saving...', async () => {
     try {
-      const res = await jsonpReliable(payload);
+      const res = await jsonpWriteOnce(payload, idem);
       if (res.ok) {
         toast('✅ Store Manager access settings saved', 'success');
       } else {
         toast(res.error || 'Save failed', 'error');
       }
     } catch(e) {
-      toast('Connection error. Try again.', 'error');
+      toast('⚠️ No confirmation from server — reload Settings to verify before saving again.', 'error');
     }
   });
 }
@@ -4105,10 +4204,13 @@ async function confirmAdminModify() {
     return;
   }
 
+  const idem = makeIdemKey(['adminmodify', leaveId, newStart, newEnd, newMode, newStatus]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
+
   setLock('adminmodify_' + leaveId, true);
   await withButtonLock(document.getElementById('adminModifyConfirmBtn'), '⏳ Saving...', async () => {
     try {
-      const res = await jsonpReliable({
+      const res = await jsonpWriteOnce({
         page: 'adminModifyLeaveAPI',
         leaveId: leaveId,
         newStart: newStart,
@@ -4119,7 +4221,7 @@ async function confirmAdminModify() {
         reason: reason,
         adminEmail: state.adminEmail,
         role: state.adminRole
-      });
+      }, idem);
       if (res.ok) {
         closeModal('adminModifyModal');
         toast(res.message || 'Leave modified successfully', 'success');
@@ -4128,7 +4230,8 @@ async function confirmAdminModify() {
         toast(res.error || 'Modify failed', 'error');
       }
     } catch (e) {
-      toast('Connection error. Try again.', 'error');
+      toast('⚠️ No confirmation from server — check "All Leaves" before repeating this modification.', 'error');
+      loadAdminData();
     }
     setLock('adminmodify_' + leaveId, false);
   });
@@ -4143,12 +4246,18 @@ async function confirmAdminModify() {
 // ══════════════════════════════════════
 async function adminApprove(row, leaveId, empId) {
   if (isLocked('appr_' + leaveId)) return;
+  const idem = makeIdemKey(['approve', leaveId, row, state.adminEmail]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
   setLock('appr_' + leaveId, true);
   const btn = document.getElementById('apprBtn_' + leaveId);
   await withButtonLock(btn, '⏳...', async () => {
     toast('⏳ Approving...', 'info');
     try {
-      const res = await jsonpReliable({ page:'adminActionAPI', action:'approve', row: row, leaveId, adminEmail: state.adminEmail, role: state.adminRole });
+      // jsonpWriteOnce (NOT jsonpReliable) — jsonpReliable silently retries
+      // up to 2 extra times on timeout, which on a WRITE call re-executes
+      // the same approval and creates duplicate rows. Exactly one attempt
+      // here, plus an idempotency key the server can use to de-duplicate.
+      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'approve', row: row, leaveId, adminEmail: state.adminEmail, role: state.adminRole }, idem);
       if(res.ok) {
         toast('✅ ' + res.message, 'success');
         fadeOutLeaveCard(leaveId);
@@ -4160,7 +4269,10 @@ async function adminApprove(row, leaveId, empId) {
         toast(res.error || 'Approve failed', 'error');
       }
     } catch(e) {
-      toast('Error: ' + e.message, 'error');
+      // No auto-retry — a timeout here does NOT mean it failed server-side.
+      // Refresh and tell the admin to verify instead of silently resubmitting.
+      toast('⚠️ No confirmation from server — check "All Leaves" before approving again. Do NOT click again if it already shows Approved.', 'error');
+      loadAdminData();
     }
     setLock('appr_' + leaveId, false);
   });
@@ -4177,12 +4289,14 @@ async function confirmReject() {
   if (isLocked('rej_' + leaveId)) return;
   const reason = document.getElementById('rejectReason').value.trim();
   if(!reason) { toast('Please enter a reason', 'error'); return; }
+  const idem = makeIdemKey(['reject', leaveId, state.rejectRow, state.adminEmail]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
   setLock('rej_' + leaveId, true);
   await withButtonLock(document.getElementById('rejectConfirmBtn'), '⏳...', async () => {
     closeModal('rejectModal');
     toast('⏳ Rejecting...', 'info');
     try {
-      const res = await jsonpReliable({ page:'adminActionAPI', action:'reject', row: state.rejectRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole });
+      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'reject', row: state.rejectRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole }, idem);
       if(res.ok) {
         toast('❌ ' + res.message, 'success');
         fadeOutLeaveCard(leaveId);
@@ -4193,7 +4307,8 @@ async function confirmReject() {
         toast(res.error || 'Reject failed', 'error');
       }
     } catch(e) {
-      toast('Error: ' + e.message, 'error');
+      toast('⚠️ No confirmation from server — check "All Leaves" before rejecting again. Do NOT click again if it already shows Rejected.', 'error');
+      loadAdminData();
     }
     setLock('rej_' + leaveId, false);
   });
@@ -4210,6 +4325,8 @@ async function confirmAbsent() {
   if (isLocked('abs_' + leaveId)) return;
   const reason = document.getElementById('absentReason').value.trim();
   if(!reason) { toast('Please enter a reason', 'error'); return; }
+  const idem = makeIdemKey(['absent', leaveId, state.absentRow, state.adminEmail]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
   setLock('abs_' + leaveId, true);
   await withButtonLock(document.getElementById('absentConfirmBtn'), '⏳...', async () => {
     closeModal('absentModal');
@@ -4218,7 +4335,7 @@ async function confirmAbsent() {
       // Uses adminActionAPI with action=reject plus an Absent flag the backend
       // can branch on — see Code.gs patch notes for the small server addition
       // required (adminActionAPI currently only supports approve/reject).
-      const res = await jsonpReliable({ page:'adminActionAPI', action:'absent', row: state.absentRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole });
+      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'absent', row: state.absentRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole }, idem);
       if(res.ok) {
         toast('⚠️ ' + res.message, 'success');
         fadeOutLeaveCard(leaveId);
@@ -4229,7 +4346,8 @@ async function confirmAbsent() {
         toast(res.error || 'Action failed', 'error');
       }
     } catch(e) {
-      toast('Error: ' + e.message, 'error');
+      toast('⚠️ No confirmation from server — check "All Leaves" before repeating. Do NOT click again if it already shows Absent.', 'error');
+      loadAdminData();
     }
     setLock('abs_' + leaveId, false);
   });
@@ -4238,12 +4356,14 @@ async function confirmAbsent() {
 async function adminCancel(leaveId, name) {
   if (isLocked('admincancel_' + leaveId)) return;
   if (!confirm('Cancel leave for ' + name + ' (' + leaveId + ')? Balance will be restored.')) return;
+  const idem = makeIdemKey(['admincancel', leaveId, state.adminEmail]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
   setLock('admincancel_' + leaveId, true);
   const btn = document.getElementById('cancelAdminBtn_' + leaveId);
   await withButtonLock(btn, '⏳...', async () => {
     toast('⏳ Cancelling...', 'info');
     try {
-      const res = await jsonpReliable({ page:'adminCancelAPI', leaveId, adminEmail: state.adminEmail, role: state.adminRole });
+      const res = await jsonpWriteOnce({ page:'adminCancelAPI', leaveId, adminEmail: state.adminEmail, role: state.adminRole }, idem);
       if(res.ok) {
         toast('🚫 ' + res.message, 'success');
         state.allLeaves = state.allLeaves.map(l => l.leaveId === leaveId ? Object.assign({}, l, { status: 'Cancelled' }) : l);
@@ -4253,7 +4373,8 @@ async function adminCancel(leaveId, name) {
         toast(res.error || 'Cancel failed', 'error');
       }
     } catch(e) {
-      toast('Error: ' + e.message, 'error');
+      toast('⚠️ No confirmation from server — check "All Leaves" before cancelling again.', 'error');
+      loadAdminData();
     }
     setLock('admincancel_' + leaveId, false);
   });
@@ -4350,9 +4471,11 @@ function resetNoticesToDefault() {
 }
 async function saveNotices() {
   const html = document.getElementById('noticesEditorBox').value;
+  const idem = makeIdemKey(['savenotices', state.adminEmail, Date.now()]);
+  if (isDuplicateSubmission(idem)) { toast('Already saving, please wait...', 'info'); return; }
   await withButtonLock(document.getElementById('saveNoticesBtn'), '⏳ Saving...', async () => {
     try {
-      const res = await jsonpReliable({ page: 'saveNoticesAPI', html, adminEmail: state.adminEmail });
+      const res = await jsonpWriteOnce({ page: 'saveNoticesAPI', html, adminEmail: state.adminEmail }, idem);
       if(res.ok) {
         toast('✅ Notices saved — employees will see this now', 'success');
         state.noticesHtml = html;
@@ -4360,7 +4483,7 @@ async function saveNotices() {
         toast(res.error || 'Save failed', 'error');
       }
     } catch(e) {
-      toast('Error: ' + e.message, 'error');
+      toast('⚠️ No confirmation from server — reload Notices to verify before saving again.', 'error');
     }
   });
 }
