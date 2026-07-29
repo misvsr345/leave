@@ -427,17 +427,15 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .footer-nav-btn.active .footer-nav-icon { transform: scale(1.1); }
 .footer-nav-btn:active { opacity: 0.6; }
 
-/* Floating Back button — shown on every page except Overview/Dashboard */
-.back-fab {
-  position: fixed; z-index: 250; bottom: 76px; left: 14px;
-  display: none; align-items: center; gap: 6px;
-  background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));
-  color: #fff; border: 2px solid var(--gold); border-radius: 24px;
-  padding: 9px 16px 9px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(107,33,168,0.4);
+/* Back button — sits top-right in the topbar (first chip, before the
+   connection status/refresh/logout), shown on every page except
+   Overview/Dashboard. */
+.back-fab-top {
+  display: none; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4);
 }
-.back-fab.show { display: flex; }
-.back-fab:active { transform: scale(0.95); }
+.back-fab-top.show { display: flex; }
+.back-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
 .page-section.active { display: block; }
 
@@ -789,6 +787,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <div class="topbar">
       <div class="topbar-logo" onclick="showEmpPage('overview')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
+        <button class="tb-chip back-fab-top" id="empBackFab" onclick="showEmpPage('overview')">← Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
@@ -985,7 +984,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <button class="footer-nav-btn" id="foot-emp-calendar" onclick="showEmpPage('calendar')"><span class="footer-nav-icon">📅</span>Calendar</button>
     <button class="footer-nav-btn" onclick="openEmpMoreModal()"><span class="footer-nav-icon">☰</span>More</button>
   </div>
-  <button class="back-fab" id="empBackFab" onclick="showEmpPage('overview')">← Back</button>
 </div><!-- end empApp -->
 
 
@@ -997,6 +995,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <div class="topbar">
       <div class="topbar-logo" onclick="showAdminPage('dashboard')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
+        <button class="tb-chip back-fab-top" id="adminBackFab" onclick="showAdminPage('dashboard')">← Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
@@ -1009,6 +1008,14 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 
     <!-- DASHBOARD -->
     <div class="page-section active" id="admin-dashboard">
+      <div class="card" style="padding:12px 14px;margin-bottom:12px;">
+        <div style="position:relative;">
+          <input type="text" id="empSearchBox" placeholder="🔍 Search employee by name or ID — jump to their profile..." autocomplete="off"
+            oninput="onEmpSearchInput()" onkeydown="if(event.key==='Enter') onEmpSearchEnter()"
+            style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
+          <div id="empSearchResults" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:var(--shadow2);max-height:280px;overflow-y:auto;z-index:50;"></div>
+        </div>
+      </div>
       <div class="bday-marquee-wrap" id="adminBdayMarquee">
         <button class="bday-marquee-refresh" onclick="populateEventScroller('adminBdayMarquee','adminBdayMarqueeTrack')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="adminBdayMarqueeTrack"></div>
@@ -1022,6 +1029,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
           <div class="quick-action-btn" id="adminQABalance" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
           <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile view</div></div>
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
+          <div class="quick-action-btn" id="adminQAAvailability" onclick="showAdminPage('availability')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Team Availability</div><div class="quick-action-sub">Who's on leave this week</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
         </div>
       </div>
@@ -1047,7 +1055,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 
     <!-- ALL LEAVES -->
     <div class="page-section" id="admin-allleaves">
-      <div class="section-hdr"><span class="section-title2">📋 All Leaves</span></div>
+      <div class="section-hdr"><span class="section-title2">📋 All Leaves</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm btn-view" onclick="exportAllLeavesCSV()">⬇️ Excel</button>
+          <button class="btn-sm btn-view" onclick="printCurrentView('📋 All Leaves')">🖨️ PDF</button>
+        </div>
+      </div>
       <div class="card" style="padding:12px 14px;margin-bottom:10px;">
         <div class="form-row" style="margin-bottom:8px;">
           <input type="text" id="allLeavesEmpFilter" placeholder="🔍 Filter by employee name or ID..." oninput="renderAdminLeaves()" style="width:100%;">
@@ -1133,9 +1146,25 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
       <div id="evtAdminContent"></div>
     </div>
 
+    <!-- TEAM AVAILABILITY -->
+    <div class="page-section" id="admin-availability">
+      <div class="section-hdr"><span class="section-title2">🗓️ Team Availability This Week</span>
+        <button class="btn-sm btn-view" onclick="renderTeamAvailability()">🔄 Refresh</button>
+      </div>
+      <div class="card" style="padding:12px 14px;margin-bottom:10px;">
+        <div style="font-size:11.5px;color:var(--text3);">Shows everyone with an <b>Approved</b> leave from today through the next 7 days, grouped by department/counter — handy for quick shift planning.</div>
+      </div>
+      <div id="availabilityContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
     <!-- BALANCE -->
     <div class="page-section" id="admin-balance">
-      <div class="section-hdr"><span class="section-title2">💰 Leave Balance Summary</span></div>
+      <div class="section-hdr"><span class="section-title2">💰 Leave Balance Summary</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm btn-view" onclick="exportBalanceCSV()">⬇️ Excel</button>
+          <button class="btn-sm btn-view" onclick="printCurrentView('💰 Leave Balance Summary')">🖨️ PDF</button>
+        </div>
+      </div>
       <div id="balanceContainer"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -1325,7 +1354,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <button class="footer-nav-btn" id="foot-admin-calendar" onclick="showAdminPage('acalendar')"><span class="footer-nav-icon">📅</span>Calendar</button>
     <button class="footer-nav-btn" onclick="openAdminMoreModal()"><span class="footer-nav-icon">☰</span>More</button>
   </div>
-  <button class="back-fab" id="adminBackFab" onclick="showAdminPage('dashboard')">← Back</button>
 </div><!-- end adminApp -->
 
 <!-- Modal: Cancel -->
@@ -1561,7 +1589,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhvQNbkgasqW8ZDY6Rm7lkb-rLXsBIVP1SUWD3DELqybXKCGevK8vkk_-rIAY-Qa7Uyg/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNP27jPylyIyj3y_efQbZc39mNcUSJnuF6M6AlpHhEzYKC7YnQjs_CiBYLjtqrcA40aQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -1666,6 +1694,16 @@ function formatLeaveMode(mode, halfDay) {
   const m = mode || 'Full Day';
   if (m === 'Half Day' && halfDay) return 'Half Day (' + halfDay + ')';
   return m;
+}
+
+// Formats a leave-day number for display WITHOUT lossy rounding to 1
+// decimal (the old .toFixed(1) turned 0.75 into "0.8", which visually
+// disagreed with the Sheet's exact 0.75/1.25 penalty values). Shows up
+// to 2 decimal places, but trims trailing zeros so whole numbers still
+// read as "3" not "3.00" and half-days read as "0.5" not "0.50".
+function fmtNum(n) {
+  const v = Number(n) || 0;
+  return (Math.round(v * 100) / 100).toString();
 }
 
 function fmtDMY(s) {
@@ -2266,10 +2304,10 @@ function renderEmpOverview() {
       <div class="home-header-name">${state.empName}</div>
       <div class="home-header-sub">${empMeta}</div>
       <div class="home-balance-row">
-        <div class="home-bal-box"><div class="home-bal-val" style="color:${balColorHex}">${b.toFixed(1)}</div><div class="home-bal-lbl">Balance</div></div>
-        <div class="home-bal-box"><div class="home-bal-val" style="color:#ff8080">${u.toFixed(1)}</div><div class="home-bal-lbl">Used</div></div>
-        <div class="home-bal-box"><div class="home-bal-val" style="color:${ex>0?'#ff5050':'#c0c0d8'}">${ex.toFixed(1)}</div><div class="home-bal-lbl">Extra Leave</div></div>
-        <div class="home-bal-box"><div class="home-bal-val" style="color:#80c8ff">${q.toFixed(1)}</div><div class="home-bal-lbl">Quota</div></div>
+        <div class="home-bal-box"><div class="home-bal-val" style="color:${balColorHex}">${fmtNum(b)}</div><div class="home-bal-lbl">Balance</div></div>
+        <div class="home-bal-box"><div class="home-bal-val" style="color:#ff8080">${fmtNum(u)}</div><div class="home-bal-lbl">Used</div></div>
+        <div class="home-bal-box"><div class="home-bal-val" style="color:${ex>0?'#ff5050':'#c0c0d8'}">${fmtNum(ex)}</div><div class="home-bal-lbl">Extra Leave</div></div>
+        <div class="home-bal-box"><div class="home-bal-val" style="color:#80c8ff">${fmtNum(q)}</div><div class="home-bal-lbl">Quota</div></div>
       </div>
     </div>
     <div class="quick-actions-section">
@@ -2288,7 +2326,7 @@ function renderEmpOverview() {
       <div class="progress-label"><span style="font-weight:600;color:var(--purple)">Leave Usage</span><span style="color:${barColor};font-weight:700">${pct}%</span></div>
       <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
     </div>
-    ${ex > 0 ? `<div style="margin-top:10px;padding:9px 12px;background:var(--red-bg);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:12px;color:var(--red);font-weight:600;">⚠️ ${ex.toFixed(1)} day(s) taken beyond your monthly quota this month.</div>` : ''}
+    ${ex > 0 ? `<div style="margin-top:10px;padding:9px 12px;background:var(--red-bg);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:12px;color:var(--red);font-weight:600;">⚠️ ${fmtNum(ex)} day(s) taken beyond your monthly quota this month.</div>` : ''}
   `;
 
   const recent = state.empLeaves.slice(0,5);
@@ -3244,6 +3282,7 @@ const SETTINGS_FEATURE_LABELS = {
   balance:   '💰 Leave Balance',
   empwise:   '👤 Employee Wise Profile',
   events:    '📆 Events (birthdays & holidays)',
+  availability: '🗓️ Team Availability',
   direct:    '🎯 Direct Action (Approve/Absent/Reject)',
   notices:   '📢 Edit Notices & Rules',
   blocked:   '🚫 Blocked Dates & Days'
@@ -3445,6 +3484,7 @@ const SM_FEATURE_ELEMENTS = {
   balance:   ['adminQABalance'],
   empwise:   ['adminQAEmpwise'],
   events:    ['adminQAEvents'],
+  availability: ['adminQAAvailability'],
   direct:    ['adminQADirect'],
   notices:   ['adminQANotices'],
   blocked:   ['adminQABlocked']
@@ -3525,6 +3565,7 @@ function showAdminPage(page) {
   if(page==='pending') renderPending();
   if(page==='allleaves') renderAdminLeaves();
   if(page==='notices') loadNoticesForAdmin();
+  if(page==='availability') renderTeamAvailability();
 }
 
 // ══════════════════════════════════════
@@ -3700,6 +3741,133 @@ function populateEventScroller(wrapId, trackId) {
   track.innerHTML = `<span class="bday-marquee-text">${wishes}</span>`;
   wrap.classList.add('show');
 }
+
+// ══════════════════════════════════════
+// TEAM AVAILABILITY — "who's on leave this week" grid, grouped by
+// department (falling back to counter when department is blank), for
+// quick shift-planning at a glance. Uses the same state.allLeaves data
+// already loaded for the All Leaves page — no extra network call.
+// ══════════════════════════════════════
+function renderTeamAvailability() {
+  const content = document.getElementById('availabilityContent');
+  if (!content) return;
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const today = todayYMD();
+  const end = new Date(); end.setDate(end.getDate() + 6);
+  const endYMD = toYMD(end);
+
+  const approved = (state.allLeaves || []).filter(l => l.status === 'Approved');
+  const exploded = explodeLeavesByDate(approved)
+    .filter(l => l.displayDate >= today && l.displayDate <= endYMD);
+
+  if (exploded.length === 0) {
+    content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>Nobody is on approved leave in the next 7 days</p></div>';
+    return;
+  }
+
+  // Group by department (fallback: counter, then "Unassigned")
+  const groups = {};
+  exploded.forEach(l => {
+    const key = l.department || l.counter || 'Unassigned';
+    if (!groups[key]) groups[key] = {};
+    const dateKey = l.displayDate;
+    if (!groups[key][dateKey]) groups[key][dateKey] = [];
+    groups[key][dateKey].push(l);
+  });
+
+  const dayLabels = [];
+  for (let i = 0; i <= 6; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    dayLabels.push({ ymd: toYMD(d), label: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) });
+  }
+
+  let html = '';
+  Object.keys(groups).sort().forEach(dept => {
+    const deptTotal = Object.values(groups[dept]).reduce((s, arr) => s + arr.length, 0);
+    html += `<div class="card">
+      <div class="card-title">🏢 ${dept} <span class="pill" style="background:var(--purple-bg);color:var(--purple-dark);margin-left:6px;">${deptTotal} leave-day${deptTotal>1?'s':''}</span></div>`;
+    dayLabels.forEach(d => {
+      const people = groups[dept][d.ymd];
+      if (!people || people.length === 0) return;
+      html += `<div style="margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin-bottom:5px;">📅 ${d.label}</div>`;
+      people.forEach(p => {
+        html += `<div class="cal-event-item">
+          <div class="cal-event-dot" style="background:var(--green)"></div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:12px;">${p.name}</div>
+            <div style="font-size:11px;color:var(--text3)">${p.type} · ${formatLeaveMode(p.mode, p.halfDay)}${p.counter ? ' · ' + p.counter : ''}</div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+
+  content.innerHTML = html;
+}
+
+// ══════════════════════════════════════
+// GLOBAL EMPLOYEE SEARCH (admin dashboard) — jump straight to a
+// person's Employee Wise profile instead of scrolling a long dropdown.
+// ══════════════════════════════════════
+function buildEmpSearchIndex() {
+  const map = {};
+  (empWiseBalanceCache || []).forEach(b => { map[b.empId] = { empId: b.empId, name: b.name, dept: b.dept || '' }; });
+  (directEmpCache || []).forEach(e => { if (!map[e.empId]) map[e.empId] = { empId: e.empId, name: e.name, dept: e.dept || '' }; });
+  (state.allLeaves || []).forEach(l => { if (l.empId && !map[l.empId]) map[l.empId] = { empId: l.empId, name: l.name, dept: l.department || '' }; });
+  return Object.values(map);
+}
+
+function onEmpSearchInput() {
+  const q = document.getElementById('empSearchBox').value.trim().toLowerCase();
+  const box = document.getElementById('empSearchResults');
+  if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+  const matches = buildEmpSearchIndex()
+    .filter(e => e.name.toLowerCase().includes(q) || e.empId.toLowerCase().includes(q))
+    .slice(0, 8);
+
+  if (matches.length === 0) {
+    box.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text3);">No employee matches "' + q + '"</div>';
+    box.style.display = 'block';
+    return;
+  }
+
+  box.innerHTML = matches.map(e => `
+    <div onclick="jumpToEmployee('${escJs(e.empId)}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='var(--purple-bg)'" onmouseout="this.style.background='#fff'">
+      <div><div style="font-weight:700;font-size:13px;color:var(--text);">${e.name}</div><div style="font-size:11px;color:var(--text3);">${e.empId}${e.dept ? ' · ' + e.dept : ''}</div></div>
+      <span style="font-size:16px;color:var(--purple);">→</span>
+    </div>`).join('');
+  box.style.display = 'block';
+}
+
+function onEmpSearchEnter() {
+  const q = document.getElementById('empSearchBox').value.trim().toLowerCase();
+  if (!q) return;
+  const match = buildEmpSearchIndex().find(e => e.name.toLowerCase().includes(q) || e.empId.toLowerCase().includes(q));
+  if (match) jumpToEmployee(match.empId);
+  else toast('No employee matches "' + q + '"', 'error');
+}
+
+async function jumpToEmployee(empId) {
+  document.getElementById('empSearchResults').style.display = 'none';
+  document.getElementById('empSearchBox').value = '';
+  showAdminPage('empwise');
+  await loadEmployeeWisePage();
+  const sel = document.getElementById('empWiseSelect');
+  if (sel) {
+    sel.value = empId;
+    renderEmployeeWiseProfile();
+  }
+}
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('empSearchResults');
+  const input = document.getElementById('empSearchBox');
+  if (box && input && !box.contains(e.target) && e.target !== input) box.style.display = 'none';
+});
 
 function renderAdminDashboard() {
   const leaves = state.allLeaves;
@@ -3934,8 +4102,10 @@ async function manualRefreshPending() {
   }
 }
 
-function renderAdminLeaves(filter) {
-  if(filter) state.adminCurrentFilter = filter;
+// Shared by renderAdminLeaves() and exportAllLeavesCSV() so the exported
+// file always matches exactly what's currently shown on screen (same
+// status filter, scope, time filter, name/ID search, and date range).
+function getFilteredAdminLeaves() {
   let leaves = state.adminCurrentFilter === 'all' ? state.allLeaves : state.allLeaves.filter(l => l.status === state.adminCurrentFilter);
   leaves = explodeLeavesByDate(leaves);
   leaves = filterLeavesByScopeAndTime(leaves, state.adminLeavesScope || 'month', state.adminLeavesTime || 'all');
@@ -3957,6 +4127,13 @@ function renderAdminLeaves(filter) {
   if(toVal) leaves = leaves.filter(l => (l.displayDate || normalizeDateStr(l.startDate)) <= toVal);
 
   leaves.sort((a,b) => (b.displayDate||'').localeCompare(a.displayDate||''));
+  return { leaves, empQuery, fromVal, toVal };
+}
+
+function renderAdminLeaves(filter) {
+  if(filter) state.adminCurrentFilter = filter;
+  const { leaves, empQuery, fromVal, toVal } = getFilteredAdminLeaves();
+
   let html = '';
   if(leaves.length === 0) {
     html = '<div class="empty-state"><span class="emoji">📭</span><p>No leaves found</p></div>';
@@ -3974,6 +4151,80 @@ function clearAllLeavesFilters() {
   document.getElementById('allLeavesDateTo').value = '';
   renderAdminLeaves();
 }
+
+// ══════════════════════════════════════
+// EXPORT — Excel (CSV) & Print/PDF
+// CSV is used instead of a true .xlsx so this works entirely client-side
+// with no new backend endpoint; Excel/Google Sheets/WPS all open .csv
+// natively. Print/PDF reuses the browser's native "Save as PDF" print
+// dialog on a clean, print-only stylesheet — no library needed.
+// ══════════════════════════════════════
+function csvEscape(val) {
+  const s = (val === null || val === undefined) ? '' : String(val);
+  if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function downloadCSV(filename, rows) {
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('⬇️ Downloaded ' + filename, 'success');
+}
+
+function exportAllLeavesCSV() {
+  const { leaves } = getFilteredAdminLeaves();
+  if (leaves.length === 0) { toast('Nothing to export — no leaves match the current filters', 'error'); return; }
+  const rows = [['Date','Employee','Emp ID','Department','Leave Type','Mode','Status','Days','Leave ID','Purpose','Submitted']];
+  leaves.forEach(l => {
+    rows.push([
+      fmtDMY(l.displayDate || l.startDate), l.name, l.empId, l.department || '',
+      l.type, formatLeaveMode(l.mode, l.halfDay), statusLabel(l.status),
+      l.days, l.leaveId, l.purpose || '', fmtDMY(l.timestamp)
+    ]);
+  });
+  downloadCSV('VSR_GOLD_All_Leaves_' + todayYMD() + '.csv', rows);
+}
+
+function exportBalanceCSV() {
+  const balances = empWiseBalanceCache && empWiseBalanceCache.length ? empWiseBalanceCache : [];
+  if (balances.length === 0) { toast('Balance data not loaded yet — open the Balance tab first', 'error'); return; }
+  const rows = [['Emp ID','Name','Department','Quota','Used','Balance','Extra Leave']];
+  balances.forEach(b => {
+    const used = b.used != null ? b.used : ((b.approved||0)+(b.absent||0));
+    rows.push([b.empId, b.name, b.dept || '', fmtNum(b.quota), fmtNum(used), fmtNum(b.balance), fmtNum(b.extraLeave || 0)]);
+  });
+  downloadCSV('VSR_GOLD_Balance_Summary_' + todayYMD() + '.csv', rows);
+}
+
+// Opens the browser Print dialog (user picks "Save as PDF") showing only
+// the currently active page-section, with a clean printable header.
+function printCurrentView(title) {
+  const activeSection = document.querySelector('#adminApp .page-section.active');
+  if (!activeSection) { toast('Nothing to print', 'error'); return; }
+  const printWin = window.open('', '_blank');
+  const dateStr = fmtDMY(todayYMD());
+  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — VSR GOLD</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:20px;color:#1a0f2e;}
+      h1{font-size:18px;color:#6b21a8;border-bottom:2px solid #d4a843;padding-bottom:8px;}
+      .print-meta{font-size:11px;color:#8a78a8;margin-bottom:16px;}
+      .card,.leave-card{border:1px solid #ddd0ee;border-radius:8px;padding:10px 12px;margin-bottom:8px;page-break-inside:avoid;}
+      .filter-bar,.btn-sm,.leave-card-actions,button,select,input{display:none !important;}
+      .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#eee;}
+      .loading,.spinner{display:none !important;}
+    </style></head><body>
+    <h1>${title} — VSR GOLD</h1>
+    <div class="print-meta">Generated: ${dateStr}</div>
+    ${activeSection.innerHTML}
+    </body></html>`);
+  printWin.document.close();
+  setTimeout(() => { printWin.print(); }, 400);
+}
+
 function adminFilterLeaves(f, btn) {
   document.querySelectorAll('#admin-allleaves .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -4026,21 +4277,19 @@ function renderEmployeeWiseProfile() {
   const empName = bal ? bal.name : (empLeaves[0] ? empLeaves[0].name : empId);
   const quota = bal ? bal.quota : 3;
 
-  // Compute Used/Balance/Extra directly from empLeaves (THIS MONTH only,
-  // Approved + Absent statuses) — same data source as Leave History below,
-  // so these numbers can never disagree with what's shown in the list.
-  // (Previously this relied on a Leave_Balance-sheet lookup that could
-  // silently fail to match, showing all-zero fallback values.)
-  const nowYM = todayYMD().substring(0, 7); // yyyy-MM
-  let used = 0;
-  empLeaves.forEach(l => {
-    if (l.status !== 'Approved' && l.status !== 'Absent') return;
-    const sd = normalizeDateStr(l.startDate);
-    if (sd.substring(0, 7) !== nowYM) return;
-    used += parseFloat(l.days) || 0;
-  });
-  const balance = quota - used;
-  const extra = used > quota ? (used - quota) : 0;
+  // Use the numbers already computed by allBalancesAPI on the SERVER —
+  // this is the exact same backend calculation (over the Approved_Leaves
+  // sheet, current month only) that the employee's own portal reads via
+  // balanceJSON. Previously this page recomputed Balance/Used/Extra itself
+  // from state.allLeaves using only each leave's startDate month, which
+  // undercounts a leave that starts in one month and runs into the next
+  // (the days landing in THIS month were being missed). That caused the
+  // Admin "Employee Wise" numbers to disagree with what the employee sees
+  // on their own Home screen for the same person. Reading bal.* directly
+  // guarantees both views always show identical figures.
+  const used = bal ? (bal.used != null ? bal.used : (bal.approved||0)+(bal.absent||0)) : 0;
+  const balance = bal ? bal.balance : quota;
+  const extra = bal ? (bal.extraLeave || 0) : 0;
 
   const typeBreakdown = {};
   empLeaves.forEach(l => {
@@ -4053,16 +4302,16 @@ function renderEmployeeWiseProfile() {
     <div style="font-size:10.5px;color:var(--text3);margin:-4px 0 8px;">Balance/Used/Extra below are for the <b>current month</b> only. Leave Type Breakdown and History below are <b>all-time</b>.</div>
     <div class="home-balance-row" style="margin-top:10px;">
       <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);">
-        <div class="home-bal-val" style="color:${balance<0?'var(--red)':'var(--purple)'}">${balance}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Balance</div>
+        <div class="home-bal-val" style="color:${balance<0?'var(--red)':'var(--purple)'}">${fmtNum(balance)}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Balance</div>
       </div>
       <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);">
-        <div class="home-bal-val" style="color:var(--purple)">${used}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Used</div>
+        <div class="home-bal-val" style="color:var(--purple)">${fmtNum(used)}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Used</div>
       </div>
       <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);">
-        <div class="home-bal-val" style="color:${extra>0?'var(--red)':'var(--purple)'}">${extra}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Extra Leave</div>
+        <div class="home-bal-val" style="color:${extra>0?'var(--red)':'var(--purple)'}">${fmtNum(extra)}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Extra Leave</div>
       </div>
       <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);">
-        <div class="home-bal-val" style="color:var(--purple)">${quota}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Quota</div>
+        <div class="home-bal-val" style="color:var(--purple)">${fmtNum(quota)}</div><div class="home-bal-lbl" style="color:var(--purple-dark)">Quota</div>
       </div>
     </div>
   </div>`;
@@ -4426,8 +4675,8 @@ async function renderBalance() {
           <div style="text-align:right;"><div class="${cls}" style="font-size:18px;font-weight:800;">${b.balance}</div><div style="font-size:10px;color:var(--text3);">${dot} of ${b.quota} quota</div></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font-size:11px;">
-          <span style="color:var(--text2);flex:1;">Used: <b>${used.toFixed(1)}</b></span>
-          ${ex>0?`<span style="color:var(--red);flex:1;font-weight:700;">Extra: ${ex.toFixed(1)}</span>`:'<span style="color:var(--text3);flex:1;">No extra</span>'}
+          <span style="color:var(--text2);flex:1;">Used: <b>${fmtNum(used)}</b></span>
+          ${ex>0?`<span style="color:var(--red);flex:1;font-weight:700;">Extra: ${fmtNum(ex)}</span>`:'<span style="color:var(--text3);flex:1;">No extra</span>'}
         </div>
       </div>`;
     });
