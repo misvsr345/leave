@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VSR Gold — Leave Management Portal</title>
+<title>VSR Gold — HR Management Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -878,8 +878,27 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
           </select>
         </div>
         <div class="form-row" id="authorityRow" style="display:none;">
-          <label>Authority Met? *</label>
-          <select id="applyAuthMet"><option value="Yes">Yes</option><option value="No">No</option></select>
+          <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
+            <input type="checkbox" id="applyAuthMetCheck" onchange="onAuthMetChange()" style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+            <span>Authority Met *</span>
+          </label>
+          <div id="authWhoRow" style="display:none;margin-top:12px;">
+            <label>Who did you meet? *</label>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);background:var(--bg);">
+                <input type="checkbox" class="auth-who-check" data-who="MIS Executive" onchange="onAuthWhoChange(this)" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+                <span style="font-size:13.5px;color:var(--text);">MIS Executive</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);background:var(--bg);">
+                <input type="checkbox" class="auth-who-check" data-who="Store Manager" onchange="onAuthWhoChange(this)" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+                <span style="font-size:13.5px;color:var(--text);">Store Manager</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);background:var(--bg);">
+                <input type="checkbox" class="auth-who-check" data-who="Director" onchange="onAuthWhoChange(this)" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+                <span style="font-size:13.5px;color:var(--text);">Director</span>
+              </label>
+            </div>
+          </div>
         </div>
         <div class="form-row"><label>Purpose / Reason *</label><textarea id="applyPurpose" rows="3" placeholder="Briefly describe the reason for leave"></textarea></div>
         <div class="form-row"><label>Leave Address</label><input type="text" id="applyAddress" placeholder="Where will you be during leave?"></div>
@@ -1859,10 +1878,30 @@ function openModal(id) { document.getElementById(id).classList.add('show'); }
 // "My Leaves" or the admin's leave lists.
 // ══════════════════════════════════════
 function fmtDateTime(raw) {
-  // processDate on the backend is stored as "dd-MMM-yyyy HH:mm" text, not
-  // yyyy-MM-dd, so it can't go through fmtDMY's parser — just clean it up.
+  // Backend now always sends dd/MM/yyyy HH:mm for Submitted/Processed
+  // timestamps. This is a defensive second layer: if anything ever
+  // arrives in a different shape (yyyy-MM-dd, ISO, or a stray
+  // Date.toString() like "Mon Jul 27 2026 16:30:00 GMT+0530..."), convert
+  // it to dd/mm/yyyy HH:mm here too, so the UI is NEVER shown any other
+  // date format, anywhere, under any circumstance.
   if (!raw) return '—';
-  return raw.toString().trim();
+  const s = raw.toString().trim();
+  if (!s) return '—';
+  // Already dd/MM/yyyy [HH:mm] — use as-is.
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}(\s+\d{1,2}:\d{2})?$/.test(s)) return s;
+  // yyyy-MM-dd [HH:mm]
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})(\s+(\d{1,2}:\d{2}))?/);
+  if (iso) return iso[3] + '/' + iso[2] + '/' + iso[1] + (iso[5] ? ' ' + iso[5] : '');
+  // Anything else (e.g. a raw JS Date.toString()) — parse and reformat.
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
+  }
+  return s;
 }
 
 function openLeaveDetailModal(key, isAdmin) {
@@ -2628,7 +2667,39 @@ function onLeaveTypeChange() {
   const lt = document.getElementById('applyLeaveType').value;
   const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
   document.getElementById('authorityRow').style.display = isDual ? 'block' : 'none';
+  if (!isDual) {
+    // Switching away from a dual-approval type — clear any half-entered
+    // authority selection so it can't leak into a different leave type.
+    document.getElementById('applyAuthMetCheck').checked = false;
+    document.getElementById('authWhoRow').style.display = 'none';
+    document.querySelectorAll('.auth-who-check').forEach(cb => cb.checked = false);
+  }
 }
+
+// "Authority Met" checkbox reveals the "who did you meet" section.
+// Unchecking it also clears any who-selection already made.
+function onAuthMetChange() {
+  const checked = document.getElementById('applyAuthMetCheck').checked;
+  document.getElementById('authWhoRow').style.display = checked ? 'block' : 'none';
+  if (!checked) {
+    document.querySelectorAll('.auth-who-check').forEach(cb => cb.checked = false);
+  }
+}
+
+// The three "who did you meet" checkboxes behave like radio buttons —
+// only one may ever be selected at a time.
+function onAuthWhoChange(cb) {
+  if (cb.checked) {
+    document.querySelectorAll('.auth-who-check').forEach(other => {
+      if (other !== cb) other.checked = false;
+    });
+  }
+}
+function getAuthWho() {
+  const el = document.querySelector('.auth-who-check:checked');
+  return el ? el.dataset.who : '';
+}
+
 function onModeChange() {
   const m = document.getElementById('applyLeaveMode').value;
   document.getElementById('halfDayRow').style.display = m === 'Half Day' ? 'block' : 'none';
@@ -2707,7 +2778,6 @@ async function submitLeave() {
   const lm = document.getElementById('applyLeaveMode').value;
   const hd = lm==='Half Day' ? document.getElementById('applyHalfDay').value : '';
   const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
-  const authMet = isDual ? document.getElementById('applyAuthMet').value : '';
   const purpose = document.getElementById('applyPurpose').value.trim();
   const address = document.getElementById('applyAddress').value.trim();
 
@@ -2715,11 +2785,30 @@ async function submitLeave() {
   if(ed < sd) { toast('End date cannot be before start date', 'error'); return; }
   if(lm === 'Half Day' && sd !== ed) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
 
+  // Emergency Leave and Special Permission Leave REQUIRE Authority Met to
+  // be ticked, plus exactly who was met — submission is blocked entirely
+  // without both, since these leave types cannot go for approval otherwise.
+  let authMet = '';
+  let authWho = '';
+  if (isDual) {
+    const metChecked = document.getElementById('applyAuthMetCheck').checked;
+    if (!metChecked) {
+      toast('Please tick "Authority Met" before submitting ' + lt, 'error');
+      return;
+    }
+    authWho = getAuthWho();
+    if (!authWho) {
+      toast('Please select who you met (MIS Executive / Store Manager / Director)', 'error');
+      return;
+    }
+    authMet = 'Yes';
+  }
+
   const data = {
     page: 'submitLeaveAPI', employeeNumber: state.empId, name: state.empName, email: state.empEmail,
     department: state.empDept, designation: state.empDesig, counter: state.empCounter,
     startDate: sd, endDate: ed, leaveType: lt, leaveMode: lm, halfDay: hd, authorityMet: authMet,
-    purpose: purpose, leaveAddress: address
+    authorityName: authWho, purpose: purpose, leaveAddress: address
   };
 
   updateConnStatus();
@@ -2766,7 +2855,9 @@ function resetApplyForm() {
   document.getElementById('applyEndDate').value = todayYMD();
   document.getElementById('applyLeaveMode').value = 'Full Day';
   document.getElementById('applyHalfDay').value = 'First Half (Morning)';
-  document.getElementById('applyAuthMet').value = 'Yes';
+  document.getElementById('applyAuthMetCheck').checked = false;
+  document.getElementById('authWhoRow').style.display = 'none';
+  document.querySelectorAll('.auth-who-check').forEach(cb => cb.checked = false);
   document.getElementById('applyPurpose').value = '';
   document.getElementById('applyAddress').value = '';
   document.getElementById('applyDaysInfo').style.display = 'none';
