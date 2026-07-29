@@ -2790,7 +2790,7 @@ function renderEventsBrowser(who) {
     });
   });
 
-  // Company holidays — fixed dates from the Event sheet, filtered to the
+  // Festival Days — fixed dates from the Event sheet, filtered to the
   // selected year/month directly (not recurring like birthdays).
   const holEvents = [];
   (state.calHolidays || []).forEach(h => {
@@ -2800,7 +2800,7 @@ function renderEventsBrowser(who) {
     if (parseInt(p[0],10) !== year) return;
     const evMonth = parseInt(p[1],10) - 1;
     if (month !== -1 && evMonth !== month) return;
-    holEvents.push({ date: h.date, name: h.name, label: '🎊 Company Holiday', dept: '' });
+    holEvents.push({ date: h.date, name: h.name, label: '🎊 Festival Day', dept: '' });
   });
 
   // Group by date
