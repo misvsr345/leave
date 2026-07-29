@@ -1009,11 +1009,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     <!-- DASHBOARD -->
     <div class="page-section active" id="admin-dashboard">
       <div class="card" style="padding:12px 14px;margin-bottom:12px;">
-        <div style="position:relative;">
-          <input type="text" id="empSearchBox" placeholder="🔍 Search employee by name or ID — jump to their profile..." autocomplete="off"
+        <div style="position:relative;display:flex;gap:8px;">
+          <input type="text" id="empSearchBox" placeholder="Search employee by name or ID — jump to their profile..." autocomplete="off"
             oninput="onEmpSearchInput()" onkeydown="if(event.key==='Enter') onEmpSearchEnter()"
-            style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
-          <div id="empSearchResults" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:var(--shadow2);max-height:280px;overflow-y:auto;z-index:50;"></div>
+            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
+          <button onclick="onEmpSearchEnter()" title="Search" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
+          <div id="empSearchResults" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:52px;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:var(--shadow2);max-height:280px;overflow-y:auto;z-index:50;"></div>
         </div>
       </div>
       <div class="bday-marquee-wrap" id="adminBdayMarquee">
@@ -1582,6 +1583,19 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   </div>
 </div>
 
+<!-- Modal: Leave Detail — full clear breakdown of a single leave: dates,
+     mode, submitted time, approved/processed time, purpose, address, etc. -->
+<div class="modal-overlay" id="leaveDetailModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-title" id="ldTitle">📄 Leave Details</div>
+    <div class="modal-sub" id="ldSub"></div>
+    <div id="leaveDetailBody"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('leaveDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1835,6 +1849,64 @@ function statusLabel(status) {
 
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+// ══════════════════════════════════════
+// LEAVE DETAIL MODAL — shows every field for one leave: full date range,
+// half/full day mode, when it was submitted, when it was processed
+// (approved/rejected/marked absent), purpose, leave address, and the
+// authority-met info for dual-approval leave types. Opened by clicking
+// a leave card or its "👁 View" button, from either the employee's own
+// "My Leaves" or the admin's leave lists.
+// ══════════════════════════════════════
+function fmtDateTime(raw) {
+  // processDate on the backend is stored as "dd-MMM-yyyy HH:mm" text, not
+  // yyyy-MM-dd, so it can't go through fmtDMY's parser — just clean it up.
+  if (!raw) return '—';
+  return raw.toString().trim();
+}
+
+function openLeaveDetailModal(key, isAdmin) {
+  const cache = isAdmin ? window.__adminLeaveCache : window.__leaveDetailCache;
+  const l = cache ? cache[key] : null;
+  if (!l) { toast('Leave details not available', 'error'); return; }
+
+  document.getElementById('ldTitle').textContent = '📄 ' + l.type + ' — ' + l.leaveId;
+  document.getElementById('ldSub').textContent = isAdmin ? (l.name + ' · ' + l.empId) : '';
+
+  const dateRange = l.startDate === l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate) + ' → ' + fmtDMY(l.endDate);
+  const rows = [
+    ['Status', `<span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>`],
+    ['Leave Dates', dateRange],
+    ['Total Days', fmtNum(l.days) + ' day(s)'],
+    ['Mode', formatLeaveMode(l.mode, l.halfDay)],
+  ];
+  if (isAdmin) {
+    rows.push(['Employee', l.name + ' (' + l.empId + ')']);
+    if (l.department) rows.push(['Department', l.department]);
+    if (l.counter) rows.push(['Counter', l.counter]);
+  }
+  rows.push(['Submitted On', fmtDateTime(l.timestamp)]);
+  rows.push(['Processed On', l.processDate ? fmtDateTime(l.processDate) : '<span style="color:var(--text3);">Not yet processed</span>']);
+  if (l.authorityMet) rows.push(['Authority Met', l.authorityMet]);
+  if (l.authorityName) rows.push(['Authority Name', l.authorityName]);
+  if (l.purpose) rows.push(['Purpose', l.purpose]);
+  if (l.leaveAddress) rows.push(['Leave Address', l.leaveAddress]);
+  if (l.reason) rows.push([l.status === 'Rejected' ? 'Rejection Reason' : 'Note', l.reason]);
+
+  let html = '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px;">';
+  rows.forEach(([label, val], idx) => {
+    const bg = idx % 2 === 0 ? '#fdfcff' : '#ffffff';
+    html += `<div style="background:${bg};padding:9px 12px;display:flex;gap:10px;border-bottom:1px solid var(--border);">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;min-width:100px;flex-shrink:0;">${label}</div>
+      <div style="font-size:12.5px;color:var(--text);font-weight:600;word-break:break-word;">${val}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  document.getElementById('leaveDetailBody').innerHTML = html;
+  openModal('leaveDetailModal');
+}
+
 function openEmpMoreModal() { openModal('empMoreModal'); }
 function openAdminMoreModal() { openModal('adminMoreModal'); }
 
@@ -2348,7 +2420,14 @@ function leaveCardHTML(l, showActions=true) {
   const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const canAct = modifiableStatuses.indexOf(l.status) > -1 && isTodayOrFuture;
   const idSuffix = l.leaveId + (l.displayDate ? '_' + l.displayDate : '');
-  let actions = '';
+
+  // Stash the full leave object so the View Details modal can show every
+  // field (submitted time, approved/processed time, purpose, address,
+  // authority-met, etc.) without cramming JSON into an onclick attribute.
+  if (!window.__leaveDetailCache) window.__leaveDetailCache = {};
+  window.__leaveDetailCache[idSuffix] = l;
+
+  let actions = `<button class="btn-sm btn-view" id="viewBtn_${idSuffix}" onclick="openLeaveDetailModal('${escJs(idSuffix)}')">👁 View</button>`;
   if(showActions && canAct) {
     actions += `<button class="btn-sm btn-cancel" id="cancelBtn_${idSuffix}" onclick="openCancelModal('${escJs(l.leaveId)}')">🚫 Cancel</button>`;
     actions += `<button class="btn-sm btn-modify" id="modifyBtn_${idSuffix}" onclick="openModifyModal('${escJs(l.leaveId)}','${escJs(l.startDate)}','${escJs(l.endDate)}','${escJs(formatLeaveMode(l.mode, l.halfDay))}')">✏️ Modify</button>`;
@@ -2362,7 +2441,7 @@ function leaveCardHTML(l, showActions=true) {
     ? `<div class="leave-card-reason" style="color:var(--red);border-left-color:var(--red);"><b>❌ Rejection Reason:</b> ${l.reason || l.rejectionReason || 'Not specified'}</div>`
     : '';
   return `
-    <div class="leave-card">
+    <div class="leave-card" onclick="openLeaveDetailModal('${escJs(idSuffix)}')" style="cursor:pointer;">
       <div class="leave-card-top">
         <div><div class="leave-card-title">${l.type}</div><div class="leave-card-id">${l.leaveId}</div></div>
         <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
@@ -2371,7 +2450,7 @@ function leaveCardHTML(l, showActions=true) {
       ${l.reason && l.status !== 'Rejected' ? `<div class="leave-card-reason">${l.reason.substring(0,80)}${l.reason.length>80?'...':''}</div>` : ''}
       ${rejectionBlock}
       <div style="font-size:10px;color:var(--text3);margin-top:4px;">${fmtDMY(l.timestamp)}</div>
-      ${actions ? `<div class="leave-card-actions">${actions}</div>` : ''}
+      <div class="leave-card-actions" onclick="event.stopPropagation();">${actions}</div>
     </div>
   `;
 }
@@ -4359,7 +4438,7 @@ function adminLeaveCardHTML(l) {
   if (!window.__adminLeaveCache) window.__adminLeaveCache = {};
   window.__adminLeaveCache[l.leaveId] = l;
 
-  let actions = '';
+  let actions = `<button class="btn-sm btn-view" id="viewAdminBtn_${idSuffix}" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)">👁 View</button>`;
   if(isPending) {
     actions += `
       <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" onclick="adminApprove(${l.row},'${escJs(l.leaveId)}','${escJs(l.empId)}')">✅ Approve</button>
@@ -4382,7 +4461,7 @@ function adminLeaveCardHTML(l) {
   const modifiedBadge = (l.processed === 'Modified (Admin)' || l.processed === 'Modified')
     ? `<span class="pill" style="background:var(--blue-bg);color:var(--blue);margin-left:6px;">✏️ Modified</span>`
     : '';
-  return `<div class="leave-card">
+  return `<div class="leave-card" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)" style="cursor:pointer;">
     <div class="leave-card-top">
       <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}</div></div>
       <div style="display:flex;align-items:center;">
@@ -4394,7 +4473,7 @@ function adminLeaveCardHTML(l) {
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
     ${rejectionBlock}
-    ${actions?`<div class="leave-card-actions">${actions}</div>`:''}
+    <div class="leave-card-actions" onclick="event.stopPropagation();">${actions}</div>
   </div>`;
 }
 
