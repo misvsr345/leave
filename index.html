@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VSR Gold — Leave Management Portal</title>
+<title>VSR Gold — HR Management Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -785,7 +785,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="login-logo">
       <div class="login-logo-mark vsr-logo-mark"></div>
       <h1>VSR GOLD</h1>
-      <p>Leave Management Portal</p>
+      <p>HR Management Portal</p>
     </div>
 
     <div class="login-tab-btns">
@@ -806,7 +806,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
           <button type="button" class="pw-toggle" onclick="togglePw('empPassInput', this)">👁</button>
         </div>
       </div>
-      <button class="btn-primary" id="empLoginBtn" onclick="empLogin()">🔓 View My Leaves</button>
+      <button class="btn-primary" id="empLoginBtn" onclick="empLogin()">🔓 Login</button>
       <div class="err-msg" id="empLoginErr">Employee ID not found. Please check.</div>
     </div>
 
@@ -1025,6 +1025,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="filter-bar" style="margin-bottom:12px;">
         <button class="filter-btn active" id="loyEmpTab-search" onclick="switchLoyaltyTab('emp','search')">🔍 Search</button>
         <button class="filter-btn" id="loyEmpTab-stats" onclick="switchLoyaltyTab('emp','stats')">📊 My Incentive</button>
+        <button class="filter-btn" id="loyEmpTab-dash" onclick="switchLoyaltyTab('emp','dash')">📈 Dashboard</button>
       </div>
 
       <div id="loyEmpSearchPane">
@@ -1048,6 +1049,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
           <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
         </div>
         <div id="loyEmpStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+
+      <div id="loyEmpDashPane" style="display:none;">
+        <div id="loyEmpDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
     </div>
 
@@ -1251,9 +1256,15 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY CARD (admin) -->
     <div class="page-section" id="admin-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
-      <div class="filter-bar" style="margin-bottom:12px;">
+      <div class="filter-bar" style="margin-bottom:12px;flex-wrap:wrap;">
         <button class="filter-btn active" id="loyAdminTab-search" onclick="switchLoyaltyTab('admin','search')">🔍 Search</button>
         <button class="filter-btn" id="loyAdminTab-stats" onclick="switchLoyaltyTab('admin','stats')">📊 All Employees</button>
+        <button class="filter-btn" id="loyAdminTab-dash" onclick="switchLoyaltyTab('admin','dash')">📈 Dashboard</button>
+        <button class="filter-btn" id="loyAdminTab-timeline" onclick="switchLoyaltyTab('admin','timeline')">👤 Employee Timeline</button>
+        <button class="filter-btn" id="loyAdminTab-range" onclick="switchLoyaltyTab('admin','range')">📅 Date Range Report</button>
+        <button class="filter-btn" id="loyAdminTab-upcoming" onclick="switchLoyaltyTab('admin','upcoming')">🔔 Upcoming Approvals</button>
+        <button class="filter-btn" id="loyAdminTab-cardhist" onclick="switchLoyaltyTab('admin','cardhist')">🗂️ Card History</button>
+        <button class="filter-btn" id="loyAdminTab-incenthist" onclick="switchLoyaltyTab('admin','incenthist')">💰 Incentive History</button>
       </div>
 
       <div id="loyAdminSearchPane">
@@ -1271,6 +1282,53 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div id="loyAdminStatsPane" style="display:none;">
         <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyAdminStats()">🔄 Refresh</button>
         <div id="loyAdminStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+
+      <div id="loyAdminDashPane" style="display:none;">
+        <div id="loyAdminDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+
+      <div id="loyAdminTimelinePane" style="display:none;">
+        <div class="card" style="padding:12px 14px;">
+          <label>Select Employee</label>
+          <select id="loyTimelineEmpSelect"><option value="">-- Loading employees... --</option></select>
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <div style="flex:1;"><label>From Date</label><input type="date" id="loyTimelineFromDate"></div>
+            <div style="flex:1;"><label>To Date</label><input type="date" id="loyTimelineToDate"></div>
+          </div>
+          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyTimeline()">🔄 Load Timeline</button>
+        </div>
+        <div id="loyTimelineContent"></div>
+      </div>
+
+      <div id="loyAdminRangePane" style="display:none;">
+        <div class="card" style="padding:12px 14px;">
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;"><label>From Date</label><input type="date" id="loyRangeFromDate"></div>
+            <div style="flex:1;"><label>To Date</label><input type="date" id="loyRangeToDate"></div>
+          </div>
+          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyDateRangeReport()">🔄 Load Report</button>
+        </div>
+        <div id="loyRangeContent"></div>
+      </div>
+
+      <div id="loyAdminUpcomingPane" style="display:none;">
+        <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals()">🔄 Refresh</button>
+        <div id="loyUpcomingContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+
+      <div id="loyAdminCardhistPane" style="display:none;">
+        <div class="card" style="padding:12px 14px;">
+          <input type="text" id="loyCardHistSearch" placeholder="Filter by customer name or card no (optional)..." autocomplete="off"
+            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);outline:none;">
+          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyCardHistory()">🔄 Load</button>
+        </div>
+        <div id="loyCardhistContent"></div>
+      </div>
+
+      <div id="loyAdminIncenthistPane" style="display:none;">
+        <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyIncentiveHistory()">🔄 Refresh</button>
+        <div id="loyIncenthistContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
     </div>
 
@@ -4081,16 +4139,24 @@ function populateEventScroller(wrapId, trackId) {
 // ══════════════════════════════════════
 let loyLastResults = [];
 
+const LOY_TABS = ['search', 'stats', 'dash', 'timeline', 'range', 'upcoming', 'cardhist', 'incenthist'];
+const LOY_PANE_NAME = {
+  search: 'Search', stats: 'Stats', dash: 'Dash', timeline: 'Timeline', range: 'Range',
+  upcoming: 'Upcoming', cardhist: 'Cardhist', incenthist: 'Incenthist'
+};
 function switchLoyaltyTab(who, tab) {
-  const searchBtn = document.getElementById('loy' + (who==='emp'?'Emp':'Admin') + 'Tab-search');
-  const statsBtn  = document.getElementById('loy' + (who==='emp'?'Emp':'Admin') + 'Tab-stats');
-  const searchPane = document.getElementById('loy' + (who==='emp'?'Emp':'Admin') + 'SearchPane');
-  const statsPane  = document.getElementById('loy' + (who==='emp'?'Emp':'Admin') + 'StatsPane');
-  searchBtn.classList.toggle('active', tab === 'search');
-  statsBtn.classList.toggle('active', tab === 'stats');
-  searchPane.style.display = tab === 'search' ? 'block' : 'none';
-  statsPane.style.display  = tab === 'stats'  ? 'block' : 'none';
+  const prefix = who === 'emp' ? 'Emp' : 'Admin';
+  LOY_TABS.forEach(t => {
+    const btn  = document.getElementById('loy' + prefix + 'Tab-' + t);
+    const pane = document.getElementById('loy' + prefix + LOY_PANE_NAME[t] + 'Pane');
+    if (btn)  btn.classList.toggle('active', tab === t);
+    if (pane) pane.style.display = tab === t ? 'block' : 'none';
+  });
   if (tab === 'stats' && who === 'admin') loadLoyaltyAdminStats();
+  if (tab === 'dash') loadLoyaltyDashboard(who);
+  if (tab === 'timeline' && who === 'admin') initLoyaltyTimeline();
+  if (tab === 'upcoming' && who === 'admin') loadLoyaltyUpcomingApprovals();
+  if (tab === 'incenthist' && who === 'admin') loadLoyaltyIncentiveHistory();
 }
 
 function initLoyaltyPage(who) {
@@ -4103,6 +4169,22 @@ function initLoyaltyPage(who) {
       to.value = todayYMD();
     }
   }
+  if (who === 'admin') {
+    const from = document.getElementById('loyRangeFromDate');
+    const to   = document.getElementById('loyRangeToDate');
+    if (from && !from.value) {
+      const d = new Date(); d.setDate(1);
+      from.value = toYMD(d);
+      to.value = todayYMD();
+    }
+    const tFrom = document.getElementById('loyTimelineFromDate');
+    const tTo   = document.getElementById('loyTimelineToDate');
+    if (tFrom && !tFrom.value) {
+      const d2 = new Date(); d2.setDate(1);
+      tFrom.value = toYMD(d2);
+      tTo.value = todayYMD();
+    }
+  }
 }
 
 function runLoyaltySearch(who) {
@@ -4111,6 +4193,12 @@ function runLoyaltySearch(who) {
   const query = box.value.trim();
   if (!query) { toast('Please type a name, mobile number, or card number', 'error'); return; }
 
+  // Search covers ALL customers for EVERY employee — it's a shared
+  // billing lookup tool (find a customer's card by name/mobile), not
+  // restricted to customers a particular employee personally enrolled.
+  // Only sensitive fields (mobile/Aadhaar/PAN/documents) are masked for
+  // non-admin roles; the "own data" restriction applies only to the
+  // separate "My Incentive" cards/earnings stats, not to search.
   const role = who === 'admin' ? 'ADMIN' : 'EMP';
   resultsEl.innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
 
@@ -4131,13 +4219,15 @@ function renderLoyaltyResults(res, resultsEl) {
   }
 
   // Results are shown fully expanded for everyone — no click needed to
-  // reveal details (the level of detail itself is what's role-gated).
+  // reveal the DATA (the level of detail itself is what's role-gated).
+  // Photos, however, load lazily on click (see loyLoadPhoto/openLoyaltyImage)
+  // — that's what keeps search itself fast, since it no longer waits on
+  // any Drive reads before returning.
   resultsEl.innerHTML = loyLastResults.map((r, i) => {
     const otherDocs = r.documents || [];
 
-    // Customer Photo is visible to EVERYONE (employee and admin).
-    const photoHtml = r.custPhoto
-      ? `<div class="loy-photo-wrap"><img class="loy-photo" src="${r.custPhoto}" onerror="this.outerHTML='<div class=&quot;loy-photo-fallback&quot;>Photo not available</div>';"></div>`
+    const photoHtml = r.custPhotoUrl
+      ? `<div class="loy-photo-wrap" id="loyPhotoWrap${i}"><button class="loy-photo-fallback" style="cursor:pointer;border:none;" onclick="loyLoadPhoto(${i})">📷 Tap to load photo</button></div>`
       : `<div class="loy-photo-wrap"><div class="loy-photo-fallback">Photo not available</div></div>`;
 
     let docsHtml = '';
@@ -4171,6 +4261,24 @@ function renderLoyaltyResults(res, resultsEl) {
   }).join('');
 }
 
+// Loads exactly one customer photo on demand (called when its "Tap to
+// load photo" placeholder is clicked) — keeps the initial search fast.
+function loyLoadPhoto(i) {
+  const item = loyLastResults[i];
+  const wrap = document.getElementById('loyPhotoWrap' + i);
+  if (!item || !wrap) return;
+  wrap.innerHTML = '<div class="loy-photo-fallback">Loading...</div>';
+  jsonpReliable({ page: 'loyaltyGetImageAPI', url: item.custPhotoUrl })
+    .then(res => {
+      if (res && res.ok && res.data) {
+        wrap.innerHTML = `<img class="loy-photo" src="${res.data}" onerror="this.outerHTML='<div class=&quot;loy-photo-fallback&quot;>Photo not available</div>';">`;
+      } else {
+        wrap.innerHTML = '<div class="loy-photo-fallback">Photo not available</div>';
+      }
+    })
+    .catch(() => { wrap.innerHTML = '<div class="loy-photo-fallback">Photo not available</div>'; });
+}
+
 function openLoyaltyImage(ev, url) {
   ev.stopPropagation();
   const img = document.getElementById('loyModalImg');
@@ -4179,23 +4287,32 @@ function openLoyaltyImage(ev, url) {
   if (!url) {
     img.style.display = 'none'; openBtn.style.display = 'none';
     msg.style.display = 'block'; msg.textContent = 'Image not available.';
-  } else if (url.startsWith('data:')) {
-    // Successfully embedded by the backend — show it directly.
-    img.src = url; img.style.display = 'block';
-    msg.style.display = 'none'; openBtn.style.display = 'none';
-  } else {
-    // Backend couldn't embed it (Drive permission issue) and fell back
-    // to a plain view link — trying to hotlink that into <img> often
-    // fails silently, so offer a working "Open in Google Drive" button
-    // instead of a broken image icon.
-    img.style.display = 'none';
-    msg.style.display = 'block';
-    msg.textContent = 'Could not preview this image directly — open it in Google Drive instead:';
-    openBtn.style.display = 'inline-block';
-    openBtn.onclick = () => window.open(url, '_blank');
+    document.getElementById('loyImgModal').classList.add('open');
+    return;
   }
+  // Documents now arrive as raw Drive URLs (not pre-fetched base64) —
+  // fetch this ONE image on demand when the user actually clicks it.
+  img.style.display = 'none'; openBtn.style.display = 'none';
+  msg.style.display = 'block'; msg.textContent = 'Loading...';
   document.getElementById('loyImgModal').classList.add('open');
+
+  jsonpReliable({ page: 'loyaltyGetImageAPI', url: url })
+    .then(res => {
+      const data = res && res.ok ? res.data : '';
+      if (data && data.startsWith('data:')) {
+        img.src = data; img.style.display = 'block'; msg.style.display = 'none';
+      } else if (data) {
+        // Fell back to a plain Drive link server-side.
+        msg.textContent = 'Could not preview this image directly — open it in Google Drive instead:';
+        openBtn.style.display = 'inline-block';
+        openBtn.onclick = () => window.open(data, '_blank');
+      } else {
+        msg.textContent = 'Image not available.';
+      }
+    })
+    .catch(() => { msg.textContent = 'Could not load image.'; });
 }
+
 function closeLoyaltyImageModal() {
   document.getElementById('loyImgModal').classList.remove('open');
   document.getElementById('loyModalImg').src = '';
@@ -4316,9 +4433,27 @@ function loadLoyaltyMyStats() {
         });
       }
       html += `</div>`;
+      html += `<button class="btn-loy-card" onclick="mailLoyaltyMyStats()">📧 Mail This Report</button>`;
       content.innerHTML = html;
+      window.__loyMyStatsData = res;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function mailLoyaltyMyStats() {
+  const res = window.__loyMyStatsData;
+  if (!res) { toast('Load your incentive first', 'error'); return; }
+  const o = res.overall;
+  const rowsHtml = res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — My Loyalty Incentive</h2>
+    <p>Total: ${o.totalCards} · Approved: ${o.approvedCards} · Balance: ${o.balanceCards} · Total Incentive ₹${fmtNum(o.totalIncentive)} · Pending ₹${fmtNum(o.pendingIncentive)}</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport('VSR GOLD — My Loyalty Incentive', bodyHtml, 'emp');
 }
 
 // ── Admin: all-employees incentive summary ──
@@ -4345,6 +4480,267 @@ function loadLoyaltyAdminStats() {
           </div>
         </div>`;
       });
+      html += `<button class="btn-loy-card" onclick="mailLoyaltyAdminStats()">📧 Mail This Report</button>`;
+      content.innerHTML = html;
+      window.__loyAdminStatsData = res;
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function mailLoyaltyAdminStats() {
+  const res = window.__loyAdminStatsData;
+  if (!res) { toast('Load the report first', 'error'); return; }
+  const rowsHtml = res.rows.map(r => `<tr><td>${r.empName}</td><td>${r.totalCards}</td><td>${r.approvedCards}</td><td>${r.balanceCards}</td><td>${r.status}</td><td>₹${fmtNum(r.pendingIncentive)}</td><td>₹${fmtNum(r.totalIncentive)}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:700px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — All Employees Incentive Summary</h2>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Employee</th><th>Total</th><th>Approved</th><th>Balance</th><th>Status</th><th>Pending ₹</th><th>Total ₹</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport('VSR GOLD — All Employees Incentive Summary', bodyHtml, 'admin');
+}
+
+// ── Mail helper — shared by every report below. Sends the report's own
+// rendered HTML to the caller's own email address (whichever account is
+// logged in right now); pressing "Mail" is purely additive — the report
+// keeps showing on screen either way. ──
+function mailLoyaltyReport(subject, bodyHtml, who) {
+  const toEmail = who === 'admin' ? state.adminEmail : state.empEmail;
+  if (!toEmail) { toast('No email address on this account to send to', 'error'); return; }
+  toast('Sending report...', 'info');
+  jsonpReliable({ page: 'loyaltyMailReportAPI', toEmail: toEmail, subject: subject, htmlBody: bodyHtml })
+    .then(res => {
+      if (res && res.ok) toast('📧 Report emailed to ' + res.sentTo, 'success');
+      else toast('Mail failed: ' + ((res && res.error) || 'unknown error'), 'error');
+    })
+    .catch(err => toast('Mail failed: ' + err.message, 'error'));
+}
+
+// ── Dashboard (role-gated: Admin sees the whole store, Employee sees only their own row) ──
+function loadLoyaltyDashboard(who) {
+  const prefix = who === 'emp' ? 'Emp' : 'Admin';
+  const content = document.getElementById('loy' + prefix + 'DashContent');
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  const reqParams = { page: 'loyaltyDashboardAPI', role: role };
+  if (who === 'emp') reqParams.empName = state.empName;
+
+  jsonpReliable(reqParams)
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      const k = res.kpi;
+
+      let html = `<div class="card">
+        <div class="card-title">📈 ${res.isAdmin ? 'Store-Wide Overview' : 'My Overview'}</div>
+        <div class="home-balance-grid" style="margin-top:8px;">
+          <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);"><div class="home-bal-val" style="color:var(--purple)">${k.totalCards}</div><div class="home-bal-lbl">Total Cards</div></div>
+          <div class="home-bal-box" style="background:var(--green-bg);border-color:var(--green);"><div class="home-bal-val" style="color:var(--green)">${k.approvedCards}</div><div class="home-bal-lbl">Approved</div></div>
+          <div class="home-bal-box" style="background:var(--orange-bg);border-color:var(--orange);"><div class="home-bal-val" style="color:var(--orange)">${k.pendingCards}</div><div class="home-bal-lbl">Pending</div></div>
+          <div class="home-bal-box" style="background:var(--blue-bg);border-color:var(--blue);"><div class="home-bal-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="home-bal-lbl">Pending Amount</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:10px;">🌱 Fresh Start (01-Apr): <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)} &nbsp;|&nbsp; 📆 This Month: <b>${k.thisMonthCards}</b> cards</div>
+      </div>`;
+
+      html += `<div class="card"><div class="card-title">🗂️ ${res.isAdmin ? 'Employee-Wise Breakdown' : 'My Cards Summary'}</div>`;
+      res.empRows.forEach(r => {
+        html += `<div class="leave-card-date" style="margin-bottom:6px;">${r.empName}: <b>${r.totalCards}</b> cards · ✅ ${r.approved} · ⏳ ${r.pending} · ₹${fmtNum(r.pendingAmount)} pending</div>`;
+      });
+      html += `</div>`;
+
+      if (res.isAdmin && res.oldYear) {
+        html += `<div class="card"><div class="card-title">📦 Fresh Start vs Old Year (FY 2025-26)</div>
+          <div class="leave-card-date">🌱 Fresh Start: <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)}</div>
+          <div class="leave-card-date">📁 Old Year (closed): <b>${res.oldYear.cards}</b> cards · ₹${fmtNum(res.oldYear.incentive)}</div>
+        </div>`;
+      }
+
+      html += `<div class="card"><div class="card-title">📊 Monthly Trend (last 3 months)</div>`;
+      res.monthlyTrend.forEach(m => {
+        html += `<div class="leave-card-date" style="margin-bottom:4px;">${m.label}: <b>${m.count}</b> cards</div>`;
+      });
+      html += `</div>`;
+
+      html += `<button class="btn-loy-card" onclick="mailLoyaltyDashboard('${who}')">📧 Mail This Dashboard</button>`;
+
+      content.innerHTML = html;
+      window['__loyDashData_' + who] = res; // stashed for the Mail button
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function mailLoyaltyDashboard(who) {
+  const res = window['__loyDashData_' + who];
+  if (!res) { toast('Load the dashboard first', 'error'); return; }
+  const k = res.kpi;
+  let rowsHtml = res.empRows.map(r => `<tr><td>${r.empName}</td><td>${r.totalCards}</td><td>${r.approved}</td><td>${r.pending}</td><td>₹${fmtNum(r.pendingAmount)}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — Loyalty ${res.isAdmin ? 'Store' : 'My'} Dashboard</h2>
+    <p>Total: ${k.totalCards} · Approved: ${k.approvedCards} · Pending: ${k.pendingCards} · Pending ₹${fmtNum(k.pendingIncentive)}</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Employee</th><th>Total</th><th>Approved</th><th>Pending</th><th>Pending ₹</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport('VSR GOLD — Loyalty Dashboard', bodyHtml, who);
+}
+
+// ── Employee Card Timeline (Admin picks any employee; reuses loyaltyMyStatsAPI) ──
+function initLoyaltyTimeline() {
+  const sel = document.getElementById('loyTimelineEmpSelect');
+  if (sel.options.length > 1 || sel.dataset.loaded === '1') return;
+  jsonpReliable({ page: 'loyaltyAdminStatsAPI' })
+    .then(res => {
+      if (!res || !res.ok) return;
+      sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+        res.rows.map(r => `<option value="${escJs(r.empName)}">${r.empName}</option>`).join('');
+      sel.dataset.loaded = '1';
+    });
+}
+
+function loadLoyaltyTimeline() {
+  const empName = document.getElementById('loyTimelineEmpSelect').value;
+  const from = document.getElementById('loyTimelineFromDate').value;
+  const to   = document.getElementById('loyTimelineToDate').value;
+  const content = document.getElementById('loyTimelineContent');
+  if (!empName) { toast('Please select an employee', 'error'); return; }
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  jsonpReliable({ page: 'loyaltyMyStatsAPI', empName: empName, fromDate: from, toDate: to })
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      const o = res.overall;
+      let html = `<div class="card"><div class="card-title">👤 ${empName} — Full History</div>
+        <div class="leave-card-date">Total Cards: <b>${o.totalCards}</b> · Approved: <b>${o.approvedCards}</b> · Balance: <b>${o.balanceCards}</b></div>
+        <div class="leave-card-date">Total Incentive: <b>₹${fmtNum(o.totalIncentive)}</b> · Pending: <b>₹${fmtNum(o.pendingIncentive)}</b></div>
+        <div class="leave-card-date">Card Range: #${o.firstCard} → #${o.lastCard} · Status: ${o.status}</div>
+      </div>`;
+      html += `<div class="card"><div class="card-title">📅 Cards in Selected Range (${res.rangeTotal})</div>`;
+      if (res.rangeCards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
+      res.rangeCards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName}</div>`; });
+      html += `</div><button class="btn-loy-card" onclick="mailLoyaltyTimeline('${escJs(empName)}')">📧 Mail This Timeline</button>`;
+      content.innerHTML = html;
+      window.__loyTimelineData = { empName, res };
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function mailLoyaltyTimeline(empName) {
+  const stash = window.__loyTimelineData;
+  if (!stash) { toast('Load the timeline first', 'error'); return; }
+  const o = stash.res.overall;
+  const rowsHtml = stash.res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — ${empName}'s Card Timeline</h2>
+    <p>Total: ${o.totalCards} · Approved: ${o.approvedCards} · Balance: ${o.balanceCards} · Total Incentive ₹${fmtNum(o.totalIncentive)}</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport("VSR GOLD — " + empName + "'s Card Timeline", bodyHtml, 'admin');
+}
+
+// ── Date Range Report (Admin, every employee's cards in one date window) ──
+function loadLoyaltyDateRangeReport() {
+  const from = document.getElementById('loyRangeFromDate').value;
+  const to   = document.getElementById('loyRangeToDate').value;
+  const content = document.getElementById('loyRangeContent');
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  jsonpReliable({ page: 'loyaltyDateRangeReportAPI', fromDate: from, toDate: to })
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      let html = `<div class="card"><div class="card-title">📅 ${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</div>`;
+      if (res.cards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
+      res.cards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName} · 👤 ${c.empName}</div>`; });
+      html += `</div><button class="btn-loy-card" onclick="mailLoyaltyDateRangeReport()">📧 Mail This Report</button>`;
+      content.innerHTML = html;
+      window.__loyRangeData = res;
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function mailLoyaltyDateRangeReport() {
+  const res = window.__loyRangeData;
+  if (!res) { toast('Load the report first', 'error'); return; }
+  const rowsHtml = res.cards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:650px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — Card Report by Date Range</h2>
+    <p>${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport('VSR GOLD — Card Report by Date Range', bodyHtml, 'admin');
+}
+
+// ── Upcoming Card Approvals — who has a full ready-to-pay set right now ──
+function loadLoyaltyUpcomingApprovals() {
+  const content = document.getElementById('loyUpcomingContent');
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'loyaltyUpcomingApprovalsAPI' })
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No pending balances — everyone is fully paid up</p></div>'; return; }
+      let html = '';
+      res.rows.forEach(r => {
+        const badge = r.readyForApproval
+          ? `<span class="pill" style="background:var(--green-bg);color:var(--green);">🔔 ${r.readySets} set(s) ready</span>`
+          : `<span class="pill" style="background:var(--orange-bg);color:var(--orange);">${r.cardsUntilNextSet} more for next set</span>`;
+        html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:700;font-size:13.5px;">${r.empName}</div>
+            ${badge}
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-top:6px;">
+            ⏳ Balance: <b>${r.balanceCards}</b> cards ${r.readyForApproval ? `· 💰 Ready Amount: <b>₹${fmtNum(r.readyAmount)}</b>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;">Card Range: #${r.firstCard} → #${r.lastCard}</div>
+        </div>`;
+      });
+      content.innerHTML = html;
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// ── Card History — browsable list of every card ever enrolled ──
+function loadLoyaltyCardHistory() {
+  const query = document.getElementById('loyCardHistSearch').value.trim();
+  const content = document.getElementById('loyCardhistContent');
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'loyaltyCardHistoryAPI', query: query })
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      let html = `<div class="card"><div class="card-title">🗂️ Showing ${res.shown} of ${res.total} card(s)${res.total > res.shown ? ' (newest first, narrow your search to see more)' : ''}</div>`;
+      if (res.cards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards found</p></div>`;
+      res.cards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName} · 👤 ${c.empName}</div>`; });
+      html += `</div>`;
+      content.innerHTML = html;
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// ── Incentive History — every payment ever recorded ──
+function loadLoyaltyIncentiveHistory() {
+  const content = document.getElementById('loyIncenthistContent');
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'loyaltyIncentiveHistoryAPI' })
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      let html = `<div class="card"><div class="card-title">💰 Total Paid (all-time): ₹${fmtNum(res.totalPaid)}</div></div>`;
+      if (res.rows.length === 0) {
+        html += `<div class="empty-state" style="padding:16px 0;"><p>No payments recorded yet</p></div>`;
+      } else {
+        res.rows.forEach(r => {
+          html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
+            <div style="font-weight:700;font-size:13.5px;">${r.empName}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${r.date} · #${r.firstCard} → #${r.lastCard} (${r.cards} cards) · 💵 ₹${fmtNum(r.amount)}</div>
+          </div>`;
+        });
+      }
       content.innerHTML = html;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
