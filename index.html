@@ -1051,9 +1051,46 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
       <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="showEmpPage('loyalty-newcard')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Card Entry</div><div class="quick-action-sub">Enroll a customer</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Full overview + PDF</div></div>
+      </div>
+    </div>
+
+    <!-- LOYALTY: New Card Entry (employee only) -->
+    <div class="page-section" id="emp-loyalty-newcard">
+      <div class="section-hdr"><span class="section-title2">➕ New Card Entry</span>
+        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
+      </div>
+      <div class="card" style="padding:14px 16px;">
+        <div class="form-row"><label>Customer Full Name (As per Document) *</label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
+        <div class="form-row"><label>Occupation *</label><input type="text" id="ncOccupation" placeholder="e.g. Business, Student, Govt Employee"></div>
+        <div class="form-row"><label>Organization Name</label><input type="text" id="ncOrgName" placeholder="Optional"></div>
+        <div class="form-row"><label>Phone Number *</label><input type="tel" id="ncPhone" placeholder="10-digit mobile number"></div>
+        <div class="form-row"><label>Address *</label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
+
+        <div class="form-row"><label>Customer Signature Photo *</label><input type="file" id="ncSigPhoto" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Customer Photo *</label><input type="file" id="ncCustPhoto" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" placeholder="12-digit Aadhaar number" maxlength="14"></div>
+        <div class="form-row"><label>Aadhaar Card Front Photo *</label><input type="file" id="ncAadhaarFront" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Aadhaar Card Back Photo</label><input type="file" id="ncAadhaarBack" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Pan No</label><input type="text" id="ncPanNo" placeholder="Optional" maxlength="10"></div>
+        <div class="form-row"><label>Pan Card Photo</label><input type="file" id="ncPanPhoto" accept="image/*" capture="environment"></div>
+
+        <div class="form-row"><label>Loyalty Card Type *</label>
+          <select id="ncCardType">
+            <option value="">-- Select Card Type --</option>
+            <option value="VSR Premium">VSR Premium</option>
+            <option value="VSR Sparkle Plus">VSR Sparkle Plus</option>
+            <option value="VSR Gold">VSR Gold</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Loyalty Card Number *</label><input type="text" id="ncCardNo" placeholder="Card number as printed on the card"></div>
+        <div class="form-row"><label>Card Issued Date *</label><input type="date" id="ncCardDate"></div>
+
+        <div id="ncErrorMsg" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;padding:8px 10px;background:var(--red-bg,#fdecea);border-radius:8px;"></div>
+        <button class="btn-primary" id="ncSubmitBtn" style="width:100%;" onclick="submitNewLoyaltyCard()">💾 Submit New Card Entry</button>
       </div>
     </div>
 
@@ -1905,6 +1942,21 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   </div>
 </div>
 
+<!-- Loyalty Card duplicate/gap flash alert — shows on EVERY login until
+     the underlying issue is corrected in the sheet (self-clearing, no
+     dismiss/snooze). Deliberately has NO top-right X — only the bottom
+     Close button — so it can't be accidentally swiped away unnoticed. -->
+<div class="loy-img-modal" id="loyAlertModal">
+  <div class="loy-img-modal-box" style="max-width:480px;text-align:left;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:22px;">⚠️</span>
+      <div style="font-size:16px;font-weight:800;color:var(--red);">Loyalty Card Data Issue</div>
+    </div>
+    <div id="loyAlertBody" style="max-height:60vh;overflow-y:auto;"></div>
+    <button class="btn-modal-cancel" style="width:100%;margin-top:14px;" onclick="closeLoyaltyAlertModal()">Close</button>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -2482,6 +2534,7 @@ async function empLogin() {
         document.getElementById('empModulePickerMeta').textContent = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
         showEmpPage('modulepicker');
         loadEmpData();
+        checkLoyaltyAlerts('emp');
         toast('Welcome, ' + state.empName + '!', 'success');
       } else {
         document.getElementById('empLoginErr').style.display = 'block';
@@ -2518,6 +2571,7 @@ async function adminLogin() {
         showAdminPage('modulepicker');
         await applyAdminRoleRestrictions();
         loadAdminData();
+        checkLoyaltyAlerts('admin');
         toast('Welcome, ' + state.adminRole + '!', 'success');
       } else {
         document.getElementById('adminLoginErr').style.display = 'block';
@@ -2643,6 +2697,7 @@ function showEmpPage(page) {
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') initLoyaltyPage('emp');
   if(page==='loyalty-dash') loadLoyaltyDashboard('emp');
+  if(page==='loyalty-newcard') resetNewLoyaltyCardForm();
   if(page==='events') initEventsBrowser('emp');
   if(page==='trend') renderTrend();
   if(page==='profile') renderEmpProfile();
@@ -4241,6 +4296,158 @@ function populateEventScroller(wrapId, trackId) {
 // session (state.empId / state.adminRole) — no separate email or login.
 // ══════════════════════════════════════
 let loyLastResults = [];
+
+// ══════════════════════════════════════
+// LOYALTY DUPLICATE/GAP FLASH ALERT — checked once right after login (both
+// Employee and Admin). Employees only see duplicates THEY are involved in;
+// Admin sees every duplicate plus any numbering gaps. Self-clearing: the
+// check runs fresh against the live sheet every login, so once the issue
+// is fixed the popup simply stops appearing — nothing to "dismiss."
+// ══════════════════════════════════════
+function checkLoyaltyAlerts(who) {
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  const reqParams = { page: 'loyaltyCheckAlertsAPI', role: role };
+  if (who === 'emp') reqParams.empName = state.empName;
+
+  jsonpReliable(reqParams)
+    .then(res => {
+      if (!res || !res.ok || !res.hasAlerts) return;
+
+      let html = '';
+      if (res.duplicates.length > 0) {
+        html += `<div style="font-weight:700;color:var(--text);margin-bottom:6px;">🔁 Duplicate Card Number(s)</div>`;
+        res.duplicates.forEach(d => {
+          html += `<div class="card" style="padding:10px 12px;margin-bottom:8px;background:#fdecea;border-color:var(--red);">
+            <div style="font-weight:700;font-size:13px;">Card #${d.cardNo} (${d.cardType}) — entered ${d.entries.length} times</div>`;
+          d.entries.forEach(en => {
+            html += `<div style="font-size:12px;color:var(--text2);margin-top:4px;">👤 ${en.empName} → ${en.custName} · 📅 ${en.cardDate}</div>`;
+          });
+          html += `</div>`;
+        });
+        html += `<div style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">One of these entries needs its card number corrected — this will keep appearing on every login until fixed in the sheet.</div>`;
+      }
+      if (who === 'admin' && res.gaps.length > 0) {
+        html += `<div style="font-weight:700;color:var(--text);margin-bottom:6px;margin-top:6px;">🔢 Missing Card Number(s)</div>`;
+        res.gaps.forEach(g => {
+          const label = g.start === g.end ? ('#' + g.start) : ('#' + g.start + ' – #' + g.end);
+          html += `<div class="card" style="padding:10px 12px;margin-bottom:8px;background:#fff8e1;border-color:var(--orange);">
+            <div style="font-size:13px;">${label} ${g.start === g.end ? 'is' : 'are'} missing from the sequence</div>
+          </div>`;
+        });
+      }
+
+      document.getElementById('loyAlertBody').innerHTML = html;
+      document.getElementById('loyAlertModal').classList.add('open');
+    })
+    .catch(() => { /* alert check failing silently is fine — never block login */ });
+}
+function closeLoyaltyAlertModal() {
+  document.getElementById('loyAlertModal').classList.remove('open');
+}
+
+// ══════════════════════════════════════
+// NEW CARD ENTRY (employee only) — writes a new row straight into the
+// Loyalty spreadsheet's master sheet, same effect as a Google Form
+// submission. Sent as a real POST with a JSON body (not JSONP) because
+// up to 5 photo uploads as base64 are far too large for a GET request's
+// URL length limit.
+// ══════════════════════════════════════
+function resetNewLoyaltyCardForm() {
+  ['ncCustName','ncOccupation','ncOrgName','ncPhone','ncAddress','ncAadhaarNo','ncPanNo','ncCardNo'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['ncSigPhoto','ncCustPhoto','ncAadhaarFront','ncAadhaarBack','ncPanPhoto'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const cardType = document.getElementById('ncCardType'); if (cardType) cardType.value = '';
+  const cardDate = document.getElementById('ncCardDate'); if (cardDate) cardDate.value = todayYMD();
+  const errBox = document.getElementById('ncErrorMsg'); if (errBox) errBox.style.display = 'none';
+}
+
+// Reads a <input type="file"> as a base64 data: URL — resolves to '' if
+// no file was chosen (so optional photo fields don't block submission).
+function fileToBase64(inputEl) {
+  return new Promise((resolve, reject) => {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) { resolve(''); return; }
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read ' + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function submitNewLoyaltyCard() {
+  const errBox = document.getElementById('ncErrorMsg');
+  errBox.style.display = 'none';
+
+  const custName   = document.getElementById('ncCustName').value.trim();
+  const occupation = document.getElementById('ncOccupation').value.trim();
+  const orgName    = document.getElementById('ncOrgName').value.trim();
+  const phone      = document.getElementById('ncPhone').value.trim();
+  const address    = document.getElementById('ncAddress').value.trim();
+  const aadhaarNo  = document.getElementById('ncAadhaarNo').value.trim();
+  const panNo      = document.getElementById('ncPanNo').value.trim();
+  const cardType   = document.getElementById('ncCardType').value;
+  const cardNo     = document.getElementById('ncCardNo').value.trim();
+  const cardDate   = document.getElementById('ncCardDate').value;
+
+  if (!custName || !occupation || !phone || !address || !aadhaarNo || !cardType || !cardNo || !cardDate) {
+    errBox.textContent = 'Please fill all required fields marked *';
+    errBox.style.display = 'block';
+    return;
+  }
+  const sigFile = document.getElementById('ncSigPhoto').files[0];
+  const custFile = document.getElementById('ncCustPhoto').files[0];
+  const aadhaarFrontFile = document.getElementById('ncAadhaarFront').files[0];
+  if (!sigFile || !custFile || !aadhaarFrontFile) {
+    errBox.textContent = 'Customer Signature Photo, Customer Photo, and Aadhaar Card Front Photo are required';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('ncSubmitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
+
+  try {
+    const [sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto] = await Promise.all([
+      fileToBase64(document.getElementById('ncSigPhoto')),
+      fileToBase64(document.getElementById('ncCustPhoto')),
+      fileToBase64(document.getElementById('ncAadhaarFront')),
+      fileToBase64(document.getElementById('ncAadhaarBack')),
+      fileToBase64(document.getElementById('ncPanPhoto'))
+    ]);
+
+    const payload = {
+      page: 'loyaltySubmitCardAPI',
+      empName: state.empName, empEmail: state.empEmail,
+      custName, occupation, orgName, phone, address, aadhaarNo, panNo,
+      cardType, cardNo, cardIssuedDate: cardDate,
+      sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto
+    };
+
+    const resp = await fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
+      body: JSON.stringify(payload)
+    });
+    const result = await resp.json();
+
+    if (result && result.ok) {
+      toast('✅ Card ' + result.cardNo + ' enrolled successfully', 'success');
+      resetNewLoyaltyCardForm();
+      showEmpPage('loyalty');
+    } else {
+      errBox.textContent = (result && result.error) || 'Submission failed — please try again';
+      errBox.style.display = 'block';
+    }
+  } catch (err) {
+    errBox.textContent = 'Network error: ' + err.message;
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
+  }
+}
 
 function initLoyaltyPage(who) {
   if (who === 'emp') {
