@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --gold: #d4a843;
@@ -1020,40 +1021,53 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
 
     <!-- LOYALTY CARD (employee) -->
+    <!-- LOYALTY CARD (employee) — landing menu, same button style/size as the Home Quick Actions grid -->
     <div class="page-section" id="emp-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
-      <div class="filter-bar" style="margin-bottom:12px;">
-        <button class="filter-btn active" id="loyEmpTab-search" onclick="switchLoyaltyTab('emp','search')">🔍 Search</button>
-        <button class="filter-btn" id="loyEmpTab-stats" onclick="switchLoyaltyTab('emp','stats')">📊 My Incentive</button>
-        <button class="filter-btn" id="loyEmpTab-dash" onclick="switchLoyaltyTab('emp','dash')">📈 Dashboard</button>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Full overview + PDF</div></div>
       </div>
+    </div>
 
-      <div id="loyEmpSearchPane">
-        <div class="card" style="padding:12px 14px;">
-          <div style="display:flex;gap:8px;">
-            <input type="text" id="loyEmpSearchBox" placeholder="Search by customer name, mobile, or card no..." autocomplete="off"
-              onkeydown="if(event.key==='Enter') runLoyaltySearch('emp')"
-              style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
-            <button onclick="runLoyaltySearch('emp')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
-          </div>
+    <!-- LOYALTY: Search (employee) -->
+    <div class="page-section" id="emp-loyalty-search">
+      <div class="section-hdr"><span class="section-title2">🔍 Loyalty — Search</span>
+        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="loyEmpSearchBox" placeholder="Search by customer name, mobile, or card no..." autocomplete="off"
+            onkeydown="if(event.key==='Enter') runLoyaltySearch('emp')"
+            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
+          <button onclick="runLoyaltySearch('emp')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
         </div>
-        <div id="loyEmpSearchResults" style="margin-top:10px;"></div>
       </div>
+      <div id="loyEmpSearchResults" style="margin-top:10px;"></div>
+    </div>
 
-      <div id="loyEmpStatsPane" style="display:none;">
-        <div class="card" style="padding:12px 14px;">
-          <div style="display:flex;gap:10px;">
-            <div style="flex:1;"><label>From Date</label><input type="date" id="loyEmpFromDate"></div>
-            <div style="flex:1;"><label>To Date</label><input type="date" id="loyEmpToDate"></div>
-          </div>
-          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
+    <!-- LOYALTY: My Incentive (employee) -->
+    <div class="page-section" id="emp-loyalty-stats">
+      <div class="section-hdr"><span class="section-title2">📊 My Incentive</span>
+        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;"><label>From Date</label><input type="date" id="loyEmpFromDate"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" id="loyEmpToDate"></div>
         </div>
-        <div id="loyEmpStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+        <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
       </div>
+      <div id="loyEmpStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
 
-      <div id="loyEmpDashPane" style="display:none;">
-        <div id="loyEmpDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    <!-- LOYALTY: Dashboard (employee) -->
+    <div class="page-section" id="emp-loyalty-dash">
+      <div class="section-hdr"><span class="section-title2">📈 My Dashboard</span>
+        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <div id="loyEmpDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <!-- PROFILE PAGE -->
@@ -1253,83 +1267,109 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div id="evtAdminContent"></div>
     </div>
 
-    <!-- LOYALTY CARD (admin) -->
+    <!-- LOYALTY CARD (admin) — landing menu, same button style/size as the Home Quick Actions grid -->
     <div class="page-section" id="admin-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
-      <div class="filter-bar" style="margin-bottom:12px;flex-wrap:wrap;">
-        <button class="filter-btn active" id="loyAdminTab-search" onclick="switchLoyaltyTab('admin','search')">🔍 Search</button>
-        <button class="filter-btn" id="loyAdminTab-stats" onclick="switchLoyaltyTab('admin','stats')">📊 All Employees</button>
-        <button class="filter-btn" id="loyAdminTab-dash" onclick="switchLoyaltyTab('admin','dash')">📈 Dashboard</button>
-        <button class="filter-btn" id="loyAdminTab-timeline" onclick="switchLoyaltyTab('admin','timeline')">👤 Employee Timeline</button>
-        <button class="filter-btn" id="loyAdminTab-range" onclick="switchLoyaltyTab('admin','range')">📅 Date Range Report</button>
-        <button class="filter-btn" id="loyAdminTab-upcoming" onclick="switchLoyaltyTab('admin','upcoming')">🔔 Upcoming Approvals</button>
-        <button class="filter-btn" id="loyAdminTab-cardhist" onclick="switchLoyaltyTab('admin','cardhist')">🗂️ Card History</button>
-        <button class="filter-btn" id="loyAdminTab-incenthist" onclick="switchLoyaltyTab('admin','incenthist')">💰 Incentive History</button>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Store-wide overview</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-timeline')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Timeline</div><div class="quick-action-sub">One person or all</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-cardhist')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Card History</div><div class="quick-action-sub">Every card enrolled</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-kyc')"><span class="quick-action-icon">📋</span><div class="quick-action-label">KYC Report</div><div class="quick-action-sub">Incomplete records</div></div>
       </div>
+    </div>
 
-      <div id="loyAdminSearchPane">
-        <div class="card" style="padding:12px 14px;">
-          <div style="display:flex;gap:8px;">
-            <input type="text" id="loyAdminSearchBox" placeholder="Search by customer name, mobile, or card no..." autocomplete="off"
-              onkeydown="if(event.key==='Enter') runLoyaltySearch('admin')"
-              style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
-            <button onclick="runLoyaltySearch('admin')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
-          </div>
+    <!-- LOYALTY: Search (admin) -->
+    <div class="page-section" id="admin-loyalty-search">
+      <div class="section-hdr"><span class="section-title2">🔍 Loyalty — Search</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="loyAdminSearchBox" placeholder="Search by customer name, mobile, or card no..." autocomplete="off"
+            onkeydown="if(event.key==='Enter') runLoyaltySearch('admin')"
+            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
+          <button onclick="runLoyaltySearch('admin')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
         </div>
-        <div id="loyAdminSearchResults" style="margin-top:10px;"></div>
       </div>
+      <div id="loyAdminSearchResults" style="margin-top:10px;"></div>
+    </div>
 
-      <div id="loyAdminStatsPane" style="display:none;">
-        <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyAdminStats()">🔄 Refresh</button>
-        <div id="loyAdminStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    <!-- LOYALTY: All Employees (admin) -->
+    <div class="page-section" id="admin-loyalty-stats">
+      <div class="section-hdr"><span class="section-title2">📊 All Employees</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyAdminStats()">🔄 Refresh</button>
+      <div id="loyAdminStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
 
-      <div id="loyAdminDashPane" style="display:none;">
-        <div id="loyAdminDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    <!-- LOYALTY: Dashboard (admin) -->
+    <div class="page-section" id="admin-loyalty-dash">
+      <div class="section-hdr"><span class="section-title2">📈 Store Dashboard</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <div id="loyAdminDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
 
-      <div id="loyAdminTimelinePane" style="display:none;">
-        <div class="card" style="padding:12px 14px;">
-          <label>Select Employee</label>
-          <select id="loyTimelineEmpSelect"><option value="">-- Loading employees... --</option></select>
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <div style="flex:1;"><label>From Date</label><input type="date" id="loyTimelineFromDate"></div>
-            <div style="flex:1;"><label>To Date</label><input type="date" id="loyTimelineToDate"></div>
-          </div>
-          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyTimeline()">🔄 Load Timeline</button>
+    <!-- LOYALTY: Employee Timeline (admin) -->
+    <div class="page-section" id="admin-loyalty-timeline">
+      <div class="section-hdr"><span class="section-title2">👤 Employee Timeline</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <label>Select Employee</label>
+        <select id="loyTimelineEmpSelect"><option value="">-- Loading employees... --</option></select>
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <div style="flex:1;"><label>From Date</label><input type="date" id="loyTimelineFromDate"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" id="loyTimelineToDate"></div>
         </div>
-        <div id="loyTimelineContent"></div>
+        <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyTimeline()">🔄 Load Timeline</button>
       </div>
+      <div id="loyTimelineContent"></div>
+    </div>
 
-      <div id="loyAdminRangePane" style="display:none;">
-        <div class="card" style="padding:12px 14px;">
-          <div style="display:flex;gap:10px;">
-            <div style="flex:1;"><label>From Date</label><input type="date" id="loyRangeFromDate"></div>
-            <div style="flex:1;"><label>To Date</label><input type="date" id="loyRangeToDate"></div>
-          </div>
-          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyDateRangeReport()">🔄 Load Report</button>
-        </div>
-        <div id="loyRangeContent"></div>
+    <!-- LOYALTY: Upcoming Approvals (admin) -->
+    <div class="page-section" id="admin-loyalty-upcoming">
+      <div class="section-hdr"><span class="section-title2">🔔 Upcoming Approvals</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals()">🔄 Refresh</button>
+      <div id="loyUpcomingContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
 
-      <div id="loyAdminUpcomingPane" style="display:none;">
-        <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals()">🔄 Refresh</button>
-        <div id="loyUpcomingContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    <!-- LOYALTY: Card History (admin) -->
+    <div class="page-section" id="admin-loyalty-cardhist">
+      <div class="section-hdr"><span class="section-title2">🗂️ Card History</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <div class="card" style="padding:12px 14px;">
+        <input type="text" id="loyCardHistSearch" placeholder="Filter by customer name or card no (optional)..." autocomplete="off"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);outline:none;">
+        <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyCardHistory()">🔄 Load</button>
+      </div>
+      <div id="loyCardhistContent"></div>
+    </div>
 
-      <div id="loyAdminCardhistPane" style="display:none;">
-        <div class="card" style="padding:12px 14px;">
-          <input type="text" id="loyCardHistSearch" placeholder="Filter by customer name or card no (optional)..." autocomplete="off"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);outline:none;">
-          <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyCardHistory()">🔄 Load</button>
-        </div>
-        <div id="loyCardhistContent"></div>
+    <!-- LOYALTY: Incentive History (admin) -->
+    <div class="page-section" id="admin-loyalty-incenthist">
+      <div class="section-hdr"><span class="section-title2">💰 Incentive History</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyIncentiveHistory()">🔄 Refresh</button>
+      <div id="loyIncenthistContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
 
-      <div id="loyAdminIncenthistPane" style="display:none;">
-        <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyIncentiveHistory()">🔄 Refresh</button>
-        <div id="loyIncenthistContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    <!-- LOYALTY: KYC Report (admin) -->
+    <div class="page-section" id="admin-loyalty-kyc">
+      <div class="section-hdr"><span class="section-title2">📋 KYC Report</span>
+        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
+      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyKYCReport()">🔄 Refresh</button>
+      <div id="loyKycContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <!-- TEAM AVAILABILITY -->
@@ -2549,6 +2589,7 @@ function showEmpPage(page) {
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') initLoyaltyPage('emp');
+  if(page==='loyalty-dash') loadLoyaltyDashboard('emp');
   if(page==='events') initEventsBrowser('emp');
   if(page==='trend') renderTrend();
   if(page==='profile') renderEmpProfile();
@@ -3938,6 +3979,12 @@ function showAdminPage(page) {
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
   if(page==='loyalty') initLoyaltyPage('admin');
+  if(page==='loyalty-dash') loadLoyaltyDashboard('admin');
+  if(page==='loyalty-stats') loadLoyaltyAdminStats();
+  if(page==='loyalty-timeline') initLoyaltyTimeline();
+  if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
+  if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
+  if(page==='loyalty-kyc') loadLoyaltyKYCReport();
   if(page==='events') initEventsBrowser('admin');
   if(page==='balance') renderBalance();
   if(page==='direct') loadDirectActionPage();
@@ -4138,26 +4185,6 @@ function populateEventScroller(wrapId, trackId) {
 // session (state.empId / state.adminRole) — no separate email or login.
 // ══════════════════════════════════════
 let loyLastResults = [];
-
-const LOY_TABS = ['search', 'stats', 'dash', 'timeline', 'range', 'upcoming', 'cardhist', 'incenthist'];
-const LOY_PANE_NAME = {
-  search: 'Search', stats: 'Stats', dash: 'Dash', timeline: 'Timeline', range: 'Range',
-  upcoming: 'Upcoming', cardhist: 'Cardhist', incenthist: 'Incenthist'
-};
-function switchLoyaltyTab(who, tab) {
-  const prefix = who === 'emp' ? 'Emp' : 'Admin';
-  LOY_TABS.forEach(t => {
-    const btn  = document.getElementById('loy' + prefix + 'Tab-' + t);
-    const pane = document.getElementById('loy' + prefix + LOY_PANE_NAME[t] + 'Pane');
-    if (btn)  btn.classList.toggle('active', tab === t);
-    if (pane) pane.style.display = tab === t ? 'block' : 'none';
-  });
-  if (tab === 'stats' && who === 'admin') loadLoyaltyAdminStats();
-  if (tab === 'dash') loadLoyaltyDashboard(who);
-  if (tab === 'timeline' && who === 'admin') initLoyaltyTimeline();
-  if (tab === 'upcoming' && who === 'admin') loadLoyaltyUpcomingApprovals();
-  if (tab === 'incenthist' && who === 'admin') loadLoyaltyIncentiveHistory();
-}
 
 function initLoyaltyPage(who) {
   if (who === 'emp') {
@@ -4407,23 +4434,32 @@ function loadLoyaltyMyStats() {
     .then(res => {
       if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
       const o = res.overall;
+      const lastInc = o.lastIncentive
+        ? `${o.lastIncentive.date} · ${o.lastIncentive.cards} cards · ₹${fmtNum(o.lastIncentive.amount)}`
+        : 'No payment yet';
+
+      // The 9 items requested: Total Cards, Rank, This Month, Total
+      // Incentive, Last Incentive, Pending Cards, Balance for next set,
+      // date-range list (below), and Download PDF (button below).
       let html = `<div class="card">
-        <div class="card-title">📊 Overall (all-time)</div>
+        <div class="card-title">📊 My Overview (all-time)</div>
         <div class="home-balance-grid" style="margin-top:8px;">
           <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);"><div class="home-bal-val" style="color:var(--purple)">${o.totalCards}</div><div class="home-bal-lbl">Total Cards</div></div>
-          <div class="home-bal-box" style="background:var(--green-bg);border-color:var(--green);"><div class="home-bal-val" style="color:var(--green)">${o.approvedCards}</div><div class="home-bal-lbl">Approved</div></div>
-          <div class="home-bal-box" style="background:var(--orange-bg);border-color:var(--orange);"><div class="home-bal-val" style="color:var(--orange)">${o.balanceCards}</div><div class="home-bal-lbl">Balance</div></div>
-          <div class="home-bal-box" style="background:var(--blue-bg);border-color:var(--blue);"><div class="home-bal-val" style="color:var(--blue)">₹${fmtNum(o.totalIncentive)}</div><div class="home-bal-lbl">Total Incentive</div></div>
+          <div class="home-bal-box" style="background:var(--gold-bg,#fdf6e3);border-color:var(--gold);"><div class="home-bal-val" style="color:var(--gold-dark)">#${o.rank}${o.rankTotal?' / '+o.rankTotal:''}</div><div class="home-bal-lbl">My Rank</div></div>
+          <div class="home-bal-box" style="background:var(--blue-bg);border-color:var(--blue);"><div class="home-bal-val" style="color:var(--blue)">${o.thisMonthCards}</div><div class="home-bal-lbl">This Month</div></div>
+          <div class="home-bal-box" style="background:var(--green-bg);border-color:var(--green);"><div class="home-bal-val" style="color:var(--green)">₹${fmtNum(o.totalIncentive)}</div><div class="home-bal-lbl">Total Incentive</div></div>
         </div>
         <div style="margin-top:10px;font-size:12.5px;color:var(--text2);">
-          <div>🟡 <b>Status:</b> ${o.status}</div>
-          <div style="margin-top:4px;">💰 <b>Pending Incentive:</b> ₹${fmtNum(o.pendingIncentive)}</div>
+          <div>🎁 <b>Last Incentive Received:</b> ${lastInc}</div>
+          <div style="margin-top:4px;">⏳ <b>Pending Cards (not yet approved):</b> ${o.balanceCards}</div>
           <div style="margin-top:4px;">🎯 <b>Cards needed for next incentive set:</b> ${o.remainingForNextSet === 0 ? 'Ready — full set complete!' : o.remainingForNextSet + ' more card(s)'}</div>
+          <div style="margin-top:4px;">💰 <b>Pending Incentive Amount:</b> ₹${fmtNum(o.pendingIncentive)}</div>
           <div style="margin-top:4px;">🔢 <b>Card Range:</b> #${o.firstCard} → #${o.lastCard}</div>
+          <div style="margin-top:4px;">🟡 <b>Status:</b> ${o.status}</div>
         </div>
       </div>`;
 
-      html += `<div class="card"><div class="card-title">📅 Cards in Selected Range</div>
+      html += `<div class="card"><div class="card-title">📅 Cards in Selected Range (Date-to-Date)</div>
         <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">${res.rangeTotal} card(s) · ₹${fmtNum(res.rangeIncentive)} incentive</div>`;
       if (res.rangeCards.length === 0) {
         html += `<div class="empty-state" style="padding:20px 0;"><p>No cards in this date range</p></div>`;
@@ -4433,11 +4469,59 @@ function loadLoyaltyMyStats() {
         });
       }
       html += `</div>`;
-      html += `<button class="btn-loy-card" onclick="mailLoyaltyMyStats()">📧 Mail This Report</button>`;
+      html += `<div style="display:flex;gap:8px;">
+        <button class="btn-loy-card" style="flex:1;" onclick="mailLoyaltyMyStats()">📧 Mail</button>
+        <button class="btn-loy-card" style="flex:1;background:var(--gold-dark);" onclick="downloadLoyaltyMyStatsPDF()">📄 Download PDF</button>
+      </div>`;
       content.innerHTML = html;
       window.__loyMyStatsData = res;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function downloadLoyaltyMyStatsPDF() {
+  const res = window.__loyMyStatsData;
+  if (!res) { toast('Load your incentive first', 'error'); return; }
+  const o = res.overall;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 18;
+  doc.setFontSize(16); doc.setTextColor(107, 33, 168);
+  doc.text('VSR GOLD — My Loyalty Incentive', 14, y); y += 6;
+  doc.setFontSize(10); doc.setTextColor(120, 120, 120);
+  doc.text(state.empName + ' · Generated ' + fmtDMY(todayYMD()), 14, y); y += 10;
+
+  doc.setFontSize(11); doc.setTextColor(30, 30, 30);
+  const lines = [
+    ['Total Cards', String(o.totalCards)],
+    ['My Rank', '#' + o.rank + (o.rankTotal ? ' / ' + o.rankTotal : '')],
+    ['This Month', String(o.thisMonthCards)],
+    ['Total Incentive Earned', 'Rs ' + fmtNum(o.totalIncentive)],
+    ['Last Incentive Received', o.lastIncentive ? (o.lastIncentive.date + ' - ' + o.lastIncentive.cards + ' cards - Rs ' + fmtNum(o.lastIncentive.amount)) : 'No payment yet'],
+    ['Pending Cards', String(o.balanceCards)],
+    ['Cards Needed for Next Set', o.remainingForNextSet === 0 ? 'Ready' : String(o.remainingForNextSet)],
+    ['Pending Incentive Amount', 'Rs ' + fmtNum(o.pendingIncentive)],
+    ['Card Range', '#' + o.firstCard + ' to #' + o.lastCard],
+    ['Status', String(o.status)]
+  ];
+  lines.forEach(([label, val]) => {
+    doc.setFont(undefined, 'bold'); doc.text(label + ':', 14, y);
+    doc.setFont(undefined, 'normal'); doc.text(String(val), 90, y);
+    y += 7;
+  });
+
+  y += 4;
+  doc.setFontSize(12); doc.setTextColor(107, 33, 168);
+  doc.text('Cards in Selected Range (' + res.rangeTotal + ')', 14, y); y += 7;
+  doc.setFontSize(9); doc.setTextColor(30, 30, 30);
+  res.rangeCards.forEach(c => {
+    if (y > 280) { doc.addPage(); y = 18; }
+    doc.text(`${c.cardDate}  #${c.cardNo}  ${c.cardType}  ${c.custName}`, 14, y);
+    y += 5.5;
+  });
+
+  doc.save('VSR_GOLD_My_Incentive_' + todayYMD() + '.pdf');
+  toast('📄 PDF downloaded', 'success');
 }
 
 function mailLoyaltyMyStats() {
@@ -4594,6 +4678,7 @@ function initLoyaltyTimeline() {
     .then(res => {
       if (!res || !res.ok) return;
       sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+        '<option value="__ALL__">🏪 All Employees</option>' +
         res.rows.map(r => `<option value="${escJs(r.empName)}">${r.empName}</option>`).join('');
       sel.dataset.loaded = '1';
     });
@@ -4607,13 +4692,36 @@ function loadLoyaltyTimeline() {
   if (!empName) { toast('Please select an employee', 'error'); return; }
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
 
+  // "All Employees" merges everyone's cards for the date range into one
+  // combined store-wide view — this replaces the old separate Date Range
+  // Report tab (same underlying data, one less screen to navigate).
+  if (empName === '__ALL__') {
+    jsonpReliable({ page: 'loyaltyDateRangeReportAPI', fromDate: from, toDate: to })
+      .then(res => {
+        if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+        let html = `<div class="card"><div class="card-title">🏪 All Employees — Combined</div>
+          <div class="leave-card-date">${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</div>
+        </div>`;
+        html += `<div class="card"><div class="card-title">📅 Cards in Selected Range</div>`;
+        if (res.cards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
+        res.cards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName} · 👤 ${c.empName}</div>`; });
+        html += `</div><button class="btn-loy-card" onclick="mailLoyaltyAllEmpTimeline()">📧 Mail This Report</button>`;
+        content.innerHTML = html;
+        window.__loyAllEmpTimelineData = res;
+      })
+      .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+    return;
+  }
+
   jsonpReliable({ page: 'loyaltyMyStatsAPI', empName: empName, fromDate: from, toDate: to })
     .then(res => {
       if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
       const o = res.overall;
       let html = `<div class="card"><div class="card-title">👤 ${empName} — Full History</div>
-        <div class="leave-card-date">Total Cards: <b>${o.totalCards}</b> · Approved: <b>${o.approvedCards}</b> · Balance: <b>${o.balanceCards}</b></div>
+        <div class="leave-card-date">Total Cards: <b>${o.totalCards}</b> · Rank: <b>#${o.rank}</b> · This Month: <b>${o.thisMonthCards}</b></div>
+        <div class="leave-card-date">Approved: <b>${o.approvedCards}</b> · Balance: <b>${o.balanceCards}</b></div>
         <div class="leave-card-date">Total Incentive: <b>₹${fmtNum(o.totalIncentive)}</b> · Pending: <b>₹${fmtNum(o.pendingIncentive)}</b></div>
+        <div class="leave-card-date">Last Incentive: <b>${o.lastIncentive ? o.lastIncentive.date + ' · ₹' + fmtNum(o.lastIncentive.amount) : 'No payment yet'}</b></div>
         <div class="leave-card-date">Card Range: #${o.firstCard} → #${o.lastCard} · Status: ${o.status}</div>
       </div>`;
       html += `<div class="card"><div class="card-title">📅 Cards in Selected Range (${res.rangeTotal})</div>`;
@@ -4625,6 +4733,22 @@ function loadLoyaltyTimeline() {
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
+
+function mailLoyaltyAllEmpTimeline() {
+  const res = window.__loyAllEmpTimelineData;
+  if (!res) { toast('Load the report first', 'error'); return; }
+  const rowsHtml = res.cards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:650px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — All Employees Card Report</h2>
+    <p>${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport('VSR GOLD — All Employees Card Report', bodyHtml, 'admin');
+}
+
 
 function mailLoyaltyTimeline(empName) {
   const stash = window.__loyTimelineData;
@@ -4640,41 +4764,6 @@ function mailLoyaltyTimeline(empName) {
     </table>
   </div>`;
   mailLoyaltyReport("VSR GOLD — " + empName + "'s Card Timeline", bodyHtml, 'admin');
-}
-
-// ── Date Range Report (Admin, every employee's cards in one date window) ──
-function loadLoyaltyDateRangeReport() {
-  const from = document.getElementById('loyRangeFromDate').value;
-  const to   = document.getElementById('loyRangeToDate').value;
-  const content = document.getElementById('loyRangeContent');
-  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-
-  jsonpReliable({ page: 'loyaltyDateRangeReportAPI', fromDate: from, toDate: to })
-    .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
-      let html = `<div class="card"><div class="card-title">📅 ${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</div>`;
-      if (res.cards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
-      res.cards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName} · 👤 ${c.empName}</div>`; });
-      html += `</div><button class="btn-loy-card" onclick="mailLoyaltyDateRangeReport()">📧 Mail This Report</button>`;
-      content.innerHTML = html;
-      window.__loyRangeData = res;
-    })
-    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
-}
-
-function mailLoyaltyDateRangeReport() {
-  const res = window.__loyRangeData;
-  if (!res) { toast('Load the report first', 'error'); return; }
-  const rowsHtml = res.cards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`).join('');
-  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:650px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — Card Report by Date Range</h2>
-    <p>${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</p>
-    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
-      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th></tr>
-      ${rowsHtml}
-    </table>
-  </div>`;
-  mailLoyaltyReport('VSR GOLD — Card Report by Date Range', bodyHtml, 'admin');
 }
 
 // ── Upcoming Card Approvals — who has a full ready-to-pay set right now ──
@@ -4742,6 +4831,30 @@ function loadLoyaltyIncentiveHistory() {
         });
       }
       content.innerHTML = html;
+    })
+    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// ── KYC Report — customers with incomplete enrollment (missing signature/Aadhaar/PAN/photo/basic details) ──
+function loadLoyaltyKYCReport() {
+  const content = document.getElementById('loyKycContent');
+  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'loyaltyKYCReportAPI' })
+    .then(res => {
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No incomplete KYC records — everyone is fully documented</p></div>'; return; }
+      let html = `<div class="card"><div class="card-title">📋 ${res.total} customer(s) with incomplete KYC</div></div>`;
+      res.rows.forEach(r => {
+        html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:700;font-size:13.5px;">${r.custName} <span style="font-weight:400;color:var(--text3);font-size:11px;">#${r.cardNo}</span></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:2px;">👤 Enrolled by: ${r.empName}</div>
+          <div style="font-size:12px;color:var(--red);margin-top:6px;">⚠️ Missing: ${r.missing.join(', ')}</div>
+        </div>`;
+      });
+      content.innerHTML = html;
+      window.__loyKycData = res;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
