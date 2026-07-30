@@ -1760,7 +1760,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="loy-img-modal" id="loyImgModal">
   <div class="loy-img-modal-box">
     <img id="loyModalImg" src="" style="display:none;">
-    <div style="padding:30px 10px;color:#999;font-size:13px;display:none;" id="loyModalMsg">Image not available.</div>
+    <div style="padding:20px 10px 10px;color:#999;font-size:13px;display:none;" id="loyModalMsg">Image not available.</div>
+    <button id="loyModalOpenBtn" class="btn-modal-confirm" style="display:none;margin-top:4px;background:var(--purple);">🔗 Open in Google Drive</button>
     <button class="btn-modal-cancel" style="margin-top:10px;" onclick="closeLoyaltyImageModal()">Close</button>
   </div>
 </div>
@@ -4132,16 +4133,12 @@ function renderLoyaltyResults(res, resultsEl) {
   // Results are shown fully expanded for everyone — no click needed to
   // reveal details (the level of detail itself is what's role-gated).
   resultsEl.innerHTML = loyLastResults.map((r, i) => {
-    const allDocs = r.documents || [];
-    const custPhotoDoc = allDocs.find(d => d.label === 'Customer Photo');
-    const otherDocs = allDocs.filter(d => d.label !== 'Customer Photo');
+    const otherDocs = r.documents || [];
 
-    let photoHtml = '';
-    if (res.isAdmin) {
-      photoHtml = custPhotoDoc && custPhotoDoc.url
-        ? `<div class="loy-photo-wrap"><img class="loy-photo" src="${custPhotoDoc.url}" onerror="this.outerHTML='<div class=&quot;loy-photo-fallback&quot;>Photo not available</div>';"></div>`
-        : `<div class="loy-photo-wrap"><div class="loy-photo-fallback">Photo not available</div></div>`;
-    }
+    // Customer Photo is visible to EVERYONE (employee and admin).
+    const photoHtml = r.custPhoto
+      ? `<div class="loy-photo-wrap"><img class="loy-photo" src="${r.custPhoto}" onerror="this.outerHTML='<div class=&quot;loy-photo-fallback&quot;>Photo not available</div>';"></div>`
+      : `<div class="loy-photo-wrap"><div class="loy-photo-fallback">Photo not available</div></div>`;
 
     let docsHtml = '';
     if (otherDocs.length > 0) {
@@ -4178,13 +4175,31 @@ function openLoyaltyImage(ev, url) {
   ev.stopPropagation();
   const img = document.getElementById('loyModalImg');
   const msg = document.getElementById('loyModalMsg');
-  if (!url) { img.style.display = 'none'; msg.style.display = 'block'; }
-  else { img.src = url; img.style.display = 'block'; msg.style.display = 'none'; }
+  const openBtn = document.getElementById('loyModalOpenBtn');
+  if (!url) {
+    img.style.display = 'none'; openBtn.style.display = 'none';
+    msg.style.display = 'block'; msg.textContent = 'Image not available.';
+  } else if (url.startsWith('data:')) {
+    // Successfully embedded by the backend — show it directly.
+    img.src = url; img.style.display = 'block';
+    msg.style.display = 'none'; openBtn.style.display = 'none';
+  } else {
+    // Backend couldn't embed it (Drive permission issue) and fell back
+    // to a plain view link — trying to hotlink that into <img> often
+    // fails silently, so offer a working "Open in Google Drive" button
+    // instead of a broken image icon.
+    img.style.display = 'none';
+    msg.style.display = 'block';
+    msg.textContent = 'Could not preview this image directly — open it in Google Drive instead:';
+    openBtn.style.display = 'inline-block';
+    openBtn.onclick = () => window.open(url, '_blank');
+  }
   document.getElementById('loyImgModal').classList.add('open');
 }
 function closeLoyaltyImageModal() {
   document.getElementById('loyImgModal').classList.remove('open');
   document.getElementById('loyModalImg').src = '';
+  document.getElementById('loyModalOpenBtn').style.display = 'none';
 }
 
 // ── Physical card visual (design unchanged from the original Loyalty page) ──
