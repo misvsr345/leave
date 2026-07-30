@@ -647,6 +647,15 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .home-bal-val { font-size: 17px; font-weight: 800; color: var(--gold2); line-height: 1; }
 .home-bal-lbl { font-size: 7.8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: rgba(255,255,255,0.7); margin-top: 3px; line-height: 1.3; }
 
+/* Compact stat tiles for light-background dashboards (Loyalty Card
+   Overview, My Incentive, etc) — small side-by-side boxes with the
+   label visible ON light pastel backgrounds (home-bal-lbl above is
+   tuned for the dark purple header and is unreadable here). */
+.stat-tile-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.stat-tile { flex: 1 1 calc(50% - 4px); min-width: 90px; border-radius: 9px; border: 1px solid; padding: 8px 6px; text-align: center; }
+.stat-tile-val { font-size: 15px; font-weight: 800; line-height: 1.1; }
+.stat-tile-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text3); margin-top: 2px; line-height: 1.2; }
+
 .quick-actions-section { margin-bottom: 14px; }
 .quick-actions-title { font-size: 10.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
 
@@ -836,9 +845,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="empApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="showEmpPage('overview')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+      <div class="topbar-logo" onclick="showEmpPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
-        <button class="tb-chip back-fab-top" id="empBackFab" onclick="showEmpPage('overview')">← Back</button>
+        <button class="tb-chip back-fab-top" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
@@ -851,7 +860,24 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   <div class="page-content">
 
     <!-- OVERVIEW PAGE -->
-    <div class="page-section active" id="emp-overview">
+    <!-- MODULE PICKER (the true landing page right after login) -->
+    <div class="page-section active" id="emp-modulepicker">
+      <div class="home-header">
+        <div class="home-header-title">VSR GOLD</div>
+        <div class="home-header-name" id="empModulePickerName">Employee</div>
+        <div class="home-header-sub" id="empModulePickerMeta"></div>
+      </div>
+      <div class="quick-actions-section">
+        <div class="quick-actions-title">⚡ Choose a Section</div>
+        <div class="quick-actions-grid">
+          <div class="quick-action-btn" onclick="showEmpPage('overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
+          <div class="quick-action-btn" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOME / OVERVIEW (Leave section landing) -->
+    <div class="page-section" id="emp-overview">
       <div class="bday-marquee-wrap" id="empEventScroller">
         <button class="bday-marquee-refresh" onclick="populateEventScroller('empEventScroller','empEventScrollerInner')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="empEventScrollerInner"></div>
@@ -1098,7 +1124,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 
   </div>
   <div class="footer-nav" id="empFooterNav">
-    <button class="footer-nav-btn" id="foot-emp-overview" onclick="showEmpPage('overview')"><span class="footer-nav-icon">🏠</span>Home</button>
+    <button class="footer-nav-btn" id="foot-emp-overview" onclick="showEmpPage('modulepicker')"><span class="footer-nav-icon">🏠</span>Home</button>
     <button class="footer-nav-btn" id="foot-emp-apply" onclick="showEmpPage('apply')"><span class="footer-nav-icon">✍️</span>Apply</button>
     <button class="footer-nav-btn" id="foot-emp-myleaves" onclick="showEmpPage('myleaves')"><span class="footer-nav-icon">📋</span>My Leaves</button>
     <button class="footer-nav-btn" id="foot-emp-calendar" onclick="showEmpPage('calendar')"><span class="footer-nav-icon">📅</span>Calendar</button>
@@ -1113,9 +1139,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="adminApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="showAdminPage('dashboard')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+      <div class="topbar-logo" onclick="showAdminPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
-        <button class="tb-chip back-fab-top" id="adminBackFab" onclick="showAdminPage('dashboard')">← Back</button>
+        <button class="tb-chip back-fab-top" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
@@ -1127,7 +1153,24 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   <div class="page-content">
 
     <!-- DASHBOARD -->
-    <div class="page-section active" id="admin-dashboard">
+    <!-- MODULE PICKER (the true landing page right after login) -->
+    <div class="page-section active" id="admin-modulepicker">
+      <div class="home-header">
+        <div class="home-header-title">VSR GOLD</div>
+        <div class="home-header-name" id="adminModulePickerName">Admin</div>
+        <div class="home-header-sub" id="adminModulePickerMeta"></div>
+      </div>
+      <div class="quick-actions-section">
+        <div class="quick-actions-title">⚡ Choose a Section</div>
+        <div class="quick-actions-grid">
+          <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
+          <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD (Leave section landing) -->
+    <div class="page-section" id="admin-dashboard">
       <div class="card" style="padding:12px 14px;margin-bottom:12px;">
         <div style="position:relative;display:flex;gap:8px;">
           <input type="text" id="empSearchBox" placeholder="Search employee by name or ID — jump to their profile..." autocomplete="off"
@@ -1574,7 +1617,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 
   </div>
   <div class="footer-nav" id="adminFooterNav">
-    <button class="footer-nav-btn" id="foot-admin-dashboard" onclick="showAdminPage('dashboard')"><span class="footer-nav-icon">🏠</span>Home</button>
+    <button class="footer-nav-btn" id="foot-admin-dashboard" onclick="showAdminPage('modulepicker')"><span class="footer-nav-icon">🏠</span>Home</button>
     <button class="footer-nav-btn" id="foot-admin-pending" onclick="showAdminPage('pending')"><span class="footer-nav-icon">⏳</span>Pending<span id="pendingCount" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:0 5px;font-size:9px;margin-left:2px;"></span></button>
     <button class="footer-nav-btn" id="foot-admin-allleaves" onclick="showAdminPage('allleaves')"><span class="footer-nav-icon">📋</span>All Leaves</button>
     <button class="footer-nav-btn" id="foot-admin-calendar" onclick="showAdminPage('acalendar')"><span class="footer-nav-icon">📅</span>Calendar</button>
@@ -1754,7 +1797,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   <div class="modal-box">
     <div class="modal-title">☰ More</div>
     <div class="quick-actions-grid" style="margin-top:10px;">
-      <div class="quick-action-btn" onclick="closeModal('empMoreModal'); showEmpPage('loyalty');"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); showEmpPage('blocked');"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openChangePassword('emp');"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openThemePickerModal();"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
@@ -1770,7 +1812,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   <div class="modal-box">
     <div class="modal-title">☰ More</div>
     <div class="quick-actions-grid" style="margin-top:10px;">
-      <div class="quick-action-btn" id="adminQALoyalty" onclick="closeModal('adminMoreModal'); showAdminPage('loyalty');"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; incentive summary</div></div>
       <div class="quick-action-btn" id="adminQADirect" onclick="closeModal('adminMoreModal'); showAdminPage('direct');"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
       <div class="quick-action-btn" id="adminQANotices" onclick="closeModal('adminMoreModal'); showAdminPage('notices');"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
       <div class="quick-action-btn" id="adminQABlocked" onclick="closeModal('adminMoreModal'); showAdminPage('blocked');"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
@@ -1871,7 +1912,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPt31oxcf31o-FZ4AfTjEN_HmUiP2b8iBYfGCAL3t84U5w0-0T9etmT-7jXsW-3RiXxg/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbye55Epegsvh1uMRG1hAzoBrip3ta-45fTRRPOcSXtYP0NSSo5ahYUCq3UWfwKHPvsnGg/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -2373,7 +2414,9 @@ function restoreSession() {
     document.getElementById('empNameBadge').textContent = (saved.empName || 'Employee') + (saved.empId ? ' · ' + saved.empId : '');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('empApp').classList.add('active');
-    showEmpPage('overview');
+    document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
+    document.getElementById('empModulePickerMeta').textContent = [saved.empId, saved.empDesig, saved.empDept, saved.empCounter].filter(Boolean).join(' · ');
+    showEmpPage('modulepicker');
     loadEmpData();
     return true;
   }
@@ -2384,7 +2427,9 @@ function restoreSession() {
     document.getElementById('adminRoleBadge').textContent = (saved.adminName ? saved.adminName + ' · ' : '') + (saved.adminRole || 'Admin') + (saved.adminDesig ? ' (' + saved.adminDesig + ')' : '');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('adminApp').classList.add('active');
-    showAdminPage('dashboard');
+    document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
+    document.getElementById('adminModulePickerMeta').textContent = [saved.adminRole, saved.adminDesig].filter(Boolean).join(' · ');
+    showAdminPage('modulepicker');
     applyAdminRoleRestrictions();
     loadAdminData();
     return true;
@@ -2433,7 +2478,9 @@ async function empLogin() {
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('empApp').classList.add('active');
         document.getElementById('empPassInput').value = '';
-        showEmpPage('overview');
+        document.getElementById('empModulePickerName').textContent = state.empName || 'Employee';
+        document.getElementById('empModulePickerMeta').textContent = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
+        showEmpPage('modulepicker');
         loadEmpData();
         toast('Welcome, ' + state.empName + '!', 'success');
       } else {
@@ -2466,7 +2513,9 @@ async function adminLogin() {
         document.getElementById('adminRoleBadge').textContent = (state.adminName ? state.adminName + ' · ' : '') + state.adminRole + (state.adminDesig ? ' (' + state.adminDesig + ')' : '');
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('adminApp').classList.add('active');
-        showAdminPage('dashboard');
+        document.getElementById('adminModulePickerName').textContent = state.adminName || state.adminRole || 'Admin';
+        document.getElementById('adminModulePickerMeta').textContent = [state.adminRole, state.adminDesig].filter(Boolean).join(' · ');
+        showAdminPage('modulepicker');
         await applyAdminRoleRestrictions();
         loadAdminData();
         toast('Welcome, ' + state.adminRole + '!', 'success');
@@ -2582,10 +2631,14 @@ function showEmpPage(page) {
   const sec = document.getElementById('emp-' + page);
   if (sec) sec.classList.add('active');
   document.querySelectorAll('#empFooterNav .footer-nav-btn').forEach(b => b.classList.remove('active'));
-  const footBtn = document.getElementById('foot-emp-' + page);
+  // "Home" in the footer nav represents the module picker; the old
+  // Leave-section landing ('overview') shares that same highlight since
+  // it's reached directly from Home's "Leave" button.
+  const footKey = (page === 'modulepicker' || page === 'overview') ? 'overview' : page;
+  const footBtn = document.getElementById('foot-emp-' + footKey);
   if (footBtn) footBtn.classList.add('active');
   const backFab = document.getElementById('empBackFab');
-  if (backFab) backFab.classList.toggle('show', page !== 'overview');
+  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') initLoyaltyPage('emp');
@@ -3971,11 +4024,14 @@ function showAdminPage(page) {
   const sec = document.getElementById('admin-' + page);
   if (sec) sec.classList.add('active');
   document.querySelectorAll('#adminFooterNav .footer-nav-btn').forEach(b => b.classList.remove('active'));
-  const footKey = page === 'acalendar' ? 'calendar' : page;
+  // "Home" in the footer nav represents the module picker; the old
+  // Leave-section landing ('dashboard') shares that same highlight since
+  // it's reached directly from Home's "Leave" button.
+  const footKey = page === 'acalendar' ? 'calendar' : (page === 'modulepicker' || page === 'dashboard') ? 'dashboard' : page;
   const footBtn = document.getElementById('foot-admin-' + footKey);
   if (footBtn) footBtn.classList.add('active');
   const backFab = document.getElementById('adminBackFab');
-  if (backFab) backFab.classList.toggle('show', page !== 'dashboard');
+  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
   if(page==='loyalty') initLoyaltyPage('admin');
@@ -4443,11 +4499,11 @@ function loadLoyaltyMyStats() {
       // date-range list (below), and Download PDF (button below).
       let html = `<div class="card">
         <div class="card-title">📊 My Overview (all-time)</div>
-        <div class="home-balance-grid" style="margin-top:8px;">
-          <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);"><div class="home-bal-val" style="color:var(--purple)">${o.totalCards}</div><div class="home-bal-lbl">Total Cards</div></div>
-          <div class="home-bal-box" style="background:var(--gold-bg,#fdf6e3);border-color:var(--gold);"><div class="home-bal-val" style="color:var(--gold-dark)">#${o.rank}${o.rankTotal?' / '+o.rankTotal:''}</div><div class="home-bal-lbl">My Rank</div></div>
-          <div class="home-bal-box" style="background:var(--blue-bg);border-color:var(--blue);"><div class="home-bal-val" style="color:var(--blue)">${o.thisMonthCards}</div><div class="home-bal-lbl">This Month</div></div>
-          <div class="home-bal-box" style="background:var(--green-bg);border-color:var(--green);"><div class="home-bal-val" style="color:var(--green)">₹${fmtNum(o.totalIncentive)}</div><div class="home-bal-lbl">Total Incentive</div></div>
+        <div class="stat-tile-row">
+          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${o.totalCards}</div><div class="stat-tile-lbl">Total Cards</div></div>
+          <div class="stat-tile" style="background:#fdf6e3;border-color:var(--gold);"><div class="stat-tile-val" style="color:var(--gold-dark)">#${o.rank}${o.rankTotal?' / '+o.rankTotal:''}</div><div class="stat-tile-lbl">My Rank</div></div>
+          <div class="stat-tile" style="background:var(--blue-bg);border-color:var(--blue);"><div class="stat-tile-val" style="color:var(--blue)">${o.thisMonthCards}</div><div class="stat-tile-lbl">This Month</div></div>
+          <div class="stat-tile" style="background:var(--green-bg);border-color:var(--green);"><div class="stat-tile-val" style="color:var(--green)">₹${fmtNum(o.totalIncentive)}</div><div class="stat-tile-lbl">Total Incentive</div></div>
         </div>
         <div style="margin-top:10px;font-size:12.5px;color:var(--text2);">
           <div>🎁 <b>Last Incentive Received:</b> ${lastInc}</div>
@@ -4618,11 +4674,11 @@ function loadLoyaltyDashboard(who) {
 
       let html = `<div class="card">
         <div class="card-title">📈 ${res.isAdmin ? 'Store-Wide Overview' : 'My Overview'}</div>
-        <div class="home-balance-grid" style="margin-top:8px;">
-          <div class="home-bal-box" style="background:var(--purple-bg);border-color:var(--purple);"><div class="home-bal-val" style="color:var(--purple)">${k.totalCards}</div><div class="home-bal-lbl">Total Cards</div></div>
-          <div class="home-bal-box" style="background:var(--green-bg);border-color:var(--green);"><div class="home-bal-val" style="color:var(--green)">${k.approvedCards}</div><div class="home-bal-lbl">Approved</div></div>
-          <div class="home-bal-box" style="background:var(--orange-bg);border-color:var(--orange);"><div class="home-bal-val" style="color:var(--orange)">${k.pendingCards}</div><div class="home-bal-lbl">Pending</div></div>
-          <div class="home-bal-box" style="background:var(--blue-bg);border-color:var(--blue);"><div class="home-bal-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="home-bal-lbl">Pending Amount</div></div>
+        <div class="stat-tile-row">
+          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${k.totalCards}</div><div class="stat-tile-lbl">Total Cards</div></div>
+          <div class="stat-tile" style="background:var(--green-bg);border-color:var(--green);"><div class="stat-tile-val" style="color:var(--green)">${k.approvedCards}</div><div class="stat-tile-lbl">Approved</div></div>
+          <div class="stat-tile" style="background:var(--orange-bg);border-color:var(--orange);"><div class="stat-tile-val" style="color:var(--orange)">${k.pendingCards}</div><div class="stat-tile-lbl">Pending</div></div>
+          <div class="stat-tile" style="background:var(--blue-bg);border-color:var(--blue);"><div class="stat-tile-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="stat-tile-lbl">Pending Amount</div></div>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:10px;">🌱 Fresh Start (01-Apr): <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)} &nbsp;|&nbsp; 📆 This Month: <b>${k.thisMonthCards}</b> cards</div>
       </div>`;
