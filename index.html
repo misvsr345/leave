@@ -263,6 +263,21 @@ body {
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   border-color: var(--gold); background: #fff; box-shadow: 0 0 0 3px rgba(212,168,67,0.15);
 }
+/* Rich dropdown look applied to EVERY <select> on the site, not just
+   ones wrapped in .form-group — a bare <select> with no wrapper (like
+   the Settings person-pickers) used to fall back to the ugly native
+   browser dropdown; this fixes that everywhere at once. */
+select {
+  width: 100%; padding: 12px 40px 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
+  font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--card);
+  outline: none; transition: all 0.2s; cursor: pointer;
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b21a8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 18px;
+}
+select:hover { border-color: var(--purple-mid); }
+select:focus { border-color: var(--gold); background-color: #fff; box-shadow: 0 0 0 3px rgba(212,168,67,0.15); }
+select option { font-family: 'DM Sans', sans-serif; padding: 8px; }
 .form-group select {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
   cursor: pointer; padding-right: 40px;
@@ -1986,7 +2001,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyj57fpU5d-GF0BAB3ouzBFVNbbbisoXl6FZZo_s9PYGXAOq6iSub_WOyYlIXuQpL5YlQ/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz0Z2MY7uW89TItgMXbWzAk5IVW_2dhDAF3urKGx0SXgU-zEMIW2nTnn7YQynYbUAP9Sw/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -3568,14 +3583,15 @@ async function loadDirectActionPage() {
   // each individual button below is still gated to its own specific
   // sub-permission — someone granted only "Approve" never sees Reject/Absent.
   const perms = state.loyaltyPerms;
-  const hasAnyDirectPerm = isMisOrDirector || (perms && (perms.direct_approve || perms.direct_reject || perms.direct_absent));
+  const sectionLeaveOn = isMisOrDirector || !perms || perms.section_leave !== false;
+  const hasAnyDirectPerm = isMisOrDirector || (sectionLeaveOn && perms && (perms.direct_approve || perms.direct_reject || perms.direct_absent));
   document.getElementById('directAccessDenied').style.display = hasAnyDirectPerm ? 'none' : 'block';
   document.getElementById('directActionFormWrap').style.display = hasAnyDirectPerm ? '' : 'none';
   if (!hasAnyDirectPerm) return;
 
-  const canApprove = isMisOrDirector || !!(perms && perms.direct_approve);
-  const canReject  = isMisOrDirector || !!(perms && perms.direct_reject);
-  const canAbsent  = isMisOrDirector || !!(perms && perms.direct_absent);
+  const canApprove = isMisOrDirector || !!(sectionLeaveOn && perms && perms.direct_approve);
+  const canReject  = isMisOrDirector || !!(sectionLeaveOn && perms && perms.direct_reject);
+  const canAbsent  = isMisOrDirector || !!(sectionLeaveOn && perms && perms.direct_absent);
   const approveBtn = document.getElementById('directApproveBtn');
   const rejectBtn  = document.getElementById('directRejectBtn');
   const absentBtn  = document.getElementById('directAbsentBtn');
@@ -3713,8 +3729,9 @@ async function loadBlockedDatesPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
   const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
   const perms = state.loyaltyPerms;
-  const canDates = isMisOrDirector || !!(perms && perms.blocked_dates);
-  const canDays  = isMisOrDirector || !!(perms && perms.blocked_days);
+  const sectionLeaveOnB = isMisOrDirector || !perms || perms.section_leave !== false;
+  const canDates = isMisOrDirector || !!(sectionLeaveOnB && perms && perms.blocked_dates);
+  const canDays  = isMisOrDirector || !!(sectionLeaveOnB && perms && perms.blocked_days);
   const allowed = canDates || canDays;
   document.getElementById('blockedAccessDenied').style.display = allowed ? 'none' : 'block';
   document.getElementById('blockedManageWrap').style.display = allowed ? '' : 'none';
@@ -3968,11 +3985,31 @@ async function onSettingsAdminSelected() {
     if (!res.ok) throw new Error(res.error);
     const perms = res.permissions || {};
     const features = res.features || [];
+    window.__leaveSectionKeys = res.leaveSectionKeys || [];
+    window.__loyaltySectionKeys = res.loyaltySectionKeys || [];
 
     let html = `<div class="card" style="padding:10px 14px;margin-bottom:8px;">
       <div style="font-weight:700;font-size:13.5px;">${admin.name}</div>
       <div style="font-size:11.5px;color:var(--text3);">${admin.role} · ${admin.email}</div>
     </div>`;
+
+    // Section master switches — a one-click way to kill an entire
+    // section for this person, instead of unticking 8-10 items one by
+    // one. Default ON (checked); unticking overrides every individual
+    // sub-permission below it, even ones that stay ticked.
+    html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;background:linear-gradient(135deg,#fdf6e3,#fff);border-color:var(--gold);">
+      <div style="font-size:11.5px;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">⚡ Section Master Switch</div>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_leave" ${perms.section_leave ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Leave Section — entire section on/off</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_loyalty" ${perms.section_loyalty ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">💳 Loyalty Card Section — entire section on/off</span>
+      </label>
+      <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
+    </div>`;
+
     features.forEach(f => {
       const subs = f.subs || [];
       const anyOn = subs.some(s => !!perms[s.key]);
@@ -4025,6 +4062,10 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
     page: 'saveIndividualAdminPermsAPI', targetEmail, targetName, targetRole,
     callerRole: state.adminRole, callerEmail: state.adminEmail
   };
+  const leaveMaster = document.getElementById('sectionMasterCheck_leave');
+  const loyaltyMaster = document.getElementById('sectionMasterCheck_loyalty');
+  if (leaveMaster) payload.section_leave = leaveMaster.checked ? 'true' : 'false';
+  if (loyaltyMaster) payload.section_loyalty = loyaltyMaster.checked ? 'true' : 'false';
   document.querySelectorAll('.settings-perm-check').forEach(cb => {
     payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
   });
@@ -4239,9 +4280,15 @@ async function applyAdminRoleRestrictions() {
   }
   state.loyaltyPerms = perms;
 
+  // Section masters override everything under them — a feature only
+  // shows if BOTH its own sub-permission AND its section master are true.
+  const sectionLeaveOn = perms.section_leave !== false;   // undefined/missing = treat as on (safe default)
+  const sectionLoyaltyOn = perms.section_loyalty !== false;
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
-    const enabled = subKeys.some(k => !!perms[k]);
+    const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
+    const sectionOn = isLoyaltyFeature ? sectionLoyaltyOn : sectionLeaveOn;
+    const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = enabled ? '' : 'none';
@@ -4701,7 +4748,8 @@ function runLoyaltySearch(who) {
   // MIS/Director (state.loyaltyPerms === null) always get full data. A
   // restricted Admin User only gets it if MIS specifically granted the
   // loySearch_fulldata sub-permission in Settings.
-  const fullData = who === 'admin' ? ((state.loyaltyPerms === null) || !!(state.loyaltyPerms && state.loyaltyPerms.loySearch_fulldata)) : false;
+  const sectionLoyaltyOnS = (state.loyaltyPerms === null) || state.loyaltyPerms.section_loyalty !== false;
+  const fullData = who === 'admin' ? ((state.loyaltyPerms === null) || !!(sectionLoyaltyOnS && state.loyaltyPerms && state.loyaltyPerms.loySearch_fulldata)) : false;
   resultsEl.innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
 
   jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role, fullData: fullData ? '1' : '0' })
@@ -6293,7 +6341,8 @@ async function loadNoticesForAdmin() {
   // and the Save button (plus the formatting toolbar) is hidden.
   const roleUp = (state.adminRole || '').toUpperCase();
   const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
-  const canEdit = isMisOrDirector || !!(state.loyaltyPerms && state.loyaltyPerms.notices_edit);
+  const sectionLeaveOnN = isMisOrDirector || !state.loyaltyPerms || state.loyaltyPerms.section_leave !== false;
+  const canEdit = isMisOrDirector || !!(sectionLeaveOnN && state.loyaltyPerms && state.loyaltyPerms.notices_edit);
   box.readOnly = !canEdit;
   const saveBtn = document.getElementById('saveNoticesBtn');
   if (saveBtn) saveBtn.style.display = canEdit ? '' : 'none';
