@@ -871,7 +871,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="quick-actions-title">⚡ Choose a Section</div>
         <div class="quick-actions-grid">
           <div class="quick-action-btn" onclick="showEmpPage('overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
+          <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
         </div>
       </div>
     </div>
@@ -1351,14 +1351,14 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Store-wide overview</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-timeline')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Timeline</div><div class="quick-action-sub">One person or all</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-cardhist')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Card History</div><div class="quick-action-sub">Every card enrolled</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-kyc')"><span class="quick-action-icon">📋</span><div class="quick-action-label">KYC Report</div><div class="quick-action-sub">Incomplete records</div></div>
+        <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
+        <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
+        <div class="quick-action-btn" id="adminQALoyDash" onclick="showAdminPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Store-wide overview</div></div>
+        <div class="quick-action-btn" id="adminQALoyTimeline" onclick="showAdminPage('loyalty-timeline')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Timeline</div><div class="quick-action-sub">One person or all</div></div>
+        <div class="quick-action-btn" id="adminQALoyUpcoming" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
+        <div class="quick-action-btn" id="adminQALoyCardhist" onclick="showAdminPage('loyalty-cardhist')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Card History</div><div class="quick-action-sub">Every card enrolled</div></div>
+        <div class="quick-action-btn" id="adminQALoyIncenthist" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
+        <div class="quick-action-btn" id="adminQALoyKyc" onclick="showAdminPage('loyalty-kyc')"><span class="quick-action-icon">📋</span><div class="quick-action-label">KYC Report</div><div class="quick-action-sub">Incomplete records</div></div>
       </div>
     </div>
 
@@ -1524,9 +1524,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="card">
           <div class="card-title">⚡ Outcome</div>
           <div class="quick-actions-grid" style="grid-template-columns:1fr 1fr 1fr;">
-            <button class="btn-sm btn-approve" style="width:100%;height:40px;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
-            <button class="btn-sm btn-absent" style="width:100%;height:40px;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
-            <button class="btn-sm btn-reject" style="width:100%;height:40px;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
+            <button class="btn-sm btn-approve" id="directApproveBtn" style="width:100%;height:40px;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
+            <button class="btn-sm btn-absent" id="directAbsentBtn" style="width:100%;height:40px;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
+            <button class="btn-sm btn-reject" id="directRejectBtn" style="width:100%;height:40px;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:10px;">This directly writes an entry (no pending request needed) — same as the Sheets-side "Direct Approve / Reject / Absent" tool. A rejection reason is required for Reject.</div>
         </div>
@@ -1595,25 +1595,29 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="empty-state"><span class="emoji">🔒</span><p>This tool is for MIS/Director only.</p></div>
       </div>
       <div id="blockedManageWrap">
-        <div class="card">
-          <div class="card-title">📅 Add a Blocked Date</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No leave can be approved on a blocked date — applications for that day will be auto-rejected.</p>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;"><label>Date *</label><input type="date" id="blockDateInput"></div>
-            <div class="form-group" style="flex:1;"><label>Reason (optional)</label><input type="text" id="blockDateReason" placeholder="e.g. Diwali, Stock Audit"></div>
+        <div id="blockedDatesSection">
+          <div class="card">
+            <div class="card-title">📅 Add a Blocked Date</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No leave can be approved on a blocked date — applications for that day will be auto-rejected.</p>
+            <div class="form-row">
+              <div class="form-group" style="flex:1;"><label>Date *</label><input type="date" id="blockDateInput"></div>
+              <div class="form-group" style="flex:1;"><label>Reason (optional)</label><input type="text" id="blockDateReason" placeholder="e.g. Diwali, Stock Audit"></div>
+            </div>
+            <button class="btn-primary" id="addBlockDateBtn" onclick="addBlockedDate()">🚫 Block This Date</button>
           </div>
-          <button class="btn-primary" id="addBlockDateBtn" onclick="addBlockedDate()">🚫 Block This Date</button>
+
+          <div class="card">
+            <div class="card-title">📆 Currently Blocked Dates</div>
+            <div id="blockedDatesList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">📆 Currently Blocked Dates</div>
-          <div id="blockedDatesList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">🗓️ Blocked Weekdays</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Toggle ON to block leave applications on that weekday every week (e.g. block Sundays).</p>
-          <div id="blockedDaysList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+        <div id="blockedDaysSection">
+          <div class="card">
+            <div class="card-title">🗓️ Blocked Weekdays</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Toggle ON to block leave applications on that weekday every week (e.g. block Sundays).</p>
+            <div id="blockedDaysList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1625,11 +1629,29 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="empty-state"><span class="emoji">🔒</span><p>This page is for MIS/Director only.</p></div>
       </div>
       <div id="settingsWrap">
-        <div class="card">
-          <div class="card-title">🔐 Store Manager — Feature Lock/Unlock</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Lock 🔒 a feature to hide it from Store Manager logins. Unlock 🔓 to let them use it. Pending Approvals is always visible and can't be locked.</p>
-          <div id="settingsSMPermList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-          <button class="btn-primary" id="settingsSaveSMBtn" onclick="saveSMPermissionsFromSettings()" style="margin-top:12px;">💾 Save Access Settings</button>
+        <div class="filter-bar" style="margin-bottom:12px;">
+          <button class="filter-btn active" id="settingsTab-emp" onclick="switchSettingsTab('emp')">👤 Employee Access</button>
+          <button class="filter-btn" id="settingsTab-admin" onclick="switchSettingsTab('admin')">🔑 Admin Access</button>
+        </div>
+
+        <!-- EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off -->
+        <div id="settingsEmpPane">
+          <div class="card">
+            <div class="card-title">👤 Select Employee</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick an employee by name to control their Loyalty Card access individually — e.g. turn it off for staff (like CRM) who don't need it.</p>
+            <select id="settingsEmpSelect" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
+          </div>
+          <div id="settingsEmpPermBody"></div>
+        </div>
+
+        <!-- ADMIN ACCESS PANEL — per-person, full feature accordion -->
+        <div id="settingsAdminPane" style="display:none;">
+          <div class="card">
+            <div class="card-title">🔑 Select Admin</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick a non-MIS/Director admin by name (Director shown separately as always-full-access; Director/EA/Manager/Store Manager/Asst Manager etc. all appear here individually — access is set per PERSON, not per job title).</p>
+            <select id="settingsAdminSelect" onchange="onSettingsAdminSelected()"><option value="">-- Loading admins... --</option></select>
+          </div>
+          <div id="settingsAdminPermBody"></div>
         </div>
 
         <div class="card">
@@ -1980,6 +2002,7 @@ let state = {
   empId: '', empName: '', empDept: '', empCounter: '', empEmail: '', empDesig: '',
   empBalance: 0, empQuota: 3, empUsed: 0, empExtraLeave: 0, empLeaves: [],
   adminEmail: '', adminRole: '', adminName: '', adminDesig: '', isStoreManager: false,
+  isRestrictedAdmin: false, loyaltyPerms: null,
   allLeaves: [], calEvents: [], calBirthdays: [],
   calYear: new Date().getFullYear(), calMonth: new Date().getMonth(), calSelectedDate: null,
   adminCalYear: new Date().getFullYear(), adminCalMonth: new Date().getMonth(), adminCalSelectedDate: null,
@@ -2535,6 +2558,7 @@ async function empLogin() {
         showEmpPage('modulepicker');
         loadEmpData();
         checkLoyaltyAlerts('emp');
+        checkEmpLoyaltyAccess();
         toast('Welcome, ' + state.empName + '!', 'success');
       } else {
         document.getElementById('empLoginErr').style.display = 'block';
@@ -2560,6 +2584,11 @@ async function adminLogin() {
         state.adminDesig = res.designation || '';
         const roleUp = state.adminRole.toUpperCase();
         state.isStoreManager = (roleUp.indexOf('STORE') > -1 || roleUp.indexOf('MANAGER') > -1) && roleUp.indexOf('MIS') === -1;
+        // Any admin whose role is NOT MIS or Director is a permission-
+        // gated "Admin User" — this covers Store Manager and any other
+        // role text someone adds to the Authorities sheet later, all
+        // controlled by the same Settings checkboxes.
+        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1 && roleUp.indexOf('DIRECTOR') === -1;
         state.__loginKind = 'admin';
         resetIdleTimer();
         saveSession();
@@ -3533,10 +3562,26 @@ let directEmpCache = [];
 
 async function loadDirectActionPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
-  const allowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
-  document.getElementById('directAccessDenied').style.display = allowed ? 'none' : 'block';
-  document.getElementById('directActionFormWrap').style.display = allowed ? '' : 'none';
-  if (!allowed) return;
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  // MIS/Director always allowed. A restricted Admin User is allowed IN
+  // (menu visibility already required at least one sub-permission), but
+  // each individual button below is still gated to its own specific
+  // sub-permission — someone granted only "Approve" never sees Reject/Absent.
+  const perms = state.loyaltyPerms;
+  const hasAnyDirectPerm = isMisOrDirector || (perms && (perms.direct_approve || perms.direct_reject || perms.direct_absent));
+  document.getElementById('directAccessDenied').style.display = hasAnyDirectPerm ? 'none' : 'block';
+  document.getElementById('directActionFormWrap').style.display = hasAnyDirectPerm ? '' : 'none';
+  if (!hasAnyDirectPerm) return;
+
+  const canApprove = isMisOrDirector || !!(perms && perms.direct_approve);
+  const canReject  = isMisOrDirector || !!(perms && perms.direct_reject);
+  const canAbsent  = isMisOrDirector || !!(perms && perms.direct_absent);
+  const approveBtn = document.getElementById('directApproveBtn');
+  const rejectBtn  = document.getElementById('directRejectBtn');
+  const absentBtn  = document.getElementById('directAbsentBtn');
+  if (approveBtn) approveBtn.style.display = canApprove ? '' : 'none';
+  if (rejectBtn)  rejectBtn.style.display  = canReject  ? '' : 'none';
+  if (absentBtn)  absentBtn.style.display  = canAbsent  ? '' : 'none';
 
   const t = todayYMD();
   document.getElementById('directStartDate').value = t;
@@ -3666,10 +3711,19 @@ const WEEKDAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Satur
 
 async function loadBlockedDatesPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
-  const allowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const perms = state.loyaltyPerms;
+  const canDates = isMisOrDirector || !!(perms && perms.blocked_dates);
+  const canDays  = isMisOrDirector || !!(perms && perms.blocked_days);
+  const allowed = canDates || canDays;
   document.getElementById('blockedAccessDenied').style.display = allowed ? 'none' : 'block';
   document.getElementById('blockedManageWrap').style.display = allowed ? '' : 'none';
   if (!allowed) return;
+
+  const datesSection = document.getElementById('blockedDatesSection');
+  const daysSection = document.getElementById('blockedDaysSection');
+  if (datesSection) datesSection.style.display = canDates ? '' : 'none';
+  if (daysSection)  daysSection.style.display  = canDays  ? '' : 'none';
 
   document.getElementById('blockDateInput').value = todayYMD();
   document.getElementById('blockDateReason').value = '';
@@ -3805,78 +3859,188 @@ async function toggleBlockedDay(day, enabled) {
 // a Store Manager login can see, using the same backend as SM Access
 // Control, presented here as a dedicated Settings page.
 // ══════════════════════════════════════
-const SETTINGS_FEATURE_LABELS = {
-  allleaves: '📋 All Leaves (full history)',
-  calendar:  '📅 Calendar',
-  balance:   '💰 Leave Balance',
-  empwise:   '👤 Employee Wise Profile',
-  events:    '📆 Events (birthdays & holidays)',
-  availability: '🗓️ Team Availability',
-  loyalty: '💳 Loyalty Card',
-  direct:    '🎯 Direct Action (Approve/Absent/Reject)',
-  notices:   '📢 Edit Notices & Rules',
-  blocked:   '🚫 Blocked Dates & Days'
-};
-
 async function loadSettingsPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
   const allowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
   document.getElementById('settingsAccessDenied').style.display = allowed ? 'none' : 'block';
   document.getElementById('settingsWrap').style.display = allowed ? '' : 'none';
   if (!allowed) return;
+  switchSettingsTab('emp');
+}
 
-  const listEl = document.getElementById('settingsSMPermList');
-  listEl.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+function switchSettingsTab(tab) {
+  document.getElementById('settingsTab-emp').classList.toggle('active', tab === 'emp');
+  document.getElementById('settingsTab-admin').classList.toggle('active', tab === 'admin');
+  document.getElementById('settingsEmpPane').style.display = tab === 'emp' ? 'block' : 'none';
+  document.getElementById('settingsAdminPane').style.display = tab === 'admin' ? 'block' : 'none';
+  if (tab === 'emp') loadSettingsEmpList();
+  if (tab === 'admin') loadSettingsAdminList();
+}
 
+// ── EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off ──
+async function loadSettingsEmpList() {
+  const sel = document.getElementById('settingsEmpSelect');
+  if (sel.dataset.loaded === '1') return;
   try {
-    const res = await jsonpReliable({ page: 'getSMPermissionsAPI' });
-    if (!res.ok) throw new Error(res.error || 'Load failed');
-    const perms = res.permissions || {};
-    let html = '';
-    Object.keys(SETTINGS_FEATURE_LABELS).forEach(key => {
-      const isUnlocked = !!perms[key];
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid var(--border);">
-        <span style="font-size:13px;font-weight:600;color:var(--text2);">${SETTINGS_FEATURE_LABELS[key]}</span>
-        <button class="btn-sm ${isUnlocked?'btn-approve':'btn-reject'}" id="lock_${key}" data-key="${key}" data-state="${isUnlocked?'unlocked':'locked'}" onclick="toggleFeatureLock('${key}')" style="min-width:100px;">
-          ${isUnlocked ? '🔓 Unlocked' : '🔒 Locked'}
-        </button>
-      </div>`;
-    });
-    listEl.innerHTML = html;
+    const res = await jsonpReliable({ page: 'listEmployeesForPermsAPI' });
+    if (!res.ok) throw new Error(res.error);
+    window.__settingsEmpList = res.employees || [];
+    sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+      res.employees.map(e => `<option value="${escJs(e.empId)}">${e.name} (${e.empId})</option>`).join('');
+    sel.dataset.loaded = '1';
   } catch(e) {
-    listEl.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load settings</p></div>';
+    sel.innerHTML = '<option value="">Could not load employees</option>';
   }
 }
 
-function toggleFeatureLock(key) {
-  const btn = document.getElementById('lock_' + key);
-  const isUnlocked = btn.dataset.state === 'unlocked';
-  const newState = !isUnlocked;
-  btn.dataset.state = newState ? 'unlocked' : 'locked';
-  btn.textContent = newState ? '🔓 Unlocked' : '🔒 Locked';
-  btn.className = 'btn-sm ' + (newState ? 'btn-approve' : 'btn-reject');
-  btn.style.minWidth = '100px';
+function onSettingsEmpSelected() {
+  const empId = document.getElementById('settingsEmpSelect').value;
+  const body = document.getElementById('settingsEmpPermBody');
+  if (!empId) { body.innerHTML = ''; return; }
+  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
+  if (!emp) { body.innerHTML = ''; return; }
+
+  body.innerHTML = `<div class="card">
+    <div class="card-title">${emp.name} (${emp.empId})</div>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLoyaltyAccessCheck" ${emp.loyaltyAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">💳 Loyalty Card Access</span>
+    </label>
+    <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see the Loyalty Card module at all after their next login. On (default) = full employee-level Loyalty access, same as everyone else.</p>
+    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" onclick="saveSettingsEmpAccess('${escJs(empId)}','${escJs(emp.name)}')">💾 Save Access for ${emp.name}</button>
+  </div>`;
 }
 
-async function saveSMPermissionsFromSettings() {
-  const payload = { page: 'saveSMPermissionsAPI', role: state.adminRole, adminEmail: state.adminEmail };
-  Object.keys(SETTINGS_FEATURE_LABELS).forEach(key => {
-    const btn = document.getElementById('lock_' + key);
-    payload[key] = (btn && btn.dataset.state === 'unlocked') ? 'true' : 'false';
-  });
-
-  const idem = makeIdemKey(['smperms', state.adminEmail, Date.now()]);
+async function saveSettingsEmpAccess(empId, empName) {
+  const enabled = document.getElementById('empLoyaltyAccessCheck').checked;
+  const payload = {
+    page: 'saveEmployeeLoyaltyAccessAPI', empId, empName, enabled: enabled ? 'true' : 'false',
+    callerRole: state.adminRole, callerEmail: state.adminEmail
+  };
+  const idem = makeIdemKey(['emplaccess', empId, Date.now()]);
   if (isDuplicateSubmission(idem)) { toast('Already saving, please wait...', 'info'); return; }
-  await withButtonLock(document.getElementById('settingsSaveSMBtn'), '⏳ Saving...', async () => {
+  await withButtonLock(document.getElementById('settingsSaveEmpBtn'), '⏳ Saving...', async () => {
     try {
       const res = await jsonpWriteOnce(payload, idem);
       if (res.ok) {
-        toast('✅ Store Manager access settings saved', 'success');
+        toast('✅ Access saved for ' + empName, 'success');
+        const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
+        if (emp) emp.loyaltyAccess = enabled;
       } else {
         toast(res.error || 'Save failed', 'error');
       }
     } catch(e) {
-      toast('⚠️ No confirmation from server — reload Settings to verify before saving again.', 'error');
+      toast('⚠️ No confirmation from server — reselect this employee to verify before saving again.', 'error');
+    }
+  });
+}
+
+// ── ADMIN ACCESS PANEL — per-person, full feature accordion ──
+async function loadSettingsAdminList() {
+  const sel = document.getElementById('settingsAdminSelect');
+  if (sel.dataset.loaded === '1') return;
+  try {
+    const res = await jsonpReliable({ page: 'listAdminUsersForPermsAPI' });
+    if (!res.ok) throw new Error(res.error);
+    window.__settingsAdminList = res.admins || [];
+    if (res.admins.length === 0) {
+      sel.innerHTML = '<option value="">No other admins found in Authorities sheet</option>';
+    } else {
+      sel.innerHTML = '<option value="">-- Select Admin --</option>' +
+        res.admins.map(a => `<option value="${escJs(a.email)}">${a.name} — ${a.role}</option>`).join('');
+    }
+    sel.dataset.loaded = '1';
+  } catch(e) {
+    sel.innerHTML = '<option value="">Could not load admins</option>';
+  }
+}
+
+async function onSettingsAdminSelected() {
+  const email = document.getElementById('settingsAdminSelect').value;
+  const body = document.getElementById('settingsAdminPermBody');
+  if (!email) { body.innerHTML = ''; return; }
+  const admin = (window.__settingsAdminList || []).find(a => a.email === email);
+  if (!admin) { body.innerHTML = ''; return; }
+
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonpReliable({ page: 'getIndividualAdminPermsAPI', email });
+    if (!res.ok) throw new Error(res.error);
+    const perms = res.permissions || {};
+    const features = res.features || [];
+
+    let html = `<div class="card" style="padding:10px 14px;margin-bottom:8px;">
+      <div style="font-weight:700;font-size:13.5px;">${admin.name}</div>
+      <div style="font-size:11.5px;color:var(--text3);">${admin.role} · ${admin.email}</div>
+    </div>`;
+    features.forEach(f => {
+      const subs = f.subs || [];
+      const anyOn = subs.some(s => !!perms[s.key]);
+      html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
+        <div onclick="toggleSettingsAccordion('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
+          <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
+            <span id="acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
+          </span>
+        </div>
+        <div id="acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
+      subs.forEach(s => {
+        const checked = !!perms[s.key];
+        html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+          <input type="checkbox" class="settings-perm-check" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="onSettingsCheckChange('${f.key}')">
+          <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
+        </label>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `<button class="btn-primary" id="settingsSaveAdminBtn" style="width:100%;margin-top:6px;" onclick="saveSettingsAdminAccess('${escJs(admin.email)}','${escJs(admin.name)}','${escJs(admin.role)}')">💾 Save Access for ${admin.name}</button>`;
+    body.innerHTML = html;
+  } catch(e) {
+    body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load this admin&#39;s permissions</p></div>';
+  }
+}
+
+function toggleSettingsAccordion(key) {
+  const body = document.getElementById('acc_body_' + key);
+  const arrow = document.getElementById('acc_arrow_' + key);
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▾' : '▴';
+}
+
+// Live-updates the ON/OFF badge and header tint the instant a checkbox
+// changes, so MIS gets immediate visual feedback before even saving.
+function onSettingsCheckChange(featureKey) {
+  const header = document.querySelector(`#acc_body_${featureKey}`).previousElementSibling;
+  const anyOn = Array.from(document.querySelectorAll(`#acc_body_${featureKey} .settings-perm-check`)).some(cb => cb.checked);
+  header.style.background = anyOn ? 'var(--green-bg)' : '#fff';
+  const pill = header.querySelector('.pill');
+  pill.style.background = anyOn ? 'var(--green)' : '#ddd';
+  pill.textContent = anyOn ? 'ON' : 'OFF';
+}
+
+async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
+  const payload = {
+    page: 'saveIndividualAdminPermsAPI', targetEmail, targetName, targetRole,
+    callerRole: state.adminRole, callerEmail: state.adminEmail
+  };
+  document.querySelectorAll('.settings-perm-check').forEach(cb => {
+    payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
+  });
+
+  const idem = makeIdemKey(['adminaccess', targetEmail, Date.now()]);
+  if (isDuplicateSubmission(idem)) { toast('Already saving, please wait...', 'info'); return; }
+  await withButtonLock(document.getElementById('settingsSaveAdminBtn'), '⏳ Saving...', async () => {
+    try {
+      const res = await jsonpWriteOnce(payload, idem);
+      if (res.ok) {
+        toast('✅ Access saved for ' + targetName, 'success');
+      } else {
+        toast(res.error || 'Save failed', 'error');
+      }
+    } catch(e) {
+      toast('⚠️ No confirmation from server — reselect this admin to verify before saving again.', 'error');
     }
   });
 }
@@ -4018,11 +4182,36 @@ const SM_FEATURE_ELEMENTS = {
   loyalty: ['adminQALoyalty'],
   direct:    ['adminQADirect'],
   notices:   ['adminQANotices'],
-  blocked:   ['adminQABlocked']
+  blocked:   ['adminQABlocked'],
+  loySearch:     ['adminQALoySearch'],
+  loyStats:      ['adminQALoyStats'],
+  loyDash:       ['adminQALoyDash'],
+  loyTimeline:   ['adminQALoyTimeline'],
+  loyUpcoming:   ['adminQALoyUpcoming'],
+  loyCardhist:   ['adminQALoyCardhist'],
+  loyIncenthist: ['adminQALoyIncenthist'],
+  loyKyc:        ['adminQALoyKyc']
+};
+
+// Which flat sub-permission keys back each top-level menu item — a menu
+// button is shown if AT LEAST ONE of its sub-permissions is enabled
+// (e.g. "Direct Action" stays visible if only Approve is granted; the
+// individual Approve/Reject/Absent buttons are then further gated inside
+// their own page — see applyDirectActionSubPerms etc below).
+const FEATURE_SUBKEYS = {
+  allleaves: ['allleaves'], calendar: ['calendar'], balance: ['balance'],
+  empwise: ['empwise'], events: ['events'], availability: ['availability'],
+  pending: ['pending'], loyalty: ['loyalty'],
+  direct: ['direct_approve','direct_reject','direct_absent'],
+  notices: ['notices_view','notices_edit'],
+  blocked: ['blocked_dates','blocked_days'],
+  loySearch: ['loySearch','loySearch_fulldata'], loyStats: ['loyStats'],
+  loyDash: ['loyDash'], loyTimeline: ['loyTimeline'], loyUpcoming: ['loyUpcoming'],
+  loyCardhist: ['loyCardhist'], loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc']
 };
 
 async function applyAdminRoleRestrictions() {
-  const restrict = state.isStoreManager;
+  const restrict = state.isRestrictedAdmin;
   const settingsQA = document.getElementById('adminQASettings');
   if (settingsQA) settingsQA.style.display = restrict ? 'none' : '';
 
@@ -4032,22 +4221,27 @@ async function applyAdminRoleRestrictions() {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
+    state.loyaltyPerms = null; // null = unrestricted (full access everywhere)
     const pendingTitle = document.querySelector('#admin-pending .section-title2');
     if(pendingTitle) pendingTitle.textContent = '⏳ Pending Approvals';
     return;
   }
 
-  // Store Manager — fetch real permissions and show only what's enabled
+  // Restricted Admin User (Store Manager or any other non-MIS/Director
+  // role) — fetch THIS SPECIFIC ADMIN'S own individually-configured
+  // permissions (by their email) and show only what's enabled for them.
   let perms = {};
   try {
-    const res = await jsonpReliable({ page: 'getSMPermissionsAPI' });
+    const res = await jsonpReliable({ page: 'getIndividualAdminPermsAPI', email: state.adminEmail });
     if (res.ok) perms = res.permissions || {};
   } catch(e) {
     // If permissions can't load, fail safe: show nothing extra (Pending only)
   }
+  state.loyaltyPerms = perms;
 
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
-    const enabled = !!perms[key];
+    const subKeys = FEATURE_SUBKEYS[key] || [key];
+    const enabled = subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = enabled ? '' : 'none';
@@ -4060,6 +4254,8 @@ async function applyAdminRoleRestrictions() {
 }
 function resetAdminRoleRestrictions() {
   state.isStoreManager = false;
+  state.isRestrictedAdmin = false;
+  state.loyaltyPerms = null;
   Object.values(SM_FEATURE_ELEMENTS).flat().forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = '';
@@ -4345,6 +4541,18 @@ function closeLoyaltyAlertModal() {
   document.getElementById('loyAlertModal').classList.remove('open');
 }
 
+// Hides the Loyalty Card module button for this specific employee if
+// MIS has explicitly removed their access (default is always ON —
+// nothing to fetch/hide unless a row exists in Employee_Loyalty_Access).
+function checkEmpLoyaltyAccess() {
+  jsonpReliable({ page: 'getEmployeeLoyaltyAccessAPI', empId: state.empId })
+    .then(res => {
+      const btn = document.getElementById('empQALoyaltyModule');
+      if (btn) btn.style.display = (res && res.ok && res.hasAccess === false) ? 'none' : '';
+    })
+    .catch(() => { /* fail open — never hide access due to a network blip */ });
+}
+
 // ══════════════════════════════════════
 // NEW CARD ENTRY (employee only) — writes a new row straight into the
 // Loyalty spreadsheet's master sheet, same effect as a Google Form
@@ -4490,9 +4698,13 @@ function runLoyaltySearch(who) {
   // non-admin roles; the "own data" restriction applies only to the
   // separate "My Incentive" cards/earnings stats, not to search.
   const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  // MIS/Director (state.loyaltyPerms === null) always get full data. A
+  // restricted Admin User only gets it if MIS specifically granted the
+  // loySearch_fulldata sub-permission in Settings.
+  const fullData = who === 'admin' ? ((state.loyaltyPerms === null) || !!(state.loyaltyPerms && state.loyaltyPerms.loySearch_fulldata)) : false;
   resultsEl.innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
 
-  jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role })
+  jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role, fullData: fullData ? '1' : '0' })
     .then(res => renderLoyaltyResults(res, resultsEl))
     .catch(err => { resultsEl.innerHTML = '<div class="empty-state"><p>Search failed: ' + err.message + '</p></div>'; });
 }
@@ -6075,7 +6287,20 @@ async function loadNoticesForAdmin() {
   box.value = state.noticesHtml;
   updateNoticesPreview();
   box.oninput = updateNoticesPreview;
+
+  // A restricted Admin User with only notices_view (not notices_edit)
+  // can read the notices but not change them — editor goes read-only
+  // and the Save button (plus the formatting toolbar) is hidden.
+  const roleUp = (state.adminRole || '').toUpperCase();
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const canEdit = isMisOrDirector || !!(state.loyaltyPerms && state.loyaltyPerms.notices_edit);
+  box.readOnly = !canEdit;
+  const saveBtn = document.getElementById('saveNoticesBtn');
+  if (saveBtn) saveBtn.style.display = canEdit ? '' : 'none';
+  const toolbar = document.querySelector('.editor-toolbar');
+  if (toolbar) toolbar.style.display = canEdit ? '' : 'none';
 }
+
 function updateNoticesPreview() {
   document.getElementById('noticesPreviewBox').innerHTML = document.getElementById('noticesEditorBox').value;
 }
