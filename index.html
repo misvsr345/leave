@@ -898,6 +898,36 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsrf-scope .emp-lock .nm{font-size:14.5px;font-weight:700;color:var(--dpurple);}
 .dsrf-scope .emp-lock .tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--dsuccess);background:#E8F5E9;padding:3px 9px;border-radius:10px;letter-spacing:.5px;}
 @media(max-width:520px){.dsrf-scope .g2{grid-template-columns:1fr;}.dsrf-scope .g3{grid-template-columns:1fr 1fr;}}
+
+/* ══════════════════════════════════════
+   KPI / DSR DATA CARDS — rich mini-stat-box layout used by the KPI and
+   DSR data pages (Target, Till Date, Monthly, Compare, Status, Missing,
+   Date Range) instead of plain stacked text lines.
+   ══════════════════════════════════════ */
+.kd-card{background:linear-gradient(180deg,#fff,var(--card));border:1.5px solid var(--border);border-left:4px solid var(--purple-mid);border-radius:var(--r2);padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 8px rgba(26,15,46,0.05);}
+.kd-card.kd-danger{border-left-color:var(--red);}
+.kd-card.kd-ok{border-left-color:var(--green);}
+.kd-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.kd-name{font-size:14.5px;font-weight:800;color:var(--text);}
+.kd-place{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--purple-bg);color:var(--purple);font-size:11px;font-weight:800;margin-right:6px;}
+.kd-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:800;letter-spacing:0.3px;}
+.kd-pill.gold{background:linear-gradient(135deg,#fdf6e3,#faedc4);color:var(--gold-dark);border:1px solid var(--gold);}
+.kd-pill.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+.kd-pill.red{background:#fde8e8;color:var(--red);border:1px solid var(--red);}
+.kd-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px;}
+.kd-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;text-align:center;}
+.kd-box .kd-ic{font-size:15px;display:block;margin-bottom:2px;}
+.kd-box .kd-val{font-size:14px;font-weight:800;color:var(--text);display:block;line-height:1.2;}
+.kd-box .kd-lbl{font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-top:2px;}
+.kd-chiprow{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.kd-chip{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:14px;background:#fde8e8;color:var(--red);border:1px solid rgba(192,57,43,0.3);}
+.kd-note{font-size:10.5px;color:var(--text3);margin-bottom:8px;}
+.kd-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2);}
+.kd-table{width:100%;border-collapse:collapse;font-size:12px;}
+.kd-table th{position:sticky;top:0;text-align:left;padding:9px 12px;background:var(--purple-bg);color:var(--purple);font-weight:700;white-space:nowrap;border-bottom:1.5px solid var(--purple-mid);}
+.kd-table td{padding:8px 12px;white-space:nowrap;border-bottom:1px solid var(--border);}
+.kd-table tr:nth-child(even) td{background:var(--bg);}
+.kd-table tr:hover td{background:var(--purple-bg);}
 </style>
 </head>
 <body>
@@ -2246,7 +2276,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQIZD9e3s7QZZoemboGLbmjG1718fubshBXyndCTphE8CFNUhdhg8P6vFhadQOMubmxQ/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8XG9u4aTNZQpfBDKTeXr7iRSZJ5gjoZyAHdPJ7AIio1hL9w4T0ypO-xs_NfxxqchlUQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -3049,7 +3079,9 @@ const SECTION_LABEL_MAP = {
   balance: 'Leave', empwise: 'Leave', events: 'Leave', availability: 'Leave',
   direct: 'Leave', notices: 'Leave', blocked: 'Leave', settings: 'Leave',
   loyalty: 'Loyalty Card', 'loyalty-dash': 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
-  'loyalty-leaderboard': 'Loyalty Card',
+  'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
+  'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
+  'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI',
   dsr: 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
@@ -3075,14 +3107,22 @@ function goToSectionDashboard(who) {
   const dash = getSectionDashboardPage(who, current);
   if (dash) (who === 'admin' ? showAdminPage : showEmpPage)(dash);
 }
-function updateSectionBackFab(who, page) {
-  const fab = document.getElementById((who === 'admin' ? 'adminSectionBackFab' : 'empSectionBackFab'));
-  if (!fab) return;
+// Shows exactly one of the two back buttons at a time:
+//  - on a section's own dashboard (or main landing / no-section pages like
+//    Emp Details) -> only the generic "← Back" (to main landing) shows
+//  - on any OTHER page inside a section -> only "↩ Back to <Section>" shows,
+//    since going to the main landing isn't the useful action there
+function updateBackFabs(who, page) {
+  const mainFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
+  const sectionFab = document.getElementById(who === 'admin' ? 'adminSectionBackFab' : 'empSectionBackFab');
   const dash = getSectionDashboardPage(who, page);
   const onDashboardItself = dash === page;
-  const showIt = !!dash && !onDashboardItself;
-  fab.classList.toggle('show', showIt);
-  if (showIt) fab.textContent = '↩ Back to ' + SECTION_LABEL_MAP[page];
+  const showSectionFab = !!dash && !onDashboardItself;
+  if (sectionFab) {
+    sectionFab.classList.toggle('show', showSectionFab);
+    if (showSectionFab) sectionFab.textContent = '↩ Back to ' + SECTION_LABEL_MAP[page];
+  }
+  if (mainFab) mainFab.classList.toggle('show', page !== 'modulepicker' && !showSectionFab);
 }
 
 function backLabelFor(page) {
@@ -3095,9 +3135,7 @@ function showEmpPage(page) {
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
   if (sec) sec.classList.add('active');
-  const backFab = document.getElementById('empBackFab');
-  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
-  updateSectionBackFab('emp', page);
+  updateBackFabs('emp', page);
   renderFooterNav('emp', page);
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
@@ -4710,9 +4748,7 @@ function showAdminPage(page) {
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
   if (sec) sec.classList.add('active');
-  const backFab = document.getElementById('adminBackFab');
-  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
-  updateSectionBackFab('admin', page);
+  updateBackFabs('admin', page);
   renderFooterNav('admin', page);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
@@ -5558,20 +5594,33 @@ function loadKpiTarget(who) {
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No target set yet.</p></div>'; return; }
     let html = '';
     res.rows.forEach(r => {
-      html += `<div class="leave-card-date" style="margin-bottom:8px;"><b>${r.employee}</b> — ${r.month}<br>
-        💳 Loyalty Target: <b>${r.loyaltyTarget}</b> &nbsp;|&nbsp; 🌟 Golden Target: <b>${r.goldenTarget}</b></div>`;
+      html += `<div class="kd-card">
+        <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill gold">📅 ${r.month}</span></div>
+        <div class="kd-stats">
+          <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyaltyTarget}</span><span class="kd-lbl">Loyalty Target</span></div>
+          <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.goldenTarget}</span><span class="kd-lbl">Golden Target</span></div>
+        </div>
+      </div>`;
     });
     box.innerHTML = html;
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
 function kpiRowCardHtml(r) {
-  return `<div class="leave-card-date" style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--border);">
-    <div style="display:flex;justify-content:space-between;"><b>#${r.place} ${r.employee}</b><span>Grade ${r.grade} — ${r.gradeLabel}</span></div>
-    <div style="margin-top:4px;">⭐ Overall Score: <b>${Number(r.overallScore).toFixed ? Number(r.overallScore).toFixed(2) : r.overallScore}</b></div>
-    <div>🛍️ Purchases: ${r.purchases} (${r.purchAchPct}) &nbsp;|&nbsp; 💳 Loyalty: ${r.loyaltyCards} (${r.loyaltyAchPct})</div>
-    <div>🌟 Golden: ${r.goldenAura} (${r.goldenAchPct}) &nbsp;|&nbsp; 🧾 DSR Score: ${r.dsrScore}</div>
-    <div>🔁 Conversion: ${r.conversionPct}</div>
+  const score = Number(r.overallScore); const scoreDisp = isNaN(score) ? r.overallScore : score.toFixed(2);
+  return `<div class="kd-card">
+    <div class="kd-head">
+      <span class="kd-name"><span class="kd-place">${r.place}</span>${r.employee}</span>
+      <span class="kd-pill gold">Grade ${r.grade} · ${r.gradeLabel}</span>
+    </div>
+    <div class="kd-stats">
+      <div class="kd-box"><span class="kd-ic">⭐</span><span class="kd-val">${scoreDisp}</span><span class="kd-lbl">Overall Score</span></div>
+      <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purch (${r.purchAchPct})</span></div>
+      <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyaltyCards}</span><span class="kd-lbl">Loyalty (${r.loyaltyAchPct})</span></div>
+      <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.goldenAura}</span><span class="kd-lbl">Golden (${r.goldenAchPct})</span></div>
+      <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.dsrScore}</span><span class="kd-lbl">DSR Score</span></div>
+      <div class="kd-box"><span class="kd-ic">🔁</span><span class="kd-val">${r.conversionPct}</span><span class="kd-lbl">Conversion</span></div>
+    </div>
   </div>`;
 }
 
@@ -5581,7 +5630,7 @@ function loadKpiTillDate(who) {
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No KPI data yet. Ask MIS to generate the KPI report.</p></div>'; return; }
-    let html = res.title ? `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${res.title}</div>` : '';
+    let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
@@ -5593,7 +5642,7 @@ function loadKpiMonthly(who) {
   jsonpReliable(kpiEmpParams(who, { page: 'kpiMonthlyJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No monthly KPI data yet.</p></div>'; return; }
-    let html = res.title ? `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${res.title}</div>` : '';
+    let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
@@ -5607,10 +5656,10 @@ function loadKpiCompare(who) {
     if (!res.generated || !res.rows.length) {
       box.innerHTML = `<div class="empty-state"><p>${res.note || 'No comparison data yet.'}</p></div>`; return;
     }
-    let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
-    html += '<tr>' + res.headers.map(h => `<th style="text-align:left;padding:6px 8px;border-bottom:1.5px solid var(--border);white-space:nowrap;">${h}</th>`).join('') + '</tr>';
+    let html = '<div class="kd-table-wrap"><table class="kd-table">';
+    html += '<tr>' + res.headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
     res.rows.forEach(r => {
-      html += '<tr>' + res.headers.map(h => `<td style="padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;">${r[h] !== undefined ? r[h] : ''}</td>`).join('') + '</tr>';
+      html += '<tr>' + res.headers.map(h => `<td>${r[h] !== undefined ? r[h] : ''}</td>`).join('') + '</tr>';
     });
     html += '</table></div>';
     box.innerHTML = html;
@@ -5629,11 +5678,19 @@ function loadDsrStatus(who) {
     let html = '';
     res.rows.forEach(r => {
       const complete = String(r.status).toLowerCase() === 'complete';
-      html += `<div class="leave-card-date" style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border);">
-        <div style="display:flex;justify-content:space-between;"><b>${r.employee}</b>
-        <span style="color:${complete ? 'var(--green)' : 'var(--red)'};font-weight:800;">${complete ? '✅' : '⏳'} ${r.status}</span></div>
-        <div>Deals: ${r.deals} &nbsp;|&nbsp; Purchases: ${r.purchases} &nbsp;|&nbsp; On-Time: ${r.onTime} &nbsp;|&nbsp; Late: ${r.late} &nbsp;|&nbsp; Missing: ${r.missing}</div>
-        <div>DSR%: <b>${r.dsrPct}</b> &nbsp;|&nbsp; Effective%: ${r.effectivePct} &nbsp;|&nbsp; ${r.dateChecked}</div>
+      html += `<div class="kd-card ${complete ? 'kd-ok' : 'kd-danger'}">
+        <div class="kd-head"><span class="kd-name">${r.employee}</span>
+          <span class="kd-pill ${complete ? 'green' : 'red'}">${complete ? '✅' : '⏳'} ${r.status}</span></div>
+        <div class="kd-stats">
+          <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
+          <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
+          <div class="kd-box"><span class="kd-ic">✅</span><span class="kd-val">${r.onTime}</span><span class="kd-lbl">On-Time</span></div>
+          <div class="kd-box"><span class="kd-ic">⏰</span><span class="kd-val">${r.late}</span><span class="kd-lbl">Late</span></div>
+          <div class="kd-box"><span class="kd-ic">🚫</span><span class="kd-val">${r.missing}</span><span class="kd-lbl">Missing</span></div>
+          <div class="kd-box"><span class="kd-ic">📶</span><span class="kd-val">${r.dsrPct}</span><span class="kd-lbl">DSR %</span></div>
+          <div class="kd-box"><span class="kd-ic">🎯</span><span class="kd-val">${r.effectivePct}</span><span class="kd-lbl">Effective %</span></div>
+        </div>
+        <div class="kd-note" style="margin-top:8px;margin-bottom:0;">Checked: ${r.dateChecked}</div>
       </div>`;
     });
     box.innerHTML = html;
@@ -5649,10 +5706,15 @@ function loadDsrMissing(who) {
     let html = '';
     res.rows.forEach(r => {
       const missDates = Object.keys(r.perDate).filter(d => String(r.perDate[d]).indexOf('M:') === 0);
-      html += `<div class="leave-card-date" style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border);">
-        <div style="display:flex;justify-content:space-between;"><b>${r.employee}</b><span style="color:var(--red);font-weight:800;">${r.totalMissing} missing</span></div>
-        <div>Purchases: ${r.totalPurchases} &nbsp;|&nbsp; DSR Entered: ${r.dsrEntered}</div>
-        ${missDates.length ? '<div style="margin-top:4px;color:var(--red);">🔴 ' + missDates.join(', ') + '</div>' : ''}
+      const noMissing = Number(r.totalMissing) === 0;
+      html += `<div class="kd-card ${noMissing ? 'kd-ok' : 'kd-danger'}">
+        <div class="kd-head"><span class="kd-name">${r.employee}</span>
+          <span class="kd-pill ${noMissing ? 'green' : 'red'}">${noMissing ? '✅ 0 Missing' : '🚫 ' + r.totalMissing + ' Missing'}</span></div>
+        <div class="kd-stats">
+          <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.totalPurchases}</span><span class="kd-lbl">Purchases</span></div>
+          <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.dsrEntered}</span><span class="kd-lbl">DSR Entered</span></div>
+        </div>
+        ${missDates.length ? '<div class="kd-chiprow">' + missDates.map(d => `<span class="kd-chip">🔴 ${d}</span>`).join('') + '</div>' : ''}
       </div>`;
     });
     box.innerHTML = html;
@@ -5663,9 +5725,15 @@ function dsrRangeResultHtml(res) {
   if (!res.rows || !res.rows.length) return '<div class="empty-state"><p>No purchases found in this range.</p></div>';
   let html = '';
   res.rows.forEach(r => {
-    html += `<div class="leave-card-date" style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border);">
-      <div style="display:flex;justify-content:space-between;"><b>${r.employee}</b><span style="font-weight:800;">${r.dsrPct}%</span></div>
-      <div>Purchases: ${r.totalPurch} &nbsp;|&nbsp; On-Time: ${r.dsrOnTime} &nbsp;|&nbsp; Late: ${r.dsrLate} &nbsp;|&nbsp; Missing: ${r.missing}</div>
+    const good = Number(r.dsrPct) >= 90;
+    html += `<div class="kd-card ${good ? 'kd-ok' : 'kd-danger'}">
+      <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill ${good ? 'green' : 'red'}">${r.dsrPct}%</span></div>
+      <div class="kd-stats">
+        <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.totalPurch}</span><span class="kd-lbl">Purchases</span></div>
+        <div class="kd-box"><span class="kd-ic">✅</span><span class="kd-val">${r.dsrOnTime}</span><span class="kd-lbl">On-Time</span></div>
+        <div class="kd-box"><span class="kd-ic">⏰</span><span class="kd-val">${r.dsrLate}</span><span class="kd-lbl">Late</span></div>
+        <div class="kd-box"><span class="kd-ic">🚫</span><span class="kd-val">${r.missing}</span><span class="kd-lbl">Missing</span></div>
+      </div>
     </div>`;
   });
   return html;
@@ -5679,7 +5747,7 @@ function loadDsrTillDate(who) {
   const iso = d => d.toISOString().split('T')[0];
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: iso(first), end: iso(today) })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
-    box.innerHTML = `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
+    box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
