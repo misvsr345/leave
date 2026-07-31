@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VSR Gold — HR Management System</title>
+<title>VSR Gold — HR Management Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -216,11 +216,18 @@ body {
 }
 
 .login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo-mark {
+  width: 84px; height: 84px;
+  background: transparent; border: none; box-shadow: none;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+}
 .login-logo h1 {
   font-family: 'Playfair Display', serif;
   font-size: 26px; font-weight: 800; color: var(--purple); letter-spacing: 2px;
 }
 .login-logo p { font-size: 11px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
 
 .login-tab-btns {
   display: flex; background: #f3e8ff; border-radius: var(--r2);
@@ -727,6 +734,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   border: none; background: rgba(255,255,255,0.2); color: #fff; font-size: 15px; cursor: pointer;
 }
 .bday-poster-emoji { font-size: 32px; margin-bottom: 6px; animation: bday-blink 1.2s ease-in-out infinite; }
+.bday-poster-logo.vsr-logo-mark { width: 70px; height: 70px; margin: 0 auto 8px; }
 .bday-poster-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: var(--gold2); letter-spacing: 2px; margin-bottom: 14px; }
 .bday-poster-wish { font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.9); }
 .bday-poster-name { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 800; color: #fff; margin: 4px 0 14px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
@@ -814,6 +822,82 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .loy-img-modal.open { display:flex; }
 .loy-img-modal-box { background:#fff; border-radius:12px; max-width:92vw; max-height:92vh; overflow:auto; padding:12px; text-align:center; }
 .loy-img-modal-box img { max-width:100%; max-height:75vh; border-radius:8px; display:block; margin:0 auto; }
+
+/* ══════════════════════════════════════
+   DSR ENTRY FORM WIDGET — scoped styles ported from the standalone
+   "VSR GOLD — Daily Sales Record" reference page. Every selector is
+   prefixed with .dsrf-scope so it can't collide with the rest of the
+   portal's CSS (which reuses class names like .card, .tgl etc. for a
+   different look).
+   ══════════════════════════════════════ */
+.dsrf-scope { --dgold:#B8860B; --dgold2:#D4AF37; --dpurple:#4A0E8F; --dpurpleL:#7B2FBE; --dpurpleP:#F5F0FF;
+  --dink:#1A1410; --dinkL:#5B4A6E; --dmuted:#9E8A7A; --dborder:#E2D9F3; --ds2:#FDFCFF;
+  --ddanger:#C0392B; --dsuccess:#1E7A4B; --dorange:#E67E22; --dorangeBg:#FFF3E0;
+  --dgreen:#1A6B3C; --dgreenBg:#E8F5EE; --dsh:rgba(74,14,143,0.09); font-family:'DM Sans',sans-serif; }
+.dsrf-scope .card{background:#fff;border:1.5px solid var(--dgold);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 10px var(--dsh);}
+.dsrf-scope .ch{background:linear-gradient(90deg,var(--dpurpleP),#FAF5FF);padding:10px 18px;font-size:13px;font-weight:700;color:var(--dpurple);border-bottom:1px solid var(--dgold);display:flex;align-items:center;gap:8px;letter-spacing:1px;text-transform:uppercase;}
+.dsrf-scope .cb{padding:16px 18px;}
+.dsrf-scope .entry{background:#fff;border:2px solid var(--dgold);border-radius:16px;margin-bottom:18px;overflow:hidden;box-shadow:0 2px 18px var(--dsh);}
+.dsrf-scope .entry-hd{background:linear-gradient(90deg,var(--dpurpleP),#FAF5FF);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--dgold);}
+.dsrf-scope .entry-title{font-size:14px;font-weight:700;color:var(--dpurple);letter-spacing:1px;text-transform:uppercase;}
+.dsrf-scope .rm-entry{background:none;border:1.5px solid rgba(192,57,43,0.4);border-radius:6px;color:var(--ddanger);cursor:pointer;padding:4px 14px;font-size:11.5px;font-weight:600;}
+.dsrf-scope .rm-entry:hover{background:rgba(192,57,43,0.07);border-color:var(--ddanger);}
+.dsrf-scope .add-entry-btn{width:100%;padding:14px;border:2.5px dashed var(--dgold2);border-radius:12px;background:var(--dpurpleP);color:var(--dpurple);font-size:14px;font-weight:700;cursor:pointer;transition:all .18s;margin-bottom:16px;}
+.dsrf-scope .add-entry-btn:hover{background:#EDE8FF;border-color:var(--dpurple);}
+.dsrf-scope .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.dsrf-scope .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.dsrf-scope .mb12{margin-bottom:12px;}.dsrf-scope .mb14{margin-bottom:14px;}
+.dsrf-scope label{display:block;font-size:10px;font-weight:600;color:var(--dinkL);margin-bottom:5px;letter-spacing:1px;text-transform:uppercase;}
+.dsrf-scope .req{color:var(--dpurple);margin-left:2px;}
+.dsrf-scope input[type="text"],.dsrf-scope input[type="date"],.dsrf-scope input[type="tel"],.dsrf-scope select{width:100%;padding:9px 13px;border:1.5px solid var(--dborder);border-radius:8px;font-size:13.5px;color:var(--dink);background:var(--ds2);-webkit-appearance:none;appearance:none;}
+.dsrf-scope input::placeholder{color:var(--dmuted);font-size:12.5px;}
+.dsrf-scope input:focus,.dsrf-scope select:focus{outline:none;border-color:var(--dpurpleL);background:#FDFAFF;box-shadow:0 0 0 3px rgba(123,47,190,.10);}
+.dsrf-scope select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234A0E8F' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;background-size:auto;}
+.dsrf-scope input.err-inp{border-color:var(--ddanger)!important;background:#fff5f5!important;}
+.dsrf-scope .mob-err{display:none;color:var(--ddanger);font-size:11px;font-weight:700;margin-top:4px;}
+.dsrf-scope .mob-err.show{display:block;}
+.dsrf-scope .tgl{display:flex;border:1.5px solid var(--dgold);border-radius:8px;overflow:hidden;background:#F9F7FF;}
+.dsrf-scope .tgl button{flex:1;padding:9px 6px;border:none;border-right:1px solid var(--dborder);font-size:12.5px;font-weight:600;cursor:pointer;color:var(--dmuted);background:transparent;}
+.dsrf-scope .tgl button:last-child{border-right:none;}
+.dsrf-scope .tgl button.on{background:linear-gradient(135deg,var(--dpurple),var(--dpurpleL));color:#fff;}
+.dsrf-scope .pay-status-section{background:linear-gradient(90deg,var(--dorangeBg),#FFF9F0);border:2px solid var(--dorange);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+.dsrf-scope .pay-status-title{font-size:13px;font-weight:700;color:var(--dorange);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.dsrf-scope .pay-tgl{display:flex;border:2px solid var(--dorange);border-radius:8px;overflow:hidden;}
+.dsrf-scope .pay-tgl button{flex:1;padding:11px 4px;border:none;border-right:1px solid rgba(230,126,34,0.3);font-size:12.5px;font-weight:700;cursor:pointer;color:var(--dmuted);background:#FFF9F5;line-height:1.3;}
+.dsrf-scope .pay-tgl button:last-child{border-right:none;}
+.dsrf-scope .pay-tgl button.on.purchased{background:linear-gradient(135deg,var(--dsuccess),#27AE60);color:#fff;}
+.dsrf-scope .pay-tgl button.on.advance{background:linear-gradient(135deg,var(--dorange),#F39C12);color:#fff;}
+.dsrf-scope .pay-tgl button.on.order{background:linear-gradient(135deg,var(--dgreen),#27AE60);color:#fff;}
+.dsrf-scope .photo-warn{display:none;color:var(--dorange);font-size:10.5px;font-weight:700;margin-top:4px;padding:4px 8px;background:var(--dorangeBg);border-radius:5px;border:1px solid var(--dorange);}
+.dsrf-scope .photo-warn.show{display:block;}
+.dsrf-scope .photo-ok{display:none;color:var(--dsuccess);font-size:10.5px;font-weight:700;margin-top:4px;}
+.dsrf-scope .photo-ok.show{display:block;}
+.dsrf-scope .ss-status{display:inline-block;padding:5px 18px;border-radius:20px;font-weight:700;font-size:12px;letter-spacing:1px;margin:6px 0;}
+.dsrf-scope .ss-status.advance{background:var(--dorangeBg);color:var(--dorange);border:1.5px solid var(--dorange);}
+.dsrf-scope .ss-status.purchased{background:#E8F5E9;color:var(--dsuccess);border:1.5px solid var(--dsuccess);}
+.dsrf-scope .ss-status.order{background:var(--dgreenBg);color:var(--dgreen);border:1.5px solid var(--dgreen);}
+.dsrf-scope .phwrap{position:relative;}
+.dsrf-scope .phlbl{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border:1.5px dashed var(--dgold2);border-radius:8px;background:var(--dpurpleP);cursor:pointer;min-height:42px;}
+.dsrf-scope .phlbl:hover{background:#EDE8FF;border-color:var(--dpurple);}
+.dsrf-scope .phi{font-size:17px;flex-shrink:0;}
+.dsrf-scope .pht{font-size:11.5px;color:var(--dinkL);}
+.dsrf-scope .phn{font-size:11px;color:var(--dsuccess);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dsrf-scope input[type="file"]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.dsrf-scope .phprev{margin-top:6px;width:100%;max-height:120px;object-fit:contain;border-radius:6px;border:1.5px solid var(--dgold);display:none;}
+.dsrf-scope .phprev.show{display:block;}
+.dsrf-scope .ph-size{font-size:10px;color:var(--dmuted);margin-top:3px;}
+.dsrf-scope .submit-progress{display:none;background:var(--dpurpleP);border:1.5px solid var(--dpurpleL);border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:center;}
+.dsrf-scope .submit-progress.show{display:block;}
+.dsrf-scope .submit-progress p{font-size:13px;color:var(--dpurple);font-weight:600;margin-bottom:8px;}
+.dsrf-scope .progress-bar-wrap{background:var(--dborder);border-radius:10px;height:8px;overflow:hidden;}
+.dsrf-scope .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--dpurple),var(--dpurpleL));border-radius:10px;transition:width 0.4s ease;}
+.dsrf-scope .sbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--dpurple),var(--dpurpleL),#6D28D9);color:#fff;border:2px solid var(--dgold2);border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:2px;text-transform:uppercase;box-shadow:0 4px 20px rgba(74,14,143,.3);}
+.dsrf-scope .sbtn:hover:not(:disabled){transform:translateY(-2px);}
+.dsrf-scope .sbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.dsrf-scope .emp-lock{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--dgold);border-radius:8px;background:var(--dpurpleP);}
+.dsrf-scope .emp-lock .nm{font-size:14.5px;font-weight:700;color:var(--dpurple);}
+.dsrf-scope .emp-lock .tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--dsuccess);background:#E8F5E9;padding:3px 9px;border-radius:10px;letter-spacing:.5px;}
+@media(max-width:520px){.dsrf-scope .g2{grid-template-columns:1fr;}.dsrf-scope .g3{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
@@ -824,8 +908,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="login-page" id="loginPage">
   <div class="login-box">
     <div class="login-logo">
+      <div class="login-logo-mark vsr-logo-mark"></div>
       <h1>VSR GOLD</h1>
-      <p>HR Management System</p>
+      <p>HR Management Portal</p>
     </div>
 
     <div class="login-tab-btns">
@@ -875,7 +960,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="empApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="showEmpPage('modulepicker')" style="cursor:pointer;" title="Home">VSR GOLD</div>
+      <div class="topbar-logo" onclick="showEmpPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
         <button class="tb-chip back-fab-top" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
@@ -1192,6 +1277,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-profile">
       <div class="card">
         <div style="text-align:center;padding:10px 0 20px;">
+          <div class="bday-poster-logo vsr-logo-mark" style="margin:0 auto 10px;"></div>
           <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:var(--purple);" id="profileEmpName">—</div>
           <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="profileEmpMeta">—</div>
         </div>
@@ -1276,7 +1362,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="adminApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="showAdminPage('modulepicker')" style="cursor:pointer;" title="Home">VSR GOLD</div>
+      <div class="topbar-logo" onclick="showAdminPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
         <button class="tb-chip back-fab-top" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
@@ -1302,8 +1388,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="quick-actions-grid">
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
+          <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -1998,6 +2084,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   <div class="bday-poster-box">
     <button class="bday-poster-close" onclick="closeModal('bdayPosterModal')">✕</button>
     <div class="bday-poster-emoji">🎉🎂🎉</div>
+    <div class="bday-poster-logo vsr-logo-mark"></div>
     <div class="bday-poster-title">VSR GOLD</div>
     <div class="bday-poster-wish">Happy Birthday</div>
     <div class="bday-poster-name" id="bdayPosterName">—</div>
@@ -2011,6 +2098,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
   <div class="bday-poster-box" style="background:linear-gradient(160deg, #7c2d12, #c2410c, #f59e0b);">
     <button class="bday-poster-close" onclick="closeModal('festivalPosterModal')">✕</button>
     <div class="bday-poster-emoji">🎊✨🎊</div>
+    <div class="bday-poster-logo vsr-logo-mark"></div>
     <div class="bday-poster-title">VSR GOLD</div>
     <div class="bday-poster-wish">Happy</div>
     <div class="bday-poster-name" id="festivalPosterName" style="font-size:24px;">—</div>
@@ -2156,7 +2244,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbysYvPxIuzLIQ9lWuuwbcbvqsO95_jc0e_lCYkWZ2WQkKvM0BYOXni1aSMP-qhJI6Zt-Q/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyAMJFKcHt4F6XB723C0hPvvGdrUlDPlK3h96hf9bUvMHKA7TFuhHYgM74FfSiWqy8hcQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -2951,12 +3039,31 @@ function renderFooterNav(who, page) {
   }
 }
 
+// Maps every page key to the human-readable section name it belongs to,
+// used to label the "← Back" button as "← Back to <Section>".
+const SECTION_LABEL_MAP = {
+  overview: 'Leave', apply: 'Leave', myleaves: 'Leave', calendar: 'Leave',
+  dashboard: 'Leave', pending: 'Leave', allleaves: 'Leave', acalendar: 'Leave',
+  balance: 'Leave', empwise: 'Leave', events: 'Leave', availability: 'Leave',
+  direct: 'Leave', notices: 'Leave', blocked: 'Leave', settings: 'Leave',
+  loyalty: 'Loyalty Card', 'loyalty-dash': 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
+  'loyalty-leaderboard': 'Loyalty Card',
+  kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI',
+  dsr: 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
+  'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
+  profile: 'Emp Details'
+};
+function backLabelFor(page) {
+  const section = SECTION_LABEL_MAP[page];
+  return section ? ('← Back to ' + section) : '← Back';
+}
+
 function showEmpPage(page) {
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
   if (sec) sec.classList.add('active');
   const backFab = document.getElementById('empBackFab');
-  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
+  if (backFab) { backFab.classList.toggle('show', page !== 'modulepicker'); backFab.textContent = backLabelFor(page); }
   renderFooterNav('emp', page);
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
@@ -4237,6 +4344,14 @@ async function onSettingsAdminSelected() {
         <input type="checkbox" id="sectionMasterCheck_loyalty" ${perms.section_loyalty ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
         <span style="font-size:13px;font-weight:700;color:var(--text);">💳 Loyalty Card Section — entire section on/off</span>
       </label>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_kpi" ${perms.section_kpi ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">📊 KPI Section — entire section on/off</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_dsr" ${perms.section_dsr ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">🧾 DSR Section — entire section on/off</span>
+      </label>
       <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
     </div>`;
 
@@ -4294,8 +4409,12 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
   };
   const leaveMaster = document.getElementById('sectionMasterCheck_leave');
   const loyaltyMaster = document.getElementById('sectionMasterCheck_loyalty');
+  const kpiMaster = document.getElementById('sectionMasterCheck_kpi');
+  const dsrMaster = document.getElementById('sectionMasterCheck_dsr');
   if (leaveMaster) payload.section_leave = leaveMaster.checked ? 'true' : 'false';
   if (loyaltyMaster) payload.section_loyalty = loyaltyMaster.checked ? 'true' : 'false';
+  if (kpiMaster) payload.section_kpi = kpiMaster.checked ? 'true' : 'false';
+  if (dsrMaster) payload.section_dsr = dsrMaster.checked ? 'true' : 'false';
   document.querySelectorAll('.settings-perm-check').forEach(cb => {
     payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
   });
@@ -4461,7 +4580,9 @@ const SM_FEATURE_ELEMENTS = {
   loyUpcoming:   ['adminQALoyUpcoming'],
   loyCardhist:   ['adminQALoyCardhist'],
   loyIncenthist: ['adminQALoyIncenthist'],
-  loyKyc:        ['adminQALoyKyc']
+  loyKyc:        ['adminQALoyKyc'],
+  kpi: ['adminQAKpi'],
+  dsr: ['adminQADsr']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -4478,7 +4599,8 @@ const FEATURE_SUBKEYS = {
   blocked: ['blocked_dates','blocked_days'],
   loySearch: ['loySearch','loySearch_fulldata'], loyStats: ['loyStats'],
   loyDash: ['loyDash'], loyTimeline: ['loyTimeline'], loyUpcoming: ['loyUpcoming'],
-  loyCardhist: ['loyCardhist'], loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc']
+  loyCardhist: ['loyCardhist'], loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc'],
+  kpi: ['kpi'], dsr: ['dsr']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -4514,10 +4636,12 @@ async function applyAdminRoleRestrictions() {
   // shows if BOTH its own sub-permission AND its section master are true.
   const sectionLeaveOn = perms.section_leave !== false;   // undefined/missing = treat as on (safe default)
   const sectionLoyaltyOn = perms.section_loyalty !== false;
+  const sectionKpiOn = perms.section_kpi !== false;
+  const sectionDsrOn = perms.section_dsr !== false;
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
-    const sectionOn = isLoyaltyFeature ? sectionLoyaltyOn : sectionLeaveOn;
+    const sectionOn = key === 'kpi' ? sectionKpiOn : key === 'dsr' ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -4552,7 +4676,7 @@ function showAdminPage(page) {
   const sec = document.getElementById('admin-' + page);
   if (sec) sec.classList.add('active');
   const backFab = document.getElementById('adminBackFab');
-  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
+  if (backFab) { backFab.classList.toggle('show', page !== 'modulepicker'); backFab.textContent = backLabelFor(page); }
   renderFooterNav('admin', page);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
@@ -5539,191 +5663,397 @@ function loadDsrDateRange(who) {
 // DSR — NEW ENTRY FORM (separate DSR web app — Main file spreadsheet)
 // ══════════════════════════════════════
 var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbzfhY3c3oYw4lhON-KnIrgSsiF6WKwQiAUrX_1vNVhRTFr5xIa19ymrqcE837wr_TpC/exec";
-var dsrFormLoaded = { emp: false, admin: false };
-var dsrFormPhotoB64 = { emp: { gold: '', silver: '' }, admin: { gold: '', silver: '' } };
+var DSR_ST = {
+  emp:   { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
+  admin: { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
+};
+
+function dsrfEmpDisplayName(who) {
+  return (who === 'admin' ? state.adminName : state.empName) || '';
+}
 
 function renderDsrEntryForm(who) {
   const box = document.getElementById('dsrEntryFormBox-' + who);
-  if (dsrFormLoaded[who]) return; // build once, reuse
-  dsrFormLoaded[who] = true;
-
-  const empLocked = (who === 'emp');
+  if (!box) return;
+  const st = DSR_ST[who];
   box.innerHTML = `
-    <div class="card">
-      <div class="card-title">✎ Bill Details</div>
-      <div class="form-2col">
-        <div class="form-row"><label>Bill Date *</label><input type="date" id="dsrfBillDate-${who}"></div>
-        <div class="form-row"><label>Customer Name *</label><input type="text" id="dsrfCust-${who}" placeholder="Customer full name"></div>
+    <div class="dsrf-scope">
+      <div class="init-banner" id="dsrfInitBanner-${who}" style="display:flex;align-items:center;gap:10px;background:var(--dpurpleP);border:1.5px solid var(--dborder);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--dpurple);font-weight:600;">
+        <span style="display:inline-block;animation:dsrfspin 1s linear infinite;">⏳</span>
+        <span>Loading products from Google Sheet...</span>
       </div>
-      <div class="form-2col">
-        <div class="form-row"><label>Mobile Number *</label><input type="tel" id="dsrfMobile-${who}" maxlength="10" placeholder="10-digit number"></div>
-        <div class="form-row"><label>Address *</label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">◉ Employee</div>
-      ${empLocked
-        ? `<div class="form-row"><label>Employee</label><input type="text" id="dsrfEmp-${who}" value="${state.empName || ''}" disabled></div>`
-        : `<div class="form-row"><label>Employee *</label><select id="dsrfEmp-${who}"><option value="">⏳ Loading...</option></select></div>`
-      }
-    </div>
-    <div class="card">
-      <div class="card-title">💰 Payment Status *</div>
-      <div class="filter-bar">
-        <button class="filter-btn active" data-val="Purchased" onclick="dsrfSetToggle('${who}','dsrfPayStatus','Purchased',this)">✅ Purchased</button>
-        <button class="filter-btn" data-val="Advance" onclick="dsrfSetToggle('${who}','dsrfPayStatus','Advance',this)">⏳ Advance</button>
-        <button class="filter-btn" data-val="Order Placed" onclick="dsrfSetToggle('${who}','dsrfPayStatus','Order Placed',this)">📦 Order Placed</button>
-      </div>
-      <input type="hidden" id="dsrfPayStatus-${who}" value="Purchased">
-    </div>
-    <div class="card">
-      <div class="card-title">⬡ Type &amp; Source</div>
-      <div class="form-2col">
-        <div class="form-row"><label>Type *</label>
-          <div class="filter-bar">
-            <button class="filter-btn active" onclick="dsrfSetType('${who}','Gold',this)">Gold</button>
-            <button class="filter-btn" onclick="dsrfSetType('${who}','Silver',this)">Silver</button>
+      <style>@keyframes dsrfspin{to{transform:rotate(360deg);}}</style>
+
+      <div class="card">
+        <div class="ch">✎ &nbsp;Bill Details</div>
+        <div class="cb">
+          <div class="g2 mb14">
+            <div><label>Bill Date <span class="req">★</span></label><input type="date" id="dsrfBillDate-${who}"></div>
+            <div><label>Customer Name <span class="req">★</span></label><input type="text" id="dsrfCust-${who}" placeholder="Customer full name"></div>
           </div>
-          <input type="hidden" id="dsrfType-${who}" value="Gold">
-        </div>
-        <div class="form-row"><label>Product From *</label>
-          <div class="filter-bar">
-            <button class="filter-btn active" onclick="dsrfSetToggle('${who}','dsrfPFrom','Retail',this)">Retail</button>
-            <button class="filter-btn" onclick="dsrfSetToggle('${who}','dsrfPFrom','Main',this)">Main</button>
+          <div class="g2">
+            <div><label>Mobile Number <span class="req">★</span></label>
+              <input type="tel" id="dsrfMobile-${who}" maxlength="10" placeholder="10-digit number" oninput="dsrfChkMob('${who}',this)">
+              <div class="mob-err" id="dsrfMobErr-${who}">⚠ WRONG</div>
+            </div>
+            <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
           </div>
-          <input type="hidden" id="dsrfPFrom-${who}" value="Retail">
         </div>
       </div>
-    </div>
-    <div class="card" id="dsrfGoldCard-${who}">
-      <div class="card-title">◈ Gold Item Details</div>
-      <div class="form-2col">
-        <div class="form-row"><label>Tag Status</label>
-          <div class="filter-bar">
-            <button class="filter-btn active" onclick="dsrfSetToggle('${who}','dsrfTagSt','Tag',this)">Tag</button>
-            <button class="filter-btn" onclick="dsrfSetToggle('${who}','dsrfTagSt','No Tag',this)">Non Tag</button>
-          </div>
-          <input type="hidden" id="dsrfTagSt-${who}" value="Tag">
+
+      <div class="card">
+        <div class="ch">◉ &nbsp;Employee</div>
+        <div class="cb">
+          <label>Employee Name</label>
+          <div class="emp-lock"><span class="nm">${dsrfEmpDisplayName(who) || '—'}</span><span class="tag">🔒 From Login</span></div>
         </div>
-        <div class="form-row"><label>Tag No</label><input type="text" id="dsrfTagNo-${who}" placeholder="e.g. C498, R749"></div>
       </div>
-      <div class="form-2col">
-        <div class="form-row"><label>Product Name *</label><input type="text" id="dsrfProdName-${who}" placeholder="e.g. Chain, Finger Ring"></div>
-        <div class="form-row"><label>Design</label><input type="text" id="dsrfDesign-${who}" placeholder="Bombay, Traditional..."></div>
-      </div>
-      <div class="form-2col">
-        <div class="form-row"><label>Tunch</label>
-          <select id="dsrfTunch-${who}"><option value="">-- Select --</option><option>750</option><option>916</option><option>999</option></select>
+
+      <div class="pay-status-section">
+        <div class="pay-status-title">💰 &nbsp;Payment Status <span class="req">★</span></div>
+        <div class="pay-tgl" id="dsrfPayTgl-${who}">
+          <button id="dsrfBtnPurchased-${who}" class="on purchased" onclick="dsrfSetPayStatus('${who}','Purchased',this)">✅ Purchased</button>
+          <button id="dsrfBtnAdvance-${who}" onclick="dsrfSetPayStatus('${who}','Advance',this)">⏳ Advance</button>
+          <button id="dsrfBtnOrder-${who}" onclick="dsrfSetPayStatus('${who}','Order Placed',this)">📦 Order Placed</button>
         </div>
-        <div class="form-row"><label>Weight (gm)</label><input type="text" id="dsrfWeight-${who}" placeholder="e.g. 21.37"></div>
+        <input type="hidden" id="dsrfPayStatus-${who}" value="Purchased">
+        <div style="margin-top:8px;font-size:11px;color:var(--dmuted);" id="dsrfPayNote-${who}">Customer has paid in full.</div>
       </div>
-      <div class="form-row"><label>Photo</label><input type="file" id="dsrfPhotoGold-${who}" accept="image/*" onchange="dsrfLoadPhoto(this,'${who}','gold')"><div id="dsrfPhotoGoldNote-${who}" style="font-size:11px;color:var(--text3);margin-top:4px;"></div></div>
-    </div>
-    <div class="card" id="dsrfSilverCard-${who}" style="display:none;">
-      <div class="card-title">◎ Silver Item Details</div>
-      <div class="form-2col">
-        <div class="form-row"><label>Silver Item *</label><input type="text" id="dsrfSilverName-${who}" placeholder="e.g. Payal, Chain"></div>
-        <div class="form-row"><label>Weight (gm) *</label><input type="text" id="dsrfSilverWt-${who}" placeholder="e.g. 12.50"></div>
+
+      <div id="dsrfEntriesList-${who}"></div>
+      <button class="add-entry-btn" onclick="dsrfAddEntry('${who}')">＋ &nbsp; Add Another Item</button>
+
+      <div class="submit-progress" id="dsrfProgress-${who}">
+        <p id="dsrfProgressMsg-${who}">⏳ Saving data...</p>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="dsrfProgressBar-${who}"></div></div>
+        <p style="font-size:11px;color:var(--dmuted);margin-top:8px;">Please wait, do not close this page</p>
       </div>
-      <div class="form-row"><label>Photo</label><input type="file" id="dsrfPhotoSilver-${who}" accept="image/*" onchange="dsrfLoadPhoto(this,'${who}','silver')"><div id="dsrfPhotoSilverNote-${who}" style="font-size:11px;color:var(--text3);margin-top:4px;"></div></div>
+
+      <button class="sbtn" id="dsrfSubmitBtn-${who}" onclick="dsrfSubmit('${who}')" style="margin-top:6px;">★ &nbsp; Submit DSR &nbsp; ★</button>
+      <div id="dsrfStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
     </div>
-    <button class="btn-primary" id="dsrfSubmitBtn-${who}" onclick="dsrfSubmit('${who}')" style="width:100%;margin-top:6px;">★ Submit DSR ★</button>
-    <div id="dsrfStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
   `;
   document.getElementById('dsrfBillDate-' + who).value = new Date().toISOString().split('T')[0];
+  st.eSeq = 0;
+  dsrfAddEntry(who);
 
-  if (!empLocked) {
+  if (!st.loaded) {
     fetch(DSR_GAS_URL + '?action=getData').then(r => r.json()).then(data => {
-      const sel = document.getElementById('dsrfEmp-' + who);
-      if (sel && data.employees) {
-        sel.innerHTML = '<option value="">-- Select Employee --</option>' + data.employees.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
-      }
-    }).catch(() => {});
+      if (data.products) { st.gold = data.products.gold || []; st.silver = data.products.silver || []; }
+      st.loaded = true;
+      document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
+        dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, ''));
+      });
+      const banner = document.getElementById('dsrfInitBanner-' + who);
+      if (banner) banner.style.display = 'none';
+    }).catch(() => {
+      const banner = document.getElementById('dsrfInitBanner-' + who);
+      if (banner) banner.innerHTML = '⚠ Could not load product list from Google Sheet.';
+    });
+  } else {
+    const banner = document.getElementById('dsrfInitBanner-' + who);
+    if (banner) banner.style.display = 'none';
   }
 }
 
-function dsrfSetToggle(who, hidId, val, btn) {
-  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(hidId + '-' + who).value = val;
-}
-function dsrfSetType(who, val, btn) {
-  dsrfSetToggle(who, 'dsrfType', val, btn);
-  document.getElementById('dsrfGoldCard-' + who).style.display = (val === 'Silver') ? 'none' : 'block';
-  document.getElementById('dsrfSilverCard-' + who).style.display = (val === 'Silver') ? 'block' : 'none';
+function dsrfRefreshProducts(who, eid) {
+  const st = DSR_ST[who];
+  const gOpts = '<option value="">-- Select --</option>' + st.gold.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const gnEl = document.getElementById(`dsrfPn-${who}-${eid}`);
+  const snEl = document.getElementById(`dsrfSn-${who}-${eid}`);
+  if (gnEl) gnEl.innerHTML = gOpts;
+  if (snEl) snEl.innerHTML = sOpts;
 }
 
-function dsrfLoadPhoto(inp, who, kind) {
-  const f = inp.files[0];
-  if (!f) return;
-  const noteEl = document.getElementById('dsrfPhoto' + (kind === 'gold' ? 'Gold' : 'Silver') + 'Note-' + who);
-  if (noteEl) noteEl.textContent = 'Processing...';
+function dsrfPhotoWidget(who, eid, pfx) {
+  const hid = `dsrfPh-${pfx}-${who}-${eid}`, tid = `dsrfPt-${pfx}-${who}-${eid}`, pid = `dsrfPp-${pfx}-${who}-${eid}`,
+        fid = `dsrfPf-${pfx}-${who}-${eid}`, sid = `dsrfPs-${pfx}-${who}-${eid}`, wid = `dsrfPw-${pfx}-${who}-${eid}`;
+  return `<div class="phwrap">
+    <label class="phlbl" for="${fid}"><span class="phi">📷</span><span id="${tid}" class="pht">Upload Photo</span></label>
+    <input type="file" id="${fid}" accept="image/*" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}')">
+    <input type="hidden" id="${hid}">
+    <div id="${sid}" class="ph-size"></div>
+    <div id="${wid}"></div>
+    <img id="${pid}" class="phprev">
+  </div>`;
+}
+
+function dsrfAddEntry(who) {
+  const st = DSR_ST[who];
+  st.eSeq++;
+  const eid = st.eSeq;
+  const list = document.getElementById('dsrfEntriesList-' + who);
+  const num = list.querySelectorAll('.entry').length + 1;
+  const payStatus = document.getElementById('dsrfPayStatus-' + who).value;
+  const isOrder = payStatus === 'Order Placed';
+  const tOpts = st.tunchs.map(t => `<option>${t}</option>`).join('');
+
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.id = `dsrf-entry-${who}-${eid}`;
+
+  const req = isOrder ? '' : '<span class="req">★</span>';
+  div.innerHTML = `
+    <div class="entry-hd">
+      <span class="entry-title">◈ &nbsp;Item Entry ${num}</span>
+      ${num > 1 ? `<button class="rm-entry" onclick="dsrfRmEntry('${who}',${eid})">✕ Remove</button>` : '<span></span>'}
+    </div>
+    <div class="card" style="margin:14px 14px 0;">
+      <div class="ch">⬡ &nbsp;Type &amp; Source</div>
+      <div class="cb"><div class="g2">
+        <div><label>Type <span class="req">★</span></label>
+          <div class="tgl" id="dsrfTglTyp-${who}-${eid}">
+            <button class="on" onclick="dsrfSetType('${who}',${eid},'Gold',this)">Gold</button>
+            <button onclick="dsrfSetType('${who}',${eid},'Silver',this)">Silver</button>
+          </div><input type="hidden" id="dsrfTyp-${who}-${eid}" value="Gold"></div>
+        <div><label>Product From <span class="req">★</span></label>
+          <div class="tgl" id="dsrfTglPf-${who}-${eid}">
+            <button class="on" onclick="dsrfSetTgl('${who}','dsrfTglPf-${who}-${eid}','dsrfPf-${who}-${eid}','Retail',this)">Retail</button>
+            <button onclick="dsrfSetTgl('${who}','dsrfTglPf-${who}-${eid}','dsrfPf-${who}-${eid}','Main',this)">Main</button>
+          </div><input type="hidden" id="dsrfPf-${who}-${eid}" value="Retail"></div>
+      </div></div>
+    </div>
+    <div id="dsrfGoldP-${who}-${eid}">
+      <div class="card" style="margin:10px 14px 14px;">
+        <div class="ch">◈ &nbsp;Gold Item Details</div>
+        <div class="cb">
+          <div class="g2 mb12">
+            <div><label>Tag Status</label>
+              <div class="tgl" id="dsrfTglTag-${who}-${eid}">
+                <button class="on" onclick="dsrfSetTagTgl('${who}',${eid},'Tag',this)">Tag</button>
+                <button onclick="dsrfSetTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
+              </div><input type="hidden" id="dsrfTagSt-${who}-${eid}" value="Tag"></div>
+            <div id="dsrfTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
+              <input type="text" id="dsrfTagNo-${who}-${eid}" placeholder="e.g. C498, R749"></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Product Name ${req}</label>
+              <select id="dsrfPn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'gold')"><option value="">-- Select --</option></select>
+              <div id="dsrfPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfPnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
+            <div><label>Design ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDes-${who}-${eid}" placeholder="Bombay, Traditional..."></div>
+          </div>
+          <div class="g3">
+            <div><label>Tunch ${!isOrder ? '<span class="req">★</span>' : ''}</label><select id="dsrfTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
+            <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37"></div>
+            <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'g')}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="dsrfSilverP-${who}-${eid}" style="display:none;">
+      <div class="card" style="margin:10px 14px 14px;">
+        <div class="ch">◎ &nbsp;Silver Item Details</div>
+        <div class="cb">
+          <div class="g2 mb12">
+            <div><label>Silver Item <span class="req">★</span></label>
+              <select id="dsrfSn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'silver')"><option value="">-- Select --</option></select>
+              <div id="dsrfSnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfSnCustom-${who}-${eid}" placeholder="Enter silver item name"></div></div>
+            <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="dsrfSw-${who}-${eid}" placeholder="e.g. 12.50"></div>
+          </div>
+          <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 's')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  list.appendChild(div);
+  dsrfRefreshProducts(who, eid);
+  dsrfReNumEntries(who);
+}
+
+function dsrfRmEntry(who, eid) {
+  const el = document.getElementById(`dsrf-entry-${who}-${eid}`);
+  if (el) { el.remove(); dsrfReNumEntries(who); }
+}
+
+function dsrfReNumEntries(who) {
+  document.querySelectorAll(`#dsrfEntriesList-${who} .entry`).forEach((e, i) => {
+    const t = e.querySelector('.entry-title');
+    if (t) t.innerHTML = '◈ &nbsp;Item Entry ' + (i + 1);
+  });
+}
+
+function dsrfSetPayStatus(who, val, btn) {
+  document.getElementById('dsrfPayTgl-' + who).querySelectorAll('button').forEach(b => b.classList.remove('on', 'advance', 'purchased', 'order'));
+  const cls = val === 'Advance' ? 'advance' : val === 'Order Placed' ? 'order' : 'purchased';
+  btn.classList.add('on', cls);
+  document.getElementById('dsrfPayStatus-' + who).value = val;
+  const notes = { 'Purchased': 'Customer has paid in full.', 'Advance': '⚠ Advance paid — follow-up required next day.', 'Order Placed': '📦 Item not in stock — order placed, customer will collect later.' };
+  document.getElementById('dsrfPayNote-' + who).textContent = notes[val] || '';
+}
+
+function dsrfChkMob(who, inp) {
+  const v = inp.value.replace(/\D/g, ''); inp.value = v;
+  const e = document.getElementById('dsrfMobErr-' + who);
+  if (v.length > 0 && v.length < 10) { inp.classList.add('err-inp'); e.textContent = '⚠ WRONG — ' + v.length + '/10 digits'; e.classList.add('show'); }
+  else { inp.classList.remove('err-inp'); e.classList.remove('show'); }
+}
+
+function dsrfSetTgl(who, grpId, hidId, val, btn) {
+  document.getElementById(grpId).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(hidId).value = val;
+}
+
+function dsrfSetType(who, eid, val, btn) {
+  dsrfSetTgl(who, `dsrfTglTyp-${who}-${eid}`, `dsrfTyp-${who}-${eid}`, val, btn);
+  const silver = val === 'Silver';
+  document.getElementById(`dsrfGoldP-${who}-${eid}`).style.display = silver ? 'none' : 'block';
+  document.getElementById(`dsrfSilverP-${who}-${eid}`).style.display = silver ? 'block' : 'none';
+}
+
+// Tag / Non Tag toggle — fixed so the Tag No field only shows for "Tag",
+// and correctly hides for "No Tag" (the old bug showed it for both).
+function dsrfSetTagTgl(who, eid, val, btn) {
+  document.getElementById(`dsrfTglTag-${who}-${eid}`).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(`dsrfTagSt-${who}-${eid}`).value = val;
+  document.getElementById(`dsrfTagNoWrap-${who}-${eid}`).style.display = (val === 'Tag') ? '' : 'none';
+}
+
+function dsrfToggleOther(who, eid, kind) {
+  if (kind === 'gold') {
+    document.getElementById(`dsrfPnOther-${who}-${eid}`).style.display = document.getElementById(`dsrfPn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
+  } else {
+    document.getElementById(`dsrfSnOther-${who}-${eid}`).style.display = document.getElementById(`dsrfSn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
+  }
+}
+
+var DSR_PHOTO_MAX_DIM = 800, DSR_PHOTO_QUALITY = 0.65, DSR_PHOTO_MAX_KB = 200;
+function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId) {
+  const f = inp.files[0]; if (!f) return;
+  const tEl = document.getElementById(tidId);
+  if (tEl) { tEl.textContent = 'Processing...'; tEl.className = 'pht'; }
   const reader = new FileReader();
   reader.onload = ev => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX = 800;
       let w = img.width, h = img.height;
-      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-      if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      if (w > DSR_PHOTO_MAX_DIM) { h = Math.round(h * DSR_PHOTO_MAX_DIM / w); w = DSR_PHOTO_MAX_DIM; }
+      if (h > DSR_PHOTO_MAX_DIM) { w = Math.round(w * DSR_PHOTO_MAX_DIM / h); h = DSR_PHOTO_MAX_DIM; }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const b64 = canvas.toDataURL('image/jpeg', 0.65);
-      dsrFormPhotoB64[who][kind] = b64;
-      if (noteEl) noteEl.textContent = '✓ Photo ready: ' + Math.round(b64.length * 0.75 / 1024) + 'KB';
+      let b64 = canvas.toDataURL('image/jpeg', DSR_PHOTO_QUALITY);
+      let sizeKB = Math.round(b64.length * 0.75 / 1024);
+      if (sizeKB > DSR_PHOTO_MAX_KB) {
+        let q = Math.max(0.3, Math.min(DSR_PHOTO_QUALITY * (DSR_PHOTO_MAX_KB / sizeKB) * 0.9, DSR_PHOTO_QUALITY));
+        b64 = canvas.toDataURL('image/jpeg', q);
+        sizeKB = Math.round(b64.length * 0.75 / 1024);
+      }
+      document.getElementById(hidId).value = b64;
+      if (tEl) { tEl.textContent = f.name; tEl.className = 'phn'; }
+      const szEl = document.getElementById(szId);
+      if (szEl) szEl.textContent = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+      const wEl = document.getElementById(warnId);
+      if (wEl) {
+        if (sizeKB > DSR_PHOTO_MAX_KB) { wEl.textContent = '⚠ Photo size: ' + sizeKB + 'KB — upload may be slow'; wEl.className = 'photo-warn show'; }
+        else { wEl.textContent = '✓ Photo ready: ' + sizeKB + 'KB'; wEl.className = 'photo-ok show'; }
+      }
+      const pv = document.getElementById(pidId);
+      if (pv) { pv.src = b64; pv.classList.add('show'); }
     };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(f);
 }
 
+function dsrfGv(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+
 function dsrfSubmit(who) {
-  const gv = id => { const el = document.getElementById(id + '-' + who); return el ? el.value.trim() : ''; };
-  const empName = who === 'emp' ? (state.empName || '') : gv('dsrfEmp');
-  const billDate = gv('dsrfBillDate'), cust = gv('dsrfCust'), mobile = gv('dsrfMobile'), addr = gv('dsrfAddr');
-  const payStatus = gv('dsrfPayStatus'), type = gv('dsrfType'), pFrom = gv('dsrfPFrom');
+  const empName = dsrfEmpDisplayName(who);
+  const date = dsrfGv('dsrfBillDate-' + who), cust = dsrfGv('dsrfCust-' + who), mob = dsrfGv('dsrfMobile-' + who),
+        addr = dsrfGv('dsrfAddr-' + who), payStatus = dsrfGv('dsrfPayStatus-' + who);
 
-  if (!empName) { toast('Select Employee', 'error'); return; }
-  if (!billDate || !cust || !addr) { toast('Fill all bill details', 'error'); return; }
-  if (!/^\d{10}$/.test(mobile)) { toast('Mobile must be 10 digits', 'error'); return; }
+  if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
+  if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
+  if (!/^\d{10}$/.test(mob)) { toast('Mobile must be 10 digits!', 'error'); return; }
 
-  let row;
-  if (type === 'Silver') {
-    const sn = gv('dsrfSilverName'), sw = gv('dsrfSilverWt');
-    if (!sn || !sw) { toast('Fill Silver item details', 'error'); return; }
-    row = { employeeName: empName, billDate, customerName: cust, mobileNumber: mobile, address: addr, paymentStatus: payStatus,
-      type, productFrom: pFrom, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
-      silverItemName: sn, silverItemWeight: sw, silverItemPhoto: dsrFormPhotoB64[who].silver };
-  } else {
-    const pn = gv('dsrfProdName'), design = gv('dsrfDesign'), tunch = gv('dsrfTunch'), wt = gv('dsrfWeight'),
-          ts = gv('dsrfTagSt'), tn = gv('dsrfTagNo');
-    if (!pn) { toast('Enter Product Name', 'error'); return; }
-    row = { employeeName: empName, billDate, customerName: cust, mobileNumber: mobile, address: addr, paymentStatus: payStatus,
-      type, productFrom: pFrom, tagStatus: ts, tagNo: tn, productName: pn, design, tunch, weight: wt,
-      photo: dsrFormPhotoB64[who].gold, silverItemName: '', silverItemWeight: '', silverItemPhoto: '' };
-  }
+  const entries = document.querySelectorAll(`#dsrfEntriesList-${who} .entry`);
+  if (!entries.length) { toast('Please add at least one item!', 'error'); return; }
+
+  const rows = []; let ok = true, errMsg = '';
+  const isOrder = payStatus === 'Order Placed';
+
+  entries.forEach(block => {
+    if (!ok) return;
+    const eid = block.id.replace(`dsrf-entry-${who}-`, '');
+    const type = dsrfGv(`dsrfTyp-${who}-${eid}`), pf = dsrfGv(`dsrfPf-${who}-${eid}`);
+
+    if (type === 'Silver') {
+      let sn = dsrfGv(`dsrfSn-${who}-${eid}`); if (sn === 'Other') sn = dsrfGv(`dsrfSnCustom-${who}-${eid}`);
+      const sw = dsrfGv(`dsrfSw-${who}-${eid}`);
+      if (!sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
+      if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
+      const sPhoto = dsrfGv(`dsrfPh-s-${who}-${eid}`);
+      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
+        type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
+        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '' });
+    } else {
+      let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrfGv(`dsrfPnCustom-${who}-${eid}`);
+      const des = dsrfGv(`dsrfDes-${who}-${eid}`), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
+            ts = dsrfGv(`dsrfTagSt-${who}-${eid}`), tn = dsrfGv(`dsrfTagNo-${who}-${eid}`);
+      if (!pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
+      if (!isOrder) {
+        if (!des) { ok = false; errMsg = 'Please enter Design!'; return; }
+        if (!tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
+        if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+        if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+      }
+      const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
+      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
+        type, productFrom: pf, tagStatus: ts || '', tagNo: tn || '', productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
+        photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '' });
+    }
+  });
+
+  if (!ok) { toast(errMsg, 'error'); return; }
+  if (!rows.length) { toast('No data to submit!', 'error'); return; }
 
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
   const msg = document.getElementById('dsrfStatusMsg-' + who);
-  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Saving...';
   msg.textContent = '';
+  document.getElementById('dsrfProgress-' + who).classList.add('show');
+  const bar = document.getElementById('dsrfProgressBar-' + who);
+  const pmsg = document.getElementById('dsrfProgressMsg-' + who);
+  bar.style.width = '10%'; pmsg.textContent = '⏳ Connecting to server...';
+  let currentProg = 10;
+  const progInt = setInterval(() => {
+    if (currentProg < 85) {
+      currentProg += 3; bar.style.width = currentProg + '%';
+      pmsg.textContent = currentProg > 30 && currentProg < 60 ? '📸 Uploading photo to Drive...' : currentProg >= 60 ? '💾 Saving to Sheet...' : '⏳ Processing...';
+    }
+  }, 800);
 
-  fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: [row] }) })
+  fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows }) })
     .then(r => r.json())
     .then(result => {
-      btn.disabled = false; btn.textContent = '★ Submit DSR ★';
+      clearInterval(progInt);
+      bar.style.width = '100%'; pmsg.textContent = '✅ Done!';
+      setTimeout(() => document.getElementById('dsrfProgress-' + who).classList.remove('show'), 1000);
+      btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
       if (result.status === 'success') {
         msg.style.color = 'var(--green)';
-        msg.textContent = '✅ Saved! DSR ID: ' + (result.dsrId || '—');
+        msg.innerHTML = `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
         toast('DSR entry saved!', 'success');
+        DSR_ST[who].eSeq = 0;
+        document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
+        dsrfAddEntry(who);
+        document.getElementById('dsrfCust-' + who).value = '';
+        document.getElementById('dsrfMobile-' + who).value = '';
+        document.getElementById('dsrfAddr-' + who).value = '';
+        document.getElementById('dsrfBillDate-' + who).value = new Date().toISOString().split('T')[0];
+        dsrfSetPayStatus(who, 'Purchased', document.getElementById('dsrfBtnPurchased-' + who));
       } else {
         msg.style.color = 'var(--red)';
         msg.textContent = '❌ ' + (result.message || 'Failed to save');
       }
     })
     .catch(err => {
-      btn.disabled = false; btn.textContent = '★ Submit DSR ★';
+      clearInterval(progInt);
+      document.getElementById('dsrfProgress-' + who).classList.remove('show');
+      btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ Network error: ' + err;
     });
