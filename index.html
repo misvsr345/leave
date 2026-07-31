@@ -1032,6 +1032,15 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <button class="bday-marquee-refresh" onclick="populateEventScroller('empEventScroller','empEventScrollerInner')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="empEventScrollerInner"></div>
       </div>
+      <div class="quick-actions-section" style="margin-bottom:14px;">
+        <div class="quick-actions-title">⚡ Quick Actions</div>
+        <div class="quick-actions-grid">
+          <div class="quick-action-btn" onclick="showEmpPage('apply')"><span class="quick-action-icon">✍️</span><div class="quick-action-label">Apply</div><div class="quick-action-sub">New leave request</div></div>
+          <div class="quick-action-btn" onclick="showEmpPage('myleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">My Leaves</div><div class="quick-action-sub">History &amp; status</div></div>
+          <div class="quick-action-btn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule</div></div>
+          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
+        </div>
+      </div>
       <div class="card" id="empBalanceCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="card" id="empRecentCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
