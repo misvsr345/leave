@@ -963,6 +963,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="topbar-logo" onclick="showEmpPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
         <button class="tb-chip back-fab-top" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
+        <button class="tb-chip back-fab-top" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
@@ -1365,6 +1366,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="topbar-logo" onclick="showAdminPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
         <button class="tb-chip back-fab-top" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
+        <button class="tb-chip back-fab-top" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
@@ -2244,7 +2246,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyyD814y1mJyDsGht6FMDS-rsWP0BPuf6oO1eYS1p6cGF8DO9JHe1n5OB4F77rDYHw8Mw/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQIZD9e3s7QZZoemboGLbmjG1718fubshBXyndCTphE8CFNUhdhg8P6vFhadQOMubmxQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -2846,7 +2848,7 @@ async function adminLogin() {
         // gated "Admin User" — this covers Store Manager and any other
         // role text someone adds to the Authorities sheet later, all
         // controlled by the same Settings checkboxes.
-        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1 && roleUp.indexOf('DIRECTOR') === -1;
+        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1;
         state.__loginKind = 'admin';
         resetIdleTimer();
         saveSession();
@@ -3053,17 +3055,49 @@ const SECTION_LABEL_MAP = {
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
   profile: 'Emp Details'
 };
+// Each section's own "dashboard" page (its landing page after clicking
+// the section's module button on the main screen) — differs for emp vs admin
+// for the Leave section only.
+const SECTION_DASHBOARD_PAGE = {
+  Leave:            { emp: 'overview', admin: 'dashboard' },
+  'Loyalty Card':   { emp: 'loyalty',  admin: 'loyalty' },
+  KPI:              { emp: 'kpi',      admin: 'kpi' },
+  DSR:              { emp: 'dsr',      admin: 'dsr' }
+};
+function getSectionDashboardPage(who, page) {
+  const section = SECTION_LABEL_MAP[page];
+  if (!section) return null;
+  const map = SECTION_DASHBOARD_PAGE[section];
+  return map ? map[who] : null;
+}
+function goToSectionDashboard(who) {
+  const current = state['_currentPage_' + who];
+  const dash = getSectionDashboardPage(who, current);
+  if (dash) (who === 'admin' ? showAdminPage : showEmpPage)(dash);
+}
+function updateSectionBackFab(who, page) {
+  const fab = document.getElementById((who === 'admin' ? 'adminSectionBackFab' : 'empSectionBackFab'));
+  if (!fab) return;
+  const dash = getSectionDashboardPage(who, page);
+  const onDashboardItself = dash === page;
+  const showIt = !!dash && !onDashboardItself;
+  fab.classList.toggle('show', showIt);
+  if (showIt) fab.textContent = '↩ Back to ' + SECTION_LABEL_MAP[page];
+}
+
 function backLabelFor(page) {
   const section = SECTION_LABEL_MAP[page];
   return section ? ('← Back to ' + section) : '← Back';
 }
 
 function showEmpPage(page) {
+  state._currentPage_emp = page;
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
   if (sec) sec.classList.add('active');
   const backFab = document.getElementById('empBackFab');
-  if (backFab) { backFab.classList.toggle('show', page !== 'modulepicker'); backFab.textContent = backLabelFor(page); }
+  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
+  updateSectionBackFab('emp', page);
   renderFooterNav('emp', page);
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
@@ -3914,7 +3948,7 @@ let directEmpCache = [];
 
 async function loadDirectActionPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
-  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1;
   // MIS/Director always allowed. A restricted Admin User is allowed IN
   // (menu visibility already required at least one sub-permission), but
   // each individual button below is still gated to its own specific
@@ -4031,7 +4065,7 @@ async function submitDirectAction(outcome, evt) {
 
   try {
     const res = await jsonpWriteOnce({
-      page: 'directActionAPI', role: state.adminRole,
+      page: 'directActionAPI', role: state.adminRole, adminEmail: state.adminEmail,
       empId, startDate, endDate, leaveType, leaveMode, halfDay, reason, outcome
     }, idem);
     if (res.ok) {
@@ -4064,7 +4098,7 @@ const WEEKDAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Satur
 
 async function loadBlockedDatesPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
-  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1;
   const perms = state.loyaltyPerms;
   const sectionLeaveOnB = isMisOrDirector || !perms || perms.section_leave !== false;
   const canDates = isMisOrDirector || !!(sectionLeaveOnB && perms && perms.blocked_dates);
@@ -4215,7 +4249,7 @@ async function toggleBlockedDay(day, enabled) {
 // ══════════════════════════════════════
 async function loadSettingsPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
-  const allowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const allowed = roleUp.indexOf('MIS') > -1;
   document.getElementById('settingsAccessDenied').style.display = allowed ? 'none' : 'block';
   document.getElementById('settingsWrap').style.display = allowed ? '' : 'none';
   if (!allowed) return;
@@ -4672,11 +4706,13 @@ function resetAdminRoleRestrictions() {
 // ADMIN NAV
 // ══════════════════════════════════════
 function showAdminPage(page) {
+  state._currentPage_admin = page;
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
   if (sec) sec.classList.add('active');
   const backFab = document.getElementById('adminBackFab');
-  if (backFab) { backFab.classList.toggle('show', page !== 'modulepicker'); backFab.textContent = backLabelFor(page); }
+  if (backFab) backFab.classList.toggle('show', page !== 'modulepicker');
+  updateSectionBackFab('admin', page);
   renderFooterNav('admin', page);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
@@ -6915,7 +6951,7 @@ function adminLeaveCardHTML(l) {
   const startYMD = normalizeDateStr(l.startDate);
   const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const roleUp = (state.adminRole || '').toUpperCase();
-  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1;
   const canCancel = isMisOrDirector; // Store Manager never gets Cancel
   const canModify = isMisOrDirector && isTodayOrFuture; // any status, today/future only
   const idSuffix = l.leaveId + (l.displayDate ? '_' + l.displayDate : '');
@@ -6975,7 +7011,7 @@ function adminLeaveCardHTML(l) {
 // ══════════════════════════════════════
 function openAdminModifyModal(l) {
   const roleUp = (state.adminRole || '').toUpperCase();
-  const isAllowed = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const isAllowed = roleUp.indexOf('MIS') > -1;
   if (!isAllowed) { toast('Only MIS or Director can modify leaves', 'error'); return; }
 
   state.adminModifyLeaveId = l.leaveId;
@@ -7275,7 +7311,7 @@ async function loadNoticesForAdmin() {
   // can read the notices but not change them — editor goes read-only
   // and the Save button (plus the formatting toolbar) is hidden.
   const roleUp = (state.adminRole || '').toUpperCase();
-  const isMisOrDirector = roleUp.indexOf('MIS') > -1 || roleUp.indexOf('DIRECTOR') > -1;
+  const isMisOrDirector = roleUp.indexOf('MIS') > -1;
   const sectionLeaveOnN = isMisOrDirector || !state.loyaltyPerms || state.loyaltyPerms.section_leave !== false;
   const canEdit = isMisOrDirector || !!(sectionLeaveOnN && state.loyaltyPerms && state.loyaltyPerms.notices_edit);
   box.readOnly = !canEdit;
