@@ -1216,6 +1216,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY CARD (employee) — landing menu, same button style/size as the Home Quick Actions grid -->
     <div class="page-section" id="emp-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
+      <div class="card" id="loyaltyHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-newcard')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Card Entry</div><div class="quick-action-sub">Enroll a customer</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
@@ -1347,6 +1348,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="empEomBanner-box" style="display:none;"></div>
+      <div class="card" id="kpiHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
@@ -1389,6 +1391,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- ══════════════ DSR SECTION (employee) ══════════════ -->
     <div class="page-section" id="emp-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
+      <div class="card" id="dsrHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
@@ -1624,6 +1627,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY CARD (admin) — landing menu, same button style/size as the Home Quick Actions grid -->
     <div class="page-section" id="admin-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
+      <div class="card" id="loyaltyHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
@@ -1955,6 +1959,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="adminEomBanner-box" style="display:none;"></div>
+      <div class="card" id="kpiHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQAKpiTarget" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
         <div class="quick-action-btn" id="adminQAKpiTillDate" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
@@ -1997,6 +2002,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- ══════════════ DSR SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
+      <div class="card" id="dsrHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
@@ -3227,15 +3233,16 @@ function showEmpPage(page) {
   renderFooterNav('emp', page);
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
-  if(page==='loyalty') initLoyaltyPage('emp');
+  if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
   if(page==='loyalty-dash') loadLoyaltyDashboard('emp');
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('emp');
-  if(page==='kpi') loadEomBanner('emp');
+  if(page==='kpi') { loadEomBanner('emp'); loadKpiHighlights('emp'); }
   if(page==='kpi-rules') renderKpiRules('emp');
   if(page==='kpi-target') loadKpiTarget('emp');
   if(page==='kpi-tilldate') loadKpiTillDate('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
   if(page==='kpi-compare') loadKpiCompare('emp');
+  if(page==='dsr') loadDsrHighlights('emp');
   if(page==='dsr-today') loadDsrToday('emp');
   if(page==='dsr-status') loadDsrStatus('emp');
   if(page==='dsr-missing') loadDsrMissing('emp');
@@ -4870,15 +4877,16 @@ function showAdminPage(page) {
   renderFooterNav('admin', page);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
-  if(page==='loyalty') initLoyaltyPage('admin');
+  if(page==='loyalty') { initLoyaltyPage('admin'); loadLoyaltyHighlights('admin'); }
   if(page==='loyalty-dash') loadLoyaltyDashboard('admin');
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('admin');
-  if(page==='kpi') loadEomBanner('admin');
+  if(page==='kpi') { loadEomBanner('admin'); loadKpiHighlights('admin'); }
   if(page==='kpi-rules') renderKpiRules('admin');
   if(page==='kpi-target') loadKpiTarget('admin');
   if(page==='kpi-tilldate') loadKpiTillDate('admin');
   if(page==='kpi-monthly') loadKpiMonthly('admin');
   if(page==='kpi-compare') loadKpiCompare('admin');
+  if(page==='dsr') loadDsrHighlights('admin');
   if(page==='dsr-today') loadDsrToday('admin');
   if(page==='dsr-status') loadDsrStatus('admin');
   if(page==='dsr-missing') loadDsrMissing('admin');
@@ -5948,6 +5956,88 @@ function loadKpiCompare(who) {
 // ══════════════════════════════════════
 // DSR SECTION
 // ══════════════════════════════════════
+// Quick-glance highlight numbers shown right on the DSR landing page —
+// no clicking into a sub-page needed to see where things stand.
+function loadDsrHighlights(who) {
+  const box = document.getElementById('dsrHighlights-' + who);
+  if (!box) return;
+  const today = new Date().toISOString().split('T')[0];
+  Promise.all([
+    jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: today, end: today })).catch(() => null),
+    jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).catch(() => null),
+    jsonpReliable(kpiEmpParams(who, { page: 'dsrMissingJSON' })).catch(() => null)
+  ]).then(([todayRes, statusRes, missingRes]) => {
+    const todayCount = (todayRes && todayRes.ok && todayRes.details) ? todayRes.details.length : '—';
+    let statusLabel = '—', statusColor = 'var(--text3)';
+    if (statusRes && statusRes.ok && statusRes.rows.length) {
+      if (who === 'admin') {
+        const complete = statusRes.rows.filter(r => String(r.status).toLowerCase().indexOf('complete') === 0).length;
+        statusLabel = complete + '/' + statusRes.rows.length + ' Complete';
+        statusColor = complete === statusRes.rows.length ? 'var(--green)' : 'var(--red)';
+      } else {
+        const r = statusRes.rows[0];
+        statusLabel = r.dsrPct;
+        statusColor = String(r.status).toLowerCase().indexOf('complete') === 0 ? 'var(--green)' : 'var(--red)';
+      }
+    }
+    let missingTotal = '—', missingColor = 'var(--text3)';
+    if (missingRes && missingRes.ok) {
+      missingTotal = missingRes.rows.reduce((sum, r) => sum + (Number(r.totalMissing) || 0), 0);
+      missingColor = missingTotal > 0 ? 'var(--red)' : 'var(--green)';
+    }
+    box.innerHTML = `<div class="card-title">⚡ At a Glance</div>
+      <div class="stat-tile-row">
+        <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${todayCount}</div><div class="stat-tile-lbl">Today's Entries</div></div>
+        <div class="stat-tile" style="background:var(--bg);border-color:${statusColor};"><div class="stat-tile-val" style="color:${statusColor}">${statusLabel}</div><div class="stat-tile-lbl">Yesterday</div></div>
+        <div class="stat-tile" style="background:var(--bg);border-color:${missingColor};"><div class="stat-tile-val" style="color:${missingColor}">${missingTotal}</div><div class="stat-tile-lbl">Missing (Month)</div></div>
+      </div>`;
+  }).catch(() => { box.innerHTML = ''; });
+}
+
+// Quick-glance highlight numbers shown right on the KPI landing page.
+function loadKpiHighlights(who) {
+  const box = document.getElementById('kpiHighlights-' + who);
+  if (!box) return;
+  jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' })).then(res => {
+    if (!res || !res.ok || !res.rows.length) { box.innerHTML = ''; return; }
+    if (who === 'admin') {
+      const top = res.rows[0];
+      box.innerHTML = `<div class="card-title">⚡ At a Glance — Running Month</div>
+        <div class="stat-tile-row">
+          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${res.rows.length}</div><div class="stat-tile-lbl">Employees Tracked</div></div>
+          <div class="stat-tile" style="background:var(--gold-bg,var(--bg));border-color:var(--gold);"><div class="stat-tile-val" style="color:var(--gold-dark)">${top.employee}</div><div class="stat-tile-lbl">🥇 Top Score (${top.overallScore})</div></div>
+        </div>`;
+    } else {
+      const r = res.rows[0];
+      box.innerHTML = `<div class="card-title">⚡ At a Glance — Running Month</div>
+        <div class="stat-tile-row">
+          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${r.grade}</div><div class="stat-tile-lbl">My Grade</div></div>
+          <div class="stat-tile" style="background:var(--bg);border-color:var(--gold);"><div class="stat-tile-val" style="color:var(--gold-dark)">${r.overallScore}</div><div class="stat-tile-lbl">Overall Score</div></div>
+          <div class="stat-tile" style="background:var(--bg);border-color:var(--border);"><div class="stat-tile-val">${r.purchAchPct}</div><div class="stat-tile-lbl">Purchase Ach%</div></div>
+        </div>`;
+    }
+  }).catch(() => { box.innerHTML = ''; });
+}
+
+// Quick-glance highlight numbers shown right on the Loyalty landing page.
+function loadLoyaltyHighlights(who) {
+  const box = document.getElementById('loyaltyHighlights-' + who);
+  if (!box) return;
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  const reqParams = { page: 'loyaltyDashboardAPI', role: role };
+  if (who === 'emp') reqParams.empName = state.empName;
+  jsonpReliable(reqParams).then(res => {
+    if (!res || !res.ok) { box.innerHTML = ''; return; }
+    const k = res.kpi;
+    box.innerHTML = `<div class="card-title">⚡ At a Glance</div>
+      <div class="stat-tile-row">
+        <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${k.thisMonthCards}</div><div class="stat-tile-lbl">This Month</div></div>
+        <div class="stat-tile" style="background:var(--orange-bg);border-color:var(--orange);"><div class="stat-tile-val" style="color:var(--orange)">${k.pendingCards}</div><div class="stat-tile-lbl">Pending</div></div>
+        <div class="stat-tile" style="background:var(--blue-bg);border-color:var(--blue);"><div class="stat-tile-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="stat-tile-lbl">Pending ₹</div></div>
+      </div>`;
+  }).catch(() => { box.innerHTML = ''; });
+}
+
 function loadDsrToday(who) {
   const box = document.getElementById('dsrTodayBox-' + who);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
