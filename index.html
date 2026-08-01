@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1330,8 +1330,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date Score</div><div class="quick-action-sub">Progress this month</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Running Month Score</div><div class="quick-action-sub">Latest monthly KPI</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
       </div>
     </div>
@@ -1340,15 +1340,25 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="card"><div id="kpiTargetBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-tilldate">
-      <div class="section-hdr"><span class="section-title2">📅 Till Date KPI Score</span></div>
+      <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date)</span></div>
       <div class="card"><div id="kpiTillDateBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-monthly">
-      <div class="section-hdr"><span class="section-title2">🏁 Running Month KPI Score</span></div>
+      <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final)</span></div>
       <div class="card"><div id="kpiMonthlyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-compare">
-      <div class="section-hdr"><span class="section-title2">📈 Month-to-Month Comparison</span></div>
+      <div class="section-hdr"><span class="section-title2">📈 Month / Date Comparison</span></div>
+      <div class="card">
+        <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" id="kpiRangeStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="kpiRangeEnd-emp"></div>
+        </div>
+        <button class="btn-primary" onclick="loadKpiRangeSummary('emp')" style="width:100%;">🔍 Show Data</button>
+      </div>
+      <div class="card"><div id="kpiRangeBox-emp"></div></div>
+      <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
       <div class="card"><div id="kpiCompareBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1357,14 +1367,14 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">DSR % / Status</div><div class="quick-action-sub">Entry details &amp; %</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-dsr-status">
-      <div class="section-hdr"><span class="section-title2">📶 DSR % / Status</span></div>
+      <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status</span></div>
       <div class="card"><div id="dsrStatusBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-missing">
@@ -1917,8 +1927,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date Score</div><div class="quick-action-sub">Progress this month</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Running Month Score</div><div class="quick-action-sub">Latest monthly KPI</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
       </div>
     </div>
@@ -1927,15 +1937,25 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="card"><div id="kpiTargetBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-tilldate">
-      <div class="section-hdr"><span class="section-title2">📅 Till Date KPI Score — All Employees</span></div>
+      <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date) — All Employees</span></div>
       <div class="card"><div id="kpiTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-monthly">
-      <div class="section-hdr"><span class="section-title2">🏁 Running Month KPI Score — All Employees</span></div>
+      <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final) — All Employees</span></div>
       <div class="card"><div id="kpiMonthlyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-compare">
-      <div class="section-hdr"><span class="section-title2">📈 Month-to-Month Comparison</span></div>
+      <div class="section-hdr"><span class="section-title2">📈 Month / Date Comparison — All Employees</span></div>
+      <div class="card">
+        <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" id="kpiRangeStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="kpiRangeEnd-admin"></div>
+        </div>
+        <button class="btn-primary" onclick="loadKpiRangeSummary('admin')" style="width:100%;">🔍 Show Data</button>
+      </div>
+      <div class="card"><div id="kpiRangeBox-admin"></div></div>
+      <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
       <div class="card"><div id="kpiCompareBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1944,14 +1964,14 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">DSR % / Status</div><div class="quick-action-sub">Entry details &amp; % — all staff</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-dsr-status">
-      <div class="section-hdr"><span class="section-title2">📶 DSR % / Status — All Employees</span></div>
+      <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status — All Employees</span></div>
       <div class="card"><div id="dsrStatusBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-missing">
@@ -3023,12 +3043,12 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi', icon:'🏠', label:'Home' },
       { page:'kpi-target', icon:'🎯', label:'Target' },
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
-      { page:'kpi-monthly', icon:'🏁', label:'Monthly' }
+      { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openEmpMoreModal()' },
     dsr: { pages: ['dsr','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
-      { page:'dsr-status', icon:'📶', label:'Status' },
+      { page:'dsr-status', icon:'📶', label:"Yesterday" },
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openEmpMoreModal()' }
   },
@@ -3043,12 +3063,12 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi', icon:'🏠', label:'Home' },
       { page:'kpi-target', icon:'🎯', label:'Target' },
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
-      { page:'kpi-monthly', icon:'🏁', label:'Monthly' }
+      { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openAdminMoreModal()' },
     dsr: { pages: ['dsr','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
-      { page:'dsr-status', icon:'📶', label:'Status' },
+      { page:'dsr-status', icon:'📶', label:"Yesterday" },
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openAdminMoreModal()' }
   }
@@ -5653,6 +5673,32 @@ function loadKpiMonthly(who) {
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No monthly KPI data yet.</p></div>'; return; }
     let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
     res.rows.forEach(r => html += kpiRowCardHtml(r));
+    box.innerHTML = html;
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+}
+
+function loadKpiRangeSummary(who) {
+  const box = document.getElementById('kpiRangeBox-' + who);
+  const start = document.getElementById('kpiRangeStart-' + who).value;
+  const end = document.getElementById('kpiRangeEnd-' + who).value;
+  if (!start || !end) { toast('Select both dates', 'error'); return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable(kpiEmpParams(who, { page: 'kpiRangeSummaryJSON', start: start, end: end })).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No data found in this range.</p></div>'; return; }
+    let html = `<div class="kd-note">${fmtDMY(res.start)} to ${fmtDMY(res.end)}</div>`;
+    res.rows.forEach(r => {
+      html += `<div class="kd-card">
+        <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill gold">🔁 ${r.conversionPct}% conversion</span></div>
+        <div class="kd-stats">
+          <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
+          <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
+          <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyalty}</span><span class="kd-lbl">Loyalty Cards</span></div>
+          <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.golden}</span><span class="kd-lbl">Golden Aura</span></div>
+          <div class="kd-box"><span class="kd-ic">📶</span><span class="kd-val">${r.dsrPct}%</span><span class="kd-lbl">DSR %</span></div>
+        </div>
+      </div>`;
+    });
     box.innerHTML = html;
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
