@@ -329,14 +329,16 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .topbar {
   background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink));
   border-bottom: 2px solid var(--gold);
-  height: var(--topbar-h);
-  padding: 0 10px;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 6px;
   box-shadow: 0 1px 8px rgba(0,0,0,0.06);
-  overflow-x: auto; overflow-y: hidden;
-  scrollbar-width: none;
 }
-.topbar::-webkit-scrollbar { display: none; }
+.topbar-row1 {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.topbar-row2 {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
 
 .topbar-logo {
   font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 800;
@@ -465,30 +467,25 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .footer-nav-btn:active { opacity: 0.6; }
 .footer-nav.footnav-hidden { display: none; }
 
-/* Back buttons — floating over the white page content area (not inside
-   the purple topbar), positioned top-right just below the Logout button.
-   Both the generic "← Back" and the section-specific "↩ Back to
-   <Section>" sit in the exact same spot — only one is ever visible at a
-   time (see updateBackFabs in JS), so they never overlap each other. */
+/* Back / Section buttons — now normal chips inside topbar-row2 (not
+   floating), so they wrap naturally on narrow/mobile screens instead of
+   overlapping other topbar elements. Both the generic "← Back" and the
+   section-specific "↩ Back to <Section>" occupy the same slot — only one
+   is ever visible at a time (see updateBackFabs in JS). */
 .back-fab-top {
   display: none; align-items: center; gap: 5px;
-  position: fixed; top: 110px; right: 14px; z-index: 60;
   background: linear-gradient(135deg, var(--purple), var(--purple-mid));
-  color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
-  border-radius: 30px; padding: 10px 16px; font-size: 12.5px; font-weight: 700;
-  box-shadow: 0 4px 16px rgba(26,15,46,0.35);
+  color: #fff; border: 1.5px solid rgba(255,255,255,0.5) !important;
+  font-size: 11px; font-weight: 700;
 }
 .back-fab-top.show { display: flex; }
 .back-fab-top:active { transform: scale(0.95); }
 .sections-fab-top {
-  display: none; align-items: center; gap: 5px;
-  position: fixed; top: 66px; right: 14px; z-index: 60;
+  display: flex; align-items: center; gap: 5px;
   background: linear-gradient(135deg, #1565C0, #0D47A1);
-  color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
-  border-radius: 12px; padding: 7px 12px; font-size: 11.5px; font-weight: 700;
-  box-shadow: 0 4px 16px rgba(13,71,161,0.4);
+  color: #fff; border: 1.5px solid rgba(255,255,255,0.5) !important;
+  font-size: 11px; font-weight: 700;
 }
-.sections-fab-top.show { display: flex; }
 .sections-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
 .page-section.active { display: block; }
@@ -1006,17 +1003,17 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="empApp">
   <div class="header-group">
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div class="topbar-row1">
         <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+        <span class="tb-chip tb-badge" style="background:#e8f5e9; color:var(--green); border-color:#a5d6a7;" id="empNameBadge">👤 Employee</span>
       </div>
-      <div class="topbar-right">
-        <button class="sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
-        <button class="back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
-        <button class="back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
+      <div class="topbar-row2">
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
-        <span class="tb-chip tb-badge" style="background:#e8f5e9; color:var(--green); border-color:#a5d6a7;" id="empNameBadge">👤 Employee</span>
+        <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
+        <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
+        <button class="tb-chip back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -1394,11 +1391,16 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
       </div>
+    </div>
+    <div class="page-section" id="emp-dsr-today">
+      <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries</span></div>
+      <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status</span></div>
@@ -1439,16 +1441,16 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="adminApp">
   <div class="header-group">
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div class="topbar-row1">
         <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+        <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
       </div>
-      <div class="topbar-right">
-        <button class="sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
-        <button class="back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
-        <button class="back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
+      <div class="topbar-row2">
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
-        <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
+        <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
+        <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
+        <button class="tb-chip back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
         <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -1997,11 +1999,16 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
+        <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
       </div>
+    </div>
+    <div class="page-section" id="admin-dsr-today">
+      <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries — All Employees</span></div>
+      <div class="card"><div id="dsrTodayBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status — All Employees</span></div>
@@ -3076,7 +3083,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openEmpMoreModal()' },
-    dsr: { pages: ['dsr','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -3103,7 +3110,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openAdminMoreModal()' },
-    dsr: { pages: ['dsr','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -3158,7 +3165,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
-  dsr: 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
+  dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
   profile: 'Emp Details'
 };
@@ -3229,6 +3236,7 @@ function showEmpPage(page) {
   if(page==='kpi-tilldate') loadKpiTillDate('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
   if(page==='kpi-compare') loadKpiCompare('emp');
+  if(page==='dsr-today') loadDsrToday('emp');
   if(page==='dsr-status') loadDsrStatus('emp');
   if(page==='dsr-missing') loadDsrMissing('emp');
   if(page==='dsr-tilldate') loadDsrTillDate('emp');
@@ -4758,7 +4766,7 @@ const SM_FEATURE_ELEMENTS = {
   kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
   dsr: ['adminQADsr'],
-  dsrNewEntry: ['adminQADsrNewEntry'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
+  dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange']
 };
 
@@ -4779,7 +4787,7 @@ const FEATURE_SUBKEYS = {
   loyCardhist: ['loyCardhist'], loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc'],
   kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
   kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
-  dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
+  dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
   dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange']
 };
 
@@ -4871,6 +4879,7 @@ function showAdminPage(page) {
   if(page==='kpi-tilldate') loadKpiTillDate('admin');
   if(page==='kpi-monthly') loadKpiMonthly('admin');
   if(page==='kpi-compare') loadKpiCompare('admin');
+  if(page==='dsr-today') loadDsrToday('admin');
   if(page==='dsr-status') loadDsrStatus('admin');
   if(page==='dsr-missing') loadDsrMissing('admin');
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
@@ -5831,14 +5840,40 @@ function kpiRowCardHtml(r) {
       <span class="kd-name"><span class="kd-place">${r.place}</span>${r.employee}</span>
       <span class="kd-pill gold">Grade ${r.grade} · ${r.gradeLabel}</span>
     </div>
-    <div class="kd-stats">
+    <div class="kd-stats" style="margin-bottom:8px;">
       <div class="kd-box"><span class="kd-ic">⭐</span><span class="kd-val">${scoreDisp}</span><span class="kd-lbl">Overall Score</span></div>
-      <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purch (${r.purchAchPct})</span></div>
-      <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyaltyCards}</span><span class="kd-lbl">Loyalty (${r.loyaltyAchPct})</span></div>
-      <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.goldenAura}</span><span class="kd-lbl">Golden (${r.goldenAchPct})</span></div>
-      <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.dsrScore}</span><span class="kd-lbl">DSR Score</span></div>
+      <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
       <div class="kd-box"><span class="kd-ic">🔁</span><span class="kd-val">${r.conversionPct}</span><span class="kd-lbl">Conversion</span></div>
     </div>
+    <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">🛍️ PURCHASE</div>
+    <div class="kd-stats" style="margin-bottom:8px;">
+      <div class="kd-box"><span class="kd-val">${r.purchTarget}</span><span class="kd-lbl">Target</span></div>
+      <div class="kd-box"><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
+      <div class="kd-box"><span class="kd-val">${r.purchAchPct}</span><span class="kd-lbl">Ach %</span></div>
+      <div class="kd-box"><span class="kd-val">${r.purchScore}</span><span class="kd-lbl">Score</span></div>
+    </div>
+    <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">💳 LOYALTY CARDS</div>
+    <div class="kd-stats" style="margin-bottom:8px;">
+      <div class="kd-box"><span class="kd-val">${r.loyalTarget}</span><span class="kd-lbl">Target</span></div>
+      <div class="kd-box"><span class="kd-val">${r.loyaltyCards}</span><span class="kd-lbl">Cards</span></div>
+      <div class="kd-box"><span class="kd-val">${r.loyaltyAchPct}</span><span class="kd-lbl">Ach %</span></div>
+      <div class="kd-box"><span class="kd-val">${r.loyaltyScore}</span><span class="kd-lbl">Score</span></div>
+    </div>
+    <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">🌟 GOLDEN PLAN</div>
+    <div class="kd-stats" style="margin-bottom:8px;">
+      <div class="kd-box"><span class="kd-val">${r.goldTarget}</span><span class="kd-lbl">Target</span></div>
+      <div class="kd-box"><span class="kd-val">${r.goldenAura}</span><span class="kd-lbl">Golden Aura</span></div>
+      <div class="kd-box"><span class="kd-val">${r.goldenAchPct}</span><span class="kd-lbl">Ach %</span></div>
+      <div class="kd-box"><span class="kd-val">${r.goldenScore}</span><span class="kd-lbl">Score</span></div>
+    </div>
+    <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">🧾 DSR ENTRY</div>
+    <div class="kd-stats">
+      <div class="kd-box"><span class="kd-val">${r.dsrOnTime}</span><span class="kd-lbl">On-Time</span></div>
+      <div class="kd-box"><span class="kd-val">${r.dsrLate}</span><span class="kd-lbl">Late</span></div>
+      <div class="kd-box"><span class="kd-val">${r.dsrNoEntry}</span><span class="kd-lbl">No-Entry</span></div>
+      <div class="kd-box"><span class="kd-val">${r.dsrScore}</span><span class="kd-lbl">Score</span></div>
+    </div>
+    <div class="kd-note" style="margin-top:8px;margin-bottom:0;">Last Updated: ${r.lastUpdated}</div>
   </div>`;
 }
 
@@ -5913,6 +5948,25 @@ function loadKpiCompare(who) {
 // ══════════════════════════════════════
 // DSR SECTION
 // ══════════════════════════════════════
+function loadDsrToday(who) {
+  const box = document.getElementById('dsrTodayBox-' + who);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const today = new Date().toISOString().split('T')[0];
+  jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: today, end: today })).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res.details || !res.details.length) { box.innerHTML = '<div class="empty-state"><p>No DSR entries filed yet today.</p></div>'; return; }
+    let html = `<div class="kd-note">${fmtDMY(today)} — ${res.details.length} entr${res.details.length === 1 ? 'y' : 'ies'}</div>`;
+    res.details.forEach(d => {
+      const good = d.status === 'On-Time';
+      html += `<div class="kd-card ${good ? 'kd-ok' : 'kd-danger'}" style="margin-bottom:8px;">
+        <div class="kd-head"><span class="kd-name">${d.customer || '—'}</span><span class="kd-pill ${good ? 'green' : 'red'}">${d.status}</span></div>
+        <div class="kd-note" style="margin:0;">👤 ${d.employee} &nbsp;|&nbsp; 📱 ${d.mobile || '—'}</div>
+      </div>`;
+    });
+    box.innerHTML = html;
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+}
+
 function loadDsrStatus(who) {
   const box = document.getElementById('dsrStatusBox-' + who);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
@@ -5921,7 +5975,7 @@ function loadDsrStatus(who) {
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
     let html = '';
     res.rows.forEach(r => {
-      const complete = String(r.status).toLowerCase() === 'complete';
+      const complete = String(r.status).toLowerCase().indexOf('complete') === 0;
       html += `<div class="kd-card ${complete ? 'kd-ok' : 'kd-danger'}">
         <div class="kd-head"><span class="kd-name">${r.employee}</span>
           <span class="kd-pill ${complete ? 'green' : 'red'}">${complete ? '✅' : '⏳'} ${r.status}</span></div>
