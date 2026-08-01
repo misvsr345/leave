@@ -472,7 +472,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    time (see updateBackFabs in JS), so they never overlap each other. */
 .back-fab-top {
   display: none; align-items: center; gap: 5px;
-  position: fixed; top: 78px; right: 14px; z-index: 60;
+  position: fixed; top: 110px; right: 14px; z-index: 60;
   background: linear-gradient(135deg, var(--purple), var(--purple-mid));
   color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
   border-radius: 30px; padding: 10px 16px; font-size: 12.5px; font-weight: 700;
@@ -480,6 +480,16 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .back-fab-top.show { display: flex; }
 .back-fab-top:active { transform: scale(0.95); }
+.sections-fab-top {
+  display: none; align-items: center; gap: 5px;
+  position: fixed; top: 66px; right: 14px; z-index: 60;
+  background: linear-gradient(135deg, #1565C0, #0D47A1);
+  color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 12px; padding: 7px 12px; font-size: 11.5px; font-weight: 700;
+  box-shadow: 0 4px 16px rgba(13,71,161,0.4);
+}
+.sections-fab-top.show { display: flex; }
+.sections-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
 .page-section.active { display: block; }
 
@@ -998,9 +1008,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
-        <button class="tb-chip" onclick="showEmpPage('modulepicker')" title="All Sections">⊞ Sections</button>
       </div>
       <div class="topbar-right">
+        <button class="sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
         <button class="back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
         <button class="back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
@@ -1040,16 +1050,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="bday-marquee-wrap" id="empEventScroller">
         <button class="bday-marquee-refresh" onclick="populateEventScroller('empEventScroller','empEventScrollerInner')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="empEventScrollerInner"></div>
-      </div>
-      <div class="quick-actions-section" style="margin-bottom:14px;">
-        <div class="quick-actions-title">⚡ Quick Actions</div>
-        <div class="quick-actions-grid">
-          <div class="quick-action-btn" onclick="showEmpPage('apply')"><span class="quick-action-icon">✍️</span><div class="quick-action-label">Apply</div><div class="quick-action-sub">New leave request</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('myleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">My Leaves</div><div class="quick-action-sub">History &amp; status</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
-          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
-        </div>
       </div>
       <div class="card" id="empBalanceCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="card" id="empRecentCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1441,9 +1441,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
-        <button class="tb-chip" onclick="showAdminPage('modulepicker')" title="All Sections">⊞ Sections</button>
       </div>
       <div class="topbar-right">
+        <button class="sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
         <button class="back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
         <button class="back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
@@ -3190,6 +3190,7 @@ function goToSectionDashboard(who) {
 function updateBackFabs(who, page) {
   const mainFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
   const sectionFab = document.getElementById(who === 'admin' ? 'adminSectionBackFab' : 'empSectionBackFab');
+  const sectionsFab = document.getElementById(who === 'admin' ? 'adminSectionsFab' : 'empSectionsFab');
   const dash = getSectionDashboardPage(who, page);
   const onDashboardItself = dash === page;
   const showSectionFab = !!dash && !onDashboardItself;
@@ -3198,6 +3199,7 @@ function updateBackFabs(who, page) {
     if (showSectionFab) sectionFab.textContent = '↩ Back to ' + SECTION_LABEL_MAP[page];
   }
   if (mainFab) mainFab.classList.toggle('show', page !== 'modulepicker' && !showSectionFab);
+  if (sectionsFab) sectionsFab.classList.toggle('show', page !== 'modulepicker');
 }
 
 function backLabelFor(page) {
@@ -3320,6 +3322,7 @@ function renderEmpOverview() {
         <div class="quick-action-btn" onclick="showEmpPage('apply')"><span class="quick-action-icon">✍️</span><div class="quick-action-label">Apply Leave</div><div class="quick-action-sub">Submit new request</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('myleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">My Leaves</div><div class="quick-action-sub">View history</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Leave schedule</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My Trends</div><div class="quick-action-sub">Usage analysis</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
