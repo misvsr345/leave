@@ -268,34 +268,34 @@ body {
    the Settings person-pickers) used to fall back to the ugly native
    browser dropdown; this fixes that everywhere at once. */
 select {
-  width: 100%; padding: 13px 44px 13px 16px; border: 1.5px solid var(--border); border-radius: var(--r2);
-  font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 600; color: var(--text);
-  background: linear-gradient(180deg, var(--card) 0%, var(--bg) 100%);
+  width: 100%; padding: 13px 46px 13px 16px; border: 1.5px solid var(--gold); border-radius: var(--r2);
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text);
+  background: linear-gradient(180deg, var(--card) 0%, var(--purple-bg) 130%);
   outline: none; transition: all 0.2s cubic-bezier(.4,0,.2,1); cursor: pointer;
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  box-shadow: 0 1px 2px rgba(26,15,46,0.05), inset 0 1px 0 rgba(255,255,255,0.6);
+  box-shadow: 0 2px 6px rgba(26,15,46,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
   background-image:
-    linear-gradient(135deg, var(--purple-mid), var(--purple)),
+    linear-gradient(135deg, var(--gold), var(--purple-mid) 55%, var(--purple)),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat, no-repeat;
-  background-position: right 6px center, right 12px center;
-  background-size: 26px 26px, 14px 14px;
+  background-position: right 5px center, right 12px center;
+  background-size: 30px 30px, 14px 14px;
   border-radius: var(--r2);
 }
 select:hover {
   border-color: var(--purple-mid);
-  box-shadow: 0 3px 10px rgba(107,33,168,0.12), inset 0 1px 0 rgba(255,255,255,0.6);
-  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(107,33,168,0.18), inset 0 1px 0 rgba(255,255,255,0.7);
+  transform: translateY(-1.5px);
 }
 select:focus {
-  border-color: var(--gold); background: var(--card);
-  box-shadow: 0 0 0 3px rgba(212,168,67,0.18), 0 3px 10px rgba(107,33,168,0.10);
+  border-color: var(--gold); border-width: 2px; background: var(--card);
+  box-shadow: 0 0 0 4px rgba(212,168,67,0.22), 0 5px 16px rgba(107,33,168,0.14);
 }
 select:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-select option { font-family: 'DM Sans', sans-serif; font-weight: 500; padding: 10px; background: var(--card); color: var(--text); }
+select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 10px; background: var(--card); color: var(--text); }
 .form-group select {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  cursor: pointer; padding-right: 44px; font-weight: 600;
+  cursor: pointer; padding-right: 46px; font-weight: 700;
   background-image:
     linear-gradient(135deg, var(--purple-mid), var(--purple)),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -465,15 +465,24 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .footer-nav-btn:active { opacity: 0.6; }
 .footer-nav.footnav-hidden { display: none; }
 
-/* Back button — sits top-right in the topbar (first chip, before the
-   connection status/refresh/logout), shown on every page except
-   Overview/Dashboard. */
+/* Back buttons — floating over the page content (not inline in the
+   topbar): the generic "← Back" (to main landing) floats bottom-left,
+   the section-specific "↩ Back to <Section>" floats bottom-right.
+   Positioned above the footer nav so they never overlap it. Exactly one
+   of the two is ever visible at a time (see updateBackFabs in JS). */
 .back-fab-top {
   display: none; align-items: center; gap: 5px;
-  background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4);
+  position: fixed; bottom: 96px; z-index: 60;
+  background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+  color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 30px; padding: 10px 16px; font-size: 12.5px; font-weight: 700;
+  box-shadow: 0 4px 16px rgba(26,15,46,0.35);
 }
 .back-fab-top.show { display: flex; }
 .back-fab-top:active { transform: scale(0.95); }
+.back-fab-main { left: 14px; }
+.back-fab-section { right: 14px; }
+@media (min-width: 640px) { .back-fab-top { bottom: 24px; } }
 .page-section { display: none; }
 .page-section.active { display: block; }
 
@@ -992,12 +1001,12 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="topbar">
       <div class="topbar-logo" onclick="showEmpPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
-        <button class="tb-chip back-fab-top" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
-        <button class="tb-chip back-fab-top" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
+        <button class="back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
+        <button class="back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
-        <span class="tb-chip tb-badge" id="empNameBadge">Employee</span>
+        <span class="tb-chip tb-badge" style="background:#e8f5e9; color:var(--green); border-color:#a5d6a7;" id="empNameBadge">👤 Employee</span>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -1018,8 +1027,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="quick-actions-grid">
           <div class="quick-action-btn" onclick="showEmpPage('overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
+          <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -1038,6 +1047,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
           <div class="quick-action-btn" onclick="showEmpPage('apply')"><span class="quick-action-icon">✍️</span><div class="quick-action-label">Apply</div><div class="quick-action-sub">New leave request</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('myleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">My Leaves</div><div class="quick-action-sub">History &amp; status</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule</div></div>
+          <div class="quick-action-btn" onclick="showEmpPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
         </div>
       </div>
@@ -1227,7 +1237,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: New Card Entry (employee only) -->
     <div class="page-section" id="emp-loyalty-newcard">
       <div class="section-hdr"><span class="section-title2">➕ New Card Entry</span>
-        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div class="card" style="padding:14px 16px;">
         <div class="form-row"><label>Customer Full Name (As per Document) *</label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
@@ -1236,13 +1245,28 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="form-row"><label>Phone Number *</label><input type="tel" id="ncPhone" placeholder="10-digit mobile number"></div>
         <div class="form-row"><label>Address *</label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
 
-        <div class="form-row"><label>Customer Signature Photo *</label><input type="file" id="ncSigPhoto" accept="image/*" capture="environment"></div>
-        <div class="form-row"><label>Customer Photo *</label><input type="file" id="ncCustPhoto" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Customer Signature Photo *</label>
+          <input type="file" id="ncSigPhoto" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncSigPhoto')">
+          <div id="ncSigPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+        </div>
+        <div class="form-row"><label>Customer Photo *</label>
+          <input type="file" id="ncCustPhoto" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncCustPhoto')">
+          <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+        </div>
         <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" placeholder="12-digit Aadhaar number" maxlength="14"></div>
-        <div class="form-row"><label>Aadhaar Card Front Photo *</label><input type="file" id="ncAadhaarFront" accept="image/*" capture="environment"></div>
-        <div class="form-row"><label>Aadhaar Card Back Photo</label><input type="file" id="ncAadhaarBack" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Aadhaar Card Front Photo *</label>
+          <input type="file" id="ncAadhaarFront" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncAadhaarFront')">
+          <div id="ncAadhaarFront-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+        </div>
+        <div class="form-row"><label>Aadhaar Card Back Photo</label>
+          <input type="file" id="ncAadhaarBack" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncAadhaarBack')">
+          <div id="ncAadhaarBack-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+        </div>
         <div class="form-row"><label>Pan No</label><input type="text" id="ncPanNo" placeholder="Optional" maxlength="10"></div>
-        <div class="form-row"><label>Pan Card Photo</label><input type="file" id="ncPanPhoto" accept="image/*" capture="environment"></div>
+        <div class="form-row"><label>Pan Card Photo</label>
+          <input type="file" id="ncPanPhoto" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncPanPhoto')">
+          <div id="ncPanPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+        </div>
 
         <div class="form-row"><label>Loyalty Card Type *</label>
           <select id="ncCardType">
@@ -1263,7 +1287,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Search (employee) -->
     <div class="page-section" id="emp-loyalty-search">
       <div class="section-hdr"><span class="section-title2">🔍 Loyalty — Search</span>
-        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div class="card" style="padding:12px 14px;">
         <div style="display:flex;gap:8px;">
@@ -1279,7 +1302,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: My Incentive (employee) -->
     <div class="page-section" id="emp-loyalty-stats">
       <div class="section-hdr"><span class="section-title2">📊 My Incentive</span>
-        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div class="card" style="padding:12px 14px;">
         <div style="display:flex;gap:10px;">
@@ -1294,7 +1316,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Dashboard (employee) -->
     <div class="page-section" id="emp-loyalty-dash">
       <div class="section-hdr"><span class="section-title2">📈 My Dashboard</span>
-        <button class="btn-sm btn-view" onclick="showEmpPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div id="loyEmpDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -1328,12 +1349,18 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- ══════════════ KPI SECTION (employee) ══════════════ -->
     <div class="page-section" id="emp-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
+      <div class="card" id="empEomBanner-box" style="display:none;"></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
+    </div>
+    <div class="page-section" id="emp-kpi-rules">
+      <div class="section-hdr"><span class="section-title2">📜 KPI Rules &amp; Grading</span></div>
+      <div class="card" id="kpiRulesBox-emp"></div>
     </div>
     <div class="page-section" id="emp-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 My Target</span></div>
@@ -1414,8 +1441,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="topbar">
       <div class="topbar-logo" onclick="showAdminPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
-        <button class="tb-chip back-fab-top" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
-        <button class="tb-chip back-fab-top" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
+        <button class="back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
+        <button class="back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
@@ -1472,6 +1499,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
           <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile view</div></div>
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
           <div class="quick-action-btn" id="adminQAAvailability" onclick="showAdminPage('availability')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Team Availability</div><div class="quick-action-sub">Who's on leave this week</div></div>
+          <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
         </div>
       </div>
@@ -1613,7 +1641,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Search (admin) -->
     <div class="page-section" id="admin-loyalty-search">
       <div class="section-hdr"><span class="section-title2">🔍 Loyalty — Search</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div class="card" style="padding:12px 14px;">
         <div style="display:flex;gap:8px;">
@@ -1629,7 +1656,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: All Employees (admin) -->
     <div class="page-section" id="admin-loyalty-stats">
       <div class="section-hdr"><span class="section-title2">📊 All Employees</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyAdminStats()">🔄 Refresh</button>
       <div id="loyAdminStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1638,7 +1664,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Dashboard (admin) -->
     <div class="page-section" id="admin-loyalty-dash">
       <div class="section-hdr"><span class="section-title2">📈 Store Dashboard</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div id="loyAdminDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -1646,7 +1671,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Employee Timeline (admin) -->
     <div class="page-section" id="admin-loyalty-timeline">
       <div class="section-hdr"><span class="section-title2">👤 Employee Timeline</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div class="card" style="padding:12px 14px;">
         <label>Select Employee</label>
@@ -1663,7 +1687,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Upcoming Approvals (admin) -->
     <div class="page-section" id="admin-loyalty-upcoming">
       <div class="section-hdr"><span class="section-title2">🔔 Upcoming Approvals</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals()">🔄 Refresh</button>
       <div id="loyUpcomingContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1672,7 +1695,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Card History (admin) -->
     <div class="page-section" id="admin-loyalty-cardhist">
       <div class="section-hdr"><span class="section-title2">🗂️ Card History</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <div class="card" style="padding:12px 14px;">
         <input type="text" id="loyCardHistSearch" placeholder="Filter by customer name or card no (optional)..." autocomplete="off"
@@ -1685,7 +1707,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: Incentive History (admin) -->
     <div class="page-section" id="admin-loyalty-incenthist">
       <div class="section-hdr"><span class="section-title2">💰 Incentive History</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyIncentiveHistory()">🔄 Refresh</button>
       <div id="loyIncenthistContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1694,7 +1715,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- LOYALTY: KYC Report (admin) -->
     <div class="page-section" id="admin-loyalty-kyc">
       <div class="section-hdr"><span class="section-title2">📋 KYC Report</span>
-        <button class="btn-sm btn-view" onclick="showAdminPage('loyalty')">← Loyalty Menu</button>
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyKYCReport()">🔄 Refresh</button>
       <div id="loyKycContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1912,6 +1932,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 
     <!-- ADMIN PROFILE -->
     <div class="page-section" id="admin-profile">
+      <div class="quick-actions-grid" style="margin-bottom:14px;">
+        <div class="quick-action-btn" style="grid-column:1/-1;" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👥</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Browse any staff member's full profile</div></div>
+      </div>
+      <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🪪 My Own Profile</span></div>
       <div class="card" style="overflow:hidden;padding:0;">
         <div style="background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));padding:28px 20px;text-align:center;">
           <div id="adminProfileAvatar" style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;font-weight:800;color:#fff;">A</div>
@@ -1925,12 +1949,18 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <!-- ══════════════ KPI SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
+      <div class="card" id="adminEomBanner-box" style="display:none;"></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
+    </div>
+    <div class="page-section" id="admin-kpi-rules">
+      <div class="section-hdr"><span class="section-title2">📜 KPI Rules &amp; Grading</span></div>
+      <div class="card" id="kpiRulesBox-admin"></div>
     </div>
     <div class="page-section" id="admin-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 Targets — All Employees</span></div>
@@ -2175,7 +2205,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="modal-title">☰ More</div>
     <div class="quick-actions-grid" style="margin-top:10px;">
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); showEmpPage('events');"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
-      <div class="quick-action-btn" onclick="closeModal('empMoreModal'); showEmpPage('blocked');"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openChangePassword('emp');"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openThemePickerModal();"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
     </div>
@@ -2192,7 +2221,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="quick-actions-grid" style="margin-top:10px;">
       <div class="quick-action-btn" id="adminQADirect" onclick="closeModal('adminMoreModal'); showAdminPage('direct');"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
       <div class="quick-action-btn" id="adminQANotices" onclick="closeModal('adminMoreModal'); showAdminPage('notices');"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
-      <div class="quick-action-btn" id="adminQABlocked" onclick="closeModal('adminMoreModal'); showAdminPage('blocked');"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
       <div class="quick-action-btn" id="adminQASettings" onclick="closeModal('adminMoreModal'); showAdminPage('settings');"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
       <div class="quick-action-btn" onclick="closeModal('adminMoreModal'); showAdminPage('profile');"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
       <div class="quick-action-btn" onclick="closeModal('adminMoreModal'); openChangePassword('admin');"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
@@ -2805,7 +2833,7 @@ function restoreSession() {
     Object.assign(state, saved);
     state.__loginKind = 'emp';
     resetIdleTimer();
-    document.getElementById('empNameBadge').textContent = (saved.empName || 'Employee') + (saved.empId ? ' · ' + saved.empId : '');
+    document.getElementById('empNameBadge').textContent = '👤 ' + (saved.empName || 'Employee') + (saved.empId ? ' · ' + saved.empId : '') + ' (Employee)';
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('empApp').classList.add('active');
     document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
@@ -2818,7 +2846,7 @@ function restoreSession() {
     Object.assign(state, saved);
     state.__loginKind = 'admin';
     resetIdleTimer();
-    document.getElementById('adminRoleBadge').textContent = (saved.adminName ? saved.adminName + ' · ' : '') + (saved.adminRole || 'Admin') + (saved.adminDesig ? ' (' + saved.adminDesig + ')' : '');
+    document.getElementById('adminRoleBadge').textContent = '🛡️ ' + (saved.adminName ? saved.adminName + ' · ' : '') + (saved.adminRole || 'Admin') + (saved.adminDesig ? ' (' + saved.adminDesig + ')' : '');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('adminApp').classList.add('active');
     document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
@@ -2868,7 +2896,7 @@ async function empLogin() {
         state.__loginKind = 'emp';
         resetIdleTimer();
         saveSession();
-        document.getElementById('empNameBadge').textContent = state.empName + (state.empId ? ' · ' + state.empId : '');
+        document.getElementById('empNameBadge').textContent = '👤 ' + state.empName + (state.empId ? ' · ' + state.empId : '') + ' (Employee)';
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('empApp').classList.add('active');
         document.getElementById('empPassInput').value = '';
@@ -2911,7 +2939,7 @@ async function adminLogin() {
         state.__loginKind = 'admin';
         resetIdleTimer();
         saveSession();
-        document.getElementById('adminRoleBadge').textContent = (state.adminName ? state.adminName + ' · ' : '') + state.adminRole + (state.adminDesig ? ' (' + state.adminDesig + ')' : '');
+        document.getElementById('adminRoleBadge').textContent = '🛡️ ' + (state.adminName ? state.adminName + ' · ' : '') + state.adminRole + (state.adminDesig ? ' (' + state.adminDesig + ')' : '');
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('adminApp').classList.add('active');
         document.getElementById('adminModulePickerName').textContent = state.adminName || state.adminRole || 'Admin';
@@ -3039,7 +3067,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'myleaves', icon:'📋', label:'My Leaves' },
       { page:'calendar', icon:'📅', label:'Calendar' }
     ], more: 'openEmpMoreModal()' },
-    kpi: { pages: ['kpi','kpi-target','kpi-tilldate','kpi-monthly','kpi-compare'], items: [
+    kpi: { pages: ['kpi','kpi-target','kpi-tilldate','kpi-monthly','kpi-compare','kpi-rules'], items: [
       { page:'kpi', icon:'🏠', label:'Home' },
       { page:'kpi-target', icon:'🎯', label:'Target' },
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
@@ -3050,6 +3078,13 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
+    ], more: 'openEmpMoreModal()' },
+    loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
+      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc'], items: [
+      { page:'loyalty', icon:'🏠', label:'Home' },
+      { page:'loyalty-newcard', icon:'➕', label:'New Card' },
+      { page:'loyalty-search', icon:'🔍', label:'Search' },
+      { page:'loyalty-dash', icon:'📈', label:'Dashboard' }
     ], more: 'openEmpMoreModal()' }
   },
   admin: {
@@ -3059,7 +3094,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'allleaves', icon:'📋', label:'All Leaves' },
       { page:'acalendar', icon:'📅', label:'Calendar' }
     ], more: 'openAdminMoreModal()' },
-    kpi: { pages: ['kpi','kpi-target','kpi-tilldate','kpi-monthly','kpi-compare'], items: [
+    kpi: { pages: ['kpi','kpi-target','kpi-tilldate','kpi-monthly','kpi-compare','kpi-rules'], items: [
       { page:'kpi', icon:'🏠', label:'Home' },
       { page:'kpi-target', icon:'🎯', label:'Target' },
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
@@ -3070,6 +3105,13 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
+    ], more: 'openAdminMoreModal()' },
+    loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
+      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc'], items: [
+      { page:'loyalty', icon:'🏠', label:'Home' },
+      { page:'loyalty-search', icon:'🔍', label:'Search' },
+      { page:'loyalty-dash', icon:'📈', label:'Dashboard' },
+      { page:'loyalty-leaderboard', icon:'🏆', label:'Leaders' }
     ], more: 'openAdminMoreModal()' }
   }
 };
@@ -3111,7 +3153,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card',
-  kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI',
+  kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
   profile: 'Emp Details'
@@ -3171,6 +3213,8 @@ function showEmpPage(page) {
   if(page==='loyalty') initLoyaltyPage('emp');
   if(page==='loyalty-dash') loadLoyaltyDashboard('emp');
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('emp');
+  if(page==='kpi') loadEomBanner('emp');
+  if(page==='kpi-rules') renderKpiRules('emp');
   if(page==='kpi-target') loadKpiTarget('emp');
   if(page==='kpi-tilldate') loadKpiTillDate('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
@@ -4361,15 +4405,26 @@ function onSettingsEmpSelected() {
       <input type="checkbox" id="empLoyaltyAccessCheck" ${emp.loyaltyAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">💳 Loyalty Card Access</span>
     </label>
-    <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see the Loyalty Card module at all after their next login. On (default) = full employee-level Loyalty access, same as everyone else.</p>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empKpiAccessCheck" ${emp.kpiAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📊 KPI Access</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empDsrAccessCheck" ${emp.dsrAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access</span>
+    </label>
+    <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" onclick="saveSettingsEmpAccess('${escJs(empId)}','${escJs(emp.name)}')">💾 Save Access for ${emp.name}</button>
   </div>`;
 }
 
 async function saveSettingsEmpAccess(empId, empName) {
   const enabled = document.getElementById('empLoyaltyAccessCheck').checked;
+  const kpiEnabled = document.getElementById('empKpiAccessCheck').checked;
+  const dsrEnabled = document.getElementById('empDsrAccessCheck').checked;
   const payload = {
-    page: 'saveEmployeeLoyaltyAccessAPI', empId, empName, enabled: enabled ? 'true' : 'false',
+    page: 'saveEmployeeLoyaltyAccessAPI', empId, empName,
+    enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
     callerRole: state.adminRole, callerEmail: state.adminEmail
   };
   const idem = makeIdemKey(['emplaccess', empId, Date.now()]);
@@ -4380,7 +4435,7 @@ async function saveSettingsEmpAccess(empId, empName) {
       if (res.ok) {
         toast('✅ Access saved for ' + empName, 'success');
         const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-        if (emp) emp.loyaltyAccess = enabled;
+        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; }
       } else {
         toast(res.error || 'Save failed', 'error');
       }
@@ -4784,6 +4839,8 @@ function showAdminPage(page) {
   if(page==='loyalty') initLoyaltyPage('admin');
   if(page==='loyalty-dash') loadLoyaltyDashboard('admin');
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('admin');
+  if(page==='kpi') loadEomBanner('admin');
+  if(page==='kpi-rules') renderKpiRules('admin');
   if(page==='kpi-target') loadKpiTarget('admin');
   if(page==='kpi-tilldate') loadKpiTillDate('admin');
   if(page==='kpi-monthly') loadKpiMonthly('admin');
@@ -5046,14 +5103,19 @@ function closeLoyaltyAlertModal() {
   document.getElementById('loyAlertModal').classList.remove('open');
 }
 
-// Hides the Loyalty Card module button for this specific employee if
-// MIS has explicitly removed their access (default is always ON —
-// nothing to fetch/hide unless a row exists in Employee_Loyalty_Access).
+// Hides the Loyalty Card / KPI / DSR module buttons for this specific
+// employee if MIS has explicitly removed their access (default is always
+// ON — nothing to fetch/hide unless a row exists in Employee_Loyalty_Access).
 function checkEmpLoyaltyAccess() {
   jsonpReliable({ page: 'getEmployeeLoyaltyAccessAPI', empId: state.empId })
     .then(res => {
-      const btn = document.getElementById('empQALoyaltyModule');
-      if (btn) btn.style.display = (res && res.ok && res.hasAccess === false) ? 'none' : '';
+      if (!res || !res.ok) return;
+      const loyBtn = document.getElementById('empQALoyaltyModule');
+      if (loyBtn) loyBtn.style.display = (res.hasAccess === false) ? 'none' : '';
+      const kpiBtn = document.getElementById('empQAKpiModule');
+      if (kpiBtn) kpiBtn.style.display = (res.kpiAccess === false) ? 'none' : '';
+      const dsrBtn = document.getElementById('empQADsrModule');
+      if (dsrBtn) dsrBtn.style.display = (res.dsrAccess === false) ? 'none' : '';
     })
     .catch(() => { /* fail open — never hide access due to a network blip */ });
 }
@@ -5079,6 +5141,27 @@ function resetNewLoyaltyCardForm() {
 
 // Reads a <input type="file"> as a base64 data: URL — resolves to '' if
 // no file was chosen (so optional photo fields don't block submission).
+// Shows a clear "✓ filename selected" confirmation under a photo input,
+// with a "✕ Remove" link that properly clears the input so the same or a
+// different photo can always be picked again. Native file inputs give no
+// visual feedback on their own, which is what made it look like "upload
+// stopped working after removing a photo" — the file WAS still selectable,
+// it just wasn't visible that anything had (or hadn't) changed.
+function ncPhotoChanged(inputId) {
+  const inp = document.getElementById(inputId);
+  const fb = document.getElementById(inputId + '-fb');
+  if (!fb) return;
+  const f = inp.files && inp.files[0];
+  if (!f) { fb.innerHTML = ''; return; }
+  fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+}
+function ncPhotoClear(inputId) {
+  const inp = document.getElementById(inputId);
+  inp.value = '';
+  const fb = document.getElementById(inputId + '-fb');
+  if (fb) fb.innerHTML = '';
+}
+
 function fileToBase64(inputEl) {
   return new Promise((resolve, reject) => {
     const file = inputEl.files && inputEl.files[0];
@@ -5615,6 +5698,83 @@ function kpiEmpParams(who, extra) {
   return p;
 }
 
+function loadEomBanner(who) {
+  const box = document.getElementById((who === 'admin' ? 'adminEomBanner-box' : 'empEomBanner-box'));
+  if (!box) return;
+  jsonpReliable(kpiEmpParams(who, { page: 'kpiEmployeeOfMonthJSON' })).then(res => {
+    if (!res || !res.ok || res.notGenerated) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    if (res.hasWinner) {
+      box.innerHTML = `<div style="background:linear-gradient(135deg,#C9A84C,#E8C766);border-radius:var(--r2);padding:16px 18px;text-align:center;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:#1A0A3D;text-transform:uppercase;">🏆 Employee of the Month</div>
+        <div style="font-size:19px;font-weight:800;color:#1A0A3D;margin-top:6px;font-family:'Playfair Display',serif;">${res.name}</div>
+        <div style="font-size:12px;color:#4A3410;margin-top:2px;">Score: ${res.score}</div>
+      </div>`;
+    } else {
+      box.innerHTML = `<div style="background:var(--bg);border:1px dashed var(--border);border-radius:var(--r2);padding:12px 16px;text-align:center;font-size:12px;color:var(--text3);">
+        🏆 No Employee of the Month yet this period — see Rules &amp; Grading for how to qualify.
+      </div>`;
+    }
+  }).catch(() => { box.style.display = 'none'; });
+}
+
+function renderKpiRules(who) {
+  const box = document.getElementById('kpiRulesBox-' + who);
+  if (!box) return;
+  // Exact figures from the Walkintrack scoring script (WEIGHTS, BONUS_RATE,
+  // CAP_MULTIPLIER, getGrade, EOM criteria) — not estimates.
+  box.innerHTML = `
+    <div class="card-title">⚖️ How Your Overall Score Is Built (out of 100)</div>
+    <div class="kd-table-wrap" style="margin-bottom:16px;">
+      <table class="kd-table">
+        <tr><th>Category</th><th>Weight</th><th>Bonus rate (above 100%)</th></tr>
+        <tr><td>🛍️ Purchases</td><td>40 pts</td><td>0.40 / % over target</td></tr>
+        <tr><td>💳 Loyalty Cards</td><td>25 pts</td><td>0.25 / % over target</td></tr>
+        <tr><td>🌟 Golden Aura</td><td>15 pts</td><td>0.10 / % over target</td></tr>
+        <tr><td>🧾 DSR</td><td>20 pts</td><td>0.20 / % over target</td></tr>
+      </table>
+    </div>
+    <div class="kd-note">Each category's points are earned in slabs based on % of target achieved — hitting 100%+ earns the full weight plus a bonus for every % over. Max score per category is capped at 1.20× its weight.</div>
+    <div class="kd-table-wrap" style="margin:10px 0 16px;">
+      <table class="kd-table">
+        <tr><th>% of Target Achieved</th><th>Points Earned</th></tr>
+        <tr><td>Below 60%</td><td>0</td></tr>
+        <tr><td>60% – 69%</td><td>50% of weight</td></tr>
+        <tr><td>70% – 79%</td><td>70% of weight</td></tr>
+        <tr><td>80% – 89%</td><td>80% of weight</td></tr>
+        <tr><td>90% – 99%</td><td>90% of weight</td></tr>
+        <tr><td>100%+</td><td>Full weight + bonus for every % over 100</td></tr>
+      </table>
+    </div>
+    <div class="kd-note">🧾 DSR is scored differently: <b>(On-Time entries + 0.5 × Late entries) ÷ DSR target × 20</b>, minus 2 points for every entry that was never filed (No-Entry).</div>
+
+    <div class="card-title" style="margin-top:18px;">🏅 Grade Thresholds</div>
+    <div class="kd-table-wrap" style="margin-bottom:16px;">
+      <table class="kd-table">
+        <tr><th>Grade</th><th>Meaning</th><th>Requirement</th></tr>
+        <tr><td>🏆 S</td><td>Star Performer</td><td>Score ≥ 100 <b>and</b> Loyalty ≥ 10 <b>and</b> Golden ≥ 3</td></tr>
+        <tr><td>A+</td><td>Elite</td><td>Score ≥ 90</td></tr>
+        <tr><td>A</td><td>Excellent</td><td>Score ≥ 75</td></tr>
+        <tr><td>B</td><td>Good</td><td>Score ≥ 60</td></tr>
+        <tr><td>C</td><td>Average</td><td>Score ≥ 40</td></tr>
+        <tr><td>D</td><td>Needs Improvement</td><td>Below 40</td></tr>
+      </table>
+    </div>
+
+    <div class="card-title" style="margin-top:18px;">🏆 Employee of the Month — Eligibility</div>
+    <div class="kd-table-wrap">
+      <table class="kd-table">
+        <tr><th>Condition</th><th>Requirement</th></tr>
+        <tr><td>Overall Score</td><td>≥ 80</td></tr>
+        <tr><td>Loyalty Cards</td><td>≥ 50% of target</td></tr>
+        <tr><td>Golden Aura</td><td>≥ 33% of target</td></tr>
+        <tr><td>Rank</td><td>#1 among everyone who passes all 3 above</td></tr>
+      </table>
+    </div>
+    <div class="kd-note" style="margin-top:10px;">The winner is only announced once the month fully closes (last calendar day reached) — and then stays displayed as that month's Employee of the Month for the rest of the following month, until the next month closes.</div>
+  `;
+}
+
 function loadKpiTarget(who) {
   const box = document.getElementById('kpiTargetBox-' + who);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
@@ -5930,7 +6090,7 @@ function dsrfPhotoWidget(who, eid, pfx) {
         fid = `dsrfPf-${pfx}-${who}-${eid}`, sid = `dsrfPs-${pfx}-${who}-${eid}`, wid = `dsrfPw-${pfx}-${who}-${eid}`;
   return `<div class="phwrap">
     <label class="phlbl" for="${fid}"><span class="phi">📷</span><span id="${tid}" class="pht">Upload Photo</span></label>
-    <input type="file" id="${fid}" accept="image/*" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}')">
+    <input type="file" id="${fid}" accept="image/*" capture="environment" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}')">
     <input type="hidden" id="${hid}">
     <div id="${sid}" class="ph-size"></div>
     <div id="${wid}"></div>
