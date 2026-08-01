@@ -996,7 +996,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="empApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="goHomeSmart('emp')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+        <button class="tb-chip" onclick="showEmpPage('modulepicker')" title="All Sections">⊞ Sections</button>
+      </div>
       <div class="topbar-right">
         <button class="back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
         <button class="back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
@@ -1022,7 +1025,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="quick-actions-section">
         <div class="quick-actions-title">⚡ Choose a Section</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" onclick="showEmpPage('overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
+          <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
@@ -1436,7 +1439,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="adminApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="goHomeSmart('admin')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+        <button class="tb-chip" onclick="showAdminPage('modulepicker')" title="All Sections">⊞ Sections</button>
+      </div>
       <div class="topbar-right">
         <button class="back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
         <button class="back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
@@ -3125,8 +3131,9 @@ function renderFooterNav(who, page) {
   let html = '';
   cfg.items.forEach(item => {
     const active = item.page === page ? ' active' : '';
+    const navTarget = item.target || item.page;
     const badgeHtml = item.badge ? `<span id="${item.badge}" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:0 5px;font-size:9px;margin-left:2px;"></span>` : '';
-    html += `<button class="footer-nav-btn${active}" onclick="show${who === 'admin' ? 'Admin' : 'Emp'}Page('${item.page}')"><span class="footer-nav-icon">${item.icon}</span>${item.label}${badgeHtml}</button>`;
+    html += `<button class="footer-nav-btn${active}" onclick="show${who === 'admin' ? 'Admin' : 'Emp'}Page('${navTarget}')"><span class="footer-nav-icon">${item.icon}</span>${item.label}${badgeHtml}</button>`;
   });
   html += `<button class="footer-nav-btn" onclick="${cfg.more}"><span class="footer-nav-icon">☰</span>More</button>`;
   el.innerHTML = html;
@@ -3199,10 +3206,7 @@ function backLabelFor(page) {
 }
 
 function goHomeSmart(who) {
-  const current = state['_currentPage_' + who];
-  const dash = getSectionDashboardPage(who, current);
-  if (dash) (who === 'admin' ? showAdminPage : showEmpPage)(dash);
-  else (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker');
+  (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker');
 }
 
 function showEmpPage(page) {
@@ -4406,6 +4410,10 @@ function onSettingsEmpSelected() {
   body.innerHTML = `<div class="card">
     <div class="card-title">${emp.name} (${emp.empId})</div>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLeaveAccessCheck" ${emp.leaveAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📋 Leave Access</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empLoyaltyAccessCheck" ${emp.loyaltyAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">💳 Loyalty Card Access</span>
     </label>
@@ -4426,9 +4434,11 @@ async function saveSettingsEmpAccess(empId, empName) {
   const enabled = document.getElementById('empLoyaltyAccessCheck').checked;
   const kpiEnabled = document.getElementById('empKpiAccessCheck').checked;
   const dsrEnabled = document.getElementById('empDsrAccessCheck').checked;
+  const leaveEnabled = document.getElementById('empLeaveAccessCheck').checked;
   const payload = {
     page: 'saveEmployeeLoyaltyAccessAPI', empId, empName,
     enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
+    leaveEnabled: leaveEnabled ? 'true' : 'false',
     callerRole: state.adminRole, callerEmail: state.adminEmail
   };
   const idem = makeIdemKey(['emplaccess', empId, Date.now()]);
@@ -4439,7 +4449,7 @@ async function saveSettingsEmpAccess(empId, empName) {
       if (res.ok) {
         toast('✅ Access saved for ' + empName, 'success');
         const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; }
+        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; }
       } else {
         toast(res.error || 'Save failed', 'error');
       }
@@ -5116,13 +5126,16 @@ function closeLoyaltyAlertModal() {
   document.getElementById('loyAlertModal').classList.remove('open');
 }
 
-// Hides the Loyalty Card / KPI / DSR module buttons for this specific
-// employee if MIS has explicitly removed their access (default is always
-// ON — nothing to fetch/hide unless a row exists in Employee_Loyalty_Access).
+// Hides the Leave / Loyalty Card / KPI / DSR module buttons for this
+// specific employee if MIS has explicitly removed their access (default
+// is always ON — nothing to fetch/hide unless a row exists in
+// Employee_Loyalty_Access).
 function checkEmpLoyaltyAccess() {
   jsonpReliable({ page: 'getEmployeeLoyaltyAccessAPI', empId: state.empId })
     .then(res => {
       if (!res || !res.ok) return;
+      const leaveBtn = document.getElementById('empQALeaveModule');
+      if (leaveBtn) leaveBtn.style.display = (res.leaveAccess === false) ? 'none' : '';
       const loyBtn = document.getElementById('empQALoyaltyModule');
       if (loyBtn) loyBtn.style.display = (res.hasAccess === false) ? 'none' : '';
       const kpiBtn = document.getElementById('empQAKpiModule');
