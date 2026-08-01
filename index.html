@@ -465,14 +465,14 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .footer-nav-btn:active { opacity: 0.6; }
 .footer-nav.footnav-hidden { display: none; }
 
-/* Back buttons — floating over the page content (not inline in the
-   topbar): the generic "← Back" (to main landing) floats bottom-left,
-   the section-specific "↩ Back to <Section>" floats bottom-right.
-   Positioned above the footer nav so they never overlap it. Exactly one
-   of the two is ever visible at a time (see updateBackFabs in JS). */
+/* Back buttons — floating over the white page content area (not inside
+   the purple topbar), positioned top-right just below the Logout button.
+   Both the generic "← Back" and the section-specific "↩ Back to
+   <Section>" sit in the exact same spot — only one is ever visible at a
+   time (see updateBackFabs in JS), so they never overlap each other. */
 .back-fab-top {
   display: none; align-items: center; gap: 5px;
-  position: fixed; bottom: 96px; z-index: 60;
+  position: fixed; top: 78px; right: 14px; z-index: 60;
   background: linear-gradient(135deg, var(--purple), var(--purple-mid));
   color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
   border-radius: 30px; padding: 10px 16px; font-size: 12.5px; font-weight: 700;
@@ -480,9 +480,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .back-fab-top.show { display: flex; }
 .back-fab-top:active { transform: scale(0.95); }
-.back-fab-main { left: 14px; }
-.back-fab-section { right: 14px; }
-@media (min-width: 640px) { .back-fab-top { bottom: 24px; } }
 .page-section { display: none; }
 .page-section.active { display: block; }
 
@@ -999,7 +996,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="empApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="showEmpPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+      <div class="topbar-logo" onclick="goHomeSmart('emp')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
         <button class="back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
         <button class="back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
@@ -1439,7 +1436,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 <div class="app" id="adminApp">
   <div class="header-group">
     <div class="topbar">
-      <div class="topbar-logo" onclick="showAdminPage('modulepicker')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+      <div class="topbar-logo" onclick="goHomeSmart('admin')" style="cursor:pointer;" title="Home"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
       <div class="topbar-right">
         <button class="back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
         <button class="back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
@@ -1951,11 +1948,11 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="adminEomBanner-box" style="display:none;"></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
+        <div class="quick-action-btn" id="adminQAKpiTarget" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
+        <div class="quick-action-btn" id="adminQAKpiTillDate" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" id="adminQAKpiLastMonth" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
+        <div class="quick-action-btn" id="adminQAKpiCompare" onclick="showAdminPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
+        <div class="quick-action-btn" id="adminQAKpiRules" onclick="showAdminPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-kpi-rules">
@@ -1993,11 +1990,11 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
+        <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
+        <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
+        <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
+        <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-dsr-status">
@@ -3199,6 +3196,13 @@ function updateBackFabs(who, page) {
 function backLabelFor(page) {
   const section = SECTION_LABEL_MAP[page];
   return section ? ('← Back to ' + section) : '← Back';
+}
+
+function goHomeSmart(who) {
+  const current = state['_currentPage_' + who];
+  const dash = getSectionDashboardPage(who, current);
+  if (dash) (who === 'admin' ? showAdminPage : showEmpPage)(dash);
+  else (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker');
 }
 
 function showEmpPage(page) {
@@ -4738,7 +4742,11 @@ const SM_FEATURE_ELEMENTS = {
   loyIncenthist: ['adminQALoyIncenthist'],
   loyKyc:        ['adminQALoyKyc'],
   kpi: ['adminQAKpi'],
-  dsr: ['adminQADsr']
+  kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
+  kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
+  dsr: ['adminQADsr'],
+  dsrNewEntry: ['adminQADsrNewEntry'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
+  dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -4756,7 +4764,10 @@ const FEATURE_SUBKEYS = {
   loySearch: ['loySearch','loySearch_fulldata'], loyStats: ['loyStats'],
   loyDash: ['loyDash'], loyTimeline: ['loyTimeline'], loyUpcoming: ['loyUpcoming'],
   loyCardhist: ['loyCardhist'], loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc'],
-  kpi: ['kpi'], dsr: ['dsr']
+  kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
+  kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
+  dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
+  dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -4797,7 +4808,9 @@ async function applyAdminRoleRestrictions() {
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
-    const sectionOn = key === 'kpi' ? sectionKpiOn : key === 'dsr' ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : sectionLeaveOn;
+    const isKpiFeature = key.indexOf('kpi') === 0;
+    const isDsrFeature = key.indexOf('dsr') === 0;
+    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
