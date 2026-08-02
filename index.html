@@ -225,7 +225,10 @@ body {
 }
 .login-logo h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 26px; font-weight: 800; color: var(--purple); letter-spacing: 2px;
+  font-size: 30px; font-weight: 800; letter-spacing: 2.5px;
+  background: linear-gradient(135deg, var(--purple-dark), var(--purple) 55%, var(--pink));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 .login-logo p { font-size: 11px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
 
@@ -363,10 +366,29 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
   justify-content: flex-end;
 }
 
+/* VSR GOLD emblem — CSS-only decorative mark (no image), reused at
+   different sizes across login page / topbar / birthday poster via the
+   font-size of its container. */
+.vsr-logo-mark { position: relative; }
+.vsr-logo-mark::before {
+  content: '✦';
+  display: block;
+  background: linear-gradient(135deg, #F0D98A, #D4A84A 45%, #8A6A1E);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-size: 1em; line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  filter: drop-shadow(0 1px 3px rgba(212,168,67,0.5));
+}
+.login-logo-mark::before { font-size: 68px; }
+.topbar-logo .mark::before { font-size: 22px; }
+.bday-poster-logo::before { font-size: 56px; }
+
 .topbar-logo {
-  font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 800;
-  color: var(--gold); letter-spacing: 1px; flex-shrink: 0;
-  display: flex; align-items: center; gap: 6px;
+  font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800;
+  background: linear-gradient(135deg, #F5E3A8, #D4A84A 55%, #B8860B);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  letter-spacing: 1.5px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 7px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.08);
 }
 .topbar-logo .mark {
   width: 28px; height: 28px; border-radius: 0; background: transparent;
@@ -6034,12 +6056,13 @@ function openBoxExportModal(boxId, title) {
   if (existing) existing.remove();
   const div = document.createElement('div');
   div.id = 'reportChoiceModal';
-  div.className = 'modal-overlay open';
+  div.className = 'modal-overlay show';
   div.innerHTML = `<div class="modal-box" style="max-width:320px;">
     <div class="modal-title">📊 Export This Page</div>
     <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;">${title}</p>
     <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','excel')">📗 Excel (.xlsx)</button>
     <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','pdf')">📕 PDF</button>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','print')">🖨️ Print</button>
     <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
   </div>`;
   document.body.appendChild(div);
@@ -6050,6 +6073,21 @@ function runBoxExport(boxId, title, format) {
   if (modal) modal.remove();
   const box = document.getElementById(boxId);
   if (!box) return;
+  if (format === 'print') {
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
+      <style>body{font-family:Arial,sans-serif;padding:20px;} h2{color:#6b21a8;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:6px 10px;font-size:12px;}
+      .kd-card{border:1.5px solid #ccc;border-left:4px solid #6b21a8;border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+      .kd-head{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px;}
+      .kd-stats{display:flex;flex-wrap:wrap;gap:8px;} .kd-box{border:1px solid #ddd;border-radius:6px;padding:6px 10px;text-align:center;min-width:70px;}
+      .kd-val{display:block;font-weight:800;font-size:14px;} .kd-lbl{display:block;font-size:9px;color:#666;text-transform:uppercase;}
+      .kd-pill{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:#eee;} .kd-note{font-size:11px;color:#666;margin-top:4px;}
+      @media print{ button{display:none;} }</style></head><body>
+      <h2>VSR GOLD — ${title}</h2>${box.innerHTML}
+      <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+    win.document.close();
+    return;
+  }
   if (format === 'pdf') {
     toast('⏳ Generating PDF...', 'info');
     html2canvas(box, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
@@ -6107,7 +6145,7 @@ function openReportModal(who, section) {
   if (existing) existing.remove();
   const div = document.createElement('div');
   div.id = 'reportChoiceModal';
-  div.className = 'modal-overlay open';
+  div.className = 'modal-overlay show';
   div.innerHTML = `<div class="modal-box" style="max-width:320px;">
     <div class="modal-title">📊 Download Report</div>
     <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;">Choose a format for the ${section.toUpperCase()} report.</p>
