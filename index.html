@@ -326,6 +326,15 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .btn-report .btn-report-ic { font-size: 16px; }
 .btn-report:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,71,161,0.45); }
 .btn-report:active { transform: scale(0.98); }
+.export-icon-btn {
+  display: none; align-items: center; justify-content: center;
+  width: 34px; height: 34px; margin-bottom: 8px; margin-left: auto;
+  background: linear-gradient(135deg, #0D47A1, #1976D2); color: #fff;
+  border: 1.5px solid var(--gold); border-radius: 50%; font-size: 15px;
+  cursor: pointer; box-shadow: 0 3px 10px rgba(13,71,161,0.3); transition: all 0.15s;
+}
+.export-icon-btn:hover { transform: scale(1.08); }
+.export-icon-btn:active { transform: scale(0.95); }
 
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
 
@@ -1377,17 +1386,17 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="emp-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 My Target</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiTargetBox-emp','My Target')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiTargetBox-emp" style="display:none;" onclick="openBoxExportModal('kpiTargetBox-emp','My Target')" title="Export">📥</button>
       <div class="card"><div id="kpiTargetBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date)</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiTillDateBox-emp','Running Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiTillDateBox-emp" style="display:none;" onclick="openBoxExportModal('kpiTillDateBox-emp','Running Month KPI')" title="Export">📥</button>
       <div class="card"><div id="kpiTillDateBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-monthly">
       <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final)</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiMonthlyBox-emp','Last Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiMonthlyBox-emp" style="display:none;" onclick="openBoxExportModal('kpiMonthlyBox-emp','Last Month KPI')" title="Export">📥</button>
       <div class="card"><div id="kpiMonthlyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-compare">
@@ -1402,7 +1411,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       </div>
       <div class="card"><div id="kpiRangeBox-emp"></div></div>
       <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiCompareBox-emp','Month Comparison')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiCompareBox-emp" style="display:none;" onclick="openBoxExportModal('kpiCompareBox-emp','Month Comparison')" title="Export">📥</button>
       <div class="card"><div id="kpiCompareBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1421,22 +1430,22 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="emp-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrTodayBox-emp','Today's DSR Entries')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrTodayBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-emp','Today DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrStatusBox-emp','Yesterday DSR Status')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrStatusBox-emp" style="display:none;" onclick="openBoxExportModal('dsrStatusBox-emp','Yesterday DSR Status')" title="Export">📥</button>
       <div class="card"><div id="dsrStatusBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — This Month</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrMissingBox-emp','Missing DSR')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrMissingBox-emp" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-emp','Missing DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrMissingBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Till Date DSR</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrTillDateBox-emp','Till Date DSR')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrTillDateBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTillDateBox-emp','Till Date DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrTillDateBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-daterange">
@@ -1448,7 +1457,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         </div>
         <button class="btn-primary" onclick="loadDsrDateRange('emp')" style="width:100%;">🔍 Show DSR</button>
       </div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrRangeBox-emp','DSR Date Range')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrRangeBox-emp" style="display:none;" onclick="openBoxExportModal('dsrRangeBox-emp','DSR Date Range')" title="Export">📥</button>
       <div class="card"><div id="dsrRangeBox-emp"></div></div>
     </div>
     <div class="page-section" id="emp-dsr-newentry">
@@ -1985,17 +1994,17 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="admin-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 Targets — All Employees</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiTargetBox-admin','KPI Targets')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiTargetBox-admin" style="display:none;" onclick="openBoxExportModal('kpiTargetBox-admin','KPI Targets')" title="Export">📥</button>
       <div class="card"><div id="kpiTargetBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date) — All Employees</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiTillDateBox-admin','Running Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiTillDateBox-admin" style="display:none;" onclick="openBoxExportModal('kpiTillDateBox-admin','Running Month KPI')" title="Export">📥</button>
       <div class="card"><div id="kpiTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-monthly">
       <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final) — All Employees</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiMonthlyBox-admin','Last Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiMonthlyBox-admin" style="display:none;" onclick="openBoxExportModal('kpiMonthlyBox-admin','Last Month KPI')" title="Export">📥</button>
       <div class="card"><div id="kpiMonthlyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-compare">
@@ -2010,7 +2019,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       </div>
       <div class="card"><div id="kpiRangeBox-admin"></div></div>
       <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('kpiCompareBox-admin','Month Comparison')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-kpiCompareBox-admin" style="display:none;" onclick="openBoxExportModal('kpiCompareBox-admin','Month Comparison')" title="Export">📥</button>
       <div class="card"><div id="kpiCompareBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -2029,22 +2038,22 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="admin-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries — All Employees</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrTodayBox-admin','Today's DSR Entries')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrTodayBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-admin','Today DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status — All Employees</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrStatusBox-admin','Yesterday DSR Status')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrStatusBox-admin" style="display:none;" onclick="openBoxExportModal('dsrStatusBox-admin','Yesterday DSR Status')" title="Export">📥</button>
       <div class="card"><div id="dsrStatusBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — This Month</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrMissingBox-admin','Missing DSR')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrMissingBox-admin" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-admin','Missing DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrMissingBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Till Date DSR — All Employees</span></div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrTillDateBox-admin','Till Date DSR')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrTillDateBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTillDateBox-admin','Till Date DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-daterange">
@@ -2056,7 +2065,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         </div>
         <button class="btn-primary" onclick="loadDsrDateRange('admin')" style="width:100%;">🔍 Show DSR</button>
       </div>
-      <button class="btn-report" onclick="openBoxExportModal('dsrRangeBox-admin','DSR Date Range')"><span class="btn-report-ic">📊</span> Export</button>
+      <button class="export-icon-btn" id="exportBtn-dsrRangeBox-admin" style="display:none;" onclick="openBoxExportModal('dsrRangeBox-admin','DSR Date Range')" title="Export">📥</button>
       <div class="card"><div id="dsrRangeBox-admin"></div></div>
     </div>
     <div class="page-section" id="admin-dsr-newentry">
@@ -5843,6 +5852,7 @@ function renderKpiRules(who) {
 
 function loadKpiTarget(who) {
   const box = document.getElementById('kpiTargetBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTargetJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
@@ -5858,6 +5868,7 @@ function loadKpiTarget(who) {
       </div>`;
     });
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
@@ -5907,6 +5918,7 @@ function kpiRowCardHtml(r) {
 
 function loadKpiTillDate(who) {
   const box = document.getElementById('kpiTillDateBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
@@ -5914,11 +5926,13 @@ function loadKpiTillDate(who) {
     let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
 function loadKpiMonthly(who) {
   const box = document.getElementById('kpiMonthlyBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiMonthlyJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
@@ -5926,6 +5940,7 @@ function loadKpiMonthly(who) {
     let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
@@ -5952,11 +5967,13 @@ function loadKpiRangeSummary(who) {
       </div>`;
     });
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
 function loadKpiCompare(who) {
   const box = document.getElementById('kpiCompareBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiComparisonJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
@@ -5970,6 +5987,7 @@ function loadKpiCompare(who) {
     });
     html += '</table></div>';
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
@@ -6000,6 +6018,15 @@ function sectionHeaderCardHtml(who, tiles) {
 // grids), so every individual sub-page (not just section landing pages)
 // can offer Export → Excel/PDF once its data has loaded.
 // ══════════════════════════════════════
+function showExportBtn(boxId) {
+  const btn = document.getElementById('exportBtn-' + boxId);
+  if (btn) btn.style.display = 'flex';
+}
+function hideExportBtn(boxId) {
+  const btn = document.getElementById('exportBtn-' + boxId);
+  if (btn) btn.style.display = 'none';
+}
+
 function openBoxExportModal(boxId, title) {
   const box = document.getElementById(boxId);
   if (!box || !box.querySelector('.kd-card, table')) { toast('No data loaded yet to export', 'error'); return; }
@@ -6258,6 +6285,7 @@ function loadLoyaltyHighlights(who) {
 
 function loadDsrToday(who) {
   const box = document.getElementById('dsrTodayBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const today = new Date().toISOString().split('T')[0];
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: today, end: today })).then(res => {
@@ -6272,11 +6300,13 @@ function loadDsrToday(who) {
       </div>`;
     });
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
 function loadDsrStatus(who) {
   const box = document.getElementById('dsrStatusBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
@@ -6306,11 +6336,13 @@ function loadDsrStatus(who) {
       </div>`;
     });
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
 function loadDsrMissing(who) {
   const box = document.getElementById('dsrMissingBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'dsrMissingJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
@@ -6330,6 +6362,7 @@ function loadDsrMissing(who) {
       </div>`;
     });
     box.innerHTML = html;
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
@@ -6353,6 +6386,7 @@ function dsrRangeResultHtml(res) {
 
 function loadDsrTillDate(who) {
   const box = document.getElementById('dsrTillDateBox-' + who);
+  hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const today = new Date();
   const first = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -6360,11 +6394,13 @@ function loadDsrTillDate(who) {
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: iso(first), end: iso(today) })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
 function loadDsrDateRange(who) {
   const box = document.getElementById('dsrRangeBox-' + who);
+  hideExportBtn(box.id);
   const start = document.getElementById('dsrRangeStart-' + who).value;
   const end = document.getElementById('dsrRangeEnd-' + who).value;
   if (!start || !end) { toast('Select both dates', 'error'); return; }
@@ -6372,6 +6408,7 @@ function loadDsrDateRange(who) {
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: start, end: end })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = dsrRangeResultHtml(res);
+    showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
