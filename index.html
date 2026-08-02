@@ -316,6 +316,17 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .btn-primary:hover:not(:disabled) { opacity: 0.9; }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
+.btn-report {
+  width: 100%; padding: 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #0D47A1, #1565C0, #1976D2); color: #fff;
+  border: 2px solid var(--gold); border-radius: var(--r2); font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.4px;
+  box-shadow: 0 4px 15px rgba(13,71,161,0.35);
+}
+.btn-report .btn-report-ic { font-size: 16px; }
+.btn-report:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,71,161,0.45); }
+.btn-report:active { transform: scale(0.98); }
+
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
 
 /* ══════════════════════════════════════
@@ -331,11 +342,12 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
   background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink));
   border-bottom: 2px solid var(--gold);
   padding: 8px 10px;
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
   box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
 }
 .topbar-row1 {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
 .topbar-row2 {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
@@ -1219,7 +1231,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
       <div class="card" id="loyaltyHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-secondary" style="width:100%;margin-bottom:14px;" onclick="openReportModal('emp','loyalty')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('emp','loyalty')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-newcard')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Card Entry</div><div class="quick-action-sub">Enroll a customer</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
@@ -1352,7 +1364,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="empEomBanner-box" style="display:none;"></div>
       <div class="card" id="kpiHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-secondary" style="width:100%;margin-bottom:14px;" onclick="openReportModal('emp','kpi')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('emp','kpi')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
@@ -1367,14 +1379,17 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="emp-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 My Target</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiTargetBox-emp','My Target')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiTargetBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date)</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiTillDateBox-emp','Running Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiTillDateBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-monthly">
       <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final)</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiMonthlyBox-emp','Last Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiMonthlyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-compare">
@@ -1389,6 +1404,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       </div>
       <div class="card"><div id="kpiRangeBox-emp"></div></div>
       <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiCompareBox-emp','Month Comparison')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiCompareBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1396,7 +1412,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="card" id="dsrHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-secondary" style="width:100%;margin-bottom:14px;" onclick="openReportModal('emp','dsr')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('emp','dsr')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
@@ -1408,18 +1424,22 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="emp-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrTodayBox-emp','Today's DSR Entries')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrStatusBox-emp','Yesterday DSR Status')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrStatusBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — This Month</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrMissingBox-emp','Missing DSR')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrMissingBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Till Date DSR</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrTillDateBox-emp','Till Date DSR')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrTillDateBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-daterange">
@@ -1431,6 +1451,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         </div>
         <button class="btn-primary" onclick="loadDsrDateRange('emp')" style="width:100%;">🔍 Show DSR</button>
       </div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrRangeBox-emp','DSR Date Range')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrRangeBox-emp"></div></div>
     </div>
     <div class="page-section" id="emp-dsr-newentry">
@@ -1489,7 +1510,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 
     <!-- DASHBOARD (Leave section landing) -->
     <div class="page-section" id="admin-dashboard">
-      <button class="btn-secondary" style="width:100%;margin-bottom:12px;" onclick="openReportModal('admin','leave')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('admin','leave')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="bday-marquee-wrap" id="adminBdayMarquee">
         <button class="bday-marquee-refresh" onclick="populateEventScroller('adminBdayMarquee','adminBdayMarqueeTrack')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="adminBdayMarqueeTrack"></div>
@@ -1625,7 +1646,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
       <div class="card" id="loyaltyHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-secondary" style="width:100%;margin-bottom:14px;" onclick="openReportModal('admin','loyalty')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('admin','loyalty')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
@@ -1955,7 +1976,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="adminEomBanner-box" style="display:none;"></div>
       <div class="card" id="kpiHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-secondary" style="width:100%;margin-bottom:14px;" onclick="openReportModal('admin','kpi')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('admin','kpi')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQAKpiTarget" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
         <div class="quick-action-btn" id="adminQAKpiTillDate" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
@@ -1970,14 +1991,17 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="admin-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 Targets — All Employees</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiTargetBox-admin','KPI Targets')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiTargetBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date) — All Employees</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiTillDateBox-admin','Running Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-monthly">
       <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final) — All Employees</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiMonthlyBox-admin','Last Month KPI')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiMonthlyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-compare">
@@ -1992,6 +2016,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       </div>
       <div class="card"><div id="kpiRangeBox-admin"></div></div>
       <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('kpiCompareBox-admin','Month Comparison')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="kpiCompareBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1999,7 +2024,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="card" id="dsrHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-secondary" style="width:100%;margin-bottom:14px;" onclick="openReportModal('admin','dsr')">📊 Download Report</button>
+      <button class="btn-report" onclick="openReportModal('admin','dsr')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
@@ -2011,18 +2036,22 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     </div>
     <div class="page-section" id="admin-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries — All Employees</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrTodayBox-admin','Today's DSR Entries')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrTodayBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status — All Employees</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrStatusBox-admin','Yesterday DSR Status')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrStatusBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — This Month</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrMissingBox-admin','Missing DSR')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrMissingBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Till Date DSR — All Employees</span></div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrTillDateBox-admin','Till Date DSR')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-daterange">
@@ -2034,6 +2063,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         </div>
         <button class="btn-primary" onclick="loadDsrDateRange('admin')" style="width:100%;">🔍 Show DSR</button>
       </div>
+      <button class="btn-report" onclick="openBoxExportModal('dsrRangeBox-admin','DSR Date Range')"><span class="btn-report-ic">📊</span> Export</button>
       <div class="card"><div id="dsrRangeBox-admin"></div></div>
     </div>
     <div class="page-section" id="admin-dsr-newentry">
@@ -3328,7 +3358,7 @@ function renderEmpOverview() {
         <div class="home-bal-box"><div class="home-bal-val" style="color:#80c8ff">${fmtNum(q)}</div><div class="home-bal-lbl">Quota</div></div>
       </div>
     </div>
-    <button class="btn-secondary" style="width:100%;margin:10px 0 4px;" onclick="openReportModal('emp','leave')">📊 Download Report</button>
+    <button class="btn-report" onclick="openReportModal('emp','leave')"><span class="btn-report-ic">📊</span> Download Report</button>
     <div class="quick-actions-section">
       <div class="quick-actions-title">⚡ Quick Actions</div>
       <div class="quick-actions-grid">
@@ -4663,17 +4693,20 @@ function renderAdminProfile() {
   if (avatarEl) avatarEl.textContent = initials || 'A';
 
   const rows = [
-    ['👤 Name', state.adminName || 'Not set'],
-    ['🎓 Designation', state.adminDesig || 'Not set'],
-    ['🔑 Role', state.adminRole || '—'],
-    ['📧 Email', state.adminEmail || '—']
+    ['👤', 'Name', state.adminName || 'Not set'],
+    ['🎓', 'Designation', state.adminDesig || 'Not set'],
+    ['🔑', 'Role', state.adminRole || '—'],
+    ['📧', 'Email', state.adminEmail || '—']
   ];
 
   let html = '';
-  rows.forEach(([label, val]) => {
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 4px;border-bottom:1px solid var(--border);gap:10px;">
-      <span style="font-size:12.5px;color:var(--text3);font-weight:600;white-space:nowrap;">${label}</span>
-      <span style="font-size:13px;color:var(--text);font-weight:700;text-align:right;word-break:break-word;">${val}</span>
+  rows.forEach(([icon, label, val], i) => {
+    html += `<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;${i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}background:${i % 2 === 0 ? 'var(--bg)' : 'transparent'};">
+      <div style="width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--purple-bg);border:1px solid var(--purple-mid);display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>
+        <div style="font-size:14px;color:var(--text);font-weight:800;margin-top:2px;overflow-wrap:break-word;">${val}</div>
+      </div>
     </div>`;
   });
   if (!state.adminName || !state.adminDesig) {
@@ -4728,20 +4761,23 @@ function renderEmpProfile() {
   document.getElementById('profileEmpMeta').textContent = [state.empDesig, state.empDept].filter(Boolean).join(' · ') || '—';
 
   const rows = [
-    ['🆔 Employee ID', state.empId],
-    ['👤 Name', state.empName],
-    ['🏢 Department', state.empDept],
-    ['🏪 Counter', state.empCounter],
-    ['🎓 Designation', state.empDesig],
-    ['📧 Email', state.empEmail],
-    ['📊 Monthly Quota', state.empQuota + ' day(s)']
+    ['🆔', 'Employee ID', state.empId],
+    ['👤', 'Name', state.empName],
+    ['🏢', 'Department', state.empDept],
+    ['🏪', 'Counter', state.empCounter],
+    ['🎓', 'Designation', state.empDesig],
+    ['📧', 'Email', state.empEmail],
+    ['📊', 'Monthly Quota', state.empQuota + ' day(s)']
   ];
 
   let html = '';
-  rows.forEach(([label, val]) => {
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 4px;border-bottom:1px solid var(--border);">
-      <span style="font-size:12.5px;color:var(--text3);font-weight:600;">${label}</span>
-      <span style="font-size:13px;color:var(--text);font-weight:700;">${val || '—'}</span>
+  rows.forEach(([icon, label, val], i) => {
+    html += `<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;${i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}background:${i % 2 === 0 ? 'var(--bg)' : 'transparent'};">
+      <div style="width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--purple-bg);border:1px solid var(--purple-mid);display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>
+        <div style="font-size:14px;color:var(--text);font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val || '—'}</div>
+      </div>
     </div>`;
   });
   document.getElementById('profileEmpDetails').innerHTML = html;
@@ -5746,20 +5782,14 @@ function loadEomBanner(who) {
   const box = document.getElementById((who === 'admin' ? 'adminEomBanner-box' : 'empEomBanner-box'));
   if (!box) return;
   jsonpReliable(kpiEmpParams(who, { page: 'kpiEmployeeOfMonthJSON' })).then(res => {
-    if (!res || !res.ok || res.notGenerated) { box.style.display = 'none'; return; }
+    // No winner (or report not generated yet) — hide the box entirely,
+    // nothing to show.
+    if (!res || !res.ok || res.notGenerated || !res.hasWinner) { box.style.display = 'none'; box.innerHTML = ''; return; }
     box.style.display = 'block';
-    if (res.hasWinner) {
-      box.innerHTML = `<div style="background:linear-gradient(135deg,#C9A84C,#E8C766);border-radius:var(--r2);padding:16px 18px;text-align:center;">
-        <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:#1A0A3D;text-transform:uppercase;">🏆 Employee of the Month</div>
-        <div style="font-size:19px;font-weight:800;color:#1A0A3D;margin-top:6px;font-family:'Playfair Display',serif;">${res.name}</div>
-        <div style="font-size:12px;color:#4A3410;margin-top:2px;">Score: ${res.score}</div>
-      </div>`;
-    } else {
-      box.innerHTML = `<div style="background:var(--bg);border:1px dashed var(--border);border-radius:var(--r2);padding:12px 16px;text-align:center;font-size:12px;color:var(--text3);">
-        🏆 No Employee of the Month yet this period — see Rules &amp; Grading for how to qualify.
-      </div>`;
-    }
-  }).catch(() => { box.style.display = 'none'; });
+    box.className = 'bday-marquee-wrap show';
+    box.style.cssText = 'background:linear-gradient(135deg,#C9A84C,#E8C766);border:2px solid var(--gold);';
+    box.innerHTML = `<div class="bday-marquee-track"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 EMPLOYEE OF THE MONTH — ${res.name} — Score: ${res.score} 🏆</span></div>`;
+  }).catch(() => { box.style.display = 'none'; box.innerHTML = ''; });
 }
 
 function renderKpiRules(who) {
@@ -5973,6 +6003,83 @@ function sectionHeaderCardHtml(who, tiles) {
 
 // Quick-glance highlight numbers shown right on the DSR landing page —
 // no clicking into a sub-page needed to see where things stand.
+// ══════════════════════════════════════
+// GENERIC PAGE EXPORT — works on any already-rendered data box (kd-card
+// grids), so every individual sub-page (not just section landing pages)
+// can offer Export → Excel/PDF once its data has loaded.
+// ══════════════════════════════════════
+function openBoxExportModal(boxId, title) {
+  const box = document.getElementById(boxId);
+  if (!box || !box.querySelector('.kd-card, table')) { toast('No data loaded yet to export', 'error'); return; }
+  const existing = document.getElementById('reportChoiceModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'reportChoiceModal';
+  div.className = 'modal-overlay open';
+  div.innerHTML = `<div class="modal-box" style="max-width:320px;">
+    <div class="modal-title">📊 Export This Page</div>
+    <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;">${title}</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','excel')">📗 Excel (.xlsx)</button>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','pdf')">📕 PDF</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function runBoxExport(boxId, title, format) {
+  const modal = document.getElementById('reportChoiceModal');
+  if (modal) modal.remove();
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  if (format === 'pdf') {
+    toast('⏳ Generating PDF...', 'info');
+    html2canvas(box, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+      const { jsPDF } = window.jspdf;
+      const imgW = canvas.width, imgH = canvas.height;
+      const pdf = new jsPDF({ orientation: imgW > imgH ? 'l' : 'p', unit: 'px', format: [imgW + 40, imgH + 60] });
+      pdf.setFontSize(14);
+      pdf.text(title, 20, 30);
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 20, 40, imgW, imgH);
+      pdf.save(title.replace(/[^\w\- ]/g, '') + '.pdf');
+      toast('✅ PDF downloaded', 'success');
+    }).catch(() => toast('PDF generation failed', 'error'));
+    return;
+  }
+  // Excel — scrape .kd-card structure (Name + each stat box's label→value),
+  // or a plain <table> if that's what the page uses instead.
+  const table = box.querySelector('table');
+  let headers, rows;
+  if (table) {
+    const trs = Array.from(table.querySelectorAll('tr'));
+    headers = Array.from(trs[0].querySelectorAll('th,td')).map(c => c.textContent.trim());
+    rows = trs.slice(1).map(tr => Array.from(tr.querySelectorAll('td,th')).map(c => c.textContent.trim()));
+  } else {
+    const cards = Array.from(box.querySelectorAll('.kd-card'));
+    if (!cards.length) { toast('No data to export', 'error'); return; }
+    const labelSet = [];
+    const cardRows = cards.map(card => {
+      const name = card.querySelector('.kd-name')?.textContent.replace(/\s+/g, ' ').trim() || '';
+      const obj = { Name: name };
+      card.querySelectorAll('.kd-box').forEach(b => {
+        const val = b.querySelector('.kd-val')?.textContent.trim() || '';
+        const lbl = b.querySelector('.kd-lbl')?.textContent.trim() || '';
+        if (lbl) { obj[lbl] = val; if (labelSet.indexOf(lbl) === -1) labelSet.push(lbl); }
+      });
+      const pill = card.querySelector('.kd-pill')?.textContent.trim();
+      if (pill) obj['Status'] = pill;
+      return obj;
+    });
+    headers = ['Name', ...labelSet, ...(cardRows.some(r => r.Status) ? ['Status'] : [])];
+    rows = cardRows.map(r => headers.map(h => r[h] !== undefined ? r[h] : ''));
+  }
+  if (!rows.length) { toast('No data to export', 'error'); return; }
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Report');
+  XLSX.writeFile(wb, title.replace(/[^\w\- ]/g, '') + '.xlsx');
+  toast('✅ Excel downloaded', 'success');
+}
+
 // ══════════════════════════════════════
 // SECTION REPORTS — Excel / PDF download, same feature in every section
 // ══════════════════════════════════════
@@ -7096,7 +7203,12 @@ function renderAdminDashboard() {
     counterMap[c] = (counterMap[c]||0)+1;
   });
 
-  document.getElementById('adminStatsCard').innerHTML = `
+  document.getElementById('adminStatsCard').innerHTML = sectionHeaderCardHtml('admin', [
+      { val: counts.total, lbl: 'Total', color: '#80c8ff' },
+      { val: counts.pending + counts.mis, lbl: 'Pending', color: '#ffd080' },
+      { val: counts.approved, lbl: 'Approved', color: '#80ffb0' },
+      { val: counts.rejected, lbl: 'Rejected', color: '#ff8080' }
+    ]) + `
     <div class="card-title">📊 Overview</div>
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
       <div class="stat-box"><div class="stat-val" style="color:var(--blue)">${counts.total}</div><div class="stat-lbl">Total</div></div>
