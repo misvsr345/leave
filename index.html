@@ -986,6 +986,21 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .kd-table td{padding:8px 12px;white-space:nowrap;border-bottom:1px solid var(--border);}
 .kd-table tr:nth-child(even) td{background:var(--bg);}
 .kd-table tr:hover td{background:var(--purple-bg);}
+
+/* Today's DSR Entries — email-receipt style card */
+.dsr-receipt-card{border:1.5px solid var(--gold);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 10px rgba(26,15,46,0.08);}
+.dsr-receipt-hd{background:linear-gradient(135deg,var(--purple-dark),var(--purple));padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.dsr-receipt-id{color:#fff;font-weight:800;font-size:13px;}
+.dsr-receipt-body{padding:12px 14px;background:#fffdf7;}
+.dsr-cust-name{font-size:16px;font-weight:800;color:var(--purple);font-family:'Playfair Display',serif;}
+.dsr-cust-addr{font-size:12.5px;color:var(--text);margin-top:2px;}
+.dsr-meta-row{font-size:11px;color:var(--text3);margin-top:6px;padding-bottom:8px;border-bottom:1px dashed var(--border);}
+.dsr-items-wrap{margin-top:8px;}
+.dsr-item-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;gap:8px;}
+.dsr-item-row:last-child{border-bottom:none;}
+.dsr-item-sub{color:var(--text3);font-weight:500;font-size:11px;}
+.dsr-photo-btn{flex-shrink:0;padding:5px 12px;font-size:11px;font-weight:700;border:1.5px solid var(--purple-mid);border-radius:16px;background:var(--purple-bg);color:var(--purple);cursor:pointer;}
+.dsr-photo-btn:active{transform:scale(0.95);}
 </style>
 </head>
 <body>
@@ -1289,25 +1304,25 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
         <div class="form-row"><label>Address *</label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
 
         <div class="form-row"><label>Customer Signature Photo *</label>
-          <input type="file" id="ncSigPhoto" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncSigPhoto')">
+          <input type="file" id="ncSigPhoto" accept="image/*" onchange="ncPhotoChanged('ncSigPhoto')">
           <div id="ncSigPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Customer Photo *</label>
-          <input type="file" id="ncCustPhoto" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncCustPhoto')">
+          <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" placeholder="12-digit Aadhaar number" maxlength="14"></div>
         <div class="form-row"><label>Aadhaar Card Front Photo *</label>
-          <input type="file" id="ncAadhaarFront" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncAadhaarFront')">
+          <input type="file" id="ncAadhaarFront" accept="image/*" onchange="ncPhotoChanged('ncAadhaarFront')">
           <div id="ncAadhaarFront-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar Card Back Photo</label>
-          <input type="file" id="ncAadhaarBack" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncAadhaarBack')">
+          <input type="file" id="ncAadhaarBack" accept="image/*" onchange="ncPhotoChanged('ncAadhaarBack')">
           <div id="ncAadhaarBack-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Pan No</label><input type="text" id="ncPanNo" placeholder="Optional" maxlength="10"></div>
         <div class="form-row"><label>Pan Card Photo</label>
-          <input type="file" id="ncPanPhoto" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncPanPhoto')">
+          <input type="file" id="ncPanPhoto" accept="image/*" onchange="ncPhotoChanged('ncPanPhoto')">
           <div id="ncPanPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
 
@@ -3772,11 +3787,47 @@ async function submitLeave() {
     startDate: sd, endDate: ed, leaveType: lt, leaveMode: lm, halfDay: hd, authorityMet: authMet,
     authorityName: authWho, purpose: purpose, leaveAddress: address
   };
+  window.__leavePendingData = data;
+  leaveShowPreview(data);
+}
+
+// Review screen — every field, before the leave is actually submitted.
+// "Edit" goes back to the form (nothing lost); "Confirm & Submit" is the
+// only thing that actually sends the request to the server.
+function leaveShowPreview(d) {
+  const existing = document.getElementById('leavePreviewModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'leavePreviewModal';
+  div.className = 'modal-overlay show';
+  const days = (new Date(d.endDate) - new Date(d.startDate)) / 86400000 + 1;
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-title">✅ Review Before Submitting</div>
+    <div class="dsr-receipt-card" style="margin-top:10px;">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${d.leaveType}</span><span class="kd-pill gold">${d.leaveMode}${d.halfDay ? ' — ' + d.halfDay : ''}</span></div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${d.name}</div>
+        <div class="dsr-meta-row">📅 ${fmtDMY(d.startDate)} ${d.startDate !== d.endDate ? '→ ' + fmtDMY(d.endDate) : ''} &nbsp;·&nbsp; ${days} day(s)</div>
+        <div class="dsr-meta-row" style="border-bottom:none;">📝 <b>${d.purpose}</b>${d.leaveAddress ? '<br>📍 ' + d.leaveAddress : ''}${d.authorityMet === 'Yes' ? '<br>✅ Authority Met: ' + d.authorityName : ''}</div>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitLeave()">✅ Confirm &amp; Submit</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('leavePreviewModal').remove()">✏️ Edit</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function confirmSubmitLeave() {
+  const modal = document.getElementById('leavePreviewModal');
+  if (modal) modal.remove();
+  const data = window.__leavePendingData;
+  if (!data) { toast('Nothing to submit — please fill the form again', 'error'); return; }
 
   updateConnStatus();
   if(!navigator.onLine) { submitLeaveOffline(data); return; }
 
-  const submitIdem = makeIdemKey(['submitleave', state.empId, sd, ed, lt, lm]);
+  const submitIdem = makeIdemKey(['submitleave', data.employeeNumber, data.startDate, data.endDate, data.leaveType, data.leaveMode]);
   if (isDuplicateSubmission(submitIdem)) { toast('Already submitting, please wait...', 'info'); return; }
 
   await withButtonLock(document.getElementById('applySubmitBtn'), '⏳ Submitting...', async () => {
@@ -5306,7 +5357,7 @@ async function submitNewLoyaltyCard() {
   }
 
   const btn = document.getElementById('ncSubmitBtn');
-  btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
+  btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
 
   try {
     const [sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto] = await Promise.all([
@@ -5324,7 +5375,58 @@ async function submitNewLoyaltyCard() {
       cardType, cardNo, cardIssuedDate: cardDate,
       sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto
     };
+    window.__loyaltyPendingPayload = payload;
+    loyaltyShowPreview(payload);
+  } catch (err) {
+    errBox.textContent = 'Could not prepare preview: ' + err.message;
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
+  }
+}
 
+// Review screen — every field + every photo, before the card is actually
+// saved. "Edit" goes back to the form (nothing lost); "Confirm & Submit"
+// is the only thing that actually sends data to the server.
+function loyaltyShowPreview(p) {
+  const photoRow = (label, src) => src ? `<div style="text-align:center;"><img src="${src}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${src}','_blank')"><div style="font-size:9.5px;color:var(--text3);margin-top:2px;">${label}</div></div>` : '';
+  const existing = document.getElementById('loyPreviewModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'loyPreviewModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-title">✅ Review Before Submitting</div>
+    <div class="dsr-receipt-card" style="margin-top:10px;">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">💳 ${p.cardType}</span><span class="kd-pill gold">${p.cardNo}</span></div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${p.custName}</div>
+        <div class="dsr-cust-addr"><b>📍 ${p.address}</b></div>
+        <div class="dsr-meta-row">📱 ${p.phone} &nbsp;·&nbsp; 💼 ${p.occupation}${p.orgName ? ' — ' + p.orgName : ''} &nbsp;·&nbsp; 📅 Issued: ${fmtDMY(p.cardIssuedDate)}</div>
+        <div class="dsr-meta-row" style="border-bottom:none;">🆔 Aadhaar: ${p.aadhaarNo}${p.panNo ? ' &nbsp;·&nbsp; PAN: ' + p.panNo : ''}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
+          ${photoRow('Signature', p.sigPhoto)}${photoRow('Customer', p.custPhoto)}${photoRow('Aadhaar Front', p.aadhaarFront)}${photoRow('Aadhaar Back', p.aadhaarBack)}${photoRow('PAN', p.panPhoto)}
+        </div>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitLoyaltyCard()">✅ Confirm &amp; Submit</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyPreviewModal').remove()">✏️ Edit</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function confirmSubmitLoyaltyCard() {
+  const modal = document.getElementById('loyPreviewModal');
+  if (modal) modal.remove();
+  const payload = window.__loyaltyPendingPayload;
+  const errBox = document.getElementById('ncErrorMsg');
+  if (!payload) { errBox.textContent = 'Nothing to submit — please fill the form again'; errBox.style.display = 'block'; return; }
+
+  const btn = document.getElementById('ncSubmitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
+
+  try {
     const resp = await fetch(WEB_APP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
@@ -6329,43 +6431,78 @@ function loadDsrToday(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR entries filed yet today.</p></div>'; return; }
 
+    // Group every item-row that shares the same DSR No into ONE card —
+    // a single DSR (one customer, one bill) can have multiple items.
+    const groups = {};
+    const order = [];
+    res.rows.forEach(d => {
+      const key = d.dsrNo || (d.customerName + '|' + d.mobile + '|' + d.entryTime);
+      if (!groups[key]) { groups[key] = { ...d, items: [] }; order.push(key); }
+      groups[key].items.push(d);
+    });
+
     let missingPhotoCount = 0;
-    let html = `<div class="kd-note">${fmtDMY(res.date)} — ${res.rows.length} entr${res.rows.length === 1 ? 'y' : 'ies'}</div>`;
-    res.rows.forEach((d, i) => {
-      if (!d.hasPhoto) missingPhotoCount++;
-      const payColor = d.paymentStatus === 'Purchased' ? 'green' : d.paymentStatus === 'Advance' ? 'gold' : 'red';
-      html += `<div class="kd-card">
-        <div class="kd-head"><span class="kd-name">🧾 ${d.dsrNo || '—'}</span><span class="kd-pill ${payColor}">${d.paymentStatus || '—'}</span></div>
-        <div class="kd-stats" style="margin-bottom:8px;">
-          <div class="kd-box"><span class="kd-ic">👤</span><span class="kd-val" style="font-size:12px;">${d.employee}</span><span class="kd-lbl">Employee</span></div>
-          <div class="kd-box"><span class="kd-ic">🧑</span><span class="kd-val" style="font-size:12px;">${d.customerName || '—'}</span><span class="kd-lbl">Customer</span></div>
-          <div class="kd-box"><span class="kd-ic">📱</span><span class="kd-val" style="font-size:12px;">${d.mobile || '—'}</span><span class="kd-lbl">Mobile</span></div>
+    let html = `<div class="kd-note">${fmtDMY(res.date)} — ${order.length} DSR${order.length === 1 ? '' : 's'} (${res.rows.length} item${res.rows.length === 1 ? '' : 's'})</div>`;
+    let photoIdx = 0;
+    window['__dsrTodayPhotos_' + who] = [];
+
+    order.forEach(key => {
+      const g = groups[key];
+      const payColor = g.paymentStatus === 'Purchased' ? 'green' : g.paymentStatus === 'Advance' ? 'gold' : 'red';
+      let itemsHtml = '';
+      g.items.forEach(it => {
+        if (!it.hasPhoto) missingPhotoCount++;
+        let photoBtn = '<span class="kd-pill red" style="font-size:9.5px;">⚠️ No Photo</span>';
+        if (it.hasPhoto) {
+          window['__dsrTodayPhotos_' + who].push(it.photo);
+          photoBtn = `<button class="dsr-photo-btn" onclick="viewDsrPhoto(${photoIdx}, '${who}')">📷 View</button>`;
+          photoIdx++;
+        }
+        itemsHtml += `<div class="dsr-item-row">
+          <div><b>${it.itemName || '—'}</b><span class="dsr-item-sub">${it.design ? ' · ' + it.design : ''}${it.tunch ? ' · Tunch ' + it.tunch : ''}${it.weight ? ' · ' + it.weight + 'g' : ''}${it.tagNo ? ' · Tag ' + it.tagNo : ''}</span></div>
+          ${photoBtn}
+        </div>`;
+      });
+
+      html += `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd">
+          <span class="dsr-receipt-id">🧾 ${g.dsrNo || '—'}</span>
+          <span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>
         </div>
-        <div class="kd-note" style="margin-bottom:6px;">📍 ${d.address || '—'} &nbsp;|&nbsp; 📅 Bill: ${fmtDMY(d.billDate)} &nbsp;|&nbsp; 🕐 Entered: ${d.entryTime}</div>
-        <div class="kd-note" style="margin-bottom:6px;">${d.type === 'Silver' ? '◎' : '◈'} ${d.itemName || '—'} ${d.design ? '· ' + d.design : ''} ${d.tunch ? '· Tunch ' + d.tunch : ''} ${d.weight ? '· ' + d.weight + 'g' : ''} ${d.tagNo ? '· Tag ' + d.tagNo : ''}</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-          ${d.hasPhoto
-            ? `<button class="btn-secondary" style="padding:6px 14px;font-size:11.5px;" onclick="viewDsrPhoto(${i}, '${who}')">📷 View Photo</button>`
-            : `<span class="kd-pill red">⚠️ Photo Not Uploaded</span>`}
+        <div class="dsr-receipt-body">
+          <div class="dsr-cust-name">${g.customerName || '—'}</div>
+          <div class="dsr-cust-addr"><b>📍 ${g.address || '—'}</b></div>
+          <div class="dsr-meta-row">👤 ${g.employee} &nbsp;·&nbsp; 📱 ${g.mobile || '—'} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(g.billDate)} &nbsp;·&nbsp; 🕐 ${g.entryTime}</div>
+          <div class="dsr-items-wrap">${itemsHtml}</div>
         </div>
       </div>`;
     });
     box.innerHTML = html;
-    window['__dsrTodayRows_' + who] = res.rows;
     showExportBtn(box.id);
 
-    // Admin-only flash alert if any entry today is missing its item photo
     if (who === 'admin' && missingPhotoCount > 0) {
-      toast(`⚠️ ${missingPhotoCount} DSR entr${missingPhotoCount === 1 ? 'y is' : 'ies are'} missing item photo today!`, 'error');
+      toast(`⚠️ ${missingPhotoCount} item(s) missing photo today!`, 'error');
     }
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
+// Handles both raw base64 photos and Google Drive share links (which
+// can't be used directly as an <img src> — they need the uc?export=view
+// format to actually render as an image).
+function dsrPhotoViewUrl(photo) {
+  if (!photo) return '';
+  if (photo.startsWith('data:image')) return photo;
+  const m = photo.match(/[?&]id=([\w-]+)/) || photo.match(/\/d\/([\w-]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  return photo;
+}
+
 function viewDsrPhoto(idx, who) {
-  const rows = window['__dsrTodayRows_' + who];
-  if (!rows || !rows[idx] || !rows[idx].photo) return;
+  const photos = window['__dsrTodayPhotos_' + who];
+  if (!photos || !photos[idx]) return;
+  const url = dsrPhotoViewUrl(photos[idx]);
   const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>DSR Photo</title><style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:100%;max-height:100vh;}</style></head><body><img src="${rows[idx].photo}"></body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><title>DSR Photo</title><style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:100%;max-height:100vh;}a{color:#fff;font-family:sans-serif;}</style></head><body><img src="${url}" onerror="this.outerHTML='<a href=\\'${url}\\' target=_blank>Could not preview — click to open in Drive</a>'"></body></html>`);
   win.document.close();
 }
 
@@ -6589,7 +6726,7 @@ function dsrfPhotoWidget(who, eid, pfx) {
         fid = `dsrfPf-${pfx}-${who}-${eid}`, sid = `dsrfPs-${pfx}-${who}-${eid}`, wid = `dsrfPw-${pfx}-${who}-${eid}`;
   return `<div class="phwrap">
     <label class="phlbl" for="${fid}"><span class="phi">📷</span><span id="${tid}" class="pht">Upload Photo</span></label>
-    <input type="file" id="${fid}" accept="image/*" capture="environment" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}')">
+    <input type="file" id="${fid}" accept="image/*" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}')">
     <input type="hidden" id="${hid}">
     <div id="${sid}" class="ph-size"></div>
     <div id="${wid}"></div>
@@ -6827,6 +6964,58 @@ function dsrfSubmit(who) {
 
   if (!ok) { toast(errMsg, 'error'); return; }
   if (!rows.length) { toast('No data to submit!', 'error'); return; }
+
+  window['__dsrPendingRows_' + who] = rows;
+  dsrfShowPreview(who, rows);
+}
+
+// Review screen — shows every item with its photo before the DSR is
+// actually saved. "Edit" goes back to the form (nothing lost); "Confirm
+// & Submit" is the only thing that actually sends data to the server.
+function dsrfShowPreview(who, rows) {
+  const r0 = rows[0];
+  let itemsHtml = '';
+  rows.forEach((r, i) => {
+    const isSilver = r.type === 'Silver';
+    const photo = isSilver ? r.silverItemPhoto : r.photo;
+    itemsHtml += `<div class="dsr-item-row" style="align-items:flex-start;">
+      <div>
+        <b>${isSilver ? r.silverItemName : r.productName || '—'}</b>
+        <span class="dsr-item-sub">${!isSilver && r.design ? ' · ' + r.design : ''}${!isSilver && r.tunch ? ' · Tunch ' + r.tunch : ''}
+          ${(isSilver ? r.silverItemWeight : r.weight) ? ' · ' + (isSilver ? r.silverItemWeight : r.weight) + 'g' : ''}${!isSilver && r.tagNo ? ' · Tag ' + r.tagNo : ''}</span>
+      </div>
+      ${photo ? `<img src="${photo}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${photo}','_blank')">` : '<span class="kd-pill red" style="font-size:9.5px;">No Photo</span>'}
+    </div>`;
+  });
+
+  const existing = document.getElementById('dsrPreviewModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'dsrPreviewModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-title">✅ Review Before Submitting</div>
+    <div class="dsr-receipt-card" style="margin-top:10px;">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 New DSR</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${r0.customerName}</div>
+        <div class="dsr-cust-addr"><b>📍 ${r0.address}</b></div>
+        <div class="dsr-meta-row">👤 ${r0.employeeName} &nbsp;·&nbsp; 📱 ${r0.mobileNumber} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(r0.billDate)}</div>
+        <div class="dsr-items-wrap">${itemsHtml}</div>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="dsrfConfirmSubmit('${who}')">✅ Confirm &amp; Submit</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrPreviewModal').remove()">✏️ Edit</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function dsrfConfirmSubmit(who) {
+  const modal = document.getElementById('dsrPreviewModal');
+  if (modal) modal.remove();
+  const rows = window['__dsrPendingRows_' + who];
+  if (!rows || !rows.length) { toast('Nothing to submit — please fill the form again', 'error'); return; }
 
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
   const msg = document.getElementById('dsrfStatusMsg-' + who);
