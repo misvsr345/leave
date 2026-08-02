@@ -1231,7 +1231,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
       <div class="card" id="loyaltyHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-report" onclick="openReportModal('emp','loyalty')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-newcard')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Card Entry</div><div class="quick-action-sub">Enroll a customer</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
@@ -1364,7 +1363,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="empEomBanner-box" style="display:none;"></div>
       <div class="card" id="kpiHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-report" onclick="openReportModal('emp','kpi')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
@@ -1412,7 +1410,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="emp-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="card" id="dsrHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-report" onclick="openReportModal('emp','dsr')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
@@ -1510,11 +1507,11 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 
     <!-- DASHBOARD (Leave section landing) -->
     <div class="page-section" id="admin-dashboard">
-      <button class="btn-report" onclick="openReportModal('admin','leave')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="bday-marquee-wrap" id="adminBdayMarquee">
         <button class="bday-marquee-refresh" onclick="populateEventScroller('adminBdayMarquee','adminBdayMarqueeTrack')" title="Refresh">🔄</button>
         <div class="bday-marquee-track" id="adminBdayMarqueeTrack"></div>
       </div>
+      <div class="card" id="adminStatsCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-section" style="margin-bottom:14px;">
         <div class="quick-actions-title">⚡ Quick Actions</div>
         <div class="quick-actions-grid" id="adminQuickActionsGrid">
@@ -1529,7 +1526,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
         </div>
       </div>
-      <div class="card" id="adminStatsCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="card" id="adminTodayCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="card" id="adminTomorrowCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="card" id="adminBirthdayCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1646,7 +1642,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-loyalty">
       <div class="section-hdr"><span class="section-title2">💳 Loyalty Card</span></div>
       <div class="card" id="loyaltyHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-report" onclick="openReportModal('admin','loyalty')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
@@ -1976,7 +1971,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
       <div class="card" id="adminEomBanner-box" style="display:none;"></div>
       <div class="card" id="kpiHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-report" onclick="openReportModal('admin','kpi')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQAKpiTarget" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
         <div class="quick-action-btn" id="adminQAKpiTillDate" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
@@ -2024,7 +2018,6 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
     <div class="page-section" id="admin-dsr">
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="card" id="dsrHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-      <button class="btn-report" onclick="openReportModal('admin','dsr')"><span class="btn-report-ic">📊</span> Download Report</button>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
@@ -3358,7 +3351,6 @@ function renderEmpOverview() {
         <div class="home-bal-box"><div class="home-bal-val" style="color:#80c8ff">${fmtNum(q)}</div><div class="home-bal-lbl">Quota</div></div>
       </div>
     </div>
-    <button class="btn-report" onclick="openReportModal('emp','leave')"><span class="btn-report-ic">📊</span> Download Report</button>
     <div class="quick-actions-section">
       <div class="quick-actions-title">⚡ Quick Actions</div>
       <div class="quick-actions-grid">
@@ -7164,6 +7156,8 @@ document.addEventListener('click', (e) => {
 function renderAdminDashboard() {
   const leaves = state.allLeaves;
   const counts = { total:0, pending:0, approved:0, rejected:0, absent:0, mis:0, cancelled:0 };
+  const countsThisMonth = { total:0, pending:0, approved:0, rejected:0, absent:0, mis:0, cancelled:0 };
+  const curMonthKey = todayYMD().substring(0, 7); // yyyy-MM
   const typeCount = {}; const deptMap = {}; const monthCount = {}; const counterMap = {};
   leaves.forEach(l => {
     counts.total++;
@@ -7174,6 +7168,17 @@ function renderAdminDashboard() {
     else if(s==='absent') counts.absent++;
     else if(s==='mis_approved') counts.mis++;
     else if(s==='cancelled') counts.cancelled++;
+
+    // Running-month-only mirror of the same counts, for the header card
+    if (l.startDate && l.startDate.substring(0, 7) === curMonthKey) {
+      countsThisMonth.total++;
+      if(s==='pending') countsThisMonth.pending++;
+      else if(s==='approved') countsThisMonth.approved++;
+      else if(s==='rejected') countsThisMonth.rejected++;
+      else if(s==='absent') countsThisMonth.absent++;
+      else if(s==='mis_approved') countsThisMonth.mis++;
+      else if(s==='cancelled') countsThisMonth.cancelled++;
+    }
 
     typeCount[l.type] = (typeCount[l.type]||0)+1;
     if(l.department) {
@@ -7204,10 +7209,10 @@ function renderAdminDashboard() {
   });
 
   document.getElementById('adminStatsCard').innerHTML = sectionHeaderCardHtml('admin', [
-      { val: counts.total, lbl: 'Total', color: '#80c8ff' },
-      { val: counts.pending + counts.mis, lbl: 'Pending', color: '#ffd080' },
-      { val: counts.approved, lbl: 'Approved', color: '#80ffb0' },
-      { val: counts.rejected, lbl: 'Rejected', color: '#ff8080' }
+      { val: countsThisMonth.total, lbl: 'This Month', color: '#80c8ff' },
+      { val: countsThisMonth.pending + countsThisMonth.mis, lbl: 'Pending', color: '#ffd080' },
+      { val: countsThisMonth.approved, lbl: 'Approved', color: '#80ffb0' },
+      { val: countsThisMonth.rejected, lbl: 'Rejected', color: '#ff8080' }
     ]) + `
     <div class="card-title">📊 Overview</div>
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
