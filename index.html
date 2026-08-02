@@ -338,6 +338,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 }
 .topbar-row2 {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .topbar-logo {
@@ -5956,6 +5957,23 @@ function loadKpiCompare(who) {
 // ══════════════════════════════════════
 // DSR SECTION
 // ══════════════════════════════════════
+// Same gradient "VSR GOLD / Name / meta" header card Leave's overview
+// uses, reusable for any section so every overview page looks and feels
+// identical — just the 4 stat tiles underneath change per section.
+function sectionHeaderCardHtml(who, tiles) {
+  const name = who === 'admin' ? (state.adminName || 'Admin') : (state.empName || 'Employee');
+  const meta = who === 'admin'
+    ? [state.adminRole, state.adminDesig].filter(Boolean).join(' · ')
+    : [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
+  const tilesHtml = tiles.map(t => `<div class="home-bal-box"><div class="home-bal-val" style="color:${t.color || '#fff'}">${t.val}</div><div class="home-bal-lbl">${t.lbl}</div></div>`).join('');
+  return `<div class="home-header">
+    <div class="home-header-title">VSR GOLD</div>
+    <div class="home-header-name">${name}</div>
+    <div class="home-header-sub">${meta}</div>
+    <div class="home-balance-row">${tilesHtml}</div>
+  </div>`;
+}
+
 // Quick-glance highlight numbers shown right on the DSR landing page —
 // no clicking into a sub-page needed to see where things stand.
 function loadDsrHighlights(who) {
@@ -5968,29 +5986,30 @@ function loadDsrHighlights(who) {
     jsonpReliable(kpiEmpParams(who, { page: 'dsrMissingJSON' })).catch(() => null)
   ]).then(([todayRes, statusRes, missingRes]) => {
     const todayCount = (todayRes && todayRes.ok && todayRes.details) ? todayRes.details.length : '—';
-    let statusLabel = '—', statusColor = 'var(--text3)';
+    let statusLabel = '—', statusColor = '#c0c0d8';
     if (statusRes && statusRes.ok && statusRes.rows.length) {
+      const isComplete = r => Number(r.purchases) === 0 || String(r.status).toLowerCase().indexOf('complete') === 0;
       if (who === 'admin') {
-        const complete = statusRes.rows.filter(r => String(r.status).toLowerCase().indexOf('complete') === 0).length;
-        statusLabel = complete + '/' + statusRes.rows.length + ' Complete';
-        statusColor = complete === statusRes.rows.length ? 'var(--green)' : 'var(--red)';
+        const complete = statusRes.rows.filter(isComplete).length;
+        statusLabel = complete + '/' + statusRes.rows.length;
+        statusColor = complete === statusRes.rows.length ? '#80ffb0' : '#ff8080';
       } else {
         const r = statusRes.rows[0];
-        statusLabel = r.dsrPct;
-        statusColor = String(r.status).toLowerCase().indexOf('complete') === 0 ? 'var(--green)' : 'var(--red)';
+        statusLabel = Number(r.purchases) === 0 ? '—' : r.dsrPct;
+        statusColor = isComplete(r) ? '#80ffb0' : '#ff8080';
       }
     }
-    let missingTotal = '—', missingColor = 'var(--text3)';
+    let missingTotal = '—', missingColor = '#c0c0d8';
     if (missingRes && missingRes.ok) {
       missingTotal = missingRes.rows.reduce((sum, r) => sum + (Number(r.totalMissing) || 0), 0);
-      missingColor = missingTotal > 0 ? 'var(--red)' : 'var(--green)';
+      missingColor = missingTotal > 0 ? '#ff5050' : '#80ffb0';
     }
-    box.innerHTML = `<div class="card-title">⚡ At a Glance</div>
-      <div class="stat-tile-row">
-        <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${todayCount}</div><div class="stat-tile-lbl">Today's Entries</div></div>
-        <div class="stat-tile" style="background:var(--bg);border-color:${statusColor};"><div class="stat-tile-val" style="color:${statusColor}">${statusLabel}</div><div class="stat-tile-lbl">Yesterday</div></div>
-        <div class="stat-tile" style="background:var(--bg);border-color:${missingColor};"><div class="stat-tile-val" style="color:${missingColor}">${missingTotal}</div><div class="stat-tile-lbl">Missing (Month)</div></div>
-      </div>`;
+    box.innerHTML = sectionHeaderCardHtml(who, [
+      { val: todayCount, lbl: "Today's Entries", color: '#80c8ff' },
+      { val: statusLabel, lbl: who === 'admin' ? 'Complete (Yest.)' : 'Yesterday %', color: statusColor },
+      { val: missingTotal, lbl: 'Missing (Month)', color: missingColor },
+      { val: '🧾', lbl: 'DSR', color: '#d4a84a' }
+    ]);
   }).catch(() => { box.innerHTML = ''; });
 }
 
@@ -6002,19 +6021,20 @@ function loadKpiHighlights(who) {
     if (!res || !res.ok || !res.rows.length) { box.innerHTML = ''; return; }
     if (who === 'admin') {
       const top = res.rows[0];
-      box.innerHTML = `<div class="card-title">⚡ At a Glance — Running Month</div>
-        <div class="stat-tile-row">
-          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${res.rows.length}</div><div class="stat-tile-lbl">Employees Tracked</div></div>
-          <div class="stat-tile" style="background:var(--gold-bg,var(--bg));border-color:var(--gold);"><div class="stat-tile-val" style="color:var(--gold-dark)">${top.employee}</div><div class="stat-tile-lbl">🥇 Top Score (${top.overallScore})</div></div>
-        </div>`;
+      box.innerHTML = sectionHeaderCardHtml(who, [
+        { val: res.rows.length, lbl: 'Employees Tracked', color: '#80c8ff' },
+        { val: top.employee, lbl: '🥇 Top Performer', color: '#ffd700' },
+        { val: top.overallScore, lbl: 'Top Score', color: '#80ffb0' },
+        { val: '📊', lbl: 'KPI', color: '#d4a84a' }
+      ]);
     } else {
       const r = res.rows[0];
-      box.innerHTML = `<div class="card-title">⚡ At a Glance — Running Month</div>
-        <div class="stat-tile-row">
-          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${r.grade}</div><div class="stat-tile-lbl">My Grade</div></div>
-          <div class="stat-tile" style="background:var(--bg);border-color:var(--gold);"><div class="stat-tile-val" style="color:var(--gold-dark)">${r.overallScore}</div><div class="stat-tile-lbl">Overall Score</div></div>
-          <div class="stat-tile" style="background:var(--bg);border-color:var(--border);"><div class="stat-tile-val">${r.purchAchPct}</div><div class="stat-tile-lbl">Purchase Ach%</div></div>
-        </div>`;
+      box.innerHTML = sectionHeaderCardHtml(who, [
+        { val: r.grade, lbl: 'My Grade', color: '#ffd700' },
+        { val: r.overallScore, lbl: 'Overall Score', color: '#80ffb0' },
+        { val: r.purchAchPct, lbl: 'Purchase Ach%', color: '#80c8ff' },
+        { val: r.dsrScore, lbl: 'DSR Score', color: '#c0c0ff' }
+      ]);
     }
   }).catch(() => { box.innerHTML = ''; });
 }
@@ -6029,12 +6049,12 @@ function loadLoyaltyHighlights(who) {
   jsonpReliable(reqParams).then(res => {
     if (!res || !res.ok) { box.innerHTML = ''; return; }
     const k = res.kpi;
-    box.innerHTML = `<div class="card-title">⚡ At a Glance</div>
-      <div class="stat-tile-row">
-        <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${k.thisMonthCards}</div><div class="stat-tile-lbl">This Month</div></div>
-        <div class="stat-tile" style="background:var(--orange-bg);border-color:var(--orange);"><div class="stat-tile-val" style="color:var(--orange)">${k.pendingCards}</div><div class="stat-tile-lbl">Pending</div></div>
-        <div class="stat-tile" style="background:var(--blue-bg);border-color:var(--blue);"><div class="stat-tile-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="stat-tile-lbl">Pending ₹</div></div>
-      </div>`;
+    box.innerHTML = sectionHeaderCardHtml(who, [
+      { val: k.thisMonthCards, lbl: 'This Month', color: '#80c8ff' },
+      { val: k.pendingCards, lbl: 'Pending', color: k.pendingCards > 0 ? '#ffd080' : '#80ffb0' },
+      { val: '₹' + fmtNum(k.pendingIncentive), lbl: 'Pending ₹', color: '#c0c0ff' },
+      { val: '💳', lbl: 'Loyalty', color: '#d4a84a' }
+    ]);
   }).catch(() => { box.innerHTML = ''; });
 }
 
@@ -6065,18 +6085,24 @@ function loadDsrStatus(who) {
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
     let html = '';
     res.rows.forEach(r => {
-      const complete = String(r.status).toLowerCase().indexOf('complete') === 0;
+      // Defensive override (works even against a stale/un-regenerated
+      // sheet): zero purchases that day means there's nothing to file a
+      // DSR for, so it can never be "Pending" — show it as complete
+      // regardless of what the sheet's own Status column says.
+      const noSales = Number(r.purchases) === 0;
+      const complete = noSales || String(r.status).toLowerCase().indexOf('complete') === 0;
+      const statusLabel = noSales ? 'Complete (No Sales)' : r.status;
       html += `<div class="kd-card ${complete ? 'kd-ok' : 'kd-danger'}">
         <div class="kd-head"><span class="kd-name">${r.employee}</span>
-          <span class="kd-pill ${complete ? 'green' : 'red'}">${complete ? '✅' : '⏳'} ${r.status}</span></div>
+          <span class="kd-pill ${complete ? 'green' : 'red'}">${complete ? '✅' : '⏳'} ${statusLabel}</span></div>
         <div class="kd-stats">
           <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
           <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
           <div class="kd-box"><span class="kd-ic">✅</span><span class="kd-val">${r.onTime}</span><span class="kd-lbl">On-Time</span></div>
           <div class="kd-box"><span class="kd-ic">⏰</span><span class="kd-val">${r.late}</span><span class="kd-lbl">Late</span></div>
           <div class="kd-box"><span class="kd-ic">🚫</span><span class="kd-val">${r.missing}</span><span class="kd-lbl">Missing</span></div>
-          <div class="kd-box"><span class="kd-ic">📶</span><span class="kd-val">${r.dsrPct}</span><span class="kd-lbl">DSR %</span></div>
-          <div class="kd-box"><span class="kd-ic">🎯</span><span class="kd-val">${r.effectivePct}</span><span class="kd-lbl">Effective %</span></div>
+          <div class="kd-box"><span class="kd-ic">📶</span><span class="kd-val">${noSales ? '—' : r.dsrPct}</span><span class="kd-lbl">DSR %</span></div>
+          <div class="kd-box"><span class="kd-ic">🎯</span><span class="kd-val">${noSales ? '—' : r.effectivePct}</span><span class="kd-lbl">Effective %</span></div>
         </div>
         <div class="kd-note" style="margin-top:8px;margin-bottom:0;">Checked: ${r.dateChecked}</div>
       </div>`;
