@@ -1314,6 +1314,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- LOYALTY: Leaderboard -->
     <div class="page-section" id="emp-loyalty-leaderboard">
       <div class="section-hdr"><span class="section-title2">🏆 Loyalty Card Leaderboard</span></div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardAllTime('emp')">🏁 All-Time</button>
+          <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardThisMonth('emp')">📅 This Month</button>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" id="loyLbStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="loyLbEnd-emp"></div>
+        </div>
+        <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('emp')">🔍 Custom Range</button>
+      </div>
       <div class="card"><div id="loyLeaderboardBox"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1722,6 +1733,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQALoyCardhist" onclick="showAdminPage('loyalty-cardhist')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Card History</div><div class="quick-action-sub">Every card enrolled</div></div>
         <div class="quick-action-btn" id="adminQALoyIncenthist" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
         <div class="quick-action-btn" id="adminQALoyKyc" onclick="showAdminPage('loyalty-kyc')"><span class="quick-action-icon">📋</span><div class="quick-action-label">KYC Report</div><div class="quick-action-sub">Incomplete records</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
         <div class="quick-action-btn" id="adminQALoyLeaderboard" onclick="showAdminPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
     </div>
@@ -1729,6 +1741,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- LOYALTY: Leaderboard (admin) -->
     <div class="page-section" id="admin-loyalty-leaderboard">
       <div class="section-hdr"><span class="section-title2">🏆 Loyalty Card Leaderboard</span></div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardAllTime('admin')">🏁 All-Time</button>
+          <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardThisMonth('admin')">📅 This Month</button>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" id="loyLbStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="loyLbEnd-admin"></div>
+        </div>
+        <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('admin')">🔍 Custom Range</button>
+      </div>
       <div class="card"><div id="loyLeaderboardBoxAdmin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
@@ -1812,6 +1835,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyKYCReport()">🔄 Refresh</button>
       <div id="loyKycContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <div class="page-section" id="admin-loyalty-issues">
+      <div class="section-hdr"><span class="section-title2">🚨 Card Issues — Duplicate / Missing Numbers</span></div>
+      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyCardIssues()">🔄 Refresh</button>
+      <div id="loyIssuesContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <!-- TEAM AVAILABILITY -->
@@ -2440,7 +2469,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwjI5UVTDp-7B7313cs0kxTQ-kcmToWAWfpzIIzPza6RMTeQ9KszwlUpLC0fIjcuoVSLw/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8XG9u4aTNZQpfBDKTeXr7iRSZJ5gjoZyAHdPJ7AIio1hL9w4T0ypO-xs_NfxxqchlUQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -3187,7 +3216,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openEmpMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc'], items: [
+      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-newcard', icon:'➕', label:'New Card' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
@@ -3214,7 +3243,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openAdminMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc'], items: [
+      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
       { page:'loyalty-dash', icon:'📈', label:'Dashboard' },
@@ -3260,7 +3289,7 @@ const SECTION_LABEL_MAP = {
   loyalty: 'Loyalty Card', 'loyalty-dash': 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
-  'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card',
+  'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
@@ -5030,6 +5059,7 @@ function showAdminPage(page) {
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
   if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
   if(page==='loyalty-kyc') loadLoyaltyKYCReport();
+  if(page==='loyalty-issues') loadLoyaltyCardIssues();
   if(page==='events') initEventsBrowser('admin');
   if(page==='balance') renderBalance();
   if(page==='direct') loadDirectActionPage();
@@ -5896,17 +5926,19 @@ function mailLoyaltyReport(subject, bodyHtml, who) {
 }
 
 // ── Dashboard (role-gated: Admin sees the whole store, Employee sees only their own row) ──
-function loadLoyaltyLeaderboard(who) {
+function loadLoyaltyLeaderboard(who, start, end) {
   const box = document.getElementById(who === 'admin' ? 'loyLeaderboardBoxAdmin' : 'loyLeaderboardBox');
   if (!box) return;
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const role = who === 'admin' ? 'ADMIN' : 'EMP';
   const reqParams = { page: 'loyaltyLeaderboardJSON', role: role };
   if (who === 'emp') reqParams.empName = state.empName;
+  if (start) reqParams.start = start;
+  if (end) reqParams.end = end;
   jsonpReliable(reqParams)
     .then(res => {
       if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
-      if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No leaderboard data yet this month.</p></div>'; return; }
+      if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No leaderboard data for this period.</p></div>'; return; }
       const medal = r => r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
       let html = `<div class="card-title">${res.title || '🏆 Loyalty Card Leaderboard'}</div>`;
       res.rows.forEach(r => {
@@ -5917,6 +5949,26 @@ function loadLoyaltyLeaderboard(who) {
       box.innerHTML = html;
     })
     .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p></div>'; });
+}
+
+function loyLeaderboardThisMonth(who) {
+  const today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  const iso = d => d.toISOString().split('T')[0];
+  document.getElementById('loyLbStart-' + who).value = iso(first);
+  document.getElementById('loyLbEnd-' + who).value = iso(today);
+  loadLoyaltyLeaderboard(who, iso(first), iso(today));
+}
+function loyLeaderboardAllTime(who) {
+  document.getElementById('loyLbStart-' + who).value = '';
+  document.getElementById('loyLbEnd-' + who).value = '';
+  loadLoyaltyLeaderboard(who);
+}
+function loyLeaderboardCustom(who) {
+  const s = document.getElementById('loyLbStart-' + who).value;
+  const e = document.getElementById('loyLbEnd-' + who).value;
+  if (!s || !e) { toast('Select both dates', 'error'); return; }
+  loadLoyaltyLeaderboard(who, s, e);
 }
 
 // ══════════════════════════════════════
@@ -6077,15 +6129,34 @@ function reportGeneratedAt(title) {
   const d = new Date(m[1].replace(/-/g, ' '));
   return isNaN(d.getTime()) ? null : d;
 }
+// The real question isn't "how many hours old is this" (a report could be
+// generated 5 minutes ago and STILL be showing last month, if it simply
+// hasn't been re-run since the month changed) — it's "does the report's
+// own 'Till <date>' actually fall in the CURRENT calendar month".
+function reportTillDate(title) {
+  if (!title) return null;
+  const m = title.match(/Till\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+  if (!m) return null;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mi = months.indexOf(m[2]);
+  if (mi === -1) return null;
+  return new Date(parseInt(m[3]), mi, parseInt(m[1]));
+}
 function staleBannerHtml(title) {
+  const till = reportTillDate(title);
+  const now = new Date();
+  const isCurrentMonth = till && till.getMonth() === now.getMonth() && till.getFullYear() === now.getFullYear();
+  if (isCurrentMonth) return ''; // covers the current month — genuinely fresh, no warning
   const genAt = reportGeneratedAt(title);
-  if (!genAt) return '';
-  const hoursOld = (Date.now() - genAt.getTime()) / 3600000;
-  if (hoursOld < 20) return '';
+  const genTxt = genAt ? fmtDMY(genAt.toISOString().split('T')[0]) : 'unknown date';
   return `<div class="kd-card kd-danger" style="text-align:center;">
-    <b>⚠️ This report looks outdated</b> — last generated ${Math.round(hoursOld)}h ago (should refresh automatically).<br>
-    <span style="font-size:11px;color:var(--text3);">Ask MIS to check the Walkintrack auto-refresh trigger, or run the report manually from its menu.</span>
+    <b>⚠️ This is not this month's data</b> — showing ${till ? (months3(till)) : 'an older period'}, last generated ${genTxt}.<br>
+    <span style="font-size:11px;color:var(--text3);">The Walkintrack auto-refresh trigger hasn't run since the month changed. Ask MIS to check Triggers, or run the KPI report manually from the Walkintrack sheet's menu.</span>
   </div>`;
+}
+function months3(d) {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return months[d.getMonth()] + ' ' + d.getFullYear();
 }
 
 function loadKpiTillDate(who) {
@@ -6433,9 +6504,10 @@ function loadKpiHighlights(who) {
   if (!box) return;
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' })).then(res => {
     if (!res || !res.ok || !res.rows.length) { box.innerHTML = ''; return; }
+    const staleWarning = staleBannerHtml(res.title);
     if (who === 'admin') {
       const top = res.rows[0];
-      box.innerHTML = sectionHeaderCardHtml(who, [
+      box.innerHTML = staleWarning + sectionHeaderCardHtml(who, [
         { val: res.rows.length, lbl: 'Employees Tracked', color: '#80c8ff' },
         { val: top.employee, lbl: '🥇 Top Performer', color: '#ffd700' },
         { val: top.overallScore, lbl: 'Top Score', color: '#80ffb0' },
@@ -6443,7 +6515,7 @@ function loadKpiHighlights(who) {
       ]);
     } else {
       const r = res.rows[0];
-      box.innerHTML = sectionHeaderCardHtml(who, [
+      box.innerHTML = staleWarning + sectionHeaderCardHtml(who, [
         { val: r.grade, lbl: 'My Grade', color: '#ffd700' },
         { val: r.overallScore, lbl: 'Overall Score', color: '#80ffb0' },
         { val: r.purchAchPct, lbl: 'Purchase Ach%', color: '#80c8ff' },
@@ -6618,7 +6690,7 @@ function loadDsrMissing(who) {
           <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.totalPurchases}</span><span class="kd-lbl">Purchases</span></div>
           <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.dsrEntered}</span><span class="kd-lbl">DSR Entered</span></div>
         </div>
-        ${missDates.length ? '<div class="kd-chiprow">' + missDates.map(d => `<span class="kd-chip">🔴 ${d}</span>`).join('') + '</div>' : ''}
+        ${missDates.length ? '<div class="kd-chiprow">' + missDates.map(d => `<span class="kd-chip">🔴 ${fmtDMY(d)}</span>`).join('') + '</div>' : ''}
       </div>`;
     });
     box.innerHTML = html;
@@ -7155,10 +7227,10 @@ function loadLoyaltyDashboard(who) {
       });
       html += `</div>`;
 
-      if (res.isAdmin && res.oldYear) {
-        html += `<div class="card"><div class="card-title">📦 Fresh Start vs Old Year (FY 2025-26)</div>
+      if (res.oldYear) {
+        html += `<div class="card"><div class="card-title">📦 Fresh Start (Since 01-Apr-2026) vs Store History (up to FY 2025-26)</div>
           <div class="leave-card-date">🌱 Fresh Start: <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)}</div>
-          <div class="leave-card-date">📁 Old Year (closed): <b>${res.oldYear.cards}</b> cards · ₹${fmtNum(res.oldYear.incentive)}</div>
+          <div class="leave-card-date">📁 Store History (closed): <b>${res.oldYear.cards}</b> cards · ₹${fmtNum(res.oldYear.incentive)}</div>
         </div>`;
       }
 
@@ -7358,6 +7430,38 @@ function loadLoyaltyIncentiveHistory() {
 }
 
 // ── KYC Report — customers with incomplete enrollment (missing signature/Aadhaar/PAN/photo/basic details) ──
+function loadLoyaltyCardIssues() {
+  const box = document.getElementById('loyIssuesContent');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'loyaltyCardIssuesJSON' }).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res.duplicates.length && !res.missing.length) {
+      box.innerHTML = '<div class="empty-state"><p>✅ No issues found — every card number is present and unique.</p></div>';
+      return;
+    }
+    let html = '';
+    if (res.duplicates.length) {
+      html += `<div class="kd-note" style="font-weight:700;color:var(--red);">🔁 Duplicate Card Numbers (${res.duplicates.length})</div>`;
+      res.duplicates.forEach(d => {
+        html += `<div class="kd-card kd-danger">
+          <div class="kd-head"><span class="kd-name">Card No: ${d.cardNo}</span><span class="kd-pill red">Used ${d.rows.length}×</span></div>
+          <div class="kd-note" style="margin:0;">Row ${d.rows[0]}: ${d.employees[0]} — ${d.customers[0]}<br>Row ${d.rows[1]}: ${d.employees[1]} — ${d.customers[1]}</div>
+        </div>`;
+      });
+    }
+    if (res.missing.length) {
+      html += `<div class="kd-note" style="font-weight:700;color:var(--orange);margin-top:10px;">❓ Missing Card Numbers (${res.missing.length})</div>`;
+      res.missing.forEach(m => {
+        html += `<div class="kd-card kd-danger">
+          <div class="kd-head"><span class="kd-name">Row ${m.row}</span><span class="kd-pill red">No Card No</span></div>
+          <div class="kd-note" style="margin:0;">👤 ${m.employee || '—'} — 🧑 ${m.customer || '—'}</div>
+        </div>`;
+      });
+    }
+    box.innerHTML = html;
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+}
+
 function loadLoyaltyKYCReport() {
   const content = document.getElementById('loyKycContent');
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
