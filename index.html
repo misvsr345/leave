@@ -6635,7 +6635,13 @@ function loadDsrStatus(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
     const trueYesterday = new Date(Date.now() - 86400000);
-    const trueYesterdayStr = fmtDMY(trueYesterday.toISOString().split('T')[0]);
+    // FIX: backend sends dateChecked as "dd MMM yyyy (Yesterday)" (e.g. "02 Aug 2026")
+    // but fmtDMY() builds "dd/MM/yyyy" (e.g. "02/08/2026") — these two formats
+    // can never match via indexOf, so the warning fired every single day
+    // even when the data was perfectly current. Compare like-for-like now.
+    const _dsrMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const trueYesterdayStr = String(trueYesterday.getDate()).padStart(2,'0') + ' ' +
+      _dsrMonths[trueYesterday.getMonth()] + ' ' + trueYesterday.getFullYear();
     const checkedStr = res.rows[0].dateChecked || '';
     let html = '';
     if (checkedStr && checkedStr.indexOf(trueYesterdayStr) === -1) {
