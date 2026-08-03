@@ -329,6 +329,15 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .btn-report .btn-report-ic { font-size: 16px; }
 .btn-report:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,71,161,0.45); }
 .btn-report:active { transform: scale(0.98); }
+.btn-secondary {
+  width: 100%; padding: 13px; background: var(--card); color: var(--purple);
+  border: 2px solid var(--purple-mid); border-radius: var(--r2); font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(107,33,168,0.1);
+}
+.btn-secondary:hover { background: var(--purple-bg); transform: translateY(-1px); }
+.btn-secondary:active { transform: scale(0.98); }
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 .export-icon-btn {
   display: none; align-items: center; justify-content: center;
   width: 34px; height: 34px; margin-bottom: 8px; margin-left: auto;
@@ -363,7 +372,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 }
 .topbar-row2 {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 /* VSR GOLD emblem — CSS-only decorative mark (no image), reused at
@@ -379,19 +388,19 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
   filter: drop-shadow(0 1px 3px rgba(212,168,67,0.5));
 }
 .login-logo-mark::before { font-size: 68px; }
-.topbar-logo .mark::before { font-size: 22px; }
+.topbar-logo .mark::before { font-size: 26px; }
 .bday-poster-logo::before { font-size: 56px; }
 
 .topbar-logo {
-  font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800;
-  background: linear-gradient(135deg, #F5E3A8, #D4A84A 55%, #B8860B);
+  font-family: 'Playfair Display', serif; font-size: 23px; font-weight: 900;
+  background: linear-gradient(135deg, #FFF0C4, #F5D77E 40%, #D4A84A 75%, #B8860B);
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  letter-spacing: 1.5px; flex-shrink: 0;
+  letter-spacing: 1.8px; flex-shrink: 0;
   display: flex; align-items: center; gap: 7px;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.08);
+  filter: drop-shadow(0 1px 4px rgba(212,168,67,0.5)) drop-shadow(0 0 12px rgba(245,215,126,0.35));
 }
 .topbar-logo .mark {
-  width: 28px; height: 28px; border-radius: 0; background: transparent;
+  width: 32px; height: 32px; border-radius: 0; background: transparent;
   border: none; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -1090,9 +1099,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="topbar">
       <div class="topbar-row1">
         <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
-        <span class="tb-chip tb-badge" style="background:#e8f5e9; color:var(--green); border-color:#a5d6a7;" id="empNameBadge">👤 Employee</span>
+        <span class="tb-chip tb-badge" style="background:#e8f5e9; color:var(--green); border-color:#a5d6a7;font-size:10px;padding:4px 9px;" id="empNameBadge">👤 Employee</span>
       </div>
       <div class="topbar-row2">
+        <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="empDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
@@ -1502,8 +1512,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
     <div class="page-section" id="emp-dsr-today">
-      <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries</span></div>
-      <button class="export-icon-btn" id="exportBtn-dsrTodayBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-emp','Today DSR Entries')" title="Export">📥</button>
+      <div class="section-hdr"><span class="section-title2">📝 DSR Entries</span></div>
+      <div class="card">
+        <div class="form-row"><label>Date</label><input type="date" id="dsrTodayDate-emp" onchange="loadDsrTodayForDate('emp')"></div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-dsrTodayBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-emp','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-status">
@@ -1512,7 +1525,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="dsrStatusBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-dsr-missing">
-      <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — This Month</span></div>
+      <div class="section-hdr"><span class="section-title2">🚫 Missing DSR</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" id="dsrMissStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="dsrMissEnd-emp"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('emp')">📅 This Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('emp')">🔍 Custom Range</button>
+        </div>
+      </div>
       <button class="export-icon-btn" id="exportBtn-dsrMissingBox-emp" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-emp','Missing DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrMissingBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
@@ -1551,9 +1574,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="topbar">
       <div class="topbar-row1">
         <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
-        <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;" id="adminRoleBadge">Admin</span>
+        <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;font-size:10px;padding:4px 9px;" id="adminRoleBadge">Admin</span>
       </div>
       <div class="topbar-row2">
+        <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="adminDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
@@ -2128,8 +2152,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
     <div class="page-section" id="admin-dsr-today">
-      <div class="section-hdr"><span class="section-title2">📝 Today's DSR Entries — All Employees</span></div>
-      <button class="export-icon-btn" id="exportBtn-dsrTodayBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-admin','Today DSR Entries')" title="Export">📥</button>
+      <div class="section-hdr"><span class="section-title2">📝 DSR Entries — All Employees</span></div>
+      <div class="card">
+        <div class="form-row"><label>Date</label><input type="date" id="dsrTodayDate-admin" onchange="loadDsrTodayForDate('admin')"></div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-dsrTodayBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-admin','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-status">
@@ -2138,7 +2165,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="dsrStatusBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-dsr-missing">
-      <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — This Month</span></div>
+      <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — All Employees</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" id="dsrMissStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="dsrMissEnd-admin"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('admin')">📅 This Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('admin')">🔍 Custom Range</button>
+        </div>
+      </div>
       <button class="export-icon-btn" id="exportBtn-dsrMissingBox-admin" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-admin','Missing DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrMissingBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
@@ -2340,7 +2377,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   <div class="modal-box">
     <div class="modal-title">☰ More</div>
     <div class="quick-actions-grid" style="margin-top:10px;">
-      <div class="quick-action-btn" onclick="closeModal('empMoreModal'); showEmpPage('events');"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openChangePassword('emp');"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
       <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openThemePickerModal();"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
     </div>
@@ -2469,7 +2505,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyD8ijLc5mwmRl6lvGVsN2l2_QPq1m-IHhvZO8H0oUDHxFcm5evipnPY8euXFX-HN7QzQ/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8XG9u4aTNZQpfBDKTeXr7iRSZJ5gjoZyAHdPJ7AIio1hL9w4T0ypO-xs_NfxxqchlUQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -2970,6 +3006,7 @@ function restoreSession() {
     state.__loginKind = 'emp';
     resetIdleTimer();
     document.getElementById('empNameBadge').textContent = '👤 Employee Portal';
+    document.getElementById('empDisplayNameBadge').textContent = '👤 ' + (state.empName || saved.empName || 'Employee');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('empApp').classList.add('active');
     document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
@@ -2983,6 +3020,7 @@ function restoreSession() {
     state.__loginKind = 'admin';
     resetIdleTimer();
     document.getElementById('adminRoleBadge').textContent = '🛡️ Admin Portal';
+        document.getElementById('adminDisplayNameBadge').textContent = '🛡️ ' + (state.adminName || saved.adminName || 'Admin');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('adminApp').classList.add('active');
     document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
@@ -3033,6 +3071,7 @@ async function empLogin() {
         resetIdleTimer();
         saveSession();
         document.getElementById('empNameBadge').textContent = '👤 Employee Portal';
+        document.getElementById('empDisplayNameBadge').textContent = '👤 ' + (state.empName || 'Employee');
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('empApp').classList.add('active');
         document.getElementById('empPassInput').value = '';
@@ -3076,6 +3115,7 @@ async function adminLogin() {
         resetIdleTimer();
         saveSession();
         document.getElementById('adminRoleBadge').textContent = '🛡️ Admin Portal';
+        document.getElementById('adminDisplayNameBadge').textContent = '🛡️ ' + (state.adminName || 'Admin');
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('adminApp').classList.add('active');
         document.getElementById('adminModulePickerName').textContent = state.adminName || state.adminRole || 'Admin';
@@ -5954,7 +5994,7 @@ function loadLoyaltyLeaderboard(who, start, end) {
 function loyLeaderboardThisMonth(who) {
   const today = new Date();
   const first = new Date(today.getFullYear(), today.getMonth(), 1);
-  const iso = d => d.toISOString().split('T')[0];
+  const iso = d => toYMD(d);
   document.getElementById('loyLbStart-' + who).value = iso(first);
   document.getElementById('loyLbEnd-' + who).value = iso(today);
   loadLoyaltyLeaderboard(who, iso(first), iso(today));
@@ -6148,7 +6188,7 @@ function staleBannerHtml(title) {
   const isCurrentMonth = till && till.getMonth() === now.getMonth() && till.getFullYear() === now.getFullYear();
   if (isCurrentMonth) return ''; // covers the current month — genuinely fresh, no warning
   const genAt = reportGeneratedAt(title);
-  const genTxt = genAt ? fmtDMY(genAt.toISOString().split('T')[0]) : 'unknown date';
+  const genTxt = genAt ? fmtDMY(toYMD(genAt)) : 'unknown date';
   return `<div class="kd-card kd-danger" style="text-align:center;">
     <b>⚠️ This is not this month's data</b> — showing ${till ? (months3(till)) : 'an older period'}, last generated ${genTxt}.<br>
     <span style="font-size:11px;color:var(--text3);">The Walkintrack auto-refresh trigger hasn't run since the month changed. Ask MIS to check Triggers, or run the KPI report manually from the Walkintrack sheet's menu.</span>
@@ -6464,7 +6504,7 @@ function exportReportPDF(title, headers, rows) {
 function loadDsrHighlights(who) {
   const box = document.getElementById('dsrHighlights-' + who);
   if (!box) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = toYMD(new Date());
   Promise.all([
     jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: today, end: today })).catch(() => null),
     jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).catch(() => null),
@@ -6544,13 +6584,15 @@ function loadLoyaltyHighlights(who) {
   }).catch(() => { box.innerHTML = ''; });
 }
 
-function loadDsrToday(who) {
+function loadDsrToday(who, date) {
   const box = document.getElementById('dsrTodayBox-' + who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable(kpiEmpParams(who, { page: 'dsrTodayFullEntriesJSON' })).then(res => {
+  const reqParams = { page: 'dsrTodayFullEntriesJSON' };
+  if (date) reqParams.date = date;
+  jsonpReliable(kpiEmpParams(who, reqParams)).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
-    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR entries filed yet today.</p></div>'; return; }
+    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR entries filed that day.</p></div>'; return; }
 
     // Group every item-row that shares the same DSR No into ONE card —
     // a single DSR (one customer, one bill) can have multiple items.
@@ -6564,14 +6606,17 @@ function loadDsrToday(who) {
 
     let missingPhotoCount = 0;
     let html = `<div class="kd-note">${fmtDMY(res.date)} — ${order.length} DSR${order.length === 1 ? '' : 's'} (${res.rows.length} item${res.rows.length === 1 ? '' : 's'})</div>`;
-    let photoIdx = 0;
+    let photoIdx = 0, itemIdx = 0;
     window['__dsrTodayPhotos_' + who] = [];
+    window['__dsrTodayItems_' + who] = [];
 
     order.forEach(key => {
       const g = groups[key];
       const payColor = g.paymentStatus === 'Purchased' ? 'green' : g.paymentStatus === 'Advance' ? 'gold' : 'red';
       let itemsHtml = '';
       g.items.forEach(it => {
+        window['__dsrTodayItems_' + who].push(it);
+        const myItemIdx = itemIdx++;
         if (!it.hasPhoto) missingPhotoCount++;
         let photoBtn = '<span class="kd-pill red" style="font-size:9.5px;">⚠️ No Photo</span>';
         if (it.hasPhoto) {
@@ -6579,9 +6624,10 @@ function loadDsrToday(who) {
           photoBtn = `<button class="dsr-photo-btn" onclick="viewDsrPhoto(${photoIdx}, '${who}')">📷 View</button>`;
           photoIdx++;
         }
+        const editBtn = who === 'admin' ? `<button class="dsr-photo-btn" style="margin-left:6px;" onclick="openDsrEditModal(${myItemIdx},'${who}')">✏️ Edit</button>` : '';
         itemsHtml += `<div class="dsr-item-row">
           <div><b>${it.itemName || '—'}</b><span class="dsr-item-sub">${it.design ? ' · ' + it.design : ''}${it.tunch ? ' · Tunch ' + it.tunch : ''}${it.weight ? ' · ' + it.weight + 'g' : ''}${it.tagNo ? ' · Tag ' + it.tagNo : ''}</span></div>
-          ${photoBtn}
+          <div style="display:flex;">${photoBtn}${editBtn}</div>
         </div>`;
       });
 
@@ -6618,6 +6664,64 @@ function dsrPhotoViewUrl(photo) {
   return photo;
 }
 
+function openDsrEditModal(idx, who) {
+  const it = window['__dsrTodayItems_' + who][idx];
+  if (!it || !it.sheetName || !it.rowNum) { toast('Cannot edit this entry', 'error'); return; }
+  const existing = document.getElementById('dsrEditModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'dsrEditModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;">
+    <div class="modal-title">✏️ Edit DSR Entry</div>
+    <div class="form-row"><label>Customer Name</label><input type="text" id="dsrEditCust" value="${it.customerName || ''}"></div>
+    <div class="form-row"><label>Mobile</label><input type="text" id="dsrEditMobile" value="${it.mobile || ''}"></div>
+    <div class="form-row"><label>Address</label><input type="text" id="dsrEditAddr" value="${it.address || ''}"></div>
+    <div class="form-row"><label>Item Name</label><input type="text" id="dsrEditItem" value="${it.itemName || ''}"></div>
+    <div class="form-row"><label>Design</label><input type="text" id="dsrEditDesign" value="${it.design || ''}"></div>
+    <div class="form-row"><label>Tunch</label><input type="text" id="dsrEditTunch" value="${it.tunch || ''}"></div>
+    <div class="form-row"><label>Weight</label><input type="text" id="dsrEditWeight" value="${it.weight || ''}"></div>
+    <div class="form-row"><label>Tag No</label><input type="text" id="dsrEditTagNo" value="${it.tagNo || ''}"></div>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="saveDsrEdit(${idx},'${who}')">💾 Save Changes</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrEditModal').remove()">Cancel</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function saveDsrEdit(idx, who) {
+  const it = window['__dsrTodayItems_' + who][idx];
+  const modal = document.getElementById('dsrEditModal');
+  const payload = {
+    page: 'dsrUpdateEntryAPI', role: 'ADMIN', callerEmail: state.adminEmail,
+    sheetName: it.sheetName, rowNum: it.rowNum,
+    customerName: document.getElementById('dsrEditCust').value,
+    mobile: document.getElementById('dsrEditMobile').value,
+    address: document.getElementById('dsrEditAddr').value,
+    itemName: document.getElementById('dsrEditItem').value,
+    design: document.getElementById('dsrEditDesign').value,
+    tunch: document.getElementById('dsrEditTunch').value,
+    weight: document.getElementById('dsrEditWeight').value,
+    tagNo: document.getElementById('dsrEditTagNo').value
+  };
+  try {
+    const res = await jsonpReliable(payload);
+    if (res && res.ok) {
+      toast('✅ DSR entry updated', 'success');
+      if (modal) modal.remove();
+      loadDsrToday('admin', document.getElementById('dsrTodayDate-admin') ? document.getElementById('dsrTodayDate-admin').value : '');
+    } else {
+      toast((res && res.error) || 'Update failed', 'error');
+    }
+  } catch (e) {
+    toast('Network error updating entry', 'error');
+  }
+}
+
+function loadDsrTodayForDate(who) {
+  const d = document.getElementById('dsrTodayDate-' + who).value;
+  loadDsrToday(who, d);
+}
+
 function viewDsrPhoto(idx, who) {
   const photos = window['__dsrTodayPhotos_' + who];
   if (!photos || !photos[idx]) return;
@@ -6635,13 +6739,7 @@ function loadDsrStatus(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
     const trueYesterday = new Date(Date.now() - 86400000);
-    // FIX: backend sends dateChecked as "dd MMM yyyy (Yesterday)" (e.g. "02 Aug 2026")
-    // but fmtDMY() builds "dd/MM/yyyy" (e.g. "02/08/2026") — these two formats
-    // can never match via indexOf, so the warning fired every single day
-    // even when the data was perfectly current. Compare like-for-like now.
-    const _dsrMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const trueYesterdayStr = String(trueYesterday.getDate()).padStart(2,'0') + ' ' +
-      _dsrMonths[trueYesterday.getMonth()] + ' ' + trueYesterday.getFullYear();
+    const trueYesterdayStr = fmtDMY(toYMD(trueYesterday));
     const checkedStr = res.rows[0].dateChecked || '';
     let html = '';
     if (checkedStr && checkedStr.indexOf(trueYesterdayStr) === -1) {
@@ -6678,11 +6776,14 @@ function loadDsrStatus(who) {
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
 
-function loadDsrMissing(who) {
+function loadDsrMissing(who, start, end) {
   const box = document.getElementById('dsrMissingBox-' + who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable(kpiEmpParams(who, { page: 'dsrMissingJSON' })).then(res => {
+  const reqParams = { page: 'dsrMissingJSON' };
+  if (start) reqParams.start = start;
+  if (end) reqParams.end = end;
+  jsonpReliable(kpiEmpParams(who, reqParams)).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR entries!</p></div>'; return; }
     let html = '';
@@ -6722,13 +6823,25 @@ function dsrRangeResultHtml(res) {
   return html;
 }
 
+function loadDsrMissingThisMonth(who) {
+  document.getElementById('dsrMissStart-' + who).value = '';
+  document.getElementById('dsrMissEnd-' + who).value = '';
+  loadDsrMissing(who);
+}
+function loadDsrMissingCustom(who) {
+  const s = document.getElementById('dsrMissStart-' + who).value;
+  const e = document.getElementById('dsrMissEnd-' + who).value;
+  if (!s || !e) { toast('Select both dates', 'error'); return; }
+  loadDsrMissing(who, s, e);
+}
+
 function loadDsrTillDate(who) {
   const box = document.getElementById('dsrTillDateBox-' + who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const today = new Date();
   const first = new Date(today.getFullYear(), today.getMonth(), 1);
-  const iso = d => d.toISOString().split('T')[0];
+  const iso = d => toYMD(d);
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: iso(first), end: iso(today) })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
@@ -6824,7 +6937,7 @@ function renderDsrEntryForm(who) {
       <div id="dsrfStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
     </div>
   `;
-  document.getElementById('dsrfBillDate-' + who).value = new Date().toISOString().split('T')[0];
+  document.getElementById('dsrfBillDate-' + who).value = toYMD(new Date());
   st.eSeq = 0;
   dsrfAddEntry(who);
 
@@ -7186,7 +7299,7 @@ function dsrfConfirmSubmit(who) {
         document.getElementById('dsrfCust-' + who).value = '';
         document.getElementById('dsrfMobile-' + who).value = '';
         document.getElementById('dsrfAddr-' + who).value = '';
-        document.getElementById('dsrfBillDate-' + who).value = new Date().toISOString().split('T')[0];
+        document.getElementById('dsrfBillDate-' + who).value = toYMD(new Date());
         dsrfSetPayStatus(who, 'Purchased', document.getElementById('dsrfBtnPurchased-' + who));
       } else {
         msg.style.color = 'var(--red)';
@@ -7233,10 +7346,14 @@ function loadLoyaltyDashboard(who) {
       });
       html += `</div>`;
 
-      if (res.oldYear) {
+      if (res.oldYear && res.isAdmin) {
         html += `<div class="card"><div class="card-title">📦 Fresh Start (Since 01-Apr-2026) vs Store History (up to FY 2025-26)</div>
           <div class="leave-card-date">🌱 Fresh Start: <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)}</div>
           <div class="leave-card-date">📁 Store History (closed): <b>${res.oldYear.cards}</b> cards · ₹${fmtNum(res.oldYear.incentive)}</div>
+        </div>`;
+      } else if (res.freshStart) {
+        html += `<div class="card"><div class="card-title">🌱 Fresh Start (Since 01-Apr-2026)</div>
+          <div class="leave-card-date">My Cards: <b>${res.freshStart.cards}</b> · ₹${fmtNum(res.freshStart.incentive)}</div>
         </div>`;
       }
 
