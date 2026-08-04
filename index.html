@@ -1198,8 +1198,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           </select>
         </div>
         <div class="form-2col">
-          <div class="form-row"><label>Start Date *</label><input type="date" id="applyStartDate" onchange="calcDays()"></div>
-          <div class="form-row"><label>End Date *</label><input type="date" id="applyEndDate" onchange="calcDays()"></div>
+          <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="applyStartDate" onchange="calcDays()"></div>
+          <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="applyEndDate" onchange="calcDays()"></div>
         </div>
         <div id="colleagueOnLeaveBox" style="display:none; padding: 10px 14px; background: var(--blue-bg); border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--blue); font-weight: 600; line-height:1.6;"></div>
         <div class="form-row">
@@ -1331,8 +1331,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardThisMonth('emp')">📅 This Month</button>
         </div>
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="loyLbStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="loyLbEnd-emp"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="loyLbStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="loyLbEnd-emp"></div>
         </div>
         <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('emp')">🔍 Custom Range</button>
       </div>
@@ -1382,7 +1382,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           </select>
         </div>
         <div class="form-row"><label>Loyalty Card Number *</label><input type="text" id="ncCardNo" placeholder="Card number as printed on the card"></div>
-        <div class="form-row"><label>Card Issued Date *</label><input type="date" id="ncCardDate"></div>
+        <div class="form-row"><label>Card Issued Date *</label><input type="date" lang="en-GB" id="ncCardDate"></div>
 
         <div id="ncErrorMsg" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;padding:8px 10px;background:var(--red-bg,#fdecea);border-radius:8px;"></div>
         <button class="btn-primary" id="ncSubmitBtn" style="width:100%;" onclick="submitNewLoyaltyCard()">💾 Submit New Card Entry</button>
@@ -1410,8 +1410,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
       <div class="card" style="padding:12px 14px;">
         <div style="display:flex;gap:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" id="loyEmpFromDate"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" id="loyEmpToDate"></div>
+          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyEmpFromDate"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyEmpToDate"></div>
         </div>
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
       </div>
@@ -1488,8 +1488,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card">
         <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="kpiRangeStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="kpiRangeEnd-emp"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiRangeStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiRangeEnd-emp"></div>
         </div>
         <button class="btn-primary" onclick="loadKpiRangeSummary('emp')" style="width:100%;">🔍 Show Data</button>
       </div>
@@ -1515,7 +1515,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 DSR Entries</span></div>
       <div class="card">
-        <div class="form-row"><label>Date</label><input type="date" id="dsrTodayDate-emp" onchange="loadDsrTodayForDate('emp')"></div>
+        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="dsrTodayDate-emp" onchange="loadDsrTodayForDate('emp')"></div>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrTodayBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-emp','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
@@ -1529,8 +1529,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR</span></div>
       <div class="card">
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="dsrMissStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="dsrMissEnd-emp"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-emp"></div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('emp')">📅 This Month</button>
@@ -1549,8 +1549,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🗓️ DSR — Date to Date</span></div>
       <div class="card">
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="dsrRangeStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="dsrRangeEnd-emp"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrRangeStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrRangeEnd-emp"></div>
         </div>
         <button class="btn-primary" onclick="loadDsrDateRange('emp')" style="width:100%;">🔍 Show DSR</button>
       </div>
@@ -1698,11 +1698,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
           <div class="form-group" style="flex:1;min-width:130px;margin:0;">
             <label style="font-size:10px;">From Date</label>
-            <input type="date" id="allLeavesDateFrom" onchange="renderAdminLeaves()">
+            <input type="date" lang="en-GB" id="allLeavesDateFrom" onchange="renderAdminLeaves()">
           </div>
           <div class="form-group" style="flex:1;min-width:130px;margin:0;">
             <label style="font-size:10px;">To Date</label>
-            <input type="date" id="allLeavesDateTo" onchange="renderAdminLeaves()">
+            <input type="date" lang="en-GB" id="allLeavesDateTo" onchange="renderAdminLeaves()">
           </div>
           <button class="btn-sm btn-view" style="height:38px;" onclick="clearAllLeavesFilters()">✕ Clear</button>
         </div>
@@ -1803,8 +1803,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardThisMonth('admin')">📅 This Month</button>
         </div>
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="loyLbStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="loyLbEnd-admin"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="loyLbStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="loyLbEnd-admin"></div>
         </div>
         <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('admin')">🔍 Custom Range</button>
       </div>
@@ -1849,8 +1849,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <label>Select Employee</label>
         <select id="loyTimelineEmpSelect"><option value="">-- Loading employees... --</option></select>
         <div style="display:flex;gap:10px;margin-top:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" id="loyTimelineFromDate"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" id="loyTimelineToDate"></div>
+          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyTimelineFromDate"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyTimelineToDate"></div>
         </div>
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyTimeline()">🔄 Load Timeline</button>
       </div>
@@ -1941,8 +1941,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="card">
           <div class="card-title">📅 Dates</div>
           <div class="form-row">
-            <div class="form-group"><label>Start Date *</label><input type="date" id="directStartDate"></div>
-            <div class="form-group"><label>End Date *</label><input type="date" id="directEndDate"></div>
+            <div class="form-group"><label>Start Date *</label><input type="date" lang="en-GB" id="directStartDate"></div>
+            <div class="form-group"><label>End Date *</label><input type="date" lang="en-GB" id="directEndDate"></div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -2047,10 +2047,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <div class="card-title">📅 Add a Blocked Date</div>
             <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No leave can be approved on a blocked date — applications for that day will be auto-rejected.</p>
             <div class="form-row">
-              <div class="form-group" style="flex:1;"><label>Date *</label><input type="date" id="blockDateInput"></div>
+              <div class="form-group" style="flex:1;"><label>Date *</label><input type="date" lang="en-GB" id="blockDateInput"></div>
               <div class="form-group" style="flex:1;"><label>Reason (optional)</label><input type="text" id="blockDateReason" placeholder="e.g. Diwali, Stock Audit"></div>
             </div>
             <button class="btn-primary" id="addBlockDateBtn" onclick="addBlockedDate()">🚫 Block This Date</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🗓️ Block a Date Range</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Block every date in a range at once — e.g. a week-long stock audit or store closure — instead of adding each day one by one.</p>
+            <div class="form-2col">
+              <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="blockRangeStart"></div>
+              <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="blockRangeEnd"></div>
+            </div>
+            <div class="form-row"><label>Reason (optional)</label><input type="text" id="blockRangeReason" placeholder="e.g. Diwali week, Stock Audit"></div>
+            <button class="btn-primary" id="addBlockRangeBtn" onclick="addBlockedDateRange()">🚫 Block This Range</button>
           </div>
 
           <div class="card">
@@ -2159,8 +2170,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card">
         <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="kpiRangeStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="kpiRangeEnd-admin"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiRangeStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiRangeEnd-admin"></div>
         </div>
         <button class="btn-primary" onclick="loadKpiRangeSummary('admin')" style="width:100%;">🔍 Show Data</button>
       </div>
@@ -2186,7 +2197,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 DSR Entries — All Employees</span></div>
       <div class="card">
-        <div class="form-row"><label>Date</label><input type="date" id="dsrTodayDate-admin" onchange="loadDsrTodayForDate('admin')"></div>
+        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="dsrTodayDate-admin" onchange="loadDsrTodayForDate('admin')"></div>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrTodayBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-admin','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
@@ -2200,8 +2211,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — All Employees</span></div>
       <div class="card">
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="dsrMissStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="dsrMissEnd-admin"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-admin"></div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('admin')">📅 This Month</button>
@@ -2220,8 +2231,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🗓️ DSR — Date to Date</span></div>
       <div class="card">
         <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" id="dsrRangeStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" id="dsrRangeEnd-admin"></div>
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrRangeStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrRangeEnd-admin"></div>
         </div>
         <button class="btn-primary" onclick="loadDsrDateRange('admin')" style="width:100%;">🔍 Show DSR</button>
       </div>
@@ -2252,12 +2263,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🔍 All Golden Aura Schemes</span></div>
       <div class="card">
         <div class="form-row"><label>Search (Name or Mobile)</label><input type="text" id="gaSearch-admin" placeholder="Type to search..." oninput="loadGoldenAuraList('admin')"></div>
+        <div class="form-row"><label>Employee</label>
+          <select id="gaEmpFilter-admin" onchange="loadGoldenAuraList('admin')">
+            <option value="">All Employees</option>
+          </select>
+        </div>
         <div class="form-row"><label>Plan Type</label>
           <select id="gaTypeFilter-admin" onchange="loadGoldenAuraList('admin')">
             <option value="">All Types</option>
             <option value="Golden Prosperity">Golden Prosperity</option>
             <option value="Golden Reward">Golden Reward</option>
           </select>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Enroll Start Date</label><input type="date" lang="en-GB" id="gaStartDate-admin" onchange="loadGoldenAuraList('admin')"></div>
+          <div class="form-row"><label>Enroll End Date</label><input type="date" lang="en-GB" id="gaEndDate-admin" onchange="loadGoldenAuraList('admin')"></div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-gaListBox-admin" style="display:none;" onclick="openBoxExportModal('gaListBox-admin','Golden Aura Schemes')" title="Export">📥</button>
@@ -2315,8 +2335,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       ⚠️ Modifying will reset this leave to <b>Pending</b> and send it for fresh MIS approval. A new approval mail will be sent once approved again.
     </div>
     <div class="form-2col">
-      <div class="form-row"><label>New Start Date</label><input type="date" id="modifyStart"></div>
-      <div class="form-row"><label>New End Date</label><input type="date" id="modifyEnd"></div>
+      <div class="form-row"><label>New Start Date</label><input type="date" lang="en-GB" id="modifyStart"></div>
+      <div class="form-row"><label>New End Date</label><input type="date" lang="en-GB" id="modifyEnd"></div>
     </div>
     <div class="form-row">
       <label>Leave Mode</label>
@@ -2349,8 +2369,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       ℹ️ Changing only the dates/mode sends no email. Changing the status below will send the matching Approved/Rejected/Absent email automatically.
     </div>
     <div class="form-2col">
-      <div class="form-row"><label>New Start Date</label><input type="date" id="adminModifyStart"></div>
-      <div class="form-row"><label>New End Date</label><input type="date" id="adminModifyEnd"></div>
+      <div class="form-row"><label>New Start Date</label><input type="date" lang="en-GB" id="adminModifyStart"></div>
+      <div class="form-row"><label>New End Date</label><input type="date" lang="en-GB" id="adminModifyEnd"></div>
     </div>
     <div class="form-row">
       <label>Leave Mode</label>
@@ -2568,7 +2588,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzi_jDW0O7D3_DRUmfTx9B9VzndV3InMQBbWI0h5ACYMMpMNBtHpOoriuLfH-biRlDKmw/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8XG9u4aTNZQpfBDKTeXr7iRSZJ5gjoZyAHdPJ7AIio1hL9w4T0ypO-xs_NfxxqchlUQ/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -4606,6 +4626,35 @@ async function addBlockedDate() {
       refreshBlockedDatesList();
     }
     setLock('addblock_' + date, false);
+  });
+}
+
+async function addBlockedDateRange() {
+  const start = document.getElementById('blockRangeStart').value;
+  const end = document.getElementById('blockRangeEnd').value;
+  const reason = document.getElementById('blockRangeReason').value.trim();
+  if (!start || !end) { toast('Select both Start and End dates', 'error'); return; }
+  if (end < start) { toast('End date cannot be before Start date', 'error'); return; }
+
+  const idem = makeIdemKey(['blockrange', start, end, state.adminEmail]);
+  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
+  await withButtonLock(document.getElementById('addBlockRangeBtn'), '⏳ Blocking range...', async () => {
+    try {
+      const res = await jsonpWriteOnce({
+        page: 'manageBlockedDateAPI', action: 'addRange', startDate: start, endDate: end, reason,
+        role: state.adminRole, adminEmail: state.adminEmail
+      }, idem);
+      if (res.ok) {
+        toast('🚫 ' + res.message, 'success');
+        document.getElementById('blockRangeReason').value = '';
+        refreshBlockedDatesList();
+      } else {
+        toast(res.error || 'Failed to add range', 'error');
+      }
+    } catch(e) {
+      toast('⚠️ No confirmation from server — check the blocked dates list before repeating.', 'error');
+      refreshBlockedDatesList();
+    }
   });
 }
 
@@ -6964,16 +7013,7 @@ function loadDsrStatus(who) {
   jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
-    const trueYesterday = new Date(Date.now() - 86400000);
-    const trueYesterdayStr = fmtDMY(toYMD(trueYesterday));
-    const checkedStr = res.rows[0].dateChecked || '';
     let html = '';
-    if (checkedStr && checkedStr.indexOf(trueYesterdayStr) === -1) {
-      html += `<div class="kd-card kd-danger" style="text-align:center;">
-        <b>⚠️ This is not actually yesterday's data</b> — sheet shows "${checkedStr}" but yesterday is ${trueYesterdayStr}.<br>
-        <span style="font-size:11px;color:var(--text3);">Ask MIS to check the Walkintrack auto-refresh trigger.</span>
-      </div>`;
-    }
     res.rows.forEach(r => {
       // Defensive override (works even against a stale/un-regenerated
       // sheet): zero purchases that day means there's nothing to file a
@@ -7118,7 +7158,7 @@ function renderDsrEntryForm(who) {
         <div class="ch">✎ &nbsp;Bill Details</div>
         <div class="cb">
           <div class="g2 mb14">
-            <div><label>Bill Date <span class="req">★</span></label><input type="date" id="dsrfBillDate-${who}"></div>
+            <div><label>Bill Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
             <div><label>Customer Name <span class="req">★</span></label><input type="text" id="dsrfCust-${who}" placeholder="Customer full name"></div>
           </div>
           <div class="g2">
@@ -7409,7 +7449,7 @@ function renderGoldenAuraForm(who) {
   box.innerHTML = `
     <div class="card">
       <div class="card-title">📆 Enroll Date</div>
-      <div class="form-row"><label>Enroll Date *</label><input type="date" id="gaEnrollDate-${who}"></div>
+      <div class="form-row"><label>Enroll Date *</label><input type="date" lang="en-GB" id="gaEnrollDate-${who}"></div>
     </div>
 
     <div class="card">
@@ -7575,8 +7615,27 @@ function loadGoldenAuraList(who) {
   if (who === 'emp') reqParams.empName = state.empName;
   if (search) reqParams.search = search;
   if (planType) reqParams.planType = planType;
+  if (who === 'admin') {
+    const empFilterEl = document.getElementById('gaEmpFilter-admin');
+    const startEl = document.getElementById('gaStartDate-admin');
+    const endEl = document.getElementById('gaEndDate-admin');
+    if (empFilterEl && empFilterEl.value) reqParams.empFilter = empFilterEl.value;
+    if (startEl && startEl.value) reqParams.startDate = startEl.value;
+    if (endEl && endEl.value) reqParams.endDate = endEl.value;
+  }
   jsonpReliable(reqParams).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    // Populate the Employee filter dropdown once, without wiping out
+    // whatever the admin currently has selected.
+    if (who === 'admin' && res.employees) {
+      const sel = document.getElementById('gaEmpFilter-admin');
+      if (sel && sel.dataset.loaded !== '1') {
+        const current = sel.value;
+        sel.innerHTML = '<option value="">All Employees</option>' + res.employees.map(n => `<option value="${n}">${n}</option>`).join('');
+        sel.value = current;
+        sel.dataset.loaded = '1';
+      }
+    }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No schemes found.</p></div>'; return; }
     let html = `<div class="kd-note">${res.rows.length} scheme(s)</div>`;
     res.rows.forEach(r => {
