@@ -1131,6 +1131,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -1314,10 +1315,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="loyaltyHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-newcard')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Card Entry</div><div class="quick-action-sub">Enroll a customer</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Full overview + PDF</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
+        <div class="quick-action-btn" id="empQALoySearch" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
+        <div class="quick-action-btn" id="empQALoyStats" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
+        <div class="quick-action-btn" id="empQALoyDash" onclick="showEmpPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Full overview + PDF</div></div>
+        <div class="quick-action-btn" id="empQALoyLeaderboard" onclick="showEmpPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
     </div>
 
@@ -1456,11 +1457,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="empEomBanner-box" style="display:none;"></div>
       <div class="card" id="kpiHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
+        <div class="quick-action-btn" id="empQAKpiTarget" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
+        <div class="quick-action-btn" id="empQAKpiTillDate" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" id="empQAKpiLastMonth" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
+        <div class="quick-action-btn" id="empQAKpiCompare" onclick="showEmpPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
+        <div class="quick-action-btn" id="empQAKpiRules" onclick="showEmpPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-kpi-rules">
@@ -1503,12 +1504,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🧾 DSR</span></div>
       <div class="card" id="dsrHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
+        <div class="quick-action-btn" id="empQADsrNewEntry" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
+        <div class="quick-action-btn" id="empQADsrToday" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
+        <div class="quick-action-btn" id="empQADsrStatus" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
+        <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
+        <div class="quick-action-btn" id="empQADsrTillDate" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" id="empQADsrDateRange" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-dsr-today">
@@ -1561,6 +1562,36 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="dsrEntryFormBox-emp"></div>
     </div>
 
+    <!-- ══════════════ GOLDEN AURA SECTION (employee) ══════════════ -->
+    <div class="page-section" id="emp-golden-aura">
+      <div class="section-hdr"><span class="section-title2">🌟 Golden Aura</span></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="empQAGaNew" onclick="showEmpPage('golden-aura-new')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Enrollment</div><div class="quick-action-sub">Enroll a customer</div></div>
+        <div class="quick-action-btn" id="empQAGaList" onclick="showEmpPage('golden-aura-list')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">My Schemes</div><div class="quick-action-sub">View &amp; search</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="emp-golden-aura-new">
+      <div class="section-hdr"><span class="section-title2">➕ New Golden Aura Enrollment</span></div>
+      <div id="gaFormBox-emp"></div>
+    </div>
+
+    <div class="page-section" id="emp-golden-aura-list">
+      <div class="section-hdr"><span class="section-title2">🔍 My Golden Aura Schemes</span></div>
+      <div class="card">
+        <div class="form-row"><label>Search (Name or Mobile)</label><input type="text" id="gaSearch-emp" placeholder="Type to search..." oninput="loadGoldenAuraList('emp')"></div>
+        <div class="form-row"><label>Plan Type</label>
+          <select id="gaTypeFilter-emp" onchange="loadGoldenAuraList('emp')">
+            <option value="">All Types</option>
+            <option value="Golden Prosperity">Golden Prosperity</option>
+            <option value="Golden Reward">Golden Reward</option>
+          </select>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-gaListBox-emp" style="display:none;" onclick="openBoxExportModal('gaListBox-emp','Golden Aura Schemes')" title="Export">📥</button>
+      <div class="card"><div id="gaListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
   </div>
   <div class="footer-nav" id="empFooterNav"></div>
 </div><!-- end empApp -->
@@ -1605,6 +1636,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -2201,6 +2233,37 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="dsrEntryFormBox-admin"></div>
     </div>
 
+    <!-- ══════════════ GOLDEN AURA SECTION (admin) ══════════════ -->
+    <div class="page-section" id="admin-golden-aura">
+      <div class="section-hdr"><span class="section-title2">🌟 Golden Aura — All Schemes</span></div>
+      <div class="card" id="gaCountsBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQAGaNew" onclick="showAdminPage('golden-aura-new')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Enrollment</div><div class="quick-action-sub">Enroll a customer</div></div>
+        <div class="quick-action-btn" id="adminQAGaList" onclick="showAdminPage('golden-aura-list')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">All Schemes</div><div class="quick-action-sub">View &amp; search</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-golden-aura-new">
+      <div class="section-hdr"><span class="section-title2">➕ New Golden Aura Enrollment</span></div>
+      <div id="gaFormBox-admin"></div>
+    </div>
+
+    <div class="page-section" id="admin-golden-aura-list">
+      <div class="section-hdr"><span class="section-title2">🔍 All Golden Aura Schemes</span></div>
+      <div class="card">
+        <div class="form-row"><label>Search (Name or Mobile)</label><input type="text" id="gaSearch-admin" placeholder="Type to search..." oninput="loadGoldenAuraList('admin')"></div>
+        <div class="form-row"><label>Plan Type</label>
+          <select id="gaTypeFilter-admin" onchange="loadGoldenAuraList('admin')">
+            <option value="">All Types</option>
+            <option value="Golden Prosperity">Golden Prosperity</option>
+            <option value="Golden Reward">Golden Reward</option>
+          </select>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-gaListBox-admin" style="display:none;" onclick="openBoxExportModal('gaListBox-admin','Golden Aura Schemes')" title="Export">📥</button>
+      <div class="card"><div id="gaListBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
   </div>
   <div class="footer-nav" id="adminFooterNav"></div>
 </div><!-- end adminApp -->
@@ -2505,7 +2568,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzYJ6k8ljdxPJMomGtAythEvpRVRpzdQ7qXSgKr1tskspGVCmMuMtkt3yJUU7qBgsCsKg/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzi_jDW0O7D3_DRUmfTx9B9VzndV3InMQBbWI0h5ACYMMpMNBtHpOoriuLfH-biRlDKmw/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 
@@ -3013,6 +3076,8 @@ function restoreSession() {
     document.getElementById('empModulePickerMeta').textContent = [saved.empId, saved.empDesig, saved.empDept, saved.empCounter].filter(Boolean).join(' · ');
     showEmpPage('modulepicker');
     loadEmpData();
+    checkEmpLoyaltyAccess();
+    applyEmpGranularRestrictions();
     return true;
   }
   if (saved.kind === 'admin' && saved.adminEmail) {
@@ -3081,6 +3146,7 @@ async function empLogin() {
         loadEmpData();
         checkLoyaltyAlerts('emp');
         checkEmpLoyaltyAccess();
+        applyEmpGranularRestrictions();
         toast('Welcome, ' + state.empName + '!', 'success');
       } else {
         document.getElementById('empLoginErr').style.display = 'block';
@@ -3261,6 +3327,11 @@ const FOOTER_NAV_CONFIG = {
       { page:'loyalty-newcard', icon:'➕', label:'New Card' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
       { page:'loyalty-dash', icon:'📈', label:'Dashboard' }
+    ], more: 'openEmpMoreModal()' },
+    goldenAura: { pages: ['golden-aura','golden-aura-new','golden-aura-list'], items: [
+      { page:'golden-aura', icon:'🏠', label:'Home' },
+      { page:'golden-aura-new', icon:'➕', label:'New' },
+      { page:'golden-aura-list', icon:'🔍', label:'Search' }
     ], more: 'openEmpMoreModal()' }
   },
   admin: {
@@ -3288,6 +3359,11 @@ const FOOTER_NAV_CONFIG = {
       { page:'loyalty-search', icon:'🔍', label:'Search' },
       { page:'loyalty-dash', icon:'📈', label:'Dashboard' },
       { page:'loyalty-leaderboard', icon:'🏆', label:'Leaders' }
+    ], more: 'openAdminMoreModal()' },
+    goldenAura: { pages: ['golden-aura','golden-aura-new','golden-aura-list'], items: [
+      { page:'golden-aura', icon:'🏠', label:'Home' },
+      { page:'golden-aura-new', icon:'➕', label:'New' },
+      { page:'golden-aura-list', icon:'🔍', label:'Search' }
     ], more: 'openAdminMoreModal()' }
   }
 };
@@ -3330,6 +3406,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
+  'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
@@ -3342,7 +3419,8 @@ const SECTION_DASHBOARD_PAGE = {
   Leave:            { emp: 'overview', admin: 'dashboard' },
   'Loyalty Card':   { emp: 'loyalty',  admin: 'loyalty' },
   KPI:              { emp: 'kpi',      admin: 'kpi' },
-  DSR:              { emp: 'dsr',      admin: 'dsr' }
+  DSR:              { emp: 'dsr',      admin: 'dsr' },
+  'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' }
 };
 function getSectionDashboardPage(who, page) {
   const section = SECTION_LABEL_MAP[page];
@@ -3408,6 +3486,8 @@ function showEmpPage(page) {
   if(page==='dsr-missing') loadDsrMissing('emp');
   if(page==='dsr-tilldate') loadDsrTillDate('emp');
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
+  if(page==='golden-aura-new') renderGoldenAuraForm('emp');
+  if(page==='golden-aura-list') loadGoldenAuraList('emp');
   if(page==='loyalty-newcard') resetNewLoyaltyCardForm();
   if(page==='events') initEventsBrowser('emp');
   if(page==='trend') renderTrend();
@@ -4639,9 +4719,88 @@ function onSettingsEmpSelected() {
       <input type="checkbox" id="empDsrAccessCheck" ${emp.dsrAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access</span>
     </label>
-    <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else.</p>
-    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" onclick="saveSettingsEmpAccess('${escJs(empId)}','${escJs(emp.name)}')">💾 Save Access for ${emp.name}</button>
-  </div>`;
+    <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
+    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" onclick="saveSettingsEmpAccess('${escJs(empId)}','${escJs(emp.name)}')">💾 Save Module Access for ${emp.name}</button>
+  </div>
+  <div id="settingsEmpGranularBody" style="margin-top:14px;"><div class="loading"><span class="spinner"></span>Loading detailed options...</div></div>`;
+  loadSettingsEmpGranular(empId, emp.name);
+}
+
+// Detailed, sub-option-level access — the exact same feature list Admin
+// Access uses (SM_PERM_FEATURES), just saved to a separate per-employee
+// sheet. Lets MIS give an employee, say, "DSR: Missing" without also
+// giving "DSR: New Entry" — instead of only being able to switch DSR
+// fully on/off.
+async function loadSettingsEmpGranular(empId, empName) {
+  const body = document.getElementById('settingsEmpGranularBody');
+  try {
+    const res = await jsonpReliable({ page: 'getIndividualEmpPermsAPI', empId });
+    if (!res.ok) throw new Error(res.error);
+    const perms = res.permissions || {};
+    const features = res.features || [];
+
+    let html = `<div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>`;
+    features.forEach(f => {
+      const subs = f.subs || [];
+      const anyOn = subs.some(s => !!perms[s.key]);
+      html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
+        <div onclick="toggleSettingsAccordionEmp('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
+          <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
+            <span id="emp_acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
+          </span>
+        </div>
+        <div id="emp_acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
+      subs.forEach(s => {
+        const checked = !!perms[s.key];
+        html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+          <input type="checkbox" class="settings-perm-check-emp" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="onSettingsCheckChangeEmp('${f.key}')">
+          <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
+        </label>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `<button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" onclick="saveSettingsEmpGranular('${escJs(empId)}','${escJs(empName)}')">💾 Save Detailed Access for ${empName}</button>`;
+    body.innerHTML = html;
+  } catch(e) {
+    body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load detailed options</p></div>';
+  }
+}
+
+function toggleSettingsAccordionEmp(key) {
+  const body = document.getElementById('emp_acc_body_' + key);
+  const arrow = document.getElementById('emp_acc_arrow_' + key);
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▾' : '▴';
+}
+function onSettingsCheckChangeEmp(featureKey) {
+  const header = document.querySelector(`#emp_acc_body_${featureKey}`).previousElementSibling;
+  const anyOn = Array.from(document.querySelectorAll(`#emp_acc_body_${featureKey} .settings-perm-check-emp`)).some(cb => cb.checked);
+  header.style.background = anyOn ? 'var(--green-bg)' : '#fff';
+  const pill = header.querySelector('.pill');
+  pill.style.background = anyOn ? 'var(--green)' : '#ddd';
+  pill.textContent = anyOn ? 'ON' : 'OFF';
+}
+
+async function saveSettingsEmpGranular(empId, empName) {
+  const payload = {
+    page: 'saveIndividualEmpPermsAPI', empId, empName,
+    callerRole: state.adminRole, callerEmail: state.adminEmail
+  };
+  document.querySelectorAll('.settings-perm-check-emp').forEach(cb => {
+    payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
+  });
+  await withButtonLock(document.getElementById('settingsSaveEmpGranularBtn'), '⏳ Saving...', async () => {
+    try {
+      const res = await jsonpReliable(payload);
+      if (res.ok) toast('✅ Detailed access saved for ' + empName, 'success');
+      else toast(res.error || 'Save failed', 'error');
+    } catch(e) {
+      toast('⚠️ No confirmation from server — reopen this employee to verify before saving again.', 'error');
+    }
+  });
 }
 
 async function saveSettingsEmpAccess(empId, empName) {
@@ -4736,6 +4895,10 @@ async function onSettingsAdminSelected() {
         <input type="checkbox" id="sectionMasterCheck_dsr" ${perms.section_dsr ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
         <span style="font-size:13px;font-weight:700;color:var(--text);">🧾 DSR Section — entire section on/off</span>
       </label>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_golden_aura" ${perms.section_golden_aura ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">🌟 Golden Aura Section — entire section on/off</span>
+      </label>
       <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
     </div>`;
 
@@ -4795,10 +4958,12 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
   const loyaltyMaster = document.getElementById('sectionMasterCheck_loyalty');
   const kpiMaster = document.getElementById('sectionMasterCheck_kpi');
   const dsrMaster = document.getElementById('sectionMasterCheck_dsr');
+  const goldenAuraMaster = document.getElementById('sectionMasterCheck_golden_aura');
   if (leaveMaster) payload.section_leave = leaveMaster.checked ? 'true' : 'false';
   if (loyaltyMaster) payload.section_loyalty = loyaltyMaster.checked ? 'true' : 'false';
   if (kpiMaster) payload.section_kpi = kpiMaster.checked ? 'true' : 'false';
   if (dsrMaster) payload.section_dsr = dsrMaster.checked ? 'true' : 'false';
+  if (goldenAuraMaster) payload.section_golden_aura = goldenAuraMaster.checked ? 'true' : 'false';
   document.querySelectorAll('.settings-perm-check').forEach(cb => {
     payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
   });
@@ -4976,7 +5141,8 @@ const SM_FEATURE_ELEMENTS = {
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
   dsr: ['adminQADsr'],
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
-  dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange']
+  dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
+  goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -4997,7 +5163,8 @@ const FEATURE_SUBKEYS = {
   kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
   kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
-  dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange']
+  dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'],
+  goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -5035,12 +5202,14 @@ async function applyAdminRoleRestrictions() {
   const sectionLoyaltyOn = perms.section_loyalty !== false;
   const sectionKpiOn = perms.section_kpi !== false;
   const sectionDsrOn = perms.section_dsr !== false;
+  const sectionGoldenAuraOn = perms.section_golden_aura !== false;
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isKpiFeature = key.indexOf('kpi') === 0;
     const isDsrFeature = key.indexOf('dsr') === 0;
-    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : sectionLeaveOn;
+    const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
+    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -5094,6 +5263,9 @@ function showAdminPage(page) {
   if(page==='dsr-missing') loadDsrMissing('admin');
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
+  if(page==='golden-aura') loadGoldenAuraCounts('admin');
+  if(page==='golden-aura-new') renderGoldenAuraForm('admin');
+  if(page==='golden-aura-list') loadGoldenAuraList('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
   if(page==='loyalty-timeline') initLoyaltyTimeline();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
@@ -6501,6 +6673,60 @@ function exportReportPDF(title, headers, rows) {
   }).catch(() => { document.body.removeChild(wrap); toast('PDF generation failed', 'error'); });
 }
 
+// Employee-side mirror of SM_FEATURE_ELEMENTS — same permission KEYS
+// (from SM_PERM_FEATURES / FEATURE_SUBKEYS, already shared with admin),
+// pointing at the EMPLOYEE section's own button IDs instead.
+const EMP_FEATURE_ELEMENTS = {
+  kpi: ['empQAKpiModule'],
+  kpiTarget: ['empQAKpiTarget'], kpiTillDate: ['empQAKpiTillDate'], kpiLastMonth: ['empQAKpiLastMonth'],
+  kpiCompare: ['empQAKpiCompare'], kpiRules: ['empQAKpiRules'],
+  dsr: ['empQADsrModule'],
+  dsrNewEntry: ['empQADsrNewEntry'], dsrToday: ['empQADsrToday'], dsrStatus: ['empQADsrStatus'],
+  dsrMissing: ['empQADsrMissing'], dsrTillDate: ['empQADsrTillDate'], dsrDateRange: ['empQADsrDateRange'],
+  loyalty: ['empQALoyaltyModule'],
+  loySearch: ['empQALoySearch'], loyStats: ['empQALoyStats'], loyDash: ['empQALoyDash'],
+  goldenAura: ['empQAGoldenAuraModule'],
+  gaNew: ['empQAGaNew'], gaList: ['empQAGaList']
+};
+
+// Fetches this specific employee's granular sub-option permissions and
+// hides every button not enabled for them — same logic/keys as the admin
+// side, just against the employee's own button IDs. Fails open (shows
+// everything) if permissions can't load, so a network blip never locks
+// someone out of features they should have.
+async function applyEmpGranularRestrictions() {
+  let perms = {};
+  try {
+    const res = await jsonpReliable({ page: 'getIndividualEmpPermsAPI', empId: state.empId });
+    if (res.ok) perms = res.permissions || {};
+  } catch (e) {
+    return; // fail open — leave everything visible
+  }
+  if (!perms || Object.keys(perms).length === 0) return;
+
+  const sectionLoyaltyOn = perms.section_loyalty !== false;
+  const sectionKpiOn = perms.section_kpi !== false;
+  const sectionDsrOn = perms.section_dsr !== false;
+  const sectionGoldenAuraOn = perms.section_golden_aura !== false;
+  Object.keys(EMP_FEATURE_ELEMENTS).forEach(key => {
+    const subKeys = FEATURE_SUBKEYS[key] || [key];
+    const isKpiFeature = key.indexOf('kpi') === 0;
+    const isDsrFeature = key.indexOf('dsr') === 0;
+    const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
+    const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
+    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : true;
+    const enabled = sectionOn && subKeys.some(k => !!perms[k]);
+    EMP_FEATURE_ELEMENTS[key].forEach(id => {
+      const el = document.getElementById(id);
+      // Only ever HIDE here — the simple module-level toggle
+      // (checkEmpLoyaltyAccess) already handles showing/hiding the 4 main
+      // module buttons; this only additionally hides SUB-buttons within
+      // an otherwise-visible module.
+      if (el && !enabled) el.style.display = 'none';
+    });
+  });
+}
+
 function loadDsrHighlights(who) {
   const box = document.getElementById('dsrHighlights-' + who);
   if (!box) return;
@@ -7163,6 +7389,224 @@ function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId) {
 }
 
 function dsrfGv(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+
+// ══════════════════════════════════════
+// GOLDEN AURA — new scheme entry form + list/search (mirrors Loyalty
+// Card's structure: employee-scoped for emp, all-schemes for admin)
+// ══════════════════════════════════════
+const INDIAN_STATES = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
+  "Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur",
+  "Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura",
+  "Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands","Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"];
+
+function renderGoldenAuraForm(who) {
+  const box = document.getElementById('gaFormBox-' + who);
+  const empName = who === 'admin' ? state.adminName : state.empName;
+  const stateOptions = INDIAN_STATES.map(s => `<option value="${s}">${s}</option>`).join('');
+  const photoField = (id, label) => `<div class="form-row"><label>${label}</label><input type="file" id="${id}" accept="image/*"></div>`;
+
+  box.innerHTML = `
+    <div class="card">
+      <div class="card-title">📆 Enroll Date</div>
+      <div class="form-row"><label>Enroll Date *</label><input type="date" id="gaEnrollDate-${who}"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💎 Select the Plan</div>
+      <div class="form-row"><label>Plan Type *</label>
+        <select id="gaPlanType-${who}">
+          <option value="">-- Select --</option>
+          <option value="Golden Prosperity">1. Golden Prosperity</option>
+          <option value="Golden Reward">2. Golden Reward</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Amount *</label><input type="number" id="gaAmount-${who}" placeholder="e.g. 10000"></div>
+      <div class="form-row"><label>Customer Name (As per Document) *</label><input type="text" id="gaCustName-${who}"></div>
+      <div class="form-row"><label>Mobile Number *</label><input type="tel" id="gaMobile-${who}" maxlength="10"></div>
+      <div class="form-row"><label>C/O, D/O, W/O, S/O</label><input type="text" id="gaCoDoWoSo-${who}"></div>
+      <div class="form-row"><label>Street</label><input type="text" id="gaStreet-${who}"></div>
+      <div class="form-row"><label>Area</label><input type="text" id="gaArea-${who}"></div>
+      <div class="form-row"><label>Landmark</label><input type="text" id="gaLandmark-${who}"></div>
+      <div class="form-row"><label>Town *</label><input type="text" id="gaTown-${who}"></div>
+      <div class="form-row"><label>District</label><input type="text" id="gaDistrict-${who}"></div>
+      <div class="form-row"><label>State</label><select id="gaState-${who}"><option value="">-- Select State --</option>${stateOptions}</select></div>
+      <div class="form-row"><label>Pin</label><input type="text" id="gaPin-${who}" maxlength="6"></div>
+      <div class="form-row"><label>Aadhaar Number</label><input type="text" id="gaAadhaarNo-${who}" maxlength="14"></div>
+      ${photoField('gaAadhaarPhoto-' + who, 'Aadhaar Card Photo (Front &amp; Back)')}
+      <div class="form-row"><label>Pan Number</label><input type="text" id="gaPanNo-${who}" maxlength="10"></div>
+      ${photoField('gaPanPhoto-' + who, 'Pan Card Photo')}
+      ${photoField('gaCustPhoto-' + who, 'Customer Photo')}
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏦 Bank Account Details</div>
+      <div class="form-row"><label>Account Number</label><input type="text" id="gaAccountNo-${who}"></div>
+      <div class="form-row"><label>IFSC Code</label><input type="text" id="gaIfsc-${who}"></div>
+      <div class="form-row"><label>Branch Name</label><input type="text" id="gaBranch-${who}"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👥 Nominee Details (As per Documents)</div>
+      <div class="form-row"><label>Nominee Name</label><input type="text" id="gaNomName-${who}"></div>
+      <div class="form-row"><label>Address</label><input type="text" id="gaNomAddress-${who}"></div>
+      <div class="form-row"><label>Mobile Number</label><input type="tel" id="gaNomMobile-${who}" maxlength="10"></div>
+      <div class="form-row"><label>Nominee Aadhaar Number</label><input type="text" id="gaNomAadhaarNo-${who}" maxlength="14"></div>
+      ${photoField('gaNomAadhaarPhoto-' + who, 'Nominee Aadhaar Card Photos (Front &amp; Back)')}
+      <div class="form-row"><label>Nominee Pan Number</label><input type="text" id="gaNomPanNo-${who}" maxlength="10"></div>
+      ${photoField('gaNomPanPhoto-' + who, 'Pan Card Photo')}
+      ${photoField('gaNomSigPhoto-' + who, 'Nominee Signature Photo')}
+      ${photoField('gaNomPhoto-' + who, 'Nominee Photo')}
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏪 Office Purpose Only</div>
+      <div class="form-row"><label>Employee Name</label><input type="text" value="${empName || ''}" disabled style="background:var(--bg);opacity:0.8;"></div>
+      <p style="font-size:11px;color:var(--text3);">Plan Number is auto-generated on submit.</p>
+    </div>
+
+    <button class="btn-primary" style="width:100%;margin-bottom:20px;" id="gaSubmitBtn-${who}" onclick="submitGoldenAura('${who}')">💾 Submit Enrollment</button>
+    <div id="gaStatusMsg-${who}" style="text-align:center;font-size:13px;margin-bottom:20px;"></div>
+  `;
+  const today = document.getElementById('gaEnrollDate-' + who);
+  if (today) today.value = toYMD(new Date());
+}
+
+async function submitGoldenAura(who) {
+  const g = id => document.getElementById(id + '-' + who);
+  const custName = g('gaCustName').value.trim();
+  const mobile = g('gaMobile').value.trim();
+  const planType = g('gaPlanType').value;
+  const amount = g('gaAmount').value.trim();
+  const town = g('gaTown').value.trim();
+
+  if (!custName || !mobile || !planType || !amount || !town) { toast('Please fill all required fields (*)', 'error'); return; }
+  if (!/^\d{10}$/.test(mobile)) { toast('Mobile must be 10 digits', 'error'); return; }
+
+  const btn = document.getElementById('gaSubmitBtn-' + who);
+  btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
+
+  try {
+    const photoIds = ['gaAadhaarPhoto','gaPanPhoto','gaCustPhoto','gaNomAadhaarPhoto','gaNomPanPhoto','gaNomSigPhoto','gaNomPhoto'];
+    const photos = {};
+    for (const pid of photoIds) { photos[pid] = await fileToBase64(g(pid)); }
+
+    const payload = {
+      page: 'goldenAuraSubmitAPI',
+      empName: who === 'admin' ? state.adminName : state.empName,
+      enrollDate: g('gaEnrollDate').value, planType, amount, custName, mobile,
+      coDoWoSo: g('gaCoDoWoSo').value, street: g('gaStreet').value, area: g('gaArea').value,
+      landmark: g('gaLandmark').value, town, district: g('gaDistrict').value, state: g('gaState').value,
+      pin: g('gaPin').value, aadhaarNo: g('gaAadhaarNo').value, aadhaarPhoto: photos.gaAadhaarPhoto,
+      panNo: g('gaPanNo').value, panPhoto: photos.gaPanPhoto, custPhoto: photos.gaCustPhoto,
+      accountNo: g('gaAccountNo').value, ifsc: g('gaIfsc').value, branch: g('gaBranch').value,
+      nomName: g('gaNomName').value, nomAddress: g('gaNomAddress').value, nomMobile: g('gaNomMobile').value,
+      nomAadhaarNo: g('gaNomAadhaarNo').value, nomAadhaarPhoto: photos.gaNomAadhaarPhoto,
+      nomPanNo: g('gaNomPanNo').value, nomPanPhoto: photos.gaNomPanPhoto,
+      nomSigPhoto: photos.gaNomSigPhoto, nomPhoto: photos.gaNomPhoto
+    };
+    window.__gaPendingPayload = payload;
+    gaShowPreview(payload, who);
+  } catch (err) {
+    toast('Could not prepare preview: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
+  }
+}
+
+function gaShowPreview(p, who) {
+  const existing = document.getElementById('gaPreviewModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'gaPreviewModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-title">✅ Review Before Submitting</div>
+    <div class="dsr-receipt-card" style="margin-top:10px;">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 ${p.planType}</span><span class="kd-pill gold">₹${p.amount}</span></div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${p.custName}</div>
+        <div class="dsr-cust-addr"><b>📍 ${[p.street,p.area,p.town,p.district,p.state,p.pin].filter(Boolean).join(', ')}</b></div>
+        <div class="dsr-meta-row">📱 ${p.mobile} &nbsp;·&nbsp; 📅 Enroll: ${fmtDMY(p.enrollDate)}</div>
+        <div class="dsr-meta-row" style="border-bottom:none;">🆔 Aadhaar: ${p.aadhaarNo || '—'} &nbsp;·&nbsp; PAN: ${p.panNo || '—'}</div>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitGoldenAura('${who}')">✅ Confirm &amp; Submit</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('gaPreviewModal').remove()">✏️ Edit</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function confirmSubmitGoldenAura(who) {
+  const modal = document.getElementById('gaPreviewModal');
+  if (modal) modal.remove();
+  const payload = window.__gaPendingPayload;
+  const msg = document.getElementById('gaStatusMsg-' + who);
+  const btn = document.getElementById('gaSubmitBtn-' + who);
+  if (!payload) { toast('Nothing to submit — please fill the form again', 'error'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  try {
+    const res = await jsonpReliable(payload);
+    if (res && res.ok) {
+      msg.style.color = 'var(--green)';
+      msg.innerHTML = `✅ Saved! Plan No: <b>${res.planNo}</b>`;
+      toast('Golden Aura enrollment saved!', 'success');
+      renderGoldenAuraForm(who);
+    } else {
+      msg.style.color = 'var(--red)';
+      msg.textContent = '❌ ' + ((res && res.error) || 'Failed to save');
+    }
+  } catch (e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = '❌ Network error: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
+  }
+}
+
+function loadGoldenAuraList(who) {
+  const box = document.getElementById('gaListBox-' + who);
+  hideExportBtn(box.id);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const search = document.getElementById('gaSearch-' + who).value.trim();
+  const planType = document.getElementById('gaTypeFilter-' + who).value;
+  const reqParams = { page: 'goldenAuraListJSON', role: who === 'admin' ? 'ADMIN' : 'EMP' };
+  if (who === 'emp') reqParams.empName = state.empName;
+  if (search) reqParams.search = search;
+  if (planType) reqParams.planType = planType;
+  jsonpReliable(reqParams).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No schemes found.</p></div>'; return; }
+    let html = `<div class="kd-note">${res.rows.length} scheme(s)</div>`;
+    res.rows.forEach(r => {
+      html += `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 Plan #${r.planNo} — ${r.planType}</span><span class="kd-pill gold">₹${r.amount}</span></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-cust-name">${r.custName}</div>
+          <div class="dsr-meta-row">📱 ${r.mobile} &nbsp;·&nbsp; 📍 ${r.town || '—'}, ${r.state || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">👤 ${r.employee} &nbsp;·&nbsp; 📅 Enrolled: ${fmtDMY(r.enrollDate)}</div>
+        </div>
+      </div>`;
+    });
+    box.innerHTML = html;
+    showExportBtn(box.id);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+}
+
+function loadGoldenAuraCounts(who) {
+  const box = document.getElementById('gaCountsBox-' + who);
+  if (!box) return;
+  jsonpReliable({ page: 'goldenAuraListJSON', role: 'ADMIN' }).then(res => {
+    if (!res || !res.ok) { box.innerHTML = ''; return; }
+    box.innerHTML = sectionHeaderCardHtml(who, [
+      { val: res.counts.total, lbl: 'Total Schemes', color: '#80c8ff' },
+      { val: res.counts['Golden Prosperity'] || 0, lbl: 'Prosperity', color: '#ffd700' },
+      { val: res.counts['Golden Reward'] || 0, lbl: 'Reward', color: '#80ffb0' },
+      { val: '🌟', lbl: 'Golden Aura', color: '#d4a84a' }
+    ]);
+  }).catch(() => { box.innerHTML = ''; });
+}
 
 function dsrfSubmit(who) {
   const empName = dsrfEmpDisplayName(who);
