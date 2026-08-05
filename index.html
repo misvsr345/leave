@@ -5586,6 +5586,11 @@ function checkEmpLoyaltyAccess() {
       if (kpiBtn) kpiBtn.style.display = (res.kpiAccess === false) ? 'none' : '';
       const dsrBtn = document.getElementById('empQADsrModule');
       if (dsrBtn) dsrBtn.style.display = (res.dsrAccess === false) ? 'none' : '';
+
+      // Granular sub-option restrictions now ride along in this same
+      // response — applyEmpGranularRestrictions no longer makes its own
+      // separate network call, saving a full round-trip at every login.
+      applyEmpGranularRestrictionsFromPerms(res.granularPerms || {});
     })
     .catch(() => { /* fail open — never hide access due to a network blip */ });
 }
@@ -5784,13 +5789,10 @@ function initLoyaltyPage(who) {
       from.value = toYMD(d);
       to.value = todayYMD();
     }
-    const tFrom = document.getElementById('loyTimelineFromDate');
-    const tTo   = document.getElementById('loyTimelineToDate');
-    if (tFrom && !tFrom.value) {
-      const d2 = new Date(); d2.setDate(1);
-      tFrom.value = toYMD(d2);
-      tTo.value = todayYMD();
-    }
+    // Full History / Employee Timeline — intentionally left BLANK by
+    // default (not "1st of this month") so it shows this employee's
+    // COMPLETE card history from the very start unless the admin
+    // explicitly narrows the range.
   }
 }
 
@@ -6209,7 +6211,7 @@ function loadLoyaltyLeaderboard(who, start, end) {
       if (res.total) html += `<div class="leave-card-date" style="margin-top:8px;font-weight:800;border-top:1px dashed var(--border);padding-top:8px;">TOTAL: ${res.total.cardsIssued} cards</div>`;
       box.innerHTML = html;
     })
-    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p></div>'; });
+    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loyLeaderboardThisMonth(who) {
@@ -6331,7 +6333,7 @@ function loadKpiTarget(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function kpiRowCardHtml(r) {
@@ -6432,7 +6434,7 @@ function loadKpiTillDate(who) {
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadKpiMonthly(who) {
@@ -6446,7 +6448,7 @@ function loadKpiMonthly(who) {
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadKpiRangeSummary(who) {
@@ -6473,7 +6475,7 @@ function loadKpiRangeSummary(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadKpiCompare(who) {
@@ -6493,7 +6495,7 @@ function loadKpiCompare(who) {
     html += '</table></div>';
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 // ══════════════════════════════════════
@@ -6925,7 +6927,7 @@ function loadDsrToday(who, date) {
     if (who === 'admin' && missingPhotoCount > 0) {
       toast(`⚠️ ${missingPhotoCount} item(s) missing photo today!`, 'error');
     }
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 // Handles both raw base64 photos and Google Drive share links (which
@@ -7039,7 +7041,7 @@ function loadDsrStatus(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadDsrMissing(who, start, end) {
@@ -7068,7 +7070,7 @@ function loadDsrMissing(who, start, end) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function dsrRangeResultHtml(res) {
@@ -7112,7 +7114,7 @@ function loadDsrTillDate(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadDsrDateRange(who) {
@@ -7126,7 +7128,7 @@ function loadDsrDateRange(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = dsrRangeResultHtml(res);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 // ══════════════════════════════════════
@@ -7650,7 +7652,7 @@ function loadGoldenAuraList(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadGoldenAuraCounts(who) {
@@ -8070,7 +8072,8 @@ function loadLoyaltyCardIssues() {
       html += `<div class="kd-note" style="font-weight:700;color:var(--red);">🔁 Duplicate Card Numbers (${res.duplicates.length})</div>`;
       res.duplicates.forEach(d => {
         html += `<div class="kd-card kd-danger">
-          <div class="kd-head"><span class="kd-name">Card No: ${d.cardNo}</span><span class="kd-pill red">Used ${d.rows.length}×</span></div>
+          <div class="kd-head"><span class="kd-name">Card No: ${d.cardNo} (${d.cardType || '—'})</span><span class="kd-pill red">Used ${d.rows.length}×</span></div>
+          <div class="kd-note" style="margin:0;font-weight:700;color:var(--red);">⚠️ Same card number AND same plan type — genuine duplicate</div>
           <div class="kd-note" style="margin:0;">Row ${d.rows[0]}: ${d.employees[0]} — ${d.customers[0]}<br>Row ${d.rows[1]}: ${d.employees[1]} — ${d.customers[1]}</div>
         </div>`;
       });
@@ -8085,7 +8088,7 @@ function loadLoyaltyCardIssues() {
       });
     }
     box.innerHTML = html;
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
 }
 
 function loadLoyaltyKYCReport() {
