@@ -1596,7 +1596,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- ══════════════ STOCK CHECK LIST SECTION (employee) ══════════════ -->
     <div class="page-section" id="emp-stock">
       <div class="section-hdr"><span class="section-title2">📋 Stock Check List</span></div>
+      <button class="export-icon-btn" id="exportBtn-stockHealthBox-emp" style="display:none;" onclick="openBoxExportModal('stockHealthBox-emp','Stock Check List Dashboard')" title="Export">📥</button>
       <div class="card" id="stockHealthBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">📈 30-Day Compliance Trend</div>
+        <div id="stockTrendBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
       <div class="card">
         <div class="card-title">👥 Today's Duty Assigned</div>
         <div id="stockDutyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -1611,6 +1616,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-stock-retail">
       <div class="section-hdr"><span class="section-title2">🏪 Retail Checklist</span></div>
       <div class="card">
+        <div class="form-row"><label>Employee</label>
+          <select id="stockRetailEmp-emp"><option value="">All Employees</option></select>
+        </div>
         <div class="form-2col">
           <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-emp"></div>
           <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-emp"></div>
@@ -1627,6 +1635,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-stock-wholesale">
       <div class="section-hdr"><span class="section-title2">📦 Wholesale Checklist</span></div>
       <div class="card">
+        <div class="form-row"><label>Employee</label>
+          <select id="stockWholesaleEmp-emp"><option value="">All Employees</option></select>
+        </div>
         <div class="form-2col">
           <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-emp"></div>
           <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-emp"></div>
@@ -2374,7 +2385,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- ══════════════ STOCK CHECK LIST SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-stock">
       <div class="section-hdr"><span class="section-title2">📋 Stock Check List</span></div>
+      <button class="export-icon-btn" id="exportBtn-stockHealthBox-admin" style="display:none;" onclick="openBoxExportModal('stockHealthBox-admin','Stock Check List Dashboard')" title="Export">📥</button>
       <div class="card" id="stockHealthBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">📈 30-Day Compliance Trend</div>
+        <div id="stockTrendBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
       <div class="card">
         <div class="card-title">👥 Today's Duty Assigned</div>
         <div id="stockDutyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -2389,6 +2405,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-stock-retail">
       <div class="section-hdr"><span class="section-title2">🏪 Retail Checklist — All Employees</span></div>
       <div class="card">
+        <div class="form-row"><label>Employee</label>
+          <select id="stockRetailEmp-admin"><option value="">All Employees</option></select>
+        </div>
         <div class="form-2col">
           <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-admin"></div>
           <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-admin"></div>
@@ -2405,6 +2424,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-stock-wholesale">
       <div class="section-hdr"><span class="section-title2">📦 Wholesale Checklist — All Employees</span></div>
       <div class="card">
+        <div class="form-row"><label>Employee</label>
+          <select id="stockWholesaleEmp-admin"><option value="">All Employees</option></select>
+        </div>
         <div class="form-2col">
           <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-admin"></div>
           <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-admin"></div>
@@ -7912,6 +7934,8 @@ function loadStockDashboard(who) {
   const dutyBox = document.getElementById('stockDutyBox-' + who);
   healthBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   dutyBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  hideExportBtn('stockHealthBox-' + who);
+  loadStockComplianceTrend(who);
 
   jsonpReliable({ page: 'stockDashboardJSON' }).then(res => {
     if (!res || !res.ok) {
@@ -7943,21 +7967,88 @@ function loadStockDashboard(who) {
       </div>`;
     }
     healthBox.innerHTML = healthHtml;
+    showExportBtn('stockHealthBox-' + who);
 
     const duty = res.duty || { Retail: [], Wholesale: [] };
-    const dutyList = (arr) => !arr || !arr.length
-      ? '<div class="empty-state" style="padding:14px;"><p style="font-size:12px;">No duty data</p></div>'
-      : arr.map(d => `<div class="leave-card-date" style="display:flex;justify-content:space-between;margin-bottom:5px;">
-          <span>👤 <b>${d.employee}</b>${d.shift ? ' (' + d.shift + ')' : ''}</span>
-          <span class="kd-pill ${String(d.today).indexOf('Done') > -1 ? 'green' : String(d.today).indexOf('Leave') > -1 ? 'gold' : 'red'}">${d.today || d.suggestedToday || '—'}</span>
-        </div>`).join('');
-    dutyBox.innerHTML = `
-      <div style="margin-bottom:10px;"><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">🏪 Retail</div>${dutyList(duty.Retail)}</div>
-      <div><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">📦 Wholesale</div>${dutyList(duty.Wholesale)}</div>
-    `;
+    dutyBox.innerHTML = stockDutySummaryHtml('Retail', duty.Retail) + stockDutySummaryHtml('Wholesale', duty.Wholesale);
   }).catch(() => {
     healthBox.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDashboard(\'' + who + '\')">🔄 Retry</button></div>';
     dutyBox.innerHTML = '';
+  });
+}
+
+// Collapses the raw per-employee duty roster rows (which include every
+// past duty-holder for context) down to what matters right now, per
+// shift: who's suggested today, whether they've actually submitted
+// (Done By only fills in once the checklist is submitted — never shown
+// pre-emptively), and who's suggested for tomorrow. Pure display, no
+// buttons — this box is informational only.
+function stockDutySummaryHtml(sectionName, arr) {
+  const icon = sectionName === 'Retail' ? '🏪' : '📦';
+  if (!arr || !arr.length) {
+    return `<div style="margin-bottom:12px;"><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">${icon} ${sectionName}</div>
+      <div class="empty-state" style="padding:14px;"><p style="font-size:12px;">No duty data</p></div></div>`;
+  }
+  // Group by shift so Morning/Opening and Evening/Closing each get their
+  // own line (the roster genuinely runs two independent duty rotations
+  // per section).
+  const shifts = {};
+  arr.forEach(d => {
+    const key = d.shift || sectionName;
+    if (!shifts[key]) shifts[key] = { todayEmployee: '', todayDone: false, tomorrowEmployee: '' };
+    const suggToday = String(d.suggestedToday || '').trim();
+    const suggTom = String(d.suggestedTomorrow || '').trim();
+    const isWaiting = (s) => /waiting/i.test(s);
+    if (suggToday && !isWaiting(suggToday) && !shifts[key].todayEmployee) {
+      shifts[key].todayEmployee = d.employee;
+      shifts[key].todayDone = String(d.today || '').indexOf('Done') > -1;
+    }
+    if (suggTom && !isWaiting(suggTom) && !shifts[key].tomorrowEmployee) {
+      shifts[key].tomorrowEmployee = d.employee;
+    }
+  });
+  const rows = Object.keys(shifts).map(shiftName => {
+    const s = shifts[shiftName];
+    const todayHtml = s.todayEmployee
+      ? `👤 <b>${s.todayEmployee}</b> ${s.todayDone ? '<span class="kd-pill green">✅ Done</span>' : '<span class="kd-pill red">⏳ Pending</span>'}`
+      : '<span style="color:var(--text3);">—</span>';
+    const tomorrowHtml = s.tomorrowEmployee ? `👤 <b>${s.tomorrowEmployee}</b>` : '<span style="color:var(--text3);">—</span>';
+    return `<div class="leave-card-date" style="margin-bottom:6px;">
+        <div style="font-weight:700;font-size:11.5px;color:var(--text3);margin-bottom:4px;">${shiftName}</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-size:11.5px;color:var(--text3);">Today Suggested / Done By</span><span>${todayHtml}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:11.5px;color:var(--text3);">Tomorrow Suggested</span><span>${tomorrowHtml}</span></div>
+      </div>`;
+  }).join('');
+  return `<div style="margin-bottom:12px;"><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">${icon} ${sectionName}</div>${rows}</div>`;
+}
+
+// 30-day compliance trend — plain CSS bar chart, no charting library
+// needed. Each bar's height = compliance % for that day (submissions
+// that day ÷ 4 expected duty checks); color-coded so a glance shows
+// whether coverage has been slipping.
+function loadStockComplianceTrend(who) {
+  const box = document.getElementById('stockTrendBox-' + who);
+  if (!box) return;
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'stockComplianceTrendJSON' }).then(res => {
+    if (!res || !res.ok || !res.trend) {
+      box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockComplianceTrend(\'' + who + '\')">🔄 Retry</button></div>';
+      return;
+    }
+    const bars = res.trend.map(d => {
+      const pct = d.compliance;
+      const color = pct >= 90 ? '#80ffb0' : pct >= 70 ? '#ffd080' : pct > 0 ? '#ff8080' : '#3a3a4a';
+      const h = Math.max(pct, 3);
+      return `<div title="${fmtDMY(d.date)}: ${d.count} submitted (${pct}%)" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:70px;">
+        <div style="background:${color};border-radius:2px 2px 0 0;height:${h}%;min-height:2px;"></div>
+      </div>`;
+    }).join('');
+    box.innerHTML = `<div style="display:flex;align-items:flex-end;gap:2px;height:70px;">${bars}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9.5px;color:var(--text3);">
+        <span>${fmtDMY(res.trend[0].date)}</span><span>${fmtDMY(res.trend[res.trend.length - 1].date)}</span>
+      </div>`;
+  }).catch(() => {
+    box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockComplianceTrend(\'' + who + '\')">🔄 Retry</button></div>';
   });
 }
 
@@ -7974,11 +8065,22 @@ function loadStockDetail(who, type) {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const start = document.getElementById('stock' + type + 'Start-' + who).value;
   const end = document.getElementById('stock' + type + 'End-' + who).value;
+  const empSel = document.getElementById('stock' + type + 'Emp-' + who);
+  const empFilter = empSel ? empSel.value : '';
   const reqParams = { page: 'stockChecklistDataJSON', type: type };
   if (start) reqParams.start = start;
   if (end) reqParams.end = end;
+  if (empFilter) reqParams.emp = empFilter;
   jsonpReliable(reqParams).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\')">🔄 Retry</button></div>'; return; }
+    // Populate the Employee filter dropdown once from whatever entries
+    // come back, without wiping out the admin's current selection.
+    if (empSel && res.empSummary && empSel.dataset.loaded !== '1') {
+      const current = empSel.value;
+      empSel.innerHTML = '<option value="">All Employees</option>' + res.empSummary.map(r => `<option value="${r.employee}">${r.employee}</option>`).join('');
+      empSel.value = current;
+      empSel.dataset.loaded = '1';
+    }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No entries for this period.</p></div>'; return; }
     let html = `<div class="kd-note">${fmtDMY(res.start)} to ${fmtDMY(res.end)} — ${res.rows.length} entries</div>`;
     res.rows.forEach(r => {
