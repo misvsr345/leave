@@ -1132,6 +1132,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
+          <div class="quick-action-btn" id="empQAStockModule" onclick="showEmpPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Duty &amp; checklist status</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -1592,6 +1593,75 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="gaListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
+    <!-- ══════════════ STOCK CHECK LIST SECTION (employee) ══════════════ -->
+    <div class="page-section" id="emp-stock">
+      <div class="section-hdr"><span class="section-title2">📋 Stock Check List</span></div>
+      <div class="card" id="stockHealthBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">👥 Today's Duty Assigned</div>
+        <div id="stockDutyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="empQAStockRetail" onclick="showEmpPage('stock-retail')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Retail Checklist</div><div class="quick-action-sub">Full detail view</div></div>
+        <div class="quick-action-btn" id="empQAStockWholesale" onclick="showEmpPage('stock-wholesale')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Wholesale Checklist</div><div class="quick-action-sub">Full detail view</div></div>
+        <div class="quick-action-btn" id="empQAStockReport" onclick="showEmpPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="emp-stock-retail">
+      <div class="section-hdr"><span class="section-title2">🏪 Retail Checklist</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-emp"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('emp','Retail')">📅 Running Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('emp','Retail')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockRetailBox-emp" style="display:none;" onclick="openBoxExportModal('stockRetailBox-emp','Retail Checklist')" title="Export">📥</button>
+      <div class="card"><div id="stockRetailBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="emp-stock-wholesale">
+      <div class="section-hdr"><span class="section-title2">📦 Wholesale Checklist</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-emp"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('emp','Wholesale')">📅 Running Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('emp','Wholesale')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockWholesaleBox-emp" style="display:none;" onclick="openBoxExportModal('stockWholesaleBox-emp','Wholesale Checklist')" title="Export">📥</button>
+      <div class="card"><div id="stockWholesaleBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="emp-stock-report">
+      <div class="section-hdr"><span class="section-title2">📅 Date-to-Date Report — Who Did What</span></div>
+      <div class="card">
+        <div class="form-row"><label>Checklist Type</label>
+          <select id="stockReportType-emp">
+            <option value="Retail">Retail</option>
+            <option value="Wholesale">Wholesale</option>
+          </select>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockReportStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockReportEnd-emp"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockReportThisMonth('emp')">📅 Running Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockReport('emp')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockReportBox-emp" style="display:none;" onclick="openBoxExportModal('stockReportBox-emp','Stock Checklist Report')" title="Export">📥</button>
+      <div class="card"><div id="stockReportBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
     <div class="page-section" id="emp-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
@@ -1645,6 +1715,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
+          <div class="quick-action-btn" id="adminQAStockModule" onclick="showAdminPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Dashboard, duty &amp; reports</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -2298,6 +2369,75 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
       <button class="export-icon-btn" id="exportBtn-gaListBox-admin" style="display:none;" onclick="openBoxExportModal('gaListBox-admin','Golden Aura Schemes')" title="Export">📥</button>
       <div class="card"><div id="gaListBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <!-- ══════════════ STOCK CHECK LIST SECTION (admin) ══════════════ -->
+    <div class="page-section" id="admin-stock">
+      <div class="section-hdr"><span class="section-title2">📋 Stock Check List</span></div>
+      <div class="card" id="stockHealthBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">👥 Today's Duty Assigned</div>
+        <div id="stockDutyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQAStockRetail" onclick="showAdminPage('stock-retail')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Retail Checklist</div><div class="quick-action-sub">Full detail view</div></div>
+        <div class="quick-action-btn" id="adminQAStockWholesale" onclick="showAdminPage('stock-wholesale')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Wholesale Checklist</div><div class="quick-action-sub">Full detail view</div></div>
+        <div class="quick-action-btn" id="adminQAStockReport" onclick="showAdminPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-stock-retail">
+      <div class="section-hdr"><span class="section-title2">🏪 Retail Checklist — All Employees</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-admin"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('admin','Retail')">📅 Running Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('admin','Retail')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockRetailBox-admin" style="display:none;" onclick="openBoxExportModal('stockRetailBox-admin','Retail Checklist')" title="Export">📥</button>
+      <div class="card"><div id="stockRetailBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stock-wholesale">
+      <div class="section-hdr"><span class="section-title2">📦 Wholesale Checklist — All Employees</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-admin"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('admin','Wholesale')">📅 Running Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('admin','Wholesale')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockWholesaleBox-admin" style="display:none;" onclick="openBoxExportModal('stockWholesaleBox-admin','Wholesale Checklist')" title="Export">📥</button>
+      <div class="card"><div id="stockWholesaleBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stock-report">
+      <div class="section-hdr"><span class="section-title2">📅 Date-to-Date Report — Who Did What</span></div>
+      <div class="card">
+        <div class="form-row"><label>Checklist Type</label>
+          <select id="stockReportType-admin">
+            <option value="Retail">Retail</option>
+            <option value="Wholesale">Wholesale</option>
+          </select>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockReportStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockReportEnd-admin"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockReportThisMonth('admin')">📅 Running Month</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockReport('admin')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockReportBox-admin" style="display:none;" onclick="openBoxExportModal('stockReportBox-admin','Stock Checklist Report')" title="Export">📥</button>
+      <div class="card"><div id="stockReportBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <div class="page-section" id="admin-more">
@@ -3349,6 +3489,12 @@ const FOOTER_NAV_CONFIG = {
       { page:'golden-aura', icon:'🏠', label:'Home' },
       { page:'golden-aura-new', icon:'➕', label:'New' },
       { page:'golden-aura-list', icon:'🔍', label:'Search' }
+    ], more: 'openEmpMoreModal()' },
+    stock: { pages: ['stock','stock-retail','stock-wholesale','stock-report'], items: [
+      { page:'stock', icon:'🏠', label:'Home' },
+      { page:'stock-retail', icon:'🏪', label:'Retail' },
+      { page:'stock-wholesale', icon:'📦', label:'Wholesale' },
+      { page:'stock-report', icon:'📅', label:'Report' }
     ], more: 'openEmpMoreModal()' }
   },
   admin: {
@@ -3381,6 +3527,12 @@ const FOOTER_NAV_CONFIG = {
       { page:'golden-aura', icon:'🏠', label:'Home' },
       { page:'golden-aura-new', icon:'➕', label:'New' },
       { page:'golden-aura-list', icon:'🔍', label:'Search' }
+    ], more: 'openAdminMoreModal()' },
+    stock: { pages: ['stock','stock-retail','stock-wholesale','stock-report'], items: [
+      { page:'stock', icon:'🏠', label:'Home' },
+      { page:'stock-retail', icon:'🏪', label:'Retail' },
+      { page:'stock-wholesale', icon:'📦', label:'Wholesale' },
+      { page:'stock-report', icon:'📅', label:'Report' }
     ], more: 'openAdminMoreModal()' }
   }
 };
@@ -3424,6 +3576,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
   'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
+  'stock': 'Stock Check List', 'stock-retail': 'Stock Check List', 'stock-wholesale': 'Stock Check List', 'stock-report': 'Stock Check List',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
@@ -3437,7 +3590,8 @@ const SECTION_DASHBOARD_PAGE = {
   'Loyalty Card':   { emp: 'loyalty',  admin: 'loyalty' },
   KPI:              { emp: 'kpi',      admin: 'kpi' },
   DSR:              { emp: 'dsr',      admin: 'dsr' },
-  'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' }
+  'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' },
+  'Stock Check List': { emp: 'stock', admin: 'stock' }
 };
 function getSectionDashboardPage(who, page) {
   const section = SECTION_LABEL_MAP[page];
@@ -3505,6 +3659,10 @@ function showEmpPage(page) {
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
+  if(page==='stock') loadStockDashboard('emp');
+  if(page==='stock-retail') loadStockDetail('emp','Retail');
+  if(page==='stock-wholesale') loadStockDetail('emp','Wholesale');
+  if(page==='stock-report') loadStockReport('emp');
   if(page==='loyalty-newcard') resetNewLoyaltyCardForm();
   if(page==='events') initEventsBrowser('emp');
   if(page==='trend') renderTrend();
@@ -4965,6 +5123,10 @@ async function onSettingsAdminSelected() {
         <input type="checkbox" id="sectionMasterCheck_golden_aura" ${perms.section_golden_aura ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
         <span style="font-size:13px;font-weight:700;color:var(--text);">🌟 Golden Aura Section — entire section on/off</span>
       </label>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_stock" ${perms.section_stock ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Stock Check List Section — entire section on/off</span>
+      </label>
       <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
     </div>`;
 
@@ -5025,11 +5187,13 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
   const kpiMaster = document.getElementById('sectionMasterCheck_kpi');
   const dsrMaster = document.getElementById('sectionMasterCheck_dsr');
   const goldenAuraMaster = document.getElementById('sectionMasterCheck_golden_aura');
+  const stockMaster = document.getElementById('sectionMasterCheck_stock');
   if (leaveMaster) payload.section_leave = leaveMaster.checked ? 'true' : 'false';
   if (loyaltyMaster) payload.section_loyalty = loyaltyMaster.checked ? 'true' : 'false';
   if (kpiMaster) payload.section_kpi = kpiMaster.checked ? 'true' : 'false';
   if (dsrMaster) payload.section_dsr = dsrMaster.checked ? 'true' : 'false';
   if (goldenAuraMaster) payload.section_golden_aura = goldenAuraMaster.checked ? 'true' : 'false';
+  if (stockMaster) payload.section_stock = stockMaster.checked ? 'true' : 'false';
   document.querySelectorAll('.settings-perm-check').forEach(cb => {
     payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
   });
@@ -5208,7 +5372,8 @@ const SM_FEATURE_ELEMENTS = {
   dsr: ['adminQADsr'],
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
-  goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList']
+  goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
+  stock: ['adminQAStockModule'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -5230,7 +5395,8 @@ const FEATURE_SUBKEYS = {
   kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
   dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'],
-  goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList']
+  goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList'],
+  stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -5269,13 +5435,15 @@ async function applyAdminRoleRestrictions() {
   const sectionKpiOn = perms.section_kpi !== false;
   const sectionDsrOn = perms.section_dsr !== false;
   const sectionGoldenAuraOn = perms.section_golden_aura !== false;
+  const sectionStockOn = perms.section_stock !== false;
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isKpiFeature = key.indexOf('kpi') === 0;
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
-    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : sectionLeaveOn;
+    const isStockFeature = key.indexOf('stock') === 0;
+    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -5332,6 +5500,10 @@ function showAdminPage(page) {
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
   if(page==='golden-aura-list') loadGoldenAuraList('admin');
+  if(page==='stock') loadStockDashboard('admin');
+  if(page==='stock-retail') loadStockDetail('admin','Retail');
+  if(page==='stock-wholesale') loadStockDetail('admin','Wholesale');
+  if(page==='stock-report') loadStockReport('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
   if(page==='loyalty-timeline') initLoyaltyTimeline();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
@@ -6229,7 +6401,7 @@ function loadLoyaltyLeaderboard(who, start, end) {
       if (res.total) html += `<div class="leave-card-date" style="margin-top:8px;font-weight:800;border-top:1px dashed var(--border);padding-top:8px;">TOTAL: ${res.total.cardsIssued} cards</div>`;
       box.innerHTML = html;
     })
-    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadLoyaltyLeaderboard(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loyLeaderboardThisMonth(who) {
@@ -6351,7 +6523,7 @@ function loadKpiTarget(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiTarget(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function kpiRowCardHtml(r) {
@@ -6452,7 +6624,7 @@ function loadKpiTillDate(who) {
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiTillDate(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loadKpiMonthly(who) {
@@ -6466,7 +6638,7 @@ function loadKpiMonthly(who) {
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiMonthly(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loadKpiRangeSummary(who) {
@@ -6493,7 +6665,7 @@ function loadKpiRangeSummary(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiRangeSummary(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loadKpiCompare(who) {
@@ -6513,7 +6685,7 @@ function loadKpiCompare(who) {
     html += '</table></div>';
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiCompare(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 // ══════════════════════════════════════
@@ -6755,7 +6927,9 @@ const EMP_FEATURE_ELEMENTS = {
   loyalty: ['empQALoyaltyModule'],
   loySearch: ['empQALoySearch'], loyStats: ['empQALoyStats'], loyDash: ['empQALoyDash'],
   goldenAura: ['empQAGoldenAuraModule'],
-  gaNew: ['empQAGaNew'], gaList: ['empQAGaList']
+  gaNew: ['empQAGaNew'], gaList: ['empQAGaList'],
+  stock: ['empQAStockModule'],
+  stockRetail: ['empQAStockRetail'], stockWholesale: ['empQAStockWholesale'], stockReport: ['empQAStockReport']
 };
 
 // Fetches this specific employee's granular sub-option permissions and
@@ -6777,13 +6951,15 @@ async function applyEmpGranularRestrictions() {
   const sectionKpiOn = perms.section_kpi !== false;
   const sectionDsrOn = perms.section_dsr !== false;
   const sectionGoldenAuraOn = perms.section_golden_aura !== false;
+  const sectionStockOn = perms.section_stock !== false;
   Object.keys(EMP_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isKpiFeature = key.indexOf('kpi') === 0;
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
-    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : true;
+    const isStockFeature = key.indexOf('stock') === 0;
+    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : true;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     EMP_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -6945,7 +7121,7 @@ function loadDsrToday(who, date) {
     if (who === 'admin' && missingPhotoCount > 0) {
       toast(`⚠️ ${missingPhotoCount} item(s) missing photo today!`, 'error');
     }
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrToday(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 // Handles both raw base64 photos and Google Drive share links (which
@@ -7098,7 +7274,7 @@ function loadDsrStatus(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrStatus(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loadDsrMissing(who, start, end) {
@@ -7127,7 +7303,7 @@ function loadDsrMissing(who, start, end) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrMissing(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function dsrRangeResultHtml(res) {
@@ -7171,7 +7347,7 @@ function loadDsrTillDate(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrTillDate(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loadDsrDateRange(who) {
@@ -7185,7 +7361,7 @@ function loadDsrDateRange(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
     box.innerHTML = dsrRangeResultHtml(res);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrDateRange(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 // ══════════════════════════════════════
@@ -7709,7 +7885,7 @@ function loadGoldenAuraList(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadGoldenAuraList(\'" + who + "\')">🔄 Retry</button></div>'; });
 }
 
 function loadGoldenAuraCounts(who) {
@@ -7724,6 +7900,147 @@ function loadGoldenAuraCounts(who) {
       { val: '🌟', lbl: 'Golden Aura', color: '#d4a84a' }
     ]);
   }).catch(() => { box.innerHTML = ''; });
+}
+
+// ══════════════════════════════════════
+// STOCK CHECK LIST — read-only display of the existing Google Form's
+// response sheet (Retail/Wholesale checklist + Dashboard health stats +
+// duty roster). The Form itself keeps handling submissions.
+// ══════════════════════════════════════
+function loadStockDashboard(who) {
+  const healthBox = document.getElementById('stockHealthBox-' + who);
+  const dutyBox = document.getElementById('stockDutyBox-' + who);
+  healthBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  dutyBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  jsonpReliable({ page: 'stockDashboardJSON' }).then(res => {
+    if (!res || !res.ok) {
+      healthBox.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDashboard(\'' + who + '\')">🔄 Retry</button></div>';
+      dutyBox.innerHTML = '';
+      return;
+    }
+    const s = res.stats || {};
+    const compliancePct = parseFloat(s.COMPLIANCE) || 0;
+    const complianceColor = compliancePct >= 90 ? '#80ffb0' : compliancePct >= 70 ? '#ffd080' : '#ff8080';
+    let healthHtml = sectionHeaderCardHtml(who, [
+      { val: s.HEALTH !== undefined ? s.HEALTH : '—', lbl: 'Health', color: '#80c8ff' },
+      { val: s.SUBMITTED !== undefined ? s.SUBMITTED : '—', lbl: 'Submitted', color: '#80ffb0' },
+      { val: s.PENDING !== undefined ? s.PENDING : '—', lbl: 'Pending', color: '#ffd080' },
+      { val: s.COMPLIANCE !== undefined ? s.COMPLIANCE : '—', lbl: 'Compliance', color: complianceColor }
+    ]);
+    const varianceCount = Number(s.VARIANCES) || 0;
+    const dupCount = Number(s.DUPLICATES) || 0;
+    if (varianceCount > 0 || dupCount > 0) {
+      healthHtml += `<div class="kd-card kd-danger" style="text-align:center;margin-top:10px;">
+        ${varianceCount > 0 ? `<div>⚠️ <b>${varianceCount}</b> variance(s) detected</div>` : ''}
+        ${dupCount > 0 ? `<div>🔁 <b>${dupCount}</b> duplicate submission(s) detected</div>` : ''}
+      </div>`;
+    }
+    if (res.trend && res.trend.length) {
+      healthHtml += `<div class="card" style="margin-top:10px;"><div class="card-title">📈 7-Day Submission Trend</div>
+        <div class="kd-table-wrap"><table class="kd-table"><thead><tr>${res.trend.map(t => `<th>${t.label}</th>`).join('')}</tr></thead>
+        <tbody><tr>${res.trend.map(t => `<td style="text-align:center;">${t.count}</td>`).join('')}</tr></tbody></table></div>
+      </div>`;
+    }
+    healthBox.innerHTML = healthHtml;
+
+    const duty = res.duty || { Retail: [], Wholesale: [] };
+    const dutyList = (arr) => !arr || !arr.length
+      ? '<div class="empty-state" style="padding:14px;"><p style="font-size:12px;">No duty data</p></div>'
+      : arr.map(d => `<div class="leave-card-date" style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span>👤 <b>${d.employee}</b>${d.shift ? ' (' + d.shift + ')' : ''}</span>
+          <span class="kd-pill ${String(d.today).indexOf('Done') > -1 ? 'green' : String(d.today).indexOf('Leave') > -1 ? 'gold' : 'red'}">${d.today || d.suggestedToday || '—'}</span>
+        </div>`).join('');
+    dutyBox.innerHTML = `
+      <div style="margin-bottom:10px;"><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">🏪 Retail</div>${dutyList(duty.Retail)}</div>
+      <div><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">📦 Wholesale</div>${dutyList(duty.Wholesale)}</div>
+    `;
+  }).catch(() => {
+    healthBox.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDashboard(\'' + who + '\')">🔄 Retry</button></div>';
+    dutyBox.innerHTML = '';
+  });
+}
+
+function stockThisMonth(who, type) {
+  document.getElementById('stock' + type + 'Start-' + who).value = '';
+  document.getElementById('stock' + type + 'End-' + who).value = '';
+  loadStockDetail(who, type);
+}
+
+function loadStockDetail(who, type) {
+  const boxId = 'stock' + type + 'Box-' + who;
+  const box = document.getElementById(boxId);
+  hideExportBtn(boxId);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const start = document.getElementById('stock' + type + 'Start-' + who).value;
+  const end = document.getElementById('stock' + type + 'End-' + who).value;
+  const reqParams = { page: 'stockChecklistDataJSON', type: type };
+  if (start) reqParams.start = start;
+  if (end) reqParams.end = end;
+  jsonpReliable(reqParams).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\')">🔄 Retry</button></div>'; return; }
+    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No entries for this period.</p></div>'; return; }
+    let html = `<div class="kd-note">${fmtDMY(res.start)} to ${fmtDMY(res.end)} — ${res.rows.length} entries</div>`;
+    res.rows.forEach(r => {
+      const who2 = r.checkedBy || r.wCheckedBy || '—';
+      const typeColor = r.checklistType === 'Opening' ? 'green' : 'gold';
+      html += `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🎫 ${r.voucherNo}</span><span class="kd-pill ${typeColor}">${r.checklistTime}</span></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-meta-row" style="border-bottom:none;">👤 ${who2} &nbsp;·&nbsp; 🕐 ${r.timestamp}</div>
+          <div class="dsr-items-wrap">`;
+      if (type === 'Retail') {
+        html += `<div class="dsr-item-row"><div>GF Display Trays</div><b>${r.gfDisplay}</b></div>
+          <div class="dsr-item-row"><div>GF Stock Down Boxes</div><b>${r.gfStockDown}</b></div>
+          <div class="dsr-item-row"><div>Heads</div><b>${r.heads}</b></div>
+          <div class="dsr-item-row"><div>Ear Ring Stands</div><b>${r.earRing}</b></div>
+          <div class="dsr-item-row"><div>FF Display Trays</div><b>${r.ffDisplay}</b></div>
+          <div class="dsr-item-row"><div>Bangle Stock Box</div><b>${r.bangle}</b></div>
+          <div class="dsr-item-row"><div>FF Stock Down Boxes</div><b>${r.ffStockDown}</b></div>
+          <div class="dsr-item-row"><div>Silver Boxes</div><b>${r.silver}</b></div>
+          <div class="dsr-item-row"><div>Sankha Box</div><b>${r.sankha}</b></div>
+          <div class="dsr-item-row"><div>Wholesale Box</div><b>${r.wholesaleBox}</b></div>
+          <div class="dsr-item-row"><div>Retail Box (Up)</div><b>${r.retailBox}</b></div>`;
+      } else {
+        html += `<div class="dsr-item-row"><div>Sankha Box</div><b>${r.sankha}</b></div>
+          <div class="dsr-item-row"><div>Wholesale Box</div><b>${r.wholesaleBox}</b></div>
+          <div class="dsr-item-row"><div>Retail Box (Up)</div><b>${r.retailBox}</b></div>`;
+      }
+      html += `</div></div></div>`;
+    });
+    box.innerHTML = html;
+    showExportBtn(boxId);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\')">🔄 Retry</button></div>'; });
+}
+
+function stockReportThisMonth(who) {
+  document.getElementById('stockReportStart-' + who).value = '';
+  document.getElementById('stockReportEnd-' + who).value = '';
+  loadStockReport(who);
+}
+
+function loadStockReport(who) {
+  const box = document.getElementById('stockReportBox-' + who);
+  hideExportBtn(box.id);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const type = document.getElementById('stockReportType-' + who).value;
+  const start = document.getElementById('stockReportStart-' + who).value;
+  const end = document.getElementById('stockReportEnd-' + who).value;
+  const reqParams = { page: 'stockChecklistDataJSON', type: type };
+  if (start) reqParams.start = start;
+  if (end) reqParams.end = end;
+  jsonpReliable(reqParams).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockReport(\'' + who + '\')">🔄 Retry</button></div>'; return; }
+    if (!res.empSummary.length) { box.innerHTML = '<div class="empty-state"><p>No entries for this period.</p></div>'; return; }
+    let html = `<div class="kd-note">${type} — ${fmtDMY(res.start)} to ${fmtDMY(res.end)}</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Checklists Done</th></tr></thead><tbody>`;
+    res.empSummary.forEach(r => {
+      html += `<tr><td><b>${r.employee}</b></td><td>${r.count}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    box.innerHTML = html;
+    showExportBtn(box.id);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockReport(\'' + who + '\')">🔄 Retry</button></div>'; });
 }
 
 function dsrfSubmit(who) {
@@ -8152,7 +8469,7 @@ function loadLoyaltyCardIssues() {
       });
     }
     box.innerHTML = html;
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="location.reload()">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick=\"loadLoyaltyCardIssues()\">🔄 Retry</button></div>'; });
 }
 
 function loadLoyaltyKYCReport() {
