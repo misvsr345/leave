@@ -1592,6 +1592,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="gaListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
+    <div class="page-section" id="emp-more">
+      <div class="section-hdr"><span class="section-title2">☰ More</span></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="openChangePassword('emp')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
+        <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
+      </div>
+    </div>
+
   </div>
   <div class="footer-nav" id="empFooterNav"></div>
 </div><!-- end empApp -->
@@ -2001,6 +2009,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="filter-btn" onclick="setLeavesTime('empwise','today', this)">📍 Today</button>
         <button class="filter-btn" onclick="setLeavesTime('empwise','upcoming', this)">⏭️ Upcoming</button>
       </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setLeavesStatus('empwise','all', this)">All</button>
+        <button class="filter-btn" onclick="setLeavesStatus('empwise','Approved', this)">✅ Approved</button>
+        <button class="filter-btn" onclick="setLeavesStatus('empwise','Rejected', this)">❌ Rejected</button>
+        <button class="filter-btn" onclick="setLeavesStatus('empwise','Cancelled', this)">🚫 Cancelled</button>
+        <button class="filter-btn" onclick="setLeavesStatus('empwise','Absent', this)">⚠️ Absent</button>
+        <button class="filter-btn" onclick="setLeavesStatus('empwise','Pending', this)">⏳ Pending</button>
+      </div>
       <div id="empWiseContent"></div>
     </div>
 
@@ -2284,6 +2300,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="gaListBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
+    <div class="page-section" id="admin-more">
+      <div class="section-hdr"><span class="section-title2">☰ More</span></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
+        <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
+        <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
+        <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
+        <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
+      </div>
+    </div>
+
   </div>
   <div class="footer-nav" id="adminFooterNav"></div>
 </div><!-- end adminApp -->
@@ -2456,37 +2484,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 </div>
 
 <!-- Modal: Employee "More" — everything not in the main 6 buttons -->
-<div class="modal-overlay" id="empMoreModal">
-  <div class="modal-box">
-    <div class="modal-title">☰ More</div>
-    <div class="quick-actions-grid" style="margin-top:10px;">
-      <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openChangePassword('emp');"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
-      <div class="quick-action-btn" onclick="closeModal('empMoreModal'); openThemePickerModal();"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('empMoreModal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Admin "More" — everything not in the main 6 buttons -->
-<div class="modal-overlay" id="adminMoreModal">
-  <div class="modal-box">
-    <div class="modal-title">☰ More</div>
-    <div class="quick-actions-grid" style="margin-top:10px;">
-      <div class="quick-action-btn" id="adminQADirect" onclick="closeModal('adminMoreModal'); showAdminPage('direct');"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
-      <div class="quick-action-btn" id="adminQANotices" onclick="closeModal('adminMoreModal'); showAdminPage('notices');"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
-      <div class="quick-action-btn" id="adminQASettings" onclick="closeModal('adminMoreModal'); showAdminPage('settings');"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
-      <div class="quick-action-btn" onclick="closeModal('adminMoreModal'); showAdminPage('profile');"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
-      <div class="quick-action-btn" onclick="closeModal('adminMoreModal'); openChangePassword('admin');"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
-      <div class="quick-action-btn" onclick="closeModal('adminMoreModal'); openThemePickerModal();"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('adminMoreModal')">Close</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal: Store Manager Access Control (MIS/Director only) -->
 <!-- Modal: Change Password -->
 <div class="modal-overlay" id="pwModal">
@@ -2913,8 +2910,8 @@ function openLeaveDetailModal(key, isAdmin) {
   openModal('leaveDetailModal');
 }
 
-function openEmpMoreModal() { openModal('empMoreModal'); }
-function openAdminMoreModal() { openModal('adminMoreModal'); }
+function openEmpMoreModal() { showEmpPage('more'); }
+function openAdminMoreModal() { showAdminPage('more'); }
 
 function togglePw(inputId, btn) {
   const input = document.getElementById(inputId);
@@ -3611,12 +3608,24 @@ function renderEmpOverview() {
     ${ex > 0 ? `<div style="margin-top:10px;padding:9px 12px;background:var(--red-bg);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:12px;color:var(--red);font-weight:600;">⚠️ ${fmtNum(ex)} day(s) taken beyond your monthly quota this month.</div>` : ''}
   `;
 
-  const recent = state.empLeaves.slice(0,5);
-  let html = '<div class="card-title">🕒 Recent Leaves</div>';
-  if(recent.length === 0) {
-    html += '<div class="empty-state"><span class="emoji">📭</span><p>No leave history found</p></div>';
+  // Focused "at a glance" view — only what's actually relevant right now:
+  // today's leave (whatever its status) plus upcoming leaves that are
+  // actually APPROVED (a pending/rejected one isn't confirmed time off,
+  // so it doesn't belong in a quick "what's coming up" glance).
+  const todayYMDStr = todayYMD();
+  const relevant = (state.empLeaves || []).filter(l => {
+    const s = normalizeDateStr(l.startDate);
+    const e = normalizeDateStr(l.endDate) || s;
+    const isToday = s <= todayYMDStr && todayYMDStr <= e;
+    const isUpcomingApproved = s > todayYMDStr && (l.status === 'Approved');
+    return isToday || isUpcomingApproved;
+  }).sort((a,b) => (a.startDate||'').localeCompare(b.startDate||''));
+
+  let html = '<div class="card-title">📍 Today &amp; Upcoming (Approved)</div>';
+  if(relevant.length === 0) {
+    html += '<div class="empty-state"><span class="emoji">📭</span><p>Nothing today or upcoming</p></div>';
   } else {
-    recent.forEach(l => { html += leaveCardHTML(l, false); });
+    relevant.forEach(l => { html += leaveCardHTML(l, false); });
   }
   document.getElementById('empRecentCard').innerHTML = html;
 }
@@ -3739,6 +3748,14 @@ function setLeavesTime(who, timeFilter, btn) {
   if (who === 'emp') { state.empLeavesTime = timeFilter; renderMyLeaves(); }
   else if (who === 'admin') { state.adminLeavesTime = timeFilter; renderAdminLeaves(); }
   else if (who === 'empwise') { state.empWiseTime = timeFilter; renderEmployeeWiseProfile(); }
+}
+
+function setLeavesStatus(who, status, btn) {
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (who === 'emp') { state.empLeavesStatus = status; renderMyLeaves(); }
+  else if (who === 'admin') { state.adminLeavesStatus = status; renderAdminLeaves(); }
+  else if (who === 'empwise') { state.empWiseStatus = status; renderEmployeeWiseProfile(); }
 }
 
 // ══════════════════════════════════════
@@ -6203,11 +6220,12 @@ function loadLoyaltyLeaderboard(who, start, end) {
       if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
       if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No leaderboard data for this period.</p></div>'; return; }
       const medal = r => r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
-      let html = `<div class="card-title">${res.title || '🏆 Loyalty Card Leaderboard'}</div>`;
+      let html = `<div class="card-title">${res.title || '🏆 Loyalty Card Leaderboard'}</div>
+        <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Rank</th><th>Employee</th><th>Cards</th><th>% of Total</th></tr></thead><tbody>`;
       res.rows.forEach(r => {
-        html += `<div class="leave-card-date" style="display:flex;justify-content:space-between;margin-bottom:6px;">
-          <span>${medal(r.rank)} ${r.employee}</span><b>${r.cardsIssued} cards (${r.pctOfTotal})</b></div>`;
+        html += `<tr><td>${medal(r.rank)}</td><td><b>${r.employee}</b></td><td>${r.cardsIssued}</td><td>${r.pctOfTotal}</td></tr>`;
       });
+      html += `</tbody></table></div>`;
       if (res.total) html += `<div class="leave-card-date" style="margin-top:8px;font-weight:800;border-top:1px dashed var(--border);padding-top:8px;">TOTAL: ${res.total.cardsIssued} cards</div>`;
       box.innerHTML = html;
     })
@@ -6960,9 +6978,48 @@ function openDsrEditModal(idx, who) {
     <div class="form-row"><label>Weight</label><input type="text" id="dsrEditWeight" value="${it.weight || ''}"></div>
     <div class="form-row"><label>Tag No</label><input type="text" id="dsrEditTagNo" value="${it.tagNo || ''}"></div>
     <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="saveDsrEdit(${idx},'${who}')">💾 Save Changes</button>
+    <button class="btn-secondary" style="width:100%;margin-bottom:10px;color:var(--red);border-color:var(--red);" onclick="confirmDeleteDsrEntry(${idx},'${who}')">🗑️ Delete This Entry</button>
     <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrEditModal').remove()">Cancel</button>
   </div>`;
   document.body.appendChild(div);
+}
+
+function confirmDeleteDsrEntry(idx, who) {
+  const it = window['__dsrTodayItems_' + who][idx];
+  if (!it) return;
+  const modal = document.getElementById('dsrEditModal');
+  if (modal) modal.remove();
+  const confirmDiv = document.createElement('div');
+  confirmDiv.id = 'dsrDeleteConfirmModal';
+  confirmDiv.className = 'modal-overlay show';
+  confirmDiv.innerHTML = `<div class="modal-box" style="max-width:360px;">
+    <div class="modal-title">🗑️ Delete DSR Entry?</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">This permanently removes <b>${it.itemName || 'this item'}</b> for <b>${it.customerName || 'this customer'}</b>. This cannot be undone.</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#c0392b,#e74c3c);" onclick="deleteDsrEntry(${idx},'${who}')">🗑️ Yes, Delete Permanently</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrDeleteConfirmModal').remove()">Cancel</button>
+  </div>`;
+  document.body.appendChild(confirmDiv);
+}
+
+async function deleteDsrEntry(idx, who) {
+  const it = window['__dsrTodayItems_' + who][idx];
+  const modal = document.getElementById('dsrDeleteConfirmModal');
+  if (modal) modal.remove();
+  if (!it || !it.sheetName || !it.rowNum) { toast('Cannot delete this entry', 'error'); return; }
+  try {
+    const res = await jsonpReliable({
+      page: 'dsrDeleteEntryAPI', role: 'ADMIN', callerEmail: state.adminEmail,
+      sheetName: it.sheetName, rowNum: it.rowNum
+    });
+    if (res && res.ok) {
+      toast('🗑️ DSR entry deleted', 'success');
+      loadDsrToday('admin', document.getElementById('dsrTodayDate-admin') ? document.getElementById('dsrTodayDate-admin').value : '');
+    } else {
+      toast((res && res.error) || 'Delete failed', 'error');
+    }
+  } catch (e) {
+    toast('Network error deleting entry', 'error');
+  }
 }
 
 async function saveDsrEdit(idx, who) {
@@ -7771,6 +7828,12 @@ function dsrfConfirmSubmit(who) {
   const rows = window['__dsrPendingRows_' + who];
   if (!rows || !rows.length) { toast('Nothing to submit — please fill the form again', 'error'); return; }
 
+  // Stable across retries of the SAME submission (doesn't change if the
+  // user just re-clicks Submit after a network error) but unique per
+  // actual new DSR — built from the data itself, not a timestamp.
+  const r0 = rows[0];
+  const idemKey = makeIdemKey(['dsrsubmit', r0.employeeName, r0.billDate, r0.customerName, r0.mobileNumber, rows.length]);
+
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
   const msg = document.getElementById('dsrfStatusMsg-' + who);
   btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Saving...';
@@ -7787,7 +7850,7 @@ function dsrfConfirmSubmit(who) {
     }
   }, 800);
 
-  fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows }) })
+  fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows, idemKey }) })
     .then(r => r.json())
     .then(result => {
       clearInterval(progInt);
@@ -7816,7 +7879,7 @@ function dsrfConfirmSubmit(who) {
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
       btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
       msg.style.color = 'var(--red)';
-      msg.textContent = '❌ Network error: ' + err;
+      msg.textContent = '❌ Network error: ' + err + ' — safe to tap Submit again, it will not create a duplicate.';
     });
 }
 
@@ -7837,36 +7900,37 @@ function loadLoyaltyDashboard(who) {
       let html = `<div class="card">
         <div class="card-title">📈 ${res.isAdmin ? 'Store-Wide Overview' : 'My Overview'}</div>
         <div class="stat-tile-row">
-          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${k.totalCards}</div><div class="stat-tile-lbl">Total Cards</div></div>
+          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${k.totalCards}</div><div class="stat-tile-lbl">Total Cards (All-Time)</div></div>
           <div class="stat-tile" style="background:var(--green-bg);border-color:var(--green);"><div class="stat-tile-val" style="color:var(--green)">${k.approvedCards}</div><div class="stat-tile-lbl">Approved</div></div>
           <div class="stat-tile" style="background:var(--orange-bg);border-color:var(--orange);"><div class="stat-tile-val" style="color:var(--orange)">${k.pendingCards}</div><div class="stat-tile-lbl">Pending</div></div>
           <div class="stat-tile" style="background:var(--blue-bg);border-color:var(--blue);"><div class="stat-tile-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="stat-tile-lbl">Pending Amount</div></div>
         </div>
-        <div style="font-size:12px;color:var(--text2);margin-top:10px;">🌱 Fresh Start (01-Apr): <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)} &nbsp;|&nbsp; 📆 This Month: <b>${k.thisMonthCards}</b> cards</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:10px;">📆 This Month: <b>${k.thisMonthCards}</b> cards</div>
       </div>`;
 
-      html += `<div class="card"><div class="card-title">🗂️ ${res.isAdmin ? 'Employee-Wise Breakdown' : 'My Cards Summary'}</div>`;
-      res.empRows.forEach(r => {
-        html += `<div class="leave-card-date" style="margin-bottom:6px;">${r.empName}: <b>${r.totalCards}</b> cards · ✅ ${r.approved} · ⏳ ${r.pending} · ₹${fmtNum(r.pendingAmount)} pending</div>`;
-      });
-      html += `</div>`;
-
-      if (res.oldYear && res.isAdmin) {
-        html += `<div class="card"><div class="card-title">📦 Fresh Start (Since 01-Apr-2026) vs Store History (up to FY 2025-26)</div>
-          <div class="leave-card-date">🌱 Fresh Start: <b>${res.freshStart.cards}</b> cards · ₹${fmtNum(res.freshStart.incentive)}</div>
-          <div class="leave-card-date">📁 Store History (closed): <b>${res.oldYear.cards}</b> cards · ₹${fmtNum(res.oldYear.incentive)}</div>
-        </div>`;
-      } else if (res.freshStart) {
-        html += `<div class="card"><div class="card-title">🌱 Fresh Start (Since 01-Apr-2026)</div>
-          <div class="leave-card-date">My Cards: <b>${res.freshStart.cards}</b> · ₹${fmtNum(res.freshStart.incentive)}</div>
-        </div>`;
+      if (res.isAdmin) {
+        html += `<div class="card"><div class="card-title">🗂️ Employee-Wise Breakdown</div>
+          <div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+            <th>Employee</th><th>Total</th><th>Approved</th><th>Pending</th><th>Pending ₹</th>
+          </tr></thead><tbody>`;
+        res.empRows.forEach(r => {
+          html += `<tr><td><b>${r.empName}</b></td><td>${r.totalCards}</td><td>${r.approved}</td><td>${r.pending}</td><td>₹${fmtNum(r.pendingAmount)}</td></tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+      } else {
+        html += `<div class="card"><div class="card-title">🗂️ My Cards Summary</div>`;
+        res.empRows.forEach(r => {
+          html += `<div class="leave-card-date" style="margin-bottom:6px;">${r.empName}: <b>${r.totalCards}</b> cards · ✅ ${r.approved} · ⏳ ${r.pending} · ₹${fmtNum(r.pendingAmount)} pending</div>`;
+        });
+        html += `</div>`;
       }
 
-      html += `<div class="card"><div class="card-title">📊 Monthly Trend (last 3 months)</div>`;
+      html += `<div class="card"><div class="card-title">📊 Monthly Trend (last 3 months)</div>
+        <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Month</th><th>Cards</th></tr></thead><tbody>`;
       res.monthlyTrend.forEach(m => {
-        html += `<div class="leave-card-date" style="margin-bottom:4px;">${m.label}: <b>${m.count}</b> cards</div>`;
+        html += `<tr><td>${m.label}</td><td><b>${m.count}</b></td></tr>`;
       });
-      html += `</div>`;
+      html += `</tbody></table></div></div>`;
 
       html += `<button class="btn-loy-card" onclick="mailLoyaltyDashboard('${who}')">📧 Mail This Dashboard</button>`;
 
