@@ -1607,9 +1607,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div id="stockDutyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" id="empQAStockRetail" onclick="showEmpPage('stock-retail')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Retail Checklist</div><div class="quick-action-sub">Full detail view</div></div>
-        <div class="quick-action-btn" id="empQAStockWholesale" onclick="showEmpPage('stock-wholesale')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Wholesale Checklist</div><div class="quick-action-sub">Full detail view</div></div>
-        <div class="quick-action-btn" id="empQAStockReport" onclick="showEmpPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
+        <div class="quick-action-btn" id="empQAStockNewEntry" onclick="openStockChecklistForm('emp')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
       </div>
     </div>
 
@@ -2398,10 +2396,45 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div id="stockDutyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
       <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQAStockNewEntry" onclick="openStockChecklistForm('admin')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
         <div class="quick-action-btn" id="adminQAStockRetail" onclick="showAdminPage('stock-retail')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Retail Checklist</div><div class="quick-action-sub">Full detail view</div></div>
         <div class="quick-action-btn" id="adminQAStockWholesale" onclick="showAdminPage('stock-wholesale')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Wholesale Checklist</div><div class="quick-action-sub">Full detail view</div></div>
         <div class="quick-action-btn" id="adminQAStockReport" onclick="showAdminPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
+        <div class="quick-action-btn" id="adminQAStockVariance" onclick="showAdminPage('stock-variance')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Variance Log</div><div class="quick-action-sub">Opening vs Closing mismatches</div></div>
+        <div class="quick-action-btn" id="adminQAStockChangeLog" onclick="showAdminPage('stock-changelog')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Change Log</div><div class="quick-action-sub">Edited entries, old → new</div></div>
       </div>
+    </div>
+
+    <div class="page-section" id="admin-stock-variance">
+      <div class="section-hdr"><span class="section-title2">⚠️ Variance Log</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockVarianceStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockVarianceEnd-admin"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockVarianceClearDates('admin')">📋 All</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockVarianceLog('admin')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockVarianceBox-admin" style="display:none;" onclick="openBoxExportModal('stockVarianceBox-admin','Variance Log')" title="Export">📥</button>
+      <div class="card"><div id="stockVarianceBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stock-changelog">
+      <div class="section-hdr"><span class="section-title2">📝 Change Log</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockChangeLogStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockChangeLogEnd-admin"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="stockChangeLogClearDates('admin')">📋 All</button>
+          <button class="btn-primary" style="flex:1;" onclick="loadStockChangeLog('admin')">🔍 Load</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-stockChangeLogBox-admin" style="display:none;" onclick="openBoxExportModal('stockChangeLogBox-admin','Change Log')" title="Export">📥</button>
+      <div class="card"><div id="stockChangeLogBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <div class="page-section" id="admin-stock-retail">
@@ -3555,7 +3588,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'golden-aura-new', icon:'➕', label:'New' },
       { page:'golden-aura-list', icon:'🔍', label:'Search' }
     ], more: 'openAdminMoreModal()' },
-    stock: { pages: ['stock','stock-retail','stock-wholesale','stock-report'], items: [
+    stock: { pages: ['stock','stock-retail','stock-wholesale','stock-report','stock-variance','stock-changelog'], items: [
       { page:'stock', icon:'🏠', label:'Home' },
       { page:'stock-retail', icon:'🏪', label:'Retail' },
       { page:'stock-wholesale', icon:'📦', label:'Wholesale' },
@@ -3604,6 +3637,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
   'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
   'stock': 'Stock Check List', 'stock-retail': 'Stock Check List', 'stock-wholesale': 'Stock Check List', 'stock-report': 'Stock Check List',
+  'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
@@ -5527,6 +5561,8 @@ function showAdminPage(page) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
+  if(page==='stock-variance') loadStockVarianceLog('admin');
+  if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
   if(page==='loyalty-timeline') initLoyaltyTimeline();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
@@ -8071,6 +8107,13 @@ const STOCK_WHOLESALE_ITEM_LABELS = [
   ['sankha', 'Sankha Box'], ['wholesaleBox', 'Wholesale Box'], ['retailBox', 'Retail Box (Up)']
 ];
 
+// Opens the actual Google Form used for submitting a new Stock Check
+// List entry. This was referenced by the home-screen quick action for
+// both roles but never defined anywhere — clicking it did nothing.
+function openStockChecklistForm(who) {
+  window.open(CHECKLIST_FORM_URL, '_blank');
+}
+
 function stockToday(who, type) {
   document.getElementById('stock' + type + 'Start-' + who).value = '';
   document.getElementById('stock' + type + 'End-' + who).value = '';
@@ -8193,6 +8236,88 @@ function loadStockReport(who, mode) {
     box.innerHTML = html;
     showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockReport(\'' + who + '\',\'' + mode + '\')">🔄 Retry</button></div>'; });
+}
+
+// ══════════════ Admin-only: Variance Log & Change Log ══════════════
+
+function stockVarianceClearDates(who) {
+  document.getElementById('stockVarianceStart-' + who).value = '';
+  document.getElementById('stockVarianceEnd-' + who).value = '';
+  loadStockVarianceLog(who);
+}
+
+function loadStockVarianceLog(who) {
+  const box = document.getElementById('stockVarianceBox-' + who);
+  hideExportBtn(box.id);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const start = document.getElementById('stockVarianceStart-' + who).value;
+  const end = document.getElementById('stockVarianceEnd-' + who).value;
+  const reqParams = { page: 'stockVarianceLogJSON' };
+  if (start) reqParams.start = start;
+  if (end) reqParams.end = end;
+  jsonpReliable(reqParams).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockVarianceLog(\'' + who + '\')">🔄 Retry</button></div>'; return; }
+    if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No variances logged for this period.</p></div>'; return; }
+    let html = `<div class="kd-note">${res.rows.length} variance(s)</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+        <th>Date</th><th>Code</th><th>Item</th><th>Opening</th><th>Closing</th><th>Variance</th><th>Opening Emp</th><th>Closing Emp</th><th>Status</th>
+      </tr></thead><tbody>`;
+    res.rows.forEach(r => {
+      html += `<tr>
+        <td><b style="color:var(--gold);">${r.date}</b></td>
+        <td>${r.code || '—'}</td>
+        <td>${r.itemName || '—'}</td>
+        <td style="text-align:center;">${r.openingValue !== undefined && r.openingValue !== '' ? r.openingValue : '—'}</td>
+        <td style="text-align:center;">${r.closingValue !== undefined && r.closingValue !== '' ? r.closingValue : '—'}</td>
+        <td style="text-align:center;"><b>${r.variance !== undefined && r.variance !== '' ? r.variance : '—'}</b></td>
+        <td><b style="color:var(--purple);">${r.openingEmp || '—'}</b></td>
+        <td><b style="color:var(--purple);">${r.closingEmp || '—'}</b></td>
+        <td>${r.status || '—'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    box.innerHTML = html;
+    showExportBtn(box.id);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockVarianceLog(\'' + who + '\')">🔄 Retry</button></div>'; });
+}
+
+function stockChangeLogClearDates(who) {
+  document.getElementById('stockChangeLogStart-' + who).value = '';
+  document.getElementById('stockChangeLogEnd-' + who).value = '';
+  loadStockChangeLog(who);
+}
+
+function loadStockChangeLog(who) {
+  const box = document.getElementById('stockChangeLogBox-' + who);
+  hideExportBtn(box.id);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const start = document.getElementById('stockChangeLogStart-' + who).value;
+  const end = document.getElementById('stockChangeLogEnd-' + who).value;
+  const reqParams = { page: 'stockChangeLogJSON' };
+  if (start) reqParams.start = start;
+  if (end) reqParams.end = end;
+  jsonpReliable(reqParams).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockChangeLog(\'' + who + '\')">🔄 Retry</button></div>'; return; }
+    if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No value changes logged for this period.</p></div>'; return; }
+    let html = `<div class="kd-note">${res.rows.length} change(s)</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+        <th>Date</th><th>Shift</th><th>Code</th><th>Item</th><th>Old Value</th><th>New Value</th><th>Employee</th>
+      </tr></thead><tbody>`;
+    res.rows.forEach(r => {
+      html += `<tr>
+        <td><b style="color:var(--gold);">${r.date}</b></td>
+        <td>${r.checklistTime || '—'}</td>
+        <td>${r.code || '—'}</td>
+        <td>${r.itemName || '—'}</td>
+        <td style="text-align:center;">${r.oldValue !== undefined && r.oldValue !== '' ? r.oldValue : '—'}</td>
+        <td style="text-align:center;"><b>${r.newValue !== undefined && r.newValue !== '' ? r.newValue : '—'}</b></td>
+        <td><b style="color:var(--purple);">${r.employee || '—'}</b></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    box.innerHTML = html;
+    showExportBtn(box.id);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockChangeLog(\'' + who + '\')">🔄 Retry</button></div>'; });
 }
 
 function dsrfSubmit(who) {
