@@ -1132,7 +1132,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
-          <div class="quick-action-btn" id="empQAStockChecklist" onclick="openStockChecklistForm('emp')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -1593,14 +1593,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="gaListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
-    <!-- ══════════════ STOCK CHECK LIST SECTION (employee) — entry form ONLY, no dashboard data ══════════════ -->
+    <!-- ══════════════ STOCK CHECK LIST SECTION (employee) — data cards first, then New Entry only ══════════════ -->
     <div class="page-section" id="emp-stock">
       <div class="section-hdr"><span class="section-title2">📋 Stock Check List</span></div>
-      <div class="card" style="text-align:center;padding:30px 16px;">
-        <div style="font-size:40px;margin-bottom:10px;">📋</div>
-        <div style="font-weight:800;font-size:15px;margin-bottom:6px;">Submit a Stock Check List Entry</div>
-        <div style="font-size:12.5px;color:var(--text3);margin-bottom:18px;">Opens the checklist form in a new tab.</div>
-        <button class="btn-primary" style="width:100%;" onclick="openStockChecklistForm('emp')">➕ Open Entry Form</button>
+      <button class="export-icon-btn" id="exportBtn-stockHealthBox-emp" style="display:none;" onclick="openBoxExportModal('stockHealthBox-emp','Stock Check List Dashboard')" title="Export">📥</button>
+      <div class="card" id="stockHealthBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">📈 30-Day Compliance Trend</div>
+        <div id="stockTrendBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 Today's Duty Assigned</div>
+        <div id="stockDutyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="empQAStockNewEntry" onclick="openStockChecklistForm('emp')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
       </div>
     </div>
 
@@ -1719,7 +1726,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
-          <div class="quick-action-btn" id="adminQAStockChecklist" onclick="openStockChecklistForm('admin')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">All options</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -2777,7 +2784,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwu-V64jgIb6ot8iz9AxTA9t-18jqZWsA7CZ5cHmHz5l9QPYNKCs-5akXwyjk-NeSUm2w/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyjdVo-Ju9Cro_6Qc1v_NVISBuiYNzphcJlHuCXqKT4UYY1DHZHS2ihXcCgZzC2B6CL0A/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const CHECKLIST_FORM_URL = 'https://forms.gle/K9QyBYuZCQVzWz4K6';
@@ -3713,8 +3720,7 @@ function showEmpPage(page) {
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
-  // (no loadStockDashboard('emp') here — the employee Stock Check List
-  // page is entry-form only now, no dashboard data to load)
+  if(page==='stock') loadStockDashboard('emp');
   if(page==='stock-retail') loadStockDetail('emp','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('emp','Wholesale','today');
   if(page==='stock-report') loadStockReport('emp');
