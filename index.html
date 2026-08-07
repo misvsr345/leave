@@ -2752,6 +2752,14 @@ const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const CHECKLIST_FORM_URL = 'https://forms.gle/K9QyBYuZCQVzWz4K6';
 
+// Opens the Google Form used to actually submit an Opening/Closing stock
+// checklist entry. The quick-action "Stock Check List" buttons (emp + admin)
+// call this — it was previously referenced but never defined, so the
+// button did nothing on click.
+function openStockChecklistForm(who) {
+  window.open(CHECKLIST_FORM_URL, '_blank');
+}
+
 const DEFAULT_NOTICES =
 '<div>💰 <b>Leave Balance</b> — Every employee gets 3 days Casual Leave quota per month. For more, use Sick Leave / Special Permission.</div>' +
 '<div class="n-warn">🚫 <b>Auto-Rejection Rules</b> — Casual Leave must be applied at least 1 day in advance (today/past date → Absent). Sick Leave must be applied on/after the leave date, not in advance. Emergency Leave cannot be planned in advance. Special Permission Leave needs both MIS and Store Manager approval.</div>' +
