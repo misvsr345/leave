@@ -1132,7 +1132,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
-          <div class="quick-action-btn" id="empQAStockChecklist" onclick="openStockChecklistForm('emp')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Dashboard &amp; reports</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -1607,6 +1607,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div id="stockDutyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
       <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="empQAStockEntryForm" onclick="openStockChecklistForm('emp')"><span class="quick-action-icon">📝</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
         <div class="quick-action-btn" id="empQAStockRetail" onclick="showEmpPage('stock-retail')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Retail Checklist</div><div class="quick-action-sub">Full detail view</div></div>
         <div class="quick-action-btn" id="empQAStockWholesale" onclick="showEmpPage('stock-wholesale')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Wholesale Checklist</div><div class="quick-action-sub">Full detail view</div></div>
         <div class="quick-action-btn" id="empQAStockReport" onclick="showEmpPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
@@ -1726,7 +1727,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
-          <div class="quick-action-btn" id="adminQAStockChecklist" onclick="openStockChecklistForm('admin')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Dashboard &amp; reports</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
         </div>
@@ -2396,6 +2397,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div id="stockDutyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
       <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQAStockEntryForm" onclick="openStockChecklistForm('admin')"><span class="quick-action-icon">📝</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
         <div class="quick-action-btn" id="adminQAStockRetail" onclick="showAdminPage('stock-retail')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Retail Checklist</div><div class="quick-action-sub">Full detail view</div></div>
         <div class="quick-action-btn" id="adminQAStockWholesale" onclick="showAdminPage('stock-wholesale')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Wholesale Checklist</div><div class="quick-action-sub">Full detail view</div></div>
         <div class="quick-action-btn" id="adminQAStockReport" onclick="showAdminPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
