@@ -996,6 +996,14 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .kd-table th{position:sticky;top:0;text-align:left;padding:9px 12px;background:var(--purple-bg);color:var(--purple);font-weight:700;white-space:nowrap;border-bottom:1.5px solid var(--purple-mid);}
 .kd-table td{padding:8px 12px;white-space:nowrap;border-bottom:1px solid var(--border);}
 .kd-table tr:nth-child(even) td{background:var(--bg);}
+/* Register-style grid table — mirrors the paper stock-register layout
+   (bold full-width banner row, every cell fully bordered) rather than
+   the plain striped kd-table used elsewhere. */
+.kd-table-grid{width:100%;border-collapse:collapse;font-size:12.5px;border:1.5px solid #2a2a3d;}
+.kd-table-grid th,.kd-table-grid td{border:1px solid #2a2a3d;padding:7px 12px;text-align:left;}
+.kd-table-grid thead tr.grid-banner th{background:#2a2a3d;color:#f5d67a;font-weight:800;font-size:13px;padding:8px 12px;}
+.kd-table-grid thead tr.grid-cols th{background:var(--purple-bg);color:var(--purple);font-weight:700;}
+.kd-table-grid tbody td:first-child{font-weight:700;color:var(--text2);}
 .kd-table tr:hover td{background:var(--purple-bg);}
 
 /* Today's DSR Entries — email-receipt style card */
@@ -8058,9 +8066,11 @@ function stockDutySummaryHtml(sectionName, arr) {
   }).join('');
   return `<div style="margin-bottom:12px;">
       <div class="kd-table-wrap">
-        <table class="kd-table">
-          <thead><tr><th colspan="3" style="text-align:left;color:var(--purple);">${icon} ${sectionName}</th></tr>
-          <tr><th>Shift</th><th>Today Suggested / Done By</th><th>Tomorrow Suggested</th></tr></thead>
+        <table class="kd-table-grid">
+          <thead>
+            <tr class="grid-banner"><th colspan="3">${icon} ${sectionName}</th></tr>
+            <tr class="grid-cols"><th>Shift</th><th>Today Suggested / Done By</th><th>Tomorrow Suggested</th></tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
