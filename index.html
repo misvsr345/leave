@@ -363,16 +363,19 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
   background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink));
   border-bottom: 2px solid var(--gold);
   padding: 8px 10px;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  display: flex; align-items: center; justify-content: flex-start; gap: 10px;
   box-shadow: 0 1px 8px rgba(0,0,0,0.06);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.topbar::-webkit-scrollbar { display: none; }
 .topbar-row1 {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 .topbar-row2 {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  justify-content: center;
+  display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 /* VSR GOLD emblem — CSS-only decorative mark (no image), reused at
@@ -2538,11 +2541,27 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- ══════════════ LEADS SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-leads">
       <div class="section-hdr"><span class="section-title2">📞 Leads</span></div>
+      <div class="card" id="adminLeadsSummaryBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Per employee — assigned/submitted/%</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Employee names — tap for their leads</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee</div></div>
       </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">🛠️ More Tools</div>
+        <button class="btn-secondary" style="width:100%;margin-bottom:8px;" onclick="sendPendingFollowUpReportNow()">🔁 Send Pending Follow-up Report</button>
+        <button class="btn-secondary" style="width:100%;" onclick="sendCallingStatusReportNow()">📞 Send Today's Calling Status Report</button>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-leads-report">
+      <div class="section-hdr"><span class="section-title2">📊 Leads Report — Employee Wise</span></div>
+      <div class="card">
+        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="adminLeadsReportDate"></div>
+        <button class="btn-primary" style="width:100%;" onclick="loadAdminLeadsReport()">🔍 Load</button>
+      </div>
+      <div id="adminLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="admin-leads-overview">
@@ -3707,6 +3726,8 @@ const SECTION_LABEL_MAP = {
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
+  leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
+  'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads',
   profile: 'Emp Details'
 };
 // Each section's own "dashboard" page (its landing page after clicking
@@ -3718,7 +3739,8 @@ const SECTION_DASHBOARD_PAGE = {
   KPI:              { emp: 'kpi',      admin: 'kpi' },
   DSR:              { emp: 'dsr',      admin: 'dsr' },
   'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' },
-  'Stock Check List': { emp: 'stock', admin: 'stock' }
+  'Stock Check List': { emp: 'stock', admin: 'stock' },
+  Leads:            { emp: 'leads',   admin: 'leads' }
 };
 function getSectionDashboardPage(who, page) {
   const section = SECTION_LABEL_MAP[page];
@@ -5744,6 +5766,7 @@ function showAdminPage(page) {
   if(page==='availability') renderTeamAvailability();
   if(page==='leads') loadAdminLeadsHome();
   if(page==='leads-overview') loadAdminLeadsOverview();
+  if(page==='leads-report') loadAdminLeadsReport();
   if(page==='leads-overdue') loadAdminOverdueLeads();
   if(page==='leads-quota') loadAdminLeadsQuota();
 }
@@ -8648,8 +8671,89 @@ function stockToday(who, type) {
   loadStockDetail(who, type, 'today');
 }
 
+// ── ADMIN: Leads home — summary box + quick-action cards ────
+async function loadAdminLeadsHome() {
+  const box = document.getElementById('adminLeadsSummaryBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() });
+    if (!res.ok || !res.rows || !res.rows.length) {
+      box.innerHTML = '<div class="empty-state"><p>No leads assigned today.</p></div>';
+      return;
+    }
+    const totalAssigned = res.rows.reduce((s, r) => s + r.assigned, 0);
+    const totalSubmitted = res.rows.reduce((s, r) => s + r.submitted, 0);
+    const totalPending = res.rows.reduce((s, r) => s + r.pending, 0);
+    const overallPct = totalAssigned > 0 ? Math.round((totalSubmitted / totalAssigned) * 100) : 0;
+    box.innerHTML = sectionHeaderCardHtml('admin', [
+      { val: res.rows.length, lbl: 'Employees', color: '#80c8ff' },
+      { val: totalAssigned, lbl: 'Assigned', color: '#d4a84a' },
+      { val: totalSubmitted, lbl: 'Submitted', color: '#80ffb0' },
+      { val: overallPct + '%', lbl: 'Completion', color: overallPct >= 80 ? '#80ffb0' : overallPct >= 40 ? '#ffd080' : '#ff8080' }
+    ]);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── ADMIN: Report — employee-wise % + status break-up ───────
+async function loadAdminLeadsReport() {
+  const box = document.getElementById('adminLeadsReportBox');
+  const dateInp = document.getElementById('adminLeadsReportDate');
+  if (dateInp && !dateInp.value) dateInp.value = todayISO();
+  const dateStr = (dateInp && dateInp.value) || todayISO();
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: dateStr });
+    if (!res.ok || !res.rows || !res.rows.length) {
+      box.innerHTML = '<div class="empty-state"><p>No leads assigned on this date.</p></div>';
+      return;
+    }
+    const rows = res.rows.slice().sort((a, b) => b.completionPct - a.completionPct);
+    let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
+      '<th style="text-align:left;">Employee</th><th>Assigned</th><th>Submitted</th><th>Pending</th><th>Avoided</th><th>%</th></tr></thead><tbody>';
+    rows.forEach(r => {
+      const pctColor = r.completionPct >= 80 ? '#1a7a4f' : r.completionPct >= 40 ? '#c97a10' : '#c0392b';
+      html += `<tr><td style="text-align:left;font-weight:700;">${r.employee}</td><td style="text-align:center;">${r.assigned}</td>` +
+        `<td style="text-align:center;">${r.submitted}</td><td style="text-align:center;">${r.pending}</td>` +
+        `<td style="text-align:center;">${r.avoided}</td><td style="text-align:center;color:${pctColor};font-weight:800;">${r.completionPct}%</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    // Status break-up per employee, below the table.
+    rows.forEach(r => {
+      const statuses = Object.keys(r.statusBreakdown || {});
+      if (!statuses.length) return;
+      html += `<div class="card" style="margin-top:8px;"><div class="card-title">${r.employee} — Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
+        statuses.map(s => `<th>${s}</th>`).join('') + '</tr></thead><tbody><tr>' +
+        statuses.map(s => `<td style="text-align:center;">${r.statusBreakdown[s]}</td>`).join('') + '</tr></tbody></table></div></div>';
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── ADMIN: More Tools — email reports from the leads.txt menu ──
+async function sendPendingFollowUpReportNow() {
+  if (!confirm('Send the Pending Follow-up Report email now?')) return;
+  try {
+    const res = await leadsApiPost({ action: 'SEND_PENDING_FOLLOWUP_REPORT' });
+    if (res && res.ok) toast('✅ Pending follow-up report sent', 'success');
+    else toast('❌ ' + ((res && (res.error || res.message)) || 'Failed'), 'error');
+  } catch (e) { toast('❌ Network error: ' + e.message, 'error'); }
+}
+
+async function sendCallingStatusReportNow() {
+  if (!confirm("Send today's Calling Status Report email now?")) return;
+  try {
+    const res = await leadsApiPost({ action: 'SEND_CALLING_STATUS_TODAY' });
+    if (res && res.ok) toast('✅ Calling status report sent', 'success');
+    else toast('❌ ' + ((res && (res.error || res.message)) || 'Failed'), 'error');
+  } catch (e) { toast('❌ Network error: ' + e.message, 'error'); }
+}
+
 // ── ADMIN: Leads home (just shows the 3 quick-action cards; nothing to load) ──
-function loadAdminLeadsHome() { /* landing page — sub-sections load their own data */ }
+function loadAdminLeadsHome_UNUSED() { /* replaced above — kept as no-op guard */ }
 
 // ── ADMIN: Today's Assignment — all employees ───────────────
 let __adminAssignmentData = {};
