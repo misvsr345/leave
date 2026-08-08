@@ -1139,6 +1139,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">📞</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
@@ -1681,6 +1682,32 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card"><div id="stockReportBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
+    <!-- ══════════════ LEADS SECTION (employee) ══════════════ -->
+    <div class="page-section" id="emp-leads">
+      <div class="section-hdr"><span class="section-title2">📞 Leads</span></div>
+      <div class="card" id="empLeadsSummaryBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="showEmpPage('leads-pending')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Leads</div><div class="quick-action-sub">Pending — call now</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">Calls already done</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Report</div><div class="quick-action-sub">My % &amp; status break-up</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="emp-leads-pending">
+      <div class="section-hdr"><span class="section-title2">📋 Today's Leads — Pending</span></div>
+      <div id="empLeadsPendingBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <div class="page-section" id="emp-leads-submitted">
+      <div class="section-hdr"><span class="section-title2">✅ Submitted Today</span></div>
+      <div id="empLeadsSubmittedBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <div class="page-section" id="emp-leads-report">
+      <div class="section-hdr"><span class="section-title2">📊 My Leads Report — Today</span></div>
+      <div class="card" id="empLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
     <div class="page-section" id="emp-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
@@ -1733,6 +1760,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">📞</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
           <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">All options</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
@@ -2505,6 +2533,36 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
       <button class="export-icon-btn" id="exportBtn-stockReportBox-admin" style="display:none;" onclick="openBoxExportModal('stockReportBox-admin','Stock Checklist Report')" title="Export">📥</button>
       <div class="card"><div id="stockReportBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <!-- ══════════════ LEADS SECTION (admin) ══════════════ -->
+    <div class="page-section" id="admin-leads">
+      <div class="section-hdr"><span class="section-title2">📞 Leads</span></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Per employee — assigned/submitted/%</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-leads-overview">
+      <div class="section-hdr"><span class="section-title2">📊 Today's Assignment — All Employees</span></div>
+      <div class="card">
+        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="adminLeadsOverviewDate"></div>
+        <button class="btn-primary" style="width:100%;" onclick="loadAdminLeadsOverview()">🔍 Load</button>
+      </div>
+      <div id="adminLeadsOverviewBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <div class="page-section" id="admin-leads-overdue">
+      <div class="section-hdr"><span class="section-title2">⏰ Overdue / Unsubmitted Leads</span></div>
+      <div class="kd-note" style="margin-bottom:10px;">These leads were assigned on a past date and never called. Only Admin can Avoid them — this sends the lead back to Clean Leads for reassignment.</div>
+      <div id="adminOverdueLeadsBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <div class="page-section" id="admin-leads-quota">
+      <div class="section-hdr"><span class="section-title2">🎯 Daily Lead Quota — Per Employee</span></div>
+      <div id="adminLeadsQuotaBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="admin-more">
@@ -3739,6 +3797,10 @@ function showEmpPage(page) {
   if(page==='blocked') renderEmpBlockedDates();
   if(page==='myleaves') renderMyLeaves();
   if(page==='apply') { loadNoticesForEmployee(); populateBlockedScroller('empBlockedScroller', 'empBlockedScrollerInner'); }
+  if(page==='leads') loadEmpLeadsHome();
+  if(page==='leads-pending') loadEmpLeadsPending();
+  if(page==='leads-submitted') loadEmpLeadsSubmitted();
+  if(page==='leads-report') loadEmpLeadsReport();
 }
 
 // ══════════════════════════════════════
@@ -5680,6 +5742,10 @@ function showAdminPage(page) {
   if(page==='allleaves') renderAdminLeaves();
   if(page==='notices') loadNoticesForAdmin();
   if(page==='availability') renderTeamAvailability();
+  if(page==='leads') loadAdminLeadsHome();
+  if(page==='leads-overview') loadAdminLeadsOverview();
+  if(page==='leads-overdue') loadAdminOverdueLeads();
+  if(page==='leads-quota') loadAdminLeadsQuota();
 }
 
 // ══════════════════════════════════════
@@ -8256,10 +8322,400 @@ function openStockChecklistForm(who) {
   window.open(CHECKLIST_FORM_URL, '_blank');
 }
 
+// ══════════════════════════════════════
+// LEADS SECTION — talks to the SEPARATE CRM/Leads Apps Script (leads.txt),
+// not this portal's own WEB_APP_URL. That script's doGet returns plain
+// JSON (no JSONP callback support), so we use fetch() directly — the
+// same approach CRM.HTML already uses successfully against this URL.
+// ══════════════════════════════════════
+const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxs9wVFkOMUHGOM9aiz5c2Ftis4LfPt9cdkr95-e3RRPHj0NNYzZq9iJ5AbFg_5e--xQQ/exec';
+
+async function leadsApiGet(params) {
+  const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
+  const resp = await fetch(LEADS_WEB_APP_URL + '?' + qs);
+  return await resp.json();
+}
+
+async function leadsApiPost(payload) {
+  const resp = await fetch(LEADS_WEB_APP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
+    body: JSON.stringify(payload)
+  });
+  return await resp.json();
+}
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// ── EMPLOYEE: Leads home / summary ──────────────────────────
+async function loadEmpLeadsHome() {
+  const box = document.getElementById('empLeadsSummaryBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
+    if (!res.ok || !res.rows || !res.rows.length) {
+      box.innerHTML = '<div class="empty-state"><p>No leads assigned to you today.</p></div>';
+      return;
+    }
+    const r = res.rows[0];
+    box.innerHTML = sectionHeaderCardHtml('emp', [
+      { val: r.assigned, lbl: 'Assigned', color: '#80c8ff' },
+      { val: r.submitted, lbl: 'Submitted', color: '#80ffb0' },
+      { val: r.pending, lbl: 'Pending', color: '#ffd080' },
+      { val: r.completionPct + '%', lbl: 'Completion', color: r.completionPct >= 80 ? '#80ffb0' : r.completionPct >= 40 ? '#ffd080' : '#ff8080' }
+    ]);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── EMPLOYEE: Today's Pending Leads ─────────────────────────
+async function loadEmpLeadsPending() {
+  const box = document.getElementById('empLeadsPendingBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS', email: state.empEmail, date: todayISO() });
+    if (!res.leads || !res.leads.length) {
+      box.innerHTML = '<div class="empty-state"><p>No leads assigned today.</p></div>';
+      return;
+    }
+    // Filter out ones already submitted today (so this stays a "to-do" list).
+    const submittedRes = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
+    const submittedPhones = new Set();
+    // We don't have a phones list directly from the report; instead check
+    // via a lightweight second pass using the leads list's own call log
+    // isn't available client-side, so pending = everyone until they submit
+    // in THIS session; server-side re-check happens on next load anyway.
+    let html = '<div class="kd-note">' + res.leads.length + ' lead(s) today</div>';
+    res.leads.forEach(l => {
+      html += `<div class="dsr-receipt-card" id="leadCard-${l.phone}">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${l.name || 'Unknown'}</span>${l.isEvent ? `<span class="kd-pill gold">🎉 ${l.eventType}</span>` : ''}</div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-meta-row">📱 ${l.phone} &nbsp;·&nbsp; 🏷️ ${l.custType || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${l.product || '—'}</div>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="openLeadCallPanel(${JSON.stringify(l).replace(/"/g, '&quot;')})">📞 Call &amp; Submit</button>
+      </div>`;
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── EMPLOYEE: Call panel (modal) ────────────────────────────
+let __leadCallTimer = null, __leadCallSeconds = 0, __leadCallRunning = false, __leadCallCurrent = null;
+
+function openLeadCallPanel(lead) {
+  __leadCallCurrent = lead;
+  __leadCallSeconds = 0; __leadCallRunning = false;
+  const existing = document.getElementById('leadCallModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'leadCallModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:440px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-title">📞 ${lead.name || 'Customer'}</div>
+    <div class="modal-sub">${lead.phone}</div>
+
+    <div style="display:flex;gap:8px;margin:12px 0;">
+      <a class="btn-secondary" style="flex:1;text-align:center;text-decoration:none;" href="tel:${lead.phone}" onclick="if(!__leadCallRunning) startLeadCallTimer();">📲 Call</a>
+      <button class="btn-secondary" style="flex:1;" id="leadTimerBtn" onclick="toggleLeadCallTimer()">▶ Start Timer</button>
+    </div>
+    <div class="form-row"><label>Call Duration (mm:ss) — editable</label>
+      <input type="text" id="leadDurationInput" value="00:00" placeholder="mm:ss">
+    </div>
+
+    <div class="form-row"><label>Status *</label>
+      <select id="leadStatusSel">
+        <option value="">Choose...</option>
+        <option>Answered</option><option>Unanswered</option><option>Not Received</option>
+        <option>Not Connected</option><option>Interested</option><option>Converted</option>
+        <option>Will Visit</option><option>Busy</option><option>Repeated</option>
+      </select>
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>Calling Type</label>
+        <select id="leadCallTypeSel"><option>Outbound</option><option>Inbound</option></select>
+      </div>
+      <div class="form-row"><label>Purpose</label>
+        <select id="leadPurposeSel">
+          <option>Sales Follow-up</option><option>Event Invitation</option><option>Birthday Wish</option>
+          <option>Anniversary Wish</option><option>Golden Aura EMI</option><option>General Enquiry</option>
+          <option>Feedback Call</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row"><label>Feedback / Note</label>
+      <textarea class="form-textarea" id="leadFeedbackTxt" placeholder="What did the customer say?"></textarea>
+    </div>
+
+    <details style="margin:10px 0;">
+      <summary style="cursor:pointer;font-weight:700;color:var(--text2);font-size:12.5px;">⭐ Retail feedback (optional)</summary>
+      <div class="form-2col" style="margin-top:8px;">
+        <div class="form-row"><label>Behavior</label><select id="leadRateBehavior"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+        <div class="form-row"><label>Service</label><select id="leadRateService"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row"><label>Design</label><select id="leadRateDesign"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+        <div class="form-row"><label>Overall</label><select id="leadRateOverall"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div class="form-row"><label>Team</label><select id="leadRateTeam"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      <div class="form-row"><label>Suggestions</label><textarea class="form-textarea" id="leadSuggestionsTxt"></textarea></div>
+    </details>
+
+    <div id="leadSubmitErr" style="display:none;color:var(--red-t,#c0392b);font-size:12px;margin-bottom:8px;"></div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px;" id="leadSubmitBtn" onclick="submitLeadCall()">💾 Submit</button>
+    <button class="btn-secondary" style="width:100%;" onclick="closeLeadCallPanel()">Cancel</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function closeLeadCallPanel() {
+  clearInterval(__leadCallTimer); __leadCallRunning = false;
+  const m = document.getElementById('leadCallModal');
+  if (m) m.remove();
+}
+
+function fmtLeadDuration(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function startLeadCallTimer() {
+  if (__leadCallRunning) return;
+  __leadCallRunning = true;
+  const btn = document.getElementById('leadTimerBtn');
+  if (btn) btn.textContent = '⏹ Stop Timer';
+  __leadCallTimer = setInterval(() => {
+    __leadCallSeconds++;
+    const inp = document.getElementById('leadDurationInput');
+    if (inp) inp.value = fmtLeadDuration(__leadCallSeconds);
+  }, 1000);
+}
+function stopLeadCallTimer() {
+  clearInterval(__leadCallTimer); __leadCallRunning = false;
+  const btn = document.getElementById('leadTimerBtn');
+  if (btn) btn.textContent = '▶ Start Timer';
+}
+function toggleLeadCallTimer() { __leadCallRunning ? stopLeadCallTimer() : startLeadCallTimer(); }
+
+async function submitLeadCall() {
+  const errBox = document.getElementById('leadSubmitErr');
+  errBox.style.display = 'none';
+  const status = document.getElementById('leadStatusSel').value;
+  if (!status) { errBox.textContent = 'Please choose a call status.'; errBox.style.display = 'block'; return; }
+  const duration = document.getElementById('leadDurationInput').value || '00:00';
+  const star = v => v ? (v + ' Star') : '';
+
+  const btn = document.getElementById('leadSubmitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  try {
+    const payload = {
+      action: 'CRM_ENTRY', timestamp: new Date().toISOString(),
+      callingDoneBy: state.empName, customerName: __leadCallCurrent.name || '', mobileNumber: __leadCallCurrent.phone,
+      status: status, callingType: document.getElementById('leadCallTypeSel').value,
+      behaviorRating: star(document.getElementById('leadRateBehavior').value),
+      serviceRating:  star(document.getElementById('leadRateService').value),
+      designRating:   star(document.getElementById('leadRateDesign').value),
+      suggestions:    document.getElementById('leadSuggestionsTxt').value,
+      overallRating:  star(document.getElementById('leadRateOverall').value),
+      teamRating:     star(document.getElementById('leadRateTeam').value),
+      purpose:        document.getElementById('leadPurposeSel').value,
+      feedback:       document.getElementById('leadFeedbackTxt').value,
+      duration:       duration
+    };
+    const res = await leadsApiPost(payload);
+    if (res && res.ok) {
+      toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
+      closeLeadCallPanel();
+      loadEmpLeadsPending();
+      loadEmpLeadsHome();
+    } else {
+      errBox.textContent = (res && (res.error || res.message)) || 'Save failed — please try again.';
+      errBox.style.display = 'block';
+    }
+  } catch (e) {
+    errBox.textContent = 'Network error: ' + e.message;
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Submit';
+  }
+}
+
+// ── EMPLOYEE: Submitted Today (read-only) ───────────────────
+async function loadEmpLeadsSubmitted() {
+  const box = document.getElementById('empLeadsSubmittedBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_DAILY_REPORT', employee: state.empName, role: 'employee', date: todayISO() });
+    const entries = (res && res.entries) || (res && res.data && res.data.entries) || [];
+    if (!entries.length) {
+      box.innerHTML = '<div class="empty-state"><p>No calls submitted yet today.</p></div>';
+      return;
+    }
+    let html = '<div class="kd-note">' + entries.length + ' call(s) submitted today</div>';
+    entries.forEach(e => {
+      html += `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${e.name || e.customerName || ''}</span><span class="kd-pill green">${e.status || ''}</span></div>
+        <div class="dsr-receipt-body"><div class="dsr-meta-row" style="border-bottom:none;">⏱ ${e.duration || e.durationFmt || '—'} &nbsp;·&nbsp; 🕐 ${e.date || e.timestamp || ''}</div></div>
+      </div>`;
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── EMPLOYEE: My Report ─────────────────────────────────────
+async function loadEmpLeadsReport() {
+  const box = document.getElementById('empLeadsReportBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
+    if (!res.ok || !res.rows || !res.rows.length) {
+      box.innerHTML = '<div class="empty-state"><p>No data for today.</p></div>';
+      return;
+    }
+    const r = res.rows[0];
+    let html = sectionHeaderCardHtml('emp', [
+      { val: r.assigned, lbl: 'Assigned', color: '#80c8ff' },
+      { val: r.submitted, lbl: 'Submitted', color: '#80ffb0' },
+      { val: r.pending, lbl: 'Pending', color: '#ffd080' },
+      { val: r.completionPct + '%', lbl: 'Completion', color: '#d4a84a' }
+    ]);
+    const statuses = Object.keys(r.statusBreakdown || {});
+    if (statuses.length) {
+      html += '<div class="card" style="margin-top:10px;"><div class="card-title">Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
+        statuses.map(s => `<th>${s}</th>`).join('') + '</tr></thead><tbody><tr>' +
+        statuses.map(s => `<td style="text-align:center;">${r.statusBreakdown[s]}</td>`).join('') + '</tr></tbody></table></div></div>';
+    }
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
 function stockToday(who, type) {
   document.getElementById('stock' + type + 'Start-' + who).value = '';
   document.getElementById('stock' + type + 'End-' + who).value = '';
   loadStockDetail(who, type, 'today');
+}
+
+// ── ADMIN: Leads home (just shows the 3 quick-action cards; nothing to load) ──
+function loadAdminLeadsHome() { /* landing page — sub-sections load their own data */ }
+
+// ── ADMIN: Today's Assignment — all employees ───────────────
+async function loadAdminLeadsOverview() {
+  const box = document.getElementById('adminLeadsOverviewBox');
+  const dateInp = document.getElementById('adminLeadsOverviewDate');
+  if (dateInp && !dateInp.value) dateInp.value = todayISO();
+  const dateStr = (dateInp && dateInp.value) || todayISO();
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: dateStr });
+    if (!res.ok || !res.rows || !res.rows.length) {
+      box.innerHTML = '<div class="empty-state"><p>No leads assigned on this date.</p></div>';
+      return;
+    }
+    const rows = res.rows.slice().sort((a, b) => b.completionPct - a.completionPct);
+    let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
+      '<th style="text-align:left;">Employee</th><th>Assigned</th><th>Submitted</th><th>Pending</th><th>Avoided</th><th>%</th></tr></thead><tbody>';
+    rows.forEach(r => {
+      const pctColor = r.completionPct >= 80 ? '#1a7a4f' : r.completionPct >= 40 ? '#c97a10' : '#c0392b';
+      html += `<tr><td style="text-align:left;font-weight:700;">${r.employee}</td><td style="text-align:center;">${r.assigned}</td>` +
+        `<td style="text-align:center;">${r.submitted}</td><td style="text-align:center;">${r.pending}</td>` +
+        `<td style="text-align:center;">${r.avoided}</td><td style="text-align:center;color:${pctColor};font-weight:800;">${r.completionPct}%</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── ADMIN: Overdue / Unsubmitted leads — Avoid button ────────
+async function loadAdminOverdueLeads() {
+  const box = document.getElementById('adminOverdueLeadsBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_OVERDUE_LEADS' });
+    if (!res.ok || !res.leads || !res.leads.length) {
+      box.innerHTML = '<div class="empty-state"><p>Nothing overdue — everyone is up to date. 🎉</p></div>';
+      return;
+    }
+    let html = '<div class="kd-note">' + res.leads.length + ' overdue lead(s)</div>';
+    res.leads.forEach(l => {
+      html += `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${l.customerName || 'Unknown'}</span><span class="kd-pill" style="background:var(--red-bg,#fdecea);color:var(--red,#c0392b);">${l.daysOverdue}d overdue</span></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-meta-row">📱 ${l.phone} &nbsp;·&nbsp; 👤 ${l.employeeName}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">📅 Assigned: ${l.assignedDate}</div>
+        </div>
+        <button class="btn-secondary" style="width:100%;margin-top:8px;color:var(--red,#c0392b);" onclick="avoidLeadAdmin('${l.phone}','${l.employeeName.replace(/'/g, "\\'")}','${l.assignedDate}')">🚫 Avoid — Send Back to Pool</button>
+      </div>`;
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+async function avoidLeadAdmin(phone, employeeName, assignedDate) {
+  if (!confirm('Avoid this lead for ' + employeeName + '?\n\nIt will go back to Clean Leads for reassignment.')) return;
+  try {
+    const res = await leadsApiPost({
+      action: 'AVOID_LEAD', phone: phone, employeeName: employeeName,
+      adminName: state.adminName || state.adminEmail || 'Admin', reason: 'Not submitted (overdue)'
+    });
+    if (res && res.ok) {
+      toast('✅ Lead avoided — back in Clean Leads pool', 'success');
+      loadAdminOverdueLeads();
+    } else {
+      toast('❌ ' + ((res && (res.error || res.message)) || 'Avoid failed'), 'error');
+    }
+  } catch (e) {
+    toast('❌ Network error: ' + e.message, 'error');
+  }
+}
+
+// ── ADMIN: Daily lead quota per employee ─────────────────────
+async function loadAdminLeadsQuota() {
+  const box = document.getElementById('adminLeadsQuotaBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_QUOTAS' });
+    if (!res.ok || !res.quotas || !res.quotas.length) {
+      box.innerHTML = '<div class="empty-state"><p>No employees found in the crm email sheet.</p></div>';
+      return;
+    }
+    let html = '';
+    res.quotas.forEach(q => {
+      html += `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="flex:1;"><div style="font-weight:700;">${q.name}</div><div style="font-size:11px;color:var(--text3);">${q.email}</div></div>
+        <input type="number" min="0" value="${q.quota}" id="quotaInp-${q.email.replace(/[^a-zA-Z0-9]/g, '')}" style="width:70px;padding:6px;border:1.5px solid var(--border);border-radius:8px;text-align:center;">
+        <button class="btn-secondary" style="padding:8px 12px;" onclick="saveEmpQuota('${q.email}')">💾</button>
+      </div>`;
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+async function saveEmpQuota(email) {
+  const inp = document.getElementById('quotaInp-' + email.replace(/[^a-zA-Z0-9]/g, ''));
+  if (!inp) return;
+  try {
+    const res = await leadsApiPost({ action: 'SET_QUOTA', email: email, quota: inp.value });
+    if (res && res.ok) toast('✅ Quota updated', 'success');
+    else toast('❌ ' + ((res && (res.error || res.message)) || 'Update failed'), 'error');
+  } catch (e) {
+    toast('❌ Network error: ' + e.message, 'error');
+  }
 }
 
 function stockThisMonth(who, type) {
