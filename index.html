@@ -2202,20 +2202,20 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div id="settingsEmpPane">
           <div class="card">
             <div class="card-title">👤 Select Employee</div>
-            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick an employee by name to control their Loyalty Card access individually — e.g. turn it off for staff (like CRM) who don't need it.</p>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick an employee here to tick the boxes that already apply to them — everything else stays unticked. Tick/untick whatever you need, then save.</p>
             <select id="settingsEmpSelect" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
           </div>
-          <div id="settingsEmpPermBody"></div>
+          <div id="settingsEmpPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
         </div>
 
         <!-- ADMIN ACCESS PANEL — per-person, full feature accordion -->
         <div id="settingsAdminPane" style="display:none;">
           <div class="card">
             <div class="card-title">🔑 Select Admin</div>
-            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick a non-MIS/Director admin by name (Director shown separately as always-full-access; Director/EA/Manager/Store Manager/Asst Manager etc. all appear here individually — access is set per PERSON, not per job title).</p>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick a non-MIS/Director admin here to tick the boxes that already apply to them — everything else stays unticked (Director shown separately as always-full-access; Director/EA/Manager/Store Manager/Asst Manager etc. all appear here individually — access is set per PERSON, not per job title).</p>
             <select id="settingsAdminSelect" onchange="onSettingsAdminSelected()"><option value="">-- Loading admins... --</option></select>
           </div>
-          <div id="settingsAdminPermBody"></div>
+          <div id="settingsAdminPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
         </div>
 
         <div class="card">
@@ -4967,11 +4967,62 @@ function switchSettingsTab(tab) {
   document.getElementById('settingsTab-admin').classList.toggle('active', tab === 'admin');
   document.getElementById('settingsEmpPane').style.display = tab === 'emp' ? 'block' : 'none';
   document.getElementById('settingsAdminPane').style.display = tab === 'admin' ? 'block' : 'none';
-  if (tab === 'emp') loadSettingsEmpList();
-  if (tab === 'admin') loadSettingsAdminList();
+  if (tab === 'emp') { loadPermFeatureList().then(() => { renderSettingsEmpBody(null); loadSettingsEmpList(); }); }
+  if (tab === 'admin') { loadPermFeatureList().then(() => { renderSettingsAdminBody(null); loadSettingsAdminList(); }); }
 }
 
-// ── EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off ──
+// Shared feature/section structure (labels, keys, groupings) used by
+// BOTH the Employee and Admin Access panels — fetched once per page
+// load (not per person) so every section/checkbox can be drawn
+// immediately when a tab opens, before any person is selected. Picking
+// a person from the dropdown never adds or removes sections — it only
+// ticks/unticks boxes that are already on screen.
+async function loadPermFeatureList() {
+  if (window.__permFeatures) return window.__permFeatures;
+  try {
+    const res = await jsonpReliable({ page: 'getPermFeatureListAPI' });
+    if (!res.ok) throw new Error(res.error);
+    window.__permFeatures = res;
+    return res;
+  } catch(e) {
+    window.__permFeatures = { features: [] };
+    return window.__permFeatures;
+  }
+}
+
+// Builds the accordion HTML for a set of features. `perms` is either a
+// real permissions object (person selected — boxes tick accordingly)
+// or null (nothing selected yet — every box starts unticked).
+// `checkClass`/`idPrefix`/`onChangeFn` let the same builder serve both
+// the Employee ("...Emp") and Admin (no suffix) panels with separate
+// DOM ids so the two panels never collide.
+function buildPermAccordionHtml(features, perms, checkClass, idPrefix, onChangeFn) {
+  let html = '';
+  (features || []).forEach(f => {
+    const subs = f.subs || [];
+    const anyOn = perms ? subs.some(s => !!perms[s.key]) : false;
+    html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
+      <div onclick="${idPrefix}_toggleAccordion('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
+          <span id="${idPrefix}_acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
+        </span>
+      </div>
+      <div id="${idPrefix}_acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
+    subs.forEach(s => {
+      const checked = perms ? !!perms[s.key] : false;
+      html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" class="${checkClass}" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="${onChangeFn}('${f.key}')">
+        <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
+      </label>`;
+    });
+    html += `</div></div>`;
+  });
+  return html;
+}
+
+// ── EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off + detailed sub-options ──
 async function loadSettingsEmpList() {
   const sel = document.getElementById('settingsEmpSelect');
   if (sel.dataset.loaded === '1') return;
@@ -4987,35 +5038,60 @@ async function loadSettingsEmpList() {
   }
 }
 
-function onSettingsEmpSelected() {
-  const empId = document.getElementById('settingsEmpSelect').value;
+// Draws the FULL employee checklist (simple module toggles + detailed
+// accordion) every time — whether or not a person is selected. `emp`
+// is null before any selection (everything unticked, Save/Reset
+// disabled since there's no target yet); once a person is picked this
+// is called again with their real data so the very same boxes just
+// change their ticked state.
+function renderSettingsEmpBody(emp) {
   const body = document.getElementById('settingsEmpPermBody');
-  if (!empId) { body.innerHTML = ''; return; }
-  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-  if (!emp) { body.innerHTML = ''; return; }
+  const disabled = emp ? '' : 'disabled';
+  const nameLabel = emp ? `${emp.name} (${emp.empId})` : 'No employee selected';
+  const features = (window.__permFeatures && window.__permFeatures.features) || [];
+  const perms = emp ? emp.granularPerms : null; // filled in by loadSettingsEmpGranular once fetched
 
-  body.innerHTML = `<div class="card">
-    <div class="card-title">${emp.name} (${emp.empId})</div>
+  let html = `<div class="card">
+    <div class="card-title">${nameLabel}</div>
+    ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : ''}
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
-      <input type="checkbox" id="empLeaveAccessCheck" ${emp.leaveAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <input type="checkbox" id="empLeaveAccessCheck" ${emp && emp.leaveAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">📋 Leave Access</span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
-      <input type="checkbox" id="empLoyaltyAccessCheck" ${emp.loyaltyAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <input type="checkbox" id="empLoyaltyAccessCheck" ${emp && emp.loyaltyAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">💳 Loyalty Card Access</span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
-      <input type="checkbox" id="empKpiAccessCheck" ${emp.kpiAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <input type="checkbox" id="empKpiAccessCheck" ${emp && emp.kpiAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">📊 KPI Access</span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
-      <input type="checkbox" id="empDsrAccessCheck" ${emp.dsrAccess ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <input type="checkbox" id="empDsrAccessCheck" ${emp && emp.dsrAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access</span>
     </label>
     <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
-    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" onclick="saveSettingsEmpAccess('${escJs(empId)}','${escJs(emp.name)}')">💾 Save Module Access for ${emp.name}</button>
+    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
-  <div id="settingsEmpGranularBody" style="margin-top:14px;"><div class="loading"><span class="spinner"></span>Loading detailed options...</div></div>`;
+  <div id="settingsEmpGranularBody" style="margin-top:14px;">
+    <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>
+    ${buildPermAccordionHtml(features, perms, 'settings-perm-check-emp', 'emp', 'onSettingsCheckChangeEmp')}
+    <button class="btn-secondary" id="settingsResetEmpBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset (Select All / Deselect All)</button>
+    <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
+  </div>`;
+  body.innerHTML = html;
+}
+
+function onSettingsEmpSelected() {
+  const empId = document.getElementById('settingsEmpSelect').value;
+  if (!empId) { renderSettingsEmpBody(null); return; }
+  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
+  if (!emp) { renderSettingsEmpBody(null); return; }
+
+  // Draw immediately with the simple toggles (already known) while the
+  // detailed sub-option ticks are fetched — sections stay visible the
+  // whole time, only their ticked state updates once data arrives.
+  renderSettingsEmpBody(emp);
   loadSettingsEmpGranular(empId, emp.name);
 }
 
@@ -5023,45 +5099,23 @@ function onSettingsEmpSelected() {
 // Access uses (SM_PERM_FEATURES), just saved to a separate per-employee
 // sheet. Lets MIS give an employee, say, "DSR: Missing" without also
 // giving "DSR: New Entry" — instead of only being able to switch DSR
-// fully on/off.
+// fully on/off. Re-renders the SAME accordion structure that's already
+// on screen with this person's real ticks, rather than building it for
+// the first time.
 async function loadSettingsEmpGranular(empId, empName) {
-  const body = document.getElementById('settingsEmpGranularBody');
+  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
   try {
     const res = await jsonpReliable({ page: 'getIndividualEmpPermsAPI', empId });
     if (!res.ok) throw new Error(res.error);
-    const perms = res.permissions || {};
-    const features = res.features || [];
-
-    let html = `<div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>`;
-    features.forEach(f => {
-      const subs = f.subs || [];
-      const anyOn = subs.some(s => !!perms[s.key]);
-      html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
-        <div onclick="toggleSettingsAccordionEmp('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
-          <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
-          <span style="display:flex;align-items:center;gap:8px;">
-            <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
-            <span id="emp_acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
-          </span>
-        </div>
-        <div id="emp_acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
-      subs.forEach(s => {
-        const checked = !!perms[s.key];
-        html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-          <input type="checkbox" class="settings-perm-check-emp" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="onSettingsCheckChangeEmp('${f.key}')">
-          <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
-        </label>`;
-      });
-      html += `</div></div>`;
-    });
-    html += `<button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" onclick="saveSettingsEmpGranular('${escJs(empId)}','${escJs(empName)}')">💾 Save Detailed Access for ${empName}</button>`;
-    body.innerHTML = html;
+    if (emp) emp.granularPerms = res.permissions || {};
+    if (document.getElementById('settingsEmpSelect').value === empId) renderSettingsEmpBody(emp);
   } catch(e) {
-    body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load detailed options</p></div>';
+    const gbody = document.getElementById('settingsEmpGranularBody');
+    if (gbody) gbody.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load detailed options</p></div>';
   }
 }
 
-function toggleSettingsAccordionEmp(key) {
+function emp_toggleAccordion(key) {
   const body = document.getElementById('emp_acc_body_' + key);
   const arrow = document.getElementById('emp_acc_arrow_' + key);
   const open = body.style.display === 'block';
@@ -5077,7 +5131,24 @@ function onSettingsCheckChangeEmp(featureKey) {
   pill.textContent = anyOn ? 'ON' : 'OFF';
 }
 
+// Toggles every detailed-access checkbox for the currently selected
+// employee between Select All and Deselect All, same behavior as the
+// Admin panel's reset button. Nothing is sent to the server until
+// "Save Detailed Access" is pressed.
+function resetSettingsEmpChecks() {
+  const checks = Array.from(document.querySelectorAll('.settings-perm-check-emp'));
+  if (checks.length === 0) return;
+  const checkedCount = checks.filter(cb => cb.checked).length;
+  const selectAll = checkedCount < checks.length;
+  checks.forEach(cb => { cb.checked = selectAll; });
+  document.querySelectorAll('[id^="emp_acc_body_"]').forEach(bodyEl => {
+    onSettingsCheckChangeEmp(bodyEl.id.replace('emp_acc_body_', ''));
+  });
+  toast(selectAll ? '✅ All detailed options selected — click Save to apply' : '⬜ All detailed options deselected — click Save to apply', 'info');
+}
+
 async function saveSettingsEmpGranular(empId, empName) {
+  if (!empId) { toast('Select an employee first', 'error'); return; }
   const payload = {
     page: 'saveIndividualEmpPermsAPI', empId, empName,
     callerRole: state.adminRole, callerEmail: state.adminEmail
@@ -5097,6 +5168,7 @@ async function saveSettingsEmpGranular(empId, empName) {
 }
 
 async function saveSettingsEmpAccess(empId, empName) {
+  if (!empId) { toast('Select an employee first', 'error'); return; }
   const enabled = document.getElementById('empLoyaltyAccessCheck').checked;
   const kpiEnabled = document.getElementById('empKpiAccessCheck').checked;
   const dsrEnabled = document.getElementById('empDsrAccessCheck').checked;
@@ -5145,92 +5217,81 @@ async function loadSettingsAdminList() {
   }
 }
 
+// Draws the FULL admin checklist (section master switches + detailed
+// accordion) every time — whether or not an admin is selected. `admin`
+// is null before any selection (everything unticked, Save/Reset
+// disabled); once an admin is picked this is called again with their
+// real permissions so the very same boxes just change their ticked
+// state instead of the whole panel appearing/disappearing.
+function renderSettingsAdminBody(admin) {
+  const body = document.getElementById('settingsAdminPermBody');
+  const disabled = admin ? '' : 'disabled';
+  const nameLabel = admin ? `${admin.name} · ${admin.role} · ${admin.email}` : 'No admin selected';
+  const features = (window.__permFeatures && window.__permFeatures.features) || [];
+  const perms = admin ? admin.perms : null;
+
+  let html = `<div class="card" style="padding:10px 14px;margin-bottom:8px;">
+    <div style="font-weight:700;font-size:13.5px;">${admin ? admin.name : 'No admin selected'}</div>
+    <div style="font-size:11.5px;color:var(--text3);">${admin ? admin.role + ' · ' + admin.email : 'Pick an admin above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.'}</div>
+  </div>`;
+
+  html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;background:linear-gradient(135deg,#fdf6e3,#fff);border-color:var(--gold);">
+    <div style="font-size:11.5px;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">⚡ Section Master Switch</div>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_leave" ${perms && perms.section_leave ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Leave Section — entire section on/off</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_loyalty" ${perms && perms.section_loyalty ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">💳 Loyalty Card Section — entire section on/off</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_kpi" ${perms && perms.section_kpi ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">📊 KPI Section — entire section on/off</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_dsr" ${perms && perms.section_dsr ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">🧾 DSR Section — entire section on/off</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_golden_aura" ${perms && perms.section_golden_aura ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">🌟 Golden Aura Section — entire section on/off</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_stock" ${perms && perms.section_stock ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Stock Check List Section — entire section on/off</span>
+    </label>
+    <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
+  </div>`;
+
+  html += buildPermAccordionHtml(features, perms, 'settings-perm-check', 'adm', 'onSettingsCheckChange');
+  html += `<button class="btn-secondary" id="settingsResetAdminBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="resetSettingsAdminChecks()">🔄 Reset (Select All / Deselect All)</button>`;
+  html += `<button class="btn-primary" id="settingsSaveAdminBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsAdminAccess('${admin ? escJs(admin.email) : ''}','${admin ? escJs(admin.name) : ''}','${admin ? escJs(admin.role) : ''}')">💾 Save Access${admin ? ' for ' + admin.name : ''}</button>`;
+  body.innerHTML = html;
+}
+
 async function onSettingsAdminSelected() {
   const email = document.getElementById('settingsAdminSelect').value;
-  const body = document.getElementById('settingsAdminPermBody');
-  if (!email) { body.innerHTML = ''; return; }
+  if (!email) { renderSettingsAdminBody(null); return; }
   const admin = (window.__settingsAdminList || []).find(a => a.email === email);
-  if (!admin) { body.innerHTML = ''; return; }
+  if (!admin) { renderSettingsAdminBody(null); return; }
 
-  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await jsonpReliable({ page: 'getIndividualAdminPermsAPI', email });
     if (!res.ok) throw new Error(res.error);
-    const perms = res.permissions || {};
-    const features = res.features || [];
+    admin.perms = res.permissions || {};
     window.__leaveSectionKeys = res.leaveSectionKeys || [];
     window.__loyaltySectionKeys = res.loyaltySectionKeys || [];
-
-    let html = `<div class="card" style="padding:10px 14px;margin-bottom:8px;">
-      <div style="font-weight:700;font-size:13.5px;">${admin.name}</div>
-      <div style="font-size:11.5px;color:var(--text3);">${admin.role} · ${admin.email}</div>
-    </div>`;
-
-    // Section master switches — a one-click way to kill an entire
-    // section for this person, instead of unticking 8-10 items one by
-    // one. Default ON (checked); unticking overrides every individual
-    // sub-permission below it, even ones that stay ticked.
-    html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;background:linear-gradient(135deg,#fdf6e3,#fff);border-color:var(--gold);">
-      <div style="font-size:11.5px;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">⚡ Section Master Switch</div>
-      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" id="sectionMasterCheck_leave" ${perms.section_leave ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Leave Section — entire section on/off</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" id="sectionMasterCheck_loyalty" ${perms.section_loyalty ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">💳 Loyalty Card Section — entire section on/off</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" id="sectionMasterCheck_kpi" ${perms.section_kpi ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">📊 KPI Section — entire section on/off</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" id="sectionMasterCheck_dsr" ${perms.section_dsr ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">🧾 DSR Section — entire section on/off</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" id="sectionMasterCheck_golden_aura" ${perms.section_golden_aura ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">🌟 Golden Aura Section — entire section on/off</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" id="sectionMasterCheck_stock" ${perms.section_stock ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Stock Check List Section — entire section on/off</span>
-      </label>
-      <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
-    </div>`;
-
-    features.forEach(f => {
-      const subs = f.subs || [];
-      const anyOn = subs.some(s => !!perms[s.key]);
-      html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
-        <div onclick="toggleSettingsAccordion('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
-          <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
-          <span style="display:flex;align-items:center;gap:8px;">
-            <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
-            <span id="acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
-          </span>
-        </div>
-        <div id="acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
-      subs.forEach(s => {
-        const checked = !!perms[s.key];
-        html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-          <input type="checkbox" class="settings-perm-check" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="onSettingsCheckChange('${f.key}')">
-          <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
-        </label>`;
-      });
-      html += `</div></div>`;
-    });
-    html += `<button class="btn-secondary" id="settingsResetAdminBtn" style="width:100%;margin-top:6px;" onclick="resetSettingsAdminChecks()">🔄 Reset (Select All / Deselect All)</button>`;
-    html += `<button class="btn-primary" id="settingsSaveAdminBtn" style="width:100%;margin-top:6px;" onclick="saveSettingsAdminAccess('${escJs(admin.email)}','${escJs(admin.name)}','${escJs(admin.role)}')">💾 Save Access for ${admin.name}</button>`;
-    body.innerHTML = html;
+    if (document.getElementById('settingsAdminSelect').value === email) renderSettingsAdminBody(admin);
   } catch(e) {
-    body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load this admin&#39;s permissions</p></div>';
+    const body = document.getElementById('settingsAdminPermBody');
+    if (body) body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load this admin&#39;s permissions</p></div>';
   }
 }
 
-function toggleSettingsAccordion(key) {
-  const body = document.getElementById('acc_body_' + key);
-  const arrow = document.getElementById('acc_arrow_' + key);
+function adm_toggleAccordion(key) {
+  const body = document.getElementById('adm_acc_body_' + key);
+  const arrow = document.getElementById('adm_acc_arrow_' + key);
   const open = body.style.display === 'block';
   body.style.display = open ? 'none' : 'block';
   arrow.textContent = open ? '▾' : '▴';
@@ -5239,8 +5300,8 @@ function toggleSettingsAccordion(key) {
 // Live-updates the ON/OFF badge and header tint the instant a checkbox
 // changes, so MIS gets immediate visual feedback before even saving.
 function onSettingsCheckChange(featureKey) {
-  const header = document.querySelector(`#acc_body_${featureKey}`).previousElementSibling;
-  const anyOn = Array.from(document.querySelectorAll(`#acc_body_${featureKey} .settings-perm-check`)).some(cb => cb.checked);
+  const header = document.querySelector(`#adm_acc_body_${featureKey}`).previousElementSibling;
+  const anyOn = Array.from(document.querySelectorAll(`#adm_acc_body_${featureKey} .settings-perm-check`)).some(cb => cb.checked);
   header.style.background = anyOn ? 'var(--green-bg)' : '#fff';
   const pill = header.querySelector('.pill');
   pill.style.background = anyOn ? 'var(--green)' : '#ddd';
@@ -5264,8 +5325,8 @@ function resetSettingsAdminChecks() {
   allChecks.forEach(cb => { cb.checked = selectAll; });
 
   // Refresh every accordion header's ON/OFF badge to match the new state.
-  document.querySelectorAll('[id^="acc_body_"]').forEach(bodyEl => {
-    const key = bodyEl.id.replace('acc_body_', '');
+  document.querySelectorAll('[id^="adm_acc_body_"]').forEach(bodyEl => {
+    const key = bodyEl.id.replace('adm_acc_body_', '');
     onSettingsCheckChange(key);
   });
 
@@ -5273,6 +5334,7 @@ function resetSettingsAdminChecks() {
 }
 
 async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
+  if (!targetEmail) { toast('Select an admin first', 'error'); return; }
   const payload = {
     page: 'saveIndividualAdminPermsAPI', targetEmail, targetName, targetRole,
     callerRole: state.adminRole, callerEmail: state.adminEmail
