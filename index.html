@@ -8353,7 +8353,23 @@ function loadStockDetail(who, type, mode) {
                 ${visibleItems.length ? visibleItems.map(([key, label]) => {
                   const ov = d.opening ? d.opening.items[key] : '';
                   const cv = d.closing ? d.closing.items[key] : '';
-                  return `<tr><td>${label}</td><td style="text-align:center;">${ov !== undefined && ov !== '' ? ov : '—'}</td><td style="text-align:center;">${cv !== undefined && cv !== '' ? cv : '—'}</td></tr>`;
+                  const hasOv = ov !== undefined && ov !== '';
+                  const hasCv = cv !== undefined && cv !== '';
+                  // Variance badge — only meaningful once BOTH Opening and
+                  // Closing are actually recorded for this item. Shortage
+                  // (Closing < Opening, stock went missing) shown in red;
+                  // Excess (Closing > Opening, extra stock appeared) shown
+                  // in green; an exact match gets no badge at all.
+                  let varianceBadge = '';
+                  if (hasOv && hasCv && !isNaN(Number(ov)) && !isNaN(Number(cv))) {
+                    const diff = Number(cv) - Number(ov);
+                    if (diff < 0) {
+                      varianceBadge = `<br><span style="display:inline-block;margin-top:2px;padding:1px 7px;border-radius:10px;font-size:10.5px;font-weight:700;background:var(--red-bg,#ffe3e0);color:var(--red,#e0453c);">🔴 Shortage ${diff}</span>`;
+                    } else if (diff > 0) {
+                      varianceBadge = `<br><span style="display:inline-block;margin-top:2px;padding:1px 7px;border-radius:10px;font-size:10.5px;font-weight:700;background:var(--green-bg,#e2f8ea);color:var(--green,#1fa855);">🟢 Excess +${diff}</span>`;
+                    }
+                  }
+                  return `<tr><td>${label}</td><td style="text-align:center;">${hasOv ? ov : '—'}</td><td style="text-align:center;">${hasCv ? cv : '—'}${varianceBadge}</td></tr>`;
                 }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text3);">No item values recorded.</td></tr>'}
               </tbody>
             </table>
