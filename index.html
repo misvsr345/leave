@@ -8087,9 +8087,10 @@ function stockDutySummaryHtml(sectionName, arr) {
     } else if (s.doneEmployee) {
       // Suggested person (or the only person we know of) did it themselves.
       todayHtml = `👤 <b>${s.doneEmployee}</b> <span class="kd-pill green">✅ Done</span>`;
-    } else if (s.suggestedEmployee) {
-      todayHtml = `👤 <b>${s.suggestedEmployee}</b> <span class="kd-pill red">⏳ Pending</span>`;
     } else {
+      // Not yet submitted, and nobody's on leave — don't reveal the
+      // suggested name pre-emptively. Only "Tomorrow Suggested" should
+      // be visible until this shift's checklist is actually done.
       todayHtml = '<span style="color:var(--text3);">—</span>';
     }
     const tomorrowHtml = s.tomorrowEmployee ? `👤 <b>${s.tomorrowEmployee}</b>` : '<span style="color:var(--text3);">—</span>';
