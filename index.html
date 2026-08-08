@@ -8041,16 +8041,30 @@ function stockDutySummaryHtml(sectionName, arr) {
   // Group by shift so Morning/Opening and Evening/Closing each get their
   // own line (the roster genuinely runs two independent duty rotations
   // per section).
+  //
+  // "Suggested" and "who actually submitted" are tracked SEPARATELY —
+  // the person who submits today's checklist is often not the person
+  // the roster suggested (someone covers for them), so we must not
+  // assume the suggested name did the work. We scan every employee row
+  // in this shift's roster: the one row with a non-empty suggestedToday
+  // tells us who was suggested (and whether *that* person is on leave
+  // or already done); separately, whichever row's own "today" status
+  // shows ✅ Done tells us who actually submitted — could be the same
+  // person, or someone else entirely.
   const shifts = {};
   arr.forEach(d => {
     const key = d.shift || sectionName;
-    if (!shifts[key]) shifts[key] = { todayEmployee: '', todayDone: false, tomorrowEmployee: '' };
+    if (!shifts[key]) shifts[key] = { suggestedEmployee: '', suggestedOnLeave: false, doneEmployee: '', tomorrowEmployee: '' };
     const suggToday = String(d.suggestedToday || '').trim();
     const suggTom = String(d.suggestedTomorrow || '').trim();
     const isWaiting = (s) => /waiting/i.test(s);
-    if (suggToday && !isWaiting(suggToday) && !shifts[key].todayEmployee) {
-      shifts[key].todayEmployee = d.employee;
-      shifts[key].todayDone = String(d.today || '').indexOf('Done') > -1;
+    const todayStatus = String(d.today || '');
+    if (suggToday && !isWaiting(suggToday) && !shifts[key].suggestedEmployee) {
+      shifts[key].suggestedEmployee = d.employee;
+      shifts[key].suggestedOnLeave = todayStatus.indexOf('🏖') > -1;
+    }
+    if (todayStatus.indexOf('✅') > -1 && !shifts[key].doneEmployee) {
+      shifts[key].doneEmployee = d.employee;
     }
     if (suggTom && !isWaiting(suggTom) && !shifts[key].tomorrowEmployee) {
       shifts[key].tomorrowEmployee = d.employee;
@@ -8058,9 +8072,26 @@ function stockDutySummaryHtml(sectionName, arr) {
   });
   const rows = Object.keys(shifts).map(shiftName => {
     const s = shifts[shiftName];
-    const todayHtml = s.todayEmployee
-      ? `👤 <b>${s.todayEmployee}</b> ${s.todayDone ? '<span class="kd-pill green">✅ Done</span>' : '<span class="kd-pill red">⏳ Pending</span>'}`
-      : '<span style="color:var(--text3);">—</span>';
+    let todayHtml;
+    if (s.suggestedOnLeave) {
+      // Suggested person is on leave — show that plainly, and if someone
+      // else stepped in and actually submitted, show that too.
+      todayHtml = `👤 <b>${s.suggestedEmployee}</b> <span class="kd-pill" style="background:var(--purple-bg);color:var(--purple);">🏖 On Leave</span>`
+        + (s.doneEmployee && s.doneEmployee !== s.suggestedEmployee
+            ? `<br>👤 <b>${s.doneEmployee}</b> <span class="kd-pill green">✅ Done</span>`
+            : '');
+    } else if (s.doneEmployee && s.suggestedEmployee && s.doneEmployee !== s.suggestedEmployee) {
+      // Someone other than the suggested person actually submitted.
+      todayHtml = `👤 ${s.suggestedEmployee} <span style="color:var(--text3);">— Suggested</span>`
+        + `<br>👤 <b>${s.doneEmployee}</b> <span class="kd-pill green">✅ Done</span>`;
+    } else if (s.doneEmployee) {
+      // Suggested person (or the only person we know of) did it themselves.
+      todayHtml = `👤 <b>${s.doneEmployee}</b> <span class="kd-pill green">✅ Done</span>`;
+    } else if (s.suggestedEmployee) {
+      todayHtml = `👤 <b>${s.suggestedEmployee}</b> <span class="kd-pill red">⏳ Pending</span>`;
+    } else {
+      todayHtml = '<span style="color:var(--text3);">—</span>';
+    }
     const tomorrowHtml = s.tomorrowEmployee ? `👤 <b>${s.tomorrowEmployee}</b>` : '<span style="color:var(--text3);">—</span>';
     return `<tr><td>${shiftName}</td><td>${todayHtml}</td><td>${tomorrowHtml}</td></tr>`;
   }).join('');
