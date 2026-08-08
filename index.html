@@ -8054,13 +8054,17 @@ function stockDutySummaryHtml(sectionName, arr) {
       ? `👤 <b>${s.todayEmployee}</b> ${s.todayDone ? '<span class="kd-pill green">✅ Done</span>' : '<span class="kd-pill red">⏳ Pending</span>'}`
       : '<span style="color:var(--text3);">—</span>';
     const tomorrowHtml = s.tomorrowEmployee ? `👤 <b>${s.tomorrowEmployee}</b>` : '<span style="color:var(--text3);">—</span>';
-    return `<div class="leave-card-date" style="margin-bottom:6px;">
-        <div style="font-weight:700;font-size:11.5px;color:var(--text3);margin-bottom:4px;">${shiftName}</div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-size:11.5px;color:var(--text3);">Today Suggested / Done By</span><span>${todayHtml}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="font-size:11.5px;color:var(--text3);">Tomorrow Suggested</span><span>${tomorrowHtml}</span></div>
-      </div>`;
+    return `<tr><td>${shiftName}</td><td>${todayHtml}</td><td>${tomorrowHtml}</td></tr>`;
   }).join('');
-  return `<div style="margin-bottom:12px;"><div style="font-weight:800;color:var(--purple);margin-bottom:6px;">${icon} ${sectionName}</div>${rows}</div>`;
+  return `<div style="margin-bottom:12px;">
+      <div class="kd-table-wrap">
+        <table class="kd-table">
+          <thead><tr><th colspan="3" style="text-align:left;color:var(--purple);">${icon} ${sectionName}</th></tr>
+          <tr><th>Shift</th><th>Today Suggested / Done By</th><th>Tomorrow Suggested</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 // 30-day compliance trend — plain CSS bar chart, no charting library
@@ -8173,6 +8177,32 @@ function loadStockDetail(who, type, mode) {
     res.dateRows.forEach(d => {
       const openEmp = d.opening ? d.opening.emp : null;
       const closeEmp = d.closing ? d.closing.emp : null;
+
+      // If this day has NO submission at all (neither Opening nor
+      // Closing happened), don't render a full item table full of
+      // dashes — it reads like data failed to load. Show one clear
+      // "nothing submitted yet" line instead.
+      if (!d.opening && !d.closing) {
+        html += `<div class="dsr-receipt-card" style="margin-bottom:12px;">
+          <div class="dsr-receipt-hd">
+            <span class="dsr-receipt-id" style="font-weight:800;color:var(--gold);">📅 ${d.dateDisp}</span>
+          </div>
+          <div class="dsr-receipt-body">
+            <div class="empty-state" style="padding:14px;"><p style="font-size:12px;">No checklist submitted yet for this day.</p></div>
+          </div>
+        </div>`;
+        return;
+      }
+
+      // Only show item rows that actually have a value on at least one
+      // side (Opening or Closing) — items with no data on either side
+      // for this day are dropped instead of printing an empty "—" row.
+      const visibleItems = itemLabels.filter(([key]) => {
+        const ov = d.opening ? d.opening.items[key] : '';
+        const cv = d.closing ? d.closing.items[key] : '';
+        return (ov !== undefined && ov !== '') || (cv !== undefined && cv !== '');
+      });
+
       html += `<div class="dsr-receipt-card" style="margin-bottom:12px;">
         <div class="dsr-receipt-hd">
           <span class="dsr-receipt-id" style="font-weight:800;color:var(--gold);">📅 ${d.dateDisp}</span>
@@ -8186,11 +8216,11 @@ function loadStockDetail(who, type, mode) {
             <table class="kd-table">
               <thead><tr><th>Item Name</th><th>Opening</th><th>Closing</th></tr></thead>
               <tbody>
-                ${itemLabels.map(([key, label]) => {
+                ${visibleItems.length ? visibleItems.map(([key, label]) => {
                   const ov = d.opening ? d.opening.items[key] : '';
                   const cv = d.closing ? d.closing.items[key] : '';
                   return `<tr><td>${label}</td><td style="text-align:center;">${ov !== undefined && ov !== '' ? ov : '—'}</td><td style="text-align:center;">${cv !== undefined && cv !== '' ? cv : '—'}</td></tr>`;
-                }).join('')}
+                }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text3);">No item values recorded.</td></tr>'}
               </tbody>
             </table>
           </div>
