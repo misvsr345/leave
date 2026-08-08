@@ -5769,8 +5769,51 @@ async function loadAdminData() {
     try { renderPending(); } catch(e3) { console.error('renderPending failed:', e3); }
     try { renderAdminLeaves(); } catch(e4) { console.error('renderAdminLeaves failed:', e4); }
     try { renderAdminCalendar(); } catch(e5) { console.error('renderAdminCalendar failed:', e5); }
+    try { checkLeaveLeadsConflictsPopup(); } catch(e6) { console.error('leave+leads popup check failed:', e6); }
   } catch(e) {
     toast('Admin data load error', 'error');
+  }
+}
+
+// ══════════════════════════════════════
+// LEAVE + LEADS CONFLICT POPUP — checked once every time the admin
+// portal opens/logs in. Shows who has today's leads assigned but is
+// also on leave (Pending/Absent/Approved), so MIS sees it immediately
+// instead of waiting for the 10:45 AM mail.
+// ══════════════════════════════════════
+async function checkLeaveLeadsConflictsPopup() {
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEAVE_LEADS_ALERTS' });
+    const conflicts = res && res.conflicts;
+    if (!res || !res.ok || !conflicts || !conflicts.rows || !conflicts.rows.length) return;
+
+    const existing = document.getElementById('leaveLeadsAlertModal');
+    if (existing) existing.remove();
+
+    const rowsHtml = conflicts.rows.map(r => {
+      const statusColor = r.leaveStatus.toLowerCase() === 'approved' ? '#065f46' : r.leaveStatus.toLowerCase() === 'absent' ? '#991b1b' : '#92400e';
+      const statusBg = r.leaveStatus.toLowerCase() === 'approved' ? '#d1fae5' : r.leaveStatus.toLowerCase() === 'absent' ? '#fee2e2' : '#fef3c7';
+      return `<div class="dsr-receipt-card" style="margin-bottom:8px;">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${r.empName}</span>
+        <span class="kd-pill" style="background:${statusBg};color:${statusColor};">${r.leaveStatus}</span></div>
+        <div class="dsr-receipt-body"><div class="dsr-meta-row" style="border-bottom:none;">📞 <b>${r.leadCount}</b> lead(s) assigned today</div></div>
+      </div>`;
+    }).join('');
+
+    const div = document.createElement('div');
+    div.id = 'leaveLeadsAlertModal';
+    div.className = 'modal-overlay show';
+    div.innerHTML = `<div class="modal-box" style="max-width:440px;max-height:88vh;overflow-y:auto;">
+      <div class="modal-title">⚠️ Leave + Leads Alert</div>
+      <div class="modal-sub">${conflicts.today} — ${conflicts.rows.length} employee(s) on leave with leads assigned</div>
+      <p style="font-size:12px;color:var(--text3);margin:10px 0;">These employees have today's calling leads assigned but their leave status is Pending/Absent/Approved. Review and Avoid their leads if needed — nothing happens automatically.</p>
+      <div style="margin:12px 0;">${rowsHtml}</div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('leaveLeadsAlertModal').remove(); showAdminPage('leads-overdue');">🚫 Review in Overdue / Avoid</button>
+      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('leaveLeadsAlertModal').remove();">Dismiss</button>
+    </div>`;
+    document.body.appendChild(div);
+  } catch (e) {
+    console.error('checkLeaveLeadsConflictsPopup error:', e);
   }
 }
 
