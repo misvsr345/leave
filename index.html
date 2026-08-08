@@ -2795,7 +2795,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyjdVo-Ju9Cro_6Qc1v_NVISBuiYNzphcJlHuCXqKT4UYY1DHZHS2ihXcCgZzC2B6CL0A/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
-const CHECKLIST_FORM_URL = 'https://forms.gle/K9QyBYuZCQVzWz4K6';
+const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
 
 const DEFAULT_NOTICES =
 '<div>💰 <b>Leave Balance</b> — Every employee gets 3 days Casual Leave quota per month. For more, use Sick Leave / Special Permission.</div>' +
@@ -8179,10 +8179,14 @@ function stockDutySummaryHtml(sectionName, arr) {
     } else if (s.doneEmployee) {
       // Suggested person (or the only person we know of) did it themselves.
       todayHtml = `👤 <b>${s.doneEmployee}</b> <span class="kd-pill green">✅ Done</span>`;
+    } else if (s.suggestedEmployee) {
+      // Not yet submitted — show who is suggested for this shift with a
+      // Pending tag. Once they (or someone else) submit, the branches
+      // above take over and show "Done".
+      todayHtml = `👤 <b>${s.suggestedEmployee}</b> <span class="kd-pill" style="background:var(--orange-bg, #fef5e7);color:var(--orange, #c97a10);">⏳ Pending</span>`;
     } else {
-      // Not yet submitted, and nobody's on leave — don't reveal the
-      // suggested name pre-emptively. Only "Tomorrow Suggested" should
-      // be visible until this shift's checklist is actually done.
+      // No suggestion could be computed at all (e.g. nobody in the
+      // roster for this shift).
       todayHtml = '<span style="color:var(--text3);">—</span>';
     }
     const tomorrowHtml = s.tomorrowEmployee ? `👤 <b>${s.tomorrowEmployee}</b>` : '<span style="color:var(--text3);">—</span>';
