@@ -8609,6 +8609,8 @@ function stockToday(who, type) {
 function loadAdminLeadsHome() { /* landing page — sub-sections load their own data */ }
 
 // ── ADMIN: Today's Assignment — all employees ───────────────
+let __adminAssignmentData = {};
+
 async function loadAdminLeadsOverview() {
   const box = document.getElementById('adminLeadsOverviewBox');
   const dateInp = document.getElementById('adminLeadsOverviewDate');
@@ -8616,25 +8618,43 @@ async function loadAdminLeadsOverview() {
   const dateStr = (dateInp && dateInp.value) || todayISO();
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: dateStr });
-    if (!res.ok || !res.rows || !res.rows.length) {
+    const res = await leadsApiGet({ action: 'GET_TODAY_ASSIGNMENT', date: dateStr });
+    if (!res.ok || !res.employees || !res.employees.length) {
       box.innerHTML = '<div class="empty-state"><p>No leads assigned on this date.</p></div>';
       return;
     }
-    const rows = res.rows.slice().sort((a, b) => b.completionPct - a.completionPct);
-    let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
-      '<th style="text-align:left;">Employee</th><th>Assigned</th><th>Submitted</th><th>Pending</th><th>Avoided</th><th>%</th></tr></thead><tbody>';
-    rows.forEach(r => {
-      const pctColor = r.completionPct >= 80 ? '#1a7a4f' : r.completionPct >= 40 ? '#c97a10' : '#c0392b';
-      html += `<tr><td style="text-align:left;font-weight:700;">${r.employee}</td><td style="text-align:center;">${r.assigned}</td>` +
-        `<td style="text-align:center;">${r.submitted}</td><td style="text-align:center;">${r.pending}</td>` +
-        `<td style="text-align:center;">${r.avoided}</td><td style="text-align:center;color:${pctColor};font-weight:800;">${r.completionPct}%</td></tr>`;
+    __adminAssignmentData = {};
+    res.employees.forEach(e => { __adminAssignmentData[e.employeeName] = e.leads; });
+
+    let html = '<div class="kd-note">' + res.employees.length + ' employee(s) with leads today</div>';
+    res.employees.forEach(e => {
+      const safeId = 'assignDetail-' + e.employeeName.replace(/[^a-zA-Z0-9]/g, '');
+      html += `<div class="card" style="margin-bottom:8px;padding:0;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;" onclick="toggleAdminAssignmentDetail('${e.employeeName.replace(/'/g, "\\'")}','${safeId}')">
+          <div style="font-weight:700;">👤 ${e.employeeName}</div>
+          <div class="kd-pill gold">${e.count} lead(s)</div>
+        </div>
+        <div id="${safeId}" style="display:none;padding:0 14px 12px;"></div>
+      </div>`;
     });
-    html += '</tbody></table></div>';
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
   }
+}
+
+function toggleAdminAssignmentDetail(employeeName, elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  const leads = __adminAssignmentData[employeeName] || [];
+  let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th style="text-align:left;">Customer</th><th style="text-align:left;">Phone</th><th>Assigned At</th></tr></thead><tbody>';
+  leads.forEach(l => {
+    html += `<tr><td style="text-align:left;">${l.customerName || '—'}</td><td style="text-align:left;">${l.phone}</td><td style="text-align:center;">${l.assignedAt || '—'}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+  el.style.display = 'block';
 }
 
 // ── ADMIN: Overdue / Unsubmitted leads — Avoid button ────────
