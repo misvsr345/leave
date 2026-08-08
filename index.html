@@ -5192,6 +5192,10 @@ async function onSettingsAdminSelected() {
         <input type="checkbox" id="sectionMasterCheck_golden_aura" ${perms.section_golden_aura ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
         <span style="font-size:13px;font-weight:700;color:var(--text);">🌟 Golden Aura Section — entire section on/off</span>
       </label>
+      <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+        <input type="checkbox" id="sectionMasterCheck_stock" ${perms.section_stock ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Stock Check List Section — entire section on/off</span>
+      </label>
       <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
     </div>`;
 
@@ -5216,6 +5220,7 @@ async function onSettingsAdminSelected() {
       });
       html += `</div></div>`;
     });
+    html += `<button class="btn-secondary" id="settingsResetAdminBtn" style="width:100%;margin-top:6px;" onclick="resetSettingsAdminChecks()">🔄 Reset (Select All / Deselect All)</button>`;
     html += `<button class="btn-primary" id="settingsSaveAdminBtn" style="width:100%;margin-top:6px;" onclick="saveSettingsAdminAccess('${escJs(admin.email)}','${escJs(admin.name)}','${escJs(admin.role)}')">💾 Save Access for ${admin.name}</button>`;
     body.innerHTML = html;
   } catch(e) {
@@ -5240,6 +5245,31 @@ function onSettingsCheckChange(featureKey) {
   const pill = header.querySelector('.pill');
   pill.style.background = anyOn ? 'var(--green)' : '#ddd';
   pill.textContent = anyOn ? 'ON' : 'OFF';
+}
+
+// Toggles EVERY checkbox in the Admin Access panel (all 6 section master
+// switches + every individual sub-permission inside every accordion) in
+// one click. If most boxes are currently checked it deselects all;
+// otherwise it selects all — so repeated clicks alternate cleanly
+// between the two states instead of doing nothing on a second click.
+// Nothing is sent to the server until "Save Access" is pressed.
+function resetSettingsAdminChecks() {
+  const masterChecks = Array.from(document.querySelectorAll('[id^="sectionMasterCheck_"]'));
+  const permChecks = Array.from(document.querySelectorAll('.settings-perm-check'));
+  const allChecks = masterChecks.concat(permChecks);
+  if (allChecks.length === 0) return;
+
+  const checkedCount = allChecks.filter(cb => cb.checked).length;
+  const selectAll = checkedCount < allChecks.length; // any unchecked box -> select all; otherwise deselect all
+  allChecks.forEach(cb => { cb.checked = selectAll; });
+
+  // Refresh every accordion header's ON/OFF badge to match the new state.
+  document.querySelectorAll('[id^="acc_body_"]').forEach(bodyEl => {
+    const key = bodyEl.id.replace('acc_body_', '');
+    onSettingsCheckChange(key);
+  });
+
+  toast(selectAll ? '✅ All permissions selected — click Save to apply' : '⬜ All permissions deselected — click Save to apply', 'info');
 }
 
 async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
