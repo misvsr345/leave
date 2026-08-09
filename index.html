@@ -8466,7 +8466,7 @@ async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await leadsApiGet({ action: 'GET_LEADS', name: state.empName, email: state.empEmail, date: todayISO() });
+    const res = await leadsApiGet({ action: 'GET_LEADS', empId: state.empId, name: state.empName, email: state.empEmail, date: todayISO() });
     if (res.error) {
       box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
       return;
