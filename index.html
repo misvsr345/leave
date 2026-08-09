@@ -8417,7 +8417,7 @@ function openStockChecklistForm(who) {
 // JSON (no JSONP callback support), so we use fetch() directly — the
 // same approach CRM.HTML already uses successfully against this URL.
 // ══════════════════════════════════════
-const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbya2sKcZ6-I5Ge40WeZKYoaADmOEgTxIGGp4Nz_ZNtpK-JwIVfhBJn2bvEkUD6GIT6P/exec';
+const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxs9wVFkOMUHGOM9aiz5c2Ftis4LfPt9cdkr95-e3RRPHj0NNYzZq9iJ5AbFg_5e--xQQ/exec';
 
 async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
@@ -8466,7 +8466,7 @@ async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await leadsApiGet({ action: 'GET_LEADS', email: state.empEmail, date: todayISO() });
+    const res = await leadsApiGet({ action: 'GET_LEADS', name: state.empName, email: state.empEmail, date: todayISO() });
     if (res.error) {
       box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
       return;
