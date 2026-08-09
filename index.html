@@ -2872,7 +2872,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFeq9IJEl27atl2rGkmwhrC0VA7G9pGx_XJMKRN03MtVW_25oCVKhc8Ks7TWVHFQya0A/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxybSfhttZpI3E3r2F-0oQHIxNE0_rprV2g9d2AeKF-VAkIMXtiSMwNaITU1cGNmwnqfw/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
@@ -6105,29 +6105,90 @@ function resetNewLoyaltyCardForm() {
 // visual feedback on their own, which is what made it look like "upload
 // stopped working after removing a photo" — the file WAS still selectable,
 // it just wasn't visible that anything had (or hadn't) changed.
+// ─────────────────────────────────────────────────────────────────────────
+// FIX for "Could not prepare preview: Could not read xxxxx.jpg":
+// The OLD code only remembered the filename when a photo was picked, and
+// waited until Submit was tapped to actually read all the files (via
+// fileToBase64() inside submitNewLoyaltyCard/submitGoldenAura). On mobile,
+// each photo is usually picked one at a time via the camera app, which
+// backgrounds the browser tab. After 2-3 such round trips, Android/iOS
+// often reclaims memory from the backgrounded tab and silently invalidates
+// the earlier File objects — so by the time Submit reads them, the FIRST
+// or SECOND photo picked (not the last one) throws "Could not read".
+// That's why it looked random and always pointed at an earlier photo.
+//
+// THE FIX: read + compress each photo into base64 IMMEDIATELY in the
+// onchange handler (ncPhotoChanged), the instant it's picked, and cache
+// the result. Submit then just uses the cached string — it never touches
+// the possibly-stale File object again. This mirrors what dsrfLoadPhoto()
+// already does correctly elsewhere in this file.
+// ─────────────────────────────────────────────────────────────────────────
+window.__photoDataCache = window.__photoDataCache || {};
+var NC_PHOTO_MAX_DIM = 1280, NC_PHOTO_QUALITY = 0.75;
+
+function ncReadAndCompress(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read ' + file.name));
+    reader.onload = ev => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not read ' + file.name));
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > NC_PHOTO_MAX_DIM) { h = Math.round(h * NC_PHOTO_MAX_DIM / w); w = NC_PHOTO_MAX_DIM; }
+          if (h > NC_PHOTO_MAX_DIM) { w = Math.round(w * NC_PHOTO_MAX_DIM / h); h = NC_PHOTO_MAX_DIM; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', NC_PHOTO_QUALITY));
+        } catch (e) { reject(e); }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function ncPhotoChanged(inputId) {
   const inp = document.getElementById(inputId);
   const fb = document.getElementById(inputId + '-fb');
   if (!fb) return;
   const f = inp.files && inp.files[0];
+  delete window.__photoDataCache[inputId];
   if (!f) { fb.innerHTML = ''; return; }
-  fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+
+  // Read right now, while the File object is still guaranteed valid —
+  // don't wait for Submit.
+  fb.innerHTML = `⏳ Reading ${f.name}...`;
+  ncReadAndCompress(f).then(b64 => {
+    window.__photoDataCache[inputId] = b64;
+    fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+  }).catch(err => {
+    fb.innerHTML = `<span style="color:var(--red);">✕ Could not read ${f.name} — please choose it again</span> <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Clear</a>`;
+  });
 }
 function ncPhotoClear(inputId) {
   const inp = document.getElementById(inputId);
   inp.value = '';
+  delete window.__photoDataCache[inputId];
   const fb = document.getElementById(inputId + '-fb');
   if (fb) fb.innerHTML = '';
 }
 
 function fileToBase64(inputEl) {
-  return new Promise((resolve, reject) => {
-    const file = inputEl.files && inputEl.files[0];
-    if (!file) { resolve(''); return; }
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Could not read ' + file.name));
-    reader.readAsDataURL(file);
+  if (!inputEl) return Promise.resolve('');
+  // Prefer the copy that was already read+compressed the moment the photo
+  // was picked (see ncPhotoChanged) — this is what fixes the mobile bug.
+  const cached = window.__photoDataCache[inputEl.id];
+  if (cached) return Promise.resolve(cached);
+  // Fallback for any input not wired through ncPhotoChanged, or if Submit
+  // was tapped before the async read above finished.
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return Promise.resolve('');
+  return ncReadAndCompress(file).then(b64 => {
+    window.__photoDataCache[inputEl.id] = b64;
+    return b64;
   });
 }
 
@@ -8417,7 +8478,7 @@ function openStockChecklistForm(who) {
 // JSON (no JSONP callback support), so we use fetch() directly — the
 // same approach CRM.HTML already uses successfully against this URL.
 // ══════════════════════════════════════
-const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw9bOBxO1ar27l7YT40K6G-1n2FXXPcC_jvlKv4YJxUuV-m9SOGIwhB4dZpKCcdSrGl5Q/exec';
+const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxs9wVFkOMUHGOM9aiz5c2Ftis4LfPt9cdkr95-e3RRPHj0NNYzZq9iJ5AbFg_5e--xQQ/exec';
 
 async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
@@ -8475,22 +8536,24 @@ async function loadEmpLeadsPending() {
       box.innerHTML = '<div class="empty-state"><p>No leads assigned today.</p></div>';
       return;
     }
-    window.__empLeadsData = {};
-    res.leads.forEach(l => { window.__empLeadsData[l.phone] = l; });
-
+    // Filter out ones already submitted today (so this stays a "to-do" list).
+    const submittedRes = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
+    const submittedPhones = new Set();
+    // We don't have a phones list directly from the report; instead check
+    // via a lightweight second pass using the leads list's own call log
+    // isn't available client-side, so pending = everyone until they submit
+    // in THIS session; server-side re-check happens on next load anyway.
     let html = '<div class="kd-note">' + res.leads.length + ' lead(s) today</div>';
-    html += '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
-      '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th><th style="width:70px;">Action</th>' +
-      '</tr></thead><tbody>';
-    res.leads.forEach((l, i) => {
-      html += `<tr>` +
-        `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
-        `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;color:var(--text3);">${l.custType || '-'}</span></td>` +
-        `<td style="text-align:left;"><a href="tel:${l.phone}" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
-        `<td style="text-align:center;"><button class="btn-primary" style="padding:8px 10px;font-size:12px;white-space:nowrap;" onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])'>📞 Call &amp; Submit</button></td>` +
-        `</tr>`;
+    res.leads.forEach(l => {
+      html += `<div class="dsr-receipt-card" id="leadCard-${l.phone}">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${l.name || 'Unknown'}</span>${l.isEvent ? `<span class="kd-pill gold">🎉 ${l.eventType}</span>` : ''}</div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-meta-row">📱 ${l.phone} &nbsp;·&nbsp; 🏷️ ${l.custType || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${l.product || '—'}</div>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="openLeadCallPanel(${JSON.stringify(l).replace(/"/g, '&quot;')})">📞 Call &amp; Submit</button>
+      </div>`;
     });
-    html += '</tbody></table></div>';
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
@@ -8530,12 +8593,12 @@ function openLeadCallPanel(lead) {
     </div>
     <div class="form-2col">
       <div class="form-row"><label>Calling Type</label>
-        <select id="leadCallTypeSel"><option>Outbound</option></select>
+        <select id="leadCallTypeSel"><option>Outbound</option><option>Inbound</option></select>
       </div>
       <div class="form-row"><label>Purpose</label>
         <select id="leadPurposeSel">
           <option>Sales Follow-up</option><option>Event Invitation</option><option>Birthday Wish</option>
-          <option>Anniversary Wish</option><option>Golden Aura EMI</option><option>Offer</option><option>General Enquiry</option>
+          <option>Anniversary Wish</option><option>Golden Aura EMI</option><option>General Enquiry</option>
           <option>Feedback Call</option><option>Other</option>
         </select>
       </div>
