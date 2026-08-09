@@ -8480,13 +8480,14 @@ async function loadEmpLeadsPending() {
 
     let html = '<div class="kd-note">' + res.leads.length + ' lead(s) today</div>';
     html += '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
-      '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th>' +
+      '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th><th style="width:70px;">Action</th>' +
       '</tr></thead><tbody>';
     res.leads.forEach((l, i) => {
-      html += `<tr onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])' style="cursor:pointer;">` +
+      html += `<tr>` +
         `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
         `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;color:var(--text3);">${l.custType || '-'}</span></td>` +
-        `<td style="text-align:left;"><a href="tel:${l.phone}" onclick="event.stopPropagation();" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
+        `<td style="text-align:left;"><a href="tel:${l.phone}" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
+        `<td style="text-align:center;"><button class="btn-primary" style="padding:8px 10px;font-size:12px;white-space:nowrap;" onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])'>📞 Call &amp; Submit</button></td>` +
         `</tr>`;
     });
     html += '</tbody></table></div>';
