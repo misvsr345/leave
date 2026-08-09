@@ -8475,24 +8475,21 @@ async function loadEmpLeadsPending() {
       box.innerHTML = '<div class="empty-state"><p>No leads assigned today.</p></div>';
       return;
     }
-    // Filter out ones already submitted today (so this stays a "to-do" list).
-    const submittedRes = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
-    const submittedPhones = new Set();
-    // We don't have a phones list directly from the report; instead check
-    // via a lightweight second pass using the leads list's own call log
-    // isn't available client-side, so pending = everyone until they submit
-    // in THIS session; server-side re-check happens on next load anyway.
+    window.__empLeadsData = {};
+    res.leads.forEach(l => { window.__empLeadsData[l.phone] = l; });
+
     let html = '<div class="kd-note">' + res.leads.length + ' lead(s) today</div>';
-    res.leads.forEach(l => {
-      html += `<div class="dsr-receipt-card" id="leadCard-${l.phone}">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${l.name || 'Unknown'}</span>${l.isEvent ? `<span class="kd-pill gold">🎉 ${l.eventType}</span>` : ''}</div>
-        <div class="dsr-receipt-body">
-          <div class="dsr-meta-row">📱 ${l.phone} &nbsp;·&nbsp; 🏷️ ${l.custType || '—'}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${l.product || '—'}</div>
-        </div>
-        <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="openLeadCallPanel(${JSON.stringify(l).replace(/"/g, '&quot;')})">📞 Call &amp; Submit</button>
-      </div>`;
+    html += '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
+      '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th>' +
+      '</tr></thead><tbody>';
+    res.leads.forEach((l, i) => {
+      html += `<tr onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])' style="cursor:pointer;">` +
+        `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
+        `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;color:var(--text3);">${l.custType || '-'}</span></td>` +
+        `<td style="text-align:left;"><a href="tel:${l.phone}" onclick="event.stopPropagation();" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
+        `</tr>`;
     });
+    html += '</tbody></table></div>';
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
