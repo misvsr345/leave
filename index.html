@@ -353,14 +353,16 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 /* ══════════════════════════════════════
    MAIN APP LAYOUT
 ══════════════════════════════════════ */
-.app { display: none; min-height: 100vh; background: var(--bg); }
+.app { display: none; min-height: 100vh; background: var(--bg); padding-top: var(--header-h, 60px); }
 .app.active { display: block; }
 
-/* Sticky header group: topbar + navbar frozen together */
-.header-group { position: sticky; top: 0; z-index: 150; }
+/* Fixed header group: topbar frozen to the viewport top no matter what —
+   position:fixed is used instead of sticky because sticky can silently
+   fail to work if any ancestor element has its own scroll/overflow or
+   transform context; fixed is always relative to the viewport itself. */
+.header-group { position: fixed; top: 0; left: 0; right: 0; z-index: 150; }
 
 .topbar {
-  position: sticky; top: 0; z-index: 150;
   background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink));
   border-bottom: 2px solid var(--gold);
   padding: 8px 10px;
@@ -7765,14 +7767,16 @@ function dsrfRefreshProducts(who, eid) {
 
 function dsrfPhotoWidget(who, eid, pfx) {
   const hid = `dsrfPh-${pfx}-${who}-${eid}`, tid = `dsrfPt-${pfx}-${who}-${eid}`, pid = `dsrfPp-${pfx}-${who}-${eid}`,
-        fid = `dsrfPf-${pfx}-${who}-${eid}`, sid = `dsrfPs-${pfx}-${who}-${eid}`, wid = `dsrfPw-${pfx}-${who}-${eid}`;
+        fid = `dsrfPf-${pfx}-${who}-${eid}`, sid = `dsrfPs-${pfx}-${who}-${eid}`, wid = `dsrfPw-${pfx}-${who}-${eid}`,
+        rid = `dsrfPr-${pfx}-${who}-${eid}`;
   return `<div class="phwrap">
     <label class="phlbl" for="${fid}"><span class="phi">📷</span><span id="${tid}" class="pht">Upload Photo</span></label>
-    <input type="file" id="${fid}" accept="image/*" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}')">
+    <input type="file" id="${fid}" accept="image/*" onchange="dsrfLoadPhoto(this,'${hid}','${tid}','${pid}','${sid}','${wid}','${rid}')">
     <input type="hidden" id="${hid}">
     <div id="${sid}" class="ph-size"></div>
     <div id="${wid}"></div>
     <img id="${pid}" class="phprev">
+    <a href="#" id="${rid}" style="display:none;color:var(--red);font-size:11px;font-weight:700;margin-top:4px;" onclick="dsrfRemovePhoto('${fid}','${hid}','${tid}','${pid}','${sid}','${wid}','${rid}');return false;">✕ Remove Photo</a>
   </div>`;
 }
 
@@ -7917,7 +7921,7 @@ function dsrfToggleOther(who, eid, kind) {
 }
 
 var DSR_PHOTO_MAX_DIM = 800, DSR_PHOTO_QUALITY = 0.65, DSR_PHOTO_MAX_KB = 200;
-function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId) {
+function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId, rmId) {
   const f = inp.files[0]; if (!f) return;
   const tEl = document.getElementById(tidId);
   if (tEl) { tEl.textContent = 'Processing...'; tEl.className = 'pht'; }
@@ -7949,10 +7953,28 @@ function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId) {
       }
       const pv = document.getElementById(pidId);
       if (pv) { pv.src = b64; pv.classList.add('show'); }
+      // Bad photo picked by mistake? Show a way to clear just THIS
+      // field, instead of the person having to reset the whole form
+      // (which was the only option before, and threw away every other
+      // item already filled in).
+      if (rmId) { const rmEl = document.getElementById(rmId); if (rmEl) rmEl.style.display = 'inline-block'; }
     };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(f);
+}
+
+// Clears one photo field back to its empty state (file input, hidden
+// base64 value, preview, size text, warning text, and this link itself)
+// without touching any other field in the DSR form.
+function dsrfRemovePhoto(fid, hidId, tidId, pidId, szId, warnId, rmId) {
+  const fEl = document.getElementById(fid); if (fEl) fEl.value = '';
+  const hEl = document.getElementById(hidId); if (hEl) hEl.value = '';
+  const tEl = document.getElementById(tidId); if (tEl) { tEl.textContent = 'Upload Photo'; tEl.className = 'pht'; }
+  const pv = document.getElementById(pidId); if (pv) { pv.src = ''; pv.classList.remove('show'); }
+  const szEl = document.getElementById(szId); if (szEl) szEl.textContent = '';
+  const wEl = document.getElementById(warnId); if (wEl) { wEl.textContent = ''; wEl.className = ''; }
+  const rmEl = document.getElementById(rmId); if (rmEl) rmEl.style.display = 'none';
 }
 
 function dsrfGv(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
@@ -7971,7 +7993,7 @@ function renderGoldenAuraForm(who) {
   const box = document.getElementById('gaFormBox-' + who);
   const empName = who === 'admin' ? state.adminName : state.empName;
   const stateOptions = INDIAN_STATES.map(s => `<option value="${s}">${s}</option>`).join('');
-  const photoField = (id, label) => `<div class="form-row"><label>${label}</label><input type="file" id="${id}" accept="image/*"></div>`;
+  const photoField = (id, label) => `<div class="form-row"><label>${label}</label><input type="file" id="${id}" accept="image/*" onchange="ncPhotoChanged('${id}')"><div id="${id}-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div></div>`;
 
   box.innerHTML = `
     <div class="card">
@@ -10623,12 +10645,32 @@ document.getElementById('applyEndDate').value = todayInit;
 
 updateConnStatus();
 
+// Fixed header (position:fixed) removes itself from normal document flow,
+// so .app needs top padding equal to the header's real rendered height —
+// measure it (varies slightly by content/zoom/device) and keep it synced
+// via ResizeObserver, so content is never hidden underneath the header.
+function syncHeaderHeight() {
+  const hg = document.querySelector('.app.active .header-group') || document.querySelector('.header-group');
+  if (!hg) return;
+  const h = hg.offsetHeight;
+  if (h > 0) document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+syncHeaderHeight();
+window.addEventListener('resize', syncHeaderHeight);
+window.addEventListener('orientationchange', syncHeaderHeight);
+if (window.ResizeObserver) {
+  document.querySelectorAll('.header-group').forEach(hg => {
+    new ResizeObserver(syncHeaderHeight).observe(hg);
+  });
+}
+
 // Try to restore a previous session first; only run the offline-queue
 // flush and skip showing the login page if restore succeeds.
 if (!restoreSession()) {
   // stay on login page
 }
 flushOfflineQueue();
+syncHeaderHeight();
 </script>
 </body>
 </html>
