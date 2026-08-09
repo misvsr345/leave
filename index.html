@@ -357,9 +357,10 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .app.active { display: block; }
 
 /* Sticky header group: topbar + navbar frozen together */
-.header-group { position: sticky; top: 0; z-index: 100; }
+.header-group { position: sticky; top: 0; z-index: 150; }
 
 .topbar {
+  position: sticky; top: 0; z-index: 150;
   background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink));
   border-bottom: 2px solid var(--gold);
   padding: 8px 10px;
@@ -2869,7 +2870,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxKuHuGBE6sr4zlJIgfDmiOxRFvTYE05ded2sReDVuS9dITmvr02PmQCfhe-5lkgHuA4w/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxybSfhttZpI3E3r2F-0oQHIxNE0_rprV2g9d2AeKF-VAkIMXtiSMwNaITU1cGNmwnqfw/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
@@ -8444,6 +8445,10 @@ async function loadEmpLeadsPending() {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_LEADS', email: state.empEmail, date: todayISO() });
+    if (res.error) {
+      box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
+      return;
+    }
     if (!res.leads || !res.leads.length) {
       box.innerHTML = '<div class="empty-state"><p>No leads assigned today.</p></div>';
       return;
@@ -8766,7 +8771,11 @@ async function loadAdminLeadsOverview() {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_TODAY_ASSIGNMENT', date: dateStr });
-    if (!res.ok || !res.employees || !res.employees.length) {
+    if (!res.ok) {
+      box.innerHTML = '<div class="empty-state"><p>Backend error: ' + (res.error || 'unknown') + '</p></div>';
+      return;
+    }
+    if (!res.employees || !res.employees.length) {
       box.innerHTML = '<div class="empty-state"><p>No leads assigned on this date.</p></div>';
       return;
     }
