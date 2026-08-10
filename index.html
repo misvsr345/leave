@@ -6255,14 +6255,18 @@ async function confirmSubmitLoyaltyCard() {
 }
 
 function initLoyaltyPage(who) {
+  // Both employee and admin views are intentionally left BLANK by
+  // default (not "1st of this month") so "My Incentive" / Employee
+  // Timeline shows the COMPLETE card history from the very first card
+  // unless the user explicitly narrows the range. (Previously the
+  // employee view defaulted to "since 1st of this month" while the
+  // admin view was already blank — that mismatch was the root of the
+  // "This Month shows 0" / "My Incentive isn't loading" reports.)
   if (who === 'emp') {
     const from = document.getElementById('loyEmpFromDate');
     const to   = document.getElementById('loyEmpToDate');
-    if (from && !from.value) {
-      const d = new Date(); d.setDate(1);
-      from.value = toYMD(d);
-      to.value = todayYMD();
-    }
+    if (from) from.value = '';
+    if (to)   to.value   = '';
   }
   if (who === 'admin') {
     const from = document.getElementById('loyRangeFromDate');
@@ -6534,9 +6538,13 @@ function loadLoyaltyMyStats() {
       if (res.rangeCards.length === 0) {
         html += `<div class="empty-state" style="padding:20px 0;"><p>No cards in this date range</p></div>`;
       } else {
-        res.rangeCards.forEach(c => {
-          html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName}</div>`;
+        html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+            <th>#</th><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th>
+          </tr></thead><tbody>`;
+        res.rangeCards.forEach((c, idx) => {
+          html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`;
         });
+        html += `</tbody></table></div>`;
       }
       html += `</div>`;
       html += `<div style="display:flex;gap:8px;">
@@ -9419,8 +9427,17 @@ function loadLoyaltyTimeline() {
           <div class="leave-card-date">${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</div>
         </div>`;
         html += `<div class="card"><div class="card-title">📅 Cards in Selected Range</div>`;
-        if (res.cards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
-        res.cards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName} · 👤 ${c.empName}</div>`; });
+        if (res.cards.length === 0) {
+          html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
+        } else {
+          html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+              <th>#</th><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th>
+            </tr></thead><tbody>`;
+          res.cards.forEach((c, idx) => {
+            html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`;
+          });
+          html += `</tbody></table></div>`;
+        }
         html += `</div><button class="btn-loy-card" onclick="mailLoyaltyAllEmpTimeline()">📧 Mail This Report</button>`;
         content.innerHTML = html;
         window.__loyAllEmpTimelineData = res;
@@ -9441,8 +9458,17 @@ function loadLoyaltyTimeline() {
         <div class="leave-card-date">Card Range: #${o.firstCard} → #${o.lastCard} · Status: ${o.status}</div>
       </div>`;
       html += `<div class="card"><div class="card-title">📅 Cards in Selected Range (${res.rangeTotal})</div>`;
-      if (res.rangeCards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
-      res.rangeCards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName}</div>`; });
+      if (res.rangeCards.length === 0) {
+        html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
+      } else {
+        html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+            <th>#</th><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th>
+          </tr></thead><tbody>`;
+        res.rangeCards.forEach((c, idx) => {
+          html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
       html += `</div><button class="btn-loy-card" onclick="mailLoyaltyTimeline('${escJs(empName)}')">📧 Mail This Timeline</button>`;
       content.innerHTML = html;
       window.__loyTimelineData = { empName, res };
