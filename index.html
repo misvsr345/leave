@@ -6709,7 +6709,7 @@ function loadLoyaltyAllCardsAdmin() {
   summary.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   content.innerHTML = '';
 
-  jsonpReliable({ page: 'loyaltyAllCardsAdminAPI', role: state.adminRole, empName: empFilter })
+  jsonpReliable({ page: 'loyaltyAllCardsAdminAPI', role: 'ADMIN', empName: empFilter })
     .then(res => {
       if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
       summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s)${empFilter ? ' — ' + empFilter : ' — all employees'}</div>`;
