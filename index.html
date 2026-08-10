@@ -1333,6 +1333,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="showEmpPage('loyalty-newcard')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Card Entry</div><div class="quick-action-sub">Enroll a customer</div></div>
         <div class="quick-action-btn" id="empQALoySearch" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="empQALoyStats" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
+        <div class="quick-action-btn" id="empQALoyMyCards" onclick="showEmpPage('loyalty-mycards')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">My Cards</div><div class="quick-action-sub">Cards I've issued</div></div>
         <div class="quick-action-btn" id="empQALoyDash" onclick="showEmpPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Full overview + PDF</div></div>
         <div class="quick-action-btn" id="empQALoyLeaderboard" onclick="showEmpPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
@@ -1432,6 +1433,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
       </div>
       <div id="loyEmpStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <!-- LOYALTY: My Cards (employee) — item B: card list with card no,
+         customer name, address, phone (masked), Aadhaar (masked), photo -->
+    <div class="page-section" id="emp-loyalty-mycards">
+      <div class="section-hdr"><span class="section-title2">🪪 My Cards</span></div>
+      <div class="card" id="loyMyCardsSummary" style="padding:12px 14px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div id="loyMyCardsContent"></div>
     </div>
 
     <!-- LOYALTY: Dashboard (employee) -->
@@ -1915,6 +1924,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
+        <div class="quick-action-btn" id="adminQALoyMyCards" onclick="showAdminPage('loyalty-mycards')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">My Cards</div><div class="quick-action-sub">All employees' cards</div></div>
         <div class="quick-action-btn" id="adminQALoyDash" onclick="showAdminPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Store-wide overview</div></div>
         <div class="quick-action-btn" id="adminQALoyTimeline" onclick="showAdminPage('loyalty-timeline')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Timeline</div><div class="quick-action-sub">One person or all</div></div>
         <div class="quick-action-btn" id="adminQALoyUpcoming" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
@@ -1924,6 +1934,20 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
         <div class="quick-action-btn" id="adminQALoyLeaderboard" onclick="showAdminPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
+    </div>
+
+    <!-- LOYALTY: My Cards (admin) — item B4: same fields as employee "My
+         Cards" but for every employee, unmasked, with an employee filter -->
+    <div class="page-section" id="admin-loyalty-mycards">
+      <div class="section-hdr"><span class="section-title2">🪪 My Cards — All Employees</span></div>
+      <div class="card" style="padding:12px 14px;">
+        <div class="form-row"><label>Filter by Employee (optional)</label>
+          <select id="loyMyCardsEmpFilter"><option value="">-- All Employees --</option></select>
+        </div>
+        <button class="btn-modal-confirm" style="width:100%;background:var(--purple);" onclick="loadLoyaltyAllCardsAdmin()">🔄 Load Cards</button>
+      </div>
+      <div class="card" id="loyAllCardsSummary-admin" style="padding:12px 14px;"></div>
+      <div id="loyAllCardsContent-admin"></div>
     </div>
 
     <!-- LOYALTY: Leaderboard (admin) -->
@@ -3627,7 +3651,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openEmpMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues'], items: [
+      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-newcard', icon:'➕', label:'New Card' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
@@ -3665,7 +3689,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openAdminMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues'], items: [
+      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
       { page:'loyalty-dash', icon:'📈', label:'Dashboard' },
@@ -3723,6 +3747,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
+  'loyalty-mycards': 'Loyalty Card',
   'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
   'stock': 'Stock Check List', 'stock-retail': 'Stock Check List', 'stock-wholesale': 'Stock Check List', 'stock-report': 'Stock Check List',
   'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
@@ -3796,6 +3821,7 @@ function showEmpPage(page) {
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
   if(page==='loyalty-dash') loadLoyaltyDashboard('emp');
+  if(page==='loyalty-mycards') loadLoyaltyMyCards();
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('emp');
   if(page==='kpi') { loadEomBanner('emp'); loadKpiHighlights('emp'); }
   if(page==='kpi-rules') renderKpiRules('emp');
@@ -4078,6 +4104,8 @@ function setLeavesStatus(who, status, btn) {
 function openCancelModal(leaveId) {
   state.cancelLeaveId = leaveId;
   document.getElementById('cancelModalSub').textContent = 'Cancel Leave ID: ' + leaveId + '? Your balance will be restored.';
+  var cancelBtn = document.getElementById('cancelConfirmBtn');
+  if (cancelBtn) { cancelBtn.dataset.busy = '0'; cancelBtn.disabled = false; }
   openModal('cancelModal');
 }
 
@@ -5157,8 +5185,27 @@ function renderSettingsEmpBody(emp) {
       <input type="checkbox" id="empDsrAccessCheck" ${emp && emp.dsrAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access</span>
     </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLeadsAccessCheck" ${emp && emp.leadsAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📞 Leads Access</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empStockAccessCheck" ${emp && emp.stockAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📦 Stock Checklist Access</span>
+    </label>
     <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
+  </div>
+  <div class="card" style="margin-top:14px;border:1.5px dashed var(--purple);">
+    <div class="card-title">👥 Apply to All Employees</div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save — this overwrites the module-level access above for every employee in one go. Doesn't touch anyone's Detailed Sub-Option Access.</p>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeaveAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📋 Leave Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLoyaltyAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">💳 Loyalty Card Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpKpiAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📊 KPI Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpDsrAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🧾 DSR Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeadsAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📞 Leads Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpStockAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📦 Stock Checklist Access</span></label>
+    <button class="btn-primary" id="settingsSaveAllEmpBtn" style="width:100%;margin-top:8px;background:var(--red);" onclick="saveSettingsAllEmpAccess()">💾 Save For ALL Employees</button>
   </div>
   <div id="settingsEmpGranularBody" style="margin-top:14px;">
     <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>
@@ -5260,10 +5307,12 @@ async function saveSettingsEmpAccess(empId, empName) {
   const kpiEnabled = document.getElementById('empKpiAccessCheck').checked;
   const dsrEnabled = document.getElementById('empDsrAccessCheck').checked;
   const leaveEnabled = document.getElementById('empLeaveAccessCheck').checked;
+  const leadsEnabled = document.getElementById('empLeadsAccessCheck').checked;
+  const stockEnabled = document.getElementById('empStockAccessCheck').checked;
   const payload = {
     page: 'saveEmployeeLoyaltyAccessAPI', empId, empName,
     enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
-    leaveEnabled: leaveEnabled ? 'true' : 'false',
+    leaveEnabled: leaveEnabled ? 'true' : 'false', leadsEnabled: leadsEnabled ? 'true' : 'false', stockEnabled: stockEnabled ? 'true' : 'false',
     callerRole: state.adminRole, callerEmail: state.adminEmail
   };
   const idem = makeIdemKey(['emplaccess', empId, Date.now()]);
@@ -5274,12 +5323,55 @@ async function saveSettingsEmpAccess(empId, empName) {
       if (res.ok) {
         toast('✅ Access saved for ' + empName, 'success');
         const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; }
+        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; }
       } else {
         toast(res.error || 'Save failed', 'error');
       }
     } catch(e) {
       toast('⚠️ No confirmation from server — reselect this employee to verify before saving again.', 'error');
+    }
+  });
+}
+
+// Bulk-apply Module Access to every employee in one Save (Module Access
+// item A2: "All Employees" bulk option).
+async function saveSettingsAllEmpAccess() {
+  const enabled = document.getElementById('allEmpLoyaltyAccessCheck').checked;
+  const kpiEnabled = document.getElementById('allEmpKpiAccessCheck').checked;
+  const dsrEnabled = document.getElementById('allEmpDsrAccessCheck').checked;
+  const leaveEnabled = document.getElementById('allEmpLeaveAccessCheck').checked;
+  const leadsEnabled = document.getElementById('allEmpLeadsAccessCheck').checked;
+  const stockEnabled = document.getElementById('allEmpStockAccessCheck').checked;
+  if (!confirm('This will overwrite Module Access for EVERY employee. Continue?')) return;
+  const payload = {
+    page: 'saveEmployeeLoyaltyAccessAPI', empId: '__ALL__', empName: 'All Employees',
+    enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
+    leaveEnabled: leaveEnabled ? 'true' : 'false', leadsEnabled: leadsEnabled ? 'true' : 'false', stockEnabled: stockEnabled ? 'true' : 'false',
+    callerRole: state.adminRole, callerEmail: state.adminEmail
+  };
+  const idem = makeIdemKey(['emplaccess_all', Date.now()]);
+  if (isDuplicateSubmission(idem)) { toast('Already saving, please wait...', 'info'); return; }
+  await withButtonLock(document.getElementById('settingsSaveAllEmpBtn'), '⏳ Saving for everyone...', async () => {
+    try {
+      const res = await jsonpWriteOnce(payload, idem);
+      if (res.ok) {
+        toast('✅ ' + (res.message || 'Access updated for all employees'), 'success');
+        (window.__settingsEmpList || []).forEach(emp => {
+          emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled;
+          emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled;
+        });
+        // If an employee is currently selected in the dropdown, refresh their
+        // visible checkboxes so the screen matches what was just saved.
+        const sel = document.getElementById('settingsEmpSelect');
+        if (sel && sel.value) {
+          const emp = (window.__settingsEmpList || []).find(e => e.empId === sel.value);
+          if (emp) renderSettingsEmpBody(emp);
+        }
+      } else {
+        toast(res.error || 'Save failed', 'error');
+      }
+    } catch(e) {
+      toast('⚠️ No confirmation from server — check a few employees before saving again.', 'error');
     }
   });
 }
@@ -5751,6 +5843,7 @@ function showAdminPage(page) {
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
+  if(page==='loyalty-mycards') initLoyaltyAllCardsAdminPage();
   if(page==='loyalty-timeline') initLoyaltyTimeline();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
   if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
@@ -6053,10 +6146,10 @@ function closeLoyaltyAlertModal() {
   document.getElementById('loyAlertModal').classList.remove('open');
 }
 
-// Hides the Leave / Loyalty Card / KPI / DSR module buttons for this
-// specific employee if MIS has explicitly removed their access (default
-// is always ON — nothing to fetch/hide unless a row exists in
-// Employee_Loyalty_Access).
+// Hides the Leave / Loyalty Card / KPI / DSR / Leads / Stock Checklist
+// module buttons for this specific employee if MIS has explicitly removed
+// their access (default is always ON — nothing to fetch/hide unless a row
+// exists in Employee_Loyalty_Access).
 function checkEmpLoyaltyAccess() {
   jsonpReliable({ page: 'getEmployeeLoyaltyAccessAPI', empId: state.empId })
     .then(res => {
@@ -6069,6 +6162,10 @@ function checkEmpLoyaltyAccess() {
       if (kpiBtn) kpiBtn.style.display = (res.kpiAccess === false) ? 'none' : '';
       const dsrBtn = document.getElementById('empQADsrModule');
       if (dsrBtn) dsrBtn.style.display = (res.dsrAccess === false) ? 'none' : '';
+      const leadsBtn = document.getElementById('empQALeadsModule');
+      if (leadsBtn) leadsBtn.style.display = (res.leadsAccess === false) ? 'none' : '';
+      const stockBtn = document.getElementById('empQAStockChecklist');
+      if (stockBtn) stockBtn.style.display = (res.stockAccess === false) ? 'none' : '';
 
       // Granular sub-option restrictions now ride along in this same
       // response — applyEmpGranularRestrictions no longer makes its own
@@ -6555,6 +6652,85 @@ function loadLoyaltyMyStats() {
       window.__loyMyStatsData = res;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// ── "My Cards" (item B) — employee's own issued cards, masked ──
+function loadLoyaltyMyCards() {
+  const summary = document.getElementById('loyMyCardsSummary');
+  const content = document.getElementById('loyMyCardsContent');
+  summary.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  content.innerHTML = '';
+
+  jsonpReliable({ page: 'loyaltyMyCardsAPI', empName: state.empName })
+    .then(res => {
+      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s) issued by you</div>`;
+      if (res.cards.length === 0) {
+        content.innerHTML = '<div class="empty-state"><span class="emoji">🪪</span><p>No cards issued yet</p></div>';
+        return;
+      }
+      let html = '';
+      res.cards.forEach(c => {
+        html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;">
+          ${c.custPhotoUrl ? `<img src="${c.custPhotoUrl}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);" onerror="this.style.display='none'">` : `<div style="width:56px;height:56px;border-radius:8px;background:var(--purple-bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🪪</div>`}
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13.5px;color:var(--text);">${c.custName} <span style="font-weight:400;color:var(--text3);font-size:11.5px;">#${c.cardNo} · ${c.cardType}</span></div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">📍 ${c.address}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">📱 ${c.phone} &nbsp;·&nbsp; 🪪 ${c.aadhaarNo}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Issued: ${c.cardDate}</div>
+          </div>
+        </div>`;
+      });
+      content.innerHTML = html;
+    })
+    .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// ── "My Cards" — admin equivalent (item B4): every employee's issued
+// cards, same fields, unmasked, with an optional employee filter ──
+function initLoyaltyAllCardsAdminPage() {
+  const sel = document.getElementById('loyMyCardsEmpFilter');
+  if (sel && sel.dataset.loaded !== '1') {
+    jsonpReliable({ page: 'listEmployeesForPermsAPI' }).then(res => {
+      if (res && res.ok) {
+        sel.innerHTML = '<option value="">-- All Employees --</option>' +
+          res.employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+        sel.dataset.loaded = '1';
+      }
+    }).catch(() => {});
+  }
+  loadLoyaltyAllCardsAdmin();
+}
+
+function loadLoyaltyAllCardsAdmin() {
+  const summary = document.getElementById('loyAllCardsSummary-admin');
+  const content = document.getElementById('loyAllCardsContent-admin');
+  const empFilter = document.getElementById('loyMyCardsEmpFilter').value;
+  summary.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  content.innerHTML = '';
+
+  jsonpReliable({ page: 'loyaltyAllCardsAdminAPI', role: state.adminRole, empName: empFilter })
+    .then(res => {
+      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s)${empFilter ? ' — ' + empFilter : ' — all employees'}</div>`;
+      if (res.cards.length === 0) {
+        content.innerHTML = '<div class="empty-state"><span class="emoji">🪪</span><p>No cards found</p></div>';
+        return;
+      }
+      let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+          <th>Photo</th><th>Card No</th><th>Type</th><th>Customer</th><th>Address</th><th>Phone</th><th>Aadhaar</th><th>Employee</th><th>Date</th>
+        </tr></thead><tbody>`;
+      res.cards.forEach(c => {
+        html += `<tr>
+          <td>${c.custPhotoUrl ? `<img src="${c.custPhotoUrl}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">` : '—'}</td>
+          <td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.address}</td>
+          <td>${c.phone}</td><td>${c.aadhaarNo}</td><td>${c.empName}</td><td>${c.cardDate}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+      content.innerHTML = html;
+    })
+    .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
 
 function downloadLoyaltyMyStatsPDF() {
@@ -10436,6 +10612,15 @@ function openAdminReject(row, leaveId, name) {
   state.rejectRow = row; state.rejectLeaveId = leaveId;
   document.getElementById('rejectModalSub').textContent = 'Reject leave for: ' + name + ' (' + leaveId + ')';
   document.getElementById('rejectReason').value = '';
+  // Defensive reset: rejectConfirmBtn is a single SHARED modal button
+  // reused for every reject across the whole session (unlike the
+  // per-card Approve buttons, which are fresh elements each render). If
+  // a previous attempt ever left it mid-flight, withButtonLock's
+  // dataset.busy guard would otherwise silently no-op every future
+  // click on this button — clearing it here guarantees Reject can never
+  // get permanently stuck.
+  var rejBtn = document.getElementById('rejectConfirmBtn');
+  if (rejBtn) { rejBtn.dataset.busy = '0'; rejBtn.disabled = false; }
   openModal('rejectModal');
 }
 async function confirmReject() {
@@ -10472,6 +10657,8 @@ function openAdminAbsent(row, leaveId, name) {
   state.absentRow = row; state.absentLeaveId = leaveId;
   document.getElementById('absentModalSub').textContent = 'Mark absent for: ' + name + ' (' + leaveId + ')';
   document.getElementById('absentReason').value = '';
+  var absBtn = document.getElementById('absentConfirmBtn');
+  if (absBtn) { absBtn.dataset.busy = '0'; absBtn.disabled = false; }
   openModal('absentModal');
 }
 async function confirmAbsent() {
