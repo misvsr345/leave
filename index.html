@@ -1923,12 +1923,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="loyaltyHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
-        <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Incentive summary</div></div>
-        <div class="quick-action-btn" id="adminQALoyMyCards" onclick="showAdminPage('loyalty-mycards')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">My Cards</div><div class="quick-action-sub">All employees' cards</div></div>
+        <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Tap a row for full timeline</div></div>
+        <div class="quick-action-btn" id="adminQALoyMyCards" onclick="showAdminPage('loyalty-mycards')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">All Cards</div><div class="quick-action-sub">Browse / search / filter</div></div>
         <div class="quick-action-btn" id="adminQALoyDash" onclick="showAdminPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Store-wide overview</div></div>
-        <div class="quick-action-btn" id="adminQALoyTimeline" onclick="showAdminPage('loyalty-timeline')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Timeline</div><div class="quick-action-sub">One person or all</div></div>
         <div class="quick-action-btn" id="adminQALoyUpcoming" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
-        <div class="quick-action-btn" id="adminQALoyCardhist" onclick="showAdminPage('loyalty-cardhist')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Card History</div><div class="quick-action-sub">Every card enrolled</div></div>
         <div class="quick-action-btn" id="adminQALoyIncenthist" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
         <div class="quick-action-btn" id="adminQALoyKyc" onclick="showAdminPage('loyalty-kyc')"><span class="quick-action-icon">📋</span><div class="quick-action-label">KYC Report</div><div class="quick-action-sub">Incomplete records</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
@@ -1936,13 +1934,24 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
 
-    <!-- LOYALTY: My Cards (admin) — item B4: same fields as employee "My
-         Cards" but for every employee, unmasked, with an employee filter -->
+    <!-- LOYALTY: All Cards (admin) — unified "browse cards" screen. Merges
+         what used to be 3 separate screens (My Cards-All-Employees, Card
+         History, and Employee Timeline's "All Employees" combined view) —
+         same underlying data, one filter panel (employee + date range +
+         search), one table. -->
     <div class="page-section" id="admin-loyalty-mycards">
-      <div class="section-hdr"><span class="section-title2">🪪 My Cards — All Employees</span></div>
+      <div class="section-hdr"><span class="section-title2">🗂️ All Cards</span></div>
       <div class="card" style="padding:12px 14px;">
         <div class="form-row"><label>Filter by Employee (optional)</label>
           <select id="loyMyCardsEmpFilter"><option value="">-- All Employees --</option></select>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>From Date (optional)</label><input type="date" lang="en-GB" id="loyMyCardsFromDate"></div>
+          <div class="form-row"><label>To Date (optional)</label><input type="date" lang="en-GB" id="loyMyCardsToDate"></div>
+        </div>
+        <div class="form-row"><label>Search — customer name or card no (optional)</label>
+          <input type="text" id="loyMyCardsSearch" placeholder="Search..." autocomplete="off"
+            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);outline:none;">
         </div>
         <button class="btn-modal-confirm" style="width:100%;background:var(--purple);" onclick="loadLoyaltyAllCardsAdmin()">🔄 Load Cards</button>
       </div>
@@ -1997,40 +2006,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="loyAdminDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
-    <!-- LOYALTY: Employee Timeline (admin) -->
-    <div class="page-section" id="admin-loyalty-timeline">
-      <div class="section-hdr"><span class="section-title2">👤 Employee Timeline</span>
-      </div>
-      <div class="card" style="padding:12px 14px;">
-        <label>Select Employee</label>
-        <select id="loyTimelineEmpSelect"><option value="">-- Loading employees... --</option></select>
-        <div style="display:flex;gap:10px;margin-top:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyTimelineFromDate"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyTimelineToDate"></div>
-        </div>
-        <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyTimeline()">🔄 Load Timeline</button>
-      </div>
-      <div id="loyTimelineContent"></div>
-    </div>
-
     <!-- LOYALTY: Upcoming Approvals (admin) -->
     <div class="page-section" id="admin-loyalty-upcoming">
       <div class="section-hdr"><span class="section-title2">🔔 Upcoming Approvals</span>
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals()">🔄 Refresh</button>
       <div id="loyUpcomingContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
-
-    <!-- LOYALTY: Card History (admin) -->
-    <div class="page-section" id="admin-loyalty-cardhist">
-      <div class="section-hdr"><span class="section-title2">🗂️ Card History</span>
-      </div>
-      <div class="card" style="padding:12px 14px;">
-        <input type="text" id="loyCardHistSearch" placeholder="Filter by customer name or card no (optional)..." autocomplete="off"
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);outline:none;">
-        <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyCardHistory()">🔄 Load</button>
-      </div>
-      <div id="loyCardhistContent"></div>
     </div>
 
     <!-- LOYALTY: Incentive History (admin) -->
@@ -2603,6 +2584,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-leads-overdue">
       <div class="section-hdr"><span class="section-title2">⏰ Overdue / Unsubmitted Leads</span></div>
       <div class="kd-note" style="margin-bottom:10px;">These leads were assigned on a past date and never called. Only Admin can Avoid them — this sends the lead back to Clean Leads for reassignment.</div>
+      <div class="card" style="padding:12px 14px;">
+        <label>Employee (optional)</label>
+        <select id="overdueEmpFilter" onchange="renderOverdueLeadsTable()"><option value="">-- All Employees --</option></select>
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="overdueFromDate" onchange="renderOverdueLeadsTable()"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="overdueToDate" onchange="renderOverdueLeadsTable()"></div>
+        </div>
+        <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadAdminOverdueLeads()">🔄 Refresh</button>
+      </div>
       <div id="adminOverdueLeadsBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -2820,13 +2810,35 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   </div>
 </div>
 
+<!-- Modal: Loyalty Employee Detail — tap a row on "All Employees" to see
+     that employee's full card timeline + stats (merges what used to be
+     the separate "Employee Timeline" screen). -->
+<div class="modal-overlay" id="loyEmpDetailModal">
+  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title" id="loyEmpDetailTitle">👤 Employee Detail</div>
+    <div class="card" style="padding:10px 14px;margin:8px 0;">
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;"><label style="font-size:11px;">From Date</label><input type="date" lang="en-GB" id="loyEmpDetailFromDate" style="width:100%;"></div>
+        <div style="flex:1;"><label style="font-size:11px;">To Date</label><input type="date" lang="en-GB" id="loyEmpDetailToDate" style="width:100%;"></div>
+      </div>
+      <button class="btn-modal-confirm" style="width:100%;margin-top:8px;background:var(--purple);" onclick="loadLoyEmpDetail()">🔄 Load</button>
+    </div>
+    <div id="loyEmpDetailContent"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('loyEmpDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Leave Detail — full clear breakdown of a single leave: dates,
      mode, submitted time, approved/processed time, purpose, address, etc. -->
 <div class="modal-overlay" id="leaveDetailModal">
-  <div class="modal-box" style="max-width:440px;">
+  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
     <div class="modal-title" id="ldTitle">📄 Leave Details</div>
     <div class="modal-sub" id="ldSub"></div>
     <div id="leaveDetailBody"></div>
+    <div id="leaveDetailDateWise"></div>
+    <div id="leaveDetailConflicts"></div>
     <div class="modal-btns">
       <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('leaveDetailModal')">Close</button>
     </div>
@@ -3219,7 +3231,70 @@ function openLeaveDetailModal(key, isAdmin) {
   html += '</div>';
 
   document.getElementById('leaveDetailBody').innerHTML = html;
+
+  // ── item E (new): date-wise breakdown for multi-day leaves — same
+  // per-day list already shown in the leave email, now visible in-app too.
+  const dwBody = document.getElementById('leaveDetailDateWise');
+  if (dwBody) {
+    const s = normalizeDateStr(l.startDate), e = normalizeDateStr(l.endDate || l.startDate);
+    if (l.days > 1 && s && e) {
+      const sd = new Date(s + 'T00:00:00'), ed = new Date(e + 'T00:00:00');
+      let rowsHtml = '', cur = new Date(sd), dayNum = 1;
+      while (cur <= ed && dayNum <= 60) { // sane cap
+        rowsHtml += `<tr><td>${dayNum}</td><td>${fmtDMY(toYMD(cur))}</td><td>${cur.toLocaleDateString('en-GB',{weekday:'short'})}</td></tr>`;
+        cur.setDate(cur.getDate() + 1); dayNum++;
+      }
+      dwBody.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;">
+        <div class="card-title" style="margin-bottom:8px;">📅 Date-wise Breakdown (${l.days} days)</div>
+        <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>#</th><th>Date</th><th>Day</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+      </div>`;
+    } else {
+      dwBody.innerHTML = '';
+    }
+  }
+
+  // ── item F (new, admin only): "who else is on leave" on these same
+  // dates — Pending/MIS_Approved/Approved/Absent, excluding this leave
+  // itself. Computed entirely from state.allLeaves (already loaded for
+  // the admin's own Leaves tabs), so this needs no extra network call.
+  const conflictBody = document.getElementById('leaveDetailConflicts');
+  if (conflictBody) {
+    if (!isAdmin || !s2e_valid(l)) {
+      conflictBody.innerHTML = '';
+    } else {
+      const s = normalizeDateStr(l.startDate), e = normalizeDateStr(l.endDate || l.startDate);
+      const relevantStatuses = ['Pending', 'MIS_Approved', 'Approved', 'Absent'];
+      const others = (state.allLeaves || []).filter(o =>
+        o.leaveId !== l.leaveId && relevantStatuses.includes(o.status) &&
+        rangesOverlap(normalizeDateStr(o.startDate), normalizeDateStr(o.endDate || o.startDate), s, e)
+      );
+      if (others.length === 0) {
+        conflictBody.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;">
+          <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates)</div>
+          <div style="font-size:12px;color:var(--text3);">Nobody else has a leave overlapping these dates. ✅</div>
+        </div>`;
+      } else {
+        const rowsHtml = others.map(o => {
+          const oRange = o.startDate === o.endDate ? fmtDMY(o.startDate) : fmtDMY(o.startDate) + ' → ' + fmtDMY(o.endDate);
+          return `<tr><td>${o.name}</td><td>${o.type}</td><td>${oRange}</td><td><span class="pill ${pillClass(o.status)}">${statusLabel(o.status)}</span></td></tr>`;
+        }).join('');
+        conflictBody.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;border:1.5px solid var(--orange,#c97a10);">
+          <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates) — ${others.length}</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Useful before deciding — check staffing overlap for these dates.</div>
+          <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+        </div>`;
+      }
+    }
+  }
+
   openModal('leaveDetailModal');
+}
+
+// Small helpers for the conflict check above.
+function s2e_valid(l) { return !!(normalizeDateStr(l.startDate) && normalizeDateStr(l.endDate || l.startDate)); }
+function rangesOverlap(aStart, aEnd, bStart, bEnd) {
+  if (!aStart || !bStart) return false;
+  return aStart <= (bEnd || bStart) && (aEnd || aStart) >= bStart;
 }
 
 function openEmpMoreModal() { showEmpPage('more'); }
@@ -3651,7 +3726,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openEmpMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
+      'loyalty-upcoming','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-newcard', icon:'➕', label:'New Card' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
@@ -3689,7 +3764,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openAdminMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-timeline','loyalty-upcoming','loyalty-cardhist','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
+      'loyalty-upcoming','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
       { page:'loyalty-dash', icon:'📈', label:'Dashboard' },
@@ -3745,7 +3820,7 @@ const SECTION_LABEL_MAP = {
   direct: 'Leave', notices: 'Leave', blocked: 'Leave', settings: 'Leave',
   loyalty: 'Loyalty Card', 'loyalty-dash': 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
-  'loyalty-timeline': 'Loyalty Card', 'loyalty-upcoming': 'Loyalty Card', 'loyalty-cardhist': 'Loyalty Card',
+  'loyalty-upcoming': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
   'loyalty-mycards': 'Loyalty Card',
   'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
@@ -5697,9 +5772,7 @@ const SM_FEATURE_ELEMENTS = {
   loySearch:     ['adminQALoySearch'],
   loyStats:      ['adminQALoyStats'],
   loyDash:       ['adminQALoyDash'],
-  loyTimeline:   ['adminQALoyTimeline'],
   loyUpcoming:   ['adminQALoyUpcoming'],
-  loyCardhist:   ['adminQALoyCardhist'],
   loyIncenthist: ['adminQALoyIncenthist'],
   loyKyc:        ['adminQALoyKyc'],
   kpi: ['adminQAKpi'],
@@ -5725,8 +5798,8 @@ const FEATURE_SUBKEYS = {
   notices: ['notices_view','notices_edit'],
   blocked: ['blocked_dates','blocked_days'],
   loySearch: ['loySearch','loySearch_fulldata'], loyStats: ['loyStats'],
-  loyDash: ['loyDash'], loyTimeline: ['loyTimeline'], loyUpcoming: ['loyUpcoming'],
-  loyCardhist: ['loyCardhist'], loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc'],
+  loyDash: ['loyDash'], loyUpcoming: ['loyUpcoming'],
+  loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc'],
   kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
   kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
@@ -5844,7 +5917,6 @@ function showAdminPage(page) {
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
   if(page==='loyalty-mycards') initLoyaltyAllCardsAdminPage();
-  if(page==='loyalty-timeline') initLoyaltyTimeline();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
   if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
   if(page==='loyalty-kyc') loadLoyaltyKYCReport();
@@ -6706,13 +6778,19 @@ function loadLoyaltyAllCardsAdmin() {
   const summary = document.getElementById('loyAllCardsSummary-admin');
   const content = document.getElementById('loyAllCardsContent-admin');
   const empFilter = document.getElementById('loyMyCardsEmpFilter').value;
+  const fromDate  = document.getElementById('loyMyCardsFromDate').value;
+  const toDate    = document.getElementById('loyMyCardsToDate').value;
+  const search    = document.getElementById('loyMyCardsSearch').value.trim();
   summary.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   content.innerHTML = '';
 
-  jsonpReliable({ page: 'loyaltyAllCardsAdminAPI', role: 'ADMIN', empName: empFilter })
+  jsonpReliable({ page: 'loyaltyAllCardsAdminAPI', role: 'ADMIN', empName: empFilter, fromDate: fromDate, toDate: toDate, search: search })
     .then(res => {
       if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
-      summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s)${empFilter ? ' — ' + empFilter : ' — all employees'}</div>`;
+      const scopeLabel = empFilter ? empFilter : 'all employees';
+      const shownNote = res.total > res.shown ? ` (showing newest ${res.shown} — narrow your filters to see more)` : '';
+      summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s) — ${scopeLabel} · ₹${fmtNum(res.incentive)} incentive${shownNote}</div>`;
+      window.__loyAllCardsData = res;
       if (res.cards.length === 0) {
         content.innerHTML = '<div class="empty-state"><span class="emoji">🪪</span><p>No cards found</p></div>';
         return;
@@ -6727,10 +6805,25 @@ function loadLoyaltyAllCardsAdmin() {
           <td>${c.phone}</td><td>${c.aadhaarNo}</td><td>${c.empName}</td><td>${c.cardDate}</td>
         </tr>`;
       });
-      html += `</tbody></table></div>`;
+      html += `</tbody></table></div><button class="btn-loy-card" onclick="mailLoyaltyAllCards()">📧 Mail This List</button>`;
       content.innerHTML = html;
     })
     .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function mailLoyaltyAllCards() {
+  const res = window.__loyAllCardsData;
+  if (!res) { toast('Load the cards first', 'error'); return; }
+  const rowsHtml = res.cards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`).join('');
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:650px;">
+    <h2 style="color:#6b21a8;">VSR GOLD — All Cards Report</h2>
+    <p>${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
+      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th></tr>
+      ${rowsHtml}
+    </table>
+  </div>`;
+  mailLoyaltyReport('VSR GOLD — All Cards Report', bodyHtml, 'admin');
 }
 
 function downloadLoyaltyMyStatsPDF() {
@@ -6805,7 +6898,7 @@ function loadLoyaltyAdminStats() {
       if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><p>No employee data found</p></div>'; return; }
       let html = '';
       res.rows.forEach(r => {
-        html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
+        html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;cursor:pointer;" onclick="openLoyEmpDetail('${escJs(r.empName)}')">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div style="font-weight:700;font-size:13.5px;">${r.empName}</div>
             <span class="pill" style="background:var(--purple-bg);color:var(--purple-dark);">${r.status}</span>
@@ -6816,6 +6909,7 @@ function loadLoyaltyAdminStats() {
           <div style="font-size:12px;color:var(--text2);margin-top:4px;">
             💰 Pending: <b>₹${fmtNum(r.pendingIncentive)}</b> · 💵 Total Incentive: <b>₹${fmtNum(r.totalIncentive)}</b>
           </div>
+          <div style="font-size:11px;color:var(--purple-dark);margin-top:6px;font-weight:600;">Tap for full timeline →</div>
         </div>`;
       });
       html += `<button class="btn-loy-card" onclick="mailLoyaltyAdminStats()">📧 Mail This Report</button>`;
@@ -9023,24 +9117,97 @@ async function loadAdminOverdueLeads() {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_OVERDUE_LEADS' });
-    if (!res.ok || !res.leads || !res.leads.length) {
-      box.innerHTML = '<div class="empty-state"><p>Nothing overdue — everyone is up to date. 🎉</p></div>';
-      return;
-    }
-    let html = '<div class="kd-note">' + res.leads.length + ' overdue lead(s)</div>';
-    res.leads.forEach(l => {
-      html += `<div class="dsr-receipt-card">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${l.customerName || 'Unknown'}</span><span class="kd-pill" style="background:var(--red-bg,#fdecea);color:var(--red,#c0392b);">${l.daysOverdue}d overdue</span></div>
-        <div class="dsr-receipt-body">
-          <div class="dsr-meta-row">📱 ${l.phone} &nbsp;·&nbsp; 👤 ${l.employeeName}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">📅 Assigned: ${l.assignedDate}</div>
-        </div>
-        <button class="btn-secondary" style="width:100%;margin-top:8px;color:var(--red,#c0392b);" onclick="avoidLeadAdmin('${l.phone}','${l.employeeName.replace(/'/g, "\\'")}','${l.assignedDate}')">🚫 Avoid — Send Back to Pool</button>
-      </div>`;
-    });
-    box.innerHTML = html;
+    if (!res.ok) { box.innerHTML = '<div class="empty-state"><p>Could not load. ' + (res.error||'') + '</p></div>'; return; }
+    window.__overdueLeadsAll = res.leads || [];
+
+    // Populate the employee filter dropdown once per load (names come
+    // straight from the data — no separate employee-list call needed).
+    const empSel = document.getElementById('overdueEmpFilter');
+    const uniqEmps = [...new Set(window.__overdueLeadsAll.map(l => l.employeeName))].sort();
+    const prevVal = empSel.value;
+    empSel.innerHTML = '<option value="">-- All Employees --</option>' + uniqEmps.map(n => `<option value="${escJs(n)}">${n}</option>`).join('');
+    if (uniqEmps.includes(prevVal)) empSel.value = prevVal;
+
+    renderOverdueLeadsTable();
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// Table view (item D): # | Customer Name | Mobile No | Assigned Date |
+// checkbox, filterable by employee + date range, with a Select All that
+// drives one bulk "Avoid Selected" action instead of one confirm per lead.
+function renderOverdueLeadsTable() {
+  const box = document.getElementById('adminOverdueLeadsBox');
+  const all = window.__overdueLeadsAll || [];
+  const empFilter = document.getElementById('overdueEmpFilter').value;
+  const fromVal = document.getElementById('overdueFromDate').value;
+  const toVal = document.getElementById('overdueToDate').value;
+
+  let leads = all;
+  if (empFilter) leads = leads.filter(l => l.employeeName === empFilter);
+  if (fromVal) leads = leads.filter(l => (l.assignedDateISO || '') >= fromVal);
+  if (toVal) leads = leads.filter(l => (l.assignedDateISO || '') <= toVal);
+  leads.sort((a, b) => (a.assignedDateISO || '').localeCompare(b.assignedDateISO || ''));
+
+  if (leads.length === 0) {
+    box.innerHTML = '<div class="empty-state"><p>' + (all.length === 0 ? 'Nothing overdue — everyone is up to date. 🎉' : 'No overdue leads match this filter.') + '</p></div>';
+    return;
+  }
+
+  let html = `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+      <input type="checkbox" id="overdueSelectAll" onchange="toggleOverdueSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;font-weight:700;color:var(--text);">Select All</span>
+    </label>
+    <span style="font-size:12px;color:var(--text3);">${leads.length} overdue lead(s)</span>
+    <div style="flex:1;"></div>
+    <button class="btn-secondary" style="color:var(--red,#c0392b);" onclick="avoidSelectedOverdueLeads()">🚫 Avoid Selected</button>
+  </div>`;
+
+  html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+      <th></th><th>Customer Name</th><th>Mobile No</th><th>Employee</th><th>Assigned Date</th><th>Overdue</th>
+    </tr></thead><tbody>`;
+  leads.forEach((l, idx) => {
+    html += `<tr>
+      <td><input type="checkbox" class="overdue-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
+      <td>${l.customerName || 'Unknown'}</td>
+      <td>${l.phone}</td>
+      <td>${l.employeeName}</td>
+      <td>${l.assignedDate}</td>
+      <td><span class="kd-pill" style="background:var(--red-bg,#fdecea);color:var(--red,#c0392b);">${l.daysOverdue}d</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  box.innerHTML = html;
+  window.__overdueLeadsFiltered = leads; // matches the data-idx used above
+}
+
+function toggleOverdueSelectAll(checked) {
+  document.querySelectorAll('.overdue-row-check').forEach(cb => { cb.checked = checked; });
+}
+
+async function avoidSelectedOverdueLeads() {
+  const checked = Array.from(document.querySelectorAll('.overdue-row-check:checked'));
+  if (checked.length === 0) { toast('Select at least one lead first', 'error'); return; }
+  const leads = window.__overdueLeadsFiltered || [];
+  const items = checked.map(cb => leads[parseInt(cb.dataset.idx, 10)]).filter(Boolean)
+    .map(l => ({ phone: l.phone, employeeName: l.employeeName }));
+  if (!confirm('Avoid ' + items.length + ' selected lead(s)?\n\nThey will go back to Clean Leads for reassignment.')) return;
+
+  try {
+    const res = await leadsApiPost({
+      action: 'AVOID_LEADS_BULK', items,
+      adminName: state.adminName || state.adminEmail || 'Admin', reason: 'Not submitted (overdue) — bulk avoid'
+    });
+    if (res && res.ok !== false) {
+      toast('✅ ' + (res.message || 'Avoided'), 'success');
+      loadAdminOverdueLeads();
+    } else {
+      toast('❌ ' + ((res && (res.error || res.message)) || 'Bulk avoid failed'), 'error');
+    }
+  } catch (e) {
+    toast('❌ Network error: ' + e.message, 'error');
   }
 }
 
@@ -9570,63 +9737,32 @@ function mailLoyaltyDashboard(who) {
   mailLoyaltyReport('VSR GOLD — Loyalty Dashboard', bodyHtml, who);
 }
 
-// ── Employee Card Timeline (Admin picks any employee; reuses loyaltyMyStatsAPI) ──
-function initLoyaltyTimeline() {
-  const sel = document.getElementById('loyTimelineEmpSelect');
-  if (sel.options.length > 1 || sel.dataset.loaded === '1') return;
-  jsonpReliable({ page: 'loyaltyAdminStatsAPI' })
-    .then(res => {
-      if (!res || !res.ok) return;
-      sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-        '<option value="__ALL__">🏪 All Employees</option>' +
-        res.rows.map(r => `<option value="${escJs(r.empName)}">${r.empName}</option>`).join('');
-      sel.dataset.loaded = '1';
-    });
+// ── Employee Card Timeline drilldown — opened by tapping a row on "All
+// Employees" (merges what used to be the separate "Employee Timeline"
+// screen; reuses loyaltyMyStatsAPI, same as before) ──
+function openLoyEmpDetail(empName) {
+  document.getElementById('loyEmpDetailTitle').textContent = '👤 ' + empName;
+  document.getElementById('loyEmpDetailContent').innerHTML = '';
+  document.getElementById('loyEmpDetailFromDate').value = '';
+  document.getElementById('loyEmpDetailToDate').value = '';
+  window.__loyEmpDetailName = empName;
+  openModal('loyEmpDetailModal');
+  loadLoyEmpDetail();
 }
 
-function loadLoyaltyTimeline() {
-  const empName = document.getElementById('loyTimelineEmpSelect').value;
-  const from = document.getElementById('loyTimelineFromDate').value;
-  const to   = document.getElementById('loyTimelineToDate').value;
-  const content = document.getElementById('loyTimelineContent');
-  if (!empName) { toast('Please select an employee', 'error'); return; }
+function loadLoyEmpDetail() {
+  const empName = window.__loyEmpDetailName;
+  if (!empName) return;
+  const from = document.getElementById('loyEmpDetailFromDate').value;
+  const to   = document.getElementById('loyEmpDetailToDate').value;
+  const content = document.getElementById('loyEmpDetailContent');
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-
-  // "All Employees" merges everyone's cards for the date range into one
-  // combined store-wide view — this replaces the old separate Date Range
-  // Report tab (same underlying data, one less screen to navigate).
-  if (empName === '__ALL__') {
-    jsonpReliable({ page: 'loyaltyDateRangeReportAPI', fromDate: from, toDate: to })
-      .then(res => {
-        if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
-        let html = `<div class="card"><div class="card-title">🏪 All Employees — Combined</div>
-          <div class="leave-card-date">${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</div>
-        </div>`;
-        html += `<div class="card"><div class="card-title">📅 Cards in Selected Range</div>`;
-        if (res.cards.length === 0) {
-          html += `<div class="empty-state" style="padding:16px 0;"><p>No cards in this range</p></div>`;
-        } else {
-          html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
-              <th>#</th><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th>
-            </tr></thead><tbody>`;
-          res.cards.forEach((c, idx) => {
-            html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`;
-          });
-          html += `</tbody></table></div>`;
-        }
-        html += `</div><button class="btn-loy-card" onclick="mailLoyaltyAllEmpTimeline()">📧 Mail This Report</button>`;
-        content.innerHTML = html;
-        window.__loyAllEmpTimelineData = res;
-      })
-      .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
-    return;
-  }
 
   jsonpReliable({ page: 'loyaltyMyStatsAPI', empName: empName, fromDate: from, toDate: to })
     .then(res => {
       if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
       const o = res.overall;
-      let html = `<div class="card"><div class="card-title">👤 ${empName} — Full History</div>
+      let html = `<div class="card"><div class="card-title">📋 Summary</div>
         <div class="leave-card-date">Total Cards: <b>${o.totalCards}</b> · Rank: <b>#${o.rank}</b> · This Month: <b>${o.thisMonthCards}</b></div>
         <div class="leave-card-date">Approved: <b>${o.approvedCards}</b> · Balance: <b>${o.balanceCards}</b></div>
         <div class="leave-card-date">Total Incentive: <b>₹${fmtNum(o.totalIncentive)}</b> · Pending: <b>₹${fmtNum(o.pendingIncentive)}</b></div>
@@ -9645,34 +9781,19 @@ function loadLoyaltyTimeline() {
         });
         html += `</tbody></table></div>`;
       }
-      html += `</div><button class="btn-loy-card" onclick="mailLoyaltyTimeline('${escJs(empName)}')">📧 Mail This Timeline</button>`;
+      html += `</div><button class="btn-loy-card" onclick="mailLoyaltyTimeline()">📧 Mail This Timeline</button>`;
       content.innerHTML = html;
-      window.__loyTimelineData = { empName, res };
+      window.__loyEmpDetailData = res;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
 
-function mailLoyaltyAllEmpTimeline() {
-  const res = window.__loyAllEmpTimelineData;
-  if (!res) { toast('Load the report first', 'error'); return; }
-  const rowsHtml = res.cards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`).join('');
-  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:650px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — All Employees Card Report</h2>
-    <p>${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</p>
-    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
-      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th></tr>
-      ${rowsHtml}
-    </table>
-  </div>`;
-  mailLoyaltyReport('VSR GOLD — All Employees Card Report', bodyHtml, 'admin');
-}
-
-
-function mailLoyaltyTimeline(empName) {
-  const stash = window.__loyTimelineData;
-  if (!stash) { toast('Load the timeline first', 'error'); return; }
-  const o = stash.res.overall;
-  const rowsHtml = stash.res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`).join('');
+function mailLoyaltyTimeline() {
+  const empName = window.__loyEmpDetailName;
+  const res = window.__loyEmpDetailData;
+  if (!empName || !res) { toast('Load the timeline first', 'error'); return; }
+  const o = res.overall;
+  const rowsHtml = res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
     <h2 style="color:#6b21a8;">VSR GOLD — ${empName}'s Card Timeline</h2>
     <p>Total: ${o.totalCards} · Approved: ${o.approvedCards} · Balance: ${o.balanceCards} · Total Incentive ₹${fmtNum(o.totalIncentive)}</p>
@@ -9708,23 +9829,6 @@ function loadLoyaltyUpcomingApprovals() {
           <div style="font-size:12px;color:var(--text2);margin-top:4px;">Card Range: #${r.firstCard} → #${r.lastCard}</div>
         </div>`;
       });
-      content.innerHTML = html;
-    })
-    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
-}
-
-// ── Card History — browsable list of every card ever enrolled ──
-function loadLoyaltyCardHistory() {
-  const query = document.getElementById('loyCardHistSearch').value.trim();
-  const content = document.getElementById('loyCardhistContent');
-  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable({ page: 'loyaltyCardHistoryAPI', query: query })
-    .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
-      let html = `<div class="card"><div class="card-title">🗂️ Showing ${res.shown} of ${res.total} card(s)${res.total > res.shown ? ' (newest first, narrow your search to see more)' : ''}</div>`;
-      if (res.cards.length === 0) html += `<div class="empty-state" style="padding:16px 0;"><p>No cards found</p></div>`;
-      res.cards.forEach(c => { html += `<div class="leave-card-date" style="margin-bottom:6px;">📅 ${c.cardDate} · #${c.cardNo} · ${c.cardType} · ${c.custName} · 👤 ${c.empName}</div>`; });
-      html += `</div>`;
       content.innerHTML = html;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
