@@ -2552,6 +2552,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="adminLeadsSummaryBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Employee names — tap for their leads</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">All employees — calls done</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee</div></div>
@@ -2561,6 +2562,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="btn-secondary" style="width:100%;margin-bottom:8px;" onclick="sendPendingFollowUpReportNow()">🔁 Send Pending Follow-up Report</button>
         <button class="btn-secondary" style="width:100%;" onclick="sendCallingStatusReportNow()">📞 Send Today's Calling Status Report</button>
       </div>
+    </div>
+
+    <div class="page-section" id="admin-leads-submitted">
+      <div class="section-hdr"><span class="section-title2">✅ Submitted Today — All Employees</span></div>
+      <div class="card">
+        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="adminLeadsSubmittedDate"></div>
+        <button class="btn-primary" style="width:100%;" onclick="loadAdminLeadsSubmitted()">🔍 Load</button>
+      </div>
+      <div id="adminLeadsSubmittedBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="admin-leads-report">
@@ -5934,6 +5944,7 @@ function showAdminPage(page) {
   if(page==='availability') renderTeamAvailability();
   if(page==='leads') loadAdminLeadsHome();
   if(page==='leads-overview') loadAdminLeadsOverview();
+  if(page==='leads-submitted') loadAdminLeadsSubmitted();
   if(page==='leads-report') loadAdminLeadsReport();
   if(page==='leads-overdue') loadAdminOverdueLeads();
   if(page==='leads-quota') loadAdminLeadsQuota();
@@ -8915,7 +8926,7 @@ async function submitLeadCall() {
   }
 }
 
-// ── EMPLOYEE: Submitted Today (read-only) ───────────────────
+// ── EMPLOYEE: Submitted Today (with Undo) ───────────────────
 async function loadEmpLeadsSubmitted() {
   const box = document.getElementById('empLeadsSubmittedBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
@@ -8927,15 +8938,47 @@ async function loadEmpLeadsSubmitted() {
       return;
     }
     let html = '<div class="kd-note">' + entries.length + ' call(s) submitted today</div>';
-    entries.forEach(e => {
+    entries.forEach((e, i) => {
+      const undoPayload = JSON.stringify({
+        empName: e.empName || state.empName, empEmail: state.empEmail || '', empId: state.empId || '',
+        phone: e.phone, timestamp: e.timestamp, sheetRow: e.sheetRow, customerName: e.name || e.customerName || ''
+      }).replace(/"/g, '&quot;');
       html += `<div class="dsr-receipt-card">
         <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${e.name || e.customerName || ''}</span><span class="kd-pill green">${e.status || ''}</span></div>
-        <div class="dsr-receipt-body"><div class="dsr-meta-row" style="border-bottom:none;">⏱ ${e.duration || e.durationFmt || '—'} &nbsp;·&nbsp; 🕐 ${e.date || e.timestamp || ''}</div></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-meta-row" style="border-bottom:none;">⏱ ${e.duration || e.durationFmt || '—'} &nbsp;·&nbsp; 🕐 ${e.date || e.timestamp || ''}</div>
+          <button class="btn-secondary" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick='undoLeadSubmission(this, ${undoPayload})'>↩️ Undo — Back to Today's Queue</button>
+        </div>
       </div>`;
     });
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// Reverses an accidental submission: deletes the Calling Log entry and
+// puts the lead back into today's Pending Leads queue so it shows up
+// again under "Today's Leads" for a fresh call/submit. Used from both
+// the employee's own "Submitted Today" and the admin's all-employee view.
+async function undoLeadSubmission(btn, payload) {
+  if (!confirm('Undo this submission? The lead will go back to today\'s pending queue.')) return;
+  btn.disabled = true; btn.textContent = 'Undoing...';
+  try {
+    const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, payload));
+    if (res && res.ok) {
+      toast('↩️ Restored to today\'s queue', 'success');
+      if (document.getElementById('empLeadsSubmittedBox')) loadEmpLeadsSubmitted();
+      if (document.getElementById('empLeadsPendingBox')) loadEmpLeadsPending();
+      if (document.getElementById('empLeadsSummaryBox')) loadEmpLeadsHome();
+      if (document.getElementById('adminLeadsSubmittedBox')) loadAdminLeadsSubmitted();
+    } else {
+      toast((res && (res.error || res.message)) || 'Undo failed', 'error');
+      btn.disabled = false; btn.textContent = "↩️ Undo — Back to Today's Queue";
+    }
+  } catch (e) {
+    toast('Network error: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = "↩️ Undo — Back to Today's Queue";
   }
 }
 
@@ -9029,6 +9072,40 @@ async function loadAdminLeadsReport() {
       html += `<div class="card" style="margin-top:8px;"><div class="card-title">${r.employee} — Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
         statuses.map(s => `<th>${s}</th>`).join('') + '</tr></thead><tbody><tr>' +
         statuses.map(s => `<td style="text-align:center;">${r.statusBreakdown[s]}</td>`).join('') + '</tr></tbody></table></div></div>';
+    });
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+  }
+}
+
+// ── ADMIN: Submitted Today — all employees, with Undo ────────
+async function loadAdminLeadsSubmitted() {
+  const box = document.getElementById('adminLeadsSubmittedBox');
+  const dateInp = document.getElementById('adminLeadsSubmittedDate');
+  if (dateInp && !dateInp.value) dateInp.value = todayISO();
+  const dateStr = (dateInp && dateInp.value) || todayISO();
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_DAILY_REPORT', role: 'admin', date: dateStr });
+    const entries = (res && res.entries) || [];
+    if (!entries.length) {
+      box.innerHTML = '<div class="empty-state"><p>No calls submitted on this date.</p></div>';
+      return;
+    }
+    let html = '<div class="kd-note">' + entries.length + ' call(s) submitted</div>';
+    entries.forEach(e => {
+      const undoPayload = JSON.stringify({
+        empName: e.empName, phone: e.phone, timestamp: e.timestamp, sheetRow: e.sheetRow,
+        customerName: e.name || e.customerName || ''
+      }).replace(/"/g, '&quot;');
+      html += `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${e.name || e.customerName || ''}</span><span class="kd-pill green">${e.status || ''}</span></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-meta-row" style="border-bottom:none;">🧑‍💼 ${e.empName || ''} &nbsp;·&nbsp; ⏱ ${e.duration || '—'} &nbsp;·&nbsp; 🕐 ${e.date || ''}</div>
+          <button class="btn-secondary" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick='undoLeadSubmission(this, ${undoPayload})'>↩️ Undo — Back to Queue</button>
+        </div>
+      </div>`;
     });
     box.innerHTML = html;
   } catch (e) {
