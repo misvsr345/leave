@@ -8334,6 +8334,7 @@ function renderGoldenAuraForm(who) {
           <option value="Golden Reward">2. Golden Reward</option>
         </select>
       </div>
+      <div class="form-row"><label>Plan Number *</label><input type="text" inputmode="numeric" id="gaPlanNo-${who}" placeholder="e.g. 29" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
       <div class="form-row"><label>Amount *</label><input type="number" id="gaAmount-${who}" placeholder="e.g. 10000"></div>
       <div class="form-row"><label>Customer Name (As per Document) *</label><input type="text" id="gaCustName-${who}"></div>
       <div class="form-row"><label>Mobile Number *</label><input type="tel" id="gaMobile-${who}" maxlength="10"></div>
@@ -8375,7 +8376,6 @@ function renderGoldenAuraForm(who) {
     <div class="card">
       <div class="card-title">🏪 Office Purpose Only</div>
       <div class="form-row"><label>Employee Name</label><input type="text" value="${empName || ''}" disabled style="background:var(--bg);opacity:0.8;"></div>
-      <p style="font-size:11px;color:var(--text3);">Plan Number is auto-generated on submit.</p>
     </div>
 
     <button class="btn-primary" style="width:100%;margin-bottom:20px;" id="gaSubmitBtn-${who}" onclick="submitGoldenAura('${who}')">💾 Submit Enrollment</button>
@@ -8390,10 +8390,12 @@ async function submitGoldenAura(who) {
   const custName = g('gaCustName').value.trim();
   const mobile = g('gaMobile').value.trim();
   const planType = g('gaPlanType').value;
+  const planNo = g('gaPlanNo').value.trim();
   const amount = g('gaAmount').value.trim();
   const town = g('gaTown').value.trim();
 
-  if (!custName || !mobile || !planType || !amount || !town) { toast('Please fill all required fields (*)', 'error'); return; }
+  if (!custName || !mobile || !planType || !planNo || !amount || !town) { toast('Please fill all required fields (*)', 'error'); return; }
+  if (!/^\d+$/.test(planNo)) { toast('Plan Number must be numbers only', 'error'); return; }
   if (!/^\d{10}$/.test(mobile)) { toast('Mobile must be 10 digits', 'error'); return; }
 
   const btn = document.getElementById('gaSubmitBtn-' + who);
@@ -8407,7 +8409,7 @@ async function submitGoldenAura(who) {
     const payload = {
       page: 'goldenAuraSubmitAPI',
       empName: who === 'admin' ? state.adminName : state.empName,
-      enrollDate: g('gaEnrollDate').value, planType, amount, custName, mobile,
+      enrollDate: g('gaEnrollDate').value, planType, planNo, amount, custName, mobile,
       coDoWoSo: g('gaCoDoWoSo').value, street: g('gaStreet').value, area: g('gaArea').value,
       landmark: g('gaLandmark').value, town, district: g('gaDistrict').value, state: g('gaState').value,
       pin: g('gaPin').value, aadhaarNo: g('gaAadhaarNo').value, aadhaarPhoto: photos.gaAadhaarPhoto,
@@ -8436,7 +8438,7 @@ function gaShowPreview(p, who) {
   div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;">
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
-      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 ${p.planType}</span><span class="kd-pill gold">₹${p.amount}</span></div>
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 ${p.planType} #${p.planNo}</span><span class="kd-pill gold">₹${p.amount}</span></div>
       <div class="dsr-receipt-body">
         <div class="dsr-cust-name">${p.custName}</div>
         <div class="dsr-cust-addr"><b>📍 ${[p.street,p.area,p.town,p.district,p.state,p.pin].filter(Boolean).join(', ')}</b></div>
