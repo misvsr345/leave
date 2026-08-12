@@ -3074,6 +3074,25 @@ function toast(msg, type='info') {
   toastHideTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// Same reasoning as _parseLeadsApiResponse (see LEADS SECTION below): a
+// direct fetch(WEB_APP_URL, {method:'POST', ...}) can occasionally get
+// back an HTML page (auth redirect / Google error page) instead of JSON.
+// Reading the body as text first lets us tell the person clearly what
+// went wrong instead of surfacing "Unexpected token '<' ... is not
+// valid JSON", which for a photo-upload form (Loyalty Card, Golden
+// Aura) reads as if the photos themselves were the problem.
+async function _parseMainApiResponse(resp) {
+  const raw = await resp.text();
+  try {
+    return JSON.parse(raw);
+  } catch (parseErr) {
+    if (/^\s*<(!DOCTYPE|html)/i.test(raw)) {
+      throw new Error('Server returned a login/error page instead of data (HTTP ' + resp.status + '). Please try again in a minute, or tell admin if it keeps happening.');
+    }
+    throw new Error('Server returned an unexpected response (HTTP ' + resp.status + ')');
+  }
+}
+
 function jsonp(params, timeoutMs) {
   timeoutMs = timeoutMs || 25000;
   return new Promise((resolve, reject) => {
@@ -6416,7 +6435,7 @@ async function confirmSubmitLoyaltyCard() {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
       body: JSON.stringify(payload)
     });
-    const result = await resp.json();
+    const result = await _parseMainApiResponse(resp);
 
     if (result && result.ok) {
       toast('✅ Card ' + result.cardNo + ' enrolled successfully', 'success');
@@ -8423,9 +8442,21 @@ async function confirmSubmitGoldenAura(who) {
   const msg = document.getElementById('gaStatusMsg-' + who);
   const btn = document.getElementById('gaSubmitBtn-' + who);
   if (!payload) { toast('Nothing to submit — please fill the form again', 'error'); return; }
-  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
   try {
-    const res = await jsonpReliable(payload);
+    // This form carries up to 7 base64 photo uploads, which is far too
+    // large for a GET/JSONP request's URL (that's exactly what caused
+    // "Network error — could not reach server": the encoded photos
+    // pushed the URL past the browser's/Apps Script's length limit and
+    // the <script src="..."> tag simply failed to load). Submitted as a
+    // raw JSON POST body instead — same proven approach already used by
+    // the Loyalty Card form's confirmSubmitLoyaltyCard().
+    const resp = await fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
+      body: JSON.stringify(payload)
+    });
+    const res = await _parseMainApiResponse(resp);
     if (res && res.ok) {
       msg.style.color = 'var(--green)';
       msg.innerHTML = `✅ Saved! Plan No: <b>${res.planNo}</b>`;
@@ -8711,7 +8742,7 @@ const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw9bOBxO1ar27
 async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
   const resp = await fetch(LEADS_WEB_APP_URL + '?' + qs);
-  return await resp.json();
+  return await _parseLeadsApiResponse(resp);
 }
 
 async function leadsApiPost(payload) {
@@ -8720,7 +8751,26 @@ async function leadsApiPost(payload) {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
     body: JSON.stringify(payload)
   });
-  return await resp.json();
+  return await _parseLeadsApiResponse(resp);
+}
+
+// The CRM Apps Script can occasionally answer with an HTML page instead
+// of JSON — e.g. a Google sign-in/redirect page if the deployment's
+// access briefly lapses, or a generic Google error page if the
+// deployment URL is stale. resp.json() on that throws a cryptic
+// "Unexpected token '<' ... is not valid JSON", which told the user
+// nothing. Read the body as text first and parse it ourselves so we can
+// surface one clear, actionable message instead.
+async function _parseLeadsApiResponse(resp) {
+  const raw = await resp.text();
+  try {
+    return JSON.parse(raw);
+  } catch (parseErr) {
+    if (/^\s*<(!DOCTYPE|html)/i.test(raw)) {
+      throw new Error('CRM server returned a login/error page instead of data (HTTP ' + resp.status + '). Please tell admin — the CRM link may need to be re-authorized or redeployed.');
+    }
+    throw new Error('CRM server returned an unexpected response (HTTP ' + resp.status + ')');
+  }
 }
 
 function todayISO() {
@@ -8926,35 +8976,114 @@ async function submitLeadCall() {
   }
 }
 
-// ── EMPLOYEE: Submitted Today (with Undo) ───────────────────
+// ── EMPLOYEE: Submitted Today (table + checkbox, with Undo) ─────────
+// Table view (matches the Overdue Leads table style: # | Customer |
+// Status | Duration | Time | checkbox) with a Select All that drives
+// one bulk Undo instead of one confirm per row, plus a per-row Undo
+// button for a single accidental submission.
+let __empSubmittedEntries = [];
+
 async function loadEmpLeadsSubmitted() {
   const box = document.getElementById('empLeadsSubmittedBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_DAILY_REPORT', employee: state.empName, role: 'employee', date: todayISO() });
     const entries = (res && res.entries) || (res && res.data && res.data.entries) || [];
-    if (!entries.length) {
-      box.innerHTML = '<div class="empty-state"><p>No calls submitted yet today.</p></div>';
-      return;
-    }
-    let html = '<div class="kd-note">' + entries.length + ' call(s) submitted today</div>';
-    entries.forEach((e, i) => {
-      const undoPayload = JSON.stringify({
-        empName: e.empName || state.empName, empEmail: state.empEmail || '', empId: state.empId || '',
-        phone: e.phone, timestamp: e.timestamp, sheetRow: e.sheetRow, customerName: e.name || e.customerName || ''
-      }).replace(/"/g, '&quot;');
-      html += `<div class="dsr-receipt-card">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${e.name || e.customerName || ''}</span><span class="kd-pill green">${e.status || ''}</span></div>
-        <div class="dsr-receipt-body">
-          <div class="dsr-meta-row" style="border-bottom:none;">⏱ ${e.duration || e.durationFmt || '—'} &nbsp;·&nbsp; 🕐 ${e.date || e.timestamp || ''}</div>
-          <button class="btn-secondary" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick='undoLeadSubmission(this, ${undoPayload})'>↩️ Undo — Back to Today's Queue</button>
-        </div>
-      </div>`;
-    });
-    box.innerHTML = html;
+    __empSubmittedEntries = entries;
+    renderEmpSubmittedTable();
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
   }
+}
+
+function renderEmpSubmittedTable() {
+  const box = document.getElementById('empLeadsSubmittedBox');
+  const entries = __empSubmittedEntries || [];
+  if (!entries.length) {
+    box.innerHTML = '<div class="empty-state"><p>No calls submitted yet today.</p></div>';
+    return;
+  }
+
+  let html = `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+      <input type="checkbox" id="empSubmittedSelectAll" onchange="toggleEmpSubmittedSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;font-weight:700;color:var(--text);">Select All</span>
+    </label>
+    <span style="font-size:12px;color:var(--text3);">${entries.length} call(s) submitted today</span>
+    <div style="flex:1;"></div>
+    <button class="btn-secondary" onclick="undoSelectedEmpSubmissions()">↩️ Undo Selected</button>
+  </div>`;
+
+  html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+      <th></th><th>Customer</th><th>Status</th><th>Duration</th><th>Time</th><th></th>
+    </tr></thead><tbody>`;
+  entries.forEach((e, idx) => {
+    html += `<tr>
+      <td><input type="checkbox" class="emp-submitted-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
+      <td>${e.name || e.customerName || 'Unknown'}</td>
+      <td><span class="kd-pill green">${e.status || ''}</span></td>
+      <td>${e.duration || '—'}</td>
+      <td>${e.date || e.timestamp || ''}</td>
+      <td><button class="btn-secondary" style="font-size:11px;padding:5px 8px;white-space:nowrap;" onclick="undoLeadSubmissionByIdx('emp', ${idx})">↩️ Undo</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  box.innerHTML = html;
+}
+
+function toggleEmpSubmittedSelectAll(checked) {
+  document.querySelectorAll('.emp-submitted-row-check').forEach(cb => { cb.checked = checked; });
+}
+
+function _submittedEntryToUndoPayload(e) {
+  return {
+    empName: e.empName || state.empName, empEmail: state.empEmail || '', empId: state.empId || '',
+    phone: e.phone, timestamp: e.timestamp, sheetRow: e.sheetRow, customerName: e.name || e.customerName || ''
+  };
+}
+
+// Single-row Undo button — looks the entry up by index instead of
+// inlining the whole payload into the onclick attribute (safer once the
+// list is a table row rather than a card, and one less place a stray
+// quote in a customer name could break the HTML).
+async function undoLeadSubmissionByIdx(who, idx) {
+  const list = who === 'admin' ? __adminSubmittedEntries : __empSubmittedEntries;
+  const e = (list || [])[idx];
+  if (!e) return;
+  if (!confirm('Undo this submission? The lead will go back to today\'s pending queue.')) return;
+  try {
+    const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, _submittedEntryToUndoPayload(e)));
+    if (res && res.ok) {
+      toast('↩️ Restored to today\'s queue', 'success');
+      if (who === 'admin') loadAdminLeadsSubmitted(); else loadEmpLeadsSubmitted();
+      if (document.getElementById('empLeadsPendingBox')) loadEmpLeadsPending();
+      if (document.getElementById('empLeadsSummaryBox')) loadEmpLeadsHome();
+    } else {
+      toast((res && (res.error || res.message)) || 'Undo failed', 'error');
+    }
+  } catch (e2) {
+    toast('Network error: ' + e2.message, 'error');
+  }
+}
+
+async function undoSelectedEmpSubmissions() {
+  const checked = Array.from(document.querySelectorAll('.emp-submitted-row-check:checked'));
+  if (checked.length === 0) { toast('Select at least one call first', 'error'); return; }
+  const idxs = checked.map(cb => parseInt(cb.dataset.idx, 10));
+  if (!confirm('Undo ' + idxs.length + ' selected submission(s)?\n\nThey will go back to today\'s pending queue.')) return;
+  let okCount = 0, failCount = 0;
+  for (const idx of idxs) {
+    const e = __empSubmittedEntries[idx];
+    if (!e) continue;
+    try {
+      const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, _submittedEntryToUndoPayload(e)));
+      if (res && res.ok) okCount++; else failCount++;
+    } catch (e2) { failCount++; }
+  }
+  toast('↩️ Restored ' + okCount + (failCount ? ', ' + failCount + ' failed' : ''), failCount ? 'error' : 'success');
+  loadEmpLeadsSubmitted();
+  if (document.getElementById('empLeadsPendingBox')) loadEmpLeadsPending();
+  if (document.getElementById('empLeadsSummaryBox')) loadEmpLeadsHome();
 }
 
 // Reverses an accidental submission: deletes the Calling Log entry and
@@ -9079,7 +9208,9 @@ async function loadAdminLeadsReport() {
   }
 }
 
-// ── ADMIN: Submitted Today — all employees, with Undo ────────
+// ── ADMIN: Submitted Today — all employees, table + checkbox, with Undo ──
+let __adminSubmittedEntries = [];
+
 async function loadAdminLeadsSubmitted() {
   const box = document.getElementById('adminLeadsSubmittedBox');
   const dateInp = document.getElementById('adminLeadsSubmittedDate');
@@ -9088,29 +9219,69 @@ async function loadAdminLeadsSubmitted() {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_DAILY_REPORT', role: 'admin', date: dateStr });
-    const entries = (res && res.entries) || [];
-    if (!entries.length) {
-      box.innerHTML = '<div class="empty-state"><p>No calls submitted on this date.</p></div>';
-      return;
-    }
-    let html = '<div class="kd-note">' + entries.length + ' call(s) submitted</div>';
-    entries.forEach(e => {
-      const undoPayload = JSON.stringify({
-        empName: e.empName, phone: e.phone, timestamp: e.timestamp, sheetRow: e.sheetRow,
-        customerName: e.name || e.customerName || ''
-      }).replace(/"/g, '&quot;');
-      html += `<div class="dsr-receipt-card">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${e.name || e.customerName || ''}</span><span class="kd-pill green">${e.status || ''}</span></div>
-        <div class="dsr-receipt-body">
-          <div class="dsr-meta-row" style="border-bottom:none;">🧑‍💼 ${e.empName || ''} &nbsp;·&nbsp; ⏱ ${e.duration || '—'} &nbsp;·&nbsp; 🕐 ${e.date || ''}</div>
-          <button class="btn-secondary" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick='undoLeadSubmission(this, ${undoPayload})'>↩️ Undo — Back to Queue</button>
-        </div>
-      </div>`;
-    });
-    box.innerHTML = html;
+    __adminSubmittedEntries = (res && res.entries) || [];
+    renderAdminSubmittedTable();
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
   }
+}
+
+function renderAdminSubmittedTable() {
+  const box = document.getElementById('adminLeadsSubmittedBox');
+  const entries = __adminSubmittedEntries || [];
+  if (!entries.length) {
+    box.innerHTML = '<div class="empty-state"><p>No calls submitted on this date.</p></div>';
+    return;
+  }
+
+  let html = `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+      <input type="checkbox" id="adminSubmittedSelectAll" onchange="toggleAdminSubmittedSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;font-weight:700;color:var(--text);">Select All</span>
+    </label>
+    <span style="font-size:12px;color:var(--text3);">${entries.length} call(s) submitted</span>
+    <div style="flex:1;"></div>
+    <button class="btn-secondary" onclick="undoSelectedAdminSubmissions()">↩️ Undo Selected</button>
+  </div>`;
+
+  html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+      <th></th><th>Customer</th><th>Employee</th><th>Status</th><th>Duration</th><th>Time</th><th></th>
+    </tr></thead><tbody>`;
+  entries.forEach((e, idx) => {
+    html += `<tr>
+      <td><input type="checkbox" class="admin-submitted-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
+      <td>${e.name || e.customerName || 'Unknown'}</td>
+      <td>${e.empName || ''}</td>
+      <td><span class="kd-pill green">${e.status || ''}</span></td>
+      <td>${e.duration || '—'}</td>
+      <td>${e.date || ''}</td>
+      <td><button class="btn-secondary" style="font-size:11px;padding:5px 8px;white-space:nowrap;" onclick="undoLeadSubmissionByIdx('admin', ${idx})">↩️ Undo</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  box.innerHTML = html;
+}
+
+function toggleAdminSubmittedSelectAll(checked) {
+  document.querySelectorAll('.admin-submitted-row-check').forEach(cb => { cb.checked = checked; });
+}
+
+async function undoSelectedAdminSubmissions() {
+  const checked = Array.from(document.querySelectorAll('.admin-submitted-row-check:checked'));
+  if (checked.length === 0) { toast('Select at least one call first', 'error'); return; }
+  const idxs = checked.map(cb => parseInt(cb.dataset.idx, 10));
+  if (!confirm('Undo ' + idxs.length + ' selected submission(s)?\n\nThey will go back to the pending queue.')) return;
+  let okCount = 0, failCount = 0;
+  for (const idx of idxs) {
+    const e = __adminSubmittedEntries[idx];
+    if (!e) continue;
+    try {
+      const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, _submittedEntryToUndoPayload(e)));
+      if (res && res.ok) okCount++; else failCount++;
+    } catch (e2) { failCount++; }
+  }
+  toast('↩️ Restored ' + okCount + (failCount ? ', ' + failCount + ' failed' : ''), failCount ? 'error' : 'success');
+  loadAdminLeadsSubmitted();
 }
 
 // ── ADMIN: More Tools — email reports from the leads.txt menu ──
