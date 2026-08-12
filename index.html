@@ -2087,7 +2087,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="form-row">
             <div class="form-group">
               <label>Leave Type</label>
-              <select id="directLeaveType">
+              <select id="directLeaveType" onchange="onDirectLeaveTypeChange()">
                 <option>Casual Leave</option><option>Sick Leave</option><option>Emergency Leave</option>
                 <option>Special Permission Leave</option>
               </select>
@@ -2102,6 +2102,37 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="form-group" id="directHalfDayWrap" style="display:none;">
             <label>Half Day Session</label>
             <select id="directHalfDay"><option value="First Half">First Half</option><option value="Second Half">Second Half</option></select>
+          </div>
+          <div class="form-group" id="directAuthorityRow" style="display:none;">
+            <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
+              <input type="checkbox" id="directAuthMetCheck" onchange="onDirectAuthMetChange()" style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+              <span>Authority Met</span>
+            </label>
+            <div id="directAuthWhoRow" style="display:none;margin-top:12px;">
+              <label>Who was met?</label>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);background:var(--bg);">
+                  <input type="checkbox" class="direct-auth-who-check" data-who="MIS Executive" onchange="onDirectAuthWhoChange(this)" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+                  <span style="font-size:13.5px;color:var(--text);">MIS Executive</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);background:var(--bg);">
+                  <input type="checkbox" class="direct-auth-who-check" data-who="Store Manager" onchange="onDirectAuthWhoChange(this)" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+                  <span style="font-size:13.5px;color:var(--text);">Store Manager</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);background:var(--bg);">
+                  <input type="checkbox" class="direct-auth-who-check" data-who="Director" onchange="onDirectAuthWhoChange(this)" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+                  <span style="font-size:13.5px;color:var(--text);">Director</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Purpose</label>
+            <textarea id="directPurpose" rows="2" placeholder="Optional — auto-filled if left blank"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Leave Address</label>
+            <input type="text" id="directLeaveAddress" placeholder="Optional — where the employee will be during leave">
           </div>
           <div class="form-group">
             <label>Reason / Note</label>
@@ -2855,6 +2886,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="modal-btns">
       <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('leaveDetailModal')">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- Leave submission result — shown IMMEDIATELY after every leave apply
+     with the actual outcome (Pending / Approved / Rejected / Absent /
+     MIS Approved), instead of a generic toast that always just said
+     "submitted" no matter what actually happened (e.g. an auto-rejected
+     or auto-absent leave used to look identical to a successful one). -->
+<div class="modal-overlay" id="leaveResultModal">
+  <div class="modal-box" style="max-width:400px;text-align:center;">
+    <div id="leaveResultIcon" style="font-size:46px;margin-bottom:8px;line-height:1;">📋</div>
+    <div class="modal-title" id="leaveResultTitle" style="margin-bottom:4px;">Leave Submitted</div>
+    <div class="modal-sub" id="leaveResultMsg" style="font-size:13px;line-height:1.6;margin-bottom:14px;"></div>
+    <div id="leaveResultDetails" style="text-align:left;border:1px solid var(--border);border-radius:10px;overflow:hidden;"></div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeModal('leaveResultModal')">OK, Got It</button>
   </div>
 </div>
 
@@ -4491,6 +4537,67 @@ function leaveShowPreview(d) {
   document.body.appendChild(div);
 }
 
+// Shows the ACTUAL outcome of a leave submission immediately, as a
+// popup the employee has to dismiss — not a toast that disappears in a
+// few seconds. handleHTMLLeaveSubmit already runs auto-rejection rules
+// synchronously (a Casual Leave applied for a past date, a blocked
+// date, a counter clash, etc. can all resolve to Rejected/Absent the
+// instant it's submitted) — this makes sure that real result is what
+// the employee sees, not a generic "submitted" message that looked the
+// same whether the leave actually went through or was auto-rejected.
+function showLeaveResultPopup(res) {
+  const status = (res.status || 'Pending').toString();
+  const presets = {
+    Approved:     { icon: '✅', color: 'var(--green)', title: 'Leave Approved!' },
+    Rejected:     { icon: '❌', color: 'var(--red)',   title: 'Leave Rejected' },
+    Absent:       { icon: '⚠️', color: 'var(--orange)', title: 'Marked Absent' },
+    Pending:      { icon: '⏳', color: 'var(--orange)', title: 'Leave Pending' },
+    MIS_Approved: { icon: '⏳', color: 'var(--blue)',  title: 'MIS Approved — Awaiting Store Manager' }
+  };
+  const p = presets[status] || { icon: '📋', color: 'var(--purple)', title: status };
+
+  document.getElementById('leaveResultIcon').textContent = p.icon;
+  const titleEl = document.getElementById('leaveResultTitle');
+  titleEl.textContent = p.title;
+  titleEl.style.color = p.color;
+
+  let msg = '';
+  if (status === 'Pending') {
+    msg = 'Your leave application is <b>pending</b> — MIS Executive will review and approve it.';
+  } else if (status === 'MIS_Approved') {
+    msg = 'MIS has approved your leave — it is now <b>waiting for the Store Manager\'s</b> final approval.';
+  } else if (status === 'Approved') {
+    msg = 'Your leave has been approved. Enjoy your time off!';
+  } else if (status === 'Rejected') {
+    msg = 'Your leave application was <b>rejected</b>.' + (res.reason ? '<br><br><b>Reason:</b> ' + res.reason : '');
+  } else if (status === 'Absent') {
+    msg = 'This has been marked as <b>Absent</b> with a penalty.' + (res.reason ? '<br><br><b>Reason:</b> ' + res.reason : '');
+  } else {
+    msg = res.message || '';
+  }
+  document.getElementById('leaveResultMsg').innerHTML = msg;
+
+  const dateRange = (res.startDate === res.endDate)
+    ? fmtDMY(res.startDate)
+    : fmtDMY(res.startDate) + ' → ' + fmtDMY(res.endDate);
+  const rows = [
+    ['Leave ID', res.leaveId || '—'],
+    ['Type', res.leaveType || '—'],
+    ['Dates', dateRange],
+    ['Days', res.days != null ? fmtNum(res.days) : '—'],
+    ['Balance', res.balance != null ? fmtNum(res.balance) : '—']
+  ];
+  document.getElementById('leaveResultDetails').innerHTML = rows.map(([label, val], i) => {
+    const bg = i % 2 === 0 ? '#fdfcff' : '#ffffff';
+    return `<div style="background:${bg};padding:9px 12px;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);">
+      <span style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">${label}</span>
+      <span style="font-size:12.5px;color:var(--text);font-weight:700;text-align:right;">${val}</span>
+    </div>`;
+  }).join('');
+
+  openModal('leaveResultModal');
+}
+
 async function confirmSubmitLeave() {
   const modal = document.getElementById('leavePreviewModal');
   if (modal) modal.remove();
@@ -4507,9 +4614,9 @@ async function confirmSubmitLeave() {
     try {
       const res = await jsonpWriteOnce(data, submitIdem);
       if(res.status && res.status !== 'Error') {
-        toast('Leave submitted! ID: ' + res.leaveId, 'success');
         resetApplyForm();
         showEmpPage('myleaves');
+        showLeaveResultPopup(res); // immediate popup with the REAL outcome (Pending/Approved/Rejected/Absent), not a generic toast
         loadEmpData(); // background — refreshes My Leaves once data arrives
       } else {
         toast(res.reason || 'Submission failed', 'error');
@@ -4917,13 +5024,42 @@ function onDirectEmpChange() {
   const empId = document.getElementById('directEmpSelect').value;
   const emp = directEmpCache.find(e => e.empId === empId);
   document.getElementById('directEmpMeta').textContent = emp
-    ? `${emp.designation || ''}${emp.counter ? ' · ' + emp.counter : ''}`
+    ? `${emp.designation || ''}${emp.counter ? ' · Counter: ' + emp.counter : ' · Counter: —'}`
     : '';
 }
 
 function onDirectModeChange() {
   const isHalf = document.getElementById('directLeaveMode').value === 'Half Day';
   document.getElementById('directHalfDayWrap').style.display = isHalf ? '' : 'none';
+}
+
+// Same behavior as the Apply Leave form's onLeaveTypeChange — Emergency
+// Leave and Special Permission Leave show the Authority Met block so
+// Direct Action entries can carry the same information a normal
+// application would, instead of leaving those columns blank.
+function onDirectLeaveTypeChange() {
+  const lt = document.getElementById('directLeaveType').value;
+  const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
+  document.getElementById('directAuthorityRow').style.display = isDual ? 'block' : 'none';
+  if (!isDual) {
+    document.getElementById('directAuthMetCheck').checked = false;
+    document.getElementById('directAuthWhoRow').style.display = 'none';
+    document.querySelectorAll('.direct-auth-who-check').forEach(cb => cb.checked = false);
+  }
+}
+function onDirectAuthMetChange() {
+  const checked = document.getElementById('directAuthMetCheck').checked;
+  document.getElementById('directAuthWhoRow').style.display = checked ? 'block' : 'none';
+  if (!checked) document.querySelectorAll('.direct-auth-who-check').forEach(cb => cb.checked = false);
+}
+function onDirectAuthWhoChange(cb) {
+  if (cb.checked) {
+    document.querySelectorAll('.direct-auth-who-check').forEach(other => { if (other !== cb) other.checked = false; });
+  }
+}
+function getDirectAuthWho() {
+  const el = document.querySelector('.direct-auth-who-check:checked');
+  return el ? el.dataset.who : '';
 }
 
 async function submitDirectAction(outcome, evt) {
@@ -4934,6 +5070,11 @@ async function submitDirectAction(outcome, evt) {
   const leaveMode = document.getElementById('directLeaveMode').value;
   const halfDay = leaveMode === 'Half Day' ? document.getElementById('directHalfDay').value : '';
   let reason = document.getElementById('directReason').value.trim();
+  const purpose = document.getElementById('directPurpose').value.trim();
+  const leaveAddress = document.getElementById('directLeaveAddress').value.trim();
+  const isDualDirect = leaveType === 'Emergency Leave' || leaveType === 'Special Permission Leave';
+  const authMet = isDualDirect && document.getElementById('directAuthMetCheck').checked ? 'Yes' : '';
+  const authWho = authMet ? getDirectAuthWho() : '';
 
   if (!empId) { toast('Select an employee first', 'error'); return; }
   if (!startDate || !endDate) { toast('Select start and end dates', 'error'); return; }
@@ -4978,11 +5119,17 @@ async function submitDirectAction(outcome, evt) {
   try {
     const res = await jsonpWriteOnce({
       page: 'directActionAPI', role: state.adminRole, adminEmail: state.adminEmail,
-      empId, startDate, endDate, leaveType, leaveMode, halfDay, reason, outcome
+      empId, startDate, endDate, leaveType, leaveMode, halfDay, reason, outcome,
+      purpose, leaveAddress, authorityMet: authMet, authorityName: authWho
     }, idem);
     if (res.ok) {
       toast(`✅ ${empName} marked ${outcome}`, 'success');
       document.getElementById('directReason').value = '';
+      document.getElementById('directPurpose').value = '';
+      document.getElementById('directLeaveAddress').value = '';
+      document.getElementById('directAuthMetCheck').checked = false;
+      document.getElementById('directAuthWhoRow').style.display = 'none';
+      document.querySelectorAll('.direct-auth-who-check').forEach(cb => cb.checked = false);
       document.getElementById('directEmpSelect').value = '';
       document.getElementById('directEmpMeta').textContent = '';
       loadAdminData();
@@ -6429,18 +6576,28 @@ function loyaltyShowPreview(p) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitLoyaltyCard()">✅ Confirm &amp; Submit</button>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitLoyaltyCard(event)">✅ Confirm &amp; Submit</button>
     <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyPreviewModal').remove()">✏️ Edit</button>
   </div>`;
   document.body.appendChild(div);
 }
 
-async function confirmSubmitLoyaltyCard() {
-  const modal = document.getElementById('loyPreviewModal');
-  if (modal) modal.remove();
+async function confirmSubmitLoyaltyCard(evt) {
   const payload = window.__loyaltyPendingPayload;
   const errBox = document.getElementById('ncErrorMsg');
   if (!payload) { errBox.textContent = 'Nothing to submit — please fill the form again'; errBox.style.display = 'block'; return; }
+
+  // DUPLICATE-SUBMIT FIX: checked synchronously, before anything else
+  // (including removing the modal) — a second overlapping click on the
+  // Confirm & Submit button now bails out immediately instead of firing
+  // a second real card entry.
+  const loyIdemKey = makeIdemKey(['loyaltycard', payload.empEmail, payload.cardNo, payload.custName, payload.phone, payload.cardIssuedDate]);
+  if (isDuplicateSubmission(loyIdemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+  if (evt && evt.target) { evt.target.disabled = true; evt.target.textContent = '⏳ Submitting...'; }
+
+  const modal = document.getElementById('loyPreviewModal');
+  if (modal) modal.remove();
+  errBox.style.display = 'none';
 
   const btn = document.getElementById('ncSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
@@ -8447,19 +8604,27 @@ function gaShowPreview(p, who) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitGoldenAura('${who}')">✅ Confirm &amp; Submit</button>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitGoldenAura('${who}', event)">✅ Confirm &amp; Submit</button>
     <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('gaPreviewModal').remove()">✏️ Edit</button>
   </div>`;
   document.body.appendChild(div);
 }
 
-async function confirmSubmitGoldenAura(who) {
+async function confirmSubmitGoldenAura(who, evt) {
+  const payload = window.__gaPendingPayload;
+  if (!payload) { toast('Nothing to submit — please fill the form again', 'error'); return; }
+
+  // DUPLICATE-SUBMIT FIX: same reasoning as confirmSubmitLoyaltyCard —
+  // checked synchronously before anything else so a second overlapping
+  // click on Confirm & Submit can never enroll the same plan twice.
+  const gaIdemKey = makeIdemKey(['goldenaura', payload.empName, payload.planType, payload.planNo, payload.custName, payload.mobile]);
+  if (isDuplicateSubmission(gaIdemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+  if (evt && evt.target) { evt.target.disabled = true; evt.target.textContent = '⏳ Submitting...'; }
+
   const modal = document.getElementById('gaPreviewModal');
   if (modal) modal.remove();
-  const payload = window.__gaPendingPayload;
   const msg = document.getElementById('gaStatusMsg-' + who);
   const btn = document.getElementById('gaSubmitBtn-' + who);
-  if (!payload) { toast('Nothing to submit — please fill the form again', 'error'); return; }
   btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
   try {
     // This form carries up to 7 base64 photo uploads, which is far too
@@ -10010,15 +10175,13 @@ function dsrfShowPreview(who, rows) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="dsrfConfirmSubmit('${who}')">✅ Confirm &amp; Submit</button>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="dsrfConfirmSubmit('${who}', event)">✅ Confirm &amp; Submit</button>
     <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrPreviewModal').remove()">✏️ Edit</button>
   </div>`;
   document.body.appendChild(div);
 }
 
-function dsrfConfirmSubmit(who) {
-  const modal = document.getElementById('dsrPreviewModal');
-  if (modal) modal.remove();
+function dsrfConfirmSubmit(who, evt) {
   const rows = window['__dsrPendingRows_' + who];
   if (!rows || !rows.length) { toast('Nothing to submit — please fill the form again', 'error'); return; }
 
@@ -10027,6 +10190,16 @@ function dsrfConfirmSubmit(who) {
   // actual new DSR — built from the data itself, not a timestamp.
   const r0 = rows[0];
   const idemKey = makeIdemKey(['dsrsubmit', r0.employeeName, r0.billDate, r0.customerName, r0.mobileNumber, rows.length]);
+
+  // DUPLICATE-SUBMIT FIX: this used to build idemKey but never actually
+  // check it, so a double-tap on Confirm & Submit could send the exact
+  // same DSR twice. Checked synchronously, first thing, before the modal
+  // is even removed.
+  if (isDuplicateSubmission(idemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+  if (evt && evt.target) { evt.target.disabled = true; evt.target.textContent = '⏳ Submitting...'; }
+
+  const modal = document.getElementById('dsrPreviewModal');
+  if (modal) modal.remove();
 
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
   const msg = document.getElementById('dsrfStatusMsg-' + who);
