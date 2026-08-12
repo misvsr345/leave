@@ -2987,6 +2987,19 @@ function escJs(str) {
     .replace(/\r?\n/g, ' ');
 }
 
+// Escapes text for safe placement inside HTML (element content or a
+// double-quoted attribute) — used e.g. for the lead-search box, whose
+// value is user-typed and gets echoed straight back into an input's
+// value="..." attribute.
+function escHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Splits a leave spanning multiple days into one entry per date. Adds
 // displayDate / dayIndex / dayTotal while keeping every other original
 // field intact. Used so All Leaves / My Leaves / Employee Wise show one
@@ -3178,8 +3191,8 @@ function pillClass(status) {
 // Dual-approval leaves sit at raw status 'Pending' (awaiting MIS) or
 // 'MIS_Approved' (awaiting Store Manager) — show clearly which stage.
 function statusLabel(status) {
-  if (status === 'Pending') return 'Pending at MIS';
-  if (status === 'MIS_Approved') return 'Pending at SM';
+  if (status === 'Pending') return 'MIS Pending';
+  if (status === 'MIS_Approved') return 'SM Pending';
   return status;
 }
 
@@ -8779,28 +8792,48 @@ function todayISO() {
 }
 
 // ── EMPLOYEE: Leads home / summary ──────────────────────────
+// __empLeadsSummary caches the last-loaded Assigned/Submitted/Pending/
+// Completion numbers so a single call submission can patch them in
+// memory (see submitLeadCall) instead of re-hitting the CRM server.
+let __empLeadsSummary = null;
+
+function renderEmpLeadsSummaryBox() {
+  const box = document.getElementById('empLeadsSummaryBox');
+  if (!box || !__empLeadsSummary) return;
+  const r = __empLeadsSummary;
+  box.innerHTML = sectionHeaderCardHtml('emp', [
+    { val: r.assigned, lbl: 'Assigned', color: '#80c8ff' },
+    { val: r.submitted, lbl: 'Submitted', color: '#80ffb0' },
+    { val: r.pending, lbl: 'Pending', color: '#ffd080' },
+    { val: r.completionPct + '%', lbl: 'Completion', color: r.completionPct >= 80 ? '#80ffb0' : r.completionPct >= 40 ? '#ffd080' : '#ff8080' }
+  ]);
+}
+
 async function loadEmpLeadsHome() {
   const box = document.getElementById('empLeadsSummaryBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
     if (!res.ok || !res.rows || !res.rows.length) {
+      __empLeadsSummary = null;
       box.innerHTML = '<div class="empty-state"><p>No leads assigned to you today.</p></div>';
       return;
     }
-    const r = res.rows[0];
-    box.innerHTML = sectionHeaderCardHtml('emp', [
-      { val: r.assigned, lbl: 'Assigned', color: '#80c8ff' },
-      { val: r.submitted, lbl: 'Submitted', color: '#80ffb0' },
-      { val: r.pending, lbl: 'Pending', color: '#ffd080' },
-      { val: r.completionPct + '%', lbl: 'Completion', color: r.completionPct >= 80 ? '#80ffb0' : r.completionPct >= 40 ? '#ffd080' : '#ff8080' }
-    ]);
+    __empLeadsSummary = res.rows[0];
+    renderEmpLeadsSummaryBox();
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
   }
 }
 
 // ── EMPLOYEE: Today's Pending Leads ─────────────────────────
+// __empPendingLeadsAll holds every lead fetched for today; once loaded,
+// submitting a call just removes that one lead from this array and
+// re-renders from memory (renderEmpLeadsPendingTable) — no re-fetch, so
+// the queue doesn't reload (and delay work) after every single call.
+let __empPendingLeadsAll = [];
+let __empLeadsSearchTerm = '';
+
 async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
@@ -8810,30 +8843,69 @@ async function loadEmpLeadsPending() {
       box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
       return;
     }
-    if (!res.leads || !res.leads.length) {
-      box.innerHTML = '<div class="empty-state"><p>No leads assigned today.</p></div>';
-      return;
-    }
+    __empPendingLeadsAll = res.leads || [];
     window.__empLeadsData = {};
-    res.leads.forEach(l => { window.__empLeadsData[l.phone] = l; });
-
-    let html = '<div class="kd-note">' + res.leads.length + ' lead(s) today</div>';
-    html += '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
-      '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th><th style="width:70px;">Action</th>' +
-      '</tr></thead><tbody>';
-    res.leads.forEach((l, i) => {
-      html += `<tr>` +
-        `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
-        `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;color:var(--text3);">${l.custType || '-'}</span></td>` +
-        `<td style="text-align:left;"><a href="tel:${l.phone}" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
-        `<td style="text-align:center;"><button class="btn-primary" style="padding:8px 10px;font-size:12px;white-space:nowrap;" onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])'>📞 Call &amp; Submit</button></td>` +
-        `</tr>`;
-    });
-    html += '</tbody></table></div>';
-    box.innerHTML = html;
+    __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
+    renderEmpLeadsPendingTable();
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
   }
+}
+
+// Icon-only search toggle — tapping 🔍 reveals a small inline search box
+// that filters the already-loaded list by customer name or phone, purely
+// client-side (no network call).
+function toggleLeadSearch(who) {
+  const inp = document.getElementById(who + 'LeadsSearchInput');
+  if (!inp) return;
+  const show = inp.style.display === 'none' || !inp.style.display;
+  inp.style.display = show ? 'inline-block' : 'none';
+  if (show) { inp.focus(); } else { inp.value = ''; inp.dispatchEvent(new Event('input')); }
+}
+
+function filterEmpLeadsPending(term) {
+  __empLeadsSearchTerm = (term || '').trim().toLowerCase();
+  renderEmpLeadsPendingTable();
+}
+
+function renderEmpLeadsPendingTable() {
+  const box = document.getElementById('empLeadsPendingBox');
+  if (!box) return;
+  const term = __empLeadsSearchTerm;
+  const leads = term
+    ? __empPendingLeadsAll.filter(l => (l.name || '').toLowerCase().includes(term) || (l.phone || '').toLowerCase().includes(term))
+    : __empPendingLeadsAll;
+
+  const searchBar = `<div class="kd-note" style="display:flex;align-items:center;gap:8px;">
+      <span style="flex:1;">${leads.length} lead(s)${term ? ' matching "' + escHtml(term) + '"' : ' today'}</span>
+      <span onclick="toggleLeadSearch('emp')" style="cursor:pointer;font-size:15px;" title="Search leads">🔎</span>
+      <input id="empLeadsSearchInput" type="text" placeholder="Name or phone..." value="${escHtml(term)}" oninput="filterEmpLeadsPending(this.value)"
+        style="display:${term ? 'inline-block' : 'none'};width:140px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
+    </div>`;
+
+  if (!__empPendingLeadsAll.length) {
+    box.innerHTML = searchBar + '<div class="empty-state"><p>No leads assigned today.</p></div>';
+    return;
+  }
+  if (!leads.length) {
+    box.innerHTML = searchBar + '<div class="empty-state"><p>No leads match your search.</p></div>';
+    return;
+  }
+
+  let html = searchBar;
+  html += '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
+    '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th><th style="width:70px;">Action</th>' +
+    '</tr></thead><tbody>';
+  leads.forEach((l, i) => {
+    html += `<tr>` +
+      `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
+      `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;color:var(--text3);">${l.custType || '-'}</span></td>` +
+      `<td style="text-align:left;"><a href="tel:${l.phone}" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
+      `<td style="text-align:center;"><button class="btn-primary" style="padding:8px 10px;font-size:12px;white-space:nowrap;" onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])'>📞 Call &amp; Submit</button></td>` +
+      `</tr>`;
+  });
+  html += '</tbody></table></div>';
+  box.innerHTML = html;
 }
 
 // ── EMPLOYEE: Call panel (modal) ────────────────────────────
@@ -8962,8 +9034,22 @@ async function submitLeadCall() {
     if (res && res.ok) {
       toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
       closeLeadCallPanel();
-      loadEmpLeadsPending();
-      loadEmpLeadsHome();
+      // Update the queue and the summary header purely from local state —
+      // no re-fetch of the whole day's leads. This is what keeps "Today's
+      // Leads" fast: only the ONE lead just submitted disappears from the
+      // list, instead of the entire list reloading (and delaying the next
+      // call) every single time someone submits.
+      const submittedPhone = __leadCallCurrent.phone;
+      __empPendingLeadsAll = __empPendingLeadsAll.filter(l => l.phone !== submittedPhone);
+      if (window.__empLeadsData) delete window.__empLeadsData[submittedPhone];
+      renderEmpLeadsPendingTable();
+      if (__empLeadsSummary) {
+        __empLeadsSummary.submitted = (__empLeadsSummary.submitted || 0) + 1;
+        __empLeadsSummary.pending = Math.max(0, (__empLeadsSummary.pending || 0) - 1);
+        __empLeadsSummary.completionPct = __empLeadsSummary.assigned > 0
+          ? Math.round((__empLeadsSummary.submitted / __empLeadsSummary.assigned) * 100) : 0;
+        renderEmpLeadsSummaryBox();
+      }
     } else {
       errBox.textContent = (res && (res.error || res.message)) || 'Save failed — please try again.';
       errBox.style.display = 'block';
@@ -8996,20 +9082,41 @@ async function loadEmpLeadsSubmitted() {
   }
 }
 
+let __empSubmittedSearchTerm = '';
+function filterEmpLeadsSubmitted(term) { __empSubmittedSearchTerm = (term || '').trim().toLowerCase(); renderEmpSubmittedTable(); }
+
 function renderEmpSubmittedTable() {
   const box = document.getElementById('empLeadsSubmittedBox');
   const entries = __empSubmittedEntries || [];
+  const term = __empSubmittedSearchTerm;
+  // Keep each row's ORIGINAL index (idx) even after filtering — Undo /
+  // bulk-Undo look entries up by index into the full __empSubmittedEntries
+  // array, not the filtered view.
+  const visible = entries
+    .map((e, idx) => ({ e, idx }))
+    .filter(({ e }) => !term || (e.name || e.customerName || '').toLowerCase().includes(term) || (e.phone || '').toLowerCase().includes(term));
+
+  const searchBar = `<div class="card" style="padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+    <span style="flex:1;font-size:12px;color:var(--text3);">${visible.length} of ${entries.length} call(s)${term ? ' — matching "' + escHtml(term) + '"' : ' submitted today'}</span>
+    <span onclick="toggleLeadSearch('empSub')" style="cursor:pointer;font-size:15px;" title="Search submitted calls">🔎</span>
+    <input id="empSubLeadsSearchInput" type="text" placeholder="Name or phone..." value="${escHtml(term)}" oninput="filterEmpLeadsSubmitted(this.value)"
+      style="display:${term ? 'inline-block' : 'none'};width:130px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
+  </div>`;
+
   if (!entries.length) {
     box.innerHTML = '<div class="empty-state"><p>No calls submitted yet today.</p></div>';
     return;
   }
+  if (!visible.length) {
+    box.innerHTML = searchBar + '<div class="empty-state"><p>No calls match your search.</p></div>';
+    return;
+  }
 
-  let html = `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  let html = searchBar + `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
       <input type="checkbox" id="empSubmittedSelectAll" onchange="toggleEmpSubmittedSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:12.5px;font-weight:700;color:var(--text);">Select All</span>
     </label>
-    <span style="font-size:12px;color:var(--text3);">${entries.length} call(s) submitted today</span>
     <div style="flex:1;"></div>
     <button class="btn-secondary" onclick="undoSelectedEmpSubmissions()">↩️ Undo Selected</button>
   </div>`;
@@ -9017,7 +9124,7 @@ function renderEmpSubmittedTable() {
   html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
       <th></th><th>Customer</th><th>Status</th><th>Duration</th><th>Time</th><th></th>
     </tr></thead><tbody>`;
-  entries.forEach((e, idx) => {
+  visible.forEach(({ e, idx }) => {
     html += `<tr>
       <td><input type="checkbox" class="emp-submitted-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
       <td>${e.name || e.customerName || 'Unknown'}</td>
@@ -9226,20 +9333,40 @@ async function loadAdminLeadsSubmitted() {
   }
 }
 
+let __adminSubmittedSearchTerm = '';
+function filterAdminLeadsSubmitted(term) { __adminSubmittedSearchTerm = (term || '').trim().toLowerCase(); renderAdminSubmittedTable(); }
+
 function renderAdminSubmittedTable() {
   const box = document.getElementById('adminLeadsSubmittedBox');
   const entries = __adminSubmittedEntries || [];
+  const term = __adminSubmittedSearchTerm;
+  // Original index (idx) is preserved through the filter — Undo / bulk-Undo
+  // look entries up by index into the full __adminSubmittedEntries array.
+  const visible = entries
+    .map((e, idx) => ({ e, idx }))
+    .filter(({ e }) => !term || (e.name || e.customerName || '').toLowerCase().includes(term) || (e.phone || '').toLowerCase().includes(term) || (e.empName || '').toLowerCase().includes(term));
+
+  const searchBar = `<div class="card" style="padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+    <span style="flex:1;font-size:12px;color:var(--text3);">${visible.length} of ${entries.length} call(s)${term ? ' — matching "' + escHtml(term) + '"' : ' submitted'}</span>
+    <span onclick="toggleLeadSearch('adminSub')" style="cursor:pointer;font-size:15px;" title="Search submitted calls">🔎</span>
+    <input id="adminSubLeadsSearchInput" type="text" placeholder="Name, phone or employee..." value="${escHtml(term)}" oninput="filterAdminLeadsSubmitted(this.value)"
+      style="display:${term ? 'inline-block' : 'none'};width:160px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
+  </div>`;
+
   if (!entries.length) {
     box.innerHTML = '<div class="empty-state"><p>No calls submitted on this date.</p></div>';
     return;
   }
+  if (!visible.length) {
+    box.innerHTML = searchBar + '<div class="empty-state"><p>No calls match your search.</p></div>';
+    return;
+  }
 
-  let html = `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  let html = searchBar + `<div class="card" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
       <input type="checkbox" id="adminSubmittedSelectAll" onchange="toggleAdminSubmittedSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:12.5px;font-weight:700;color:var(--text);">Select All</span>
     </label>
-    <span style="font-size:12px;color:var(--text3);">${entries.length} call(s) submitted</span>
     <div style="flex:1;"></div>
     <button class="btn-secondary" onclick="undoSelectedAdminSubmissions()">↩️ Undo Selected</button>
   </div>`;
@@ -9247,7 +9374,7 @@ function renderAdminSubmittedTable() {
   html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
       <th></th><th>Customer</th><th>Employee</th><th>Status</th><th>Duration</th><th>Time</th><th></th>
     </tr></thead><tbody>`;
-  entries.forEach((e, idx) => {
+  visible.forEach(({ e, idx }) => {
     html += `<tr>
       <td><input type="checkbox" class="admin-submitted-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
       <td>${e.name || e.customerName || 'Unknown'}</td>
@@ -10299,8 +10426,14 @@ function renderAdminDashboard() {
     else if(s==='mis_approved') counts.mis++;
     else if(s==='cancelled') counts.cancelled++;
 
+    const inThisMonth = l.startDate && l.startDate.substring(0, 7) === curMonthKey;
+
     // Running-month-only mirror of the same counts, for the header card
-    if (l.startDate && l.startDate.substring(0, 7) === curMonthKey) {
+    // AND the Overview grid below — every reporting figure on this
+    // dashboard is running-month-only; only the multi-month Trend chart
+    // (monthCount, populated further down, outside this "if") looks
+    // further back on purpose.
+    if (inThisMonth) {
       countsThisMonth.total++;
       if(s==='pending') countsThisMonth.pending++;
       else if(s==='approved') countsThisMonth.approved++;
@@ -10308,15 +10441,16 @@ function renderAdminDashboard() {
       else if(s==='absent') countsThisMonth.absent++;
       else if(s==='mis_approved') countsThisMonth.mis++;
       else if(s==='cancelled') countsThisMonth.cancelled++;
-    }
 
-    typeCount[l.type] = (typeCount[l.type]||0)+1;
-    if(l.department) {
-      if(!deptMap[l.department]) deptMap[l.department] = {approved:0,absent:0,pending:0,total:0};
-      deptMap[l.department].total++;
-      if(l.status==='Approved') deptMap[l.department].approved++;
-      else if(l.status==='Absent') deptMap[l.department].absent++;
-      else if(l.status==='Pending'||l.status==='MIS_Approved') deptMap[l.department].pending++;
+      // Dept-wise and Leave-Type breakdown cards are also running-month-only.
+      typeCount[l.type] = (typeCount[l.type]||0)+1;
+      if(l.department) {
+        if(!deptMap[l.department]) deptMap[l.department] = {approved:0,absent:0,pending:0,total:0};
+        deptMap[l.department].total++;
+        if(l.status==='Approved') deptMap[l.department].approved++;
+        else if(l.status==='Absent') deptMap[l.department].absent++;
+        else if(l.status==='Pending'||l.status==='MIS_Approved') deptMap[l.department].pending++;
+      }
     }
     if(l.startDate) {
       const mKey = l.startDate.substring(0,7); // yyyy-MM
@@ -10338,20 +10472,26 @@ function renderAdminDashboard() {
     counterMap[c] = (counterMap[c]||0)+1;
   });
 
+  // "Pending" here means only genuinely-Pending (not yet reviewed by MIS)
+  // requests. Once MIS approves a request it moves to MIS_Approved and is
+  // shown separately as "SM Pending" (awaiting the Store Manager's final
+  // sign-off) — the two used to be merged into one "Pending" figure, which
+  // hid how many requests were actually still stuck with MIS vs. sitting
+  // with the Store Manager.
   document.getElementById('adminStatsCard').innerHTML = sectionHeaderCardHtml('admin', [
       { val: countsThisMonth.total, lbl: 'This Month', color: '#80c8ff' },
-      { val: countsThisMonth.pending + countsThisMonth.mis, lbl: 'Pending', color: '#ffd080' },
+      { val: countsThisMonth.pending, lbl: 'Pending', color: '#ffd080' },
       { val: countsThisMonth.approved, lbl: 'Approved', color: '#80ffb0' },
       { val: countsThisMonth.rejected, lbl: 'Rejected', color: '#ff8080' }
     ]) + `
-    <div class="card-title">📊 Overview</div>
+    <div class="card-title">📊 Overview (This Month)</div>
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="stat-box"><div class="stat-val" style="color:var(--blue)">${counts.total}</div><div class="stat-lbl">Total</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${counts.pending + counts.mis}</div><div class="stat-lbl">Pending</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--green)">${counts.approved}</div><div class="stat-lbl">Approved</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--red)">${counts.rejected}</div><div class="stat-lbl">Rejected</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--purple)">${counts.absent}</div><div class="stat-lbl">Absent</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--gold-dark)">${counts.mis}</div><div class="stat-lbl">MIS Appr.</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--blue)">${countsThisMonth.total}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${countsThisMonth.pending}</div><div class="stat-lbl">Pending</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--green)">${countsThisMonth.approved}</div><div class="stat-lbl">Approved</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--red)">${countsThisMonth.rejected}</div><div class="stat-lbl">Rejected</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--purple)">${countsThisMonth.absent}</div><div class="stat-lbl">Absent</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--gold-dark)">${countsThisMonth.mis}</div><div class="stat-lbl">SM Pending</div></div>
     </div>
   `;
 
@@ -10438,7 +10578,7 @@ function renderAdminDashboard() {
   }
   document.getElementById('adminCounterCard').innerHTML = ctrHTML;
 
-  let deptHTML = '<div class="card-title">🏢 Department-wise Stats</div>';
+  let deptHTML = '<div class="card-title">🏢 Department-wise Stats (This Month)</div>';
   const deptKeys = Object.keys(deptMap).sort((a,b)=>deptMap[b].total-deptMap[a].total);
   if(deptKeys.length === 0) {
     deptHTML += '<div class="empty-state"><span class="emoji">🏢</span><p>No department data</p></div>';
@@ -10452,14 +10592,14 @@ function renderAdminDashboard() {
   }
   document.getElementById('adminDeptCard').innerHTML = deptHTML;
 
-  let typeHTML = '<div class="card-title">🥧 Leave Type Breakdown</div>';
+  let typeHTML = '<div class="card-title">🥧 Leave Type Breakdown (This Month)</div>';
   const typeKeys = Object.keys(typeCount).sort((a,b)=>typeCount[b]-typeCount[a]);
   const typeColors = ['var(--purple)','var(--blue)','var(--orange)','var(--green)','var(--red)'];
   if(typeKeys.length === 0) {
     typeHTML += '<div class="empty-state"><span class="emoji">🥧</span><p>No data</p></div>';
   } else {
     typeKeys.forEach((t,i) => {
-      const c = typeCount[t]; const pct = counts.total>0 ? Math.round((c/counts.total)*100) : 0;
+      const c = typeCount[t]; const pct = countsThisMonth.total>0 ? Math.round((c/countsThisMonth.total)*100) : 0;
       typeHTML += `<div class="trend-item"><span class="trend-label">${t}</span><div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%;background:${typeColors[i%typeColors.length]}"></div></div><span class="trend-val">${c} (${pct}%)</span></div>`;
     });
   }
