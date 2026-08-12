@@ -4599,37 +4599,51 @@ function showLeaveResultPopup(res) {
 }
 
 // Called only when the submit request itself timed out (no response
-// within jsonpWriteOnce's window) but the device was online — the leave
-// may well have actually been saved server-side, the response just
-// didn't make it back in time. Looks up the just-submitted leave by its
-// own identifying fields and, if found, shows the SAME result popup the
-// normal success path would have shown — instead of leaving the
-// employee with only a scary red "no confirmation" toast and no idea
-// what actually happened.
-async function checkLeaveSubmissionResult(data) {
+// within jsonpWriteOnce's window) but the device was online. Apps
+// Script keeps executing on the server regardless of whether the
+// browser gave up waiting on it — a slow leave submission (auto-
+// rejection checks, a submission email, AND an MIS notification email
+// all in one request) can easily still be finishing up server-side
+// well after the client's own timeout fires. So instead of checking
+// ONCE (which can just as easily land in that same still-processing
+// gap and wrongly report "not found"), this POLLS a few times with a
+// short wait in between, and only gives up after genuinely exhausting
+// every attempt.
+async function checkLeaveSubmissionResult(data, attemptsLeft) {
+  if (attemptsLeft === undefined) attemptsLeft = 6; // ~6 tries, 5s apart = up to ~30s more
+  // Plain jsonp() with a short timeout here — NOT jsonpReliable(), which
+  // can itself silently retry 2-3 times (up to ~90s per call) and would
+  // make each polling attempt far too slow to be useful in a loop like
+  // this one.
   try {
     const [leavesRes, balRes] = await Promise.all([
-      jsonpReliable({ page: 'leavesJSON', empId: data.employeeNumber }),
-      jsonpReliable({ page: 'balanceJSON', empId: data.employeeNumber }).catch(() => null)
+      jsonp({ page: 'leavesJSON', empId: data.employeeNumber }, 12000),
+      jsonp({ page: 'balanceJSON', empId: data.employeeNumber }, 12000).catch(() => null)
     ]);
-    if (!leavesRes || !leavesRes.ok) return false;
-    const match = (leavesRes.leaves || []).find(l =>
-      l.startDate === data.startDate && l.endDate === data.endDate && l.type === data.leaveType
-    );
-    if (!match) return false;
+    if (leavesRes && leavesRes.ok) {
+      const match = (leavesRes.leaves || []).find(l =>
+        l.startDate === data.startDate && l.endDate === data.endDate && l.type === data.leaveType
+      );
+      if (match) {
+        resetApplyForm();
+        showEmpPage('myleaves');
+        showLeaveResultPopup({
+          status: match.status, leaveId: match.leaveId, leaveType: match.type,
+          startDate: match.startDate, endDate: match.endDate, days: match.days,
+          reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null
+        });
+        loadEmpData();
+        return true;
+      }
+    }
+  } catch (e) { /* fall through to retry below */ }
 
-    resetApplyForm();
-    showEmpPage('myleaves');
-    showLeaveResultPopup({
-      status: match.status, leaveId: match.leaveId, leaveType: match.type,
-      startDate: match.startDate, endDate: match.endDate, days: match.days,
-      reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null
-    });
-    loadEmpData();
-    return true;
-  } catch (e) {
-    return false;
+  if (attemptsLeft > 1) {
+    toast('⏳ Still checking — server is taking a little longer than usual...', 'info');
+    await new Promise(r => setTimeout(r, 5000));
+    return checkLeaveSubmissionResult(data, attemptsLeft - 1);
   }
+  return false;
 }
 
 async function confirmSubmitLeave() {
@@ -4673,7 +4687,7 @@ async function confirmSubmitLeave() {
         // of leaving the employee with only a warning, look up whether the
         // leave actually went through and show its real result — falling
         // back to the warning only if it genuinely can't be found.
-        toast('⏳ Checking whether your leave went through...', 'info');
+        toast('⏳ Checking whether your leave went through — this can take a bit...', 'info');
         const found = await checkLeaveSubmissionResult(data);
         if (!found) {
           toast('⚠️ No confirmation from server — check "My Leaves" before submitting again. Do NOT resubmit if it already appears there.', 'error');
