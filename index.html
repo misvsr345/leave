@@ -7982,7 +7982,7 @@ function loadDsrDateRange(who) {
 // ══════════════════════════════════════
 // DSR — NEW ENTRY FORM (separate DSR web app — Main file spreadsheet)
 // ══════════════════════════════════════
-var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbzfhY3c3oYw4lhON-KnIrgSsiF6WKwQiAUrX_1vNVhRTFr5xIa19ymrqcE837wr_TpC/exec";
+var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbwo0Qzry5honvhZUw-FA8lIZcdnLhQB4agQTv5sUnwVdEnQa282hl6x6oxeYpVufC-NZQ/exec";
 var DSR_ST = {
   emp:   { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
   admin: { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
@@ -8750,7 +8750,7 @@ function openStockChecklistForm(who) {
 // JSON (no JSONP callback support), so we use fetch() directly — the
 // same approach CRM.HTML already uses successfully against this URL.
 // ══════════════════════════════════════
-const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw9bOBxO1ar27l7YT40K6G-1n2FXXPcC_jvlKv4YJxUuV-m9SOGIwhB4dZpKCcdSrGl5Q/exec';
+const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxTc6iVoGTpcHvlA3MwoEAYbckSBrjEYfonHlJ4KGXIex4hEiAX9kxib32GKEWyk91kTA/exec';
 
 async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
