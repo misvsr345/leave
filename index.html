@@ -1833,8 +1833,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
       </div>
       <div class="card" style="padding:12px 14px;margin-bottom:10px;">
-        <div class="form-row" style="margin-bottom:8px;">
-          <input type="text" id="allLeavesEmpFilter" placeholder="🔍 Filter by employee name or ID..." oninput="renderAdminLeaves()" style="width:100%;">
+        <div class="form-row" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+          <span style="flex:1;font-size:12px;color:var(--text3);">Filter by Employee Name or ID</span>
+          <span onclick="toggleAllLeavesSearch()" style="cursor:pointer;font-size:15px;" title="Filter by Employee Name or ID">🔎</span>
+          <input type="text" id="allLeavesEmpFilter" placeholder="Employee Name or ID..." oninput="renderAdminLeaves()"
+            style="display:none;width:160px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
         </div>
         <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
           <div class="form-group" style="flex:1;min-width:130px;margin:0;">
@@ -2918,7 +2921,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFeq9IJEl27atl2rGkmwhrC0VA7G9pGx_XJMKRN03MtVW_25oCVKhc8Ks7TWVHFQya0A/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz42vO3jRqFIPVvrAqgdSM8rJEWRpLc4GZ7LW15O3xl0z6W5PJ1H0tr6-gJZRikt7hbew/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
@@ -7982,7 +7985,7 @@ function loadDsrDateRange(who) {
 // ══════════════════════════════════════
 // DSR — NEW ENTRY FORM (separate DSR web app — Main file spreadsheet)
 // ══════════════════════════════════════
-var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbwo0Qzry5honvhZUw-FA8lIZcdnLhQB4agQTv5sUnwVdEnQa282hl6x6oxeYpVufC-NZQ/exec";
+var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbzfhY3c3oYw4lhON-KnIrgSsiF6WKwQiAUrX_1vNVhRTFr5xIa19ymrqcE837wr_TpC/exec";
 var DSR_ST = {
   emp:   { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
   admin: { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
@@ -8750,7 +8753,7 @@ function openStockChecklistForm(who) {
 // JSON (no JSONP callback support), so we use fetch() directly — the
 // same approach CRM.HTML already uses successfully against this URL.
 // ══════════════════════════════════════
-const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxTc6iVoGTpcHvlA3MwoEAYbckSBrjEYfonHlJ4KGXIex4hEiAX9kxib32GKEWyk91kTA/exec';
+const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzsdrdfXyIUsZdRf3cJuuBHwrWZOQd6HBnWF5VAJxtCc6kIHsfph0MktLIT_q83oc9D3Q/exec';
 
 async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
@@ -8833,12 +8836,16 @@ async function loadEmpLeadsHome() {
 // the queue doesn't reload (and delay work) after every single call.
 let __empPendingLeadsAll = [];
 let __empLeadsSearchTerm = '';
+let __empPendingSummary = null; // { assigned, submitted, pending } for today, shown above the list
 
 async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await leadsApiGet({ action: 'GET_LEADS', empId: state.empId, name: state.empName, email: state.empEmail, date: todayISO() });
+    const [res, reportRes] = await Promise.all([
+      leadsApiGet({ action: 'GET_LEADS', empId: state.empId, name: state.empName, email: state.empEmail, date: todayISO() }),
+      leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() }).catch(() => null)
+    ]);
     if (res.error) {
       box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
       return;
@@ -8846,6 +8853,7 @@ async function loadEmpLeadsPending() {
     __empPendingLeadsAll = res.leads || [];
     window.__empLeadsData = {};
     __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
+    __empPendingSummary = (reportRes && reportRes.ok && reportRes.rows && reportRes.rows[0]) ? reportRes.rows[0] : null;
     renderEmpLeadsPendingTable();
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
@@ -8876,7 +8884,17 @@ function renderEmpLeadsPendingTable() {
     ? __empPendingLeadsAll.filter(l => (l.name || '').toLowerCase().includes(term) || (l.phone || '').toLowerCase().includes(term))
     : __empPendingLeadsAll;
 
-  const searchBar = `<div class="kd-note" style="display:flex;align-items:center;gap:8px;">
+  // Total assigned / submitted / pending for today, above the list — so the
+  // pending queue also shows how the day looks overall, not just what's left.
+  const summaryLine = __empPendingSummary
+    ? `<div class="kd-note" style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text3);">
+        <span>Assigned: <b style="color:var(--text);">${__empPendingSummary.assigned}</b></span>
+        <span>Submitted: <b style="color:var(--text);">${__empPendingSummary.submitted}</b></span>
+        <span>Pending: <b style="color:var(--text);">${__empPendingSummary.pending}</b></span>
+      </div>`
+    : '';
+
+  const searchBar = summaryLine + `<div class="kd-note" style="display:flex;align-items:center;gap:8px;">
       <span style="flex:1;">${leads.length} lead(s)${term ? ' matching "' + escHtml(term) + '"' : ' today'}</span>
       <span onclick="toggleLeadSearch('emp')" style="cursor:pointer;font-size:15px;" title="Search leads">🔎</span>
       <input id="empLeadsSearchInput" type="text" placeholder="Name or phone..." value="${escHtml(term)}" oninput="filterEmpLeadsPending(this.value)"
@@ -9249,9 +9267,13 @@ async function loadEmpLeadsReport() {
     ]);
     const statuses = Object.keys(r.statusBreakdown || {});
     if (statuses.length) {
+      // Vertical layout — one status per row (Status | Count) instead of one
+      // column per status — reads as a proper table instead of a single wide
+      // horizontal strip, and stays readable how many statuses there are.
       html += '<div class="card" style="margin-top:10px;"><div class="card-title">Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
-        statuses.map(s => `<th>${s}</th>`).join('') + '</tr></thead><tbody><tr>' +
-        statuses.map(s => `<td style="text-align:center;">${r.statusBreakdown[s]}</td>`).join('') + '</tr></tbody></table></div></div>';
+        '<th style="text-align:left;">Status</th><th>Count</th></tr></thead><tbody>' +
+        statuses.map(s => `<tr><td style="text-align:left;">${s}</td><td style="text-align:center;font-weight:700;">${r.statusBreakdown[s]}</td></tr>`).join('') +
+        '</tbody></table></div></div>';
     }
     box.innerHTML = html;
   } catch (e) {
@@ -9317,9 +9339,11 @@ async function loadAdminLeadsReport() {
     rows.forEach(r => {
       const statuses = Object.keys(r.statusBreakdown || {});
       if (!statuses.length) return;
+      // Same vertical Status | Count layout as the employee's own report.
       html += `<div class="card" style="margin-top:8px;"><div class="card-title">${r.employee} — Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
-        statuses.map(s => `<th>${s}</th>`).join('') + '</tr></thead><tbody><tr>' +
-        statuses.map(s => `<td style="text-align:center;">${r.statusBreakdown[s]}</td>`).join('') + '</tr></tbody></table></div></div>';
+        '<th style="text-align:left;">Status</th><th>Count</th></tr></thead><tbody>' +
+        statuses.map(s => `<tr><td style="text-align:left;">${s}</td><td style="text-align:center;font-weight:700;">${r.statusBreakdown[s]}</td></tr>`).join('') +
+        '</tbody></table></div></div>';
     });
     box.innerHTML = html;
   } catch (e) {
@@ -10735,6 +10759,16 @@ function clearAllLeavesFilters() {
   document.getElementById('allLeavesDateFrom').value = '';
   document.getElementById('allLeavesDateTo').value = '';
   renderAdminLeaves();
+}
+// Icon-only search toggle for the All Leaves employee filter — same
+// tap-to-reveal pattern used for Today's Leads, instead of a permanently
+// wide input box.
+function toggleAllLeavesSearch() {
+  const inp = document.getElementById('allLeavesEmpFilter');
+  if (!inp) return;
+  const show = inp.style.display === 'none' || !inp.style.display;
+  inp.style.display = show ? 'inline-block' : 'none';
+  if (show) { inp.focus(); } else { inp.value = ''; renderAdminLeaves(); }
 }
 
 // ══════════════════════════════════════
