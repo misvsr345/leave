@@ -3199,9 +3199,9 @@ async function jsonpReliable(params) {
 // duplicates. jsonpWriteOnce() makes exactly ONE network attempt with a
 // generous timeout and never auto-retries; on failure it tells the caller
 // to verify manually instead of silently resubmitting.
-async function jsonpWriteOnce(params, idempotencyKey) {
+async function jsonpWriteOnce(params, idempotencyKey, timeoutMs) {
   const payload = idempotencyKey ? Object.assign({}, params, { idempotencyKey: idempotencyKey }) : params;
-  return await jsonp(payload, 30000); // single attempt only — no retry loop
+  return await jsonp(payload, timeoutMs || 30000); // single attempt only — no retry loop
 }
 
 // Builds a stable idempotency key from a write action's identifying fields.
@@ -4598,6 +4598,40 @@ function showLeaveResultPopup(res) {
   openModal('leaveResultModal');
 }
 
+// Called only when the submit request itself timed out (no response
+// within jsonpWriteOnce's window) but the device was online — the leave
+// may well have actually been saved server-side, the response just
+// didn't make it back in time. Looks up the just-submitted leave by its
+// own identifying fields and, if found, shows the SAME result popup the
+// normal success path would have shown — instead of leaving the
+// employee with only a scary red "no confirmation" toast and no idea
+// what actually happened.
+async function checkLeaveSubmissionResult(data) {
+  try {
+    const [leavesRes, balRes] = await Promise.all([
+      jsonpReliable({ page: 'leavesJSON', empId: data.employeeNumber }),
+      jsonpReliable({ page: 'balanceJSON', empId: data.employeeNumber }).catch(() => null)
+    ]);
+    if (!leavesRes || !leavesRes.ok) return false;
+    const match = (leavesRes.leaves || []).find(l =>
+      l.startDate === data.startDate && l.endDate === data.endDate && l.type === data.leaveType
+    );
+    if (!match) return false;
+
+    resetApplyForm();
+    showEmpPage('myleaves');
+    showLeaveResultPopup({
+      status: match.status, leaveId: match.leaveId, leaveType: match.type,
+      startDate: match.startDate, endDate: match.endDate, days: match.days,
+      reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null
+    });
+    loadEmpData();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function confirmSubmitLeave() {
   const modal = document.getElementById('leavePreviewModal');
   if (modal) modal.remove();
@@ -4612,7 +4646,13 @@ async function confirmSubmitLeave() {
 
   await withButtonLock(document.getElementById('applySubmitBtn'), '⏳ Submitting...', async () => {
     try {
-      const res = await jsonpWriteOnce(data, submitIdem);
+      // 45s (not the usual 30s) — submitting a leave is the heaviest write
+      // in this app: it can trigger auto-rejection checks, an approval/
+      // submission email, AND an MIS notification email, all before the
+      // response comes back. 30s was cutting it close and is what caused
+      // the "no confirmation from server" warning to fire even on leaves
+      // that actually went through fine.
+      const res = await jsonpWriteOnce(data, submitIdem, 45000);
       if(res.status && res.status !== 'Error') {
         resetApplyForm();
         showEmpPage('myleaves');
@@ -4629,14 +4669,16 @@ async function confirmSubmitLeave() {
       } else {
         // We WERE online — the request likely already reached and was
         // processed by the server; the client just didn't get the response
-        // back in time (slow script execution, not a lost request). Silently
-        // queuing this for automatic resubmission is what was creating
-        // duplicate Absent/Approved rows — including ones that reappeared
-        // right after being manually deleted from the sheet, since the
-        // browser has no idea the row already exists. Surface it instead of
-        // silently retrying.
-        toast('⚠️ No confirmation from server — check "My Leaves" before submitting again. Do NOT resubmit if it already appears there.', 'error');
-        loadEmpData(); // refresh in background so "My Leaves" reflects reality
+        // back in time (slow script execution, not a lost request). Instead
+        // of leaving the employee with only a warning, look up whether the
+        // leave actually went through and show its real result — falling
+        // back to the warning only if it genuinely can't be found.
+        toast('⏳ Checking whether your leave went through...', 'info');
+        const found = await checkLeaveSubmissionResult(data);
+        if (!found) {
+          toast('⚠️ No confirmation from server — check "My Leaves" before submitting again. Do NOT resubmit if it already appears there.', 'error');
+          loadEmpData(); // refresh in background so "My Leaves" reflects reality
+        }
       }
     }
     });
