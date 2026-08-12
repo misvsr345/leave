@@ -9039,9 +9039,21 @@ async function submitLeadCall() {
       // Leads" fast: only the ONE lead just submitted disappears from the
       // list, instead of the entire list reloading (and delaying the next
       // call) every single time someone submits.
-      const submittedPhone = __leadCallCurrent.phone;
-      __empPendingLeadsAll = __empPendingLeadsAll.filter(l => l.phone !== submittedPhone);
-      if (window.__empLeadsData) delete window.__empLeadsData[submittedPhone];
+      // Compare phones as digits-only strings — the pending list can come
+      // back with phone as a number (Sheets auto-typed) while
+      // __leadCallCurrent.phone is a string (or vice-versa), and a strict
+      // !== on mismatched types/formatting silently fails to remove the
+      // row. That left the "submitted" lead still showing until the next
+      // full reload (e.g. navigating back into Today's Leads), which is
+      // what looked like the page "loading again" after every submit.
+      const normPhone = p => String(p == null ? '' : p).replace(/\D/g, '');
+      const submittedPhone = normPhone(__leadCallCurrent.phone);
+      __empPendingLeadsAll = __empPendingLeadsAll.filter(l => normPhone(l.phone) !== submittedPhone);
+      if (window.__empLeadsData) {
+        Object.keys(window.__empLeadsData).forEach(k => {
+          if (normPhone(k) === submittedPhone) delete window.__empLeadsData[k];
+        });
+      }
       renderEmpLeadsPendingTable();
       if (__empLeadsSummary) {
         __empLeadsSummary.submitted = (__empLeadsSummary.submitted || 0) + 1;
