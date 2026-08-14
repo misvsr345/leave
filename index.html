@@ -1364,7 +1364,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Customer Full Name (As per Document) *</label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
         <div class="form-row"><label>Occupation *</label><input type="text" id="ncOccupation" placeholder="e.g. Business, Student, Govt Employee"></div>
         <div class="form-row"><label>Organization Name</label><input type="text" id="ncOrgName" placeholder="Optional"></div>
-        <div class="form-row"><label>Phone Number *</label><input type="tel" id="ncPhone" placeholder="10-digit mobile number"></div>
+        <div class="form-row"><label>Phone Number *</label><input type="tel" id="ncPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
         <div class="form-row"><label>Address *</label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
 
         <div class="form-row"><label>Customer Signature Photo *</label>
@@ -1375,7 +1375,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
-        <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" placeholder="12-digit Aadhaar number" maxlength="14"></div>
+        <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
         <div class="form-row"><label>Aadhaar Card Front Photo *</label>
           <input type="file" id="ncAadhaarFront" accept="image/*" onchange="ncPhotoChanged('ncAadhaarFront')">
           <div id="ncAadhaarFront-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
@@ -1794,13 +1794,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-section" style="margin-bottom:14px;">
         <div class="quick-actions-title">⚡ Quick Actions</div>
         <div class="quick-actions-grid" id="adminQuickActionsGrid">
-          <div class="quick-action-btn" id="adminQAAllLeaves" onclick="showAdminPage('allleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">All Leaves</div><div class="quick-action-sub">Full history</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('unified-dashboard')"><span class="quick-action-icon">🎛️</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Everything at a glance</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending</div><div class="quick-action-sub">Awaiting approval</div></div>
-          <div class="quick-action-btn" id="adminQACalendar" onclick="showAdminPage('acalendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule</div></div>
+          <div class="quick-action-btn" id="adminQACalendar" onclick="showAdminPage('acalendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule + 7-day availability</div></div>
           <div class="quick-action-btn" id="adminQABalance" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
-          <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile view</div></div>
+          <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile / all leaves</div></div>
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
-          <div class="quick-action-btn" id="adminQAAvailability" onclick="showAdminPage('availability')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Team Availability</div><div class="quick-action-sub">Who's on leave this week</div></div>
           <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
         </div>
@@ -1815,6 +1814,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
 
+    <!-- UNIFIED DASHBOARD — Leave/Loyalty/KPI/DSR/CRM/Checklist at a glance + Top Performers -->
+    <div class="page-section" id="admin-unified-dashboard">
+      <div class="section-hdr"><span class="section-title2">🎛️ Dashboard</span>
+        <button class="btn-sm btn-view" onclick="loadUnifiedDashboard()">🔄 Refresh</button>
+      </div>
+      <div id="unifiedDashGrid" class="quick-actions-grid" style="margin-bottom:14px;"></div>
+      <div class="card" id="unifiedDashTopPerformers"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
     <!-- PENDING -->
     <div class="page-section" id="admin-pending">
       <div class="section-hdr"><span class="section-title2">⏳ Pending Approvals</span>
@@ -1825,53 +1833,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
     <!-- ALL LEAVES -->
-    <div class="page-section" id="admin-allleaves">
-      <div class="section-hdr"><span class="section-title2">📋 All Leaves</span>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-sm btn-view" onclick="exportAllLeavesCSV()">⬇️ Excel</button>
-          <button class="btn-sm btn-view" onclick="printCurrentView('📋 All Leaves')">🖨️ PDF</button>
-        </div>
-      </div>
-      <div class="card" style="padding:12px 14px;margin-bottom:10px;">
-        <div class="form-row" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-          <span style="flex:1;font-size:12px;color:var(--text3);">Filter by Employee Name or ID</span>
-          <span onclick="toggleAllLeavesSearch()" style="cursor:pointer;font-size:15px;" title="Filter by Employee Name or ID">🔎</span>
-          <input type="text" id="allLeavesEmpFilter" placeholder="Employee Name or ID..." oninput="renderAdminLeaves()"
-            style="display:none;width:160px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
-        </div>
-        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
-          <div class="form-group" style="flex:1;min-width:130px;margin:0;">
-            <label style="font-size:10px;">From Date</label>
-            <input type="date" lang="en-GB" id="allLeavesDateFrom" onchange="renderAdminLeaves()">
-          </div>
-          <div class="form-group" style="flex:1;min-width:130px;margin:0;">
-            <label style="font-size:10px;">To Date</label>
-            <input type="date" lang="en-GB" id="allLeavesDateTo" onchange="renderAdminLeaves()">
-          </div>
-          <button class="btn-sm btn-view" style="height:38px;" onclick="clearAllLeavesFilters()">✕ Clear</button>
-        </div>
-      </div>
-      <div class="filter-bar">
-        <button class="filter-btn active" onclick="setLeavesScope('admin','month', this)">🗓️ Running Month</button>
-        <button class="filter-btn" onclick="setLeavesScope('admin','all', this)">📚 All Leaves</button>
-      </div>
-      <div class="filter-bar">
-        <button class="filter-btn active" onclick="setLeavesTime('admin','all', this)">All</button>
-        <button class="filter-btn" onclick="setLeavesTime('admin','past', this)">⏮️ Past</button>
-        <button class="filter-btn" onclick="setLeavesTime('admin','today', this)">📍 Today</button>
-        <button class="filter-btn" onclick="setLeavesTime('admin','upcoming', this)">⏭️ Upcoming</button>
-      </div>
-      <div class="filter-bar" id="adminFilterBar">
-        <button class="filter-btn active" onclick="adminFilterLeaves('all', this)">All</button>
-        <button class="filter-btn" onclick="adminFilterLeaves('Approved', this)">Approved</button>
-        <button class="filter-btn" onclick="adminFilterLeaves('Pending', this)">Pending</button>
-        <button class="filter-btn" onclick="adminFilterLeaves('Rejected', this)">Rejected</button>
-        <button class="filter-btn" onclick="adminFilterLeaves('Absent', this)">Absent</button>
-        <button class="filter-btn" onclick="adminFilterLeaves('Cancelled', this)">Cancelled</button>
-      </div>
-      <div id="adminLeavesContainer"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
-
     <!-- ADMIN CALENDAR -->
     <div class="page-section" id="admin-acalendar">
       <div class="card">
@@ -1891,8 +1852,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
       </div>
       <div class="card">
-        <div class="card-title" id="adminCalEventsCardTitle">👥 Leave Data</div>
-        <div id="adminCalEvents"><div class="empty-state"><span class="emoji">👆</span><p>Click a date on the calendar above to see that day's leave data</p></div></div>
+        <div class="card-title" id="adminCalEventsCardTitle">👥 Next 7 Days — Team Availability</div>
+        <div id="adminCalEventsSubtitle" style="font-size:11px;color:var(--text3);margin:-4px 0 8px;">Shows everyone with an <b>Approved</b> leave today through the next 7 days, grouped by department/counter — click any date above for just that day instead.</div>
+        <div id="adminCalEvents"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
     </div>
 
@@ -1931,7 +1893,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQALoyDash" onclick="showAdminPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Store-wide overview</div></div>
         <div class="quick-action-btn" id="adminQALoyUpcoming" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
         <div class="quick-action-btn" id="adminQALoyIncenthist" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
-        <div class="quick-action-btn" id="adminQALoyKyc" onclick="showAdminPage('loyalty-kyc')"><span class="quick-action-icon">📋</span><div class="quick-action-label">KYC Report</div><div class="quick-action-sub">Incomplete records</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
         <div class="quick-action-btn" id="adminQALoyLeaderboard" onclick="showAdminPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
@@ -1943,7 +1904,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
          same underlying data, one filter panel (employee + date range +
          search), one table. -->
     <div class="page-section" id="admin-loyalty-mycards">
-      <div class="section-hdr"><span class="section-title2">🗂️ All Cards</span></div>
+      <div class="section-hdr"><span class="section-title2">🗂️ All Cards</span>
+        <button class="export-icon-btn" id="exportBtn-loyAllCardsContent-admin" style="display:none;" onclick="openBoxExportModal('loyAllCardsContent-admin','Loyalty Card History')" title="Export">📥</button>
+      </div>
       <div class="card" style="padding:12px 14px;">
         <div class="form-row"><label>Filter by Employee (optional)</label>
           <select id="loyMyCardsEmpFilter"><option value="">-- All Employees --</option></select>
@@ -2020,34 +1983,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- LOYALTY: Incentive History (admin) -->
     <div class="page-section" id="admin-loyalty-incenthist">
       <div class="section-hdr"><span class="section-title2">💰 Incentive History</span>
+        <button class="export-icon-btn" id="exportBtn-loyIncenthistContent" style="display:none;" onclick="openBoxExportModal('loyIncenthistContent','Loyalty Incentive History')" title="Export">📥</button>
       </div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyIncentiveHistory()">🔄 Refresh</button>
       <div id="loyIncenthistContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
-
-    <!-- LOYALTY: KYC Report (admin) -->
-    <div class="page-section" id="admin-loyalty-kyc">
-      <div class="section-hdr"><span class="section-title2">📋 KYC Report</span>
-      </div>
-      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyKYCReport()">🔄 Refresh</button>
-      <div id="loyKycContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="admin-loyalty-issues">
       <div class="section-hdr"><span class="section-title2">🚨 Card Issues — Duplicate / Missing Numbers</span></div>
       <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyCardIssues()">🔄 Refresh</button>
       <div id="loyIssuesContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
-
-    <!-- TEAM AVAILABILITY -->
-    <div class="page-section" id="admin-availability">
-      <div class="section-hdr"><span class="section-title2">🗓️ Team Availability This Week</span>
-        <button class="btn-sm btn-view" onclick="renderTeamAvailability()">🔄 Refresh</button>
-      </div>
-      <div class="card" style="padding:12px 14px;margin-bottom:10px;">
-        <div style="font-size:11.5px;color:var(--text3);">Shows everyone with an <b>Approved</b> leave from today through the next 7 days, grouped by department/counter — handy for quick shift planning.</div>
-      </div>
-      <div id="availabilityContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <!-- BALANCE -->
@@ -2153,13 +2098,40 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <!-- EMPLOYEE WISE -->
     <div class="page-section" id="admin-empwise">
-      <div class="section-hdr"><span class="section-title2">👤 Employee Wise Profile</span></div>
+      <div class="section-hdr"><span class="section-title2">👤 Employee Wise</span>
+        <div id="empWiseExportBtns" style="display:none;gap:8px;">
+          <button class="btn-sm btn-view" onclick="exportAllLeavesCSV()">⬇️ Excel</button>
+          <button class="btn-sm btn-view" onclick="printCurrentView('👤 Employee Wise')">🖨️ PDF</button>
+        </div>
+      </div>
       <div class="card">
         <div class="form-group">
           <label>Select Employee</label>
           <select id="empWiseSelect" onchange="renderEmployeeWiseProfile()">
-            <option value="">-- Select Employee --</option>
+            <option value="__ALL__">-- All Employees --</option>
           </select>
+        </div>
+      </div>
+      <!-- Only shown when "All Employees" is selected — same search/date-range
+           the old separate "All Leaves" page had, merged in here since the two
+           pages did almost the same thing. -->
+      <div class="card" id="empWiseAllFilters" style="padding:12px 14px;margin-bottom:10px;display:none;">
+        <div class="form-row" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+          <span style="flex:1;font-size:12px;color:var(--text3);">Filter by Employee Name or ID</span>
+          <span onclick="toggleAllLeavesSearch()" style="cursor:pointer;font-size:15px;" title="Filter by Employee Name or ID">🔎</span>
+          <input type="text" id="allLeavesEmpFilter" placeholder="Employee Name or ID..." oninput="renderEmployeeWiseProfile()"
+            style="display:none;width:160px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:130px;margin:0;">
+            <label style="font-size:10px;">From Date</label>
+            <input type="date" lang="en-GB" id="allLeavesDateFrom" onchange="renderEmployeeWiseProfile()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:130px;margin:0;">
+            <label style="font-size:10px;">To Date</label>
+            <input type="date" lang="en-GB" id="allLeavesDateTo" onchange="renderEmployeeWiseProfile()">
+          </div>
+          <button class="btn-sm btn-view" style="height:38px;" onclick="clearAllLeavesFilters()">✕ Clear</button>
         </div>
       </div>
       <div class="filter-bar">
@@ -2610,8 +2582,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-leads-report">
       <div class="section-hdr"><span class="section-title2">📊 Leads Report — Employee Wise</span></div>
       <div class="card">
-        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="adminLeadsReportDate"></div>
-        <button class="btn-primary" style="width:100%;" onclick="loadAdminLeadsReport()">🔍 Load</button>
+        <div style="display:flex;gap:8px;">
+          <div class="form-row" style="flex:1;"><label>Start Date</label><input type="date" lang="en-GB" id="adminLeadsReportStartDate"></div>
+          <div class="form-row" style="flex:1;"><label>End Date</label><input type="date" lang="en-GB" id="adminLeadsReportEndDate"></div>
+        </div>
+        <p style="font-size:10.5px;color:var(--text3);margin:-4px 0 8px;">Leave both dates the same for a single day, or pick a range for multiple days combined.</p>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" style="flex:1;" onclick="loadAdminLeadsReport()">🔍 Search / View Report</button>
+          <button class="btn-secondary" style="width:44px;flex-shrink:0;" title="Export" onclick="exportAdminLeadsReport()">📥</button>
+        </div>
       </div>
       <div id="adminLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -2742,9 +2721,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       ℹ️ Changing only the dates/mode sends no email. Changing the status below will send the matching Approved/Rejected/Absent email automatically.
     </div>
     <div class="form-2col">
-      <div class="form-row"><label>New Start Date</label><input type="date" lang="en-GB" id="adminModifyStart"></div>
-      <div class="form-row"><label>New End Date</label><input type="date" lang="en-GB" id="adminModifyEnd"></div>
+      <div class="form-row"><label>New Start Date</label><input type="date" lang="en-GB" id="adminModifyStart" onchange="refreshAdminModifyConflicts()"></div>
+      <div class="form-row"><label>New End Date</label><input type="date" lang="en-GB" id="adminModifyEnd" onchange="refreshAdminModifyConflicts()"></div>
     </div>
+    <div id="adminModifyConflicts"></div>
     <div class="form-row">
       <label>Leave Mode</label>
       <select id="adminModifyMode" onchange="onAdminModifyModeChange()">
@@ -3344,41 +3324,57 @@ function openLeaveDetailModal(key, isAdmin) {
     }
   }
 
-  // ── item F (new, admin only): "who else is on leave" on these same
+  // ── item F (admin only): "who else is on leave" on these same
   // dates — Pending/MIS_Approved/Approved/Absent, excluding this leave
   // itself. Computed entirely from state.allLeaves (already loaded for
   // the admin's own Leaves tabs), so this needs no extra network call.
   const conflictBody = document.getElementById('leaveDetailConflicts');
   if (conflictBody) {
-    if (!isAdmin || !s2e_valid(l)) {
-      conflictBody.innerHTML = '';
-    } else {
-      const s = normalizeDateStr(l.startDate), e = normalizeDateStr(l.endDate || l.startDate);
-      const relevantStatuses = ['Pending', 'MIS_Approved', 'Approved', 'Absent'];
-      const others = (state.allLeaves || []).filter(o =>
-        o.leaveId !== l.leaveId && relevantStatuses.includes(o.status) &&
-        rangesOverlap(normalizeDateStr(o.startDate), normalizeDateStr(o.endDate || o.startDate), s, e)
-      );
-      if (others.length === 0) {
-        conflictBody.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;">
-          <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates)</div>
-          <div style="font-size:12px;color:var(--text3);">Nobody else has a leave overlapping these dates. ✅</div>
-        </div>`;
-      } else {
-        const rowsHtml = others.map(o => {
-          const oRange = o.startDate === o.endDate ? fmtDMY(o.startDate) : fmtDMY(o.startDate) + ' → ' + fmtDMY(o.endDate);
-          return `<tr><td>${o.name}</td><td>${o.type}</td><td>${oRange}</td><td><span class="pill ${pillClass(o.status)}">${statusLabel(o.status)}</span></td></tr>`;
-        }).join('');
-        conflictBody.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;border:1.5px solid var(--orange,#c97a10);">
-          <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates) — ${others.length}</div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Useful before deciding — check staffing overlap for these dates.</div>
-          <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
-        </div>`;
-      }
-    }
+    conflictBody.innerHTML = (isAdmin && s2e_valid(l))
+      ? buildLeaveConflictHTML(l.leaveId, l.startDate, l.endDate || l.startDate)
+      : '';
   }
 
   openModal('leaveDetailModal');
+}
+
+// Shared by the View modal (above) and the Modify modal's live refresh
+// (refreshAdminModifyConflicts, below) — same "who else is on leave"
+// check either way, just called with different dates.
+function buildLeaveConflictHTML(excludeLeaveId, startDate, endDate) {
+  const s = normalizeDateStr(startDate), e = normalizeDateStr(endDate || startDate);
+  if (!s || !e) return '';
+  const relevantStatuses = ['Pending', 'MIS_Approved', 'Approved', 'Absent'];
+  const others = (state.allLeaves || []).filter(o =>
+    o.leaveId !== excludeLeaveId && relevantStatuses.includes(o.status) &&
+    rangesOverlap(normalizeDateStr(o.startDate), normalizeDateStr(o.endDate || o.startDate), s, e)
+  );
+  if (others.length === 0) {
+    return `<div class="card" style="margin-top:10px;padding:12px 14px;">
+      <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates)</div>
+      <div style="font-size:12px;color:var(--text3);">Nobody else has a leave overlapping these dates. ✅</div>
+    </div>`;
+  }
+  const rowsHtml = others.map(o => {
+    const oRange = o.startDate === o.endDate ? fmtDMY(o.startDate) : fmtDMY(o.startDate) + ' → ' + fmtDMY(o.endDate);
+    return `<tr><td>${o.name}</td><td>${o.type}</td><td>${oRange}</td><td><span class="pill ${pillClass(o.status)}">${statusLabel(o.status)}</span></td></tr>`;
+  }).join('');
+  return `<div class="card" style="margin-top:10px;padding:12px 14px;border:1.5px solid var(--orange,#c97a10);">
+    <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates) — ${others.length}</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Useful before deciding — check staffing overlap for these dates.</div>
+    <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+  </div>`;
+}
+
+// #5-6: Modify Leave — same conflict info a new application would show,
+// live-refreshed as MIS changes the dates in the Modify form (not just
+// a static snapshot from when the modal opened).
+function refreshAdminModifyConflicts() {
+  const box = document.getElementById('adminModifyConflicts');
+  if (!box) return;
+  const s = document.getElementById('adminModifyStart').value;
+  const e = document.getElementById('adminModifyEnd').value;
+  box.innerHTML = buildLeaveConflictHTML(state.adminModifyLeaveId, s, e);
 }
 
 // Small helpers for the conflict check above.
@@ -3665,6 +3661,7 @@ async function adminLogin() {
         state.adminRole = res.role || 'Admin';
         state.adminName = res.name || '';
         state.adminDesig = res.designation || '';
+        state.adminDepartment = res.department || '';
         const roleUp = state.adminRole.toUpperCase();
         state.isStoreManager = (roleUp.indexOf('STORE') > -1 || roleUp.indexOf('MANAGER') > -1) && roleUp.indexOf('MIS') === -1;
         // Any admin whose role is NOT MIS or Director is a permission-
@@ -3685,6 +3682,10 @@ async function adminLogin() {
         await applyAdminRoleRestrictions();
         loadAdminData();
         checkLoyaltyAlerts('admin');
+        // MIS-only: check for Pending leaves (today) that still have
+        // active/uncalled leads assigned — see checkPendingLeaveWithLeadsAPI.
+        // Never shown to Store Manager or any other admin role.
+        if (roleUp.indexOf('MIS') > -1) checkMISPendingLeavePopup();
         toast('Welcome, ' + state.adminRole + '!', 'success');
       } else {
         document.getElementById('adminLoginErr').style.display = 'block';
@@ -3836,10 +3837,10 @@ const FOOTER_NAV_CONFIG = {
     ], more: 'openEmpMoreModal()' }
   },
   admin: {
-    leave: { pages: ['dashboard','pending','allleaves','acalendar','balance','empwise','events','availability','direct','notices','blocked','settings'], items: [
+    leave: { pages: ['dashboard','unified-dashboard','pending','acalendar','balance','empwise','events','direct','notices','blocked','settings'], items: [
       { page:'dashboard', icon:'🏠', label:'Home' },
       { page:'pending', icon:'⏳', label:'Pending', badge:'pendingCount' },
-      { page:'allleaves', icon:'📋', label:'All Leaves' },
+      { page:'empwise', icon:'👤', label:'Employee Wise' },
       { page:'acalendar', icon:'📅', label:'Calendar' }
     ], more: 'openAdminMoreModal()' },
     kpi: { pages: ['kpi','kpi-target','kpi-tilldate','kpi-monthly','kpi-compare','kpi-rules'], items: [
@@ -4244,7 +4245,6 @@ function setLeavesScope(who, scope, btn) {
   btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (who === 'emp') { state.empLeavesScope = scope; renderMyLeaves(); }
-  else if (who === 'admin') { state.adminLeavesScope = scope; renderAdminLeaves(); }
   else if (who === 'empwise') { state.empWiseScope = scope; renderEmployeeWiseProfile(); }
 }
 
@@ -4252,7 +4252,6 @@ function setLeavesTime(who, timeFilter, btn) {
   btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (who === 'emp') { state.empLeavesTime = timeFilter; renderMyLeaves(); }
-  else if (who === 'admin') { state.adminLeavesTime = timeFilter; renderAdminLeaves(); }
   else if (who === 'empwise') { state.empWiseTime = timeFilter; renderEmployeeWiseProfile(); }
 }
 
@@ -4260,7 +4259,6 @@ function setLeavesStatus(who, status, btn) {
   btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (who === 'emp') { state.empLeavesStatus = status; renderMyLeaves(); }
-  else if (who === 'admin') { state.adminLeavesStatus = status; renderAdminLeaves(); }
   else if (who === 'empwise') { state.empWiseStatus = status; renderEmployeeWiseProfile(); }
 }
 
@@ -4971,9 +4969,25 @@ function renderCalendarFor(who, year, month, events) {
   const titleEl = document.getElementById(titleElId);
 
   if (!selectedDate) {
+    // Admin calendar (not employee): default view is now the "Next 7 Days"
+    // team availability, grouped by department — this used to be its own
+    // separate "Team Availability" page/button; it's folded in here now.
+    if (who !== 'empCal') {
+      const availHtml = buildTeamAvailabilityHTML();
+      if (titleEl) titleEl.textContent = '👥 Next 7 Days — Team Availability';
+      const subtitleEl = document.getElementById('adminCalEventsSubtitle');
+      if (subtitleEl) subtitleEl.style.display = '';
+      document.getElementById(eventsId).innerHTML = availHtml ||
+        '<div class="empty-state"><span class="emoji">✅</span><p>Nobody is on approved leave in the next 7 days</p></div>';
+      return;
+    }
     if (titleEl) titleEl.textContent = '👥 Leave Data';
     document.getElementById(eventsId).innerHTML = '<div class="empty-state"><span class="emoji">👆</span><p>Click a date on the calendar above to see that day\'s leave data</p></div>';
     return;
+  }
+  if (who !== 'empCal') {
+    const subtitleEl2 = document.getElementById('adminCalEventsSubtitle');
+    if (subtitleEl2) subtitleEl2.style.display = 'none';
   }
 
   if (titleEl) titleEl.textContent = '👥 Leave Data — ' + fmtDMY(selectedDate);
@@ -5277,7 +5291,7 @@ async function refreshBlockedDatesList() {
     daysListEl.innerHTML = dayHtml;
 
   } catch(e) {
-    datesListEl.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load blocked dates</p></div>';
+    datesListEl.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load blocked dates</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="refreshBlockedDatesList()" title="Retry">🔄</button></div>';
     daysListEl.innerHTML = '';
   }
 }
@@ -5516,6 +5530,10 @@ function renderSettingsEmpBody(emp) {
       <input type="checkbox" id="empStockAccessCheck" ${emp && emp.stockAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">📦 Stock Checklist Access</span>
     </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empGoldenAuraAccessCheck" ${emp && emp.goldenAuraAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">🌟 Golden Aura Access</span>
+    </label>
     <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
@@ -5528,6 +5546,7 @@ function renderSettingsEmpBody(emp) {
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpDsrAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🧾 DSR Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeadsAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📞 Leads Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpStockAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📦 Stock Checklist Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpGoldenAuraAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🌟 Golden Aura Access</span></label>
     <button class="btn-primary" id="settingsSaveAllEmpBtn" style="width:100%;margin-top:8px;background:var(--red);" onclick="saveSettingsAllEmpAccess()">💾 Save For ALL Employees</button>
   </div>
   <div id="settingsEmpGranularBody" style="margin-top:14px;">
@@ -5568,7 +5587,7 @@ async function loadSettingsEmpGranular(empId, empName) {
     if (document.getElementById('settingsEmpSelect').value === empId) renderSettingsEmpBody(emp);
   } catch(e) {
     const gbody = document.getElementById('settingsEmpGranularBody');
-    if (gbody) gbody.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load detailed options</p></div>';
+    if (gbody) gbody.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load detailed options</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadSettingsEmpGranular(\'' + empId + '\', \'' + empName.replace(/'/g,"\\'") + '\')" title="Retry">🔄</button></div>';
   }
 }
 
@@ -5632,10 +5651,12 @@ async function saveSettingsEmpAccess(empId, empName) {
   const leaveEnabled = document.getElementById('empLeaveAccessCheck').checked;
   const leadsEnabled = document.getElementById('empLeadsAccessCheck').checked;
   const stockEnabled = document.getElementById('empStockAccessCheck').checked;
+  const goldenAuraEnabled = document.getElementById('empGoldenAuraAccessCheck').checked;
   const payload = {
     page: 'saveEmployeeLoyaltyAccessAPI', empId, empName,
     enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
     leaveEnabled: leaveEnabled ? 'true' : 'false', leadsEnabled: leadsEnabled ? 'true' : 'false', stockEnabled: stockEnabled ? 'true' : 'false',
+    goldenAuraEnabled: goldenAuraEnabled ? 'true' : 'false',
     callerRole: state.adminRole, callerEmail: state.adminEmail
   };
   const idem = makeIdemKey(['emplaccess', empId, Date.now()]);
@@ -5646,7 +5667,7 @@ async function saveSettingsEmpAccess(empId, empName) {
       if (res.ok) {
         toast('✅ Access saved for ' + empName, 'success');
         const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; }
+        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; emp.goldenAuraAccess = goldenAuraEnabled; }
       } else {
         toast(res.error || 'Save failed', 'error');
       }
@@ -5665,11 +5686,13 @@ async function saveSettingsAllEmpAccess() {
   const leaveEnabled = document.getElementById('allEmpLeaveAccessCheck').checked;
   const leadsEnabled = document.getElementById('allEmpLeadsAccessCheck').checked;
   const stockEnabled = document.getElementById('allEmpStockAccessCheck').checked;
+  const goldenAuraEnabled = document.getElementById('allEmpGoldenAuraAccessCheck').checked;
   if (!confirm('This will overwrite Module Access for EVERY employee. Continue?')) return;
   const payload = {
     page: 'saveEmployeeLoyaltyAccessAPI', empId: '__ALL__', empName: 'All Employees',
     enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
     leaveEnabled: leaveEnabled ? 'true' : 'false', leadsEnabled: leadsEnabled ? 'true' : 'false', stockEnabled: stockEnabled ? 'true' : 'false',
+    goldenAuraEnabled: goldenAuraEnabled ? 'true' : 'false',
     callerRole: state.adminRole, callerEmail: state.adminEmail
   };
   const idem = makeIdemKey(['emplaccess_all', Date.now()]);
@@ -5681,7 +5704,7 @@ async function saveSettingsAllEmpAccess() {
         toast('✅ ' + (res.message || 'Access updated for all employees'), 'success');
         (window.__settingsEmpList || []).forEach(emp => {
           emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled;
-          emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled;
+          emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; emp.goldenAuraAccess = goldenAuraEnabled;
         });
         // If an employee is currently selected in the dropdown, refresh their
         // visible checkboxes so the screen matches what was just saved.
@@ -5763,6 +5786,10 @@ function renderSettingsAdminBody(admin) {
       <input type="checkbox" id="sectionMasterCheck_stock" ${perms && perms.section_stock ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;font-weight:700;color:var(--text);">📋 Stock Check List Section — entire section on/off</span>
     </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_leads" ${perms && perms.section_leads ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">📞 Leads / CRM Section — entire section on/off</span>
+    </label>
     <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
   </div>`;
 
@@ -5787,7 +5814,7 @@ async function onSettingsAdminSelected() {
     if (document.getElementById('settingsAdminSelect').value === email) renderSettingsAdminBody(admin);
   } catch(e) {
     const body = document.getElementById('settingsAdminPermBody');
-    if (body) body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load this admin&#39;s permissions</p></div>';
+    if (body) body.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load this admin&#39;s permissions</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="onSettingsAdminSelected()" title="Retry">🔄</button></div>';
   }
 }
 
@@ -5847,12 +5874,14 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
   const dsrMaster = document.getElementById('sectionMasterCheck_dsr');
   const goldenAuraMaster = document.getElementById('sectionMasterCheck_golden_aura');
   const stockMaster = document.getElementById('sectionMasterCheck_stock');
+  const leadsMaster = document.getElementById('sectionMasterCheck_leads');
   if (leaveMaster) payload.section_leave = leaveMaster.checked ? 'true' : 'false';
   if (loyaltyMaster) payload.section_loyalty = loyaltyMaster.checked ? 'true' : 'false';
   if (kpiMaster) payload.section_kpi = kpiMaster.checked ? 'true' : 'false';
   if (dsrMaster) payload.section_dsr = dsrMaster.checked ? 'true' : 'false';
   if (goldenAuraMaster) payload.section_golden_aura = goldenAuraMaster.checked ? 'true' : 'false';
   if (stockMaster) payload.section_stock = stockMaster.checked ? 'true' : 'false';
+  if (leadsMaster) payload.section_leads = leadsMaster.checked ? 'true' : 'false';
   document.querySelectorAll('.settings-perm-check').forEach(cb => {
     payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
   });
@@ -5973,7 +6002,7 @@ async function renderEmpBlockedDates() {
       daysEl.innerHTML = blockedDays.map(d => `<span class="pill" style="background:var(--red-bg);color:var(--red);margin:0 6px 6px 0;display:inline-block;">🚫 ${d}</span>`).join('');
     }
   } catch(e) {
-    datesEl.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load blocked dates</p></div>';
+    datesEl.innerHTML = '<div class="empty-state"><span class="emoji">❌</span><p>Could not load blocked dates</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="renderEmpBlockedDates()" title="Retry">🔄</button></div>';
     daysEl.innerHTML = '';
   }
 }
@@ -6007,12 +6036,10 @@ function renderEmpProfile() {
 
 // Maps each SM_Permissions feature key to the DOM elements it controls
 const SM_FEATURE_ELEMENTS = {
-  allleaves: ['adminQAAllLeaves'],
   calendar:  ['adminQACalendar'],
   balance:   ['adminQABalance'],
   empwise:   ['adminQAEmpwise'],
   events:    ['adminQAEvents'],
-  availability: ['adminQAAvailability'],
   loyalty: ['adminQALoyalty'],
   direct:    ['adminQADirect'],
   notices:   ['adminQANotices'],
@@ -6022,7 +6049,6 @@ const SM_FEATURE_ELEMENTS = {
   loyDash:       ['adminQALoyDash'],
   loyUpcoming:   ['adminQALoyUpcoming'],
   loyIncenthist: ['adminQALoyIncenthist'],
-  loyKyc:        ['adminQALoyKyc'],
   kpi: ['adminQAKpi'],
   kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
@@ -6039,15 +6065,15 @@ const SM_FEATURE_ELEMENTS = {
 // individual Approve/Reject/Absent buttons are then further gated inside
 // their own page — see applyDirectActionSubPerms etc below).
 const FEATURE_SUBKEYS = {
-  allleaves: ['allleaves'], calendar: ['calendar'], balance: ['balance'],
-  empwise: ['empwise'], events: ['events'], availability: ['availability'],
+  calendar: ['calendar','availability'], balance: ['balance'],
+  empwise: ['empwise','allleaves'], events: ['events'],
   pending: ['pending'], loyalty: ['loyalty'],
   direct: ['direct_approve','direct_reject','direct_absent'],
   notices: ['notices_view','notices_edit'],
   blocked: ['blocked_dates','blocked_days'],
   loySearch: ['loySearch','loySearch_fulldata'], loyStats: ['loyStats'],
   loyDash: ['loyDash'], loyUpcoming: ['loyUpcoming'],
-  loyIncenthist: ['loyIncenthist'], loyKyc: ['loyKyc'],
+  loyIncenthist: ['loyIncenthist'],
   kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
   kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
@@ -6167,7 +6193,6 @@ function showAdminPage(page) {
   if(page==='loyalty-mycards') initLoyaltyAllCardsAdminPage();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
   if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
-  if(page==='loyalty-kyc') loadLoyaltyKYCReport();
   if(page==='loyalty-issues') loadLoyaltyCardIssues();
   if(page==='events') initEventsBrowser('admin');
   if(page==='balance') renderBalance();
@@ -6176,10 +6201,9 @@ function showAdminPage(page) {
   if(page==='settings') loadSettingsPage();
   if(page==='profile') renderAdminProfile();
   if(page==='empwise') loadEmployeeWisePage();
+  if(page==='unified-dashboard') loadUnifiedDashboard();
   if(page==='pending') renderPending();
-  if(page==='allleaves') renderAdminLeaves();
   if(page==='notices') loadNoticesForAdmin();
-  if(page==='availability') renderTeamAvailability();
   if(page==='leads') loadAdminLeadsHome();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
@@ -6426,6 +6450,90 @@ let loyLastResults = [];
 // check runs fresh against the live sheet every login, so once the issue
 // is fixed the popup simply stops appearing — nothing to "dismiss."
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// MIS PENDING LEAVE + ACTIVE LEADS POPUP
+// MIS-login only (never Store Manager or other admin roles). Shows every
+// employee with a leave still "Pending" for TODAY who also still has
+// leads assigned today that haven't been called yet, and asks MIS to
+// confirm whether the leave is genuine (voids the remaining leads right
+// away) or a mistake (leaves them active, no changes). Once MIS answers
+// for a given leave, it's recorded server-side and never asked again.
+// ══════════════════════════════════════
+function checkMISPendingLeavePopup() {
+  jsonpReliable({ page: 'checkPendingLeaveWithLeadsJSON' }).then(res => {
+    if (!res || !res.ok || !res.items || res.items.length === 0) return; // normal case — nothing to ask
+    misLeaveLeadQueue = res.items.slice();
+    showNextMISLeaveLeadPopup();
+  }).catch(() => { /* silent — this is a background check, not a page load */ });
+}
+
+let misLeaveLeadQueue = [];
+
+function showNextMISLeaveLeadPopup() {
+  const existing = document.getElementById('misLeaveLeadModal');
+  if (existing) existing.remove();
+  if (!misLeaveLeadQueue || misLeaveLeadQueue.length === 0) return;
+  const item = misLeaveLeadQueue[0];
+
+  const div = document.createElement('div');
+  div.id = 'misLeaveLeadModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;">
+    <div class="modal-title">⏳ Pending Leave — Action Needed</div>
+    <div class="kd-note" style="background:#FFF3CD;border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin-bottom:12px;">
+      <b>${item.empName}</b> applied for <b>${item.leaveType}</b> today (${item.leaveDate}) — still <b>Pending</b>.
+      They have leads assigned today that haven't all been called yet.
+    </div>
+    <div class="kd-table-wrap" style="margin-bottom:14px;">
+      <table class="kd-table">
+        <tr><td>Total Leads Assigned</td><td><b>${item.totalLeads}</b></td></tr>
+        <tr><td>Already Called</td><td>${item.completedLeads}</td></tr>
+        <tr><td>Still Active (not called)</td><td><b>${item.remainingLeads}</b></td></tr>
+      </table>
+    </div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:12px;">Did ${item.empName} genuinely leave the store, or was this leave applied by mistake?</p>
+    <div id="misLeaveLeadErr" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:6px;"></div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px;background:var(--green);" id="misLeaveGenuineBtn" onclick="misLeaveLeadDecide('GENUINE')">✅ YES — Leave Genuine (void the ${item.remainingLeads} remaining lead(s))</button>
+    <button class="btn-secondary" style="width:100%;" id="misLeaveMistakeBtn" onclick="misLeaveLeadDecide('MISTAKE')">❌ NO — Leave by Mistake (keep leads active)</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function misLeaveLeadDecide(decision) {
+  if (!misLeaveLeadQueue || misLeaveLeadQueue.length === 0) return;
+  const item = misLeaveLeadQueue[0];
+  const genBtn = document.getElementById('misLeaveGenuineBtn');
+  const misBtn = document.getElementById('misLeaveMistakeBtn');
+  const errBox = document.getElementById('misLeaveLeadErr');
+  if (genBtn) genBtn.disabled = true;
+  if (misBtn) misBtn.disabled = true;
+  if (errBox) errBox.textContent = 'Saving...';
+
+  const idem = makeIdemKey(['misleavelead', item.leaveId, decision]);
+  jsonpWriteOnce({
+    page: 'recordMISLeaveDecisionJSON',
+    empId: item.empId, empName: item.empName, leaveDate: item.leaveDate, leaveType: item.leaveType, leaveId: item.leaveId,
+    totalLeads: item.totalLeads, completedLeads: item.completedLeads, remainingLeads: item.remainingLeads,
+    decision: decision, callerEmail: state.adminEmail || 'MIS'
+  }, idem).then(res => {
+    if (!res || !res.ok) {
+      if (errBox) errBox.textContent = (res && res.error) || 'Failed to save — please try again.';
+      if (genBtn) genBtn.disabled = false;
+      if (misBtn) misBtn.disabled = false;
+      return;
+    }
+    toast('✅ ' + res.message, 'success');
+    misLeaveLeadQueue.shift();
+    const modal = document.getElementById('misLeaveLeadModal');
+    if (modal) modal.remove();
+    showNextMISLeaveLeadPopup(); // next employee in queue, if any
+  }).catch(() => {
+    if (errBox) errBox.textContent = 'Connection error. Please try again.';
+    if (genBtn) genBtn.disabled = false;
+    if (misBtn) misBtn.disabled = false;
+  });
+}
+
 function checkLoyaltyAlerts(who) {
   const role = who === 'admin' ? 'ADMIN' : 'EMP';
   const reqParams = { page: 'loyaltyCheckAlertsAPI', role: role };
@@ -6494,6 +6602,28 @@ function checkEmpLoyaltyAccess() {
       applyEmpGranularRestrictionsFromPerms(res.granularPerms || {});
     })
     .catch(() => { /* fail open — never hide access due to a network blip */ });
+}
+
+// ══════════════════════════════════════
+// SHARED VALIDATORS — Aadhaar (exactly 12 digits) and Mobile (exactly 10
+// digits, first digit 6/7/8/9). Used at both New Card Entry and Golden
+// Aura enrollment (Items 3 & 4). Each returns '' if valid, or an error
+// message string to show the person.
+// ══════════════════════════════════════
+function validateAadhaarNo(raw) {
+  const digits = (raw || '').replace(/\D/g, '');
+  if (!digits) return 'Aadhaar Number is required.';
+  if (!/^[0-9]+$/.test(raw.trim().replace(/\s/g, ''))) return 'Invalid Aadhaar Number — only digits are allowed.';
+  if (digits.length !== 12) return 'Invalid Aadhaar Number — must be exactly 12 digits (got ' + digits.length + ').';
+  return '';
+}
+function validateMobileNo(raw) {
+  const digits = (raw || '').replace(/\D/g, '');
+  if (!digits) return 'Mobile Number is required.';
+  if (!/^[0-9]+$/.test(raw.trim().replace(/\s/g, ''))) return 'Invalid Mobile Number.';
+  if (digits.length !== 10) return 'Invalid Mobile Number — must be exactly 10 digits (got ' + digits.length + ').';
+  if (!/^[6-9]/.test(digits)) return 'Invalid Mobile Number — must start with 6, 7, 8, or 9.';
+  return '';
 }
 
 // ══════════════════════════════════════
@@ -6569,6 +6699,13 @@ async function submitNewLoyaltyCard() {
     errBox.style.display = 'block';
     return;
   }
+
+  // v-fix (Items 3 & 4): strict format validation, not just "not empty".
+  const mobileErr = validateMobileNo(phone);
+  if (mobileErr) { errBox.textContent = mobileErr; errBox.style.display = 'block'; return; }
+  const aadhaarErr = validateAadhaarNo(aadhaarNo);
+  if (aadhaarErr) { errBox.textContent = aadhaarErr; errBox.style.display = 'block'; return; }
+
   const sigFile = document.getElementById('ncSigPhoto').files[0];
   const custFile = document.getElementById('ncCustPhoto').files[0];
   const aadhaarFrontFile = document.getElementById('ncAadhaarFront').files[0];
@@ -6800,12 +6937,28 @@ function loyLoadPhoto(i) {
   jsonpReliable({ page: 'loyaltyGetImageAPI', url: item.custPhotoUrl })
     .then(res => {
       if (res && res.ok && res.data) {
-        wrap.innerHTML = `<img class="loy-photo" src="${res.data}" onerror="this.outerHTML='<div class=&quot;loy-photo-fallback&quot;>Photo not available</div>';">`;
+        // Thumbnail is now clickable — opens the same big photo-viewer
+        // modal already used for the other documents (Aadhaar front,
+        // signature, etc), with a Close button and click-outside-to-close.
+        wrap.innerHTML = `<img class="loy-photo" src="${res.data}" style="cursor:zoom-in;" onclick="openLoyaltyImageData(this.src)" onerror="this.outerHTML='<div class=&quot;loy-photo-fallback&quot;>Photo not available</div>';">`;
       } else {
         wrap.innerHTML = '<div class="loy-photo-fallback">Photo not available</div>';
       }
     })
     .catch(() => { wrap.innerHTML = '<div class="loy-photo-fallback">Photo not available</div>'; });
+}
+
+// Opens the big photo-viewer modal directly from already-loaded image data
+// (no extra server round-trip needed — the thumbnail was already fetched).
+function openLoyaltyImageData(dataUrl) {
+  const img = document.getElementById('loyModalImg');
+  const msg = document.getElementById('loyModalMsg');
+  const openBtn = document.getElementById('loyModalOpenBtn');
+  msg.style.display = 'none';
+  openBtn.style.display = 'none';
+  img.src = dataUrl;
+  img.style.display = 'block';
+  document.getElementById('loyImgModal').classList.add('open');
 }
 
 function openLoyaltyImage(ev, url) {
@@ -6847,6 +7000,10 @@ function closeLoyaltyImageModal() {
   document.getElementById('loyModalImg').src = '';
   document.getElementById('loyModalOpenBtn').style.display = 'none';
 }
+// Click on the dark backdrop (not the photo/box itself) also closes it.
+document.getElementById('loyImgModal').addEventListener('click', (e) => {
+  if (e.target.id === 'loyImgModal') closeLoyaltyImageModal();
+});
 
 // ── Physical card visual (design unchanged from the original Loyalty page) ──
 function loyaltyCardTheme(type) {
@@ -6934,7 +7091,7 @@ function loadLoyaltyMyStats() {
 
   jsonpReliable({ page: 'loyaltyMyStatsAPI', empName: state.empName, fromDate: from, toDate: to })
     .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyMyStats()\" title=\"Retry\">🔄</button></div>'; return; }
       const o = res.overall;
       const lastInc = o.lastIncentive
         ? `${o.lastIncentive.date} · ${o.lastIncentive.cards} cards · ₹${fmtNum(o.lastIncentive.amount)}`
@@ -6994,7 +7151,7 @@ function loadLoyaltyMyCards() {
 
   jsonpReliable({ page: 'loyaltyMyCardsAPI', empName: state.empName })
     .then(res => {
-      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyMyCards()\" title=\"Retry\">🔄</button></div>'; return; }
       summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s) issued by you</div>`;
       if (res.cards.length === 0) {
         content.innerHTML = '<div class="empty-state"><span class="emoji">🪪</span><p>No cards issued yet</p></div>';
@@ -7036,6 +7193,7 @@ function initLoyaltyAllCardsAdminPage() {
 function loadLoyaltyAllCardsAdmin() {
   const summary = document.getElementById('loyAllCardsSummary-admin');
   const content = document.getElementById('loyAllCardsContent-admin');
+  hideExportBtn(content.id);
   const empFilter = document.getElementById('loyMyCardsEmpFilter').value;
   const fromDate  = document.getElementById('loyMyCardsFromDate').value;
   const toDate    = document.getElementById('loyMyCardsToDate').value;
@@ -7045,7 +7203,7 @@ function loadLoyaltyAllCardsAdmin() {
 
   jsonpReliable({ page: 'loyaltyAllCardsAdminAPI', role: 'ADMIN', empName: empFilter, fromDate: fromDate, toDate: toDate, search: search })
     .then(res => {
-      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyAllCardsAdmin()\" title=\"Retry\">🔄</button></div>'; return; }
       const scopeLabel = empFilter ? empFilter : 'all employees';
       const shownNote = res.total > res.shown ? ` (showing newest ${res.shown} — narrow your filters to see more)` : '';
       summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s) — ${scopeLabel} · ₹${fmtNum(res.incentive)} incentive${shownNote}</div>`;
@@ -7066,6 +7224,7 @@ function loadLoyaltyAllCardsAdmin() {
       });
       html += `</tbody></table></div><button class="btn-loy-card" onclick="mailLoyaltyAllCards()">📧 Mail This List</button>`;
       content.innerHTML = html;
+      showExportBtn(content.id);
     })
     .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
@@ -7153,7 +7312,7 @@ function loadLoyaltyAdminStats() {
 
   jsonpReliable({ page: 'loyaltyAdminStatsAPI' })
     .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyAdminStats()\" title=\"Retry\">🔄</button></div>'; return; }
       if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><p>No employee data found</p></div>'; return; }
       let html = '';
       res.rows.forEach(r => {
@@ -7220,7 +7379,7 @@ function loadLoyaltyLeaderboard(who, start, end) {
   if (end) reqParams.end = end;
   jsonpReliable(reqParams)
     .then(res => {
-      if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyLeaderboard(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
       if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No leaderboard data for this period.</p></div>'; return; }
       const medal = r => r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
       let html = `<div class="card-title">${res.title || '🏆 Loyalty Card Leaderboard'}</div>
@@ -7232,7 +7391,7 @@ function loadLoyaltyLeaderboard(who, start, end) {
       if (res.total) html += `<div class="leave-card-date" style="margin-top:8px;font-weight:800;border-top:1px dashed var(--border);padding-top:8px;">TOTAL: ${res.total.cardsIssued} cards</div>`;
       box.innerHTML = html;
     })
-    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadLoyaltyLeaderboard(\'" + who + "\')">🔄 Retry</button></div>'; });
+    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load leaderboard.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadLoyaltyLeaderboard(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loyLeaderboardThisMonth(who) {
@@ -7281,43 +7440,57 @@ function loadEomBanner(who) {
 function renderKpiRules(who) {
   const box = document.getElementById('kpiRulesBox-' + who);
   if (!box) return;
-  // Exact figures from the Walkintrack scoring script (WEIGHTS, BONUS_RATE,
-  // CAP_MULTIPLIER, getGrade, EOM criteria) — not estimates.
-  box.innerHTML = `
+  box.innerHTML = '<div class="kd-note">Loading…</div>';
+  // Pulled live from the backend (kpiRulesJSON), which mirrors the
+  // Walkintrack scoring script's actual constants (WEIGHTS, BONUS_RATE,
+  // CAP_MULTIPLIER, slabScore tiers, getGrade, EOM criteria) — this used
+  // to be hardcoded here and had gone stale (missing the 30–39/40–49/
+  // 50–59% partial-credit tiers). Loading it live means it can't drift
+  // out of sync with the scoring script again.
+  jsonpReliable({ page: 'kpiRulesJSON' }).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="kd-note">Could not load rules right now. <button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="renderKpiRules(\'' + who + '\')" title="Retry">🔄</button></div>'; return; }
+
+    const w = res.weights, b = res.bonusRate;
+    const weightRows = [
+      ['🛍️ Purchases', w.purchase, b.purchase],
+      ['💳 Loyalty Cards', w.loyalty, b.loyalty],
+      ['🌟 Golden Aura', w.golden, b.golden],
+      ['🧾 DSR', w.dsr, b.dsr]
+    ].map(r => `<tr><td>${r[0]}</td><td>${r[1]} pts</td><td>${r[2].toFixed(2)} / % over target</td></tr>`).join('');
+
+    const slabRows = res.slabs.map(s => `<tr><td>${s.label}</td><td>${s.pointsLabel}</td></tr>`).join('');
+
+    const gradeRows = res.grades.map(g =>
+      `<tr><td>${g.grade === 'A+' ? '🏆 ' : ''}${g.grade}</td><td>${g.label}</td><td>${g.scoreNeeded}</td></tr>`
+    ).join('');
+
+    const dealsBonusNote = res.dealsBonusRate
+      ? `<div class="kd-note" style="margin-top:10px;">🤝 <b>Deals Bonus</b> — a separate, uncapped bonus on top of the score above: (Deals ÷ Purchase Target) × ${res.dealsBonusRate}. This is why your Overall Score can go above 100 — a very high Deals count pushes it past that mark, which is also why the top grade is "Score > 100" rather than a fixed number.</div>`
+      : '';
+
+    box.innerHTML = `
     <div class="card-title">⚖️ How Your Overall Score Is Built (out of 100)</div>
     <div class="kd-table-wrap" style="margin-bottom:16px;">
       <table class="kd-table">
         <tr><th>Category</th><th>Weight</th><th>Bonus rate (above 100%)</th></tr>
-        <tr><td>🛍️ Purchases</td><td>40 pts</td><td>0.40 / % over target</td></tr>
-        <tr><td>💳 Loyalty Cards</td><td>25 pts</td><td>0.25 / % over target</td></tr>
-        <tr><td>🌟 Golden Aura</td><td>15 pts</td><td>0.10 / % over target</td></tr>
-        <tr><td>🧾 DSR</td><td>20 pts</td><td>0.20 / % over target</td></tr>
+        ${weightRows}
       </table>
     </div>
-    <div class="kd-note">Each category's points are earned in slabs based on % of target achieved — hitting 100%+ earns the full weight plus a bonus for every % over. Max score per category is capped at 1.20× its weight.</div>
+    <div class="kd-note">Each category's points are earned in slabs based on % of target achieved — hitting 100%+ earns the full weight plus a bonus for every % over. Max score per category is capped at ${res.capMultiplier}× its weight.</div>
+    ${dealsBonusNote}
     <div class="kd-table-wrap" style="margin:10px 0 16px;">
       <table class="kd-table">
         <tr><th>% of Target Achieved</th><th>Points Earned</th></tr>
-        <tr><td>Below 60%</td><td>0</td></tr>
-        <tr><td>60% – 69%</td><td>50% of weight</td></tr>
-        <tr><td>70% – 79%</td><td>70% of weight</td></tr>
-        <tr><td>80% – 89%</td><td>80% of weight</td></tr>
-        <tr><td>90% – 99%</td><td>90% of weight</td></tr>
-        <tr><td>100%+</td><td>Full weight + bonus for every % over 100</td></tr>
+        ${slabRows}
       </table>
     </div>
-    <div class="kd-note">🧾 DSR is scored differently: <b>(On-Time entries + 0.5 × Late entries) ÷ DSR target × 20</b>, minus 2 points for every entry that was never filed (No-Entry).</div>
+    <div class="kd-note">🧾 ${res.dsrRuleText}</div>
 
     <div class="card-title" style="margin-top:18px;">🏅 Grade Thresholds</div>
     <div class="kd-table-wrap" style="margin-bottom:16px;">
       <table class="kd-table">
         <tr><th>Grade</th><th>Meaning</th><th>Requirement</th></tr>
-        <tr><td>🏆 S</td><td>Star Performer</td><td>Score ≥ 100 <b>and</b> Loyalty ≥ 10 <b>and</b> Golden ≥ 3</td></tr>
-        <tr><td>A+</td><td>Elite</td><td>Score ≥ 90</td></tr>
-        <tr><td>A</td><td>Excellent</td><td>Score ≥ 75</td></tr>
-        <tr><td>B</td><td>Good</td><td>Score ≥ 60</td></tr>
-        <tr><td>C</td><td>Average</td><td>Score ≥ 40</td></tr>
-        <tr><td>D</td><td>Needs Improvement</td><td>Below 40</td></tr>
+        ${gradeRows}
       </table>
     </div>
 
@@ -7325,22 +7498,22 @@ function renderKpiRules(who) {
     <div class="kd-table-wrap">
       <table class="kd-table">
         <tr><th>Condition</th><th>Requirement</th></tr>
-        <tr><td>Overall Score</td><td>≥ 80</td></tr>
-        <tr><td>Loyalty Cards</td><td>≥ 50% of target</td></tr>
-        <tr><td>Golden Aura</td><td>≥ 33% of target</td></tr>
-        <tr><td>Rank</td><td>#1 among everyone who passes all 3 above</td></tr>
+        <tr><td>Overall Score</td><td>≥ ${res.employeeOfMonth.minScorePct}</td></tr>
+        <tr><td>Loyalty Cards</td><td>≥ ${Math.round(res.employeeOfMonth.loyaltyPct * 100)}% of target</td></tr>
+        <tr><td>Golden Aura</td><td>≥ ${Math.round(res.employeeOfMonth.goldenPct * 100)}% of target</td></tr>
+        <tr><td>Store Rank</td><td>#1 among eligible employees</td></tr>
       </table>
-    </div>
-    <div class="kd-note" style="margin-top:10px;">The winner is only announced once the month fully closes (last calendar day reached) — and then stays displayed as that month's Employee of the Month for the rest of the following month, until the next month closes.</div>
-  `;
+    </div>`;
+  }).catch(() => { box.innerHTML = '<div class="kd-note">Connection error loading rules. <button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="renderKpiRules(\'' + who + '\')" title="Retry">🔄</button></div>'; });
 }
+
 
 function loadKpiTarget(who) {
   const box = document.getElementById('kpiTargetBox-' + who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTargetJSON' })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiTarget(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No target set yet.</p></div>'; return; }
     let html = '';
     res.rows.forEach(r => {
@@ -7354,7 +7527,7 @@ function loadKpiTarget(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiTarget(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTarget(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function kpiRowCardHtml(r) {
@@ -7369,12 +7542,14 @@ function kpiRowCardHtml(r) {
       <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
       <div class="kd-box"><span class="kd-ic">🔁</span><span class="kd-val">${r.conversionPct}</span><span class="kd-lbl">Conversion</span></div>
     </div>
-    <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">🛍️ PURCHASE</div>
+    <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">🛍️ PURCHASE + DEALS BONUS</div>
     <div class="kd-stats" style="margin-bottom:8px;">
       <div class="kd-box"><span class="kd-val">${r.purchTarget}</span><span class="kd-lbl">Target</span></div>
       <div class="kd-box"><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
       <div class="kd-box"><span class="kd-val">${r.purchAchPct}</span><span class="kd-lbl">Ach %</span></div>
-      <div class="kd-box"><span class="kd-val">${r.purchScore}</span><span class="kd-lbl">Score</span></div>
+      <div class="kd-box"><span class="kd-val">${r.purchScore}</span><span class="kd-lbl">Purch Score</span></div>
+      <div class="kd-box"><span class="kd-val">${r.dealsRatio}</span><span class="kd-lbl">Deals Ratio</span></div>
+      <div class="kd-box"><span class="kd-val">${r.dealsBonus}</span><span class="kd-lbl">Deals Bonus</span></div>
     </div>
     <div class="kd-note" style="margin-bottom:4px;font-weight:700;color:var(--purple);">💳 LOYALTY CARDS</div>
     <div class="kd-stats" style="margin-bottom:8px;">
@@ -7448,14 +7623,23 @@ function loadKpiTillDate(who) {
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiTillDate(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No KPI data yet. Ask MIS to generate the KPI report.</p></div>'; return; }
     let html = staleBannerHtml(res.title);
     html += res.title ? `<div class="kd-note">${res.title}</div>` : '';
+    // Employees only get their own row back (their individual figures
+    // stay private from co-workers) — but they can still see who's
+    // currently #1 in the store via this lightweight name+score summary.
+    if (who === 'emp' && res.topPerformer) {
+      const isMe = (res.topPerformer.name || '').toLowerCase() === (state.empName || '').toLowerCase();
+      html += `<div class="kd-note" style="background:linear-gradient(135deg,#C9A84C22,#E8C76622);border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin-bottom:10px;">
+        🏆 Currently #1 this month: <b>${isMe ? 'You!' : res.topPerformer.name}</b> — Score ${res.topPerformer.score} (${res.topPerformer.grade})
+      </div>`;
+    }
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiTillDate(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTillDate(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadKpiMonthly(who) {
@@ -7463,13 +7647,19 @@ function loadKpiMonthly(who) {
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiMonthlyJSON' })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiMonthly(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No monthly KPI data yet.</p></div>'; return; }
     let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
+    if (who === 'emp' && res.topPerformer) {
+      const isMe = (res.topPerformer.name || '').toLowerCase() === (state.empName || '').toLowerCase();
+      html += `<div class="kd-note" style="background:linear-gradient(135deg,#C9A84C22,#E8C76622);border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin-bottom:10px;">
+        🏆 #1 last month: <b>${isMe ? 'You!' : res.topPerformer.name}</b> — Score ${res.topPerformer.score} (${res.topPerformer.grade})
+      </div>`;
+    }
     res.rows.forEach(r => html += kpiRowCardHtml(r));
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiMonthly(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiMonthly(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadKpiRangeSummary(who) {
@@ -7479,7 +7669,7 @@ function loadKpiRangeSummary(who) {
   if (!start || !end) { toast('Select both dates', 'error'); return; }
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiRangeSummaryJSON', start: start, end: end })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiRangeSummary(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No data found in this range.</p></div>'; return; }
     let html = `<div class="kd-note">${fmtDMY(res.start)} to ${fmtDMY(res.end)}</div>`;
     res.rows.forEach(r => {
@@ -7496,7 +7686,7 @@ function loadKpiRangeSummary(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiRangeSummary(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiRangeSummary(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadKpiCompare(who) {
@@ -7504,7 +7694,7 @@ function loadKpiCompare(who) {
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiComparisonJSON' })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiCompare(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.generated || !res.rows.length) {
       box.innerHTML = `<div class="empty-state"><p>${res.note || 'No comparison data yet.'}</p></div>`; return;
     }
@@ -7516,7 +7706,7 @@ function loadKpiCompare(who) {
     html += '</table></div>';
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadKpiCompare(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiCompare(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 // ══════════════════════════════════════
@@ -7893,7 +8083,7 @@ function loadDsrToday(who, date) {
   const reqParams = { page: 'dsrTodayFullEntriesJSON' };
   if (date) reqParams.date = date;
   jsonpReliable(kpiEmpParams(who, reqParams)).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrToday(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR entries filed that day.</p></div>'; return; }
 
     // Group every item-row that shares the same DSR No into ONE card —
@@ -7911,6 +8101,7 @@ function loadDsrToday(who, date) {
     let photoIdx = 0, itemIdx = 0;
     window['__dsrTodayPhotos_' + who] = [];
     window['__dsrTodayItems_' + who] = [];
+    window['__dsrTodayGroups_' + who] = groups;
 
     order.forEach(key => {
       const g = groups[key];
@@ -7934,8 +8125,8 @@ function loadDsrToday(who, date) {
       });
 
       html += `<div class="dsr-receipt-card">
-        <div class="dsr-receipt-hd">
-          <span class="dsr-receipt-id">🧾 ${g.dsrNo || '—'}</span>
+        <div class="dsr-receipt-hd"${who === 'admin' ? ` onclick="openDsrDetailModal('${key}','${who}')" style="cursor:pointer;"` : ''}>
+          <span class="dsr-receipt-id">🧾 ${g.dsrNo || '—'}${who === 'admin' ? ' <span style="font-size:10px;font-weight:400;opacity:0.85;">(tap for full detail)</span>' : ''}</span>
           <span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>
         </div>
         <div class="dsr-receipt-body">
@@ -7952,7 +8143,7 @@ function loadDsrToday(who, date) {
     if (who === 'admin' && missingPhotoCount > 0) {
       toast(`⚠️ ${missingPhotoCount} item(s) missing photo today!`, 'error');
     }
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrToday(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrToday(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 // Handles both raw base64 photos and Google Drive share links (which
@@ -8063,6 +8254,67 @@ function loadDsrTodayForDate(who) {
   loadDsrToday(who, d);
 }
 
+// Admin-only "tap a DSR record for complete detail" (Portal update, DSR
+// section item: "DSR details should be viewable cleanly, in the same
+// style as the existing Leave detail-view") — same label/value row layout as
+// openLeaveDetailModal, built from the exact same data already loaded
+// on screen (no extra network call).
+function openDsrDetailModal(key, who) {
+  const groups = window['__dsrTodayGroups_' + who];
+  const g = groups ? groups[key] : null;
+  if (!g) { toast('DSR detail not available', 'error'); return; }
+
+  const existing = document.getElementById('dsrDetailModal');
+  if (existing) existing.remove();
+
+  const payColor = g.paymentStatus === 'Purchased' ? 'green' : g.paymentStatus === 'Advance' ? 'gold' : 'red';
+  const rows = [
+    ['DSR No', g.dsrNo || '—'],
+    ['Status', `<span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>`],
+    ['Employee', g.employee || '—'],
+    ['Customer Name', g.customerName || '—'],
+    ['Mobile', g.mobile || '—'],
+    ['Address', g.address || '—'],
+    ['Bill Date', fmtDMY(g.billDate) || '—'],
+    ['Entry Time', g.entryTime || '—']
+  ];
+
+  let rowsHtml = '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px;">';
+  rows.forEach(([label, val], idx) => {
+    const bg = idx % 2 === 0 ? '#fdfcff' : '#ffffff';
+    rowsHtml += `<div style="background:${bg};padding:9px 12px;display:flex;gap:10px;border-bottom:1px solid var(--border);">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;min-width:100px;flex-shrink:0;">${label}</div>
+      <div style="font-size:12.5px;color:var(--text);font-weight:600;word-break:break-word;">${val}</div>
+    </div>`;
+  });
+  rowsHtml += '</div>';
+
+  let itemsHtml = `<div class="card-title" style="margin-top:14px;margin-bottom:6px;">🧾 Items (${g.items.length})</div>`;
+  g.items.forEach(it => {
+    const photoBtn = it.hasPhoto ? `<button class="dsr-photo-btn" onclick="dsrDetailViewPhoto('${(it.photo||'').replace(/'/g,"\\'")}')">📷 View Photo</button>` : '<span class="kd-pill red" style="font-size:9.5px;">⚠️ No Photo</span>';
+    itemsHtml += `<div class="dsr-item-row">
+      <div><b>${it.itemName || '—'}</b><span class="dsr-item-sub">${it.design ? ' · ' + it.design : ''}${it.tunch ? ' · Tunch ' + it.tunch : ''}${it.weight ? ' · ' + it.weight + 'g' : ''}${it.tagNo ? ' · Tag ' + it.tagNo : ''}</span></div>
+      <div>${photoBtn}</div>
+    </div>`;
+  });
+
+  const div = document.createElement('div');
+  div.id = 'dsrDetailModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;">
+    <div class="modal-title">🧾 DSR Full Detail</div>
+    ${rowsHtml}
+    ${itemsHtml}
+    <button class="btn-secondary" style="width:100%;margin-top:14px;" onclick="document.getElementById('dsrDetailModal').remove()">Close</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function dsrDetailViewPhoto(photoData) {
+  const w = window.open('', '_blank');
+  if (w) w.document.write(`<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${photoData}" style="max-width:100%;max-height:100vh;"></body></html>`);
+}
+
 function viewDsrPhoto(idx, who) {
   const photos = window['__dsrTodayPhotos_' + who];
   if (!photos || !photos[idx]) return;
@@ -8077,7 +8329,7 @@ function loadDsrStatus(who) {
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrStatus(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
     let html = '';
     res.rows.forEach(r => {
@@ -8105,7 +8357,7 @@ function loadDsrStatus(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrStatus(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrStatus(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadDsrMissing(who, start, end) {
@@ -8116,7 +8368,7 @@ function loadDsrMissing(who, start, end) {
   if (start) reqParams.start = start;
   if (end) reqParams.end = end;
   jsonpReliable(kpiEmpParams(who, reqParams)).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrMissing(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR entries!</p></div>'; return; }
     let html = '';
     res.rows.forEach(r => {
@@ -8134,7 +8386,7 @@ function loadDsrMissing(who, start, end) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrMissing(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrMissing(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function dsrRangeResultHtml(res) {
@@ -8175,10 +8427,10 @@ function loadDsrTillDate(who) {
   const first = new Date(today.getFullYear(), today.getMonth(), 1);
   const iso = d => toYMD(d);
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: iso(first), end: iso(today) })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrTillDate(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
     box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrTillDate(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrTillDate(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadDsrDateRange(who) {
@@ -8189,10 +8441,10 @@ function loadDsrDateRange(who) {
   if (!start || !end) { toast('Select both dates', 'error'); return; }
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: start, end: end })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrDateRange(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
     box.innerHTML = dsrRangeResultHtml(res);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadDsrDateRange(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrDateRange(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 // ══════════════════════════════════════
@@ -8550,7 +8802,7 @@ function renderGoldenAuraForm(who) {
       <div class="form-row"><label>Plan Number *</label><input type="text" inputmode="numeric" id="gaPlanNo-${who}" placeholder="e.g. 29" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
       <div class="form-row"><label>Amount *</label><input type="number" id="gaAmount-${who}" placeholder="e.g. 10000"></div>
       <div class="form-row"><label>Customer Name (As per Document) *</label><input type="text" id="gaCustName-${who}"></div>
-      <div class="form-row"><label>Mobile Number *</label><input type="tel" id="gaMobile-${who}" maxlength="10"></div>
+      <div class="form-row"><label>Mobile Number *</label><input type="tel" id="gaMobile-${who}" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
       <div class="form-row"><label>C/O, D/O, W/O, S/O</label><input type="text" id="gaCoDoWoSo-${who}"></div>
       <div class="form-row"><label>Street</label><input type="text" id="gaStreet-${who}"></div>
       <div class="form-row"><label>Area</label><input type="text" id="gaArea-${who}"></div>
@@ -8559,7 +8811,7 @@ function renderGoldenAuraForm(who) {
       <div class="form-row"><label>District</label><input type="text" id="gaDistrict-${who}"></div>
       <div class="form-row"><label>State</label><select id="gaState-${who}"><option value="">-- Select State --</option>${stateOptions}</select></div>
       <div class="form-row"><label>Pin</label><input type="text" id="gaPin-${who}" maxlength="6"></div>
-      <div class="form-row"><label>Aadhaar Number</label><input type="text" id="gaAadhaarNo-${who}" maxlength="14"></div>
+      <div class="form-row"><label>Aadhaar Number</label><input type="text" id="gaAadhaarNo-${who}" inputmode="numeric" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
       ${photoField('gaAadhaarPhoto-' + who, 'Aadhaar Card Photo (Front &amp; Back)')}
       <div class="form-row"><label>Pan Number</label><input type="text" id="gaPanNo-${who}" maxlength="10"></div>
       ${photoField('gaPanPhoto-' + who, 'Pan Card Photo')}
@@ -8577,8 +8829,8 @@ function renderGoldenAuraForm(who) {
       <div class="card-title">👥 Nominee Details (As per Documents)</div>
       <div class="form-row"><label>Nominee Name</label><input type="text" id="gaNomName-${who}"></div>
       <div class="form-row"><label>Address</label><input type="text" id="gaNomAddress-${who}"></div>
-      <div class="form-row"><label>Mobile Number</label><input type="tel" id="gaNomMobile-${who}" maxlength="10"></div>
-      <div class="form-row"><label>Nominee Aadhaar Number</label><input type="text" id="gaNomAadhaarNo-${who}" maxlength="14"></div>
+      <div class="form-row"><label>Mobile Number</label><input type="tel" id="gaNomMobile-${who}" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+      <div class="form-row"><label>Nominee Aadhaar Number</label><input type="text" id="gaNomAadhaarNo-${who}" inputmode="numeric" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
       ${photoField('gaNomAadhaarPhoto-' + who, 'Nominee Aadhaar Card Photos (Front &amp; Back)')}
       <div class="form-row"><label>Nominee Pan Number</label><input type="text" id="gaNomPanNo-${who}" maxlength="10"></div>
       ${photoField('gaNomPanPhoto-' + who, 'Pan Card Photo')}
@@ -8609,7 +8861,29 @@ async function submitGoldenAura(who) {
 
   if (!custName || !mobile || !planType || !planNo || !amount || !town) { toast('Please fill all required fields (*)', 'error'); return; }
   if (!/^\d+$/.test(planNo)) { toast('Plan Number must be numbers only', 'error'); return; }
-  if (!/^\d{10}$/.test(mobile)) { toast('Mobile must be 10 digits', 'error'); return; }
+
+  // v-fix (Items 3 & 4): strict format validation, not just "10 digits".
+  // Mobile Number is required, so always checked; the other 3 fields
+  // (Aadhaar, Nominee Mobile, Nominee Aadhaar) are optional on this form
+  // — only validated if the person actually typed something in them.
+  const mobileErr = validateMobileNo(mobile);
+  if (mobileErr) { toast(mobileErr, 'error'); return; }
+
+  const aadhaarNo = g('gaAadhaarNo').value.trim();
+  if (aadhaarNo) {
+    const aadhaarErr = validateAadhaarNo(aadhaarNo);
+    if (aadhaarErr) { toast(aadhaarErr, 'error'); return; }
+  }
+  const nomMobile = g('gaNomMobile').value.trim();
+  if (nomMobile) {
+    const nomMobileErr = validateMobileNo(nomMobile);
+    if (nomMobileErr) { toast('Nominee ' + nomMobileErr.charAt(0).toLowerCase() + nomMobileErr.slice(1), 'error'); return; }
+  }
+  const nomAadhaarNo = g('gaNomAadhaarNo').value.trim();
+  if (nomAadhaarNo) {
+    const nomAadhaarErr = validateAadhaarNo(nomAadhaarNo);
+    if (nomAadhaarErr) { toast('Nominee ' + nomAadhaarErr.charAt(0).toLowerCase() + nomAadhaarErr.slice(1), 'error'); return; }
+  }
 
   const btn = document.getElementById('gaSubmitBtn-' + who);
   btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
@@ -8732,7 +9006,7 @@ function loadGoldenAuraList(who) {
     if (endEl && endEl.value) reqParams.endDate = endEl.value;
   }
   jsonpReliable(reqParams).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadGoldenAuraList(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
     // Populate the Employee filter dropdown once, without wiping out
     // whatever the admin currently has selected.
     if (who === 'admin' && res.employees) {
@@ -8758,7 +9032,7 @@ function loadGoldenAuraList(who) {
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadGoldenAuraList(\'" + who + "\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadGoldenAuraList(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadGoldenAuraCounts(who) {
@@ -8790,7 +9064,7 @@ function loadStockDashboard(who) {
 
   jsonpReliable({ page: 'stockDashboardJSON' }).then(res => {
     if (!res || !res.ok) {
-      healthBox.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDashboard(\'' + who + '\')">🔄 Retry</button></div>';
+      healthBox.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockDashboard(\'' + who + '\')" title="Retry">🔄</button></div>';
       dutyBox.innerHTML = '';
       return;
     }
@@ -8827,7 +9101,7 @@ function loadStockDashboard(who) {
     const duty = res.duty || { Retail: [], Wholesale: [] };
     dutyBox.innerHTML = stockDutySummaryHtml('Retail', duty.Retail) + stockDutySummaryHtml('Wholesale', duty.Wholesale);
   }).catch(() => {
-    healthBox.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDashboard(\'' + who + '\')">🔄 Retry</button></div>';
+    healthBox.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockDashboard(\'' + who + '\')" title="Retry">🔄</button></div>';
     dutyBox.innerHTML = '';
   });
 }
@@ -8929,7 +9203,7 @@ function loadStockComplianceTrend(who) {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable({ page: 'stockComplianceTrendJSON' }).then(res => {
     if (!res || !res.ok || !res.trend) {
-      box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockComplianceTrend(\'' + who + '\')">🔄 Retry</button></div>';
+      box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockComplianceTrend(\'' + who + '\')" title="Retry">🔄</button></div>';
       return;
     }
     const bars = res.trend.map(d => {
@@ -8945,7 +9219,7 @@ function loadStockComplianceTrend(who) {
         <span>${fmtDMY(res.trend[0].date)}</span><span>${fmtDMY(res.trend[res.trend.length - 1].date)}</span>
       </div>`;
   }).catch(() => {
-    box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockComplianceTrend(\'' + who + '\')">🔄 Retry</button></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockComplianceTrend(\'' + who + '\')" title="Retry">🔄</button></div>';
   });
 }
 
@@ -9048,7 +9322,7 @@ async function loadEmpLeadsHome() {
     __empLeadsSummary = res.rows[0];
     renderEmpLeadsSummaryBox();
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadEmpLeadsHome()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9079,7 +9353,7 @@ async function loadEmpLeadsPending() {
     __empPendingSummary = (reportRes && reportRes.ok && reportRes.rows && reportRes.rows[0]) ? reportRes.rows[0] : null;
     renderEmpLeadsPendingTable();
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadEmpLeadsPending()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9331,7 +9605,7 @@ async function loadEmpLeadsSubmitted() {
     __empSubmittedEntries = entries;
     renderEmpSubmittedTable();
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadEmpLeadsSubmitted()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9500,7 +9774,7 @@ async function loadEmpLeadsReport() {
     }
     box.innerHTML = html;
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadEmpLeadsReport()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9531,25 +9805,38 @@ async function loadAdminLeadsHome() {
       { val: overallPct + '%', lbl: 'Completion', color: overallPct >= 80 ? '#80ffb0' : overallPct >= 40 ? '#ffd080' : '#ff8080' }
     ]);
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminLeadsHome()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
 // ── ADMIN: Report — employee-wise % + status break-up ───────
+function exportAdminLeadsReport() {
+  const startInp = document.getElementById('adminLeadsReportStartDate');
+  const endInp = document.getElementById('adminLeadsReportEndDate');
+  const startDate = (startInp && startInp.value) || todayISO();
+  const endDate = (endInp && endInp.value) || startDate;
+  const url = LEADS_WEB_APP_URL + '?action=EXPORT_LEADS_REPORT_CSV&role=ADMIN&startDate=' + encodeURIComponent(startDate) + '&endDate=' + encodeURIComponent(endDate);
+  window.open(url, '_blank');
+}
+
 async function loadAdminLeadsReport() {
   const box = document.getElementById('adminLeadsReportBox');
-  const dateInp = document.getElementById('adminLeadsReportDate');
-  if (dateInp && !dateInp.value) dateInp.value = todayISO();
-  const dateStr = (dateInp && dateInp.value) || todayISO();
+  const startInp = document.getElementById('adminLeadsReportStartDate');
+  const endInp = document.getElementById('adminLeadsReportEndDate');
+  if (startInp && !startInp.value) startInp.value = todayISO();
+  if (endInp && !endInp.value) endInp.value = startInp.value || todayISO();
+  const startDate = (startInp && startInp.value) || todayISO();
+  const endDate = (endInp && endInp.value) || startDate;
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: dateStr });
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', startDate, endDate });
     if (!res.ok || !res.rows || !res.rows.length) {
-      box.innerHTML = '<div class="empty-state"><p>No leads assigned on this date.</p></div>';
+      box.innerHTML = '<div class="empty-state"><p>No leads assigned in this date range.</p></div>';
       return;
     }
+    const rangeLabel = startDate === endDate ? startDate : (startDate + ' \u2192 ' + endDate);
     const rows = res.rows.slice().sort((a, b) => b.completionPct - a.completionPct);
-    let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr>' +
+    let html = `<div class="kd-note" style="font-weight:700;">📅 ${rangeLabel}</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
       '<th style="text-align:left;">Employee</th><th>Assigned</th><th>Submitted</th><th>Pending</th><th>Avoided</th><th>%</th></tr></thead><tbody>';
     rows.forEach(r => {
       const pctColor = r.completionPct >= 80 ? '#1a7a4f' : r.completionPct >= 40 ? '#c97a10' : '#c0392b';
@@ -9570,7 +9857,7 @@ async function loadAdminLeadsReport() {
     });
     box.innerHTML = html;
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminLeadsReport()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9588,7 +9875,7 @@ async function loadAdminLeadsSubmitted() {
     __adminSubmittedEntries = (res && res.entries) || [];
     renderAdminSubmittedTable();
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminLeadsSubmitted()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9727,7 +10014,7 @@ async function loadAdminLeadsOverview() {
     });
     box.innerHTML = html;
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminLeadsOverview()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9751,7 +10038,7 @@ async function loadAdminOverdueLeads() {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_OVERDUE_LEADS' });
-    if (!res.ok) { box.innerHTML = '<div class="empty-state"><p>Could not load. ' + (res.error||'') + '</p></div>'; return; }
+    if (!res.ok) { box.innerHTML = '<div class="empty-state"><p>Could not load. ' + (res.error||'') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminOverdueLeads()\" title=\"Retry\">🔄</button></div>'; return; }
     window.__overdueLeadsAll = res.leads || [];
 
     // Populate the employee filter dropdown once per load (names come
@@ -9764,7 +10051,7 @@ async function loadAdminOverdueLeads() {
 
     renderOverdueLeadsTable();
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminOverdueLeads()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9883,7 +10170,7 @@ async function loadAdminLeadsQuota() {
     });
     box.innerHTML = html;
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p></div>';
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminLeadsQuota()\" title=\"Retry\">🔄</button></div>';
   }
 }
 
@@ -9928,7 +10215,7 @@ function loadStockDetail(who, type, mode) {
   }
   if (empFilter) reqParams.emp = empFilter;
   jsonpReliable(reqParams).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\',\'' + mode + '\')">🔄 Retry</button></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\',\'' + mode + '\')" title="Retry">🔄</button></div>'; return; }
     // Merge new employee names into the filter dropdown every load
     // (instead of locking it after the first response) so a narrow
     // "Today" load doesn't leave the dropdown missing everyone who
@@ -10020,7 +10307,7 @@ function loadStockDetail(who, type, mode) {
     });
     box.innerHTML = html;
     showExportBtn(boxId);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\',\'' + mode + '\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockDetail(\'' + who + '\',\'' + type + '\',\'' + mode + '\')" title="Retry">🔄</button></div>'; });
 }
 
 function stockReportThisMonth(who) {
@@ -10046,7 +10333,7 @@ function loadStockReport(who, mode) {
     reqParams.range = 'month';
   }
   jsonpReliable(reqParams).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockReport(\'' + who + '\',\'' + mode + '\')">🔄 Retry</button></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockReport(\'' + who + '\',\'' + mode + '\')" title="Retry">🔄</button></div>'; return; }
     if (!res.empSummary.length) { box.innerHTML = '<div class="empty-state"><p>No entries for this period.</p></div>'; return; }
     let html = `<div class="kd-note">${type} — ${fmtDMY(res.start)} to ${fmtDMY(res.end)}</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Checklists Done</th></tr></thead><tbody>`;
@@ -10056,7 +10343,7 @@ function loadStockReport(who, mode) {
     html += `</tbody></table></div>`;
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockReport(\'' + who + '\',\'' + mode + '\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockReport(\'' + who + '\',\'' + mode + '\')" title="Retry">🔄</button></div>'; });
 }
 
 // ══════════════ Admin-only: Variance Log & Change Log ══════════════
@@ -10077,7 +10364,7 @@ function loadStockVarianceLog(who) {
   if (start) reqParams.start = start;
   if (end) reqParams.end = end;
   jsonpReliable(reqParams).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockVarianceLog(\'' + who + '\')">🔄 Retry</button></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockVarianceLog(\'' + who + '\')" title="Retry">🔄</button></div>'; return; }
     if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No variances logged for this period.</p></div>'; return; }
     let html = `<div class="kd-note">${res.rows.length} variance(s)</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr>
@@ -10099,7 +10386,7 @@ function loadStockVarianceLog(who) {
     html += `</tbody></table></div>`;
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockVarianceLog(\'' + who + '\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockVarianceLog(\'' + who + '\')" title="Retry">🔄</button></div>'; });
 }
 
 function stockChangeLogClearDates(who) {
@@ -10118,7 +10405,7 @@ function loadStockChangeLog(who) {
   if (start) reqParams.start = start;
   if (end) reqParams.end = end;
   jsonpReliable(reqParams).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockChangeLog(\'' + who + '\')">🔄 Retry</button></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockChangeLog(\'' + who + '\')" title="Retry">🔄</button></div>'; return; }
     if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No value changes logged for this period.</p></div>'; return; }
     let html = `<div class="kd-note">${res.rows.length} change(s)</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr>
@@ -10138,7 +10425,7 @@ function loadStockChangeLog(who) {
     html += `</tbody></table></div>`;
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick="loadStockChangeLog(\'' + who + '\')">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockChangeLog(\'' + who + '\')" title="Retry">🔄</button></div>'; });
 }
 
 function dsrfSubmit(who) {
@@ -10317,7 +10604,7 @@ function loadLoyaltyDashboard(who) {
 
   jsonpReliable(reqParams)
     .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyDashboard(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
       const k = res.kpi;
 
       let html = `<div class="card">
@@ -10402,7 +10689,7 @@ function loadLoyEmpDetail() {
 
   jsonpReliable({ page: 'loyaltyMyStatsAPI', empName: empName, fromDate: from, toDate: to })
     .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyEmpDetail()\" title=\"Retry\">🔄</button></div>'; return; }
       const o = res.overall;
       let html = `<div class="card"><div class="card-title">📋 Summary</div>
         <div class="leave-card-date">Total Cards: <b>${o.totalCards}</b> · Rank: <b>#${o.rank}</b> · This Month: <b>${o.thisMonthCards}</b></div>
@@ -10453,7 +10740,7 @@ function loadLoyaltyUpcomingApprovals() {
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable({ page: 'loyaltyUpcomingApprovalsAPI' })
     .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyUpcomingApprovals()\" title=\"Retry\">🔄</button></div>'; return; }
       if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No pending balances — everyone is fully paid up</p></div>'; return; }
       let html = '';
       res.rows.forEach(r => {
@@ -10469,6 +10756,7 @@ function loadLoyaltyUpcomingApprovals() {
             ⏳ Balance: <b>${r.balanceCards}</b> cards ${r.readyForApproval ? `· 💰 Ready Amount: <b>₹${fmtNum(r.readyAmount)}</b>` : ''}
           </div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px;">Card Range: #${r.firstCard} → #${r.lastCard}</div>
+          <button class="btn-primary" style="width:100%;margin-top:10px;height:36px;font-size:12.5px;" onclick="openLoyaltyApprovalModal('${escJs(r.empName)}', ${r.balanceCards})">✅ Approve Cards</button>
         </div>`;
       });
       content.innerHTML = html;
@@ -10476,13 +10764,136 @@ function loadLoyaltyUpcomingApprovals() {
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
 
+// ══════════════════════════════════════
+// LOYALTY CARD APPROVAL — 2-step modal (Quantity -> Confirm). No separate
+// KYC completeness check — mandatory "*" fields on the enrollment form
+// already guarantee required data was captured at entry time.
+// Calls the backend loyaltyApprovalPreviewJSON / loyaltyApprovalExecuteJSON
+// endpoints. Admin-only (this button only exists on the admin Upcoming
+// Approvals page).
+// ══════════════════════════════════════
+let loyApprovalState = null;
+
+function openLoyaltyApprovalModal(empName, balanceCards) {
+  const existing = document.getElementById('loyApprovalModal');
+  if (existing) existing.remove();
+  const fullSetOk = balanceCards >= 10;
+  const div = document.createElement('div');
+  div.id = 'loyApprovalModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">✅ Approve Cards — ${empName}</div>
+    <div id="loyApprovalStep1">
+      <p style="font-size:12.5px;color:var(--text3);margin-bottom:12px;">Balance: <b>${balanceCards}</b> card(s)</p>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);margin-bottom:8px;${fullSetOk ? '' : 'opacity:0.5;'}">
+          <input type="radio" name="loyApprovalQty" value="FULL" ${fullSetOk ? 'checked' : 'disabled'} style="width:17px;height:17px;">
+          <span style="font-size:13px;">Full Set — 10 cards ${fullSetOk ? '' : '(not available, balance below 10)'}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);margin-bottom:8px;">
+          <input type="radio" name="loyApprovalQty" value="ALL" ${fullSetOk ? '' : 'checked'} style="width:17px;height:17px;">
+          <span style="font-size:13px;">All Balance — ${balanceCards} card(s)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);">
+          <input type="radio" name="loyApprovalQty" value="CUSTOM" style="width:17px;height:17px;">
+          <span style="font-size:13px;">Custom Quantity</span>
+        </label>
+        <input type="number" id="loyApprovalCustomQty" min="1" max="${balanceCards}" placeholder="e.g. 5" style="margin-top:8px;" onfocus="document.querySelector('input[name=loyApprovalQty][value=CUSTOM]').checked=true" oninput="document.querySelector('input[name=loyApprovalQty][value=CUSTOM]').checked=true">
+      </div>
+      <div id="loyApprovalStep1Err" style="color:var(--red);font-size:12px;min-height:16px;margin:6px 0;"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px;" onclick="loyaltyApprovalGoToPreview('${escJs(empName)}')">Continue</button>
+      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyApprovalModal').remove()">Cancel</button>
+    </div>
+    <div id="loyApprovalStep2" style="display:none;"></div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function loyaltyApprovalGoToPreview(empName) {
+  const sel = document.querySelector('input[name=loyApprovalQty]:checked');
+  const errBox = document.getElementById('loyApprovalStep1Err');
+  if (!sel) { errBox.textContent = 'Please choose an option.'; return; }
+  let qty = sel.value;
+  if (qty === 'CUSTOM') {
+    const raw = (document.getElementById('loyApprovalCustomQty').value || '').trim();
+    if (!raw || isNaN(parseInt(raw, 10)) || parseInt(raw, 10) <= 0) { errBox.textContent = 'Enter a valid positive number.'; return; }
+    qty = raw;
+  }
+  errBox.textContent = '';
+  const step1 = document.getElementById('loyApprovalStep1');
+  const step2 = document.getElementById('loyApprovalStep2');
+  step2.style.display = 'block';
+  step2.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  step1.style.display = 'none';
+
+  jsonpReliable({ page: 'loyaltyApprovalPreviewJSON', role: 'ADMIN', empName: empName, quantity: qty }).then(res => {
+    if (!res || !res.ok) {
+      step2.innerHTML = `<div class="empty-state"><p>${(res && res.error) || 'Failed to load preview'}</p></div>
+        <button class="btn-secondary" style="display:block;margin:8px auto;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" title="Retry" onclick="loyaltyApprovalGoToPreview('${escJs(empName)}')">🔄</button>
+        <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyApprovalModal').remove()">Close</button>`;
+      return;
+    }
+    loyApprovalState = res;
+    step2.innerHTML = `
+      <div class="modal-title" style="margin-top:0;">✅ Confirm Approval</div>
+      <div class="kd-table-wrap" style="margin-bottom:12px;">
+        <table class="kd-table">
+          <tr><td>Approving</td><td><b>${res.enteredCount} card(s)</b></td></tr>
+          <tr><td>Card Range</td><td>#${res.approveFirstCard} → #${res.approveLastCard}</td></tr>
+          <tr><td>Approved</td><td>${res.alreadyApprovedCards} → ${res.alreadyApprovedCards + res.enteredCount}</td></tr>
+          <tr><td>Balance After</td><td>${res.balanceCards - res.enteredCount}</td></tr>
+          <tr><td>Amount</td><td><b>₹${fmtNum(res.approveIncentive)}</b></td></tr>
+        </table>
+      </div>
+      <div id="loyApprovalStep2Err" style="color:var(--red);font-size:12px;min-height:16px;margin:6px 0;"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px;" id="loyApprovalConfirmBtn" onclick="loyaltyApprovalConfirm()">Confirm & Approve</button>
+      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyApprovalModal').remove()">Cancel</button>`;
+  }).catch(() => {
+    step2.innerHTML = `<div class="empty-state"><p>Connection error.</p></div>
+      <button class="btn-secondary" style="display:block;margin:8px auto;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" title="Retry" onclick="loyaltyApprovalGoToPreview('${escJs(empName)}')">🔄</button>
+      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyApprovalModal').remove()">Close</button>`;
+  });
+}
+
+function loyaltyApprovalConfirm() {
+  if (!loyApprovalState) return;
+  const btn = document.getElementById('loyApprovalConfirmBtn');
+  const errBox = document.getElementById('loyApprovalStep2Err');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+  const s = loyApprovalState;
+  const idem = makeIdemKey(['loyapprove', s.empName, s.approveFirstCard, s.approveLastCard, s.enteredCount]);
+  jsonpWriteOnce({
+    page: 'loyaltyApprovalExecuteJSON', role: 'ADMIN',
+    empName: s.empName, empEmail: s.empEmail || '',
+    approveFirstCard: s.approveFirstCard, approveLastCard: s.approveLastCard,
+    enteredCount: s.enteredCount, approveIncentive: s.approveIncentive,
+    alreadyApprovedCards: s.alreadyApprovedCards, totalCards: s.totalCards,
+    callerEmail: state.adminEmail || 'Portal Admin'
+  }, idem).then(res => {
+    if (!res || !res.ok) {
+      if (errBox) errBox.textContent = (res && res.error) || 'Approval failed.';
+      if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Approve'; }
+      return;
+    }
+    toast('✅ ' + res.message, 'success');
+    const modal = document.getElementById('loyApprovalModal');
+    if (modal) modal.remove();
+    loyApprovalState = null;
+    loadLoyaltyUpcomingApprovals();
+  }).catch(() => {
+    if (errBox) errBox.textContent = 'Connection error. Please check and retry.';
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Approve'; }
+  });
+}
+
 // ── Incentive History — every payment ever recorded ──
 function loadLoyaltyIncentiveHistory() {
   const content = document.getElementById('loyIncenthistContent');
+  hideExportBtn(content.id);
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable({ page: 'loyaltyIncentiveHistoryAPI' })
     .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
+      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyIncentiveHistory()\" title=\"Retry\">🔄</button></div>'; return; }
       let html = `<div class="card"><div class="card-title">💰 Total Paid (all-time): ₹${fmtNum(res.totalPaid)}</div></div>`;
       if (res.rows.length === 0) {
         html += `<div class="empty-state" style="padding:16px 0;"><p>No payments recorded yet</p></div>`;
@@ -10493,18 +10904,28 @@ function loadLoyaltyIncentiveHistory() {
             <div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${r.date} · #${r.firstCard} → #${r.lastCard} (${r.cards} cards) · 💵 ₹${fmtNum(r.amount)}</div>
           </div>`;
         });
+        // Hidden table, same data — the generic export scraper
+        // (openBoxExportModal) reads a <table> first if one exists, so
+        // Export → Excel/PDF works without changing the visible card list.
+        html += `<table style="display:none;"><tr><th>Employee</th><th>Date</th><th>First Card</th><th>Last Card</th><th>Cards</th><th>Amount</th></tr>` +
+          res.rows.map(r => `<tr><td>${r.empName}</td><td>${r.date}</td><td>${r.firstCard}</td><td>${r.lastCard}</td><td>${r.cards}</td><td>${r.amount}</td></tr>`).join('') +
+          `</table>`;
       }
       content.innerHTML = html;
+      if (res.rows.length > 0) showExportBtn(content.id);
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
 
-// ── KYC Report — customers with incomplete enrollment (missing signature/Aadhaar/PAN/photo/basic details) ──
+// Card Number data-integrity check — duplicate or missing card numbers.
+// (Unrelated to KYC field-completeness — that separate "KYC Report" was
+// removed; mandatory "*" fields on the enrollment form already guarantee
+// required data is captured, so a second completeness check is redundant.)
 function loadLoyaltyCardIssues() {
   const box = document.getElementById('loyIssuesContent');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable({ page: 'loyaltyCardIssuesJSON' }).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\\"loadLoyaltyCardIssues()\\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.duplicates.length && !res.missing.length) {
       box.innerHTML = '<div class="empty-state"><p>✅ No issues found — every card number is present and unique.</p></div>';
       return;
@@ -10530,37 +10951,18 @@ function loadLoyaltyCardIssues() {
       });
     }
     box.innerHTML = html;
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:10px;max-width:160px;" onclick=\"loadLoyaltyCardIssues()\">🔄 Retry</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick=\"loadLoyaltyCardIssues()\" title="Retry">🔄</button></div>'; });
 }
 
-function loadLoyaltyKYCReport() {
-  const content = document.getElementById('loyKycContent');
-  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable({ page: 'loyaltyKYCReportAPI' })
-    .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p></div>'; return; }
-      if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No incomplete KYC records — everyone is fully documented</p></div>'; return; }
-      let html = `<div class="card"><div class="card-title">📋 ${res.total} customer(s) with incomplete KYC</div></div>`;
-      res.rows.forEach(r => {
-        html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-weight:700;font-size:13.5px;">${r.custName} <span style="font-weight:400;color:var(--text3);font-size:11px;">#${r.cardNo}</span></div>
-          </div>
-          <div style="font-size:11.5px;color:var(--text3);margin-top:2px;">👤 Enrolled by: ${r.empName}</div>
-          <div style="font-size:12px;color:var(--red);margin-top:6px;">⚠️ Missing: ${r.missing.join(', ')}</div>
-        </div>`;
-      });
-      content.innerHTML = html;
-      window.__loyKycData = res;
-    })
-    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
-}
-
-function renderTeamAvailability() {
-  const content = document.getElementById('availabilityContent');
-  if (!content) return;
-  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-
+// Builds the "Next 7 Days" team-availability HTML (grouped by department/
+// counter — Wholesale, Retail, Front Office etc. stay as separate section
+// cards, exactly as before). Returns null when there's nothing to show, so
+// the caller can fall back to its own empty-state message.
+// Previously this was its own standalone admin page ("Team Availability").
+// Now it's folded directly into the Calendar page instead — it's what
+// shows there by default (before any date is clicked), so there's no
+// separate button/page needed for it any more.
+function buildTeamAvailabilityHTML() {
   const today = todayYMD();
   const end = new Date(); end.setDate(end.getDate() + 6);
   const endYMD = toYMD(end);
@@ -10569,10 +10971,7 @@ function renderTeamAvailability() {
   const exploded = explodeLeavesByDate(approved)
     .filter(l => l.displayDate >= today && l.displayDate <= endYMD);
 
-  if (exploded.length === 0) {
-    content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>Nobody is on approved leave in the next 7 days</p></div>';
-    return;
-  }
+  if (exploded.length === 0) return null;
 
   // Group by department (fallback: counter, then "Unassigned")
   const groups = {};
@@ -10614,7 +11013,7 @@ function renderTeamAvailability() {
     html += `</div>`;
   });
 
-  content.innerHTML = html;
+  return html;
 }
 
 // ══════════════════════════════════════
@@ -10898,7 +11297,18 @@ function fadeOutLeaveCard(leaveId) {
 
 function renderPending() {
   let pending = state.allLeaves.filter(l => l.status==='Pending' || l.status==='MIS_Approved');
-  if(state.isStoreManager) pending = pending.filter(l => l.status==='MIS_Approved');
+  if(state.isStoreManager) {
+    pending = pending.filter(l => l.status==='MIS_Approved');
+    // v-fix (Manager ID <-> Employee mapping bug): a Store Manager should
+    // only see approvals for their OWN department's employees — not
+    // every department's. Only applies once state.adminDepartment is
+    // actually set (Authorities sheet Column F for this manager) — a
+    // manager with no department configured still sees everything, same
+    // as before, so nobody gets silently locked out by an unfilled cell.
+    if (state.adminDepartment) {
+      pending = pending.filter(l => (l.department || '').trim().toLowerCase() === state.adminDepartment.trim().toLowerCase());
+    }
+  }
 
   // Oldest first — the longest-waiting requests surface at the top
   pending.sort((a,b) => (a.timestamp||'').localeCompare(b.timestamp||''));
@@ -10942,13 +11352,16 @@ async function manualRefreshPending() {
   }
 }
 
-// Shared by renderAdminLeaves() and exportAllLeavesCSV() so the exported
-// file always matches exactly what's currently shown on screen (same
-// status filter, scope, time filter, name/ID search, and date range).
+// Shared by the "All Employees" branch of renderEmployeeWiseProfile() and
+// exportAllLeavesCSV() so the exported file always matches exactly what's
+// currently shown on screen (same status filter, scope, time filter,
+// name/ID search, and date range). Uses the same empWise* state as the
+// per-employee view now, since All Leaves and Employee Wise were merged
+// into one page/one set of filter controls.
 function getFilteredAdminLeaves() {
-  let leaves = state.adminCurrentFilter === 'all' ? state.allLeaves : state.allLeaves.filter(l => l.status === state.adminCurrentFilter);
+  let leaves = (!state.empWiseStatus || state.empWiseStatus === 'all') ? state.allLeaves : state.allLeaves.filter(l => l.status === state.empWiseStatus);
   leaves = explodeLeavesByDate(leaves);
-  leaves = filterLeavesByScopeAndTime(leaves, state.adminLeavesScope || 'month', state.adminLeavesTime || 'all');
+  leaves = filterLeavesByScopeAndTime(leaves, state.empWiseScope || 'all', state.empWiseTime || 'all');
 
   const empBox = document.getElementById('allLeavesEmpFilter');
   const empQuery = empBox ? empBox.value.trim().toLowerCase() : '';
@@ -10970,26 +11383,35 @@ function getFilteredAdminLeaves() {
   return { leaves, empQuery, fromVal, toVal };
 }
 
-function renderAdminLeaves(filter) {
-  if(filter) state.adminCurrentFilter = filter;
+// Renders the "All Employees" branch into the shared #empWiseContent box.
+function renderEmployeeWiseAllView() {
+  const content = document.getElementById('empWiseContent');
   const { leaves, empQuery, fromVal, toVal } = getFilteredAdminLeaves();
 
   let html = '';
   if(leaves.length === 0) {
     html = '<div class="empty-state"><span class="emoji">📭</span><p>No leaves found</p></div>';
   } else {
-    if(empQuery || fromVal || toVal) {
-      html += `<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">Showing ${leaves.length} date-row(s)</div>`;
-    }
+    html += `<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">Showing ${leaves.length} date-row(s)${empQuery || fromVal || toVal ? ' (filtered)' : ''}</div>`;
     leaves.forEach(l => { html += adminLeaveCardHTML(l); });
   }
-  document.getElementById('adminLeavesContainer').innerHTML = html;
+  content.innerHTML = html;
+}
+
+// Kept as a thin wrapper (rather than removed) so every existing call site
+// — adminApprove/confirmReject/adminMarkAbsent refresh calls, etc — keeps
+// working unchanged after the All Leaves + Employee Wise merge. `filter`
+// (an old status name, e.g. from a stale caller) maps onto the same
+// empWiseStatus the merged page's status buttons already use.
+function renderAdminLeaves(filter) {
+  if (filter) state.empWiseStatus = filter;
+  renderEmployeeWiseProfile();
 }
 function clearAllLeavesFilters() {
   document.getElementById('allLeavesEmpFilter').value = '';
   document.getElementById('allLeavesDateFrom').value = '';
   document.getElementById('allLeavesDateTo').value = '';
-  renderAdminLeaves();
+  renderEmployeeWiseProfile();
 }
 // Icon-only search toggle for the All Leaves employee filter — same
 // tap-to-reveal pattern used for Today's Leads, instead of a permanently
@@ -11075,16 +11497,112 @@ function printCurrentView(title) {
   setTimeout(() => { printWin.print(); }, 400);
 }
 
-function adminFilterLeaves(f, btn) {
-  document.querySelectorAll('#admin-allleaves .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderAdminLeaves(f);
-}
-
 // ══════════════════════════════════════
 // EMPLOYEE WISE — full profile (available to all admin logins)
 // ══════════════════════════════════════
 let empWiseBalanceCache = [];
+
+// ══════════════════════════════════════
+// UNIFIED DASHBOARD — Leave / Loyalty / KPI / DSR / CRM (Leads) /
+// Checklist (Stock) summary boxes, all at a glance, plus a combined
+// "Top Performers" section (KPI leaderboard + Loyalty leaderboard).
+// Each box is independently fetched (Promise.allSettled) so one slow
+// or failing module never blocks the others from showing — a box that
+// fails just shows "Tap to open" instead of numbers.
+// ══════════════════════════════════════
+async function loadUnifiedDashboard() {
+  const grid = document.getElementById('unifiedDashGrid');
+  const topBox = document.getElementById('unifiedDashTopPerformers');
+  grid.innerHTML = '';
+  topBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const boxDefs = [
+    { key: 'leave', icon: '🏖️', label: 'Leave', page: 'pending' },
+    { key: 'loyalty', icon: '💳', label: 'Loyalty Card', page: 'loyalty' },
+    { key: 'kpi', icon: '📊', label: 'KPI', page: 'kpi' },
+    { key: 'dsr', icon: '🧾', label: 'DSR', page: 'dsr' },
+    { key: 'crm', icon: '📞', label: 'Leads (CRM)', page: 'leads' },
+    { key: 'checklist', icon: '📋', label: 'Stock Checklist', page: 'stock' }
+  ];
+  // Render placeholders immediately (tap-through works right away even
+  // before the numbers finish loading).
+  grid.innerHTML = boxDefs.map(b => `
+    <div class="quick-action-btn" id="unifiedDashBox-${b.key}" onclick="showAdminPage('${b.page}')">
+      <span class="quick-action-icon">${b.icon}</span>
+      <div class="quick-action-label">${b.label}</div>
+      <div class="quick-action-sub" id="unifiedDashSub-${b.key}">Loading...</div>
+    </div>`).join('');
+
+  const setSub = (key, text) => {
+    const el = document.getElementById('unifiedDashSub-' + key);
+    if (el) el.textContent = text;
+  };
+
+  const results = await Promise.allSettled([
+    // Leave — pending count already known from state, no network call needed
+    Promise.resolve(state.allLeaves ? state.allLeaves.filter(l => l.status === 'Pending' || l.status === 'MIS_Approved').length : null),
+    jsonpReliable({ page: 'loyaltyUpcomingApprovalsAPI' }),
+    jsonpReliable({ page: 'kpiTillDateJSON', role: 'ADMIN' }),
+    jsonpReliable({ page: 'dsrMissingJSON', role: 'ADMIN' }),
+    leadsApiGet({ action: 'GET_TODAY_ASSIGNMENT', date: todayISO() }).catch(() => null),
+    jsonpReliable({ page: 'stockDashboardJSON' })
+  ]);
+
+  // Leave
+  setSub('leave', results[0].status === 'fulfilled' && results[0].value != null ? results[0].value + ' pending approval' : 'Tap to open');
+
+  // Loyalty — count of employees with a ready-to-approve balance
+  const loyRes = results[1].status === 'fulfilled' ? results[1].value : null;
+  setSub('loyalty', (loyRes && loyRes.ok) ? (loyRes.rows || []).filter(r => r.readyForApproval).length + ' ready for approval' : 'Tap to open');
+
+  // KPI — store leader
+  const kpiRes = results[2].status === 'fulfilled' ? results[2].value : null;
+  setSub('kpi', (kpiRes && kpiRes.ok && kpiRes.rows && kpiRes.rows[0]) ? '🏆 ' + kpiRes.rows[0].employee : 'Tap to open');
+
+  // DSR — missing entries
+  const dsrRes = results[3].status === 'fulfilled' ? results[3].value : null;
+  setSub('dsr', (dsrRes && dsrRes.ok && dsrRes.rows) ? dsrRes.rows.length + ' missing entries' : 'Tap to open');
+
+  // CRM / Leads — today's total assigned across everyone
+  const crmRes = results[4].status === 'fulfilled' ? results[4].value : null;
+  if (crmRes && crmRes.ok && crmRes.employees) {
+    const totalAssigned = crmRes.employees.reduce((s, e) => s + (e.count || 0), 0);
+    setSub('crm', totalAssigned + ' lead(s) assigned today');
+  } else { setSub('crm', 'Tap to open'); }
+
+  // Stock Checklist — HEALTH stat if the Dashboard sheet has it under
+  // that exact label, otherwise a safe fallback (this sheet's stat
+  // labels are whatever's typed in its own Row 2, so this doesn't
+  // guess at a field that might not exist).
+  const stockRes = results[5].status === 'fulfilled' ? results[5].value : null;
+  const stockHealth = stockRes && stockRes.ok && stockRes.stats ? (stockRes.stats['HEALTH'] || stockRes.stats['Health']) : null;
+  setSub('checklist', stockHealth ? ('Health: ' + stockHealth) : 'Tap to open');
+
+  // ── Top Performers (KPI + Loyalty leaderboards side by side) ──
+  const kpiTop = (kpiRes && kpiRes.ok && kpiRes.rows) ? kpiRes.rows.slice(0, 3) : [];
+  const loyTop = (loyRes && loyRes.ok && loyRes.rows) ? loyRes.rows.slice().sort((a, b) => (b.readyAmount || 0) - (a.readyAmount || 0)).slice(0, 3) : [];
+
+  let topHtml = '<div class="card-title">🏆 Top Performers</div>';
+  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:8px 0 4px;">📊 KPI — Running Month</div>';
+  if (kpiTop.length === 0) {
+    topHtml += '<div style="font-size:11.5px;color:var(--text3);">No KPI data yet.</div>';
+  } else {
+    kpiTop.forEach((r, i) => {
+      const medal = ['🥇', '🥈', '🥉'][i] || '';
+      topHtml += `<div class="trend-item"><span class="trend-label">${medal} ${r.employee}</span><span class="trend-val">${r.overallScore}</span></div>`;
+    });
+  }
+  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:12px 0 4px;">💳 Loyalty — Ready to Approve</div>';
+  if (loyTop.length === 0) {
+    topHtml += '<div style="font-size:11.5px;color:var(--text3);">Nobody has a ready-to-approve balance right now.</div>';
+  } else {
+    loyTop.forEach((r, i) => {
+      const medal = ['🥇', '🥈', '🥉'][i] || '';
+      topHtml += `<div class="trend-item"><span class="trend-label">${medal} ${r.empName}</span><span class="trend-val">₹${fmtNum(r.readyAmount || 0)}</span></div>`;
+    });
+  }
+  topBox.innerHTML = topHtml;
+}
 
 async function loadEmployeeWisePage() {
   const sel = document.getElementById('empWiseSelect');
@@ -11100,7 +11618,7 @@ async function loadEmployeeWisePage() {
     }
     directEmpCache.forEach(emp => { namesMap[emp.empId] = emp.name; });
 
-    let html = '<option value="">-- Select Employee --</option>';
+    let html = '<option value="__ALL__">-- All Employees --</option>';
     Object.keys(namesMap).sort((a,b) => namesMap[a].localeCompare(namesMap[b])).forEach(id => {
       html += `<option value="${id}">${namesMap[id]} (${id})</option>`;
     });
@@ -11113,12 +11631,24 @@ async function loadEmployeeWisePage() {
       if (res.ok) empWiseBalanceCache = res.balances || [];
     } catch(e) {}
   }
+
+  renderEmployeeWiseProfile();
 }
 
 function renderEmployeeWiseProfile() {
-  const empId = document.getElementById('empWiseSelect').value;
+  const empId = document.getElementById('empWiseSelect').value || '__ALL__';
   const content = document.getElementById('empWiseContent');
-  if (!empId) { content.innerHTML = ''; return; }
+  const allFiltersBox = document.getElementById('empWiseAllFilters');
+  const exportBtns = document.getElementById('empWiseExportBtns');
+
+  if (empId === '__ALL__') {
+    if (allFiltersBox) allFiltersBox.style.display = 'block';
+    if (exportBtns) exportBtns.style.display = 'flex';
+    renderEmployeeWiseAllView();
+    return;
+  }
+  if (allFiltersBox) allFiltersBox.style.display = 'none';
+  if (exportBtns) exportBtns.style.display = 'none';
 
   const bal = empWiseBalanceCache.find(b => b.empId === empId);
   const empLeaves = (state.allLeaves || []).filter(l => l.empId === empId)
@@ -11176,7 +11706,13 @@ function renderEmployeeWiseProfile() {
   }
 
   const explodedHistory = explodeLeavesByDate(empLeaves);
-  const filteredHistory = filterLeavesByScopeAndTime(explodedHistory, state.empWiseScope || 'all', state.empWiseTime || 'all')
+  // v-fix: the status filter buttons (All/Approved/Rejected/...) set
+  // state.empWiseStatus, but this view never actually applied it before —
+  // the buttons looked functional but silently did nothing. Applied now.
+  const statusFiltered = (!state.empWiseStatus || state.empWiseStatus === 'all')
+    ? explodedHistory
+    : explodedHistory.filter(l => l.status === state.empWiseStatus);
+  const filteredHistory = filterLeavesByScopeAndTime(statusFiltered, state.empWiseScope || 'all', state.empWiseTime || 'all')
     .sort((a,b) => (b.displayDate||'').localeCompare(a.displayDate||''));
 
   html += `<div class="card"><div class="card-title">📋 Leave History (${filteredHistory.length})</div>`;
@@ -11196,9 +11732,32 @@ function adminLeaveCardHTML(l) {
   const startYMD = normalizeDateStr(l.startDate);
   const isTodayOrFuture = !startYMD || startYMD >= todayYMD();
   const roleUp = (state.adminRole || '').toUpperCase();
-  const isMisOrDirector = roleUp.indexOf('MIS') > -1;
+  const isMIS = roleUp.indexOf('MIS') > -1;
+  const isDirector = roleUp.indexOf('DIRECTOR') > -1;
+  const isSM = !!state.isStoreManager;
+  const isMisOrDirector = isMIS; // kept for Cancel/Modify below (Director never got these either — "MIS" is the only match roleUp.indexOf('MIS') has ever produced)
   const canCancel = isMisOrDirector; // Store Manager never gets Cancel
   const canModify = isMisOrDirector && isTodayOrFuture; // any status, today/future only
+
+  // v-fix (#9-14 — role/stage-based action buttons): previously ANY
+  // logged-in admin role saw Approve/Reject/Mark Absent on any card with
+  // status Pending or MIS_Approved, with zero regard for whose TURN it
+  // actually was — a Director browsing Employee Wise, or MIS looking at
+  // an SM-stage (MIS_Approved) card, would all see live action buttons
+  // they should never have. Now:
+  //   - MIS gets the buttons ONLY when status === 'Pending' (their own
+  //     stage — this leave hasn't been touched yet).
+  //   - Store Manager gets them ONLY when status === 'MIS_Approved'
+  //     (MIS already acted, now it's SM's turn) AND only for their own
+  //     department once one is configured (state.adminDepartment).
+  //   - Director, or any other role, NEVER gets these buttons — view
+  //     only, matching #12 exactly. The backend (adminActionAPI) already
+  //     independently re-checks role+stage on every action too, so this
+  //     is defense in depth, not the only guard.
+  const isMyTurnMIS = isMIS && l.status === 'Pending';
+  const isMySM = isSM && l.status === 'MIS_Approved' &&
+    (!state.adminDepartment || (l.department || '').trim().toLowerCase() === state.adminDepartment.trim().toLowerCase());
+  const showApprovalActions = !isDirector && (isMyTurnMIS || isMySM);
   const idSuffix = l.leaveId + (l.displayDate ? '_' + l.displayDate : '');
   const dateStr = l.displayDate
     ? fmtDMY(l.displayDate) + (l.dayTotal > 1 ? ` (Day ${l.dayIndex} of ${l.dayTotal})` : '')
@@ -11210,13 +11769,21 @@ function adminLeaveCardHTML(l) {
   window.__adminLeaveCache[l.leaveId] = l;
 
   let actions = `<button class="btn-sm btn-view" id="viewAdminBtn_${idSuffix}" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)">👁 View</button>`;
-  if(isPending) {
+  if(showApprovalActions) {
     actions += `
       <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" onclick="adminApprove(${l.row},'${escJs(l.leaveId)}','${escJs(l.empId)}')">✅ Approve</button>
       <button class="btn-sm btn-reject" id="rejBtn_${l.leaveId}" onclick="openAdminReject(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">❌ Reject</button>
       <button class="btn-sm btn-absent" id="absBtn_${l.leaveId}" onclick="openAdminAbsent(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">⚠️ Mark Absent</button>
     `;
-  } else if (isFinal && isTodayOrFuture && canCancel) {
+  } else if (isPending && !isDirector) {
+    // Still Pending/MIS_Approved, but NOT this role's turn — say so
+    // instead of just silently showing nothing (avoids "did my click not
+    // register?" confusion for SM looking at a not-yet-MIS-approved card,
+    // or MIS looking at one already at the SM stage).
+    const waitingOn = l.status === 'Pending' ? 'MIS' : 'Store Manager';
+    actions += `<span class="pill" style="background:var(--purple-bg);color:var(--purple-dark);">⏳ Awaiting ${waitingOn}</span>`;
+  }
+  if (isFinal && isTodayOrFuture && canCancel) {
     // Only Approved/Absent leaves are cancellable — a Rejected leave has
     // nothing to cancel, so that case is intentionally excluded here.
     actions += `<button class="btn-sm btn-cancel" id="cancelAdminBtn_${idSuffix}" onclick="adminCancel('${escJs(l.leaveId)}','${escJs(l.name)}')">🚫 Cancel</button>`;
@@ -11270,6 +11837,7 @@ function openAdminModifyModal(l) {
   document.getElementById('adminModifyStatus').value = '';
   document.getElementById('adminModifyReason').value = '';
   onAdminModifyStatusChange();
+  refreshAdminModifyConflicts();
   openModal('adminModifyModal');
 }
 
