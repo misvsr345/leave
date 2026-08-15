@@ -721,6 +721,10 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 
 /* Loading */
 .loading { text-align: center; padding: 36px; color: var(--text3); font-size: 13px; }
+/* Collapsible Access panel sections (Settings > Employee Access) so the
+   3 repeated module checklists read as 3 distinct tools, not clutter. */
+summary.card-title::-webkit-details-marker { display: none; }
+summary.card-title { display: flex; align-items: center; }
 .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -4109,23 +4113,53 @@ function showEmpPage(page) {
 // ══════════════════════════════════════
 async function loadEmpData() {
   try {
-    const [balRes, leavesRes, calRes] = await Promise.all([
+    // FIX: was Promise.all() — if ANY ONE of these 3 calls failed/timed
+    // out (e.g. calendarDataAPI slow), the whole thing rejected and
+    // jumped straight to the catch below, which only fires a toast and
+    // never touches empBalanceCard/empRecentCard — so those two cards
+    // stayed stuck on their static "Loading..." placeholder forever,
+    // even though balance/leaves had already arrived successfully.
+    // Promise.allSettled() lets each result be used independently, the
+    // same "one bug must never block the others" principle already
+    // applied to the renders right below.
+    const [balSettled, leavesSettled, calSettled] = await Promise.allSettled([
       jsonpReliable({ page:'balanceJSON', empId: state.empId }),
       jsonpReliable({ page:'leavesJSON', empId: state.empId }),
       jsonpReliable({ page:'calendarDataAPI' })
     ]);
-    if(balRes.ok) {
+    const balRes = balSettled.status === 'fulfilled' ? balSettled.value : null;
+    const leavesRes = leavesSettled.status === 'fulfilled' ? leavesSettled.value : null;
+    const calRes = calSettled.status === 'fulfilled' ? calSettled.value : null;
+    if (balSettled.status === 'rejected') console.error('balanceJSON failed:', balSettled.reason);
+    if (leavesSettled.status === 'rejected') console.error('leavesJSON failed:', leavesSettled.reason);
+    if (calSettled.status === 'rejected') console.error('calendarDataAPI failed:', calSettled.reason);
+
+    if(balRes && balRes.ok) {
       state.empBalance = balRes.balance || 0;
       state.empQuota = balRes.quota || 3;
       state.empUsed = balRes.used || 0;
       state.empExtraLeave = balRes.extraLeave || 0;
     }
-    if(leavesRes.ok) state.empLeaves = leavesRes.leaves || [];
-    if(calRes.ok) {
+    if(leavesRes && leavesRes.ok) state.empLeaves = leavesRes.leaves || [];
+    if(calRes && calRes.ok) {
       state.calEvents = (calRes.events || []).map(ev => Object.assign({}, ev, { date: normalizeDateStr(ev.date) }));
       state.calBirthdays = calRes.birthdays || [];
       state.calHolidays = calRes.holidays || [];
     }
+
+    // If every single call failed (e.g. no network / server down), the
+    // cards would otherwise sit on "Loading..." with nothing telling the
+    // person what happened. Replace them with a clear retry instead.
+    if (!balRes && !leavesRes && !calRes) {
+      const retryBtn = '<button class="btn-secondary" style="margin-top:8px;" onclick="loadEmpData()">🔄 Retry</button>';
+      const balCard = document.getElementById('empBalanceCard');
+      const recCard = document.getElementById('empRecentCard');
+      if (balCard) balCard.innerHTML = '<div class="empty-state"><p>Could not load your dashboard. Check your connection and retry.</p>' + retryBtn + '</div>';
+      if (recCard) recCard.innerHTML = '';
+      toast('Data load error — tap retry above', 'error');
+      return;
+    }
+
     // Each render runs independently — a bug in one must never block the others
     try { renderEmpOverview(); } catch(e1) { console.error('renderEmpOverview failed:', e1); }
     try { checkAndShowFestivalPoster(() => checkAndShowBirthdayPoster(state.empName)); } catch(e2) { console.error('festival poster failed:', e2); }
@@ -5599,28 +5633,34 @@ async function loadPermFeatureList() {
 // `checkClass`/`idPrefix`/`onChangeFn` let the same builder serve both
 // the Employee ("...Emp") and Admin (no suffix) panels with separate
 // DOM ids so the two panels never collide.
+// v2: flat checklist, no accordion. Groups features by their `section`
+// field (Leave / Loyalty Card / KPI / DSR / Golden Aura / Stock Check
+// List) and renders ONE plain heading per section followed directly by
+// every checkbox for that section — no nested "Leave: Calendar"-style
+// sub-headings, no arrows, nothing to click-to-expand. Ticking is the
+// only interaction; Save/Cancel (the buttons around this block) is what
+// commits or discards the change, same as before.
 function buildPermAccordionHtml(features, perms, checkClass, idPrefix, onChangeFn) {
-  let html = '';
+  const sections = [];
+  const bySection = {};
   (features || []).forEach(f => {
-    const subs = f.subs || [];
-    const anyOn = perms ? subs.some(s => !!perms[s.key]) : false;
-    html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
-      <div onclick="${idPrefix}_toggleAccordion('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
-        <span style="display:flex;align-items:center;gap:8px;">
-          <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
-          <span id="${idPrefix}_acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
-        </span>
-      </div>
-      <div id="${idPrefix}_acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
-    subs.forEach(s => {
-      const checked = perms ? !!perms[s.key] : false;
+    const sec = f.section || 'Other';
+    if (!bySection[sec]) { bySection[sec] = []; sections.push(sec); }
+    bySection[sec].push(f);
+  });
+  let html = '';
+  sections.forEach(sec => {
+    html += `<div class="card" style="margin-bottom:10px;">
+      <div class="card-title" style="margin-bottom:6px;">${sec}</div>`;
+    bySection[sec].forEach(f => {
+      const key = (f.subs && f.subs[0] && f.subs[0].key) || f.key;
+      const checked = perms ? !!perms[key] : false;
       html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" class="${checkClass}" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="${onChangeFn}('${f.key}')">
-        <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
+        <input type="checkbox" class="${checkClass}" data-key="${key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:12.5px;color:var(--text2);">${f.shortLabel || f.label}</span>
       </label>`;
     });
-    html += `</div></div>`;
+    html += `</div>`;
   });
   return html;
 }
@@ -5654,9 +5694,9 @@ function renderSettingsEmpBody(emp) {
   const features = (window.__permFeatures && window.__permFeatures.features) || [];
   const perms = emp ? emp.granularPerms : null; // filled in by loadSettingsEmpGranular once fetched
 
-  let html = `<div class="card">
-    <div class="card-title">${nameLabel}</div>
-    ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : ''}
+  let html = `<div class="card" style="border-left:3px solid var(--purple);">
+    <div class="card-title">1️⃣ Module Access — ${nameLabel}</div>
+    ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">On/off switch for this ONE employee — which modules they can see at all.</p>'}
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empLeaveAccessCheck" ${emp && emp.leaveAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">📋 Leave Access</span>
@@ -5688,9 +5728,9 @@ function renderSettingsEmpBody(emp) {
     <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
-  <div class="card" style="margin-top:14px;border:1.5px dashed var(--purple);">
-    <div class="card-title">👥 Apply to All Employees</div>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save — this overwrites the module-level access above for every employee in one go. Doesn't touch anyone's Detailed Sub-Option Access.</p>
+  <details class="card" style="margin-top:14px;border:1.5px dashed var(--red);">
+    <summary style="cursor:pointer;list-style:none;" class="card-title">2️⃣ 👥 Bulk: Apply to ALL Employees at once ▾</summary>
+    <p style="font-size:11px;color:var(--text3);margin:10px 0;">⚠️ Different tool from Section 1 above — this ignores whoever is selected and overwrites Module Access for <b>every employee at once</b>. Tick the modules you want ON, then Save. Doesn't touch anyone's Detailed Sub-Option Access (Section 3 below).</p>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeaveAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📋 Leave Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLoyaltyAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">💳 Loyalty Card Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpKpiAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📊 KPI Access</span></label>
@@ -5699,13 +5739,14 @@ function renderSettingsEmpBody(emp) {
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpStockAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📦 Stock Checklist Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpGoldenAuraAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🌟 Golden Aura Access</span></label>
     <button class="btn-primary" id="settingsSaveAllEmpBtn" style="width:100%;margin-top:8px;background:var(--red);" onclick="saveSettingsAllEmpAccess()">💾 Save For ALL Employees</button>
-  </div>
-  <div id="settingsEmpGranularBody" style="margin-top:14px;">
-    <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>
+  </details>
+  <details id="settingsEmpGranularBody" style="margin-top:14px;" class="card">
+    <summary style="cursor:pointer;list-style:none;" class="card-title">3️⃣ 🔎 Detailed Sub-Option Access — ${nameLabel} ▾</summary>
+    <p style="font-size:11px;color:var(--text3);margin:10px 0;">Fine-tune WITHIN a module that's already ON above — e.g. give access to "DSR: Missing" but not "DSR: New Entry". Only matters for modules turned on in Section 1.</p>
     ${buildPermAccordionHtml(features, perms, 'settings-perm-check-emp', 'emp', 'onSettingsCheckChangeEmp')}
     <button class="btn-secondary" id="settingsResetEmpBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset (Select All / Deselect All)</button>
     <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
-  </div>`;
+  </details>`;
   body.innerHTML = html;
 }
 
@@ -5768,9 +5809,6 @@ function resetSettingsEmpChecks() {
   const checkedCount = checks.filter(cb => cb.checked).length;
   const selectAll = checkedCount < checks.length;
   checks.forEach(cb => { cb.checked = selectAll; });
-  document.querySelectorAll('[id^="emp_acc_body_"]').forEach(bodyEl => {
-    onSettingsCheckChangeEmp(bodyEl.id.replace('emp_acc_body_', ''));
-  });
   toast(selectAll ? '✅ All detailed options selected — click Save to apply' : '⬜ All detailed options deselected — click Save to apply', 'info');
 }
 
@@ -6003,12 +6041,6 @@ function resetSettingsAdminChecks() {
   const checkedCount = allChecks.filter(cb => cb.checked).length;
   const selectAll = checkedCount < allChecks.length; // any unchecked box -> select all; otherwise deselect all
   allChecks.forEach(cb => { cb.checked = selectAll; });
-
-  // Refresh every accordion header's ON/OFF badge to match the new state.
-  document.querySelectorAll('[id^="adm_acc_body_"]').forEach(bodyEl => {
-    const key = bodyEl.id.replace('adm_acc_body_', '');
-    onSettingsCheckChange(key);
-  });
 
   toast(selectAll ? '✅ All permissions selected — click Save to apply' : '⬜ All permissions deselected — click Save to apply', 'info');
 }
@@ -6369,16 +6401,39 @@ function showAdminPage(page) {
 // ══════════════════════════════════════
 async function loadAdminData() {
   try {
-    const [leavesRes, calRes] = await Promise.all([
+    // FIX: same Promise.all() issue as loadEmpData() above — one failed
+    // call (e.g. calendarDataAPI) used to reject the whole pair and skip
+    // straight to the catch, leaving adminStatsCard/adminTodayCard/etc.
+    // frozen on "Loading..." even when allLeavesAPI had already
+    // succeeded. allSettled() lets each result be used independently.
+    const [leavesSettled, calSettled] = await Promise.allSettled([
       jsonpReliable({ page:'allLeavesAPI' }),
       jsonpReliable({ page:'calendarDataAPI' })
     ]);
-    if(leavesRes.ok) state.allLeaves = leavesRes.leaves || [];
-    if(calRes.ok) {
+    const leavesRes = leavesSettled.status === 'fulfilled' ? leavesSettled.value : null;
+    const calRes = calSettled.status === 'fulfilled' ? calSettled.value : null;
+    if (leavesSettled.status === 'rejected') console.error('allLeavesAPI failed:', leavesSettled.reason);
+    if (calSettled.status === 'rejected') console.error('calendarDataAPI failed:', calSettled.reason);
+
+    if(leavesRes && leavesRes.ok) state.allLeaves = leavesRes.leaves || [];
+    if(calRes && calRes.ok) {
       state.calEvents = (calRes.events || []).map(ev => Object.assign({}, ev, { date: normalizeDateStr(ev.date) }));
       state.calBirthdays = calRes.birthdays || [];
       state.calHolidays = calRes.holidays || [];
     }
+
+    // If both calls failed outright, don't leave every admin card stuck
+    // on "Loading..." with no explanation — show a clear retry instead.
+    if (!leavesRes && !calRes) {
+      const retryBtn = '<button class="btn-secondary" style="margin-top:8px;" onclick="loadAdminData()">🔄 Retry</button>';
+      ['adminStatsCard','adminTodayCard','adminTomorrowCard','adminBirthdayCard','adminCounterCard','adminDeptCard','adminTypeCard','adminTrendCard'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<div class="empty-state"><p>Could not load.</p>' + retryBtn + '</div>';
+      });
+      toast('Admin data load error — tap retry above', 'error');
+      return;
+    }
+
     // Each render runs independently — a bug in one must never block the others
     try { renderAdminDashboard(); } catch(e1) { console.error('renderAdminDashboard failed:', e1); }
     try { checkAndShowFestivalPoster(() => checkAndShowBirthdayPoster(state.adminName)); } catch(e2) { console.error('festival poster failed:', e2); }
