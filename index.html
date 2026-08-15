@@ -1182,9 +1182,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('events')"><span class="quick-action-icon">🎂</span><div class="quick-action-label">Birthday / Dates</div><div class="quick-action-sub">Customer &amp; team events</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
-          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, notices, password</div></div>
+          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Events, theme, password</div></div>
         </div>
       </div>
     </div>
@@ -1817,13 +1816,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Reports</div><div class="quick-action-sub">Leads &amp; performance reports</div></div>
           <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">All options</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('events')"><span class="quick-action-icon">🎂</span><div class="quick-action-label">Birthday / Dates</div><div class="quick-action-sub">Customer &amp; employee events</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">📞</span><div class="quick-action-label">Follow-up</div><div class="quick-action-sub">Overdue / pending call-backs</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employees</div><div class="quick-action-sub">My profile</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Access, permissions &amp; admin options</div></div>
-          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, notices, password</div></div>
+          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings, notices, theme, password</div></div>
         </div>
       </div>
     </div>
@@ -1895,8 +1890,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQABalance" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
           <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile / all leaves</div></div>
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
+          <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
           <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
-          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
+          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Notices, Settings &amp; more</div></div>
         </div>
       </div>
       <div class="card" id="adminTodayCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -2112,9 +2108,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="card">
           <div class="card-title">📅 Dates</div>
           <div class="form-row">
-            <div class="form-group"><label>Start Date *</label><input type="date" lang="en-GB" id="directStartDate"></div>
-            <div class="form-group"><label>End Date *</label><input type="date" lang="en-GB" id="directEndDate"></div>
+            <div class="form-group"><label>Start Date *</label><input type="date" lang="en-GB" id="directStartDate" onchange="refreshDirectConflicts()"></div>
+            <div class="form-group"><label>End Date *</label><input type="date" lang="en-GB" id="directEndDate" onchange="refreshDirectConflicts()"></div>
           </div>
+          <div id="directConflicts"></div>
           <div class="form-row">
             <div class="form-group">
               <label>Leave Type</label>
@@ -2713,7 +2710,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
         <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
@@ -4435,6 +4431,40 @@ async function refreshModifyConflicts() {
   } catch (e2) { box.innerHTML = ''; }
 }
 
+// v-new (Direct Action — MIS gives a direct/instant approval here, so
+// unlike a normal apply/modify request, there's no separate later
+// review step; MIS needs to see "who else is on leave that date"
+// BEFORE deciding, not after). Same lightweight, employee-safe
+// getLeaveConflictsJSON endpoint as Apply/Modify Leave already use.
+async function refreshDirectConflicts() {
+  const box = document.getElementById('directConflicts');
+  if (!box) return;
+  const s = document.getElementById('directStartDate').value;
+  const e = document.getElementById('directEndDate').value;
+  if (!s) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="loading" style="padding:8px 0;"><span class="spinner"></span>Checking...</div>';
+  try {
+    const res = await jsonpReliable({ page: 'getLeaveConflictsJSON', startDate: s, endDate: e || s });
+    if (!res || !res.ok) { box.innerHTML = ''; return; }
+    const others = res.conflicts || [];
+    if (others.length === 0) {
+      box.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;">
+        <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates)</div>
+        <div style="font-size:12px;color:var(--text3);">Nobody else has a leave overlapping these dates. ✅</div>
+      </div>`;
+      return;
+    }
+    const rowsHtml = others.map(o => {
+      const oRange = o.startDate === o.endDate ? fmtDMY(o.startDate) : fmtDMY(o.startDate) + ' → ' + fmtDMY(o.endDate);
+      return `<tr><td>${o.name}</td><td>${o.type}</td><td>${oRange}</td><td><span class="pill ${pillClass(o.status)}">${statusLabel(o.status)}</span></td></tr>`;
+    }).join('');
+    box.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;border:1.5px solid var(--orange,#c97a10);">
+      <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates) — ${others.length}</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+    </div>`;
+  } catch (e2) { box.innerHTML = ''; }
+}
+
 function onModifyModeChange() {
   const m = document.getElementById('modifyMode').value;
   document.getElementById('modifyHalfDayRow').style.display = m === 'Half Day' ? 'block' : 'none';
@@ -5182,6 +5212,7 @@ async function loadDirectActionPage() {
   const t = todayYMD();
   document.getElementById('directStartDate').value = t;
   document.getElementById('directEndDate').value = t;
+  refreshDirectConflicts();
 
   if (directEmpCache.length > 0) { populateDirectEmpSelect(); return; }
   try {
@@ -9469,9 +9500,9 @@ async function loadEmpLeadsPending() {
       box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
       return;
     }
-    // v-fix ("submit chesaka lead delete avutundi, ala vaddu — page
-    // reload aina full day list undali"): merge today's ALREADY-submitted
-    // entries in alongside the still-open ones, so the full "Today's
+    // v-fix (a submitted lead used to disappear from the list right
+    // away — page reload should keep the full day's list intact): merge
+    // today's ALREADY-submitted entries in alongside the still-open ones, so the full "Today's
     // Received" list — completed AND pending together — survives a real
     // page reload, not just staying visible for the rest of THIS
     // session. The list only truly resets when tomorrow's fresh
@@ -9720,10 +9751,10 @@ async function submitLeadCall() {
     if (res && res.ok) {
       toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
       closeLeadCallPanel();
-      // v-fix ("submit chesaka aa lead delete avutundi, ala vaddu"): the
-      // submitted lead used to be REMOVED from the list entirely, right
-      // after submit. Now it stays visible — just marked completed
-      // (greyed out, its Call button disabled) — so the employee can
+      // v-fix (a submitted lead used to be REMOVED from the list
+      // entirely, right after submit — it should stay visible): now it
+      // stays, marked completed (greyed out, Call button disabled), so
+      // the employee can
       // still see everything assigned today in one place, with correct
       // Total/Completed/Pending counts. It only disappears once the
       // WHOLE day's list refreshes for real (next day's fresh dispatch,
@@ -11784,25 +11815,36 @@ function renderUnifiedDashboard(d, period) {
   const empWiseBox = document.getElementById('unifiedDashEmployeeWise');
   const periodLabel = { today: 'Today', month: 'This Month', year: 'This Year' }[period] || 'Today';
 
+  // Rich, full-color gradient card per module — each module gets its own
+  // distinct gradient (built from the same purple/gold VSR GOLD palette
+  // plus a few accent colors for visual separation between modules,
+  // same idea as the reference image's colored stat boxes) instead of a
+  // plain white card. Text goes white-on-gradient like the reference.
   function moduleCard(opts) {
     const bad = !opts.data || opts.data.ok === false;
-    return `<div class="card" style="padding:12px 14px;cursor:pointer;border-left:3px solid ${opts.color};" onclick="${opts.onclick}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="font-size:12.5px;font-weight:700;color:var(--text);">${opts.icon} ${opts.title}</div>
-        ${opts.badge ? `<span class="kd-pill ${opts.badgeColor||'gold'}" style="font-size:9.5px;">${opts.badge}</span>` : ''}
+    return `<div class="card" style="padding:0;overflow:hidden;cursor:pointer;border:none;box-shadow:0 4px 14px rgba(0,0,0,.12);" onclick="${opts.onclick}">
+      <div style="background:${opts.gradient};padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:13.5px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.15);">${opts.icon} ${opts.title}</div>
+          ${opts.badge ? `<span style="background:rgba(255,255,255,.25);color:#fff;font-size:9.5px;font-weight:700;padding:3px 9px;border-radius:20px;">${opts.badge}</span>` : ''}
+        </div>
+        ${bad ? '<div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:8px;">No data available</div>' : `<div style="color:rgba(255,255,255,.95);margin-top:8px;">${opts.body}</div>`}
       </div>
-      ${bad ? '<div style="font-size:11px;color:var(--text3);margin-top:6px;">No data available</div>' : opts.body}
     </div>`;
   }
 
-  // ── Pending / Alerts (period-independent — always "right now") ──
+  // ── Pending / Alerts (period-independent — always "right now") — rich
+  // red/orange gradient, matching the reference image's "Important
+  // Alerts" box exactly in spirit. ──
   const alerts = d.alerts || [];
   if (alerts.length === 0) {
     alertsBox.innerHTML = '';
   } else {
-    alertsBox.innerHTML = `<div class="card" style="padding:12px 14px;margin-bottom:10px;border:1.5px solid var(--red);background:#fdeceb;">
-      <div style="font-size:12.5px;font-weight:700;color:var(--red);margin-bottom:6px;">🔔 Needs Action (${alerts.length})</div>
-      ${alerts.map(a => `<div style="font-size:11.5px;padding:5px 0;border-top:1px solid #f5d5d3;cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
+    alertsBox.innerHTML = `<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px;border:none;box-shadow:0 4px 14px rgba(220,38,38,.25);">
+      <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:12px 16px;">
+        <div style="font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.15);margin-bottom:8px;">🔔 Important Alerts (${alerts.length})</div>
+        ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:7px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="showAdminPage('${a.page}')"><span>${a.icon} ${a.text}</span><span style="opacity:.85;">→</span></div>`).join('')}
+      </div>
     </div>`;
   }
 
@@ -11814,106 +11856,114 @@ function renderUnifiedDashboard(d, period) {
     : period === 'month' ? (lv && lv.ok && { requests: lv.thisMonth.total, extra: `${lv.thisMonth.approved} approved · ${lv.thisMonth.pending} pending · ${lv.thisMonth.rejected} rejected` })
     : (lv && lv.ok && { requests: lv.yearTotal.total, extra: `${lv.yearTotal.approved} approved · ${lv.yearTotal.pending} pending · ${lv.yearTotal.rejected} rejected` });
   html += moduleCard({
-    icon: '🏖️', title: 'Leave', color: 'var(--purple)',
-    badge: lv && lv.ok ? (periodLabel) : null, badgeColor: 'gold',
+    icon: '🏖️', title: 'Leave', gradient: 'linear-gradient(135deg,#7c3aed,#4a1880)',
+    badge: lv && lv.ok ? periodLabel : null,
     onclick: "showAdminPage('dashboard')", data: lv,
-    body: lvBucket ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">${periodLabel}: ${lvBucket.requests} request(s)<br>${lvBucket.extra}</div>` : ''
+    body: lvBucket ? `<div style="font-size:11px;line-height:1.7;">${periodLabel}: <b>${lvBucket.requests}</b> request(s)<br>${lvBucket.extra}</div>` : ''
   });
 
   // ── LEADS ──
   const ldBucket = period === 'today' ? (ld && ld.ok && ld.today) : period === 'month' ? (ld && ld.ok && ld.thisMonth) : (ld && ld.ok && ld.yearTotal);
   html += moduleCard({
-    icon: '👥', title: 'Leads (CRM)', color: 'var(--orange)',
-    badge: ld && ld.ok ? periodLabel : null, badgeColor: 'gold',
+    icon: '👥', title: 'Leads (CRM)', gradient: 'linear-gradient(135deg,#f59e0b,#c2610a)',
+    badge: ld && ld.ok ? periodLabel : null,
     onclick: "showAdminPage('leads')", data: ld,
-    body: ldBucket ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
-      ${periodLabel}: ${ldBucket.assigned} assigned · ${ldBucket.submitted} done · ${ldBucket.pending} pending<br>
+    body: ldBucket ? `<div style="font-size:11px;line-height:1.7;">
+      ${periodLabel}: <b>${ldBucket.assigned}</b> assigned · ${ldBucket.submitted} done · ${ldBucket.pending} pending<br>
       ${ld.topPerformer ? '🏆 Top (this month): ' + ld.topPerformer.employee : ''}
     </div>` : ''
   });
 
   // ── KPI — only "this month" data exists (no daily KPI concept) ──
   html += moduleCard({
-    icon: '📊', title: 'KPI', color: 'var(--green)',
-    badge: kp && kp.ok && kp.thisMonth.topper ? '🏆 ' + kp.thisMonth.topper.employee : null, badgeColor: 'green',
+    icon: '📊', title: 'KPI', gradient: 'linear-gradient(135deg,#16a34a,#065f46)',
+    badge: kp && kp.ok && kp.thisMonth.topper ? '🏆 ' + kp.thisMonth.topper.employee : null,
     onclick: "showAdminPage('kpi')", data: kp,
-    body: kp && kp.ok && kp.thisMonth.topper ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
-      This month topper: ${kp.thisMonth.topper.employee} — ${kp.thisMonth.topper.overallScore} pts<br>
-      <span style="font-size:10px;">(KPI is scored per running month — no single-day figure exists)</span>
-    </div>` : '<div style="font-size:11px;color:var(--text3);margin-top:6px;">No KPI data yet.</div>'
+    body: kp && kp.ok && kp.thisMonth.topper ? `<div style="font-size:11px;line-height:1.7;">
+      This month topper: <b>${kp.thisMonth.topper.employee}</b> — ${kp.thisMonth.topper.overallScore} pts<br>
+      <span style="font-size:10px;opacity:.85;">(KPI is scored per running month — no single-day figure exists)</span>
+    </div>` : '<div style="font-size:11px;">No KPI data yet.</div>'
   });
 
   // ── DSR — only today/month tracked ──
   const drBucket = period === 'year' ? null : (dr && dr.ok && (period === 'today' ? dr.today.entries : dr.thisMonth.entries));
   html += moduleCard({
-    icon: '🧾', title: 'DSR', color: 'var(--blue,#2563eb)',
+    icon: '🧾', title: 'DSR', gradient: 'linear-gradient(135deg,#2563eb,#1d3f8f)',
     onclick: "showAdminPage('dsr')", data: dr,
-    body: drBucket !== null && drBucket !== undefined ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;">${periodLabel}: ${drBucket} entries</div>` : '<div style="font-size:11px;color:var(--text3);margin-top:6px;">Year view not tracked for DSR — showing Today/Month only.</div>'
+    body: drBucket !== null && drBucket !== undefined ? `<div style="font-size:11px;">${periodLabel}: <b>${drBucket}</b> entries</div>` : '<div style="font-size:11px;">Year view not tracked for DSR — showing Today/Month only.</div>'
   });
 
   // ── LOYALTY CARD ──
   const lyBucket = period === 'today' ? (ly && ly.ok && ly.today.cardsApproved) : period === 'month' ? (ly && ly.ok && ly.thisMonth.cardsApproved) : (ly && ly.ok && ly.total.cardsApproved);
   html += moduleCard({
-    icon: '💳', title: 'Loyalty Card', color: 'var(--gold)',
+    icon: '💳', title: 'Loyalty Card', gradient: 'linear-gradient(135deg,#e0b968,#a67f2e)',
     onclick: "showAdminPage('loyalty')", data: ly,
-    body: (lyBucket !== null && lyBucket !== undefined) ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
-      ${periodLabel}: ${lyBucket} card(s)${period === 'year' ? ' (all-time total) · ₹' + fmtNum(ly.total.incentivePaid) + ' paid' : ''}
+    body: (lyBucket !== null && lyBucket !== undefined) ? `<div style="font-size:11px;line-height:1.7;">
+      ${periodLabel}: <b>${lyBucket}</b> card(s)${period === 'year' ? ' (all-time total) · ₹' + fmtNum(ly.total.incentivePaid) + ' paid' : ''}
     </div>` : ''
   });
 
   // ── GOLDEN AURA ──
   const gaBucket = period === 'today' ? (ga && ga.ok && ga.today.enrollments) : period === 'month' ? (ga && ga.ok && ga.thisMonth.enrollments) : (ga && ga.ok && ga.total.enrollments);
   html += moduleCard({
-    icon: '🥇', title: 'Golden Plan', color: 'var(--purple-mid)',
+    icon: '🥇', title: 'Golden Plan', gradient: 'linear-gradient(135deg,#4a1880,#a67f2e)',
     onclick: "showAdminPage('golden-aura')", data: ga,
-    body: (gaBucket !== null && gaBucket !== undefined) ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;">${periodLabel}: ${gaBucket} enrollment(s)${period === 'year' ? ' (all-time total)' : ''}</div>` : ''
+    body: (gaBucket !== null && gaBucket !== undefined) ? `<div style="font-size:11px;">${periodLabel}: <b>${gaBucket}</b> enrollment(s)${period === 'year' ? ' (all-time total)' : ''}</div>` : ''
   });
 
   // ── STOCK CHECKLIST — today only ──
   const stKeys = st && st.ok ? Object.keys(st.today) : [];
   html += moduleCard({
-    icon: '📝', title: 'Stock Checklist', color: 'var(--red)',
+    icon: '📝', title: 'Stock Checklist', gradient: 'linear-gradient(135deg,#0d9488,#0f5c8a)',
     onclick: "showAdminPage('stock')", data: st,
-    body: (period === 'today' && st && st.ok && stKeys.length) ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
-      ${stKeys.slice(0, 4).map(k => k + ': ' + st.today[k]).join(' · ')}
-    </div>` : '<div style="font-size:11px;color:var(--text3);margin-top:6px;">Only a Today view exists for Stock Checklist.</div>'
+    body: (period === 'today' && st && st.ok && stKeys.length) ? `<div style="font-size:11px;line-height:1.7;">
+      ${stKeys.slice(0, 4).map(k => k + ': <b>' + st.today[k] + '</b>').join(' · ')}
+    </div>` : '<div style="font-size:11px;">Only a Today view exists for Stock Checklist.</div>'
   });
 
   grid.innerHTML = html;
 
-  // ── Employee-Wise (KPI) with a simple bar chart ──
+  // ── Employee-Wise (KPI) with a simple bar chart — rich purple gradient card ──
   if (kp && kp.ok && kp.employeeWise && kp.employeeWise.length) {
     const maxScore = Math.max(...kp.employeeWise.map(r => r.score || 0), 1);
-    let ewHtml = '<div class="card-title">👤 Employee-Wise — KPI This Month</div>';
+    let ewHtml = `<div style="background:linear-gradient(135deg,#7c3aed,#4a1880);margin:-1px;padding:14px 16px;border-radius:var(--r2,12px);">
+      <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px;">👤 Employee-Wise — KPI This Month</div>`;
     kp.employeeWise.slice(0, 10).forEach(r => {
       const pct = Math.round(((r.score || 0) / maxScore) * 100);
-      ewHtml += `<div class="trend-item"><span class="trend-label">${r.employee} (${r.grade})</span>
-        <div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%;background:var(--purple);"></div></div>
-        <span class="trend-val">${r.score}</span></div>`;
+      ewHtml += `<div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#fff;margin-bottom:3px;"><span>${r.employee} (${r.grade})</span><span style="font-weight:800;">${r.score}</span></div>
+        <div style="background:rgba(255,255,255,.25);border-radius:6px;height:6px;overflow:hidden;"><div style="background:#fbbf24;height:6px;width:${pct}%;"></div></div>
+      </div>`;
     });
+    ewHtml += `</div>`;
     empWiseBox.innerHTML = ewHtml;
+    empWiseBox.style.padding = '0'; empWiseBox.style.overflow = 'hidden'; empWiseBox.style.border = 'none'; empWiseBox.style.boxShadow = '0 4px 14px rgba(0,0,0,.12)';
   } else {
-    empWiseBox.innerHTML = '';
+    empWiseBox.innerHTML = ''; empWiseBox.style.boxShadow = 'none';
   }
 
-  // ── Top Performers (KPI + Leads) ──
-  let topHtml = '<div class="card-title">🏆 Top Performers</div>';
-  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:8px 0 4px;">📊 KPI — This Month</div>';
+  // ── Top Performers (KPI + Leads) — rich gold gradient card, matching
+  // the reference image's "Top Performers" leaderboard style ──
+  let topHtml = `<div style="background:linear-gradient(135deg,#e0b968,#a67f2e);margin:-1px;padding:14px 16px;border-radius:var(--r2,12px);">
+    <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px;">🏆 Top Performers</div>
+    <div style="font-size:11px;font-weight:800;color:#fff;opacity:.9;margin:4px 0 6px;">📊 KPI — This Month</div>`;
   if (!kp || !kp.ok || !kp.thisMonth.top3 || kp.thisMonth.top3.length === 0) {
-    topHtml += '<div style="font-size:11.5px;color:var(--text3);">No KPI data yet.</div>';
+    topHtml += '<div style="font-size:11.5px;color:rgba(255,255,255,.85);">No KPI data yet.</div>';
   } else {
     kp.thisMonth.top3.forEach((r, i) => {
       const medal = ['🥇', '🥈', '🥉'][i] || '';
-      topHtml += `<div class="trend-item"><span class="trend-label">${medal} ${r.employee}</span><span class="trend-val">${r.overallScore}</span></div>`;
+      topHtml += `<div style="display:flex;justify-content:space-between;font-size:12px;color:#fff;padding:4px 0;border-top:1px solid rgba(255,255,255,.2);"><span>${medal} ${r.employee}</span><span style="font-weight:800;">${r.overallScore}</span></div>`;
     });
   }
-  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:12px 0 4px;">👥 Leads — This Month (submitted)</div>';
+  topHtml += '<div style="font-size:11px;font-weight:800;color:#fff;opacity:.9;margin:12px 0 6px;">👥 Leads — This Month (submitted)</div>';
   if (ld && ld.ok && ld.topPerformer) {
-    topHtml += `<div class="trend-item"><span class="trend-label">🏆 ${ld.topPerformer.employee}</span><span class="trend-val">${ld.topPerformer.submitted} done</span></div>`;
+    topHtml += `<div style="display:flex;justify-content:space-between;font-size:12px;color:#fff;padding:4px 0;border-top:1px solid rgba(255,255,255,.2);"><span>🏆 ${ld.topPerformer.employee}</span><span style="font-weight:800;">${ld.topPerformer.submitted} done</span></div>`;
   } else {
-    topHtml += '<div style="font-size:11.5px;color:var(--text3);">No leads data yet.</div>';
+    topHtml += '<div style="font-size:11.5px;color:rgba(255,255,255,.85);">No leads data yet.</div>';
   }
+  topHtml += '</div>';
   topBox.innerHTML = topHtml;
+  topBox.style.padding = '0'; topBox.style.overflow = 'hidden'; topBox.style.border = 'none'; topBox.style.boxShadow = '0 4px 14px rgba(0,0,0,.12)';
 }
 
 async function loadEmployeeWisePage() {
