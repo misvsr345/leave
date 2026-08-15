@@ -640,6 +640,40 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   background-size: 24px 24px, 13px 13px;
 }
 .form-row select:hover { border-color: var(--purple-mid); transform: translateY(-1px); }
+/* v-fix (UI audit — "No plain black/default controls"): several
+   dropdowns across the portal (Direct Action employee/leave-type/mode,
+   Employee Wise picker, Settings employee/admin pickers, Overdue Leads
+   employee filter, Events month pickers) were bare <select> elements
+   with no class at all, so they fell back to the browser's native
+   default appearance instead of the same purple/premium look every
+   other dropdown has. This is the exact same rule as ".form-row
+   select" above, just usable directly on a <select> without needing a
+   .form-row parent wrapper (some of these sit in flex rows or plain
+   divs where wrapping wasn't practical). */
+.uniform-select {
+  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
+  font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text); background: var(--bg);
+  outline: none; transition: all 0.2s;
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  cursor: pointer; padding-right: 44px; font-weight: 600;
+  background-image:
+    linear-gradient(135deg, var(--purple-mid), var(--purple)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 6px center, right 12px center;
+  background-size: 24px 24px, 13px 13px;
+}
+.uniform-select:focus { border-color: var(--purple-mid); background-color: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+.uniform-select:hover { border-color: var(--purple-mid); transform: translateY(-1px); }
+/* Same fix as .uniform-select above, for plain text/date <input>s that
+   sit outside a .form-row wrapper (date-range filter pairs, search
+   boxes) and were otherwise falling back to native browser styling. */
+.uniform-input {
+  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
+  font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text); background: var(--bg);
+  outline: none; transition: all 0.2s;
+}
+.uniform-input:focus { border-color: var(--purple-mid); background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* Calendar — shrunk to ~75% of original */
@@ -1139,17 +1173,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="home-header-sub" id="empModulePickerMeta"></div>
       </div>
       <div class="quick-actions-section">
-        <div class="quick-actions-title">⚡ Choose a Section</div>
+        <div class="quick-actions-title">📊 Dashboard</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
+          <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
+          <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🥇</span><div class="quick-action-label">Golden Plan</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
-          <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">📞</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
-          <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
-          <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">Entry form</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
-          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
+          <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
+          <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" onclick="showEmpPage('events')"><span class="quick-action-icon">🎂</span><div class="quick-action-label">Birthday / Dates</div><div class="quick-action-sub">Customer &amp; team events</div></div>
+          <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
+          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, notices, password</div></div>
         </div>
       </div>
     </div>
@@ -1197,7 +1232,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="card-title">📢 Notices &amp; Rules</div>
         <div class="notice-render" id="noticeRenderBox">Loading notices...</div>
         <label style="display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);cursor:pointer;">
-          <input type="checkbox" id="ackNotices" onchange="onAckChange()" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:var(--purple);cursor:pointer;">
+          <input type="checkbox" id="ackNotices" onchange="onAckChange()" style="width:19px;height:19px;flex-shrink:0;margin-top:1px;accent-color:var(--purple);cursor:pointer;">
           <span style="font-size:12px;color:var(--text2);font-weight:600;line-height:1.5;">I have read and understood the notices above *</span>
         </label>
       </div>
@@ -1303,7 +1338,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           </div>
           <div class="form-group" style="flex:1;">
             <label>Month</label>
-            <select id="evtEmpMonth" onchange="renderEventsBrowser('emp')">
+            <select id="evtEmpMonth" class="uniform-select" onchange="renderEventsBrowser('emp')">
               <option value="-1">All Months</option>
               <option value="0">January</option><option value="1">February</option><option value="2">March</option>
               <option value="3">April</option><option value="4">May</option><option value="5">June</option>
@@ -1427,8 +1462,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
       <div class="card" style="padding:12px 14px;">
         <div style="display:flex;gap:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyEmpFromDate"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyEmpToDate"></div>
+          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyEmpFromDate" class="uniform-input"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyEmpToDate" class="uniform-input"></div>
         </div>
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
       </div>
@@ -1760,8 +1795,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
   <div class="page-content">
 
-    <!-- DASHBOARD -->
-    <!-- MODULE PICKER (the true landing page right after login) -->
+    <!-- DASHBOARD — the true landing page right after login. Rich stats
+         (from the old separate "unified-dashboard" page, now merged in
+         here) + a card for every module. Leave is just ONE of these
+         peer cards, same as every other module — Leave's own home page
+         intentionally has no way back to this Dashboard other than the
+         same bottom-nav Home icon every other section uses. -->
     <div class="page-section active" id="admin-modulepicker">
       <div class="home-header">
         <div class="home-header-title">VSR GOLD</div>
@@ -1769,19 +1808,76 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="home-header-sub" id="adminModulePickerMeta"></div>
       </div>
       <div class="quick-actions-section">
-        <div class="quick-actions-title">⚡ Choose a Section</div>
+        <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
+          <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('unified-dashboard')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
+          <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🥇</span><div class="quick-action-label">Golden Plan</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
-          <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">📞</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
-          <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🌟</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
-          <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Stock Check List</div><div class="quick-action-sub">All options</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Emp Details</div><div class="quick-action-sub">My profile</div></div>
-          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, events, password</div></div>
+          <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Reports</div><div class="quick-action-sub">Leads &amp; performance reports</div></div>
+          <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">All options</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('events')"><span class="quick-action-icon">🎂</span><div class="quick-action-label">Birthday / Dates</div><div class="quick-action-sub">Customer &amp; employee events</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">📞</span><div class="quick-action-label">Follow-up</div><div class="quick-action-sub">Overdue / pending call-backs</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employees</div><div class="quick-action-sub">My profile</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Access, permissions &amp; admin options</div></div>
+          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Theme, notices, password</div></div>
         </div>
       </div>
+    </div>
+
+    <!-- UNIFIED DASHBOARD — separate page, reached via the "📊 Dashboard"
+         button on the Section Page above. The Section Page itself stays
+         exactly as it always was (pure navigation, nothing removed) —
+         this is purely an ADDITIONAL navigation layer on top, per the
+         explicit "don't touch the old page/flow" requirement. Direct
+         access to any individual section (Leave/Loyalty/KPI/etc) from
+         the Section Page still works exactly as before, unaffected. -->
+    <div class="page-section" id="admin-unified-dashboard">
+      <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
+        <button class="btn-sm btn-view" onclick="loadUnifiedDashboard()">🔄 Refresh</button>
+      </div>
+
+      <!-- Period Filter -->
+      <div class="filter-bar" id="dashPeriodBar">
+        <button class="filter-btn active" data-period="today" onclick="setDashPeriod('today', this)">Today</button>
+        <button class="filter-btn" data-period="month" onclick="setDashPeriod('month', this)">This Month</button>
+        <button class="filter-btn" data-period="year" onclick="setDashPeriod('year', this)">Year</button>
+        <button class="filter-btn" data-period="custom" onclick="setDashPeriod('custom', this)">Custom</button>
+      </div>
+      <div id="dashCustomRangeBox" style="display:none;padding:10px 2px;">
+        <div style="display:flex;gap:8px;align-items:end;">
+          <div class="form-row" style="flex:1;margin:0;"><label style="font-size:10px;">Start Date</label><input type="date" lang="en-GB" id="dashCustomStart"></div>
+          <div class="form-row" style="flex:1;margin:0;"><label style="font-size:10px;">End Date</label><input type="date" lang="en-GB" id="dashCustomEnd"></div>
+          <button class="btn-sm btn-view" style="height:38px;" onclick="loadDashCustomRange()">🔍 Go</button>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions-section" style="margin-bottom:14px;">
+        <div class="quick-actions-title" style="font-size:11px;">⚡ Quick Actions</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('direct')">✍️ Direct Leave Action</button>
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('pending')">⏳ Review Pending</button>
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('leads')">👥 Lead Action</button>
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('loyalty')">💳 Loyalty Card</button>
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('golden-aura-new')">🥇 New Golden Plan</button>
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('stock')">📝 Stock Checklist</button>
+          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('leads-report')">📈 Reports</button>
+        </div>
+      </div>
+
+      <!-- Pending / Alerts -->
+      <div id="unifiedDashAlerts"></div>
+
+      <div id="unifiedDashGrid" style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px;"></div>
+
+      <!-- Employee-Wise (KPI) -->
+      <div class="card" id="unifiedDashEmployeeWise" style="margin-bottom:14px;"></div>
+
+      <div class="card" id="unifiedDashTopPerformers"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <!-- DASHBOARD (Leave section landing) -->
@@ -1794,7 +1890,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-section" style="margin-bottom:14px;">
         <div class="quick-actions-title">⚡ Quick Actions</div>
         <div class="quick-actions-grid" id="adminQuickActionsGrid">
-          <div class="quick-action-btn" onclick="showAdminPage('unified-dashboard')"><span class="quick-action-icon">🎛️</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Everything at a glance</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending</div><div class="quick-action-sub">Awaiting approval</div></div>
           <div class="quick-action-btn" id="adminQACalendar" onclick="showAdminPage('acalendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule + 7-day availability</div></div>
           <div class="quick-action-btn" id="adminQABalance" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
@@ -1813,15 +1908,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="adminTrendCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
-
-    <!-- UNIFIED DASHBOARD — Leave/Loyalty/KPI/DSR/CRM/Checklist at a glance + Top Performers -->
-    <div class="page-section" id="admin-unified-dashboard">
-      <div class="section-hdr"><span class="section-title2">🎛️ Dashboard</span>
-        <button class="btn-sm btn-view" onclick="loadUnifiedDashboard()">🔄 Refresh</button>
-      </div>
-      <div id="unifiedDashGrid" class="quick-actions-grid" style="margin-bottom:14px;"></div>
-      <div class="card" id="unifiedDashTopPerformers"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
 
     <!-- PENDING -->
     <div class="page-section" id="admin-pending">
@@ -1869,7 +1955,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           </div>
           <div class="form-group" style="flex:1;">
             <label>Month</label>
-            <select id="evtAdminMonth" onchange="renderEventsBrowser('admin')">
+            <select id="evtAdminMonth" class="uniform-select" onchange="renderEventsBrowser('admin')">
               <option value="-1">All Months</option>
               <option value="0">January</option><option value="1">February</option><option value="2">March</option>
               <option value="3">April</option><option value="4">May</option><option value="5">June</option>
@@ -2017,7 +2103,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="card-title">👤 Employee</div>
           <div class="form-group">
             <label>Select Employee *</label>
-            <select id="directEmpSelect" onchange="onDirectEmpChange()">
+            <select id="directEmpSelect" class="uniform-select" onchange="onDirectEmpChange()">
               <option value="">-- Select Employee --</option>
             </select>
           </div>
@@ -2032,21 +2118,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="form-row">
             <div class="form-group">
               <label>Leave Type</label>
-              <select id="directLeaveType" onchange="onDirectLeaveTypeChange()">
+              <select id="directLeaveType" class="uniform-select" onchange="onDirectLeaveTypeChange()">
                 <option>Casual Leave</option><option>Sick Leave</option><option>Emergency Leave</option>
                 <option>Special Permission Leave</option>
               </select>
             </div>
             <div class="form-group">
               <label>Leave Mode</label>
-              <select id="directLeaveMode" onchange="onDirectModeChange()">
+              <select id="directLeaveMode" class="uniform-select" onchange="onDirectModeChange()">
                 <option>Full Day</option><option>Half Day</option>
               </select>
             </div>
           </div>
           <div class="form-group" id="directHalfDayWrap" style="display:none;">
             <label>Half Day Session</label>
-            <select id="directHalfDay"><option value="First Half">First Half</option><option value="Second Half">Second Half</option></select>
+            <select id="directHalfDay" class="uniform-select"><option value="First Half">First Half</option><option value="Second Half">Second Half</option></select>
           </div>
           <div class="form-group" id="directAuthorityRow" style="display:none;">
             <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
@@ -2107,7 +2193,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card">
         <div class="form-group">
           <label>Select Employee</label>
-          <select id="empWiseSelect" onchange="renderEmployeeWiseProfile()">
+          <select id="empWiseSelect" class="uniform-select" onchange="renderEmployeeWiseProfile()">
             <option value="__ALL__">-- All Employees --</option>
           </select>
         </div>
@@ -2125,11 +2211,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
           <div class="form-group" style="flex:1;min-width:130px;margin:0;">
             <label style="font-size:10px;">From Date</label>
-            <input type="date" lang="en-GB" id="allLeavesDateFrom" onchange="renderEmployeeWiseProfile()">
+            <input type="date" lang="en-GB" id="allLeavesDateFrom" class="uniform-input" onchange="renderEmployeeWiseProfile()">
           </div>
           <div class="form-group" style="flex:1;min-width:130px;margin:0;">
             <label style="font-size:10px;">To Date</label>
-            <input type="date" lang="en-GB" id="allLeavesDateTo" onchange="renderEmployeeWiseProfile()">
+            <input type="date" lang="en-GB" id="allLeavesDateTo" class="uniform-input" onchange="renderEmployeeWiseProfile()">
           </div>
           <button class="btn-sm btn-view" style="height:38px;" onclick="clearAllLeavesFilters()">✕ Clear</button>
         </div>
@@ -2248,7 +2334,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="card">
             <div class="card-title">👤 Select Employee</div>
             <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick an employee here to tick the boxes that already apply to them — everything else stays unticked. Tick/untick whatever you need, then save.</p>
-            <select id="settingsEmpSelect" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
+            <select id="settingsEmpSelect" class="uniform-select" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
           </div>
           <div id="settingsEmpPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
         </div>
@@ -2258,7 +2344,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="card">
             <div class="card-title">🔑 Select Admin</div>
             <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick a non-MIS/Director admin here to tick the boxes that already apply to them — everything else stays unticked (Director shown separately as always-full-access; Director/EA/Manager/Store Manager/Asst Manager etc. all appear here individually — access is set per PERSON, not per job title).</p>
-            <select id="settingsAdminSelect" onchange="onSettingsAdminSelected()"><option value="">-- Loading admins... --</option></select>
+            <select id="settingsAdminSelect" class="uniform-select" onchange="onSettingsAdminSelected()"><option value="">-- Loading admins... --</option></select>
           </div>
           <div id="settingsAdminPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
         </div>
@@ -2609,10 +2695,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="kd-note" style="margin-bottom:10px;">These leads were assigned on a past date and never called. Only Admin can Avoid them — this sends the lead back to Clean Leads for reassignment.</div>
       <div class="card" style="padding:12px 14px;">
         <label>Employee (optional)</label>
-        <select id="overdueEmpFilter" onchange="renderOverdueLeadsTable()"><option value="">-- All Employees --</option></select>
+        <select id="overdueEmpFilter" class="uniform-select" onchange="renderOverdueLeadsTable()"><option value="">-- All Employees --</option></select>
         <div style="display:flex;gap:10px;margin-top:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="overdueFromDate" onchange="renderOverdueLeadsTable()"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="overdueToDate" onchange="renderOverdueLeadsTable()"></div>
+          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="overdueFromDate" class="uniform-input" onchange="renderOverdueLeadsTable()"></div>
+          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="overdueToDate" class="uniform-input" onchange="renderOverdueLeadsTable()"></div>
         </div>
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadAdminOverdueLeads()">🔄 Refresh</button>
       </div>
@@ -2687,9 +2773,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       ⚠️ Modifying will reset this leave to <b>Pending</b> and send it for fresh MIS approval. A new approval mail will be sent once approved again.
     </div>
     <div class="form-2col">
-      <div class="form-row"><label>New Start Date</label><input type="date" lang="en-GB" id="modifyStart"></div>
-      <div class="form-row"><label>New End Date</label><input type="date" lang="en-GB" id="modifyEnd"></div>
+      <div class="form-row"><label>New Start Date</label><input type="date" lang="en-GB" id="modifyStart" onchange="refreshModifyConflicts()"></div>
+      <div class="form-row"><label>New End Date</label><input type="date" lang="en-GB" id="modifyEnd" onchange="refreshModifyConflicts()"></div>
     </div>
+    <div id="modifyConflicts"></div>
     <div class="form-row">
       <label>Leave Mode</label>
       <select id="modifyMode" onchange="onModifyModeChange()">
@@ -2842,8 +2929,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="modal-title" id="loyEmpDetailTitle">👤 Employee Detail</div>
     <div class="card" style="padding:10px 14px;margin:8px 0;">
       <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:11px;">From Date</label><input type="date" lang="en-GB" id="loyEmpDetailFromDate" style="width:100%;"></div>
-        <div style="flex:1;"><label style="font-size:11px;">To Date</label><input type="date" lang="en-GB" id="loyEmpDetailToDate" style="width:100%;"></div>
+        <div style="flex:1;"><label style="font-size:11px;">From Date</label><input type="date" lang="en-GB" id="loyEmpDetailFromDate" class="uniform-input"></div>
+        <div style="flex:1;"><label style="font-size:11px;">To Date</label><input type="date" lang="en-GB" id="loyEmpDetailToDate" class="uniform-input"></div>
       </div>
       <button class="btn-modal-confirm" style="width:100%;margin-top:8px;background:var(--purple);" onclick="loadLoyEmpDetail()">🔄 Load</button>
     </div>
@@ -3837,7 +3924,7 @@ const FOOTER_NAV_CONFIG = {
     ], more: 'openEmpMoreModal()' }
   },
   admin: {
-    leave: { pages: ['dashboard','unified-dashboard','pending','acalendar','balance','empwise','events','direct','notices','blocked','settings'], items: [
+    leave: { pages: ['dashboard','pending','acalendar','balance','empwise','events','direct','notices','blocked','settings'], items: [
       { page:'dashboard', icon:'🏠', label:'Home' },
       { page:'pending', icon:'⏳', label:'Pending', badge:'pendingCount' },
       { page:'empwise', icon:'👤', label:'Employee Wise' },
@@ -4312,7 +4399,40 @@ function openModifyModal(leaveId, start, end, mode) {
   document.getElementById('modifyMode').value = isHalf ? 'Half Day' : 'Full Day';
   onModifyModeChange();
   document.getElementById('modifyReason').value = '';
+  refreshModifyConflicts();
   openModal('modifyModal');
+}
+
+// v-new (#5-6): same "who else is on leave these dates" info New Leave
+// Apply shows, now shown here too — uses the lightweight, employee-safe
+// getLeaveConflictsJSON endpoint (not the admin-only allLeavesAPI).
+async function refreshModifyConflicts() {
+  const box = document.getElementById('modifyConflicts');
+  if (!box) return;
+  const s = document.getElementById('modifyStart').value;
+  const e = document.getElementById('modifyEnd').value;
+  if (!s) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="loading" style="padding:8px 0;"><span class="spinner"></span>Checking...</div>';
+  try {
+    const res = await jsonpReliable({ page: 'getLeaveConflictsJSON', startDate: s, endDate: e || s, excludeLeaveId: state.modifyLeaveId || '' });
+    if (!res || !res.ok) { box.innerHTML = ''; return; }
+    const others = res.conflicts || [];
+    if (others.length === 0) {
+      box.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;">
+        <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates)</div>
+        <div style="font-size:12px;color:var(--text3);">Nobody else has a leave overlapping these dates. ✅</div>
+      </div>`;
+      return;
+    }
+    const rowsHtml = others.map(o => {
+      const oRange = o.startDate === o.endDate ? fmtDMY(o.startDate) : fmtDMY(o.startDate) + ' → ' + fmtDMY(o.endDate);
+      return `<tr><td>${o.name}</td><td>${o.type}</td><td>${oRange}</td><td><span class="pill ${pillClass(o.status)}">${statusLabel(o.status)}</span></td></tr>`;
+    }).join('');
+    box.innerHTML = `<div class="card" style="margin-top:10px;padding:12px 14px;border:1.5px solid var(--orange,#c97a10);">
+      <div class="card-title" style="margin-bottom:6px;">👥 Others On Leave (Same Dates) — ${others.length}</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+    </div>`;
+  } catch (e2) { box.innerHTML = ''; }
 }
 
 function onModifyModeChange() {
@@ -6201,10 +6321,11 @@ function showAdminPage(page) {
   if(page==='settings') loadSettingsPage();
   if(page==='profile') renderAdminProfile();
   if(page==='empwise') loadEmployeeWisePage();
-  if(page==='unified-dashboard') loadUnifiedDashboard();
+  if(page==='modulepicker') loadUnifiedDashboard();
   if(page==='pending') renderPending();
   if(page==='notices') loadNoticesForAdmin();
   if(page==='leads') loadAdminLeadsHome();
+  if(page==='unified-dashboard') loadUnifiedDashboard();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
   if(page==='leads-report') loadAdminLeadsReport();
@@ -9339,15 +9460,49 @@ async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const [res, reportRes] = await Promise.all([
+    const [res, reportRes, submittedRes] = await Promise.all([
       leadsApiGet({ action: 'GET_LEADS', empId: state.empId, name: state.empName, email: state.empEmail, date: todayISO() }),
-      leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() }).catch(() => null)
+      leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() }).catch(() => null),
+      leadsApiGet({ action: 'GET_DAILY_REPORT', employee: state.empName, role: 'employee', date: todayISO() }).catch(() => null)
     ]);
     if (res.error) {
       box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p></div>';
       return;
     }
-    __empPendingLeadsAll = res.leads || [];
+    // v-fix ("submit chesaka lead delete avutundi, ala vaddu — page
+    // reload aina full day list undali"): merge today's ALREADY-submitted
+    // entries in alongside the still-open ones, so the full "Today's
+    // Received" list — completed AND pending together — survives a real
+    // page reload, not just staying visible for the rest of THIS
+    // session. The list only truly resets when tomorrow's fresh
+    // dispatch loads (~10 AM, see automatedDispatchAll's trigger time).
+    const normPhone = p => String(p == null ? '' : p).replace(/\D/g, '');
+    const submittedToday = (submittedRes && (submittedRes.entries || (submittedRes.data && submittedRes.data.entries))) || [];
+    const submittedPhoneSet = {};
+    submittedToday.forEach(e => { const p = normPhone(e.phone); if (p) submittedPhoneSet[p] = true; });
+
+    __empPendingLeadsAll = (res.leads || []).map(l => Object.assign({}, l));
+    // Add back any submitted-today lead that's no longer in the server's
+    // "still pending" list, so it still shows (marked done) instead of
+    // just vanishing on reload.
+    const alreadyShownPhones = {};
+    __empPendingLeadsAll.forEach(l => { alreadyShownPhones[normPhone(l.phone)] = true; });
+    submittedToday.forEach(e => {
+      const p = normPhone(e.phone);
+      if (p && !alreadyShownPhones[p]) {
+        __empPendingLeadsAll.push({
+          name: e.name || e.customerName || '', phone: e.phone,
+          custType: e.custType || '', product: e.product || '',
+          completedJustNow: true
+        });
+        alreadyShownPhones[p] = true;
+      }
+    });
+    // Mark any still-pending-looking row that's ALSO in today's
+    // submitted list (edge case: submitted very recently, before the
+    // Pending Leads sheet's own removal caught up) as done too.
+    __empPendingLeadsAll.forEach(l => { if (submittedPhoneSet[normPhone(l.phone)]) l.completedJustNow = true; });
+
     window.__empLeadsData = {};
     __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
     __empPendingSummary = (reportRes && reportRes.ok && reportRes.rows && reportRes.rows[0]) ? reportRes.rows[0] : null;
@@ -9381,18 +9536,22 @@ function renderEmpLeadsPendingTable() {
     ? __empPendingLeadsAll.filter(l => (l.name || '').toLowerCase().includes(term) || (l.phone || '').toLowerCase().includes(term))
     : __empPendingLeadsAll;
 
-  // Total assigned / submitted / pending for today, above the list — so the
-  // pending queue also shows how the day looks overall, not just what's left.
-  const summaryLine = __empPendingSummary
-    ? `<div class="kd-note" style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text3);">
-        <span>Assigned: <b style="color:var(--text);">${__empPendingSummary.assigned}</b></span>
-        <span>Submitted: <b style="color:var(--text);">${__empPendingSummary.submitted}</b></span>
-        <span>Pending: <b style="color:var(--text);">${__empPendingSummary.pending}</b></span>
-      </div>`
-    : '';
+  // Total Received / Completed / Pending for today, above the list — a
+  // lead submitted just now stays IN this same list (marked done, not
+  // removed — see submitLeadCall), so these counts reflect that: server
+  // "Pending" leads still open, plus any submitted during this session.
+  const completedNow = __empPendingLeadsAll.filter(l => l.completedJustNow).length;
+  const totalReceived = __empPendingSummary ? __empPendingSummary.assigned : __empPendingLeadsAll.length;
+  const completedTotal = (__empPendingSummary ? __empPendingSummary.submitted : 0);
+  const pendingNow = __empPendingLeadsAll.length - completedNow;
+  const summaryLine = `<div class="kd-note" style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text3);">
+        <span>Today's Received: <b style="color:var(--text);">${totalReceived}</b></span>
+        <span>Completed: <b style="color:var(--green);">${completedTotal}</b></span>
+        <span>Pending: <b style="color:var(--orange,#c97a10);">${Math.max(0, totalReceived - completedTotal)}</b></span>
+      </div>`;
 
   const searchBar = summaryLine + `<div class="kd-note" style="display:flex;align-items:center;gap:8px;">
-      <span style="flex:1;">${leads.length} lead(s)${term ? ' matching "' + escHtml(term) + '"' : ' today'}</span>
+      <span style="flex:1;">${leads.length} lead(s)${term ? ' matching "' + escHtml(term) + '"' : ' today'} — ${pendingNow} still to call</span>
       <span onclick="toggleLeadSearch('emp')" style="cursor:pointer;font-size:15px;" title="Search leads">🔎</span>
       <input id="empLeadsSearchInput" type="text" placeholder="Name or phone..." value="${escHtml(term)}" oninput="filterEmpLeadsPending(this.value)"
         style="display:${term ? 'inline-block' : 'none'};width:140px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
@@ -9412,11 +9571,23 @@ function renderEmpLeadsPendingTable() {
     '<th style="width:28px;">#</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Contact</th><th style="width:70px;">Action</th>' +
     '</tr></thead><tbody>';
   leads.forEach((l, i) => {
-    html += `<tr>` +
+    const done = !!l.completedJustNow;
+    // v-new: below the customer name — Fresh for a never-called lead, or
+    // Last Sent date + status (Not Connected/Switched Off/etc) for a
+    // repeat one. Uses leadTag/lastStatus/lastCalledDate exactly as the
+    // backend already tracks them (Pending Leads sheet) — nothing here
+    // is guessed or invented.
+    const isRetryLead = (l.leadTag || '').indexOf('Retry') > -1;
+    const subLine = isRetryLead
+      ? `<span style="color:var(--orange,#c97a10);">🔁 Last Sent: ${l.lastCalledDate || '-'}${l.lastStatus ? ' · ' + l.lastStatus : ''}</span>`
+      : `<span style="color:var(--green);">🆕 Fresh</span>`;
+    html += `<tr style="${done ? 'opacity:0.5;' : ''}">` +
       `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
-      `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;color:var(--text3);">${l.custType || '-'}</span></td>` +
+      `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;">${subLine}</span></td>` +
       `<td style="text-align:left;"><a href="tel:${l.phone}" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
-      `<td style="text-align:center;"><button class="btn-primary" style="padding:8px 10px;font-size:12px;white-space:nowrap;" onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])'>📞 Call &amp; Submit</button></td>` +
+      `<td style="text-align:center;">${done
+        ? `<span class="kd-pill green" style="font-size:10px;white-space:nowrap;">✅ Done</span>`
+        : `<button class="btn-primary" style="padding:8px 10px;font-size:12px;white-space:nowrap;" onclick='openLeadCallPanel(window.__empLeadsData[${JSON.stringify(l.phone)}])'>📞 Call &amp; Submit</button>`}</td>` +
       `</tr>`;
   });
   html += '</tbody></table></div>';
@@ -9549,27 +9720,30 @@ async function submitLeadCall() {
     if (res && res.ok) {
       toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
       closeLeadCallPanel();
-      // Update the queue and the summary header purely from local state —
-      // no re-fetch of the whole day's leads. This is what keeps "Today's
-      // Leads" fast: only the ONE lead just submitted disappears from the
-      // list, instead of the entire list reloading (and delaying the next
-      // call) every single time someone submits.
-      // Compare phones as digits-only strings — the pending list can come
-      // back with phone as a number (Sheets auto-typed) while
-      // __leadCallCurrent.phone is a string (or vice-versa), and a strict
-      // !== on mismatched types/formatting silently fails to remove the
-      // row. That left the "submitted" lead still showing until the next
-      // full reload (e.g. navigating back into Today's Leads), which is
-      // what looked like the page "loading again" after every submit.
+      // v-fix ("submit chesaka aa lead delete avutundi, ala vaddu"): the
+      // submitted lead used to be REMOVED from the list entirely, right
+      // after submit. Now it stays visible — just marked completed
+      // (greyed out, its Call button disabled) — so the employee can
+      // still see everything assigned today in one place, with correct
+      // Total/Completed/Pending counts. It only disappears once the
+      // WHOLE day's list refreshes for real (next day's fresh dispatch,
+      // ~10 AM — see automatedDispatchAll's trigger time), never mid-day
+      // just because it was submitted.
       const normPhone = p => String(p == null ? '' : p).replace(/\D/g, '');
       const submittedPhone = normPhone(__leadCallCurrent.phone);
-      __empPendingLeadsAll = __empPendingLeadsAll.filter(l => normPhone(l.phone) !== submittedPhone);
+      __empPendingLeadsAll.forEach(l => {
+        if (normPhone(l.phone) === submittedPhone) l.completedJustNow = true;
+      });
       if (window.__empLeadsData) {
         Object.keys(window.__empLeadsData).forEach(k => {
-          if (normPhone(k) === submittedPhone) delete window.__empLeadsData[k];
+          if (normPhone(k) === submittedPhone) window.__empLeadsData[k].completedJustNow = true;
         });
       }
       renderEmpLeadsPendingTable();
+      if (__empPendingSummary) {
+        __empPendingSummary.submitted = (__empPendingSummary.submitted || 0) + 1;
+        __empPendingSummary.pending = Math.max(0, (__empPendingSummary.pending || 0) - 1);
+      }
       if (__empLeadsSummary) {
         __empLeadsSummary.submitted = (__empLeadsSummary.submitted || 0) + 1;
         __empLeadsSummary.pending = Math.max(0, (__empLeadsSummary.pending || 0) - 1);
@@ -11510,96 +11684,234 @@ let empWiseBalanceCache = [];
 // or failing module never blocks the others from showing — a box that
 // fails just shows "Tap to open" instead of numbers.
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// A-TO-Z DASHBOARD — Complete A-Z Dashboard Master Prompt.
+// Every figure here comes straight from dashboardAtoZJSON (real sheet
+// reads, no invented numbers). Accounting is not shown — that module
+// doesn't exist anywhere in this project. Golden Aura shows enrollment
+// activity only — no Target/Achievement, because no target concept
+// exists in that system's data.
+// ══════════════════════════════════════
+let dashLastData = null;   // cached dashboardAtoZJSON result — period switches re-render from this, no re-fetch needed
+let dashCurrentPeriod = 'today';
+
 async function loadUnifiedDashboard() {
   const grid = document.getElementById('unifiedDashGrid');
   const topBox = document.getElementById('unifiedDashTopPerformers');
-  grid.innerHTML = '';
-  topBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const alertsBox = document.getElementById('unifiedDashAlerts');
+  grid.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
+  topBox.innerHTML = ''; alertsBox.innerHTML = '';
 
-  const boxDefs = [
-    { key: 'leave', icon: '🏖️', label: 'Leave', page: 'pending' },
-    { key: 'loyalty', icon: '💳', label: 'Loyalty Card', page: 'loyalty' },
-    { key: 'kpi', icon: '📊', label: 'KPI', page: 'kpi' },
-    { key: 'dsr', icon: '🧾', label: 'DSR', page: 'dsr' },
-    { key: 'crm', icon: '📞', label: 'Leads (CRM)', page: 'leads' },
-    { key: 'checklist', icon: '📋', label: 'Stock Checklist', page: 'stock' }
-  ];
-  // Render placeholders immediately (tap-through works right away even
-  // before the numbers finish loading).
-  grid.innerHTML = boxDefs.map(b => `
-    <div class="quick-action-btn" id="unifiedDashBox-${b.key}" onclick="showAdminPage('${b.page}')">
-      <span class="quick-action-icon">${b.icon}</span>
-      <div class="quick-action-label">${b.label}</div>
-      <div class="quick-action-sub" id="unifiedDashSub-${b.key}">Loading...</div>
-    </div>`).join('');
+  let res;
+  try {
+    res = await jsonpReliable({ page: 'dashboardAtoZJSON' });
+  } catch (e) {
+    grid.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadUnifiedDashboard()" title="Retry">🔄</button></div>';
+    return;
+  }
+  if (!res || !res.ok) {
+    grid.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadUnifiedDashboard()" title="Retry">🔄</button></div>';
+    return;
+  }
+  dashLastData = res.data;
+  document.getElementById('dashCustomRangeBox').style.display = 'none';
+  document.querySelectorAll('#dashPeriodBar .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.period === 'today'));
+  dashCurrentPeriod = 'today';
+  renderUnifiedDashboard(dashLastData, 'today');
+}
 
-  const setSub = (key, text) => {
-    const el = document.getElementById('unifiedDashSub-' + key);
-    if (el) el.textContent = text;
-  };
+// Period tabs re-render from the already-fetched data — Today/This
+// Month/Year are all returned together by dashboardAtoZJSON, so
+// switching between them is instant with no extra network call.
+// "Custom" is the one exception (see loadDashCustomRange below), since
+// an arbitrary date range isn't part of the bulk fetch.
+function setDashPeriod(period, btn) {
+  document.querySelectorAll('#dashPeriodBar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const customBox = document.getElementById('dashCustomRangeBox');
+  if (period === 'custom') {
+    customBox.style.display = 'block';
+    return; // wait for "Go" — loadDashCustomRange() renders when clicked
+  }
+  customBox.style.display = 'none';
+  dashCurrentPeriod = period;
+  if (dashLastData) renderUnifiedDashboard(dashLastData, period);
+}
 
-  const results = await Promise.allSettled([
-    // Leave — pending count already known from state, no network call needed
-    Promise.resolve(state.allLeaves ? state.allLeaves.filter(l => l.status === 'Pending' || l.status === 'MIS_Approved').length : null),
-    jsonpReliable({ page: 'loyaltyUpcomingApprovalsAPI' }),
-    jsonpReliable({ page: 'kpiTillDateJSON', role: 'ADMIN' }),
-    jsonpReliable({ page: 'dsrMissingJSON', role: 'ADMIN' }),
-    leadsApiGet({ action: 'GET_TODAY_ASSIGNMENT', date: todayISO() }).catch(() => null),
-    jsonpReliable({ page: 'stockDashboardJSON' })
+async function loadDashCustomRange() {
+  const s = document.getElementById('dashCustomStart').value;
+  const e = document.getElementById('dashCustomEnd').value;
+  if (!s || !e) { toast('Pick both a start and end date', 'error'); return; }
+  const grid = document.getElementById('unifiedDashGrid');
+  grid.innerHTML = '<div class="loading"><span class="spinner"></span>Loading custom range...</div>';
+  // Custom-range figures are only available for Leads and DSR right now
+  // (the two modules whose backends already support an arbitrary date
+  // range) — Leave/Loyalty/Golden Plan custom-range would need their
+  // own range-aware backend work first, so rather than fake those
+  // numbers for a picked range, this is honest about only showing what
+  // genuinely supports it.
+  const sDMY = s.split('-').reverse().join('-'), eDMY = e.split('-').reverse().join('-');
+  const [leadsRes, dsrRes] = await Promise.allSettled([
+    leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', startDate: sDMY, endDate: eDMY }),
+    jsonpReliable({ page: 'dsrDateRangeJSON', role: 'ADMIN', start: s, end: e })
   ]);
+  let html = `<div class="kd-note" style="font-weight:700;">📅 Custom Range: ${fmtDMY(s)} → ${fmtDMY(e)}</div>`;
+  const lr = leadsRes.status === 'fulfilled' ? leadsRes.value : null;
+  if (lr && lr.ok && lr.rows) {
+    const tot = lr.rows.reduce((a, r) => ({ assigned: a.assigned + (r.assigned||0), submitted: a.submitted + (r.submitted||0), pending: a.pending + (r.pending||0) }), { assigned: 0, submitted: 0, pending: 0 });
+    html += `<div class="card" style="padding:12px 14px;cursor:pointer;border-left:3px solid var(--orange);" onclick="showAdminPage('leads-report')">
+      <div style="font-size:12.5px;font-weight:700;">👥 Leads (CRM)</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Assigned: ${tot.assigned} · Submitted: ${tot.submitted} · Pending: ${tot.pending}</div>
+    </div>`;
+  }
+  const dr = dsrRes.status === 'fulfilled' ? dsrRes.value : null;
+  if (dr && dr.ok && dr.rows) {
+    html += `<div class="card" style="padding:12px 14px;cursor:pointer;border-left:3px solid var(--blue,#2563eb);" onclick="showAdminPage('dsr')">
+      <div style="font-size:12.5px;font-weight:700;">🧾 DSR</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">${dr.rows.length} entries in range</div>
+    </div>`;
+  }
+  html += `<div class="kd-note" style="margin-top:8px;">Leave, Loyalty, Golden Plan, KPI and Stock Checklist custom-range totals aren't wired up yet — those still show their own Today/Month reports on their own pages.</div>`;
+  grid.innerHTML = html;
+  document.getElementById('unifiedDashEmployeeWise').innerHTML = '';
+  document.getElementById('unifiedDashTopPerformers').innerHTML = '';
+}
 
-  // Leave
-  setSub('leave', results[0].status === 'fulfilled' && results[0].value != null ? results[0].value + ' pending approval' : 'Tap to open');
+function renderUnifiedDashboard(d, period) {
+  const grid = document.getElementById('unifiedDashGrid');
+  const topBox = document.getElementById('unifiedDashTopPerformers');
+  const alertsBox = document.getElementById('unifiedDashAlerts');
+  const empWiseBox = document.getElementById('unifiedDashEmployeeWise');
+  const periodLabel = { today: 'Today', month: 'This Month', year: 'This Year' }[period] || 'Today';
 
-  // Loyalty — count of employees with a ready-to-approve balance
-  const loyRes = results[1].status === 'fulfilled' ? results[1].value : null;
-  setSub('loyalty', (loyRes && loyRes.ok) ? (loyRes.rows || []).filter(r => r.readyForApproval).length + ' ready for approval' : 'Tap to open');
+  function moduleCard(opts) {
+    const bad = !opts.data || opts.data.ok === false;
+    return `<div class="card" style="padding:12px 14px;cursor:pointer;border-left:3px solid ${opts.color};" onclick="${opts.onclick}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="font-size:12.5px;font-weight:700;color:var(--text);">${opts.icon} ${opts.title}</div>
+        ${opts.badge ? `<span class="kd-pill ${opts.badgeColor||'gold'}" style="font-size:9.5px;">${opts.badge}</span>` : ''}
+      </div>
+      ${bad ? '<div style="font-size:11px;color:var(--text3);margin-top:6px;">No data available</div>' : opts.body}
+    </div>`;
+  }
 
-  // KPI — store leader
-  const kpiRes = results[2].status === 'fulfilled' ? results[2].value : null;
-  setSub('kpi', (kpiRes && kpiRes.ok && kpiRes.rows && kpiRes.rows[0]) ? '🏆 ' + kpiRes.rows[0].employee : 'Tap to open');
+  // ── Pending / Alerts (period-independent — always "right now") ──
+  const alerts = d.alerts || [];
+  if (alerts.length === 0) {
+    alertsBox.innerHTML = '';
+  } else {
+    alertsBox.innerHTML = `<div class="card" style="padding:12px 14px;margin-bottom:10px;border:1.5px solid var(--red);background:#fdeceb;">
+      <div style="font-size:12.5px;font-weight:700;color:var(--red);margin-bottom:6px;">🔔 Needs Action (${alerts.length})</div>
+      ${alerts.map(a => `<div style="font-size:11.5px;padding:5px 0;border-top:1px solid #f5d5d3;cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
+    </div>`;
+  }
 
-  // DSR — missing entries
-  const dsrRes = results[3].status === 'fulfilled' ? results[3].value : null;
-  setSub('dsr', (dsrRes && dsrRes.ok && dsrRes.rows) ? dsrRes.rows.length + ' missing entries' : 'Tap to open');
+  let html = '';
+  const lv = d.leave, ld = d.leads, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock;
 
-  // CRM / Leads — today's total assigned across everyone
-  const crmRes = results[4].status === 'fulfilled' ? results[4].value : null;
-  if (crmRes && crmRes.ok && crmRes.employees) {
-    const totalAssigned = crmRes.employees.reduce((s, e) => s + (e.count || 0), 0);
-    setSub('crm', totalAssigned + ' lead(s) assigned today');
-  } else { setSub('crm', 'Tap to open'); }
+  // ── LEAVE — bucket picked by period ──
+  const lvBucket = period === 'today' ? (lv && lv.ok && { requests: lv.today.totalRequests, extra: `${lv.today.onLeave.length} on leave · ${lv.today.pending} pending` })
+    : period === 'month' ? (lv && lv.ok && { requests: lv.thisMonth.total, extra: `${lv.thisMonth.approved} approved · ${lv.thisMonth.pending} pending · ${lv.thisMonth.rejected} rejected` })
+    : (lv && lv.ok && { requests: lv.yearTotal.total, extra: `${lv.yearTotal.approved} approved · ${lv.yearTotal.pending} pending · ${lv.yearTotal.rejected} rejected` });
+  html += moduleCard({
+    icon: '🏖️', title: 'Leave', color: 'var(--purple)',
+    badge: lv && lv.ok ? (periodLabel) : null, badgeColor: 'gold',
+    onclick: "showAdminPage('dashboard')", data: lv,
+    body: lvBucket ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">${periodLabel}: ${lvBucket.requests} request(s)<br>${lvBucket.extra}</div>` : ''
+  });
 
-  // Stock Checklist — HEALTH stat if the Dashboard sheet has it under
-  // that exact label, otherwise a safe fallback (this sheet's stat
-  // labels are whatever's typed in its own Row 2, so this doesn't
-  // guess at a field that might not exist).
-  const stockRes = results[5].status === 'fulfilled' ? results[5].value : null;
-  const stockHealth = stockRes && stockRes.ok && stockRes.stats ? (stockRes.stats['HEALTH'] || stockRes.stats['Health']) : null;
-  setSub('checklist', stockHealth ? ('Health: ' + stockHealth) : 'Tap to open');
+  // ── LEADS ──
+  const ldBucket = period === 'today' ? (ld && ld.ok && ld.today) : period === 'month' ? (ld && ld.ok && ld.thisMonth) : (ld && ld.ok && ld.yearTotal);
+  html += moduleCard({
+    icon: '👥', title: 'Leads (CRM)', color: 'var(--orange)',
+    badge: ld && ld.ok ? periodLabel : null, badgeColor: 'gold',
+    onclick: "showAdminPage('leads')", data: ld,
+    body: ldBucket ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
+      ${periodLabel}: ${ldBucket.assigned} assigned · ${ldBucket.submitted} done · ${ldBucket.pending} pending<br>
+      ${ld.topPerformer ? '🏆 Top (this month): ' + ld.topPerformer.employee : ''}
+    </div>` : ''
+  });
 
-  // ── Top Performers (KPI + Loyalty leaderboards side by side) ──
-  const kpiTop = (kpiRes && kpiRes.ok && kpiRes.rows) ? kpiRes.rows.slice(0, 3) : [];
-  const loyTop = (loyRes && loyRes.ok && loyRes.rows) ? loyRes.rows.slice().sort((a, b) => (b.readyAmount || 0) - (a.readyAmount || 0)).slice(0, 3) : [];
+  // ── KPI — only "this month" data exists (no daily KPI concept) ──
+  html += moduleCard({
+    icon: '📊', title: 'KPI', color: 'var(--green)',
+    badge: kp && kp.ok && kp.thisMonth.topper ? '🏆 ' + kp.thisMonth.topper.employee : null, badgeColor: 'green',
+    onclick: "showAdminPage('kpi')", data: kp,
+    body: kp && kp.ok && kp.thisMonth.topper ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
+      This month topper: ${kp.thisMonth.topper.employee} — ${kp.thisMonth.topper.overallScore} pts<br>
+      <span style="font-size:10px;">(KPI is scored per running month — no single-day figure exists)</span>
+    </div>` : '<div style="font-size:11px;color:var(--text3);margin-top:6px;">No KPI data yet.</div>'
+  });
 
+  // ── DSR — only today/month tracked ──
+  const drBucket = period === 'year' ? null : (dr && dr.ok && (period === 'today' ? dr.today.entries : dr.thisMonth.entries));
+  html += moduleCard({
+    icon: '🧾', title: 'DSR', color: 'var(--blue,#2563eb)',
+    onclick: "showAdminPage('dsr')", data: dr,
+    body: drBucket !== null && drBucket !== undefined ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;">${periodLabel}: ${drBucket} entries</div>` : '<div style="font-size:11px;color:var(--text3);margin-top:6px;">Year view not tracked for DSR — showing Today/Month only.</div>'
+  });
+
+  // ── LOYALTY CARD ──
+  const lyBucket = period === 'today' ? (ly && ly.ok && ly.today.cardsApproved) : period === 'month' ? (ly && ly.ok && ly.thisMonth.cardsApproved) : (ly && ly.ok && ly.total.cardsApproved);
+  html += moduleCard({
+    icon: '💳', title: 'Loyalty Card', color: 'var(--gold)',
+    onclick: "showAdminPage('loyalty')", data: ly,
+    body: (lyBucket !== null && lyBucket !== undefined) ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
+      ${periodLabel}: ${lyBucket} card(s)${period === 'year' ? ' (all-time total) · ₹' + fmtNum(ly.total.incentivePaid) + ' paid' : ''}
+    </div>` : ''
+  });
+
+  // ── GOLDEN AURA ──
+  const gaBucket = period === 'today' ? (ga && ga.ok && ga.today.enrollments) : period === 'month' ? (ga && ga.ok && ga.thisMonth.enrollments) : (ga && ga.ok && ga.total.enrollments);
+  html += moduleCard({
+    icon: '🥇', title: 'Golden Plan', color: 'var(--purple-mid)',
+    onclick: "showAdminPage('golden-aura')", data: ga,
+    body: (gaBucket !== null && gaBucket !== undefined) ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;">${periodLabel}: ${gaBucket} enrollment(s)${period === 'year' ? ' (all-time total)' : ''}</div>` : ''
+  });
+
+  // ── STOCK CHECKLIST — today only ──
+  const stKeys = st && st.ok ? Object.keys(st.today) : [];
+  html += moduleCard({
+    icon: '📝', title: 'Stock Checklist', color: 'var(--red)',
+    onclick: "showAdminPage('stock')", data: st,
+    body: (period === 'today' && st && st.ok && stKeys.length) ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
+      ${stKeys.slice(0, 4).map(k => k + ': ' + st.today[k]).join(' · ')}
+    </div>` : '<div style="font-size:11px;color:var(--text3);margin-top:6px;">Only a Today view exists for Stock Checklist.</div>'
+  });
+
+  grid.innerHTML = html;
+
+  // ── Employee-Wise (KPI) with a simple bar chart ──
+  if (kp && kp.ok && kp.employeeWise && kp.employeeWise.length) {
+    const maxScore = Math.max(...kp.employeeWise.map(r => r.score || 0), 1);
+    let ewHtml = '<div class="card-title">👤 Employee-Wise — KPI This Month</div>';
+    kp.employeeWise.slice(0, 10).forEach(r => {
+      const pct = Math.round(((r.score || 0) / maxScore) * 100);
+      ewHtml += `<div class="trend-item"><span class="trend-label">${r.employee} (${r.grade})</span>
+        <div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%;background:var(--purple);"></div></div>
+        <span class="trend-val">${r.score}</span></div>`;
+    });
+    empWiseBox.innerHTML = ewHtml;
+  } else {
+    empWiseBox.innerHTML = '';
+  }
+
+  // ── Top Performers (KPI + Leads) ──
   let topHtml = '<div class="card-title">🏆 Top Performers</div>';
-  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:8px 0 4px;">📊 KPI — Running Month</div>';
-  if (kpiTop.length === 0) {
+  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:8px 0 4px;">📊 KPI — This Month</div>';
+  if (!kp || !kp.ok || !kp.thisMonth.top3 || kp.thisMonth.top3.length === 0) {
     topHtml += '<div style="font-size:11.5px;color:var(--text3);">No KPI data yet.</div>';
   } else {
-    kpiTop.forEach((r, i) => {
+    kp.thisMonth.top3.forEach((r, i) => {
       const medal = ['🥇', '🥈', '🥉'][i] || '';
       topHtml += `<div class="trend-item"><span class="trend-label">${medal} ${r.employee}</span><span class="trend-val">${r.overallScore}</span></div>`;
     });
   }
-  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:12px 0 4px;">💳 Loyalty — Ready to Approve</div>';
-  if (loyTop.length === 0) {
-    topHtml += '<div style="font-size:11.5px;color:var(--text3);">Nobody has a ready-to-approve balance right now.</div>';
+  topHtml += '<div style="font-size:11px;font-weight:700;color:var(--purple-dark);margin:12px 0 4px;">👥 Leads — This Month (submitted)</div>';
+  if (ld && ld.ok && ld.topPerformer) {
+    topHtml += `<div class="trend-item"><span class="trend-label">🏆 ${ld.topPerformer.employee}</span><span class="trend-val">${ld.topPerformer.submitted} done</span></div>`;
   } else {
-    loyTop.forEach((r, i) => {
-      const medal = ['🥇', '🥈', '🥉'][i] || '';
-      topHtml += `<div class="trend-item"><span class="trend-label">${medal} ${r.empName}</span><span class="trend-val">₹${fmtNum(r.readyAmount || 0)}</span></div>`;
-    });
+    topHtml += '<div style="font-size:11.5px;color:var(--text3);">No leads data yet.</div>';
   }
   topBox.innerHTML = topHtml;
 }
