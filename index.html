@@ -1054,12 +1054,30 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsr-cust-name{font-size:16px;font-weight:800;color:var(--purple);font-family:'DM Sans',sans-serif;}
 .dsr-cust-addr{font-size:12.5px;color:var(--text);margin-top:2px;text-transform:uppercase;}
 .dsr-meta-row{font-size:11px;color:var(--text3);margin-top:6px;padding-bottom:8px;border-bottom:1px dashed var(--border);}
-.dsr-items-wrap{margin-top:8px;}
+.dsr-items-wrap{margin-top:8px;overflow-x:auto;}
 .dsr-item-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;gap:8px;}
 .dsr-item-row:last-child{border-bottom:none;}
 .dsr-item-sub{color:var(--text3);font-weight:500;font-size:11px;}
+/* Items table — replaces the old .dsr-item-row stacked layout so gold/silver
+   item rows read as a proper table, with the product name picked out in
+   red/bold ahead of its design-tunch-weight-tag details (same base font,
+   just recoloured + weighted for emphasis). */
+.dsr-items-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:2px;}
+.dsr-items-table thead th{background:var(--purple-bg);color:var(--purple);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;text-align:left;padding:6px 8px;white-space:nowrap;border-bottom:1.5px solid var(--purple-mid);}
+.dsr-items-table tbody td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.dsr-items-table tbody tr:last-child td{border-bottom:none;}
+.dsr-items-table tbody tr:nth-child(even) td{background:var(--bg);}
+.dsr-item-name{color:var(--red);font-weight:800;}
 .dsr-photo-btn{flex-shrink:0;padding:5px 12px;font-size:11px;font-weight:700;border:1.5px solid var(--purple-mid);border-radius:16px;background:var(--purple-bg);color:var(--purple);cursor:pointer;}
 .dsr-photo-btn:active{transform:scale(0.95);}
+
+/* Upcoming Card Approvals — register-style table (Employee / Balance /
+   First Card / Last Card / Approve Card / Status), one row per employee,
+   with a working Approve Card button per row (was missing under each
+   employee row before). */
+.loy-appr-name{font-weight:700;color:var(--purple-dark);}
+.loy-appr-link{background:none;border:none;padding:0;color:var(--purple-mid);font-weight:700;font-size:12px;text-decoration:underline;cursor:pointer;white-space:nowrap;}
+.loy-appr-link:active{opacity:0.7;}
 
 /* Global safety net: iOS Safari (and some Android browsers) auto-zoom
    the whole page when a focused input/select/textarea has font-size
@@ -8314,10 +8332,12 @@ function renderDsrTodayFiltered(who) {
           }
         }
         const editBtn = who === 'admin' ? `<button class="dsr-photo-btn" style="margin-left:6px;" onclick="openDsrEditModal(${myItemIdx},'${who}')">✏️ Edit</button>` : '';
-        itemsHtml += `<div class="dsr-item-row">
-          <div><b>${it.itemName || '—'}</b><span class="dsr-item-sub">${it.design ? ' · ' + it.design : ''}${it.tunch ? ' · Tunch ' + it.tunch : ''}${it.weight ? ' · ' + it.weight + 'g' : ''}${it.tagNo ? ' · Tag ' + it.tagNo : ''}</span></div>
-          <div style="display:flex;">${photoBtn}${editBtn}</div>
-        </div>`;
+        const itemDetails = [it.design, it.tunch ? 'Tunch ' + it.tunch : '', it.weight ? it.weight + 'g' : '', it.tagNo ? 'Tag ' + it.tagNo : ''].filter(Boolean).join(' · ');
+        itemsHtml += `<tr>
+          <td><span class="dsr-item-name">${it.itemName || '—'}</span></td>
+          <td class="dsr-item-sub">${itemDetails || '—'}</td>
+          <td style="text-align:right;white-space:nowrap;">${photoBtn}${editBtn}</td>
+        </tr>`;
       });
 
       html += `<div class="dsr-receipt-card">
@@ -8329,7 +8349,7 @@ function renderDsrTodayFiltered(who) {
           <div class="dsr-cust-name">${g.customerName || '—'}</div>
           <div class="dsr-cust-addr"><b>📍 ${g.address || '—'}</b></div>
           <div class="dsr-meta-row"><span style="font-size:13px;font-weight:700;color:var(--purple-dark);">👤 ${g.employee}</span> &nbsp;·&nbsp; 📱 ${g.mobile || '—'} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(g.billDate)} &nbsp;·&nbsp; 🕐 ${g.entryTime}</div>
-          <div class="dsr-items-wrap">${itemsHtml}</div>
+          <div class="dsr-items-wrap"><table class="dsr-items-table"><thead><tr><th>Product</th><th>Details</th><th style="text-align:right;">Photo</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
         </div>
       </div>`;
     });
@@ -8485,13 +8505,17 @@ function openDsrDetailModal(key, who) {
   rowsHtml += '</div>';
 
   let itemsHtml = `<div class="card-title" style="margin-top:14px;margin-bottom:6px;">🧾 Items (${g.items.length})</div>`;
+  let itemRowsHtml = '';
   g.items.forEach(it => {
     const photoBtn = it.hasPhoto ? `<button class="dsr-photo-btn" onclick="dsrDetailViewPhoto('${(it.photo||'').replace(/'/g,"\\'")}')">📷 View Photo</button>` : '<span class="kd-pill red" style="font-size:9.5px;">⚠️ No Photo</span>';
-    itemsHtml += `<div class="dsr-item-row">
-      <div><b>${it.itemName || '—'}</b><span class="dsr-item-sub">${it.design ? ' · ' + it.design : ''}${it.tunch ? ' · Tunch ' + it.tunch : ''}${it.weight ? ' · ' + it.weight + 'g' : ''}${it.tagNo ? ' · Tag ' + it.tagNo : ''}</span></div>
-      <div>${photoBtn}</div>
-    </div>`;
+    const itemDetails = [it.design, it.tunch ? 'Tunch ' + it.tunch : '', it.weight ? it.weight + 'g' : '', it.tagNo ? 'Tag ' + it.tagNo : ''].filter(Boolean).join(' · ');
+    itemRowsHtml += `<tr>
+      <td><span class="dsr-item-name">${it.itemName || '—'}</span></td>
+      <td class="dsr-item-sub">${itemDetails || '—'}</td>
+      <td style="text-align:right;white-space:nowrap;">${photoBtn}</td>
+    </tr>`;
   });
+  itemsHtml += `<div class="dsr-items-wrap"><table class="dsr-items-table"><thead><tr><th>Product</th><th>Details</th><th style="text-align:right;">Photo</th></tr></thead><tbody>${itemRowsHtml}</tbody></table></div>`;
 
   const div = document.createElement('div');
   div.id = 'dsrDetailModal';
@@ -11004,24 +11028,24 @@ function loadLoyaltyUpcomingApprovals() {
     .then(res => {
       if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyUpcomingApprovals()\" title=\"Retry\">🔄</button></div>'; return; }
       if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No pending balances — everyone is fully paid up</p></div>'; return; }
-      let html = '';
+      let rowsHtml = '';
       res.rows.forEach(r => {
         const badge = r.readyForApproval
-          ? `<span class="pill" style="background:var(--green-bg);color:var(--green);">🔔 ${r.readySets} set(s) ready</span>`
-          : `<span class="pill" style="background:var(--orange-bg);color:var(--orange);">${r.cardsUntilNextSet} more for next set</span>`;
-        html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-weight:700;font-size:13.5px;">${r.empName}</div>
-            ${badge}
-          </div>
-          <div style="font-size:12px;color:var(--text2);margin-top:6px;">
-            ⏳ Balance: <b>${r.balanceCards}</b> cards ${r.readyForApproval ? `· 💰 Ready Amount: <b>₹${fmtNum(r.readyAmount)}</b>` : ''}
-          </div>
-          <div style="font-size:12px;color:var(--text2);margin-top:4px;">Card Range: #${r.firstCard} → #${r.lastCard}</div>
-          <button class="btn-primary" style="width:100%;margin-top:10px;height:36px;font-size:12.5px;" onclick="openLoyaltyApprovalModal('${escJs(r.empName)}', ${r.balanceCards})">✅ Approve Cards</button>
-        </div>`;
+          ? `<span class="kd-pill green">🔔 ${r.readySets} set(s) ready${r.readyAmount ? ' · ₹' + fmtNum(r.readyAmount) : ''}</span>`
+          : `<span class="kd-pill gold">${r.cardsUntilNextSet} more for next set</span>`;
+        rowsHtml += `<tr>
+          <td class="loy-appr-name">${r.empName}</td>
+          <td style="text-align:center;">${r.balanceCards}</td>
+          <td style="text-align:center;">${r.firstCard}</td>
+          <td style="text-align:center;">${r.lastCard}</td>
+          <td><button class="loy-appr-link" onclick="openLoyaltyApprovalModal('${escJs(r.empName)}', ${r.balanceCards})">Approve Card</button></td>
+          <td>${badge}</td>
+        </tr>`;
       });
-      content.innerHTML = html;
+      content.innerHTML = `<div class="kd-table-wrap"><table class="kd-table">
+        <thead><tr><th>Employee Name</th><th>Balance Cards</th><th>First Card No.</th><th>Last Card No.</th><th>Approve Card</th><th>Status</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table></div>`;
     })
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
