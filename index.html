@@ -1386,7 +1386,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="empQALoySearch" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="empQALoyStats" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
         <div class="quick-action-btn" id="empQALoyMyCards" onclick="showEmpPage('loyalty-mycards')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">My Cards</div><div class="quick-action-sub">Cards I've issued</div></div>
-        <div class="quick-action-btn" id="empQALoyDash" onclick="showEmpPage('loyalty-dash')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">Full overview + PDF</div></div>
         <div class="quick-action-btn" id="empQALoyLeaderboard" onclick="showEmpPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
     </div>
@@ -1473,7 +1472,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="loyEmpSearchResults" style="margin-top:10px;"></div>
     </div>
 
-    <!-- LOYALTY: My Incentive (employee) -->
+    <!-- LOYALTY: My Incentive (employee) — now also carries the Monthly
+         Trend + Mail button that used to live on the separate Dashboard
+         page, merged in below the date-range card list. -->
     <div class="page-section" id="emp-loyalty-stats">
       <div class="section-hdr"><span class="section-title2">📊 My Incentive</span>
       </div>
@@ -1485,6 +1486,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
       </div>
       <div id="loyEmpStatsContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div id="loyEmpStatsTrend"></div>
     </div>
 
     <!-- LOYALTY: My Cards (employee) — item B: card list with card no,
@@ -1495,12 +1497,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="loyMyCardsContent"></div>
     </div>
 
-    <!-- LOYALTY: Dashboard (employee) -->
-    <div class="page-section" id="emp-loyalty-dash">
-      <div class="section-hdr"><span class="section-title2">📈 My Dashboard</span>
-      </div>
-      <div id="loyEmpDashContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
 
     <!-- PROFILE PAGE -->
     <!-- BLOCKED DATES (employee — read-only, this month only) -->
@@ -3918,12 +3914,12 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openEmpMoreModal()' },
-    loyalty: { pages: ['loyalty','loyalty-dash','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
+    loyalty: { pages: ['loyalty','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
       'loyalty-upcoming','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-newcard', icon:'➕', label:'New Card' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
-      { page:'loyalty-dash', icon:'📈', label:'Dashboard' }
+      { page:'loyalty-stats', icon:'📊', label:'Incentive' }
     ], more: 'openEmpMoreModal()' },
     goldenAura: { pages: ['golden-aura','golden-aura-new','golden-aura-list'], items: [
       { page:'golden-aura', icon:'🏠', label:'Home' },
@@ -4011,7 +4007,7 @@ const SECTION_LABEL_MAP = {
   dashboard: 'Leave', pending: 'Leave', allleaves: 'Leave', acalendar: 'Leave',
   balance: 'Leave', empwise: 'Leave', events: 'Leave', availability: 'Leave',
   direct: 'Leave', notices: 'Leave', blocked: 'Leave', settings: 'Leave',
-  loyalty: 'Loyalty Card', 'loyalty-dash': 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
+  loyalty: 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-upcoming': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
@@ -4088,7 +4084,6 @@ function showEmpPage(page) {
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
-  if(page==='loyalty-dash') loadLoyaltyDashboard('emp');
   if(page==='loyalty-mycards') loadLoyaltyMyCards();
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('emp');
   if(page==='kpi') { loadEomBanner('emp'); loadKpiHighlights('emp'); }
@@ -7257,6 +7252,7 @@ function loadLoyaltyMyStats() {
   const from = document.getElementById('loyEmpFromDate').value;
   const to   = document.getElementById('loyEmpToDate').value;
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  loadLoyaltyMyStatsTrend();
 
   jsonpReliable({ page: 'loyaltyMyStatsAPI', empName: state.empName, fromDate: from, toDate: to })
     .then(res => {
@@ -7311,7 +7307,27 @@ function loadLoyaltyMyStats() {
     .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
 }
 
-// ── "My Cards" (item B) — employee's own issued cards, masked ──
+// Monthly Trend + Mail button — this used to be the separate employee
+// "Dashboard" quick-action/page; it's now merged straight into the bottom
+// of "My Incentive" so it's one tap away instead of a whole extra page.
+function loadLoyaltyMyStatsTrend() {
+  const box = document.getElementById('loyEmpStatsTrend');
+  if (!box) return;
+  jsonpReliable({ page: 'loyaltyDashboardAPI', role: 'EMP', empName: state.empName })
+    .then(res => {
+      if (!res || !res.ok) { box.innerHTML = ''; return; }
+      let html = `<div class="card"><div class="card-title">📊 Monthly Trend (last 3 months)</div>
+        <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Month</th><th>Cards</th></tr></thead><tbody>`;
+      res.monthlyTrend.forEach(m => {
+        html += `<tr><td>${m.label}</td><td><b>${m.count}</b></td></tr>`;
+      });
+      html += `</tbody></table></div></div>
+      <button class="btn-loy-card" onclick="mailLoyaltyDashboard('emp')">📧 Mail This Overview</button>`;
+      box.innerHTML = html;
+      window.__loyDashData_emp = res; // stashed for the Mail button
+    })
+    .catch(() => { box.innerHTML = ''; });
+}
 function loadLoyaltyMyCards() {
   const summary = document.getElementById('loyMyCardsSummary');
   const content = document.getElementById('loyMyCardsContent');
@@ -10898,63 +10914,6 @@ function dsrfConfirmSubmit(who, evt) {
     });
 }
 
-function loadLoyaltyDashboard(who) {
-  const prefix = who === 'emp' ? 'Emp' : 'Admin';
-  const content = document.getElementById('loy' + prefix + 'DashContent');
-  content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-
-  const role = who === 'admin' ? 'ADMIN' : 'EMP';
-  const reqParams = { page: 'loyaltyDashboardAPI', role: role };
-  if (who === 'emp') reqParams.empName = state.empName;
-
-  jsonpReliable(reqParams)
-    .then(res => {
-      if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyDashboard(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
-      const k = res.kpi;
-
-      let html = `<div class="card">
-        <div class="card-title">📈 ${res.isAdmin ? 'Store-Wide Overview' : 'My Overview'}</div>
-        <div class="stat-tile-row">
-          <div class="stat-tile" style="background:var(--purple-bg);border-color:var(--purple);"><div class="stat-tile-val" style="color:var(--purple)">${k.totalCards}</div><div class="stat-tile-lbl">Total Cards (All-Time)</div></div>
-          <div class="stat-tile" style="background:var(--green-bg);border-color:var(--green);"><div class="stat-tile-val" style="color:var(--green)">${k.approvedCards}</div><div class="stat-tile-lbl">Approved</div></div>
-          <div class="stat-tile" style="background:var(--orange-bg);border-color:var(--orange);"><div class="stat-tile-val" style="color:var(--orange)">${k.pendingCards}</div><div class="stat-tile-lbl">Pending</div></div>
-          <div class="stat-tile" style="background:var(--blue-bg);border-color:var(--blue);"><div class="stat-tile-val" style="color:var(--blue)">₹${fmtNum(k.pendingIncentive)}</div><div class="stat-tile-lbl">Pending Amount</div></div>
-        </div>
-        <div style="font-size:12px;color:var(--text2);margin-top:10px;">📆 This Month: <b>${k.thisMonthCards}</b> cards</div>
-      </div>`;
-
-      if (res.isAdmin) {
-        html += `<div class="card"><div class="card-title">🗂️ Employee-Wise Breakdown</div>
-          <div class="kd-table-wrap"><table class="kd-table"><thead><tr>
-            <th>Employee</th><th>Total</th><th>Approved</th><th>Pending</th><th>Pending ₹</th>
-          </tr></thead><tbody>`;
-        res.empRows.forEach(r => {
-          html += `<tr><td><b>${r.empName}</b></td><td>${r.totalCards}</td><td>${r.approved}</td><td>${r.pending}</td><td>₹${fmtNum(r.pendingAmount)}</td></tr>`;
-        });
-        html += `</tbody></table></div></div>`;
-      } else {
-        html += `<div class="card"><div class="card-title">🗂️ My Cards Summary</div>`;
-        res.empRows.forEach(r => {
-          html += `<div class="leave-card-date" style="margin-bottom:6px;">${r.empName}: <b>${r.totalCards}</b> cards · ✅ ${r.approved} · ⏳ ${r.pending} · ₹${fmtNum(r.pendingAmount)} pending</div>`;
-        });
-        html += `</div>`;
-      }
-
-      html += `<div class="card"><div class="card-title">📊 Monthly Trend (last 3 months)</div>
-        <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Month</th><th>Cards</th></tr></thead><tbody>`;
-      res.monthlyTrend.forEach(m => {
-        html += `<tr><td>${m.label}</td><td><b>${m.count}</b></td></tr>`;
-      });
-      html += `</tbody></table></div></div>`;
-
-      html += `<button class="btn-loy-card" onclick="mailLoyaltyDashboard('${who}')">📧 Mail This Dashboard</button>`;
-
-      content.innerHTML = html;
-      window['__loyDashData_' + who] = res; // stashed for the Mail button
-    })
-    .catch(err => { content.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
-}
-
 function mailLoyaltyDashboard(who) {
   const res = window['__loyDashData_' + who];
   if (!res) { toast('Load the dashboard first', 'error'); return; }
@@ -11450,10 +11409,10 @@ function renderAdminDashboard() {
   // hid how many requests were actually still stuck with MIS vs. sitting
   // with the Store Manager.
   document.getElementById('adminStatsCard').innerHTML = sectionHeaderCardHtml('admin', [
-      { val: countsThisMonth.total, lbl: 'This Month', color: '#80c8ff' },
-      { val: countsThisMonth.pending, lbl: 'Pending', color: '#ffd080' },
-      { val: countsThisMonth.approved, lbl: 'Approved', color: '#80ffb0' },
-      { val: countsThisMonth.rejected, lbl: 'Rejected', color: '#ff8080' }
+      { val: counts.total, lbl: 'All-Time Total', color: '#80c8ff' },
+      { val: counts.approved, lbl: 'All-Time Approved', color: '#80ffb0' },
+      { val: counts.pending + counts.mis, lbl: 'Awaiting Action', color: '#ffd080' },
+      { val: Object.keys(deptMap).length, lbl: 'Depts Active (Mo.)', color: '#c0c0ff' }
     ]) + `
     <div class="card-title">📊 Overview (This Month)</div>
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
