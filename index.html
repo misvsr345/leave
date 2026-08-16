@@ -1051,8 +1051,8 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsr-receipt-hd{background:linear-gradient(135deg,var(--purple-dark),var(--purple));padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
 .dsr-receipt-id{color:#fff;font-weight:800;font-size:13px;}
 .dsr-receipt-body{padding:12px 14px;background:#fffdf7;}
-.dsr-cust-name{font-size:16px;font-weight:800;color:var(--purple);font-family:'Playfair Display',serif;}
-.dsr-cust-addr{font-size:12.5px;color:var(--text);margin-top:2px;}
+.dsr-cust-name{font-size:16px;font-weight:800;color:var(--purple);font-family:'DM Sans',sans-serif;}
+.dsr-cust-addr{font-size:12.5px;color:var(--text);margin-top:2px;text-transform:uppercase;}
 .dsr-meta-row{font-size:11px;color:var(--text3);margin-top:6px;padding-bottom:8px;border-bottom:1px dashed var(--border);}
 .dsr-items-wrap{margin-top:8px;}
 .dsr-item-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;gap:8px;}
@@ -2432,6 +2432,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📝 DSR Entries — All Employees</span></div>
       <div class="card">
         <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="dsrTodayDate-admin" onchange="loadDsrTodayForDate('admin')"></div>
+        <div class="form-row"><label>Employee</label>
+          <select id="dsrTodayEmpFilter-admin" class="uniform-select" onchange="renderDsrTodayFiltered('admin')">
+            <option value="">-- All Employees --</option>
+          </select>
+        </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrTodayBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-admin','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
@@ -8236,38 +8241,77 @@ function loadDsrToday(who, date) {
   if (date) reqParams.date = date;
   jsonpReliable(kpiEmpParams(who, reqParams)).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrToday(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
-    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR entries filed that day.</p></div>'; return; }
+    window['__dsrTodayRes_' + who] = res;
 
-    // Group every item-row that shares the same DSR No into ONE card —
-    // a single DSR (one customer, one bill) can have multiple items.
-    const groups = {};
-    const order = [];
-    res.rows.forEach(d => {
-      const key = d.dsrNo || (d.customerName + '|' + d.mobile + '|' + d.entryTime);
-      if (!groups[key]) { groups[key] = { ...d, items: [] }; order.push(key); }
-      groups[key].items.push(d);
-    });
+    // v-new (Item 4 — Admin employee-wise DSR filter): populate the
+    // dropdown from whoever actually has entries in this data — no
+    // separate backend call needed, all the rows are already here.
+    if (who === 'admin') {
+      const sel = document.getElementById('dsrTodayEmpFilter-admin');
+      if (sel) {
+        const names = [...new Set(res.rows.map(r => r.employee).filter(Boolean))].sort();
+        const prevVal = sel.value;
+        sel.innerHTML = '<option value="">-- All Employees --</option>' + names.map(n => `<option value="${escJs(n)}">${n}</option>`).join('');
+        if (names.includes(prevVal)) sel.value = prevVal; // keep selection across a date change if still valid
+      }
+    }
+    renderDsrTodayFiltered(who);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrToday(\'' + who + '\')\" title=\"Retry\">🔄</button></div>'; });
+}
 
-    let missingPhotoCount = 0;
-    let html = `<div class="kd-note">${fmtDMY(res.date)} — ${order.length} DSR${order.length === 1 ? '' : 's'} (${res.rows.length} item${res.rows.length === 1 ? '' : 's'})</div>`;
-    let photoIdx = 0, itemIdx = 0;
-    window['__dsrTodayPhotos_' + who] = [];
-    window['__dsrTodayItems_' + who] = [];
-    window['__dsrTodayGroups_' + who] = groups;
+// Renders from the already-fetched data (window.__dsrTodayRes_*) — the
+// Employee filter calls this directly, no re-fetch needed.
+function renderDsrTodayFiltered(who) {
+  const box = document.getElementById('dsrTodayBox-' + who);
+  const res = window['__dsrTodayRes_' + who];
+  if (!res) return;
+  const empFilterSel = who === 'admin' ? document.getElementById('dsrTodayEmpFilter-admin') : null;
+  const empFilter = empFilterSel ? empFilterSel.value : '';
+  const filteredRows = empFilter ? res.rows.filter(r => r.employee === empFilter) : res.rows;
 
-    order.forEach(key => {
-      const g = groups[key];
+  if (!filteredRows.length) { box.innerHTML = `<div class="empty-state"><p>No DSR entries ${empFilter ? 'for ' + empFilter : ''} that day.</p></div>`; return; }
+
+  // Group every item-row that shares the same DSR No into ONE card —
+  // a single DSR (one customer, one bill) can have multiple items.
+  const groups = {};
+  const order = [];
+  filteredRows.forEach(d => {
+    const key = d.dsrNo || (d.customerName + '|' + d.mobile + '|' + d.entryTime);
+    if (!groups[key]) { groups[key] = { ...d, items: [] }; order.push(key); }
+    groups[key].items.push(d);
+  });
+
+  let missingPhotoCount = 0;
+  let html = `<div class="kd-note">${fmtDMY(res.date)}${empFilter ? ' — ' + empFilter : ''} — ${order.length} DSR${order.length === 1 ? '' : 's'} (${filteredRows.length} item${filteredRows.length === 1 ? '' : 's'})</div>`;
+  let photoIdx = 0, itemIdx = 0;
+  window['__dsrTodayPhotos_' + who] = [];
+  window['__dsrTodayItems_' + who] = [];
+  window['__dsrTodayGroups_' + who] = groups;
+
+  order.forEach(key => {
+    const g = groups[key];
       const payColor = g.paymentStatus === 'Purchased' ? 'green' : g.paymentStatus === 'Advance' ? 'gold' : 'red';
       let itemsHtml = '';
       g.items.forEach(it => {
         window['__dsrTodayItems_' + who].push(it);
         const myItemIdx = itemIdx++;
         if (!it.hasPhoto) missingPhotoCount++;
+        // v-fix (No Photo badge confusing employees who DID upload):
+        // hasPhoto is now accurate for everyone (see backend fix), but
+        // an employee never receives the actual photo data — a "View"
+        // button would be broken for them. So: employee sees a plain,
+        // accurate "✅ Uploaded" / "⚠️ No Photo" indicator (informational
+        // only, nothing to click); admin still gets the clickable View
+        // button exactly as before, since they DO receive the photo.
         let photoBtn = '<span class="kd-pill red" style="font-size:9.5px;">⚠️ No Photo</span>';
         if (it.hasPhoto) {
-          window['__dsrTodayPhotos_' + who].push(it.photo);
-          photoBtn = `<button class="dsr-photo-btn" onclick="viewDsrPhoto(${photoIdx}, '${who}')">📷 View</button>`;
-          photoIdx++;
+          if (who === 'admin') {
+            window['__dsrTodayPhotos_' + who].push(it.photo);
+            photoBtn = `<button class="dsr-photo-btn" onclick="viewDsrPhoto(${photoIdx}, '${who}')">📷 View</button>`;
+            photoIdx++;
+          } else {
+            photoBtn = '<span class="kd-pill green" style="font-size:9.5px;">✅ Uploaded</span>';
+          }
         }
         const editBtn = who === 'admin' ? `<button class="dsr-photo-btn" style="margin-left:6px;" onclick="openDsrEditModal(${myItemIdx},'${who}')">✏️ Edit</button>` : '';
         itemsHtml += `<div class="dsr-item-row">
@@ -8284,7 +8328,7 @@ function loadDsrToday(who, date) {
         <div class="dsr-receipt-body">
           <div class="dsr-cust-name">${g.customerName || '—'}</div>
           <div class="dsr-cust-addr"><b>📍 ${g.address || '—'}</b></div>
-          <div class="dsr-meta-row">👤 ${g.employee} &nbsp;·&nbsp; 📱 ${g.mobile || '—'} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(g.billDate)} &nbsp;·&nbsp; 🕐 ${g.entryTime}</div>
+          <div class="dsr-meta-row"><span style="font-size:13px;font-weight:700;color:var(--purple-dark);">👤 ${g.employee}</span> &nbsp;·&nbsp; 📱 ${g.mobile || '—'} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(g.billDate)} &nbsp;·&nbsp; 🕐 ${g.entryTime}</div>
           <div class="dsr-items-wrap">${itemsHtml}</div>
         </div>
       </div>`;
@@ -8295,7 +8339,6 @@ function loadDsrToday(who, date) {
     if (who === 'admin' && missingPhotoCount > 0) {
       toast(`⚠️ ${missingPhotoCount} item(s) missing photo today!`, 'error');
     }
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrToday(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
 // Handles both raw base64 photos and Google Drive share links (which
@@ -12027,8 +12070,10 @@ function renderEmployeeWiseProfile() {
   if (exportBtns) exportBtns.style.display = 'none';
 
   const bal = empWiseBalanceCache.find(b => b.empId === empId);
-  const empLeaves = (state.allLeaves || []).filter(l => l.empId === empId)
-    .sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''));
+  // v-fix (Employee Wise Leave order): no longer re-sorted by date —
+  // shows in the same order the leaves come from the sheet itself, per
+  // explicit instruction (show it exactly as it comes from the sheet).
+  const empLeaves = (state.allLeaves || []).filter(l => l.empId === empId);
 
   const empName = bal ? bal.name : (empLeaves[0] ? empLeaves[0].name : empId);
   const quota = bal ? bal.quota : 3;
@@ -12088,8 +12133,8 @@ function renderEmployeeWiseProfile() {
   const statusFiltered = (!state.empWiseStatus || state.empWiseStatus === 'all')
     ? explodedHistory
     : explodedHistory.filter(l => l.status === state.empWiseStatus);
-  const filteredHistory = filterLeavesByScopeAndTime(statusFiltered, state.empWiseScope || 'all', state.empWiseTime || 'all')
-    .sort((a,b) => (b.displayDate||'').localeCompare(a.displayDate||''));
+  // v-fix (Employee Wise Leave order): no re-sort here either — natural order.
+  const filteredHistory = filterLeavesByScopeAndTime(statusFiltered, state.empWiseScope || 'all', state.empWiseTime || 'all');
 
   html += `<div class="card"><div class="card-title">📋 Leave History (${filteredHistory.length})</div>`;
   if (filteredHistory.length === 0) {
