@@ -2642,7 +2642,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Employee names — tap for their leads</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">All employees — calls done</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
+        <div class="quick-action-btn" id="adminQALeadsReport" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee</div></div>
       </div>
@@ -5599,28 +5599,50 @@ async function loadPermFeatureList() {
 // `checkClass`/`idPrefix`/`onChangeFn` let the same builder serve both
 // the Employee ("...Emp") and Admin (no suffix) panels with separate
 // DOM ids so the two panels never collide.
+// v-redesign (permission editor UI): the old version treated every
+// single feature as its OWN mini-accordion ("↳ Leave: Calendar" as a
+// clickable header with an ON/OFF pill AND a ▾ arrow that expanded to
+// reveal one lone checkbox inside) — confusing, and nothing to actually
+// click-expand since each "section" only ever contained itself. Now:
+// ONE real heading per module (Leave, Loyalty Card, KPI, DSR, Leads,
+// Golden Aura, Stock), with every one of its features listed directly
+// underneath as a plain checkbox — nothing to expand, nothing that
+// opens another box, tick what's needed and Save.
 function buildPermAccordionHtml(features, perms, checkClass, idPrefix, onChangeFn) {
-  let html = '';
+  // Group the flat features[] list (each entry still labeled "↳ Leave:
+  // X" from the backend for backward compatibility) by its module
+  // prefix, so this can render one heading + all its checkboxes
+  // together instead of one heading PER feature.
+  const groups = []; // [{ sectionLabel, sectionIcon, items: [{key,label}] }]
+  let current = null;
   (features || []).forEach(f => {
-    const subs = f.subs || [];
-    const anyOn = perms ? subs.some(s => !!perms[s.key]) : false;
-    html += `<div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;">
-      <div onclick="${idPrefix}_toggleAccordion('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:${anyOn ? 'var(--green-bg)' : '#fff'};">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">${f.label}</span>
-        <span style="display:flex;align-items:center;gap:8px;">
-          <span class="pill" style="background:${anyOn ? 'var(--green)' : '#ddd'};color:#fff;font-size:10px;">${anyOn ? 'ON' : 'OFF'}</span>
-          <span id="${idPrefix}_acc_arrow_${f.key}" style="font-size:12px;color:var(--text3);">▾</span>
-        </span>
-      </div>
-      <div id="${idPrefix}_acc_body_${f.key}" style="display:none;padding:6px 14px 12px;border-top:1px solid var(--border);">`;
-    subs.forEach(s => {
+    const isSectionRow = !f.label.startsWith('↳'); // e.g. "📋 Leave (section)" — the module's own master row
+    if (isSectionRow) {
+      const iconMatch = f.label.match(/^(\S+)\s*(.*)$/);
+      current = { sectionIcon: iconMatch ? iconMatch[1] : '📁', sectionLabel: (iconMatch ? iconMatch[2] : f.label).replace(/\s*\(section\)\s*$/i, ''), items: [] };
+      groups.push(current);
+      // The section's own master feature still gets a checkbox too —
+      // "whole module on/off" as just another item in the same flat list.
+      (f.subs || []).forEach(s => current.items.push(s));
+    } else if (current) {
+      // Sub labels here are already clean (e.g. "Calendar", "Approve",
+      // "Reject") — no "Section: " prefix to strip, just add them as-is.
+      (f.subs || []).forEach(s => current.items.push(s));
+    }
+  });
+
+  let html = '';
+  groups.forEach(g => {
+    html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:13.5px;font-weight:800;color:var(--text);margin-bottom:8px;">${g.sectionIcon} ${g.sectionLabel}</div>`;
+    g.items.forEach(s => {
       const checked = perms ? !!perms[s.key] : false;
-      html += `<label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
-        <input type="checkbox" class="${checkClass}" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="${onChangeFn}('${f.key}')">
+      html += `<label style="display:flex;align-items:center;gap:9px;padding:7px 2px;cursor:pointer;">
+        <input type="checkbox" class="${checkClass}" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="${onChangeFn}('${s.key}')">
         <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
       </label>`;
     });
-    html += `</div></div>`;
+    html += `</div>`;
   });
   return html;
 }
@@ -5742,21 +5764,11 @@ async function loadSettingsEmpGranular(empId, empName) {
   }
 }
 
-function emp_toggleAccordion(key) {
-  const body = document.getElementById('emp_acc_body_' + key);
-  const arrow = document.getElementById('emp_acc_arrow_' + key);
-  const open = body.style.display === 'block';
-  body.style.display = open ? 'none' : 'block';
-  arrow.textContent = open ? '▾' : '▴';
-}
-function onSettingsCheckChangeEmp(featureKey) {
-  const header = document.querySelector(`#emp_acc_body_${featureKey}`).previousElementSibling;
-  const anyOn = Array.from(document.querySelectorAll(`#emp_acc_body_${featureKey} .settings-perm-check-emp`)).some(cb => cb.checked);
-  header.style.background = anyOn ? 'var(--green-bg)' : '#fff';
-  const pill = header.querySelector('.pill');
-  pill.style.background = anyOn ? 'var(--green)' : '#ddd';
-  pill.textContent = anyOn ? 'ON' : 'OFF';
-}
+// v-redesign: no longer needs to do anything — the old accordion
+// header/ON-OFF pill this used to keep in sync doesn't exist anymore
+// (flat checkbox list now, see buildPermAccordionHtml). Kept as a
+// no-op so the onchange="..." wiring on each checkbox stays harmless.
+function onSettingsCheckChangeEmp(featureKey) { /* no-op — see comment above */ }
 
 // Toggles every detailed-access checkbox for the currently selected
 // employee between Select All and Deselect All, same behavior as the
@@ -5969,24 +5981,11 @@ async function onSettingsAdminSelected() {
   }
 }
 
-function adm_toggleAccordion(key) {
-  const body = document.getElementById('adm_acc_body_' + key);
-  const arrow = document.getElementById('adm_acc_arrow_' + key);
-  const open = body.style.display === 'block';
-  body.style.display = open ? 'none' : 'block';
-  arrow.textContent = open ? '▾' : '▴';
-}
-
 // Live-updates the ON/OFF badge and header tint the instant a checkbox
 // changes, so MIS gets immediate visual feedback before even saving.
-function onSettingsCheckChange(featureKey) {
-  const header = document.querySelector(`#adm_acc_body_${featureKey}`).previousElementSibling;
-  const anyOn = Array.from(document.querySelectorAll(`#adm_acc_body_${featureKey} .settings-perm-check`)).some(cb => cb.checked);
-  header.style.background = anyOn ? 'var(--green-bg)' : '#fff';
-  const pill = header.querySelector('.pill');
-  pill.style.background = anyOn ? 'var(--green)' : '#ddd';
-  pill.textContent = anyOn ? 'ON' : 'OFF';
-}
+// v-redesign: no longer needs to do anything — see comment on
+// onSettingsCheckChangeEmp above.
+function onSettingsCheckChange(featureKey) { /* no-op — see comment above */ }
 
 // Toggles EVERY checkbox in the Admin Access panel (all 6 section master
 // switches + every individual sub-permission inside every accordion) in
@@ -6200,6 +6199,7 @@ const SM_FEATURE_ELEMENTS = {
   loyDash:       ['adminQALoyDash'],
   loyUpcoming:   ['adminQALoyUpcoming'],
   loyIncenthist: ['adminQALoyIncenthist'],
+  leadsReport: ['adminQALeadsReport'],
   kpi: ['adminQAKpi'],
   kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
@@ -9659,11 +9659,14 @@ function openLeadCallPanel(lead) {
              so they're merged into one "Not Connected" status instead of
              being separate choices that split the same underlying
              outcome across three labels. Interested/Converted/Will
-             Visit/Busy/Repeated are genuinely different outcomes and
-             stay separate. -->
+             Visit/Busy are genuinely different outcomes and stay
+             separate. "Repeated" is removed entirely — it isn't an
+             actual calling outcome (nothing was learned from the call
+             that "Repeated" describes on its own), so it no longer
+             appears as a choice. -->
         <option>Not Connected</option>
         <option>Interested</option><option>Converted</option>
-        <option>Will Visit</option><option>Busy</option><option>Repeated</option>
+        <option>Will Visit</option><option>Busy</option>
       </select>
     </div>
     <div style="font-size:10.5px;color:var(--text3);margin-top:-8px;margin-bottom:8px;">"Not Connected" covers Unanswered, Not Received, and Switched Off too — no need to pick separately.</div>
