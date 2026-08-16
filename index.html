@@ -8310,7 +8310,7 @@ function renderDsrTodayFiltered(who) {
             photoBtn = `<button class="dsr-photo-btn" onclick="viewDsrPhoto(${photoIdx}, '${who}')">📷 View</button>`;
             photoIdx++;
           } else {
-            photoBtn = '<span class="kd-pill green" style="font-size:9.5px;">✅ Uploaded</span>';
+            photoBtn = '<span class="kd-pill green" style="font-size:9.5px;">✅Photo Uploaded</span>';
           }
         }
         const editBtn = who === 'admin' ? `<button class="dsr-photo-btn" style="margin-left:6px;" onclick="openDsrEditModal(${myItemIdx},'${who}')">✏️ Edit</button>` : '';
