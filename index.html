@@ -597,56 +597,45 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-quick-item:active { background: var(--purple-bg); border-color: var(--gold); }
 .dh-quick-item .qi { font-size: 17px; display: block; margin-bottom: 4px; }
 
-/* ══════════════════════════════════════
-   DASHBOARD HUB v2 — full spec build (section-wise data,
-   Leave/Loyalty/Golden Plan/KPI/DSR/Walkin/Leads/Checklist).
-   Mobile-first by default; @media rules below turn the same
-   markup into a rich multi-column desktop control-center
-   without touching any other page in the app.
-   ══════════════════════════════════════ */
-.dh-datebar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
-.dh-datebar-label { font-size:11.5px; font-weight:700; color:var(--text3); }
-.dh-section-title { font-family:'Playfair Display',serif; font-size:14px; font-weight:800; color:var(--purple); margin:16px 0 8px; display:flex; align-items:center; gap:7px; }
-.dh-section-title:first-child { margin-top:0; }
-.dh-row-2 { display:grid; grid-template-columns:1fr; gap:10px; }
-.dh-row-3 { display:grid; grid-template-columns:1fr; gap:10px; }
-.dh-mini-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:10px; }
-.dh-mini-stat { background:linear-gradient(135deg,#faf5ff,#fff); border:1.5px solid var(--gold); border-radius:var(--r2); padding:10px 8px; text-align:center; }
-.dh-mini-stat .v { font-size:18px; font-weight:800; font-family:'Playfair Display',serif; color:var(--purple); line-height:1.1; }
-.dh-mini-stat .l { font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--text3); margin-top:3px; }
-.dh-list-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-top:1px solid var(--border); font-size:12px; }
-.dh-list-row:first-child { border-top:none; }
-.dh-name-pill { font-weight:700; color:var(--text); }
-.dh-badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; white-space:nowrap; }
-.dh-badge.gold { background:var(--gold-bg,#fff8e1); color:#8a6d1f; }
-.dh-badge.green { background:#e8faf0; color:#1a7a4f; }
-.dh-badge.red { background:#fdeaea; color:#c0392b; }
-.dh-badge.blue { background:#e8f0fb; color:var(--blue); }
-.dh-badge.grey { background:#f1eef7; color:var(--text3); }
-.dh-chart-box { position:relative; height:190px; margin:6px 0 2px; }
-.dh-chart-box.small { height:150px; }
-.dh-empty-mini { font-size:11px; color:var(--text3); text-align:center; padding:14px 0; }
-.dh-checklist-grid { display:grid; grid-template-columns:1fr; gap:10px; }
-.dh-checklist-col-title { font-size:11.5px; font-weight:800; color:var(--text2); margin:8px 0 4px; text-transform:uppercase; letter-spacing:.4px; }
-.dh-checklist-col-title:first-child { margin-top:0; }
-.dh-emp-pill { display:flex; align-items:center; justify-content:space-between; padding:6px 9px; border-radius:8px; background:#faf8fc; border:1px solid var(--border); margin-bottom:6px; font-size:11.5px; }
-.dh-emp-pill .nm { font-weight:700; }
-.dh-tabbar { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
-.dh-tab { font-size:11px; font-weight:700; padding:6px 12px; border-radius:16px; border:1.5px solid var(--border); background:var(--card); color:var(--text2); cursor:pointer; }
-.dh-tab.active { background:var(--purple); color:#fff; border-color:var(--purple); }
+/* ── Dashboard Hub v2 — per-module detail panels (Leave/Loyalty/Golden
+   Plan/KPI/DSR/Walk-in/Checklist) added on top of the KPI-card row above.
+   Mobile: everything just stacks (dh-panel's own margin-bottom does the
+   work). Desktop: dh-panels-grid below turns into a real multi-column
+   grid — see the min-width:1024px block further down. ── */
+.dh-panels-grid { display: block; }
+.dh-stat-grid6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.dh-stat-box2 { background: var(--bg2, #f8f5ff); border-radius: 10px; padding: 9px 6px; text-align: center; }
+.dh-stat-box2 .v { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 800; }
+.dh-stat-box2 .l { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .3px; margin-top: 2px; }
+.dh-subhead { font-size: 11px; font-weight: 800; color: var(--text2); margin: 12px 0 6px; display: flex; align-items: center; gap: 5px; }
+.dh-mini-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 0; border-top: 1px solid var(--border); }
+.dh-mini-row:first-of-type { border-top: none; }
+.dh-mini-name { color: var(--text); font-weight: 600; }
+.dh-mini-val { color: var(--purple); font-weight: 800; white-space: nowrap; }
+.dh-name-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.dh-name-chip { background: #fff0f0; color: #b91c1c; border: 1px solid #fecaca; border-radius: 20px; padding: 3px 10px; font-size: 10.5px; font-weight: 700; }
+.dh-name-chip.ok { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.dh-split2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.dh-split-box { background: var(--bg2, #f8f5ff); border-radius: 10px; padding: 9px 10px; }
+.dh-split-box .t { font-size: 9.5px; font-weight: 800; color: var(--text3); text-transform: uppercase; margin-bottom: 4px; }
+.dh-split-box .row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+.dh-empty-mini { font-size: 11px; color: var(--text3); font-style: italic; padding: 4px 0; }
+.dh-chart-wrap { position: relative; height: 150px; margin-top: 4px; }
 
+/* ── Desktop (≥1024px) — richer multi-column dashboard, per the
+   Desktop/Mobile spec: sidebar stays as-is (unchanged app chrome), but
+   inside the Dashboard Hub itself the KPI row widens and the detail
+   panels below arrange into a real grid instead of one long mobile
+   column, exactly like the reference layout's desktop view. ── */
 @media (min-width: 1024px) {
-  #admin-dashboard-hub .dh-kpi-grid { grid-template-columns:repeat(6,1fr); gap:14px; }
-  #admin-dashboard-hub .dh-row-2 { grid-template-columns:1fr 1fr; gap:14px; }
-  #admin-dashboard-hub .dh-row-3 { grid-template-columns:1fr 1fr 1fr; gap:14px; }
-  #admin-dashboard-hub .dh-mini-stats { grid-template-columns:repeat(3,1fr); }
-  #admin-dashboard-hub .dh-panel, #admin-dashboard-hub .dh-alert-card { margin-bottom:14px; }
-  #admin-dashboard-hub .dh-kpi-val { font-size:23px; }
-  #admin-dashboard-hub .dh-quick-row { grid-template-columns:repeat(8,1fr); }
-  #admin-dashboard-hub .dh-chart-box { height:230px; }
-}
-@media (min-width: 1024px) and (max-width: 1365px) {
-  #admin-dashboard-hub .dh-kpi-grid { grid-template-columns:repeat(3,1fr); }
+  #admin-dashboard-hub .dh-kpi-grid, #emp-dashboard-hub .dh-kpi-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  #admin-dashboard-hub .dh-panels-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: start;
+  }
+  #admin-dashboard-hub .dh-panels-grid .dh-panel-wide { grid-column: 1 / -1; }
+  #admin-dashboard-hub .dh-panel { margin-bottom: 0; }
+  #admin-dashboard-hub .dh-quick-row { grid-template-columns: repeat(7, 1fr); }
+  #admin-dashboard-hub .dh-stat-grid6 { grid-template-columns: repeat(6,1fr); }
 }
 
 /* Stats Grid */
@@ -11910,6 +11899,20 @@ function dhMakeGauge(canvasId, pct, color) {
   });
 }
 
+// Small labelled donut — used by the Dashboard Hub's Leave breakdown
+// (Approved/Pending/Rejected/Absent/SM Pending, this month).
+function dhMakeDonut(canvasId, labels, data, colors) {
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  window.__dhGauges = window.__dhGauges || {};
+  window.__dhGauges[canvasId] = new Chart(el, {
+    type: 'doughnut',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { enabled: true } } }
+  });
+}
+
 // KPI-style summary card: colored left accent, icon, label, big value, sub-line.
 // bad=true (module has no data yet) shows a quiet "Tap to open" instead of stats,
 // same fallback behaviour as before — nothing here is invented if the API sends nothing.
@@ -11981,28 +11984,6 @@ async function loadEmpDashboardHub() {
   }
 }
 
-// ══════════════════════════════════════
-// DASHBOARD HUB v2 — full section-wise build.
-// Desktop vs Mobile share the SAME markup; @media (min-width:1024px)
-// rules in the CSS turn the 2-col mobile grid into a rich multi-column
-// desktop layout. Every number below comes straight from
-// adminDashboardJSON (backend) plus a direct client-side call to the
-// Leads CRM app (GET_LEADS_REPORT) — no Leads logic is modified, this
-// only DISPLAYS the same report the Leads pages already show.
-// ══════════════════════════════════════
-function dhPill(status) {
-  const s = String(status || '').toLowerCase();
-  if (s.indexOf('approv') > -1 || s === 'done' || s.indexOf('complet') > -1 || s.indexOf('submit') > -1) return 'green';
-  if (s.indexOf('reject') > -1) return 'red';
-  if (s.indexOf('pend') > -1 || s.indexOf('miss') > -1) return 'gold';
-  return 'grey';
-}
-
-function dhListRows(items, emptyMsg) {
-  if (!items || !items.length) return `<div class="dh-empty-mini">${emptyMsg || 'No data'}</div>`;
-  return items.map(it => `<div class="dh-list-row"><span class="dh-name-pill">${it.name}</span><span class="dh-badge ${it.badgeClass || 'grey'}">${it.badge}</span></div>`).join('');
-}
-
 async function loadAdminDashboardHub() {
   const body = document.getElementById('adminDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
@@ -12018,192 +11999,218 @@ async function loadAdminDashboardHub() {
     return;
   }
   const d = res.data || {};
-  const lv = d.leave, kp = d.kpi, dr = d.dsr, ly = d.loyalty, gp = d.goldenPlan || d.goldenAura, wk = d.walkin, ck = d.checklist || d.stock;
+  const lv = d.leave, ld = d.leads, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock, wk = d.walkin;
 
-  // Leads — fetched directly from the Leads CRM app, same as the Leads
-  // pages already do. Failure here never blocks the rest of the dashboard.
-  let leadsRep = null;
-  try {
-    const lres = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() });
-    if (lres && lres.ok) leadsRep = lres;
-  } catch (e) { /* leads dashboard tile falls back to "Tap to open" below */ }
+  let html = '';
 
-  let html = `<div class="dh-datebar"><span class="dh-datebar-label">📅 Today: ${todayYMD()}</span></div>`;
-
-  // ── Alerts ──
+  // Alerts — unchanged behaviour, just restyled to match the new panel look
   const alerts = d.alerts || [];
   if (alerts.length) {
-    html += `<div class="dh-alert-card"><div class="dh-alert-inner">
-      <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">🔔 Needs Action (${alerts.length})</div>
-      ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
-    </div></div>`;
+    html += `<div class="dh-alert-card">
+      <div class="dh-alert-inner">
+        <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">🔔 Needs Action (${alerts.length})</div>
+        ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
+      </div>
+    </div>`;
   }
 
-  // ── KPI summary row (spec section 7) ──
-  const leadsTotal = leadsRep && leadsRep.rows ? leadsRep.rows.reduce((s, r) => s + (r.assigned || 0), 0) : null;
+  // KPI summary cards — 2-col on mobile / 4-col on desktop (see @media rule), colored accent per module, tap to drill into that module
   html += '<div class="dh-kpi-grid">';
-  html += dhKpiCard({ icon: '👥', title: 'Total Leads', accent: '#c97a10', onclick: "showAdminPage('leads')", data: leadsTotal != null ? { ok: true } : null,
-    value: leadsTotal != null ? leadsTotal : '', sub: leadsTotal != null ? 'Assigned today' : '' });
-  html += dhKpiCard({ icon: '🏖️', title: 'Leave (Month)', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
-    value: lv && lv.ok ? lv.total : '', sub: lv && lv.ok ? `Pending ${lv.pending} · SM ${lv.smPending}` : '' });
-  html += dhKpiCard({ icon: '🧾', title: 'DSR Today', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
-    value: dr && dr.ok ? dr.today.entries : '', sub: dr && dr.ok ? `Missing ${dr.missingToday.count}` : '' });
-  html += dhKpiCard({ icon: '💳', title: 'Loyalty Cards', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
-    value: ly && ly.ok ? ly.today.cardsApproved : '', sub: ly && ly.ok ? `This month ${ly.thisMonth.cardsApproved}` : '' });
-  html += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: gp,
-    value: gp && gp.ok ? gp.today.enrollments : '', sub: gp && gp.ok ? `This month ${gp.thisMonth.enrollments}` : '' });
-  html += dhKpiCard({ icon: '📊', title: 'KPI Topper', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
+  html += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
+    value: lv && lv.ok ? lv.today.onLeave.length : '',
+    sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
+
+  // Leads (CRM) tile — untouched: still reads d.leads exactly as before,
+  // still falls back to "Tap to open" since that module isn't part of
+  // this Dashboard update.
+  html += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
+    value: ld && ld.ok ? ld.today.assigned : '',
+    sub: ld && ld.ok ? `Assigned today${ld.topPerformer ? ' · 🏆 ' + ld.topPerformer.employee : ''}` : '' });
+
+  html += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
     value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
-    sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.employee : '' });
+    sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? `Topper: ${kp.thisMonth.topper.employee}` : '' });
+
+  html += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
+    value: dr && dr.ok ? dr.today.entries : '',
+    sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
+
+  html += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
+    value: ly && ly.ok ? ly.today.cardsApproved : '',
+    sub: ly && ly.ok ? `Today · ${ly.thisMonth.cardsApproved} this month` : '' });
+
+  html += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: ga,
+    value: ga && ga.ok ? ga.today.enrollments : '',
+    sub: ga && ga.ok ? `Today · ${ga.thisMonth.enrollments} this month` : '' });
+
+  html += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('kpi')", data: wk,
+    value: wk && wk.ok ? wk.today.walkins : '',
+    sub: wk && wk.ok ? `Today · ${wk.yesterday.walkins} yesterday` : '' });
+
+  html += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock')", data: st,
+    value: st && st.ok && st.today ? (st.today['SUBMITTED'] != null ? st.today['SUBMITTED'] : '') : '',
+    sub: st && st.ok ? 'Today · tap for detail' : '' });
   html += '</div>';
 
-  // ── Leave section ──
-  html += `<div class="dh-section-title">🏖️ Leave — This Month</div><div class="dh-panel" onclick="showAdminPage('dashboard')">`;
-  if (lv && lv.ok) {
-    html += `<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">
-      <div class="stat-box"><div class="stat-val" style="color:var(--blue)">${lv.total}</div><div class="stat-lbl">Total</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${lv.pending}</div><div class="stat-lbl">Pending</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--green)">${lv.approved}</div><div class="stat-lbl">Approved</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--red)">${lv.rejected}</div><div class="stat-lbl">Rejected</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--purple)">${lv.absent}</div><div class="stat-lbl">Absent</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:var(--gold-dark)">${lv.smPending}</div><div class="stat-lbl">SM Pending</div></div>
-    </div><div class="dh-chart-box small"><canvas id="dhLeavePie"></canvas></div>`;
-  } else { html += '<div class="dh-empty-mini">Tap to open Leave</div>'; }
-  html += '</div>';
+  // ── Detail panels — one per module, arranged in dh-panels-grid so
+  // desktop can lay them out 2-up while mobile just stacks them. ──
+  html += '<div class="dh-panels-grid">';
 
-  // ── Loyalty section ──
-  html += `<div class="dh-section-title">💳 Loyalty Card</div><div class="dh-row-2">`;
-  html += `<div class="dh-panel" onclick="showAdminPage('loyalty')"><div class="dh-panel-title">Cards</div>`;
+  // Leave — 6-stat grid (Total/Pending/Approved/Rejected/Absent/SM
+  // Pending, this month) + donut breakdown.
+  if (lv && lv.ok && lv.thisMonth) {
+    const cm = lv.thisMonth;
+    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('dashboard')">
+      <div class="dh-panel-title">🏖️ Leave — This Month</div>
+      <div class="dh-stat-grid6">
+        <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${cm.total}</div><div class="l">Total</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#c97a10">${cm.pending}</div><div class="l">Pending</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#1a7a4f">${cm.approved}</div><div class="l">Approved</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#dc2626">${cm.rejected}</div><div class="l">Rejected</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#6b21a8">${cm.absent}</div><div class="l">Absent</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#d4a843">${cm.smPending}</div><div class="l">SM Pending</div></div>
+      </div>
+      <div class="dh-chart-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminLeaveDonut"></canvas></div>
+    </div>`;
+  }
+
+  // Loyalty Card — today/month/total + leaderboard + incentive history + upcoming incentive
   if (ly && ly.ok) {
-    html += `<div class="dh-mini-stats">
-      <div class="dh-mini-stat"><div class="v">${ly.today.cardsApproved}</div><div class="l">Today</div></div>
-      <div class="dh-mini-stat"><div class="v">${ly.thisMonth.cardsApproved}</div><div class="l">This Month</div></div>
-      <div class="dh-mini-stat"><div class="v">${ly.total.cardsApproved}</div><div class="l">Total</div></div>
+    const lb = ly.leaderboard || [];
+    const hist = (ly.incentiveHistory && ly.incentiveHistory.recent) || [];
+    const up = ly.upcomingIncentive || { total: 0, byEmployee: [] };
+    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('loyalty')">
+      <div class="dh-panel-title">💳 Loyalty Card</div>
+      <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
+        <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.today.cardsApproved}</div><div class="l">Today</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.thisMonth.cardsApproved}</div><div class="l">This Month</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.total.cardsApproved}</div><div class="l">Total</div></div>
+      </div>
+      <div class="dh-subhead">🏆 Leaderboard (All-Time)</div>
+      ${lb.length ? lb.map(r => `<div class="dh-mini-row"><span class="dh-mini-name">${['🥇','🥈','🥉'][r.rank-1] || ('#'+r.rank)} ${r.employee}</span><span class="dh-mini-val">${r.cardsIssued} (${r.pctOfTotal})</span></div>`).join('') : '<div class="dh-empty-mini">No cards yet.</div>'}
+      <div class="dh-subhead">💰 Incentive History — Recent (Total Paid: ₹${(ly.incentiveHistory && ly.incentiveHistory.totalPaid) || 0})</div>
+      ${hist.length ? hist.map(r => `<div class="dh-mini-row"><span class="dh-mini-name">${r.empName} <span style="color:var(--text3);font-weight:500;">· ${r.date}</span></span><span class="dh-mini-val">₹${r.amount}</span></div>`).join('') : '<div class="dh-empty-mini">No payments recorded yet.</div>'}
+      <div class="dh-subhead">⏳ Upcoming Incentive — Pending (Total: ₹${up.total})</div>
+      ${(up.byEmployee||[]).length ? up.byEmployee.map(r => `<div class="dh-mini-row"><span class="dh-mini-name">${r.employee}</span><span class="dh-mini-val">₹${r.pendingIncentive}</span></div>`).join('') : '<div class="dh-empty-mini">Nothing pending.</div>'}
     </div>`;
-    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:6px 0 2px;">🏆 Leaderboard</div>`;
-    html += (ly.leaderboard || []).slice(0, 5).map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.rank}. ${r.employee}</span><span class="dh-badge gold">${r.cardsIssued}</span></div>`).join('') || '<div class="dh-empty-mini">No data yet</div>';
-  } else { html += '<div class="dh-empty-mini">Tap to open Loyalty</div>'; }
-  html += '</div>';
+  }
 
-  html += `<div class="dh-panel" onclick="showAdminPage('loyalty')"><div class="dh-panel-title">Incentive</div>`;
-  if (ly && ly.ok) {
-    html += `<div class="dh-mini-stats" style="grid-template-columns:1fr 1fr;">
-      <div class="dh-mini-stat"><div class="v">₹${(ly.upcomingIncentive && ly.upcomingIncentive.total) || 0}</div><div class="l">Upcoming</div></div>
-      <div class="dh-mini-stat"><div class="v">${(ly.incentiveHistory || []).length}</div><div class="l">Recent Payouts</div></div>
+  // Golden Plan — today/month/total + topper + plan-type split
+  if (ga && ga.ok) {
+    const byType = ga.byPlanType || {};
+    html += `<div class="dh-panel" onclick="showAdminPage('golden-aura')">
+      <div class="dh-panel-title">🥇 Golden Plan</div>
+      <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
+        <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.today.enrollments}</div><div class="l">Today</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.thisMonth.enrollments}</div><div class="l">This Month</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.total.enrollments}</div><div class="l">Total</div></div>
+      </div>
+      <div class="dh-subhead">🏆 Topper (This Month)</div>
+      <div class="dh-mini-row">${ga.topper ? `<span class="dh-mini-name">${ga.topper.employee}</span><span class="dh-mini-val">${ga.topper.enrollments} plan(s)</span>` : '<span class="dh-empty-mini">No enrollments this month yet.</span>'}</div>
+      <div class="dh-subhead">📋 Plan Type Split</div>
+      ${Object.keys(byType).length ? Object.keys(byType).map(k => `<div class="dh-mini-row"><span class="dh-mini-name">${k}</span><span class="dh-mini-val">${byType[k]}</span></div>`).join('') : '<div class="dh-empty-mini">No data.</div>'}
     </div>`;
-    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:6px 0 2px;">📜 Incentive History</div>`;
-    html += (ly.incentiveHistory || []).slice(0, 4).map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.employee}</span><span class="dh-badge green">₹${r.amount} · ${r.date}</span></div>`).join('') || '<div class="dh-empty-mini">No payouts yet</div>';
-    if (ly.upcomingIncentive && ly.upcomingIncentive.employees && ly.upcomingIncentive.employees.length) {
-      html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:8px 0 2px;">⏭️ Upcoming Incentive</div>`;
-      html += ly.upcomingIncentive.employees.map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.employee}</span><span class="dh-badge gold">₹${r.pendingIncentive}</span></div>`).join('');
-    }
-  } else { html += '<div class="dh-empty-mini">Tap to open Loyalty</div>'; }
-  html += '</div></div>';
+  }
 
-  // ── Golden Plan section ──
-  html += `<div class="dh-section-title">🥇 Golden Plan</div><div class="dh-panel" onclick="showAdminPage('golden-aura')">`;
-  if (gp && gp.ok) {
-    html += `<div class="dh-mini-stats">
-      <div class="dh-mini-stat"><div class="v">${gp.today.enrollments}</div><div class="l">Today</div></div>
-      <div class="dh-mini-stat"><div class="v">${gp.thisMonth.enrollments}</div><div class="l">This Month</div></div>
-      <div class="dh-mini-stat"><div class="v">${gp.total.enrollments}</div><div class="l">Total</div></div>
-    </div>`;
-    html += `<div class="dh-list-row"><span class="dh-name-pill">🏆 Topper (This Month)</span><span class="dh-badge gold">${gp.topper ? gp.topper.employee + ' · ' + gp.topper.count : '—'}</span></div>`;
-    const types = Object.keys(gp.planTypeBreakdown || {});
-    if (types.length) {
-      html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:8px 0 2px;">Plan Type (This Month)</div>`;
-      html += types.map(t => `<div class="dh-list-row"><span class="dh-name-pill">${t}</span><span class="dh-badge blue">${gp.planTypeBreakdown[t]}</span></div>`).join('');
-    }
-  } else { html += '<div class="dh-empty-mini">Tap to open Golden Plan</div>'; }
-  html += '</div>';
-
-  // ── KPI section ──
-  html += `<div class="dh-section-title">📊 KPI</div><div class="dh-row-2">`;
-  html += `<div class="dh-panel" onclick="showAdminPage('kpi')"><div class="dh-panel-title">This Month's Topper</div>`;
+  // KPI — gauge (topper score + conversion%) + Last Month's Employee of the Month
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     const t = kp.thisMonth.topper;
-    html += `<div class="dh-gauge-wrap"><canvas id="dhAdminKpiGauge"></canvas>
-      <div class="dh-gauge-label"><div class="num">${t.overallScore}</div><div class="sub">${t.employee}</div></div></div>
-      <div class="dh-list-row"><span class="dh-name-pill">Grade</span><span class="dh-badge blue">${t.grade || '—'}</span></div>
-      <div class="dh-list-row"><span class="dh-name-pill">Conversion %</span><span class="dh-badge green">${t.conversionPct != null ? t.conversionPct : '—'}</span></div>`;
-  } else { html += '<div class="dh-empty-mini">Tap to open KPI</div>'; }
-  html += '</div>';
-
-  html += `<div class="dh-panel" onclick="showAdminPage('kpi')"><div class="dh-panel-title">🏆 Employee of Last Month</div>`;
-  if (kp && kp.lastMonthEOM && kp.lastMonthEOM.hasWinner) {
-    html += `<div class="dh-list-row"><span class="dh-name-pill">${kp.lastMonthEOM.name}</span><span class="dh-badge gold">Score ${kp.lastMonthEOM.score}</span></div>`;
-  } else { html += '<div class="dh-empty-mini">No winner recorded</div>'; }
-  if (kp && kp.ok && kp.thisMonth && kp.thisMonth.top3 && kp.thisMonth.top3.length) {
-    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:10px 0 2px;">Top 3 — This Month</div>`;
-    html += kp.thisMonth.top3.map((r, i) => `<div class="dh-list-row"><span class="dh-name-pill">${['🥇','🥈','🥉'][i] || (i + 1) + '.'} ${r.employee}</span><span class="dh-badge blue">${r.overallScore}</span></div>`).join('');
+    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
+      <div class="dh-panel-title">📈 KPI Score — This Month's Topper</div>
+      <div class="dh-gauge-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminKpiGauge"></canvas>
+        <div class="dh-gauge-label"><div class="num">${t.overallScore}</div><div class="sub">${t.employee}</div></div>
+      </div>
+      ${t.conversionPct != null ? `<div class="dh-mini-row" style="border-top:none;justify-content:center;gap:6px;"><span class="dh-mini-name">Conversion %</span><span class="dh-mini-val">${t.conversionPct}</span></div>` : ''}
+    </div>`;
   }
-  html += '</div></div>';
+  if (kp && kp.ok && kp.lastMonthEOM) {
+    const eom = kp.lastMonthEOM;
+    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
+      <div class="dh-panel-title">🏅 Employee of the Month — Last Month</div>
+      ${eom.hasWinner ? `<div class="dh-mini-row" style="border-top:none;"><span class="dh-mini-name">${eom.name}</span><span class="dh-mini-val">${eom.score}</span></div><div class="dh-kpi-sub">${eom.monthTitle||''}</div>` : `<div class="dh-empty-mini">No winner declared for last month${eom.monthTitle ? ' ('+eom.monthTitle+')' : ''}.</div>`}
+    </div>`;
+  }
 
-  // ── DSR section ──
-  html += `<div class="dh-section-title">🧾 DSR</div><div class="dh-panel" onclick="showAdminPage('dsr')">`;
+  // Top performers — unchanged data, restyled as a ranked list
+  if (kp && kp.ok && kp.thisMonth.top3 && kp.thisMonth.top3.length) {
+    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('kpi')">
+      <div class="dh-panel-title">🏆 Top Performers — KPI This Month</div>
+      ${kp.thisMonth.top3.map((r, i) => `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:7px 0;border-top:${i===0?'none':'1px solid var(--border)'};"><span>${['🥇','🥈','🥉'][i] || (i+1)+'.'} ${r.employee}</span><span style="font-weight:800;color:var(--purple);">${r.overallScore}</span></div>`).join('')}
+    </div>`;
+  }
+
+  // DSR — today entries / till-date total, missing-today & yesterday-pending name lists
   if (dr && dr.ok) {
-    html += `<div class="dh-mini-stats">
-      <div class="dh-mini-stat"><div class="v">${dr.today.entries}</div><div class="l">Today Entries</div></div>
-      <div class="dh-mini-stat"><div class="v">${dr.missingToday.count}</div><div class="l">Missing Today</div></div>
-      <div class="dh-mini-stat"><div class="v">${dr.tillDateTotal}</div><div class="l">Till-Date Total</div></div>
+    const missToday = (dr.today && dr.today.missing) || [];
+    const missYest = dr.yesterdayPending || [];
+    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('dsr')">
+      <div class="dh-panel-title">🧾 DSR</div>
+      <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
+        <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${dr.today.entries}</div><div class="l">Today Entries</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${dr.tillDateTotal}</div><div class="l">Till-Date Total</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:${missToday.length?'#dc2626':'#1a7a4f'}">${missToday.length}</div><div class="l">Missing Today</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:${missYest.length?'#dc2626':'#1a7a4f'}">${missYest.length}</div><div class="l">Yesterday Pending</div></div>
+      </div>
+      <div class="dh-subhead">⚠️ Missing Today</div>
+      <div class="dh-name-chip-row">${missToday.length ? missToday.map(n => `<span class="dh-name-chip">${n}</span>`).join('') : '<span class="dh-name-chip ok">✅ All entered</span>'}</div>
+      <div class="dh-subhead">⏮️ Yesterday — Still Pending</div>
+      <div class="dh-name-chip-row">${missYest.length ? missYest.map(n => `<span class="dh-name-chip">${n}</span>`).join('') : '<span class="dh-name-chip ok">✅ None pending</span>'}</div>
     </div>`;
-    if (dr.missingToday.count) html += `<div class="dh-list-row"><span class="dh-name-pill">⚠️ Missing Today</span><span class="dh-badge red">${dr.missingToday.names.join(', ')}</span></div>`;
-    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:8px 0 2px;">Yesterday — Still Pending (${dr.yesterdayPending.count})</div>`;
-    html += dr.yesterdayPending.count ? dr.yesterdayPending.names.map(n => `<div class="dh-list-row"><span class="dh-name-pill">${n}</span><span class="dh-badge gold">Pending</span></div>`).join('') : '<div class="dh-empty-mini">Everyone entered yesterday ✅</div>';
-  } else { html += '<div class="dh-empty-mini">Tap to open DSR</div>'; }
-  html += '</div>';
+  }
 
-  // ── Walkin Track section ──
-  html += `<div class="dh-section-title">🚶 Walkin Track</div><div class="dh-panel" onclick="showAdminPage('kpi')">`;
+  // Walk-in Track — Today vs Yesterday side-by-side + highest-deal employee (not a standalone module page, so this panel isn't clickable)
   if (wk && wk.ok) {
-    html += `<div class="dh-mini-stats">
-      <div class="dh-mini-stat"><div class="v">${wk.today.walkins}</div><div class="l">Today Walkins</div></div>
-      <div class="dh-mini-stat"><div class="v">${wk.yesterday.walkins}</div><div class="l">Yesterday Walkins</div></div>
-      <div class="dh-mini-stat"><div class="v">${wk.totalDeals}</div><div class="l">Total Deals</div></div>
-      <div class="dh-mini-stat"><div class="v">${wk.totalPurchase}</div><div class="l">Total Purchase</div></div>
-      <div class="dh-mini-stat"><div class="v">${wk.totalNonPurchase}</div><div class="l">Total Non-Purchase</div></div>
-      <div class="dh-mini-stat"><div class="v" style="font-size:13px;">${wk.highestDeals ? wk.highestDeals.employee : '—'}</div><div class="l">Highest Deals${wk.highestDeals ? ' · ' + wk.highestDeals.count : ''}</div></div>
+    html += `<div class="dh-panel dh-panel-wide">
+      <div class="dh-panel-title">🚶 Walk-in Track (Customer Footfall)</div>
+      <div class="dh-split2">
+        <div class="dh-split-box"><div class="t">Today</div>
+          <div class="row"><span>Walk-ins</span><b>${wk.today.walkins}</b></div>
+          <div class="row"><span>Deals</span><b>${wk.today.deals}</b></div>
+          <div class="row"><span>Purchased</span><b>${wk.today.purchased}</b></div>
+          <div class="row"><span>Non-Purchased</span><b>${wk.today.nonPurchased}</b></div>
+        </div>
+        <div class="dh-split-box"><div class="t">Yesterday</div>
+          <div class="row"><span>Walk-ins</span><b>${wk.yesterday.walkins}</b></div>
+          <div class="row"><span>Deals</span><b>${wk.yesterday.deals}</b></div>
+          <div class="row"><span>Purchased</span><b>${wk.yesterday.purchased}</b></div>
+          <div class="row"><span>Non-Purchased</span><b>${wk.yesterday.nonPurchased}</b></div>
+        </div>
+      </div>
+      <div class="dh-subhead">🏆 Highest Deals (Today + Yesterday)</div>
+      <div class="dh-mini-row" style="border-top:none;">${wk.highestDealEmployee ? `<span class="dh-mini-name">${wk.highestDealEmployee.employee}</span><span class="dh-mini-val">${wk.highestDealEmployee.deals} deal(s)</span>` : '<span class="dh-empty-mini">No deals recorded.</span>'}</div>
+      <div class="dh-kpi-sub" style="margin-top:6px;">Total Deals (Today+Yesterday): <b>${wk.combined.deals}</b> &nbsp;·&nbsp; Total Purchase: <b>${wk.combined.purchased}</b> &nbsp;·&nbsp; Total Non-Purchase: <b>${wk.combined.nonPurchased}</b></div>
     </div>`;
-  } else { html += '<div class="dh-empty-mini">No walkin data for today/yesterday</div>'; }
-  html += '</div>';
+  }
 
-  // ── Leads section ──
-  html += `<div class="dh-section-title">👥 Leads</div><div class="dh-panel" onclick="showAdminPage('leads')">`;
-  if (leadsRep && leadsRep.rows && leadsRep.rows.length) {
-    const totAssigned = leadsRep.rows.reduce((s, r) => s + (r.assigned || 0), 0);
-    const totSubmitted = leadsRep.rows.reduce((s, r) => s + (r.submitted || 0), 0);
-    const totPending = leadsRep.rows.reduce((s, r) => s + (r.pending || 0), 0);
-    html += `<div class="dh-mini-stats">
-      <div class="dh-mini-stat"><div class="v">${totAssigned}</div><div class="l">Received</div></div>
-      <div class="dh-mini-stat"><div class="v">${totSubmitted}</div><div class="l">Submitted</div></div>
-      <div class="dh-mini-stat"><div class="v">${totPending}</div><div class="l">Pending</div></div>
+  // Stock Checklist — health stats + duty roster (assigned/done-not-done) + today's Opening/Closing, Retail & Wholesale shown separately
+  if (st) {
+    const stKeys = st.ok && st.today ? Object.keys(st.today) : [];
+    const duty = st.duty || { Retail: [], Wholesale: [] };
+    const dutyChip = e => `<span class="dh-name-chip ${e.today ? 'ok' : ''}">${e.employee}${e.today ? ' · ' + e.today : ' · Pending'}</span>`;
+    const slotLine = (label, slot) => `<div class="row"><span>${label}</span><b>${slot ? (slot.emp + ' · ' + slot.time) : '—'}</b></div>`;
+    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('stock')">
+      <div class="dh-panel-title">📝 Stock Checklist — Today</div>
+      ${stKeys.length ? `<div class="dh-kpi-sub" style="font-size:12px;">${stKeys.slice(0,4).map(k => k + ': ' + st.today[k]).join(' &nbsp;·&nbsp; ')}</div>` : '<div class="dh-kpi-sub">Tap to open</div>'}
+      <div class="dh-subhead">👤 Duty — Retail (Done / Not Done)</div>
+      <div class="dh-name-chip-row">${(duty.Retail||[]).length ? duty.Retail.map(dutyChip).join('') : '<span class="dh-empty-mini">No duty assigned today.</span>'}</div>
+      <div class="dh-subhead">👤 Duty — Wholesale (Done / Not Done)</div>
+      <div class="dh-name-chip-row">${(duty.Wholesale||[]).length ? duty.Wholesale.map(dutyChip).join('') : '<span class="dh-empty-mini">No duty assigned today.</span>'}</div>
+      <div class="dh-split2" onclick="event.stopPropagation()">
+        <div class="dh-split-box"><div class="t">Retail — Today</div>
+          ${slotLine('Opening', st.retail && st.retail.opening)}
+          ${slotLine('Closing', st.retail && st.retail.closing)}
+        </div>
+        <div class="dh-split-box"><div class="t">Wholesale — Today</div>
+          ${slotLine('Opening', st.wholesale && st.wholesale.opening)}
+          ${slotLine('Closing', st.wholesale && st.wholesale.closing)}
+        </div>
+      </div>
     </div>`;
-    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:6px 0 2px;">Employee-wise %</div>`;
-    html += leadsRep.rows.slice(0, 8).map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.employee}</span><span class="dh-badge ${r.pct >= 70 ? 'green' : (r.pct >= 40 ? 'gold' : 'red')}">${r.submitted}/${r.assigned} · ${r.pct}%</span></div>`).join('');
-  } else { html += '<div class="dh-empty-mini">Tap to open Leads</div>'; }
-  html += '</div>';
+  }
 
-  // ── Checklist section (Retail/Wholesale, Opening/Closing) ──
-  html += `<div class="dh-section-title">📝 Stock Checklist</div><div class="dh-row-2">`;
-  ['retail', 'wholesale'].forEach(function(kind) {
-    const label = kind === 'retail' ? '🏬 Retail' : '📦 Wholesale';
-    html += `<div class="dh-panel" onclick="showAdminPage('stock')"><div class="dh-panel-title">${label}</div>`;
-    const sec = ck && ck.ok ? ck[kind] : null;
-    if (sec) {
-      ['opening', 'closing'].forEach(function(shift) {
-        html += `<div class="dh-checklist-col-title">${shift === 'opening' ? '🌅 Opening' : '🌇 Closing'}</div>`;
-        const list = sec[shift] || [];
-        if (!list.length) { html += '<div class="dh-empty-mini">No duty assigned</div>'; return; }
-        html += list.map(p => `<div class="dh-emp-pill"><span class="nm">${p.employee}</span><span class="dh-badge ${p.done ? 'green' : 'gold'}">${p.done ? '✅ Done' : '⏳ ' + (p.status || 'Pending')}</span></div>`).join('');
-      });
-    } else {
-      html += '<div class="dh-empty-mini">Tap to open Checklist</div>';
-    }
-    html += '</div>';
-  });
-  html += '</div>';
+  html += '</div>'; // /dh-panels-grid
 
-  // ── Quick-access shortcuts ──
+  // Quick-access shortcuts — same modules as the section page, one tap away
   html += `<div class="dh-quick-row">
     <div class="dh-quick-item" onclick="showAdminPage('dashboard')"><span class="qi">🏖️</span>Leave</div>
     <div class="dh-quick-item" onclick="showAdminPage('leads')"><span class="qi">👥</span>Leads</div>
@@ -12216,27 +12223,15 @@ async function loadAdminDashboardHub() {
 
   body.innerHTML = html;
   dhDestroyGauges('dhAdmin');
-  dhDestroyGauges('dhLeave');
-
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     dhMakeGauge('dhAdminKpiGauge', kp.thisMonth.topper.overallScore, '#d4a843');
   }
-
-  // Leave status donut
-  if (lv && lv.ok && typeof Chart !== 'undefined') {
-    const el = document.getElementById('dhLeavePie');
-    if (el) {
-      window.__dhGauges = window.__dhGauges || {};
-      window.__dhGauges['dhLeavePie'] = new Chart(el, {
-        type: 'doughnut',
-        data: {
-          labels: ['Pending', 'Approved', 'Rejected', 'Absent', 'SM Pending'],
-          datasets: [{ data: [lv.pending, lv.approved, lv.rejected, lv.absent, lv.smPending],
-            backgroundColor: ['#ffb020', '#22c55e', '#e74c3c', '#8b5cf6', '#d4a843'], borderWidth: 0 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
-      });
-    }
+  if (lv && lv.ok && lv.thisMonth) {
+    const cm = lv.thisMonth;
+    dhMakeDonut('dhAdminLeaveDonut',
+      ['Approved', 'Pending', 'Rejected', 'Absent', 'SM Pending'],
+      [cm.approved, cm.pending, cm.rejected, cm.absent, cm.smPending],
+      ['#1a7a4f', '#c97a10', '#dc2626', '#6b21a8', '#d4a843']);
   }
 }
 
