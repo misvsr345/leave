@@ -597,6 +597,58 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-quick-item:active { background: var(--purple-bg); border-color: var(--gold); }
 .dh-quick-item .qi { font-size: 17px; display: block; margin-bottom: 4px; }
 
+/* ══════════════════════════════════════
+   DASHBOARD HUB v2 — full spec build (section-wise data,
+   Leave/Loyalty/Golden Plan/KPI/DSR/Walkin/Leads/Checklist).
+   Mobile-first by default; @media rules below turn the same
+   markup into a rich multi-column desktop control-center
+   without touching any other page in the app.
+   ══════════════════════════════════════ */
+.dh-datebar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.dh-datebar-label { font-size:11.5px; font-weight:700; color:var(--text3); }
+.dh-section-title { font-family:'Playfair Display',serif; font-size:14px; font-weight:800; color:var(--purple); margin:16px 0 8px; display:flex; align-items:center; gap:7px; }
+.dh-section-title:first-child { margin-top:0; }
+.dh-row-2 { display:grid; grid-template-columns:1fr; gap:10px; }
+.dh-row-3 { display:grid; grid-template-columns:1fr; gap:10px; }
+.dh-mini-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:10px; }
+.dh-mini-stat { background:linear-gradient(135deg,#faf5ff,#fff); border:1.5px solid var(--gold); border-radius:var(--r2); padding:10px 8px; text-align:center; }
+.dh-mini-stat .v { font-size:18px; font-weight:800; font-family:'Playfair Display',serif; color:var(--purple); line-height:1.1; }
+.dh-mini-stat .l { font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--text3); margin-top:3px; }
+.dh-list-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-top:1px solid var(--border); font-size:12px; }
+.dh-list-row:first-child { border-top:none; }
+.dh-name-pill { font-weight:700; color:var(--text); }
+.dh-badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; white-space:nowrap; }
+.dh-badge.gold { background:var(--gold-bg,#fff8e1); color:#8a6d1f; }
+.dh-badge.green { background:#e8faf0; color:#1a7a4f; }
+.dh-badge.red { background:#fdeaea; color:#c0392b; }
+.dh-badge.blue { background:#e8f0fb; color:var(--blue); }
+.dh-badge.grey { background:#f1eef7; color:var(--text3); }
+.dh-chart-box { position:relative; height:190px; margin:6px 0 2px; }
+.dh-chart-box.small { height:150px; }
+.dh-empty-mini { font-size:11px; color:var(--text3); text-align:center; padding:14px 0; }
+.dh-checklist-grid { display:grid; grid-template-columns:1fr; gap:10px; }
+.dh-checklist-col-title { font-size:11.5px; font-weight:800; color:var(--text2); margin:8px 0 4px; text-transform:uppercase; letter-spacing:.4px; }
+.dh-checklist-col-title:first-child { margin-top:0; }
+.dh-emp-pill { display:flex; align-items:center; justify-content:space-between; padding:6px 9px; border-radius:8px; background:#faf8fc; border:1px solid var(--border); margin-bottom:6px; font-size:11.5px; }
+.dh-emp-pill .nm { font-weight:700; }
+.dh-tabbar { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.dh-tab { font-size:11px; font-weight:700; padding:6px 12px; border-radius:16px; border:1.5px solid var(--border); background:var(--card); color:var(--text2); cursor:pointer; }
+.dh-tab.active { background:var(--purple); color:#fff; border-color:var(--purple); }
+
+@media (min-width: 1024px) {
+  #admin-dashboard-hub .dh-kpi-grid { grid-template-columns:repeat(6,1fr); gap:14px; }
+  #admin-dashboard-hub .dh-row-2 { grid-template-columns:1fr 1fr; gap:14px; }
+  #admin-dashboard-hub .dh-row-3 { grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  #admin-dashboard-hub .dh-mini-stats { grid-template-columns:repeat(3,1fr); }
+  #admin-dashboard-hub .dh-panel, #admin-dashboard-hub .dh-alert-card { margin-bottom:14px; }
+  #admin-dashboard-hub .dh-kpi-val { font-size:23px; }
+  #admin-dashboard-hub .dh-quick-row { grid-template-columns:repeat(8,1fr); }
+  #admin-dashboard-hub .dh-chart-box { height:230px; }
+}
+@media (min-width: 1024px) and (max-width: 1365px) {
+  #admin-dashboard-hub .dh-kpi-grid { grid-template-columns:repeat(3,1fr); }
+}
+
 /* Stats Grid */
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .stat-box {
@@ -11929,6 +11981,28 @@ async function loadEmpDashboardHub() {
   }
 }
 
+// ══════════════════════════════════════
+// DASHBOARD HUB v2 — full section-wise build.
+// Desktop vs Mobile share the SAME markup; @media (min-width:1024px)
+// rules in the CSS turn the 2-col mobile grid into a rich multi-column
+// desktop layout. Every number below comes straight from
+// adminDashboardJSON (backend) plus a direct client-side call to the
+// Leads CRM app (GET_LEADS_REPORT) — no Leads logic is modified, this
+// only DISPLAYS the same report the Leads pages already show.
+// ══════════════════════════════════════
+function dhPill(status) {
+  const s = String(status || '').toLowerCase();
+  if (s.indexOf('approv') > -1 || s === 'done' || s.indexOf('complet') > -1 || s.indexOf('submit') > -1) return 'green';
+  if (s.indexOf('reject') > -1) return 'red';
+  if (s.indexOf('pend') > -1 || s.indexOf('miss') > -1) return 'gold';
+  return 'grey';
+}
+
+function dhListRows(items, emptyMsg) {
+  if (!items || !items.length) return `<div class="dh-empty-mini">${emptyMsg || 'No data'}</div>`;
+  return items.map(it => `<div class="dh-list-row"><span class="dh-name-pill">${it.name}</span><span class="dh-badge ${it.badgeClass || 'grey'}">${it.badge}</span></div>`).join('');
+}
+
 async function loadAdminDashboardHub() {
   const body = document.getElementById('adminDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
@@ -11944,74 +12018,192 @@ async function loadAdminDashboardHub() {
     return;
   }
   const d = res.data || {};
-  const lv = d.leave, ld = d.leads, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock;
+  const lv = d.leave, kp = d.kpi, dr = d.dsr, ly = d.loyalty, gp = d.goldenPlan || d.goldenAura, wk = d.walkin, ck = d.checklist || d.stock;
 
-  let html = '';
+  // Leads — fetched directly from the Leads CRM app, same as the Leads
+  // pages already do. Failure here never blocks the rest of the dashboard.
+  let leadsRep = null;
+  try {
+    const lres = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() });
+    if (lres && lres.ok) leadsRep = lres;
+  } catch (e) { /* leads dashboard tile falls back to "Tap to open" below */ }
 
-  // Alerts — unchanged behaviour, just restyled to match the new panel look
+  let html = `<div class="dh-datebar"><span class="dh-datebar-label">📅 Today: ${todayYMD()}</span></div>`;
+
+  // ── Alerts ──
   const alerts = d.alerts || [];
   if (alerts.length) {
-    html += `<div class="dh-alert-card">
-      <div class="dh-alert-inner">
-        <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">🔔 Needs Action (${alerts.length})</div>
-        ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
-      </div>
-    </div>`;
+    html += `<div class="dh-alert-card"><div class="dh-alert-inner">
+      <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">🔔 Needs Action (${alerts.length})</div>
+      ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
+    </div></div>`;
   }
 
-  // KPI summary cards — 2-column grid, colored accent per module, tap to drill into that module
+  // ── KPI summary row (spec section 7) ──
+  const leadsTotal = leadsRep && leadsRep.rows ? leadsRep.rows.reduce((s, r) => s + (r.assigned || 0), 0) : null;
   html += '<div class="dh-kpi-grid">';
-  html += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
-    value: lv && lv.ok ? lv.today.onLeave.length : '',
-    sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
-
-  html += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
-    value: ld && ld.ok ? ld.today.assigned : '',
-    sub: ld && ld.ok ? `Assigned today${ld.topPerformer ? ' · 🏆 ' + ld.topPerformer.employee : ''}` : '' });
-
-  html += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
+  html += dhKpiCard({ icon: '👥', title: 'Total Leads', accent: '#c97a10', onclick: "showAdminPage('leads')", data: leadsTotal != null ? { ok: true } : null,
+    value: leadsTotal != null ? leadsTotal : '', sub: leadsTotal != null ? 'Assigned today' : '' });
+  html += dhKpiCard({ icon: '🏖️', title: 'Leave (Month)', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
+    value: lv && lv.ok ? lv.total : '', sub: lv && lv.ok ? `Pending ${lv.pending} · SM ${lv.smPending}` : '' });
+  html += dhKpiCard({ icon: '🧾', title: 'DSR Today', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
+    value: dr && dr.ok ? dr.today.entries : '', sub: dr && dr.ok ? `Missing ${dr.missingToday.count}` : '' });
+  html += dhKpiCard({ icon: '💳', title: 'Loyalty Cards', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
+    value: ly && ly.ok ? ly.today.cardsApproved : '', sub: ly && ly.ok ? `This month ${ly.thisMonth.cardsApproved}` : '' });
+  html += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: gp,
+    value: gp && gp.ok ? gp.today.enrollments : '', sub: gp && gp.ok ? `This month ${gp.thisMonth.enrollments}` : '' });
+  html += dhKpiCard({ icon: '📊', title: 'KPI Topper', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
     value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
-    sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? `Topper: ${kp.thisMonth.topper.employee}` : '' });
-
-  html += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
-    value: dr && dr.ok ? dr.today.entries : '',
-    sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
-
-  html += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
-    value: ly && ly.ok ? ly.today.cardsApproved : '',
-    sub: ly && ly.ok ? `Today · ${ly.thisMonth.cardsApproved} this month` : '' });
-
-  html += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: ga,
-    value: ga && ga.ok ? ga.today.enrollments : '',
-    sub: ga && ga.ok ? `Today · ${ga.thisMonth.enrollments} this month` : '' });
+    sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.employee : '' });
   html += '</div>';
 
-  // Stock checklist — kept as a wide panel since it's a key/value map, not a single number
-  const stKeys = st && st.ok ? Object.keys(st.today) : [];
-  html += `<div class="dh-panel" onclick="showAdminPage('stock')">
-    <div class="dh-panel-title">📝 Stock Checklist — Today</div>
-    ${stKeys.length ? `<div class="dh-kpi-sub" style="font-size:12px;">${stKeys.slice(0,4).map(k => k + ': ' + st.today[k]).join(' &nbsp;·&nbsp; ')}</div>` : '<div class="dh-kpi-sub">Tap to open</div>'}
-  </div>`;
+  // ── Leave section ──
+  html += `<div class="dh-section-title">🏖️ Leave — This Month</div><div class="dh-panel" onclick="showAdminPage('dashboard')">`;
+  if (lv && lv.ok) {
+    html += `<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">
+      <div class="stat-box"><div class="stat-val" style="color:var(--blue)">${lv.total}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${lv.pending}</div><div class="stat-lbl">Pending</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--green)">${lv.approved}</div><div class="stat-lbl">Approved</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--red)">${lv.rejected}</div><div class="stat-lbl">Rejected</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--purple)">${lv.absent}</div><div class="stat-lbl">Absent</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--gold-dark)">${lv.smPending}</div><div class="stat-lbl">SM Pending</div></div>
+    </div><div class="dh-chart-box small"><canvas id="dhLeavePie"></canvas></div>`;
+  } else { html += '<div class="dh-empty-mini">Tap to open Leave</div>'; }
+  html += '</div>';
 
-  // Gauge — KPI topper score this month (only when the API actually returned one)
+  // ── Loyalty section ──
+  html += `<div class="dh-section-title">💳 Loyalty Card</div><div class="dh-row-2">`;
+  html += `<div class="dh-panel" onclick="showAdminPage('loyalty')"><div class="dh-panel-title">Cards</div>`;
+  if (ly && ly.ok) {
+    html += `<div class="dh-mini-stats">
+      <div class="dh-mini-stat"><div class="v">${ly.today.cardsApproved}</div><div class="l">Today</div></div>
+      <div class="dh-mini-stat"><div class="v">${ly.thisMonth.cardsApproved}</div><div class="l">This Month</div></div>
+      <div class="dh-mini-stat"><div class="v">${ly.total.cardsApproved}</div><div class="l">Total</div></div>
+    </div>`;
+    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:6px 0 2px;">🏆 Leaderboard</div>`;
+    html += (ly.leaderboard || []).slice(0, 5).map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.rank}. ${r.employee}</span><span class="dh-badge gold">${r.cardsIssued}</span></div>`).join('') || '<div class="dh-empty-mini">No data yet</div>';
+  } else { html += '<div class="dh-empty-mini">Tap to open Loyalty</div>'; }
+  html += '</div>';
+
+  html += `<div class="dh-panel" onclick="showAdminPage('loyalty')"><div class="dh-panel-title">Incentive</div>`;
+  if (ly && ly.ok) {
+    html += `<div class="dh-mini-stats" style="grid-template-columns:1fr 1fr;">
+      <div class="dh-mini-stat"><div class="v">₹${(ly.upcomingIncentive && ly.upcomingIncentive.total) || 0}</div><div class="l">Upcoming</div></div>
+      <div class="dh-mini-stat"><div class="v">${(ly.incentiveHistory || []).length}</div><div class="l">Recent Payouts</div></div>
+    </div>`;
+    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:6px 0 2px;">📜 Incentive History</div>`;
+    html += (ly.incentiveHistory || []).slice(0, 4).map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.employee}</span><span class="dh-badge green">₹${r.amount} · ${r.date}</span></div>`).join('') || '<div class="dh-empty-mini">No payouts yet</div>';
+    if (ly.upcomingIncentive && ly.upcomingIncentive.employees && ly.upcomingIncentive.employees.length) {
+      html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:8px 0 2px;">⏭️ Upcoming Incentive</div>`;
+      html += ly.upcomingIncentive.employees.map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.employee}</span><span class="dh-badge gold">₹${r.pendingIncentive}</span></div>`).join('');
+    }
+  } else { html += '<div class="dh-empty-mini">Tap to open Loyalty</div>'; }
+  html += '</div></div>';
+
+  // ── Golden Plan section ──
+  html += `<div class="dh-section-title">🥇 Golden Plan</div><div class="dh-panel" onclick="showAdminPage('golden-aura')">`;
+  if (gp && gp.ok) {
+    html += `<div class="dh-mini-stats">
+      <div class="dh-mini-stat"><div class="v">${gp.today.enrollments}</div><div class="l">Today</div></div>
+      <div class="dh-mini-stat"><div class="v">${gp.thisMonth.enrollments}</div><div class="l">This Month</div></div>
+      <div class="dh-mini-stat"><div class="v">${gp.total.enrollments}</div><div class="l">Total</div></div>
+    </div>`;
+    html += `<div class="dh-list-row"><span class="dh-name-pill">🏆 Topper (This Month)</span><span class="dh-badge gold">${gp.topper ? gp.topper.employee + ' · ' + gp.topper.count : '—'}</span></div>`;
+    const types = Object.keys(gp.planTypeBreakdown || {});
+    if (types.length) {
+      html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:8px 0 2px;">Plan Type (This Month)</div>`;
+      html += types.map(t => `<div class="dh-list-row"><span class="dh-name-pill">${t}</span><span class="dh-badge blue">${gp.planTypeBreakdown[t]}</span></div>`).join('');
+    }
+  } else { html += '<div class="dh-empty-mini">Tap to open Golden Plan</div>'; }
+  html += '</div>';
+
+  // ── KPI section ──
+  html += `<div class="dh-section-title">📊 KPI</div><div class="dh-row-2">`;
+  html += `<div class="dh-panel" onclick="showAdminPage('kpi')"><div class="dh-panel-title">This Month's Topper</div>`;
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
-    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
-      <div class="dh-panel-title">📈 KPI Score — This Month's Topper</div>
-      <div class="dh-gauge-wrap"><canvas id="dhAdminKpiGauge"></canvas>
-        <div class="dh-gauge-label"><div class="num">${kp.thisMonth.topper.overallScore}</div><div class="sub">${kp.thisMonth.topper.employee}</div></div>
-      </div>
-    </div>`;
-  }
+    const t = kp.thisMonth.topper;
+    html += `<div class="dh-gauge-wrap"><canvas id="dhAdminKpiGauge"></canvas>
+      <div class="dh-gauge-label"><div class="num">${t.overallScore}</div><div class="sub">${t.employee}</div></div></div>
+      <div class="dh-list-row"><span class="dh-name-pill">Grade</span><span class="dh-badge blue">${t.grade || '—'}</span></div>
+      <div class="dh-list-row"><span class="dh-name-pill">Conversion %</span><span class="dh-badge green">${t.conversionPct != null ? t.conversionPct : '—'}</span></div>`;
+  } else { html += '<div class="dh-empty-mini">Tap to open KPI</div>'; }
+  html += '</div>';
 
-  // Top performers — unchanged data, restyled as a ranked list
-  if (kp && kp.ok && kp.thisMonth.top3 && kp.thisMonth.top3.length) {
-    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
-      <div class="dh-panel-title">🏆 Top Performers — KPI This Month</div>
-      ${kp.thisMonth.top3.map((r, i) => `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:7px 0;border-top:${i===0?'none':'1px solid var(--border)'};"><span>${['🥇','🥈','🥉'][i] || (i+1)+'.'} ${r.employee}</span><span style="font-weight:800;color:var(--purple);">${r.overallScore}</span></div>`).join('')}
-    </div>`;
+  html += `<div class="dh-panel" onclick="showAdminPage('kpi')"><div class="dh-panel-title">🏆 Employee of Last Month</div>`;
+  if (kp && kp.lastMonthEOM && kp.lastMonthEOM.hasWinner) {
+    html += `<div class="dh-list-row"><span class="dh-name-pill">${kp.lastMonthEOM.name}</span><span class="dh-badge gold">Score ${kp.lastMonthEOM.score}</span></div>`;
+  } else { html += '<div class="dh-empty-mini">No winner recorded</div>'; }
+  if (kp && kp.ok && kp.thisMonth && kp.thisMonth.top3 && kp.thisMonth.top3.length) {
+    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:10px 0 2px;">Top 3 — This Month</div>`;
+    html += kp.thisMonth.top3.map((r, i) => `<div class="dh-list-row"><span class="dh-name-pill">${['🥇','🥈','🥉'][i] || (i + 1) + '.'} ${r.employee}</span><span class="dh-badge blue">${r.overallScore}</span></div>`).join('');
   }
+  html += '</div></div>';
 
-  // Quick-access shortcuts — same modules as the section page, one tap away
+  // ── DSR section ──
+  html += `<div class="dh-section-title">🧾 DSR</div><div class="dh-panel" onclick="showAdminPage('dsr')">`;
+  if (dr && dr.ok) {
+    html += `<div class="dh-mini-stats">
+      <div class="dh-mini-stat"><div class="v">${dr.today.entries}</div><div class="l">Today Entries</div></div>
+      <div class="dh-mini-stat"><div class="v">${dr.missingToday.count}</div><div class="l">Missing Today</div></div>
+      <div class="dh-mini-stat"><div class="v">${dr.tillDateTotal}</div><div class="l">Till-Date Total</div></div>
+    </div>`;
+    if (dr.missingToday.count) html += `<div class="dh-list-row"><span class="dh-name-pill">⚠️ Missing Today</span><span class="dh-badge red">${dr.missingToday.names.join(', ')}</span></div>`;
+    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:8px 0 2px;">Yesterday — Still Pending (${dr.yesterdayPending.count})</div>`;
+    html += dr.yesterdayPending.count ? dr.yesterdayPending.names.map(n => `<div class="dh-list-row"><span class="dh-name-pill">${n}</span><span class="dh-badge gold">Pending</span></div>`).join('') : '<div class="dh-empty-mini">Everyone entered yesterday ✅</div>';
+  } else { html += '<div class="dh-empty-mini">Tap to open DSR</div>'; }
+  html += '</div>';
+
+  // ── Walkin Track section ──
+  html += `<div class="dh-section-title">🚶 Walkin Track</div><div class="dh-panel" onclick="showAdminPage('kpi')">`;
+  if (wk && wk.ok) {
+    html += `<div class="dh-mini-stats">
+      <div class="dh-mini-stat"><div class="v">${wk.today.walkins}</div><div class="l">Today Walkins</div></div>
+      <div class="dh-mini-stat"><div class="v">${wk.yesterday.walkins}</div><div class="l">Yesterday Walkins</div></div>
+      <div class="dh-mini-stat"><div class="v">${wk.totalDeals}</div><div class="l">Total Deals</div></div>
+      <div class="dh-mini-stat"><div class="v">${wk.totalPurchase}</div><div class="l">Total Purchase</div></div>
+      <div class="dh-mini-stat"><div class="v">${wk.totalNonPurchase}</div><div class="l">Total Non-Purchase</div></div>
+      <div class="dh-mini-stat"><div class="v" style="font-size:13px;">${wk.highestDeals ? wk.highestDeals.employee : '—'}</div><div class="l">Highest Deals${wk.highestDeals ? ' · ' + wk.highestDeals.count : ''}</div></div>
+    </div>`;
+  } else { html += '<div class="dh-empty-mini">No walkin data for today/yesterday</div>'; }
+  html += '</div>';
+
+  // ── Leads section ──
+  html += `<div class="dh-section-title">👥 Leads</div><div class="dh-panel" onclick="showAdminPage('leads')">`;
+  if (leadsRep && leadsRep.rows && leadsRep.rows.length) {
+    const totAssigned = leadsRep.rows.reduce((s, r) => s + (r.assigned || 0), 0);
+    const totSubmitted = leadsRep.rows.reduce((s, r) => s + (r.submitted || 0), 0);
+    const totPending = leadsRep.rows.reduce((s, r) => s + (r.pending || 0), 0);
+    html += `<div class="dh-mini-stats">
+      <div class="dh-mini-stat"><div class="v">${totAssigned}</div><div class="l">Received</div></div>
+      <div class="dh-mini-stat"><div class="v">${totSubmitted}</div><div class="l">Submitted</div></div>
+      <div class="dh-mini-stat"><div class="v">${totPending}</div><div class="l">Pending</div></div>
+    </div>`;
+    html += `<div style="font-size:11px;font-weight:800;color:var(--text2);margin:6px 0 2px;">Employee-wise %</div>`;
+    html += leadsRep.rows.slice(0, 8).map(r => `<div class="dh-list-row"><span class="dh-name-pill">${r.employee}</span><span class="dh-badge ${r.pct >= 70 ? 'green' : (r.pct >= 40 ? 'gold' : 'red')}">${r.submitted}/${r.assigned} · ${r.pct}%</span></div>`).join('');
+  } else { html += '<div class="dh-empty-mini">Tap to open Leads</div>'; }
+  html += '</div>';
+
+  // ── Checklist section (Retail/Wholesale, Opening/Closing) ──
+  html += `<div class="dh-section-title">📝 Stock Checklist</div><div class="dh-row-2">`;
+  ['retail', 'wholesale'].forEach(function(kind) {
+    const label = kind === 'retail' ? '🏬 Retail' : '📦 Wholesale';
+    html += `<div class="dh-panel" onclick="showAdminPage('stock')"><div class="dh-panel-title">${label}</div>`;
+    const sec = ck && ck.ok ? ck[kind] : null;
+    if (sec) {
+      ['opening', 'closing'].forEach(function(shift) {
+        html += `<div class="dh-checklist-col-title">${shift === 'opening' ? '🌅 Opening' : '🌇 Closing'}</div>`;
+        const list = sec[shift] || [];
+        if (!list.length) { html += '<div class="dh-empty-mini">No duty assigned</div>'; return; }
+        html += list.map(p => `<div class="dh-emp-pill"><span class="nm">${p.employee}</span><span class="dh-badge ${p.done ? 'green' : 'gold'}">${p.done ? '✅ Done' : '⏳ ' + (p.status || 'Pending')}</span></div>`).join('');
+      });
+    } else {
+      html += '<div class="dh-empty-mini">Tap to open Checklist</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // ── Quick-access shortcuts ──
   html += `<div class="dh-quick-row">
     <div class="dh-quick-item" onclick="showAdminPage('dashboard')"><span class="qi">🏖️</span>Leave</div>
     <div class="dh-quick-item" onclick="showAdminPage('leads')"><span class="qi">👥</span>Leads</div>
@@ -12024,8 +12216,27 @@ async function loadAdminDashboardHub() {
 
   body.innerHTML = html;
   dhDestroyGauges('dhAdmin');
+  dhDestroyGauges('dhLeave');
+
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     dhMakeGauge('dhAdminKpiGauge', kp.thisMonth.topper.overallScore, '#d4a843');
+  }
+
+  // Leave status donut
+  if (lv && lv.ok && typeof Chart !== 'undefined') {
+    const el = document.getElementById('dhLeavePie');
+    if (el) {
+      window.__dhGauges = window.__dhGauges || {};
+      window.__dhGauges['dhLeavePie'] = new Chart(el, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pending', 'Approved', 'Rejected', 'Absent', 'SM Pending'],
+          datasets: [{ data: [lv.pending, lv.approved, lv.rejected, lv.absent, lv.smPending],
+            backgroundColor: ['#ffb020', '#22c55e', '#e74c3c', '#8b5cf6', '#d4a843'], borderWidth: 0 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
+      });
+    }
   }
 }
 
