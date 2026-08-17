@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root {
   --gold: #d4a843;
@@ -559,6 +560,42 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--purple);
   margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
+
+/* ══════════════════════════════════════
+   NEW DASHBOARD HUB STYLE — KPI cards with
+   accent border + icon, gauge rings, quick-access
+   row. Used by loadEmpDashboardHub() / loadAdminDashboardHub().
+   ══════════════════════════════════════ */
+.dh-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.dh-kpi-card {
+  background: var(--card); border-radius: var(--r2); padding: 13px 14px;
+  border-left: 4px solid var(--dh-accent, var(--purple)); box-shadow: 0 2px 10px rgba(107,33,168,0.08);
+  cursor: pointer; transition: transform 0.15s;
+}
+.dh-kpi-card:active { transform: scale(0.97); }
+.dh-kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 5px; }
+.dh-kpi-val { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800; color: var(--text); margin-top: 4px; }
+.dh-kpi-sub { font-size: 10.5px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+.dh-panel {
+  background: var(--card); border-radius: var(--r); padding: 14px; margin-bottom: 10px;
+  box-shadow: 0 2px 12px rgba(107,33,168,0.08); cursor: pointer;
+}
+.dh-panel-title { font-size: 12.5px; font-weight: 800; color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.dh-gauge-row { display: flex; gap: 10px; }
+.dh-gauge-box { flex: 1; text-align: center; }
+.dh-gauge-wrap { position: relative; height: 90px; display: flex; align-items: center; justify-content: center; }
+.dh-gauge-label { position: absolute; text-align: center; }
+.dh-gauge-label .num { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 800; color: var(--text); }
+.dh-gauge-label .sub { font-size: 8.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; }
+.dh-alert-card { border-radius: var(--r); overflow: hidden; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(220,38,38,0.25); }
+.dh-alert-inner { background: linear-gradient(135deg,#dc2626,#991b1b); padding: 12px 16px; }
+.dh-quick-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 4px; }
+.dh-quick-item {
+  background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r2);
+  padding: 10px 4px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text2); cursor: pointer;
+}
+.dh-quick-item:active { background: var(--purple-bg); border-color: var(--gold); }
+.dh-quick-item .qi { font-size: 17px; display: block; margin-bottom: 4px; }
 
 /* Stats Grid */
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -1193,6 +1230,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-section">
         <div class="quick-actions-title">📊 Dashboard</div>
         <div class="quick-actions-grid">
+          <div class="quick-action-btn" id="empQADashboard" onclick="showEmpPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">My data at a glance</div></div>
           <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🥇</span><div class="quick-action-label">Golden Plan</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
@@ -1204,6 +1242,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Events, theme, password</div></div>
         </div>
       </div>
+    </div>
+
+    <!-- NEW EMPLOYEE DASHBOARD — own data only. Backend (empDashboardAPI)
+         filters by this employee's own identity server-side, not just
+         hidden in the UI — the same request can never return anyone
+         else's numbers no matter what. -->
+    <div class="page-section" id="emp-dashboard-hub">
+      <div class="section-hdr"><span class="section-title2">📊 My Dashboard</span>
+        <button class="btn-sm btn-view" onclick="loadEmpDashboardHub()">🔄 Refresh</button>
+      </div>
+      <div id="empDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
 
     <!-- HOME / OVERVIEW (Leave section landing) -->
@@ -1808,12 +1857,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
   <div class="page-content">
 
-    <!-- DASHBOARD — the true landing page right after login. Rich stats
-         (from the old separate "unified-dashboard" page, now merged in
-         here) + a card for every module. Leave is just ONE of these
-         peer cards, same as every other module — Leave's own home page
-         intentionally has no way back to this Dashboard other than the
-         same bottom-nav Home icon every other section uses. -->
+    <!-- SECTION PAGE — pure navigation, one card per module (including
+         the Dashboard itself, which is its own separate page — see
+         admin-dashboard-hub below). Nothing auto-loads here; every card
+         is a direct link, and the Dashboard's own data only loads when
+         someone actually opens it. -->
     <div class="page-section active" id="admin-modulepicker">
       <div class="home-header">
         <div class="home-header-title">VSR GOLD</div>
@@ -1823,7 +1871,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-section">
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('unified-dashboard')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
+          <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQAGoldenAura" onclick="showAdminPage('golden-aura')"><span class="quick-action-icon">🥇</span><div class="quick-action-label">Golden Plan</div><div class="quick-action-sub">All schemes &amp; enrollments</div></div>
@@ -1837,56 +1885,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
 
-    <!-- UNIFIED DASHBOARD — separate page, reached via the "📊 Dashboard"
-         button on the Section Page above. The Section Page itself stays
-         exactly as it always was (pure navigation, nothing removed) —
-         this is purely an ADDITIONAL navigation layer on top, per the
-         explicit "don't touch the old page/flow" requirement. Direct
-         access to any individual section (Leave/Loyalty/KPI/etc) from
-         the Section Page still works exactly as before, unaffected. -->
-    <div class="page-section" id="admin-unified-dashboard">
+    <!-- NEW ADMIN DASHBOARD (built from scratch — the old one that hung
+         on "Loading dashboard..." for ~2 days is completely removed,
+         not fixed. This ONLY loads when actually opened — never
+         auto-triggered from the Section Page — and every box below is
+         independently fetched server-side inside ONE call, so a single
+         failing section shows its own "Tap to open" fallback instead of
+         ever leaving the whole page stuck spinning.) -->
+    <div class="page-section" id="admin-dashboard-hub">
       <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
-        <button class="btn-sm btn-view" onclick="loadUnifiedDashboard()">🔄 Refresh</button>
+        <button class="btn-sm btn-view" onclick="loadAdminDashboardHub()">🔄 Refresh</button>
       </div>
-
-      <!-- Period Filter -->
-      <div class="filter-bar" id="dashPeriodBar">
-        <button class="filter-btn active" data-period="today" onclick="setDashPeriod('today', this)">Today</button>
-        <button class="filter-btn" data-period="month" onclick="setDashPeriod('month', this)">This Month</button>
-        <button class="filter-btn" data-period="year" onclick="setDashPeriod('year', this)">Year</button>
-        <button class="filter-btn" data-period="custom" onclick="setDashPeriod('custom', this)">Custom</button>
-      </div>
-      <div id="dashCustomRangeBox" style="display:none;padding:10px 2px;">
-        <div style="display:flex;gap:8px;align-items:end;">
-          <div class="form-row" style="flex:1;margin:0;"><label style="font-size:10px;">Start Date</label><input type="date" lang="en-GB" id="dashCustomStart"></div>
-          <div class="form-row" style="flex:1;margin:0;"><label style="font-size:10px;">End Date</label><input type="date" lang="en-GB" id="dashCustomEnd"></div>
-          <button class="btn-sm btn-view" style="height:38px;" onclick="loadDashCustomRange()">🔍 Go</button>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="quick-actions-section" style="margin-bottom:14px;">
-        <div class="quick-actions-title" style="font-size:11px;">⚡ Quick Actions</div>
-        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('direct')">✍️ Direct Leave Action</button>
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('pending')">⏳ Review Pending</button>
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('leads')">👥 Lead Action</button>
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('loyalty')">💳 Loyalty Card</button>
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('golden-aura-new')">🥇 New Golden Plan</button>
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('stock')">📝 Stock Checklist</button>
-          <button class="btn-sm btn-view" style="white-space:nowrap;" onclick="showAdminPage('leads-report')">📈 Reports</button>
-        </div>
-      </div>
-
-      <!-- Pending / Alerts -->
-      <div id="unifiedDashAlerts"></div>
-
-      <div id="unifiedDashGrid" style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px;"></div>
-
-      <!-- Employee-Wise (KPI) -->
-      <div class="card" id="unifiedDashEmployeeWise" style="margin-bottom:14px;"></div>
-
-      <div class="card" id="unifiedDashTopPerformers"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
 
     <!-- DASHBOARD (Leave section landing) -->
@@ -3388,15 +3398,11 @@ function openLeaveDetailModal(key, isAdmin) {
   if (l.leaveAddress) rows.push(['Leave Address', l.leaveAddress]);
   if (l.reason) rows.push([l.status === 'Rejected' ? 'Rejection Reason' : 'Note', l.reason]);
 
-  let html = '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px;">';
-  rows.forEach(([label, val], idx) => {
-    const bg = idx % 2 === 0 ? '#fdfcff' : '#ffffff';
-    html += `<div style="background:${bg};padding:9px 12px;display:flex;gap:10px;border-bottom:1px solid var(--border);">
-      <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;min-width:100px;flex-shrink:0;">${label}</div>
-      <div style="font-size:12.5px;color:var(--text);font-weight:600;word-break:break-word;">${val}</div>
-    </div>`;
+  let html = '<div class="kd-table-wrap" style="margin-top:8px;"><table class="kd-table">';
+  rows.forEach(([label, val]) => {
+    html += `<tr><td style="font-weight:700;color:var(--text3);text-transform:uppercase;font-size:10.5px;width:110px;">${label}</td><td style="font-weight:600;">${val}</td></tr>`;
   });
-  html += '</div>';
+  html += '</table></div>';
 
   document.getElementById('leaveDetailBody').innerHTML = html;
 
@@ -4082,6 +4088,7 @@ function showEmpPage(page) {
   updateBackFabs('emp', page);
   renderFooterNav('emp', page);
   window.scrollTo(0, 0);
+  if(page==='dashboard-hub') loadEmpDashboardHub();
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
   if(page==='loyalty-mycards') loadLoyaltyMyCards();
@@ -5693,6 +5700,10 @@ function renderSettingsEmpBody(emp) {
     <div class="card-title">${nameLabel}</div>
     ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : ''}
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
+      <input type="checkbox" id="empDashboardAccessCheck" ${emp && emp.dashboardAccess !== false ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📊 Dashboard Access</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empLeaveAccessCheck" ${emp && emp.leaveAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">📋 Leave Access</span>
     </label>
@@ -5821,6 +5832,7 @@ async function saveSettingsEmpGranular(empId, empName) {
 
 async function saveSettingsEmpAccess(empId, empName) {
   if (!empId) { toast('Select an employee first', 'error'); return; }
+  const dashboardEnabled = document.getElementById('empDashboardAccessCheck').checked;
   const enabled = document.getElementById('empLoyaltyAccessCheck').checked;
   const kpiEnabled = document.getElementById('empKpiAccessCheck').checked;
   const dsrEnabled = document.getElementById('empDsrAccessCheck').checked;
@@ -5830,6 +5842,7 @@ async function saveSettingsEmpAccess(empId, empName) {
   const goldenAuraEnabled = document.getElementById('empGoldenAuraAccessCheck').checked;
   const payload = {
     page: 'saveEmployeeLoyaltyAccessAPI', empId, empName,
+    dashboardEnabled: dashboardEnabled ? 'true' : 'false',
     enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
     leaveEnabled: leaveEnabled ? 'true' : 'false', leadsEnabled: leadsEnabled ? 'true' : 'false', stockEnabled: stockEnabled ? 'true' : 'false',
     goldenAuraEnabled: goldenAuraEnabled ? 'true' : 'false',
@@ -5843,7 +5856,7 @@ async function saveSettingsEmpAccess(empId, empName) {
       if (res.ok) {
         toast('✅ Access saved for ' + empName, 'success');
         const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; emp.goldenAuraAccess = goldenAuraEnabled; }
+        if (emp) { emp.dashboardAccess = dashboardEnabled; emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; emp.goldenAuraAccess = goldenAuraEnabled; }
       } else {
         toast(res.error || 'Save failed', 'error');
       }
@@ -6199,6 +6212,7 @@ function renderEmpProfile() {
 
 // Maps each SM_Permissions feature key to the DOM elements it controls
 const SM_FEATURE_ELEMENTS = {
+  dashboardHub: ['adminQADashboard'],
   calendar:  ['adminQACalendar'],
   balance:   ['adminQABalance'],
   empwise:   ['adminQAEmpwise'],
@@ -6364,11 +6378,10 @@ function showAdminPage(page) {
   if(page==='settings') loadSettingsPage();
   if(page==='profile') renderAdminProfile();
   if(page==='empwise') loadEmployeeWisePage();
-  if(page==='modulepicker') loadUnifiedDashboard();
   if(page==='pending') renderPending();
   if(page==='notices') loadNoticesForAdmin();
   if(page==='leads') loadAdminLeadsHome();
-  if(page==='unified-dashboard') loadUnifiedDashboard();
+  if(page==='dashboard-hub') loadAdminDashboardHub();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
   if(page==='leads-report') loadAdminLeadsReport();
@@ -6847,11 +6860,14 @@ async function submitNewLoyaltyCard() {
   const errBox = document.getElementById('ncErrorMsg');
   errBox.style.display = 'none';
 
-  const custName   = document.getElementById('ncCustName').value.trim();
+  // v-fix (mandatory formatting): uppercase at the point of collection,
+  // same as DSR — the actual saved/generated data is uppercase, not
+  // just its on-screen display.
+  const custName   = document.getElementById('ncCustName').value.trim().toUpperCase();
   const occupation = document.getElementById('ncOccupation').value.trim();
   const orgName    = document.getElementById('ncOrgName').value.trim();
   const phone      = document.getElementById('ncPhone').value.trim();
-  const address    = document.getElementById('ncAddress').value.trim();
+  const address    = document.getElementById('ncAddress').value.trim().toUpperCase();
   const aadhaarNo  = document.getElementById('ncAadhaarNo').value.trim();
   const panNo      = document.getElementById('ncPanNo').value.trim();
   const cardType   = document.getElementById('ncCardType').value;
@@ -8409,13 +8425,21 @@ function renderDsrTodayFiltered(who) {
 }
 
 // Handles both raw base64 photos and Google Drive share links (which
-// can't be used directly as an <img src> — they need the uc?export=view
-// format to actually render as an image).
+// can't be used directly as an <img src> — they need converting to
+// Google's image-CDN format to actually render as an image).
 function dsrPhotoViewUrl(photo) {
   if (!photo) return '';
   if (photo.startsWith('data:image')) return photo;
   const m = photo.match(/[?&]id=([\w-]+)/) || photo.match(/\/d\/([\w-]+)/);
-  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  // v-fix ("URL kanipistundi, photo click chesthene vastundi — direct ga
+  // ravali"): uc?export=view is unreliable as a direct <img src> — Google
+  // frequently redirects it to a viewer page instead of raw image bytes,
+  // which makes the <img> tag fail to load and fall back to the "click
+  // to open" link the user was seeing. googleusercontent.com's /d/ path
+  // is Google's own image-serving CDN and reliably returns the actual
+  // image bytes directly, so the photo now shows immediately with no
+  // extra click needed.
+  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
   return photo;
 }
 
@@ -8488,9 +8512,9 @@ async function saveDsrEdit(idx, who) {
   const payload = {
     page: 'dsrUpdateEntryAPI', role: 'ADMIN', callerEmail: state.adminEmail,
     sheetName: it.sheetName, rowNum: it.rowNum,
-    customerName: document.getElementById('dsrEditCust').value,
+    customerName: (document.getElementById('dsrEditCust').value || '').toUpperCase(),
     mobile: document.getElementById('dsrEditMobile').value,
-    address: document.getElementById('dsrEditAddr').value,
+    address: (document.getElementById('dsrEditAddr').value || '').toUpperCase(),
     itemName: document.getElementById('dsrEditItem').value,
     design: document.getElementById('dsrEditDesign').value,
     tunch: document.getElementById('dsrEditTunch').value,
@@ -8541,15 +8565,11 @@ function openDsrDetailModal(key, who) {
     ['Entry Time', g.entryTime || '—']
   ];
 
-  let rowsHtml = '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px;">';
-  rows.forEach(([label, val], idx) => {
-    const bg = idx % 2 === 0 ? '#fdfcff' : '#ffffff';
-    rowsHtml += `<div style="background:${bg};padding:9px 12px;display:flex;gap:10px;border-bottom:1px solid var(--border);">
-      <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;min-width:100px;flex-shrink:0;">${label}</div>
-      <div style="font-size:12.5px;color:var(--text);font-weight:600;word-break:break-word;">${val}</div>
-    </div>`;
+  let rowsHtml = '<div class="kd-table-wrap" style="margin-top:8px;"><table class="kd-table">';
+  rows.forEach(([label, val]) => {
+    rowsHtml += `<tr><td style="font-weight:700;color:var(--text3);text-transform:uppercase;font-size:10.5px;width:100px;">${label}</td><td style="font-weight:600;">${val}</td></tr>`;
   });
-  rowsHtml += '</div>';
+  rowsHtml += '</table></div>';
 
   let itemsHtml = `<div class="card-title" style="margin-top:14px;margin-bottom:6px;">🧾 Items (${g.items.length})</div>`;
   let itemRowsHtml = '';
@@ -8595,8 +8615,13 @@ function viewDsrPhoto(idx, who) {
   const photos = window['__dsrTodayPhotos_' + who];
   if (!photos || !photos[idx]) return;
   const url = dsrPhotoViewUrl(photos[idx]);
+  // Second-attempt fallback format, tried before ever giving up and
+  // showing a click-through link — different Drive sharing
+  // configurations occasionally favor one format over the other.
+  const m = (photos[idx] || '').match(/[?&]id=([\w-]+)/) || (photos[idx] || '').match(/\/d\/([\w-]+)/);
+  const altUrl = m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : url;
   const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>DSR Photo</title><style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:100%;max-height:100vh;}a{color:#fff;font-family:sans-serif;}</style></head><body><img src="${url}" onerror="this.outerHTML='<a href=\\'${url}\\' target=_blank>Could not preview — click to open in Drive</a>'"></body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><title>DSR Photo</title><style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:100%;max-height:100vh;}a{color:#fff;font-family:sans-serif;}</style></head><body><img src="${url}" onerror="if(this.dataset.retried){this.outerHTML='<a href=\\'${url}\\' target=_blank>Could not preview — click to open in Drive</a>'}else{this.dataset.retried=1;this.src='${altUrl}'}"></body></html>`);
   win.document.close();
 }
 
@@ -9128,12 +9153,13 @@ function renderGoldenAuraForm(who) {
 
 async function submitGoldenAura(who) {
   const g = id => document.getElementById(id + '-' + who);
-  const custName = g('gaCustName').value.trim();
+  // v-fix (mandatory formatting): same uppercase-at-source treatment as DSR/Loyalty.
+  const custName = g('gaCustName').value.trim().toUpperCase();
   const mobile = g('gaMobile').value.trim();
   const planType = g('gaPlanType').value;
   const planNo = g('gaPlanNo').value.trim();
   const amount = g('gaAmount').value.trim();
-  const town = g('gaTown').value.trim();
+  const town = g('gaTown').value.trim().toUpperCase();
 
   if (!custName || !mobile || !planType || !planNo || !amount || !town) { toast('Please fill all required fields (*)', 'error'); return; }
   if (!/^\d+$/.test(planNo)) { toast('Plan Number must be numbers only', 'error'); return; }
@@ -10773,8 +10799,16 @@ function loadStockChangeLog(who) {
 
 function dsrfSubmit(who) {
   const empName = dsrfEmpDisplayName(who);
-  const date = dsrfGv('dsrfBillDate-' + who), cust = dsrfGv('dsrfCust-' + who), mob = dsrfGv('dsrfMobile-' + who),
-        addr = dsrfGv('dsrfAddr-' + who), payStatus = dsrfGv('dsrfPayStatus-' + who);
+  const date = dsrfGv('dsrfBillDate-' + who), mob = dsrfGv('dsrfMobile-' + who),
+        payStatus = dsrfGv('dsrfPayStatus-' + who);
+  // v-fix (mandatory formatting — customer name/address must be
+  // uppercase in the actual saved data, not just via CSS): converted
+  // right here at the point of collection, so it's what actually gets
+  // written to the sheet — every DSR entry, table, report, and search
+  // result downstream sees it uppercase because it genuinely IS
+  // uppercase, not because a stylesheet is hiding the real casing.
+  const cust = (dsrfGv('dsrfCust-' + who) || '').toUpperCase();
+  const addr = (dsrfGv('dsrfAddr-' + who) || '').toUpperCase();
 
   if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
   if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
@@ -11788,263 +11822,211 @@ function printCurrentView(title) {
 // ══════════════════════════════════════
 let empWiseBalanceCache = [];
 
-// ══════════════════════════════════════
-// UNIFIED DASHBOARD — Leave / Loyalty / KPI / DSR / CRM (Leads) /
-// Checklist (Stock) summary boxes, all at a glance, plus a combined
-// "Top Performers" section (KPI leaderboard + Loyalty leaderboard).
-// Each box is independently fetched (Promise.allSettled) so one slow
-// or failing module never blocks the others from showing — a box that
-// fails just shows "Tap to open" instead of numbers.
-// ══════════════════════════════════════
-// ══════════════════════════════════════
-// A-TO-Z DASHBOARD — Complete A-Z Dashboard Master Prompt.
-// Every figure here comes straight from dashboardAtoZJSON (real sheet
-// reads, no invented numbers). Accounting is not shown — that module
-// doesn't exist anywhere in this project. Golden Aura shows enrollment
-// activity only — no Target/Achievement, because no target concept
-// exists in that system's data.
-// ══════════════════════════════════════
-let dashLastData = null;   // cached dashboardAtoZJSON result — period switches re-render from this, no re-fetch needed
-let dashCurrentPeriod = 'today';
 
-async function loadUnifiedDashboard() {
-  const grid = document.getElementById('unifiedDashGrid');
-  const topBox = document.getElementById('unifiedDashTopPerformers');
-  const alertsBox = document.getElementById('unifiedDashAlerts');
-  grid.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
-  topBox.innerHTML = ''; alertsBox.innerHTML = '';
+// ══════════════════════════════════════
+// NEW ADMIN DASHBOARD — built from scratch (see empDashboardAPI /
+// adminDashboardAPI in the backend for why the old one is gone, not
+// fixed). Loads ONLY when this page is actually opened — never
+// auto-triggered from the Section Page. Every box renders from
+// whatever came back; a section with ok:false just shows "Tap to
+// open" instead of numbers, and a totally failed fetch shows a clear
+// Retry button — it can never sit on a spinner forever.
+// ══════════════════════════════════════
+// ══════════════════════════════════════
+// NEW EMPLOYEE DASHBOARD — own data only. Same safe pattern as the
+// admin dashboard: loads only when opened, clear Retry on failure,
+// never spins forever.
+// ══════════════════════════════════════
+function dhDestroyGauges(prefix) {
+  Object.keys(window).forEach(() => {}); // no-op, kept for symmetry
+  (window.__dhGauges = window.__dhGauges || {});
+  Object.keys(window.__dhGauges).filter(k => k.indexOf(prefix) === 0).forEach(k => {
+    try { window.__dhGauges[k].destroy(); } catch(e) {}
+    delete window.__dhGauges[k];
+  });
+}
+function dhMakeGauge(canvasId, pct, color) {
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  window.__dhGauges = window.__dhGauges || {};
+  window.__dhGauges[canvasId] = new Chart(el, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [p, 100 - p], backgroundColor: [color, '#eee4f8'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '75%', circumference: 180, rotation: 270,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+  });
+}
 
+// KPI-style summary card: colored left accent, icon, label, big value, sub-line.
+// bad=true (module has no data yet) shows a quiet "Tap to open" instead of stats,
+// same fallback behaviour as before — nothing here is invented if the API sends nothing.
+function dhKpiCard(opts) {
+  const bad = !opts.data || opts.data.ok === false;
+  return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}" onclick="${opts.onclick}">
+    <div class="dh-kpi-label">${opts.icon} ${opts.title}</div>
+    ${bad
+      ? '<div class="dh-kpi-sub" style="margin-top:6px;">Tap to open</div>'
+      : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
+  </div>`;
+}
+
+async function loadEmpDashboardHub() {
+  const body = document.getElementById('empDashHubBody');
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
   let res;
   try {
-    res = await jsonpReliable({ page: 'dashboardAtoZJSON' });
+    res = await jsonpReliable({ page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail });
   } catch (e) {
-    grid.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadUnifiedDashboard()" title="Retry">🔄</button></div>';
+    body.innerHTML = '<div class="empty-state"><p>Could not load your dashboard.</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadEmpDashboardHub()">🔄 Retry</button></div>';
     return;
   }
   if (!res || !res.ok) {
-    grid.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadUnifiedDashboard()" title="Retry">🔄</button></div>';
+    body.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load your dashboard.') + '</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadEmpDashboardHub()">🔄 Retry</button></div>';
     return;
   }
-  dashLastData = res.data;
-  document.getElementById('dashCustomRangeBox').style.display = 'none';
-  document.querySelectorAll('#dashPeriodBar .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.period === 'today'));
-  dashCurrentPeriod = 'today';
-  renderUnifiedDashboard(dashLastData, 'today');
-}
+  const d = res.data || {};
 
-// Period tabs re-render from the already-fetched data — Today/This
-// Month/Year are all returned together by dashboardAtoZJSON, so
-// switching between them is instant with no extra network call.
-// "Custom" is the one exception (see loadDashCustomRange below), since
-// an arbitrary date range isn't part of the bulk fetch.
-function setDashPeriod(period, btn) {
-  document.querySelectorAll('#dashPeriodBar .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const customBox = document.getElementById('dashCustomRangeBox');
-  if (period === 'custom') {
-    customBox.style.display = 'block';
-    return; // wait for "Go" — loadDashCustomRange() renders when clicked
-  }
-  customBox.style.display = 'none';
-  dashCurrentPeriod = period;
-  if (dashLastData) renderUnifiedDashboard(dashLastData, period);
-}
+  const lv = d.leave, dr = d.dsr, kp = d.kpi, ly = d.loyalty, ga = d.goldenAura;
 
-async function loadDashCustomRange() {
-  const s = document.getElementById('dashCustomStart').value;
-  const e = document.getElementById('dashCustomEnd').value;
-  if (!s || !e) { toast('Pick both a start and end date', 'error'); return; }
-  const grid = document.getElementById('unifiedDashGrid');
-  grid.innerHTML = '<div class="loading"><span class="spinner"></span>Loading custom range...</div>';
-  // Custom-range figures are only available for Leads and DSR right now
-  // (the two modules whose backends already support an arbitrary date
-  // range) — Leave/Loyalty/Golden Plan custom-range would need their
-  // own range-aware backend work first, so rather than fake those
-  // numbers for a picked range, this is honest about only showing what
-  // genuinely supports it.
-  const sDMY = s.split('-').reverse().join('-'), eDMY = e.split('-').reverse().join('-');
-  const [leadsRes, dsrRes] = await Promise.allSettled([
-    leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', startDate: sDMY, endDate: eDMY }),
-    jsonpReliable({ page: 'dsrDateRangeJSON', role: 'ADMIN', start: s, end: e })
-  ]);
-  let html = `<div class="kd-note" style="font-weight:700;">📅 Custom Range: ${fmtDMY(s)} → ${fmtDMY(e)}</div>`;
-  const lr = leadsRes.status === 'fulfilled' ? leadsRes.value : null;
-  if (lr && lr.ok && lr.rows) {
-    const tot = lr.rows.reduce((a, r) => ({ assigned: a.assigned + (r.assigned||0), submitted: a.submitted + (r.submitted||0), pending: a.pending + (r.pending||0) }), { assigned: 0, submitted: 0, pending: 0 });
-    html += `<div class="card" style="padding:12px 14px;cursor:pointer;border-left:3px solid var(--orange);" onclick="showAdminPage('leads-report')">
-      <div style="font-size:12.5px;font-weight:700;">👥 Leads (CRM)</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Assigned: ${tot.assigned} · Submitted: ${tot.submitted} · Pending: ${tot.pending}</div>
-    </div>`;
-  }
-  const dr = dsrRes.status === 'fulfilled' ? dsrRes.value : null;
-  if (dr && dr.ok && dr.rows) {
-    html += `<div class="card" style="padding:12px 14px;cursor:pointer;border-left:3px solid var(--blue,#2563eb);" onclick="showAdminPage('dsr')">
-      <div style="font-size:12.5px;font-weight:700;">🧾 DSR</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">${dr.rows.length} entries in range</div>
-    </div>`;
-  }
-  html += `<div class="kd-note" style="margin-top:8px;">Leave, Loyalty, Golden Plan, KPI and Stock Checklist custom-range totals aren't wired up yet — those still show their own Today/Month reports on their own pages.</div>`;
-  grid.innerHTML = html;
-  document.getElementById('unifiedDashEmployeeWise').innerHTML = '';
-  document.getElementById('unifiedDashTopPerformers').innerHTML = '';
-}
+  let html = '<div class="dh-kpi-grid">';
+  html += dhKpiCard({ icon: '🏖️', title: 'My Leave', accent: 'var(--purple)', onclick: "showEmpPage('overview')", data: lv,
+    value: lv && lv.ok ? (lv.balance && lv.balance.balance != null ? lv.balance.balance : (lv.thisMonth.count + '')) : '',
+    sub: lv && lv.ok ? `${lv.today ? lv.today.status : 'Not on leave today'} · Pending ${lv.pendingCount}` : '' });
 
-function renderUnifiedDashboard(d, period) {
-  const grid = document.getElementById('unifiedDashGrid');
-  const topBox = document.getElementById('unifiedDashTopPerformers');
-  const alertsBox = document.getElementById('unifiedDashAlerts');
-  const empWiseBox = document.getElementById('unifiedDashEmployeeWise');
-  const periodLabel = { today: 'Today', month: 'This Month', year: 'This Year' }[period] || 'Today';
+  html += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr')", data: dr,
+    value: dr && dr.ok ? dr.today.entries : '',
+    sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  // Rich, full-color gradient card per module — each module gets its own
-  // distinct gradient (built from the same purple/gold VSR GOLD palette
-  // plus a few accent colors for visual separation between modules,
-  // same idea as the reference image's colored stat boxes) instead of a
-  // plain white card. Text goes white-on-gradient like the reference.
-  function moduleCard(opts) {
-    const bad = !opts.data || opts.data.ok === false;
-    return `<div class="card" style="padding:0;overflow:hidden;cursor:pointer;border:none;box-shadow:0 4px 14px rgba(0,0,0,.12);" onclick="${opts.onclick}">
-      <div style="background:${opts.gradient};padding:14px 16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div style="font-size:13.5px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.15);">${opts.icon} ${opts.title}</div>
-          ${opts.badge ? `<span style="background:rgba(255,255,255,.25);color:#fff;font-size:9.5px;font-weight:700;padding:3px 9px;border-radius:20px;">${opts.badge}</span>` : ''}
-        </div>
-        ${bad ? '<div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:8px;">No data available</div>' : `<div style="color:rgba(255,255,255,.95);margin-top:8px;">${opts.body}</div>`}
+  html += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi')", data: kp && kp.thisMonth ? kp : null,
+    value: kp && kp.ok && kp.thisMonth ? kp.thisMonth.score : '',
+    sub: kp && kp.ok && kp.thisMonth ? `Grade ${kp.thisMonth.grade} this month` : '' });
+
+  html += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty')", data: ly,
+    value: ly && ly.ok ? ly.thisMonth.cardsApproved : '',
+    sub: ly && ly.ok ? `This month · ${ly.total.cardsApproved} total` : '' });
+
+  html += dhKpiCard({ icon: '🥇', title: 'My Golden Plan', accent: '#d6389a', onclick: "showEmpPage('golden-aura')", data: ga,
+    value: ga && ga.ok ? ga.thisMonth.enrollments : '',
+    sub: ga && ga.ok ? `This month · ${ga.total.enrollments} total` : '' });
+  html += '</div>';
+
+  // Gauge — KPI score this month (only rendered when the API actually sent a score;
+  // nothing is fabricated when kp is missing/not ok).
+  if (kp && kp.ok && kp.thisMonth && kp.thisMonth.score != null) {
+    html += `<div class="dh-panel" onclick="showEmpPage('kpi')">
+      <div class="dh-panel-title">📈 KPI Score — This Month</div>
+      <div class="dh-gauge-wrap"><canvas id="dhEmpKpiGauge"></canvas>
+        <div class="dh-gauge-label"><div class="num">${kp.thisMonth.score}</div><div class="sub">Grade ${kp.thisMonth.grade || '—'}</div></div>
       </div>
     </div>`;
   }
 
-  // ── Pending / Alerts (period-independent — always "right now") — rich
-  // red/orange gradient, matching the reference image's "Important
-  // Alerts" box exactly in spirit. ──
-  const alerts = d.alerts || [];
-  if (alerts.length === 0) {
-    alertsBox.innerHTML = '';
-  } else {
-    alertsBox.innerHTML = `<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px;border:none;box-shadow:0 4px 14px rgba(220,38,38,.25);">
-      <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:12px 16px;">
-        <div style="font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.15);margin-bottom:8px;">🔔 Important Alerts (${alerts.length})</div>
-        ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:7px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="showAdminPage('${a.page}')"><span>${a.icon} ${a.text}</span><span style="opacity:.85;">→</span></div>`).join('')}
-      </div>
-    </div>`;
+  body.innerHTML = html;
+  dhDestroyGauges('dhEmp');
+  if (kp && kp.ok && kp.thisMonth && kp.thisMonth.score != null) {
+    dhMakeGauge('dhEmpKpiGauge', kp.thisMonth.score, '#6b21a8');
   }
+}
 
-  let html = '';
+async function loadAdminDashboardHub() {
+  const body = document.getElementById('adminDashHubBody');
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
+  let res;
+  try {
+    res = await jsonpReliable({ page: 'adminDashboardJSON' });
+  } catch (e) {
+    body.innerHTML = '<div class="empty-state"><p>Could not load the dashboard.</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
+    return;
+  }
+  if (!res || !res.ok) {
+    body.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load dashboard.') + '</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
+    return;
+  }
+  const d = res.data || {};
   const lv = d.leave, ld = d.leads, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock;
 
-  // ── LEAVE — bucket picked by period ──
-  const lvBucket = period === 'today' ? (lv && lv.ok && { requests: lv.today.totalRequests, extra: `${lv.today.onLeave.length} on leave · ${lv.today.pending} pending` })
-    : period === 'month' ? (lv && lv.ok && { requests: lv.thisMonth.total, extra: `${lv.thisMonth.approved} approved · ${lv.thisMonth.pending} pending · ${lv.thisMonth.rejected} rejected` })
-    : (lv && lv.ok && { requests: lv.yearTotal.total, extra: `${lv.yearTotal.approved} approved · ${lv.yearTotal.pending} pending · ${lv.yearTotal.rejected} rejected` });
-  html += moduleCard({
-    icon: '🏖️', title: 'Leave', gradient: 'linear-gradient(135deg,#7c3aed,#4a1880)',
-    badge: lv && lv.ok ? periodLabel : null,
-    onclick: "showAdminPage('dashboard')", data: lv,
-    body: lvBucket ? `<div style="font-size:11px;line-height:1.7;">${periodLabel}: <b>${lvBucket.requests}</b> request(s)<br>${lvBucket.extra}</div>` : ''
-  });
+  let html = '';
 
-  // ── LEADS ──
-  const ldBucket = period === 'today' ? (ld && ld.ok && ld.today) : period === 'month' ? (ld && ld.ok && ld.thisMonth) : (ld && ld.ok && ld.yearTotal);
-  html += moduleCard({
-    icon: '👥', title: 'Leads (CRM)', gradient: 'linear-gradient(135deg,#f59e0b,#c2610a)',
-    badge: ld && ld.ok ? periodLabel : null,
-    onclick: "showAdminPage('leads')", data: ld,
-    body: ldBucket ? `<div style="font-size:11px;line-height:1.7;">
-      ${periodLabel}: <b>${ldBucket.assigned}</b> assigned · ${ldBucket.submitted} done · ${ldBucket.pending} pending<br>
-      ${ld.topPerformer ? '🏆 Top (this month): ' + ld.topPerformer.employee : ''}
-    </div>` : ''
-  });
+  // Alerts — unchanged behaviour, just restyled to match the new panel look
+  const alerts = d.alerts || [];
+  if (alerts.length) {
+    html += `<div class="dh-alert-card">
+      <div class="dh-alert-inner">
+        <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">🔔 Needs Action (${alerts.length})</div>
+        ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
+      </div>
+    </div>`;
+  }
 
-  // ── KPI — only "this month" data exists (no daily KPI concept) ──
-  html += moduleCard({
-    icon: '📊', title: 'KPI', gradient: 'linear-gradient(135deg,#16a34a,#065f46)',
-    badge: kp && kp.ok && kp.thisMonth.topper ? '🏆 ' + kp.thisMonth.topper.employee : null,
-    onclick: "showAdminPage('kpi')", data: kp,
-    body: kp && kp.ok && kp.thisMonth.topper ? `<div style="font-size:11px;line-height:1.7;">
-      This month topper: <b>${kp.thisMonth.topper.employee}</b> — ${kp.thisMonth.topper.overallScore} pts<br>
-      <span style="font-size:10px;opacity:.85;">(KPI is scored per running month — no single-day figure exists)</span>
-    </div>` : '<div style="font-size:11px;">No KPI data yet.</div>'
-  });
+  // KPI summary cards — 2-column grid, colored accent per module, tap to drill into that module
+  html += '<div class="dh-kpi-grid">';
+  html += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
+    value: lv && lv.ok ? lv.today.onLeave.length : '',
+    sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
 
-  // ── DSR — only today/month tracked ──
-  const drBucket = period === 'year' ? null : (dr && dr.ok && (period === 'today' ? dr.today.entries : dr.thisMonth.entries));
-  html += moduleCard({
-    icon: '🧾', title: 'DSR', gradient: 'linear-gradient(135deg,#2563eb,#1d3f8f)',
-    onclick: "showAdminPage('dsr')", data: dr,
-    body: drBucket !== null && drBucket !== undefined ? `<div style="font-size:11px;">${periodLabel}: <b>${drBucket}</b> entries</div>` : '<div style="font-size:11px;">Year view not tracked for DSR — showing Today/Month only.</div>'
-  });
+  html += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
+    value: ld && ld.ok ? ld.today.assigned : '',
+    sub: ld && ld.ok ? `Assigned today${ld.topPerformer ? ' · 🏆 ' + ld.topPerformer.employee : ''}` : '' });
 
-  // ── LOYALTY CARD ──
-  const lyBucket = period === 'today' ? (ly && ly.ok && ly.today.cardsApproved) : period === 'month' ? (ly && ly.ok && ly.thisMonth.cardsApproved) : (ly && ly.ok && ly.total.cardsApproved);
-  html += moduleCard({
-    icon: '💳', title: 'Loyalty Card', gradient: 'linear-gradient(135deg,#e0b968,#a67f2e)',
-    onclick: "showAdminPage('loyalty')", data: ly,
-    body: (lyBucket !== null && lyBucket !== undefined) ? `<div style="font-size:11px;line-height:1.7;">
-      ${periodLabel}: <b>${lyBucket}</b> card(s)${period === 'year' ? ' (all-time total) · ₹' + fmtNum(ly.total.incentivePaid) + ' paid' : ''}
-    </div>` : ''
-  });
+  html += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
+    value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
+    sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? `Topper: ${kp.thisMonth.topper.employee}` : '' });
 
-  // ── GOLDEN AURA ──
-  const gaBucket = period === 'today' ? (ga && ga.ok && ga.today.enrollments) : period === 'month' ? (ga && ga.ok && ga.thisMonth.enrollments) : (ga && ga.ok && ga.total.enrollments);
-  html += moduleCard({
-    icon: '🥇', title: 'Golden Plan', gradient: 'linear-gradient(135deg,#4a1880,#a67f2e)',
-    onclick: "showAdminPage('golden-aura')", data: ga,
-    body: (gaBucket !== null && gaBucket !== undefined) ? `<div style="font-size:11px;">${periodLabel}: <b>${gaBucket}</b> enrollment(s)${period === 'year' ? ' (all-time total)' : ''}</div>` : ''
-  });
+  html += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
+    value: dr && dr.ok ? dr.today.entries : '',
+    sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  // ── STOCK CHECKLIST — today only ──
+  html += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
+    value: ly && ly.ok ? ly.today.cardsApproved : '',
+    sub: ly && ly.ok ? `Today · ${ly.thisMonth.cardsApproved} this month` : '' });
+
+  html += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: ga,
+    value: ga && ga.ok ? ga.today.enrollments : '',
+    sub: ga && ga.ok ? `Today · ${ga.thisMonth.enrollments} this month` : '' });
+  html += '</div>';
+
+  // Stock checklist — kept as a wide panel since it's a key/value map, not a single number
   const stKeys = st && st.ok ? Object.keys(st.today) : [];
-  html += moduleCard({
-    icon: '📝', title: 'Stock Checklist', gradient: 'linear-gradient(135deg,#0d9488,#0f5c8a)',
-    onclick: "showAdminPage('stock')", data: st,
-    body: (period === 'today' && st && st.ok && stKeys.length) ? `<div style="font-size:11px;line-height:1.7;">
-      ${stKeys.slice(0, 4).map(k => k + ': <b>' + st.today[k] + '</b>').join(' · ')}
-    </div>` : '<div style="font-size:11px;">Only a Today view exists for Stock Checklist.</div>'
-  });
+  html += `<div class="dh-panel" onclick="showAdminPage('stock')">
+    <div class="dh-panel-title">📝 Stock Checklist — Today</div>
+    ${stKeys.length ? `<div class="dh-kpi-sub" style="font-size:12px;">${stKeys.slice(0,4).map(k => k + ': ' + st.today[k]).join(' &nbsp;·&nbsp; ')}</div>` : '<div class="dh-kpi-sub">Tap to open</div>'}
+  </div>`;
 
-  grid.innerHTML = html;
-
-  // ── Employee-Wise (KPI) with a simple bar chart — rich purple gradient card ──
-  if (kp && kp.ok && kp.employeeWise && kp.employeeWise.length) {
-    const maxScore = Math.max(...kp.employeeWise.map(r => r.score || 0), 1);
-    let ewHtml = `<div style="background:linear-gradient(135deg,#7c3aed,#4a1880);margin:-1px;padding:14px 16px;border-radius:var(--r2,12px);">
-      <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px;">👤 Employee-Wise — KPI This Month</div>`;
-    kp.employeeWise.slice(0, 10).forEach(r => {
-      const pct = Math.round(((r.score || 0) / maxScore) * 100);
-      ewHtml += `<div style="margin-bottom:8px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#fff;margin-bottom:3px;"><span>${r.employee} (${r.grade})</span><span style="font-weight:800;">${r.score}</span></div>
-        <div style="background:rgba(255,255,255,.25);border-radius:6px;height:6px;overflow:hidden;"><div style="background:#fbbf24;height:6px;width:${pct}%;"></div></div>
-      </div>`;
-    });
-    ewHtml += `</div>`;
-    empWiseBox.innerHTML = ewHtml;
-    empWiseBox.style.padding = '0'; empWiseBox.style.overflow = 'hidden'; empWiseBox.style.border = 'none'; empWiseBox.style.boxShadow = '0 4px 14px rgba(0,0,0,.12)';
-  } else {
-    empWiseBox.innerHTML = ''; empWiseBox.style.boxShadow = 'none';
+  // Gauge — KPI topper score this month (only when the API actually returned one)
+  if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
+    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
+      <div class="dh-panel-title">📈 KPI Score — This Month's Topper</div>
+      <div class="dh-gauge-wrap"><canvas id="dhAdminKpiGauge"></canvas>
+        <div class="dh-gauge-label"><div class="num">${kp.thisMonth.topper.overallScore}</div><div class="sub">${kp.thisMonth.topper.employee}</div></div>
+      </div>
+    </div>`;
   }
 
-  // ── Top Performers (KPI + Leads) — rich gold gradient card, matching
-  // the reference image's "Top Performers" leaderboard style ──
-  let topHtml = `<div style="background:linear-gradient(135deg,#e0b968,#a67f2e);margin:-1px;padding:14px 16px;border-radius:var(--r2,12px);">
-    <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px;">🏆 Top Performers</div>
-    <div style="font-size:11px;font-weight:800;color:#fff;opacity:.9;margin:4px 0 6px;">📊 KPI — This Month</div>`;
-  if (!kp || !kp.ok || !kp.thisMonth.top3 || kp.thisMonth.top3.length === 0) {
-    topHtml += '<div style="font-size:11.5px;color:rgba(255,255,255,.85);">No KPI data yet.</div>';
-  } else {
-    kp.thisMonth.top3.forEach((r, i) => {
-      const medal = ['🥇', '🥈', '🥉'][i] || '';
-      topHtml += `<div style="display:flex;justify-content:space-between;font-size:12px;color:#fff;padding:4px 0;border-top:1px solid rgba(255,255,255,.2);"><span>${medal} ${r.employee}</span><span style="font-weight:800;">${r.overallScore}</span></div>`;
-    });
+  // Top performers — unchanged data, restyled as a ranked list
+  if (kp && kp.ok && kp.thisMonth.top3 && kp.thisMonth.top3.length) {
+    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
+      <div class="dh-panel-title">🏆 Top Performers — KPI This Month</div>
+      ${kp.thisMonth.top3.map((r, i) => `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:7px 0;border-top:${i===0?'none':'1px solid var(--border)'};"><span>${['🥇','🥈','🥉'][i] || (i+1)+'.'} ${r.employee}</span><span style="font-weight:800;color:var(--purple);">${r.overallScore}</span></div>`).join('')}
+    </div>`;
   }
-  topHtml += '<div style="font-size:11px;font-weight:800;color:#fff;opacity:.9;margin:12px 0 6px;">👥 Leads — This Month (submitted)</div>';
-  if (ld && ld.ok && ld.topPerformer) {
-    topHtml += `<div style="display:flex;justify-content:space-between;font-size:12px;color:#fff;padding:4px 0;border-top:1px solid rgba(255,255,255,.2);"><span>🏆 ${ld.topPerformer.employee}</span><span style="font-weight:800;">${ld.topPerformer.submitted} done</span></div>`;
-  } else {
-    topHtml += '<div style="font-size:11.5px;color:rgba(255,255,255,.85);">No leads data yet.</div>';
+
+  // Quick-access shortcuts — same modules as the section page, one tap away
+  html += `<div class="dh-quick-row">
+    <div class="dh-quick-item" onclick="showAdminPage('dashboard')"><span class="qi">🏖️</span>Leave</div>
+    <div class="dh-quick-item" onclick="showAdminPage('leads')"><span class="qi">👥</span>Leads</div>
+    <div class="dh-quick-item" onclick="showAdminPage('stock')"><span class="qi">📝</span>Checklist</div>
+    <div class="dh-quick-item" onclick="showAdminPage('loyalty')"><span class="qi">💳</span>Loyalty</div>
+    <div class="dh-quick-item" onclick="showAdminPage('golden-aura')"><span class="qi">🥇</span>Golden Plan</div>
+    <div class="dh-quick-item" onclick="showAdminPage('dsr')"><span class="qi">🧾</span>DSR</div>
+    <div class="dh-quick-item" onclick="showAdminPage('kpi')"><span class="qi">📊</span>KPI</div>
+  </div>`;
+
+  body.innerHTML = html;
+  dhDestroyGauges('dhAdmin');
+  if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
+    dhMakeGauge('dhAdminKpiGauge', kp.thisMonth.topper.overallScore, '#d4a843');
   }
-  topHtml += '</div>';
-  topBox.innerHTML = topHtml;
-  topBox.style.padding = '0'; topBox.style.overflow = 'hidden'; topBox.style.border = 'none'; topBox.style.boxShadow = '0 4px 14px rgba(0,0,0,.12)';
 }
 
 async function loadEmployeeWisePage() {
