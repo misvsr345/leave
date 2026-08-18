@@ -6336,8 +6336,16 @@ function renderEmpProfile() {
 }
 
 // Maps each SM_Permissions feature key to the DOM elements it controls
+// NOTE: 'dashboardHub' (the Admin Dashboard quick-action) is deliberately
+// NOT listed here. It used to be gated behind a 'dashboardHub' permission
+// key, but that key never existed in SM_PERM_FEATURES/SM_PERM_FLAT_KEYS on
+// the backend and had no checkbox anywhere in the Settings UI — so it was
+// impossible for MIS to ever grant it, and every restricted (non-MIS/
+// Director) admin permanently lost the Dashboard button. The Dashboard Hub
+// is just a personal summary view (same as the employee side, where
+// empQADashboard is likewise never gated), so it now stays visible for
+// every admin regardless of their individual permissions.
 const SM_FEATURE_ELEMENTS = {
-  dashboardHub: ['adminQADashboard'],
   calendar:  ['adminQACalendar'],
   balance:   ['adminQABalance'],
   empwise:   ['adminQAEmpwise'],
