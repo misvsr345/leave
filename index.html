@@ -3888,7 +3888,7 @@ async function loadLoginActivity(who) {
   try {
     const res = await jsonpReliable({ page: 'loginActivityJSON' });
     if (!res || !res.ok) {
-      box.innerHTML = '<div class="empty-state"><p>Could not load login activity. This needs a small backend addition — see the note below.</p><div class="kd-note" style="margin-top:10px;">Add a <code>loginActivityJSON</code> case to the backend that reads the Login Log sheet and returns each login\\'s Emp ID / Admin email, name, device, time, and whether it used their own password or the MIS master password.</div></div>';
+      box.innerHTML = '<div class="empty-state"><p>Could not load login activity. This needs a small backend addition — see the note below.</p><div class="kd-note" style="margin-top:10px;">Add a <code>loginActivityJSON</code> case to the backend that reads the Login Log sheet and returns each login\'s Emp ID / Admin email, name, device, time, and whether it used their own password or the MIS master password.</div></div>';
       return;
     }
     if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No login activity yet.</p></div>'; return; }
