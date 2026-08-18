@@ -2780,7 +2780,13 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
+        <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
       </div>
+    </div>
+
+    <div class="page-section" id="admin-login-activity">
+      <div class="section-hdr"><span class="section-title2">🔐 Login Activity</span></div>
+      <div id="loginActivityBox" class="section-body"></div>
     </div>
 
   </div>
@@ -3283,6 +3289,33 @@ async function _parseMainApiResponse(resp) {
   }
 }
 
+// Readable "which device/browser is this" summary, sent along with every
+// login attempt so MIS can see who logged in, when, and from what device
+// (Login Activity page). Best-effort from navigator — browsers don't expose
+// a real device name, so this parses userAgent into something readable
+// like "Chrome on Windows" or "Safari on iPhone".
+function getDeviceInfo() {
+  try {
+    var ua = navigator.userAgent || '';
+    var os = 'Unknown OS';
+    if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/Mac OS X/i.test(ua)) os = 'macOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+
+    var browser = 'Unknown Browser';
+    if (/Edg\//i.test(ua)) browser = 'Edge';
+    else if (/OPR\/|Opera/i.test(ua)) browser = 'Opera';
+    else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = 'Chrome';
+    else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = 'Safari';
+    else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+
+    var isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+    return (isMobile ? '📱 ' : '💻 ') + browser + ' on ' + os;
+  } catch (e) { return 'Unknown device'; }
+}
+
 function jsonp(params, timeoutMs) {
   timeoutMs = timeoutMs || 25000;
   return new Promise((resolve, reject) => {
@@ -3752,7 +3785,7 @@ async function empLogin() {
   if(!pass)  { toast('Please enter your password', 'error'); return; }
   await withButtonLock(document.getElementById('empLoginBtn'), '⏳ Checking...', async () => {
     try {
-      const res = await jsonpReliable({ page:'empLoginAPI', empId, password: pass });
+      const res = await jsonpReliable({ page:'empLoginAPI', empId, password: pass, device: getDeviceInfo(), loginAt: new Date().toISOString() });
       if(res.ok) {
         const clean = v => (!v || v === '—') ? '' : v;
         state.empId = empId;
@@ -3799,7 +3832,7 @@ async function adminLogin() {
   if(!email || !pass) { toast('Please enter email & password', 'error'); return; }
   await withButtonLock(document.getElementById('adminLoginBtn'), '⏳ Verifying...', async () => {
     try {
-      const res = await jsonpReliable({ page:'validateAdminAPI', email, password: pass });
+      const res = await jsonpReliable({ page:'validateAdminAPI', email, password: pass, device: getDeviceInfo(), loginAt: new Date().toISOString() });
       if(res.ok) {
         state.adminEmail = res.email || email;
         state.adminRole = res.role || 'Admin';
@@ -3839,6 +3872,41 @@ async function adminLogin() {
       toast('Connection error. Try again.', 'error');
     }
   });
+}
+
+// Login Activity — who logged in, when, from which device. Also flags any
+// login where an Employee ID was unlocked using the MIS master password
+// instead of that employee's own password, so master-password use is
+// always visible/accountable rather than invisible.
+// Needs a backend endpoint 'loginActivityJSON' that returns:
+//   { ok:true, rows:[ { who:'EMP123', name:'...', device:'💻 Chrome on Windows',
+//                        loginAt:'2026-08-18T10:15:00Z', method:'own'|'master' } ] }
+async function loadLoginActivity(who) {
+  const box = document.getElementById('loginActivityBox');
+  if (!box) return;
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonpReliable({ page: 'loginActivityJSON' });
+    if (!res || !res.ok) {
+      box.innerHTML = '<div class="empty-state"><p>Could not load login activity. This needs a small backend addition — see the note below.</p><div class="kd-note" style="margin-top:10px;">Add a <code>loginActivityJSON</code> case to the backend that reads the Login Log sheet and returns each login\\'s Emp ID / Admin email, name, device, time, and whether it used their own password or the MIS master password.</div></div>';
+      return;
+    }
+    if (!res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No login activity yet.</p></div>'; return; }
+    let html = '<div class="kd-table-wrap"><table class="kd-table"><tr><th>Who</th><th>Device</th><th>Time</th><th>Method</th></tr>';
+    res.rows.slice().reverse().forEach(r => {
+      const isMaster = r.method === 'master';
+      html += `<tr>
+        <td>${r.name || r.who}<div style="font-size:10px;color:var(--text3);">${r.who}</div></td>
+        <td>${r.device || '—'}</td>
+        <td>${fmtDMY(toYMD(new Date(r.loginAt)))} ${new Date(r.loginAt).toLocaleTimeString()}</td>
+        <td>${isMaster ? '<span class="kd-pill" style="background:var(--red-bg);color:var(--red);">🔑 MIS Override</span>' : '<span class="kd-pill" style="background:var(--green-bg);color:var(--green);">Own Password</span>'}</td>
+      </tr>`;
+    });
+    html += '</table></div>';
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load login activity.</p></div>';
+  }
 }
 
 function logout(who) {
@@ -6355,7 +6423,13 @@ async function applyAdminRoleRestrictions() {
 
   const pendingTitle = document.querySelector('#admin-pending .section-title2');
   if(pendingTitle) pendingTitle.textContent = '⏳ Leaves Awaiting Your Final Approval';
-  showAdminPage('pending');
+  // Note: do NOT force-navigate here. adminLogin()/restoreSession() already
+  // land the admin on showAdminPage('modulepicker') (the Section page)
+  // before calling this function — this used to override that with
+  // showAdminPage('pending') for every non-MIS admin, so anyone other
+  // than MIS always ended up on the Pending screen right after login
+  // instead of the Section page. MIS never had this problem because it
+  // returns early above, before ever reaching here.
 }
 function resetAdminRoleRestrictions() {
   state.isStoreManager = false;
@@ -6418,6 +6492,7 @@ function showAdminPage(page) {
   if(page==='blocked') loadBlockedDatesPage();
   if(page==='settings') loadSettingsPage();
   if(page==='profile') renderAdminProfile();
+  if(page==='login-activity') loadLoginActivity('admin');
   if(page==='empwise') loadEmployeeWisePage();
   if(page==='pending') renderPending();
   if(page==='notices') loadNoticesForAdmin();
@@ -8134,11 +8209,19 @@ async function generateReportData(who, section) {
   }
   if (section === 'kpi') {
     const res = await jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' }));
-    const headers = ['Place', 'Employee', 'Grade', 'Overall Score', 'Deals', 'Purch Target', 'Purchases', 'Purch Ach%', 'Purch Score',
-      'Loyal Target', 'Loyalty Cards', 'Loyalty Ach%', 'Loyalty Score', 'Gold Target', 'Golden Aura', 'Golden Ach%', 'Golden Score',
+    // Same 26-column layout/order as the VSR GOLD KPI sheet (Place..Employee..Grade..Performance..
+    // Overall Score..Deals | Purch Target..Deals Bonus | Loyal Target..Loyalty Score |
+    // Gold Target..Golden Score | DSR OnTime..Last Updated) — kept 1:1 with KPI_TABLE_COLS
+    // on the backend so exports match what's shown on the KPI board.
+    const headers = ['Place', 'Employee', 'Grade', 'Performance', 'Overall Score', 'Deals',
+      'Purch Target', 'Purchases', 'Purch Ach%', 'Purch Score', 'Deals Ratio', 'Deals Bonus',
+      'Loyal Target', 'Loyalty Cards', 'Loyalty Ach%', 'Loyalty Score',
+      'Gold Target', 'Golden Aura', 'Golden Ach%', 'Golden Score',
       'DSR OnTime', 'DSR Late', 'DSR No-Entry', 'DSR Score', 'Conversion%', 'Last Updated'];
-    const rows = (res.rows || []).map(r => [r.place, r.employee, r.grade, r.overallScore, r.deals, r.purchTarget, r.purchases, r.purchAchPct, r.purchScore,
-      r.loyalTarget, r.loyaltyCards, r.loyaltyAchPct, r.loyaltyScore, r.goldTarget, r.goldenAura, r.goldenAchPct, r.goldenScore,
+    const rows = (res.rows || []).map(r => [r.place, r.employee, r.grade, r.gradeLabel, r.overallScore, r.deals,
+      r.purchTarget, r.purchases, r.purchAchPct, r.purchScore, r.dealsRatio, r.dealsBonus,
+      r.loyalTarget, r.loyaltyCards, r.loyaltyAchPct, r.loyaltyScore,
+      r.goldTarget, r.goldenAura, r.goldenAchPct, r.goldenScore,
       r.dsrOnTime, r.dsrLate, r.dsrNoEntry, r.dsrScore, r.conversionPct, r.lastUpdated]);
     return { title: 'KPI Report (Running Month) — ' + today, headers, rows };
   }
@@ -11929,13 +12012,23 @@ function dhKpiCard(opts) {
 async function loadEmpDashboardHub() {
   const body = document.getElementById('empDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
+  const slowHintTimer = setTimeout(() => {
+    const spinnerBox = body.querySelector('.loading');
+    if (spinnerBox) spinnerBox.lastChild.textContent = 'Still loading... this is taking longer than usual';
+  }, 8000);
   let res;
   try {
-    res = await jsonpReliable({ page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail });
+    try {
+      res = await jsonp({ page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail }, 20000);
+    } catch (e0) {
+      res = await jsonp({ page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail }, 20000);
+    }
   } catch (e) {
+    clearTimeout(slowHintTimer);
     body.innerHTML = '<div class="empty-state"><p>Could not load your dashboard.</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadEmpDashboardHub()">🔄 Retry</button></div>';
     return;
   }
+  clearTimeout(slowHintTimer);
   if (!res || !res.ok) {
     body.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load your dashboard.') + '</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadEmpDashboardHub()">🔄 Retry</button></div>';
     return;
@@ -11987,13 +12080,31 @@ async function loadEmpDashboardHub() {
 async function loadAdminDashboardHub() {
   const body = document.getElementById('adminDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
+  // Dashboard Hub is a summary screen, not a critical action — it
+  // shouldn't leave the admin staring at a spinner for up to ~90s
+  // (jsonpReliable's full 25s+30s+35s retry chain). One attempt at 20s,
+  // then a second attempt at 20s (40s worst case) is enough; anything
+  // slower than that almost always means the backend endpoint itself
+  // isn't reachable (e.g. a stale Apps Script deployment) rather than
+  // a slow-but-working response, so failing fast here gets the Retry
+  // button in front of the admin instead of an endless wait.
+  const slowHintTimer = setTimeout(() => {
+    const spinnerBox = body.querySelector('.loading');
+    if (spinnerBox) spinnerBox.lastChild.textContent = 'Still loading... this is taking longer than usual';
+  }, 8000);
   let res;
   try {
-    res = await jsonpReliable({ page: 'adminDashboardJSON' });
+    try {
+      res = await jsonp({ page: 'adminDashboardJSON' }, 20000);
+    } catch (e0) {
+      res = await jsonp({ page: 'adminDashboardJSON' }, 20000);
+    }
   } catch (e) {
+    clearTimeout(slowHintTimer);
     body.innerHTML = '<div class="empty-state"><p>Could not load the dashboard.</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
     return;
   }
+  clearTimeout(slowHintTimer);
   if (!res || !res.ok) {
     body.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load dashboard.') + '</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
     return;
