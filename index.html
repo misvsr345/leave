@@ -620,6 +620,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-split-box .t { font-size: 9.5px; font-weight: 800; color: var(--text3); text-transform: uppercase; margin-bottom: 4px; }
 .dh-split-box .row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
 .dh-empty-mini { font-size: 11px; color: var(--text3); font-style: italic; padding: 4px 0; }
+.dh-table-wrap { overflow-x: auto; margin-top: 4px; }
+.dh-mini-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.dh-mini-table th { text-align: left; font-size: 9.5px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: .3px; padding: 4px 6px; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
+.dh-mini-table td { padding: 6px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+.dh-mini-table tr:last-child td { border-bottom: none; }
 .dh-chart-wrap { position: relative; height: 150px; margin-top: 4px; }
 
 /* ── Desktop (≥1024px) — richer multi-column dashboard, per the
@@ -636,6 +641,17 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   #admin-dashboard-hub .dh-panel { margin-bottom: 0; }
   #admin-dashboard-hub .dh-quick-row { grid-template-columns: repeat(7, 1fr); }
   #admin-dashboard-hub .dh-stat-grid6 { grid-template-columns: repeat(6,1fr); }
+
+  /* Quick-action buttons move to a sticky left sidebar on desktop; on
+     mobile they stay in normal document flow at the bottom (unchanged). */
+  #adminDashHubBody, #empDashHubBody {
+    display: grid; grid-template-columns: 168px 1fr; gap: 16px; align-items: start;
+  }
+  #adminDashHubBody > *, #empDashHubBody > * { grid-column: 2; }
+  #adminDashHubBody .dh-quick-row, #empDashHubBody .dh-quick-row {
+    grid-column: 1; grid-row: 1 / -1; grid-template-columns: 1fr;
+    position: sticky; top: 12px; align-self: start;
+  }
 }
 
 /* Stats Grid */
@@ -1291,7 +1307,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
          else's numbers no matter what. -->
     <div class="page-section" id="emp-dashboard-hub">
       <div class="section-hdr"><span class="section-title2">📊 My Dashboard</span>
-        <button class="btn-sm btn-view" onclick="loadEmpDashboardHub()">🔄 Refresh</button>
+        <button class="btn-sm btn-view" onclick="loadEmpDashboardHub(true)">🔄 Refresh</button>
       </div>
       <div id="empDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
@@ -1935,7 +1951,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
          ever leaving the whole page stuck spinning.) -->
     <div class="page-section" id="admin-dashboard-hub">
       <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
-        <button class="btn-sm btn-view" onclick="loadAdminDashboardHub()">🔄 Refresh</button>
+        <button class="btn-sm btn-view" onclick="loadAdminDashboardHub(true)">🔄 Refresh</button>
       </div>
       <div id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
@@ -3101,7 +3117,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyp8pOYqmjnBp18J2Fk1Vc8nVXmkihMpem1U3eKcMjzzKlDkip8-nCpYXps6VLlVk3zEw/exec";
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz6GG8qnpNeI7eDgJHAzBnP5pQMsQpFV_yqDJqbwG_cgb7rICX_exEk-SXQKOekhB13ig/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
@@ -12009,19 +12025,21 @@ function dhKpiCard(opts) {
   </div>`;
 }
 
-async function loadEmpDashboardHub() {
+async function loadEmpDashboardHub(force) {
   const body = document.getElementById('empDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
   const slowHintTimer = setTimeout(() => {
     const spinnerBox = body.querySelector('.loading');
     if (spinnerBox) spinnerBox.lastChild.textContent = 'Still loading... this is taking longer than usual';
   }, 8000);
+  const empReqParams = { page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail };
+  if (force) empReqParams.force = '1'; // Refresh button — bypass the backend's short-TTL cache
   let res;
   try {
     try {
-      res = await jsonp({ page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail }, 20000);
+      res = await jsonp(empReqParams, 20000);
     } catch (e0) {
-      res = await jsonp({ page: 'empDashboardJSON', empId: state.empId, empName: state.empName, empEmail: state.empEmail }, 20000);
+      res = await jsonp(empReqParams, 20000);
     }
   } catch (e) {
     clearTimeout(slowHintTimer);
@@ -12077,7 +12095,7 @@ async function loadEmpDashboardHub() {
   }
 }
 
-async function loadAdminDashboardHub() {
+async function loadAdminDashboardHub(force) {
   const body = document.getElementById('adminDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
   // Dashboard Hub is a summary screen, not a critical action — it
@@ -12092,12 +12110,14 @@ async function loadAdminDashboardHub() {
     const spinnerBox = body.querySelector('.loading');
     if (spinnerBox) spinnerBox.lastChild.textContent = 'Still loading... this is taking longer than usual';
   }, 8000);
+  const reqParams = { page: 'adminDashboardJSON' };
+  if (force) reqParams.force = '1'; // Refresh button — bypass the backend's short-TTL cache
   let res;
   try {
     try {
-      res = await jsonp({ page: 'adminDashboardJSON' }, 20000);
+      res = await jsonp(reqParams, 20000);
     } catch (e0) {
-      res = await jsonp({ page: 'adminDashboardJSON' }, 20000);
+      res = await jsonp(reqParams, 20000);
     }
   } catch (e) {
     clearTimeout(slowHintTimer);
@@ -12198,11 +12218,17 @@ async function loadAdminDashboardHub() {
         <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.total.cardsApproved}</div><div class="l">Total</div></div>
       </div>
       <div class="dh-subhead">🏆 Leaderboard (All-Time)</div>
-      ${lb.length ? lb.map(r => `<div class="dh-mini-row"><span class="dh-mini-name">${['🥇','🥈','🥉'][r.rank-1] || ('#'+r.rank)} ${r.employee}</span><span class="dh-mini-val">${r.cardsIssued} (${r.pctOfTotal})</span></div>`).join('') : '<div class="dh-empty-mini">No cards yet.</div>'}
+      ${lb.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Rank</th><th>Employee</th><th style="text-align:right;">Cards</th><th style="text-align:right;">% of Total</th></tr></thead><tbody>
+        ${lb.map(r => `<tr><td>${['🥇','🥈','🥉'][r.rank-1] || ('#'+r.rank)}</td><td>${r.employee}</td><td style="text-align:right;">${r.cardsIssued}</td><td style="text-align:right;">${r.pctOfTotal}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="dh-empty-mini">No cards yet.</div>'}
       <div class="dh-subhead">💰 Incentive History — Recent (Total Paid: ₹${(ly.incentiveHistory && ly.incentiveHistory.totalPaid) || 0})</div>
-      ${hist.length ? hist.map(r => `<div class="dh-mini-row"><span class="dh-mini-name">${r.empName} <span style="color:var(--text3);font-weight:500;">· ${r.date}</span></span><span class="dh-mini-val">₹${r.amount}</span></div>`).join('') : '<div class="dh-empty-mini">No payments recorded yet.</div>'}
+      ${hist.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Name</th><th>Date</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+        ${hist.map(r => `<tr><td>${r.empName}</td><td>${r.date}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.amount}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="dh-empty-mini">No payments recorded yet.</div>'}
       <div class="dh-subhead">⏳ Upcoming Incentive — Pending (Total: ₹${up.total})</div>
-      ${(up.byEmployee||[]).length ? up.byEmployee.map(r => `<div class="dh-mini-row"><span class="dh-mini-name">${r.employee}</span><span class="dh-mini-val">₹${r.pendingIncentive}</span></div>`).join('') : '<div class="dh-empty-mini">Nothing pending.</div>'}
+      ${(up.byEmployee||[]).length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Name</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+        ${up.byEmployee.map(r => `<tr><td>${r.employee}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.pendingIncentive}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="dh-empty-mini">Nothing pending.</div>'}
     </div>`;
   }
 
@@ -12219,7 +12245,9 @@ async function loadAdminDashboardHub() {
       <div class="dh-subhead">🏆 Topper (This Month)</div>
       <div class="dh-mini-row">${ga.topper ? `<span class="dh-mini-name">${ga.topper.employee}</span><span class="dh-mini-val">${ga.topper.enrollments} plan(s)</span>` : '<span class="dh-empty-mini">No enrollments this month yet.</span>'}</div>
       <div class="dh-subhead">📋 Plan Type Split</div>
-      ${Object.keys(byType).length ? Object.keys(byType).map(k => `<div class="dh-mini-row"><span class="dh-mini-name">${k}</span><span class="dh-mini-val">${byType[k]}</span></div>`).join('') : '<div class="dh-empty-mini">No data.</div>'}
+      ${Object.keys(byType).length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Plan Type</th><th style="text-align:right;">Count</th></tr></thead><tbody>
+        ${Object.keys(byType).map(k => `<tr><td>${k}</td><td style="text-align:right;font-weight:800;color:var(--purple);">${byType[k]}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="dh-empty-mini">No data.</div>'}
     </div>`;
   }
 
@@ -12269,53 +12297,39 @@ async function loadAdminDashboardHub() {
     </div>`;
   }
 
-  // Walk-in Track — Today vs Yesterday side-by-side + highest-deal employee (not a standalone module page, so this panel isn't clickable)
+  // Walk-in Track — Yesterday + Last 5 Days (Today dropped — mid-day data was incomplete/confusing)
   if (wk && wk.ok) {
+    const last5 = wk.last5 || [];
     html += `<div class="dh-panel dh-panel-wide">
       <div class="dh-panel-title">🚶 Walk-in Track (Customer Footfall)</div>
-      <div class="dh-split2">
-        <div class="dh-split-box"><div class="t">Today</div>
-          <div class="row"><span>Walk-ins</span><b>${wk.today.walkins}</b></div>
-          <div class="row"><span>Deals</span><b>${wk.today.deals}</b></div>
-          <div class="row"><span>Purchased</span><b>${wk.today.purchased}</b></div>
-          <div class="row"><span>Non-Purchased</span><b>${wk.today.nonPurchased}</b></div>
-        </div>
-        <div class="dh-split-box"><div class="t">Yesterday</div>
-          <div class="row"><span>Walk-ins</span><b>${wk.yesterday.walkins}</b></div>
-          <div class="row"><span>Deals</span><b>${wk.yesterday.deals}</b></div>
-          <div class="row"><span>Purchased</span><b>${wk.yesterday.purchased}</b></div>
-          <div class="row"><span>Non-Purchased</span><b>${wk.yesterday.nonPurchased}</b></div>
-        </div>
+      <div class="dh-subhead">📆 Yesterday (${wk.yesterday.date || ''})</div>
+      <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
+        <div class="dh-stat-box2"><div class="v">${wk.yesterday.walkins}</div><div class="l">Walk-ins</div></div>
+        <div class="dh-stat-box2"><div class="v">${wk.yesterday.deals}</div><div class="l">Deals</div></div>
+        <div class="dh-stat-box2"><div class="v">${wk.yesterday.purchased}</div><div class="l">Purchased</div></div>
+        <div class="dh-stat-box2"><div class="v">${wk.yesterday.nonPurchased}</div><div class="l">Non-Purchased</div></div>
       </div>
-      <div class="dh-subhead">🏆 Highest Deals (Today + Yesterday)</div>
-      <div class="dh-mini-row" style="border-top:none;">${wk.highestDealEmployee ? `<span class="dh-mini-name">${wk.highestDealEmployee.employee}</span><span class="dh-mini-val">${wk.highestDealEmployee.deals} deal(s)</span>` : '<span class="dh-empty-mini">No deals recorded.</span>'}</div>
-      <div class="dh-kpi-sub" style="margin-top:6px;">Total Deals (Today+Yesterday): <b>${wk.combined.deals}</b> &nbsp;·&nbsp; Total Purchase: <b>${wk.combined.purchased}</b> &nbsp;·&nbsp; Total Non-Purchase: <b>${wk.combined.nonPurchased}</b></div>
+      <div class="dh-subhead">🗓️ Last 5 Days</div>
+      ${last5.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Date</th><th>Walk-ins</th><th>Deals</th><th>Purch.</th><th>Non-Purch.</th></tr></thead><tbody>
+        ${last5.map(r => `<tr><td>${r.date}</td><td>${r.walkins}</td><td>${r.deals}</td><td>${r.purchased}</td><td>${r.nonPurchased}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="dh-empty-mini">No data.</div>'}
+      <div class="dh-subhead">🏆 Highest Deals (Last 5 Days + Yesterday)</div>
+      <div class="dh-mini-row" style="border-top:none;">${wk.highestDeals ? `<span class="dh-mini-name">${wk.highestDeals.employee}</span><span class="dh-mini-val">${wk.highestDeals.count} deal(s)</span>` : '<span class="dh-empty-mini">No deals recorded.</span>'}</div>
     </div>`;
   }
 
-  // Stock Checklist — health stats + duty roster (assigned/done-not-done) + today's Opening/Closing, Retail & Wholesale shown separately
+  // Stock Checklist — health stats + duty roster (suggested/done only) + today's Opening/Closing, Retail & Wholesale shown separately
   if (st) {
     const stKeys = st.ok && st.today ? Object.keys(st.today) : [];
-    const duty = st.duty || { Retail: [], Wholesale: [] };
-    const dutyChip = e => `<span class="dh-name-chip ${e.today ? 'ok' : ''}">${e.employee}${e.today ? ' · ' + e.today : ' · Pending'}</span>`;
-    const slotLine = (label, slot) => `<div class="row"><span>${label}</span><b>${slot ? (slot.emp + ' · ' + slot.time) : '—'}</b></div>`;
+    const dutyChip = e => `<span class="dh-name-chip ${e.done ? 'ok' : ''}">${e.employee}${e.done ? ' · ✅ Done' : (e.suggestedToday ? ' · ⭐ Assigned Today' : ' · ⭐ Assigned Tomorrow')}</span>`;
+    const dutyLine = (label, arr) => `<div class="dh-subhead">👤 ${label}</div><div class="dh-name-chip-row">${(arr||[]).length ? arr.map(dutyChip).join('') : '<span class="dh-empty-mini">Nothing to show.</span>'}</div>`;
     html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('stock')">
       <div class="dh-panel-title">📝 Stock Checklist — Today</div>
       ${stKeys.length ? `<div class="dh-kpi-sub" style="font-size:12px;">${stKeys.slice(0,4).map(k => k + ': ' + st.today[k]).join(' &nbsp;·&nbsp; ')}</div>` : '<div class="dh-kpi-sub">Tap to open</div>'}
-      <div class="dh-subhead">👤 Duty — Retail (Done / Not Done)</div>
-      <div class="dh-name-chip-row">${(duty.Retail||[]).length ? duty.Retail.map(dutyChip).join('') : '<span class="dh-empty-mini">No duty assigned today.</span>'}</div>
-      <div class="dh-subhead">👤 Duty — Wholesale (Done / Not Done)</div>
-      <div class="dh-name-chip-row">${(duty.Wholesale||[]).length ? duty.Wholesale.map(dutyChip).join('') : '<span class="dh-empty-mini">No duty assigned today.</span>'}</div>
-      <div class="dh-split2" onclick="event.stopPropagation()">
-        <div class="dh-split-box"><div class="t">Retail — Today</div>
-          ${slotLine('Opening', st.retail && st.retail.opening)}
-          ${slotLine('Closing', st.retail && st.retail.closing)}
-        </div>
-        <div class="dh-split-box"><div class="t">Wholesale — Today</div>
-          ${slotLine('Opening', st.wholesale && st.wholesale.opening)}
-          ${slotLine('Closing', st.wholesale && st.wholesale.closing)}
-        </div>
-      </div>
+      ${dutyLine('Retail — Opening', st.retail && st.retail.opening)}
+      ${dutyLine('Retail — Closing', st.retail && st.retail.closing)}
+      ${dutyLine('Wholesale — Opening', st.wholesale && st.wholesale.opening)}
+      ${dutyLine('Wholesale — Closing', st.wholesale && st.wholesale.closing)}
     </div>`;
   }
 
