@@ -570,17 +570,28 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-kpi-card {
   background: var(--card); border-radius: var(--r2); padding: 13px 14px;
   border-left: 4px solid var(--dh-accent, var(--purple)); box-shadow: 0 2px 10px rgba(107,33,168,0.08);
-  cursor: pointer; transition: transform 0.15s;
 }
-.dh-kpi-card:active { transform: scale(0.97); }
+.dh-kpi-view-btn {
+  display: block; margin-top: 8px; width: 100%; text-align: left; background: none; border: none;
+  padding: 6px 0 0; font-size: 10.5px; font-weight: 800; color: var(--dh-accent, var(--purple));
+  cursor: pointer; border-top: 1px dashed rgba(0,0,0,0.08);
+}
+.dh-kpi-view-btn:active { opacity: 0.6; }
 .dh-kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 5px; }
 .dh-kpi-val { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800; color: var(--text); margin-top: 4px; }
 .dh-kpi-sub { font-size: 10.5px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
 .dh-panel {
   background: var(--card); border-radius: var(--r); padding: 14px; margin-bottom: 10px;
-  box-shadow: 0 2px 12px rgba(107,33,168,0.08); cursor: pointer;
+  box-shadow: 0 2px 12px rgba(107,33,168,0.08);
 }
-.dh-panel-title { font-size: 12.5px; font-weight: 800; color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.dh-panel-title { font-size: 12.5px; font-weight: 800; color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.dh-panel-title .t { display:flex; align-items:center; gap:6px; }
+.dh-panel-view-btn {
+  font-size: 10.5px; font-weight: 800; color: var(--purple); background: var(--purple-bg);
+  border: 1px solid var(--purple-mid); border-radius: 20px; padding: 4px 11px; cursor: pointer;
+  flex-shrink: 0; white-space: nowrap;
+}
+.dh-panel-view-btn:active { background: var(--purple-mid); color: #fff; }
 .dh-gauge-row { display: flex; gap: 10px; }
 .dh-gauge-box { flex: 1; text-align: center; }
 .dh-gauge-wrap { position: relative; height: 90px; display: flex; align-items: center; justify-content: center; }
@@ -1910,6 +1921,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="adminDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
+        <button class="tb-chip" id="adminDashboardFabTop" onclick="showAdminPage('dashboard-hub')" title="Dashboard">📊 Dashboard</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
         <button class="tb-chip back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
@@ -1953,7 +1965,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
          not fixed. This ONLY loads when actually opened — never
          auto-triggered from the Section Page — and every box below is
          independently fetched server-side inside ONE call, so a single
-         failing section shows its own "Tap to open" fallback instead of
+         failing section shows its own "No data yet" fallback instead of
          ever leaving the whole page stuck spinning.) -->
     <div class="page-section" id="admin-dashboard-hub">
       <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
@@ -7574,16 +7586,30 @@ function loadLoyaltyAllCardsAdmin() {
 function mailLoyaltyAllCards() {
   const res = window.__loyAllCardsData;
   if (!res) { toast('Load the cards first', 'error'); return; }
-  const rowsHtml = res.cards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.empName}</td></tr>`).join('');
-  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:650px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — All Cards Report</h2>
-    <p>${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</p>
-    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
-      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th><th>Employee</th></tr>
-      ${rowsHtml}
+  const empFilter = (document.getElementById('loyMyCardsEmpFilter') || {}).value || '';
+  const rowsHtml = res.cards.map((c, i) => `<tr style="background:${i % 2 === 0 ? '#faf8ff' : '#ffffff'};">
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${c.cardDate}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;font-family:monospace;">#${c.cardNo}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;"><span style="background:#f3e8ff;color:#6b21a8;border-radius:12px;padding:2px 9px;font-size:10.5px;font-weight:700;">${c.cardType}</span></td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#1a1a2e;font-weight:700;">${c.custName}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${c.empName}</td>
+  </tr>`).join('');
+  const scopeLabel = empFilter ? empFilter : 'All Employees';
+  const bodyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;">
+    <div style="font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:2px;">📇 All Cards Report</div>
+    <div style="font-size:11.5px;color:#6b7280;margin-bottom:14px;">Scope: <strong>${scopeLabel}</strong> · ${res.total} card(s) · ₹${fmtNum(res.incentive)} incentive</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+      <thead><tr style="background:linear-gradient(135deg,#4c1d95,#6d28d9);">
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Card No</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Type</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Customer</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Employee</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
     </table>
   </div>`;
-  mailLoyaltyReport('VSR GOLD — All Cards Report', bodyHtml, 'admin');
+  mailLoyaltyReport('VSR GOLD — All Cards Report' + (empFilter ? ' — ' + empFilter : ''), bodyHtml, 'admin', empFilter);
 }
 
 function downloadLoyaltyMyStatsPDF() {
@@ -7722,13 +7748,15 @@ function mailLoyaltyAdminStats() {
 // rendered HTML to the caller's own email address (whichever account is
 // logged in right now); pressing "Mail" is purely additive — the report
 // keeps showing on screen either way. ──
-function mailLoyaltyReport(subject, bodyHtml, who) {
+function mailLoyaltyReport(subject, bodyHtml, who, empName) {
   const toEmail = who === 'admin' ? state.adminEmail : state.empEmail;
   if (!toEmail) { toast('No email address on this account to send to', 'error'); return; }
   toast('Sending report...', 'info');
-  jsonpReliable({ page: 'loyaltyMailReportAPI', toEmail: toEmail, subject: subject, htmlBody: bodyHtml })
+  const reqParams = { page: 'loyaltyMailReportAPI', toEmail: toEmail, subject: subject, htmlBody: bodyHtml };
+  if (empName) reqParams.empName = empName;
+  jsonpReliable(reqParams)
     .then(res => {
-      if (res && res.ok) toast('📧 Report emailed to ' + res.sentTo, 'success');
+      if (res && res.ok) toast('📧 Sent to ' + res.sentTo + (res.cc && res.cc.length ? ' · cc: ' + res.cc.join(', ') : ''), 'success');
       else toast('Mail failed: ' + ((res && res.error) || 'unknown error'), 'error');
     })
     .catch(err => toast('Mail failed: ' + err.message, 'error'));
@@ -11191,16 +11219,26 @@ function mailLoyaltyTimeline() {
   const res = window.__loyEmpDetailData;
   if (!empName || !res) { toast('Load the timeline first', 'error'); return; }
   const o = res.overall;
-  const rowsHtml = res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`).join('');
-  const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — ${empName}'s Card Timeline</h2>
-    <p>Total: ${o.totalCards} · Approved: ${o.approvedCards} · Balance: ${o.balanceCards} · Total Incentive ₹${fmtNum(o.totalIncentive)}</p>
-    <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
-      <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th></tr>
-      ${rowsHtml}
+  const rowsHtml = res.rangeCards.map((c, i) => `<tr style="background:${i % 2 === 0 ? '#faf8ff' : '#ffffff'};">
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${c.cardDate}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;font-family:monospace;">#${c.cardNo}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;"><span style="background:#f3e8ff;color:#6b21a8;border-radius:12px;padding:2px 9px;font-size:10.5px;font-weight:700;">${c.cardType}</span></td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#1a1a2e;font-weight:700;">${c.custName}</td>
+  </tr>`).join('');
+  const bodyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;">
+    <div style="font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:2px;">🪪 ${empName}'s Card Timeline</div>
+    <div style="font-size:11.5px;color:#6b7280;margin-bottom:14px;">Total: <strong>${o.totalCards}</strong> · Approved: <strong>${o.approvedCards}</strong> · Balance: <strong>${o.balanceCards}</strong> · Total Incentive <strong>₹${fmtNum(o.totalIncentive)}</strong></div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+      <thead><tr style="background:linear-gradient(135deg,#4c1d95,#6d28d9);">
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Card No</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Type</th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Customer</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
     </table>
   </div>`;
-  mailLoyaltyReport("VSR GOLD — " + empName + "'s Card Timeline", bodyHtml, 'admin');
+  mailLoyaltyReport("VSR GOLD — " + empName + "'s Card Timeline", bodyHtml, 'admin', empName);
 }
 
 // ── Upcoming Card Approvals — who has a full ready-to-pay set right now ──
@@ -12021,16 +12059,17 @@ function dhMakeDonut(canvasId, labels, data, colors) {
   });
 }
 
-// KPI-style summary card: colored left accent, icon, label, big value, sub-line.
-// bad=true (module has no data yet) shows a quiet "Tap to open" instead of stats,
-// same fallback behaviour as before — nothing here is invented if the API sends nothing.
+// KPI-style summary card: colored left accent, icon, label, big value, sub-line,
+// and an explicit "View Details" button (the only clickable/navigating part —
+// the card body itself does nothing on click).
 function dhKpiCard(opts) {
   const bad = !opts.data || opts.data.ok === false;
-  return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}" onclick="${opts.onclick}">
+  return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}">
     <div class="dh-kpi-label">${opts.icon} ${opts.title}</div>
     ${bad
-      ? '<div class="dh-kpi-sub" style="margin-top:6px;">Tap to open</div>'
+      ? '<div class="dh-kpi-sub" style="margin-top:6px;">No data yet</div>'
       : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
+    <button class="dh-kpi-view-btn" onclick="${opts.onclick}">View Details ›</button>
   </div>`;
 }
 
@@ -12089,8 +12128,8 @@ async function loadEmpDashboardHub(force) {
   // Gauge — KPI score this month (only rendered when the API actually sent a score;
   // nothing is fabricated when kp is missing/not ok).
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.score != null) {
-    html += `<div class="dh-panel" onclick="showEmpPage('kpi')">
-      <div class="dh-panel-title">📈 KPI Score — This Month</div>
+    html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);">
+      <div class="dh-panel-title"><span class="t">📈 KPI Score — This Month</span><button class="dh-panel-view-btn" onclick="showEmpPage('kpi')">View →</button></div>
       <div class="dh-gauge-wrap"><canvas id="dhEmpKpiGauge"></canvas>
         <div class="dh-gauge-label"><div class="num">${kp.thisMonth.score}</div><div class="sub">Grade ${kp.thisMonth.grade || '—'}</div></div>
       </div>
@@ -12139,7 +12178,25 @@ async function loadAdminDashboardHub(force) {
     return;
   }
   const d = res.data || {};
-  const lv = d.leave, ld = d.leads, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock, wk = d.walkin;
+  const lv = d.leave, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock, wk = d.walkin;
+
+  // Leads (CRM) isn't part of adminDashboardJSON (separate Apps Script
+  // deployment) — fetch it the same way the Leads Management home page
+  // does, so the Dashboard's Leads card shows real Sent/Submitted/
+  // Pending numbers + an employee-wise breakdown instead of always
+  // falling back to a placeholder. Fails open (ld stays not-ok) if the
+  // Leads backend is slow/unreachable — never blocks the rest of the
+  // Dashboard from rendering.
+  let ld = { ok: false };
+  try {
+    const leadsRes = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() });
+    if (leadsRes && leadsRes.ok && leadsRes.rows && leadsRes.rows.length) {
+      const totalAssigned = leadsRes.rows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+      const totalSubmitted = leadsRes.rows.reduce((s, r) => s + (Number(r.submitted) || 0), 0);
+      const totalPending = leadsRes.rows.reduce((s, r) => s + (Number(r.pending) || 0), 0);
+      ld = { ok: true, today: { assigned: totalAssigned, submitted: totalSubmitted, pending: totalPending }, employees: leadsRes.rows };
+    }
+  } catch (eLd) { /* fail open — Leads card/panel just show 'No data yet' */ }
 
   let html = '';
 
@@ -12149,7 +12206,10 @@ async function loadAdminDashboardHub(force) {
     html += `<div class="dh-alert-card">
       <div class="dh-alert-inner">
         <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">🔔 Needs Action (${alerts.length})</div>
-        ${alerts.map(a => `<div style="font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);cursor:pointer;" onclick="showAdminPage('${a.page}')">${a.icon} ${a.text} →</div>`).join('')}
+        ${alerts.map(a => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#fff;padding:6px 0;border-top:1px solid rgba(255,255,255,.25);">
+          <span>${a.icon} ${a.text}</span>
+          <button style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:14px;padding:3px 11px;font-size:10.5px;font-weight:800;cursor:pointer;flex-shrink:0;" onclick="showAdminPage('${a.page}')">Open ›</button>
+        </div>`).join('')}
       </div>
     </div>`;
   }
@@ -12160,12 +12220,11 @@ async function loadAdminDashboardHub(force) {
     value: lv && lv.ok ? lv.today.onLeave.length : '',
     sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
 
-  // Leads (CRM) tile — untouched: still reads d.leads exactly as before,
-  // still falls back to "Tap to open" since that module isn't part of
-  // this Dashboard update.
+  // Leads (CRM) tile — now backed by a real client-side fetch above
+  // instead of always falling back to a placeholder.
   html += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
     value: ld && ld.ok ? ld.today.assigned : '',
-    sub: ld && ld.ok ? `Assigned today${ld.topPerformer ? ' · 🏆 ' + ld.topPerformer.employee : ''}` : '' });
+    sub: ld && ld.ok ? `Sent today · ${ld.today.submitted} submitted` : '' });
 
   html += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
     value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
@@ -12203,18 +12262,20 @@ async function loadAdminDashboardHub(force) {
   const hasLeaveChart = lv && lv.ok && lv.thisMonth;
   const hasKpiChart = kp && kp.ok && kp.thisMonth && kp.thisMonth.topper;
   if (hasLeaveChart || hasKpiChart) {
-    html += `<div class="dh-panel dh-panel-wide">
-      <div class="dh-panel-title">📊 Charts Overview</div>
+    html += `<div class="dh-panel dh-panel-wide" style="background:#f7f5fc;">
+      <div class="dh-panel-title"><span class="t">📊 Charts Overview</span></div>
       <div class="dh-charts-row">
-        ${hasLeaveChart ? `<div class="dh-chart-col" onclick="showAdminPage('dashboard')">
+        ${hasLeaveChart ? `<div class="dh-chart-col">
           <div class="dh-chart-col-title">🏖️ Leave Breakdown — This Month</div>
-          <div class="dh-chart-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminLeaveDonut"></canvas></div>
+          <div class="dh-chart-wrap"><canvas id="dhAdminLeaveDonut"></canvas></div>
+          <button class="dh-panel-view-btn" style="display:block;margin:8px auto 0;" onclick="showAdminPage('dashboard')">View →</button>
         </div>` : ''}
-        ${hasKpiChart ? `<div class="dh-chart-col" onclick="showAdminPage('kpi')">
+        ${hasKpiChart ? `<div class="dh-chart-col">
           <div class="dh-chart-col-title">📈 KPI — This Month's Topper</div>
-          <div class="dh-gauge-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminKpiGauge"></canvas>
-            <div class="dh-gauge-label"><div class="num">${hasKpiChart ? kp.thisMonth.topper.overallScore : ''}</div><div class="sub">${hasKpiChart ? kp.thisMonth.topper.employee : ''}</div></div>
+          <div class="dh-gauge-wrap"><canvas id="dhAdminKpiGauge"></canvas>
+            <div class="dh-gauge-label"><div class="num">${kp.thisMonth.topper.overallScore}</div><div class="sub">${kp.thisMonth.topper.employee}</div></div>
           </div>
+          <button class="dh-panel-view-btn" style="display:block;margin:8px auto 0;" onclick="showAdminPage('kpi')">View →</button>
         </div>` : ''}
       </div>
     </div>`;
@@ -12224,8 +12285,8 @@ async function loadAdminDashboardHub(force) {
   // Pending, this month). Chart moved up into Charts Overview above.
   if (lv && lv.ok && lv.thisMonth) {
     const cm = lv.thisMonth;
-    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('dashboard')">
-      <div class="dh-panel-title">🏖️ Leave — This Month</div>
+    html += `<div class="dh-panel dh-panel-wide" style="background:var(--purple-bg);">
+      <div class="dh-panel-title"><span class="t">🏖️ Leave — This Month</span><button class="dh-panel-view-btn" onclick="showAdminPage('dashboard')">View →</button></div>
       <div class="dh-stat-grid6">
         <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${cm.total}</div><div class="l">Total</div></div>
         <div class="dh-stat-box2"><div class="v" style="color:#c97a10">${cm.pending}</div><div class="l">Pending</div></div>
@@ -12237,13 +12298,32 @@ async function loadAdminDashboardHub(force) {
     </div>`;
   }
 
+  // Leads (CRM) — Sent/Submitted/Pending only up top (per request), full
+  // employee-wise Sent/Submitted/Pending/% breakdown below.
+  if (ld && ld.ok) {
+    const empRows = (ld.employees || []).slice().sort((a, b) => (b.completionPct || 0) - (a.completionPct || 0));
+    const pctColor = p => p >= 80 ? '#1a7a4f' : p >= 40 ? '#c97a10' : '#c0392b';
+    html += `<div class="dh-panel dh-panel-wide" style="background:#fef5e7;">
+      <div class="dh-panel-title"><span class="t">👥 Leads (CRM) — Today</span><button class="dh-panel-view-btn" onclick="showAdminPage('leads')">View →</button></div>
+      <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
+        <div class="dh-stat-box2"><div class="v" style="color:#c97a10">${ld.today.assigned}</div><div class="l">Sent</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#1a7a4f">${ld.today.submitted}</div><div class="l">Submitted</div></div>
+        <div class="dh-stat-box2"><div class="v" style="color:#dc2626">${ld.today.pending}</div><div class="l">Pending</div></div>
+      </div>
+      <div class="dh-subhead">👤 Employee-wise</div>
+      ${empRows.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Employee</th><th style="text-align:right;">Sent</th><th style="text-align:right;">Submitted</th><th style="text-align:right;">Pending</th><th style="text-align:right;">%</th></tr></thead><tbody>
+        ${empRows.map(r => `<tr><td>${r.employee}</td><td style="text-align:right;">${r.assigned}</td><td style="text-align:right;">${r.submitted}</td><td style="text-align:right;">${r.pending}</td><td style="text-align:right;font-weight:800;color:${pctColor(r.completionPct)};">${r.completionPct}%</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="dh-empty-mini">No leads assigned today.</div>'}
+    </div>`;
+  }
+
   // Loyalty Card — today/month/total + leaderboard + incentive history + upcoming incentive
   if (ly && ly.ok) {
     const lb = ly.leaderboard || [];
     const hist = (ly.incentiveHistory && ly.incentiveHistory.recent) || [];
     const up = ly.upcomingIncentive || { total: 0, byEmployee: [] };
-    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('loyalty')">
-      <div class="dh-panel-title">💳 Loyalty Card</div>
+    html += `<div class="dh-panel dh-panel-wide" style="background:#fff8e1;">
+      <div class="dh-panel-title"><span class="t">💳 Loyalty Card</span><button class="dh-panel-view-btn" onclick="showAdminPage('loyalty')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.today.cardsApproved}</div><div class="l">Today</div></div>
         <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.thisMonth.cardsApproved}</div><div class="l">This Month</div></div>
@@ -12267,8 +12347,8 @@ async function loadAdminDashboardHub(force) {
   // Golden Plan — today/month/total + topper + plan-type split
   if (ga && ga.ok) {
     const byType = ga.byPlanType || {};
-    html += `<div class="dh-panel" onclick="showAdminPage('golden-aura')">
-      <div class="dh-panel-title">🥇 Golden Plan</div>
+    html += `<div class="dh-panel" style="background:var(--pink-bg,#fce7f3);">
+      <div class="dh-panel-title"><span class="t">🥇 Golden Plan</span><button class="dh-panel-view-btn" onclick="showAdminPage('golden-aura')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.today.enrollments}</div><div class="l">Today</div></div>
         <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.thisMonth.enrollments}</div><div class="l">This Month</div></div>
@@ -12289,17 +12369,26 @@ async function loadAdminDashboardHub(force) {
   // that used to sit here has been removed entirely.
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     const t = kp.thisMonth.topper;
-    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
-      <div class="dh-panel-title">📈 KPI — This Month's Topper</div>
-      <div class="dh-mini-row" style="border-top:none;"><span class="dh-mini-name">${t.employee}</span><span class="dh-mini-val">${t.overallScore}</span></div>
+    html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);">
+      <div class="dh-panel-title"><span class="t">📈 KPI — This Month's Topper</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
+      <div style="text-align:center;padding:6px 0 10px;">
+        <div style="font-size:16px;font-weight:800;color:var(--gold-dark,#B8860B);">🏆 ${t.employee}</div>
+        <div style="font-size:26px;font-weight:800;color:#1a7a4f;margin-top:2px;">${t.overallScore}</div>
+      </div>
       ${t.conversionPct != null ? `<div class="dh-mini-row"><span class="dh-mini-name">Conversion %</span><span class="dh-mini-val">${t.conversionPct}</span></div>` : ''}
     </div>`;
   }
-  if (kp && kp.ok && kp.lastMonthEOM) {
+  // Per request: if there's no EOM winner, hide this box entirely instead
+  // of showing a "No winner declared" empty state.
+  if (kp && kp.ok && kp.lastMonthEOM && kp.lastMonthEOM.hasWinner) {
     const eom = kp.lastMonthEOM;
-    html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
-      <div class="dh-panel-title">🏅 Employee of the Month — Last Month</div>
-      ${eom.hasWinner ? `<div class="dh-mini-row" style="border-top:none;"><span class="dh-mini-name">${eom.name}</span><span class="dh-mini-val">${eom.score}</span></div><div class="dh-kpi-sub">${eom.monthTitle||''}</div>` : `<div class="dh-empty-mini">No winner declared for last month${eom.monthTitle ? ' ('+eom.monthTitle+')' : ''}.</div>`}
+    html += `<div class="dh-panel" style="background:#fef3c7;">
+      <div class="dh-panel-title"><span class="t">🏅 Employee of the Month — Last Month</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
+      <div style="text-align:center;padding:6px 0 4px;">
+        <div style="font-size:16px;font-weight:800;color:#b8860b;">🥇 ${eom.name}</div>
+        <div style="font-size:24px;font-weight:800;color:#1a7a4f;margin-top:2px;">${eom.score}</div>
+      </div>
+      ${eom.monthTitle ? `<div class="dh-kpi-sub" style="text-align:center;">${eom.monthTitle}</div>` : ''}
     </div>`;
   }
 
@@ -12307,8 +12396,8 @@ async function loadAdminDashboardHub(force) {
   if (dr && dr.ok) {
     const missToday = (dr.today && dr.today.missing) || [];
     const missYest = dr.yesterdayPending || [];
-    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('dsr')">
-      <div class="dh-panel-title">🧾 DSR</div>
+    html += `<div class="dh-panel dh-panel-wide" style="background:var(--blue-bg,#e8f0fb);">
+      <div class="dh-panel-title"><span class="t">🧾 DSR</span><button class="dh-panel-view-btn" onclick="showAdminPage('dsr')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${dr.today.entries}</div><div class="l">Today Entries</div></div>
         <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${dr.tillDateTotal}</div><div class="l">Till-Date Total</div></div>
@@ -12325,8 +12414,8 @@ async function loadAdminDashboardHub(force) {
   // Walk-in Track — Yesterday + Last 5 Days (Today dropped — mid-day data was incomplete/confusing)
   if (wk && wk.ok) {
     const last5 = wk.last5 || [];
-    html += `<div class="dh-panel dh-panel-wide">
-      <div class="dh-panel-title">🚶 Walk-in Track (Customer Footfall)</div>
+    html += `<div class="dh-panel dh-panel-wide" style="background:#e6f7f5;">
+      <div class="dh-panel-title"><span class="t">🚶 Walk-in Track (Customer Footfall)</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div class="dh-subhead">📆 Yesterday (${wk.yesterday.date || ''})</div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
         <div class="dh-stat-box2"><div class="v">${wk.yesterday.walkins}</div><div class="l">Walk-ins</div></div>
@@ -12338,23 +12427,30 @@ async function loadAdminDashboardHub(force) {
       ${last5.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Date</th><th>Walk-ins</th><th>Deals</th><th>Purch.</th><th>Non-Purch.</th></tr></thead><tbody>
         ${last5.map(r => `<tr><td>${r.date}</td><td>${r.walkins}</td><td>${r.deals}</td><td>${r.purchased}</td><td>${r.nonPurchased}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">No data.</div>'}
-      <div class="dh-subhead">🏆 Highest Deals (Last 5 Days + Yesterday)</div>
-      <div class="dh-mini-row" style="border-top:none;">${wk.highestDeals ? `<span class="dh-mini-name">${wk.highestDeals.employee}</span><span class="dh-mini-val">${wk.highestDeals.count} deal(s)</span>` : '<span class="dh-empty-mini">No deals recorded.</span>'}</div>
     </div>`;
   }
 
-  // Stock Checklist — health stats + duty roster (suggested/done only) + today's Opening/Closing, Retail & Wholesale shown separately
+  // Stock Checklist — health stats as boxes + duty roster as Employee|Status tables, Retail & Wholesale shown separately
   if (st) {
     const stKeys = st.ok && st.today ? Object.keys(st.today) : [];
-    const dutyChip = e => `<span class="dh-name-chip ${e.done ? 'ok' : ''}">${e.employee}${e.done ? ' · ✅ Done' : (e.suggestedToday ? ' · ⭐ Assigned Today' : ' · ⭐ Assigned Tomorrow')}</span>`;
-    const dutyLine = (label, arr) => `<div class="dh-subhead">👤 ${label}</div><div class="dh-name-chip-row">${(arr||[]).length ? arr.map(dutyChip).join('') : '<span class="dh-empty-mini">Nothing to show.</span>'}</div>`;
-    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('stock')">
-      <div class="dh-panel-title">📝 Stock Checklist — Today</div>
-      ${stKeys.length ? `<div class="dh-kpi-sub" style="font-size:12px;">${stKeys.slice(0,4).map(k => k + ': ' + st.today[k]).join(' &nbsp;·&nbsp; ')}</div>` : '<div class="dh-kpi-sub">Tap to open</div>'}
-      ${dutyLine('Retail — Opening', st.retail && st.retail.opening)}
-      ${dutyLine('Retail — Closing', st.retail && st.retail.closing)}
-      ${dutyLine('Wholesale — Opening', st.wholesale && st.wholesale.opening)}
-      ${dutyLine('Wholesale — Closing', st.wholesale && st.wholesale.closing)}
+    const dutyStatus = e => e.done ? '✅ Done' : (e.suggestedToday ? '⭐ Assigned Today' : e.suggestedTomorrow ? '⭐ Assigned Tomorrow' : e.status);
+    const dutyTable = (label, arr) => {
+      const list = arr || [];
+      return `<div class="dh-subhead">👤 ${label}</div>` + (list.length
+        ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Employee</th><th>Status</th></tr></thead><tbody>
+            ${list.map(e => `<tr><td>${e.employee}</td><td>${dutyStatus(e)}</td></tr>`).join('')}
+          </tbody></table></div>`
+        : '<div class="dh-empty-mini">Nothing to show.</div>');
+    };
+    html += `<div class="dh-panel dh-panel-wide" style="background:#ede9fe;">
+      <div class="dh-panel-title"><span class="t">📝 Stock Checklist — Today</span><button class="dh-panel-view-btn" onclick="showAdminPage('stock')">View →</button></div>
+      ${stKeys.length ? `<div class="dh-stat-grid6" style="grid-template-columns:repeat(${Math.min(stKeys.length,4)},1fr)">
+        ${stKeys.slice(0,4).map(k => `<div class="dh-stat-box2"><div class="v" style="color:#6b21a8">${st.today[k]}</div><div class="l">${k}</div></div>`).join('')}
+      </div>` : '<div class="dh-kpi-sub">No data yet</div>'}
+      ${dutyTable('Retail — Opening', st.retail && st.retail.opening)}
+      ${dutyTable('Retail — Closing', st.retail && st.retail.closing)}
+      ${dutyTable('Wholesale — Opening', st.wholesale && st.wholesale.opening)}
+      ${dutyTable('Wholesale — Closing', st.wholesale && st.wholesale.closing)}
     </div>`;
   }
 
