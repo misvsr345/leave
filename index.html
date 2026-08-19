@@ -583,6 +583,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-panel {
   background: var(--card); border-radius: var(--r); padding: 14px; margin-bottom: 10px;
   box-shadow: 0 2px 12px rgba(107,33,168,0.08);
+  border-left: 4px solid var(--dh-accent, var(--purple));
 }
 .dh-panel-title { font-size: 12.5px; font-weight: 800; color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .dh-panel-title .t { display:flex; align-items:center; gap:6px; }
@@ -607,6 +608,23 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .dh-quick-item:active { background: var(--purple-bg); border-color: var(--gold); }
 .dh-quick-item .qi { font-size: 17px; display: block; margin-bottom: 4px; }
+
+/* Dashboard Hub — fixed top strip (KPI summary cards + quick-access
+   row) stays pinned right below the app header while the detail panels
+   below it scroll normally. position:fixed (not sticky) for the same
+   reliability reason .header-group above uses it — see that comment.
+   --dh-fixed-h is measured live from the rendered strip's real height
+   (syncDashHubFixedHeight()) and used to pad .dh-scroll-body so content
+   is never hidden underneath the fixed strip. */
+.dh-fixed-top {
+  position: fixed; left: 0; right: 0; top: var(--header-h, 60px); z-index: 90;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+}
+.dh-fixed-top-inner { max-width: 800px; margin: 0 auto; padding: 10px 14px 8px; }
+.dh-fixed-top .dh-kpi-grid, .dh-fixed-top .dh-quick-row { margin-bottom: 0; }
+.dh-fixed-top .dh-quick-row { margin-top: 8px; }
+.dh-scroll-body { padding-top: var(--dh-fixed-h, 0px); }
 
 /* ── Dashboard Hub v2 — per-module detail panels (Leave/Loyalty/Golden
    Plan/KPI/DSR/Walk-in/Checklist) added on top of the KPI-card row above.
@@ -658,17 +676,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   #admin-dashboard-hub .dh-panel { margin-bottom: 0; }
   #admin-dashboard-hub .dh-quick-row { grid-template-columns: repeat(7, 1fr); }
   #admin-dashboard-hub .dh-stat-grid6 { grid-template-columns: repeat(6,1fr); }
-
-  /* Quick-action buttons move to a sticky left sidebar on desktop; on
-     mobile they stay in normal document flow at the bottom (unchanged). */
-  #adminDashHubBody, #empDashHubBody {
-    display: grid; grid-template-columns: 168px 1fr; gap: 16px; align-items: start;
-  }
-  #adminDashHubBody > *, #empDashHubBody > * { grid-column: 2; }
-  #adminDashHubBody .dh-quick-row, #empDashHubBody .dh-quick-row {
-    grid-column: 1; grid-row: 1 / -1; grid-template-columns: 1fr;
-    position: sticky; top: 12px; align-self: start;
-  }
 }
 
 /* Stats Grid */
@@ -981,6 +988,21 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .quick-action-icon { font-size: 26px; margin-bottom: 5px; display: block; }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
+
+/* Dashboard home-screen section buttons ONLY (#emp-modulepicker /
+   #admin-modulepicker) — name-only, no emoji, ~50%+ shorter, one
+   uniform label size for every button (same size the Checklist button
+   already used). Scoped by container id so the same .quick-action-btn
+   markup reused inside Loyalty/KPI/DSR/Leads/Stock sub-pages elsewhere
+   is completely untouched. */
+#emp-modulepicker .quick-action-btn,
+#admin-modulepicker .quick-action-btn { padding: 10px 10px; display: flex; align-items: center; justify-content: center; min-height: 0; }
+#emp-modulepicker .quick-action-icon,
+#admin-modulepicker .quick-action-icon,
+#emp-modulepicker .quick-action-sub,
+#admin-modulepicker .quick-action-sub { display: none; }
+#emp-modulepicker .quick-action-label,
+#admin-modulepicker .quick-action-label { font-size: 11.5px; margin: 0; }
 
 /* Notices rendered box (employee view) */
 .notice-render { font-size: 12.5px; line-height: 1.8; color: var(--text2); }
@@ -1326,7 +1348,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📊 My Dashboard</span>
         <button class="btn-sm btn-view" onclick="loadEmpDashboardHub(true)">🔄 Refresh</button>
       </div>
-      <div id="empDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
+      <div class="dh-fixed-top" id="empDashHubFixedOuter"><div class="dh-fixed-top-inner" id="empDashHubFixed"></div></div>
+      <div class="dh-scroll-body" id="empDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
 
     <!-- HOME / OVERVIEW (Leave section landing) -->
@@ -1971,7 +1994,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
         <button class="btn-sm btn-view" onclick="loadAdminDashboardHub(true)">🔄 Refresh</button>
       </div>
-      <div id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
+      <div class="dh-fixed-top" id="adminDashHubFixedOuter"><div class="dh-fixed-top-inner" id="adminDashHubFixed"></div></div>
+      <div class="dh-scroll-body" id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
 
     <!-- DASHBOARD (Leave section landing) -->
@@ -3879,7 +3903,18 @@ async function adminLogin() {
         // gated "Admin User" — this covers Store Manager and any other
         // role text someone adds to the Authorities sheet later, all
         // controlled by the same Settings checkboxes.
-        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1;
+        // v-fix: this previously only excluded MIS (roleUp.indexOf('MIS')
+        // === -1), never Director, despite the comment directly above
+        // saying "NOT MIS or Director" — so every Director login was
+        // silently treated as a restricted Admin User, hiding Direct
+        // Action, full Loyalty search data, Notices edit, Blocked
+        // dates/days, etc. unless MIS had separately granted a full
+        // permissions row for that exact Director email. Now matches
+        // the backend's own isDirector checks (e.g.
+        // saveEmployeeLoyaltyAccessAPI's "!isMIS && !isDirector" guard),
+        // which already correctly treat MIS and Director as equally
+        // unrestricted.
+        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1 && roleUp.indexOf('DIRECTOR') === -1;
         state.__loginKind = 'admin';
         resetIdleTimer();
         saveSession();
@@ -5874,6 +5909,32 @@ function renderSettingsEmpBody(emp) {
     <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-title">🗓️ Leave Type Access</div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">A DIFFERENT layer from Module Access above — this controls WHICH leave types this employee can pick, once inside the Leave module. Off = that leave type is hidden and blocked (server-side too) for this employee.</p>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLtaCasualCheck" ${emp && emp.leaveTypeAccess?.allowed?.['Casual Leave'] !== false ? 'checked' : ''} ${disabled} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;color:var(--text2);">Casual Leave</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLtaSickCheck" ${emp && emp.leaveTypeAccess?.allowed?.['Sick Leave'] !== false ? 'checked' : ''} ${disabled} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;color:var(--text2);">Sick Leave</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLtaEmergencyCheck" ${emp && emp.leaveTypeAccess?.allowed?.['Emergency Leave'] !== false ? 'checked' : ''} ${disabled} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;color:var(--text2);">Emergency Leave</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="empLtaSpecialCheck" ${emp && emp.leaveTypeAccess?.allowed?.['Special Permission Leave'] !== false ? 'checked' : ''} ${disabled} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:12.5px;color:var(--text2);">Special Permission Leave</span>
+    </label>
+    <div style="display:flex;align-items:center;gap:9px;padding:10px 2px 4px;">
+      <span style="font-size:12.5px;color:var(--text2);white-space:nowrap;">Special Permission limit / month</span>
+      <input type="number" min="0" id="empLtaSpecialLimit" placeholder="blank = unlimited" value="${emp && emp.leaveTypeAccess && emp.leaveTypeAccess.specialPermissionLimit !== null && emp.leaveTypeAccess.specialPermissionLimit !== undefined ? emp.leaveTypeAccess.specialPermissionLimit : ''}" ${disabled} style="width:110px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;">
+    </div>
+    ${emp && emp.leaveTypeAccess && emp.leaveTypeAccess.specialPermissionLimit !== null && emp.leaveTypeAccess.specialPermissionLimit !== undefined ? `<p style="font-size:11px;color:var(--text3);margin:4px 0 0;">Used ${emp.leaveTypeAccess.specialPermissionUsed || 0} of ${emp.leaveTypeAccess.specialPermissionLimit} this month.</p>` : ''}
+    <button class="btn-primary" id="settingsSaveEmpLtaBtn" style="width:100%;margin-top:10px;" ${disabled} onclick="saveSettingsEmpLeaveTypeAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Leave Type Access${emp ? ' for ' + emp.name : ''}</button>
+  </div>
   <div class="card" style="margin-top:14px;border:1.5px dashed var(--purple);">
     <div class="card-title">👥 Apply to All Employees</div>
     <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save — this overwrites the module-level access above for every employee in one go. Doesn't touch anyone's Detailed Sub-Option Access.</p>
@@ -5906,6 +5967,49 @@ function onSettingsEmpSelected() {
   // whole time, only their ticked state updates once data arrives.
   renderSettingsEmpBody(emp);
   loadSettingsEmpGranular(empId, emp.name);
+  loadSettingsEmpLeaveTypeAccess(empId);
+}
+
+// Fetches this employee's current Leave Type Access + Special
+// Permission Leave limit/usage for the admin panel, same
+// draw-immediately-then-refresh pattern as loadSettingsEmpGranular above.
+async function loadSettingsEmpLeaveTypeAccess(empId) {
+  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
+  try {
+    const res = await jsonpReliable({ page: 'getEmpLeaveTypeAccessForAdminAPI', empId });
+    if (!res.ok) throw new Error(res.error);
+    if (emp) emp.leaveTypeAccess = res;
+    if (document.getElementById('settingsEmpSelect').value === empId) renderSettingsEmpBody(emp);
+  } catch(e) {
+    // Fail quiet — the card already shows sensible defaults (all ON,
+    // unlimited); admin can still Save to set explicit values.
+  }
+}
+
+async function saveSettingsEmpLeaveTypeAccess(empId, empName) {
+  if (!empId) { toast('Select an employee first', 'error'); return; }
+  const payload = {
+    page: 'saveEmpLeaveTypeAccessAPI', empId, empName,
+    casual: document.getElementById('empLtaCasualCheck').checked ? 'true' : 'false',
+    sick: document.getElementById('empLtaSickCheck').checked ? 'true' : 'false',
+    emergency: document.getElementById('empLtaEmergencyCheck').checked ? 'true' : 'false',
+    special: document.getElementById('empLtaSpecialCheck').checked ? 'true' : 'false',
+    specialLimit: document.getElementById('empLtaSpecialLimit').value.trim(),
+    callerRole: state.adminRole, callerEmail: state.adminEmail
+  };
+  await withButtonLock(document.getElementById('settingsSaveEmpLtaBtn'), '⏳ Saving...', async () => {
+    try {
+      const res = await jsonpReliable(payload);
+      if (res.ok) {
+        toast('✅ Leave Type Access saved for ' + empName, 'success');
+        loadSettingsEmpLeaveTypeAccess(empId);
+      } else {
+        toast(res.error || 'Save failed', 'error');
+      }
+    } catch(e) {
+      toast('⚠️ No confirmation from server — reselect this employee to verify before saving again.', 'error');
+    }
+  });
 }
 
 // Detailed, sub-option-level access — the exact same feature list Admin
@@ -6932,6 +7036,46 @@ function checkEmpLoyaltyAccess() {
       applyEmpGranularRestrictionsFromPerms(res.granularPerms || {});
     })
     .catch(() => { /* fail open — never hide access due to a network blip */ });
+
+  // Leave Type Access + Special Permission Leave limit — a SEPARATE
+  // permission layer from Module Access above (see backend comment on
+  // SHEET_LEAVE_TYPE_ACCESS). This only filters the "Apply Leave"
+  // dropdown for convenience; the real enforcement is server-side in
+  // handleHTMLLeaveSubmit, so hiding an option here is never the only
+  // thing standing between an employee and a disallowed leave type.
+  jsonpReliable({ page: 'getEmployeeLeaveTypeAccessAPI', empId: state.empId })
+    .then(res => {
+      if (!res || !res.ok) return;
+      state.leaveTypeAccess = res;
+      applyLeaveTypeAccessToDropdown(res);
+    })
+    .catch(() => { /* fail open — never hide a leave type due to a network blip */ });
+}
+
+// Disables (rather than removes) options for leave types this employee
+// isn't allowed to submit, so the dropdown's positions stay stable and
+// a disallowed choice is clearly explained rather than just missing.
+// Also appends a remaining-count hint to Special Permission Leave when
+// a monthly limit is configured for this employee.
+function applyLeaveTypeAccessToDropdown(res) {
+  const sel = document.getElementById('applyLeaveType');
+  if (!sel || !res || !res.allowed) return;
+  Array.from(sel.options).forEach(opt => {
+    if (!opt.value) return; // skip the "-- Select Leave Type --" placeholder
+    const allowed = res.allowed[opt.value] !== false;
+    opt.disabled = !allowed;
+    let label = opt.value;
+    if (!allowed) {
+      label += ' (Not available for you)';
+    } else if (opt.value === 'Special Permission Leave' && res.specialPermissionLimit !== null && res.specialPermissionLimit !== undefined) {
+      label += ' (' + res.specialPermissionRemaining + ' left this month)';
+    }
+    opt.textContent = label;
+    // If the currently-selected option just became disallowed (e.g. a
+    // stale page left open across a permission change), clear it so the
+    // employee can't submit a hidden-but-still-selected disallowed type.
+    if (!allowed && sel.value === opt.value) sel.value = '';
+  });
 }
 
 // ══════════════════════════════════════
@@ -7197,11 +7341,17 @@ function runLoyaltySearch(who) {
   // MIS/Director (state.loyaltyPerms === null) always get full data. A
   // restricted Admin User only gets it if MIS specifically granted the
   // loySearch_fulldata sub-permission in Settings.
+  // v-note: fullData below is only a UI hint for which view to render
+  // optimistically — the REAL decision is made server-side in
+  // loyaltySearchAPI from adminEmail/adminRole now, since a client-sent
+  // flag alone could previously be overridden by calling the endpoint
+  // directly (Section 22 — backend must independently enforce this, not
+  // just trust what the frontend computed).
   const sectionLoyaltyOnS = (state.loyaltyPerms === null) || state.loyaltyPerms.section_loyalty !== false;
   const fullData = who === 'admin' ? ((state.loyaltyPerms === null) || !!(sectionLoyaltyOnS && state.loyaltyPerms && state.loyaltyPerms.loySearch_fulldata)) : false;
   resultsEl.innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
 
-  jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role, fullData: fullData ? '1' : '0' })
+  jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role, fullData: fullData ? '1' : '0', adminEmail: who === 'admin' ? state.adminEmail : '', adminRole: who === 'admin' ? state.adminRole : '' })
     .then(res => renderLoyaltyResults(res, resultsEl))
     .catch(err => { resultsEl.innerHTML = '<div class="empty-state"><p>Search failed: ' + err.message + '</p></div>'; });
 }
@@ -12103,32 +12253,34 @@ async function loadEmpDashboardHub(force) {
 
   const lv = d.leave, dr = d.dsr, kp = d.kpi, ly = d.loyalty, ga = d.goldenAura;
 
-  let html = '<div class="dh-kpi-grid">';
-  html += dhKpiCard({ icon: '🏖️', title: 'My Leave', accent: 'var(--purple)', onclick: "showEmpPage('overview')", data: lv,
+  let fixedHtml = '<div class="dh-kpi-grid">';
+  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'My Leave', accent: 'var(--purple)', onclick: "showEmpPage('overview')", data: lv,
     value: lv && lv.ok ? (lv.balance && lv.balance.balance != null ? lv.balance.balance : (lv.thisMonth.count + '')) : '',
     sub: lv && lv.ok ? `${lv.today ? lv.today.status : 'Not on leave today'} · Pending ${lv.pendingCount}` : '' });
 
-  html += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr')", data: dr,
+  fixedHtml += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr')", data: dr,
     value: dr && dr.ok ? dr.today.entries : '',
     sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  html += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi')", data: kp && kp.thisMonth ? kp : null,
+  fixedHtml += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi')", data: kp && kp.thisMonth ? kp : null,
     value: kp && kp.ok && kp.thisMonth ? kp.thisMonth.score : '',
     sub: kp && kp.ok && kp.thisMonth ? `Grade ${kp.thisMonth.grade} this month` : '' });
 
-  html += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty')", data: ly,
+  fixedHtml += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty')", data: ly,
     value: ly && ly.ok ? ly.thisMonth.cardsApproved : '',
     sub: ly && ly.ok ? `This month · ${ly.total.cardsApproved} total` : '' });
 
-  html += dhKpiCard({ icon: '🥇', title: 'My Golden Plan', accent: '#d6389a', onclick: "showEmpPage('golden-aura')", data: ga,
+  fixedHtml += dhKpiCard({ icon: '🥇', title: 'My Golden Plan', accent: '#d6389a', onclick: "showEmpPage('golden-aura')", data: ga,
     value: ga && ga.ok ? ga.thisMonth.enrollments : '',
     sub: ga && ga.ok ? `This month · ${ga.total.enrollments} total` : '' });
-  html += '</div>';
+  fixedHtml += '</div>';
+
+  let html = '';
 
   // Gauge — KPI score this month (only rendered when the API actually sent a score;
   // nothing is fabricated when kp is missing/not ok).
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.score != null) {
-    html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);">
+    html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);--dh-accent:#1a7a4f;">
       <div class="dh-panel-title"><span class="t">📈 KPI Score — This Month</span><button class="dh-panel-view-btn" onclick="showEmpPage('kpi')">View →</button></div>
       <div class="dh-gauge-wrap"><canvas id="dhEmpKpiGauge"></canvas>
         <div class="dh-gauge-label"><div class="num">${kp.thisMonth.score}</div><div class="sub">Grade ${kp.thisMonth.grade || '—'}</div></div>
@@ -12136,7 +12288,9 @@ async function loadEmpDashboardHub(force) {
     </div>`;
   }
 
+  document.getElementById('empDashHubFixed').innerHTML = fixedHtml;
   body.innerHTML = html;
+  syncDashHubFixedHeight('empDashHubFixedOuter', 'empDashHubBody');
   dhDestroyGauges('dhEmp');
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.score != null) {
     dhMakeGauge('dhEmpKpiGauge', kp.thisMonth.score, '#6b21a8');
@@ -12198,6 +12352,7 @@ async function loadAdminDashboardHub(force) {
     }
   } catch (eLd) { /* fail open — Leads card/panel just show 'No data yet' */ }
 
+  let fixedHtml = '';
   let html = '';
 
   // Alerts — unchanged behaviour, just restyled to match the new panel look
@@ -12215,41 +12370,41 @@ async function loadAdminDashboardHub(force) {
   }
 
   // KPI summary cards — 2-col on mobile / 4-col on desktop (see @media rule), colored accent per module, tap to drill into that module
-  html += '<div class="dh-kpi-grid">';
-  html += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
+  fixedHtml += '<div class="dh-kpi-grid">';
+  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
     value: lv && lv.ok ? lv.today.onLeave.length : '',
     sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
 
   // Leads (CRM) tile — now backed by a real client-side fetch above
   // instead of always falling back to a placeholder.
-  html += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
+  fixedHtml += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
     value: ld && ld.ok ? ld.today.assigned : '',
     sub: ld && ld.ok ? `Sent today · ${ld.today.submitted} submitted` : '' });
 
-  html += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
+  fixedHtml += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
     value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
     sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? `Topper: ${kp.thisMonth.topper.employee}` : '' });
 
-  html += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
+  fixedHtml += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
     value: dr && dr.ok ? dr.today.entries : '',
     sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  html += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
+  fixedHtml += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
     value: ly && ly.ok ? ly.today.cardsApproved : '',
     sub: ly && ly.ok ? `Today · ${ly.thisMonth.cardsApproved} this month` : '' });
 
-  html += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: ga,
+  fixedHtml += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: ga,
     value: ga && ga.ok ? ga.today.enrollments : '',
     sub: ga && ga.ok ? `Today · ${ga.thisMonth.enrollments} this month` : '' });
 
-  html += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('kpi')", data: wk,
+  fixedHtml += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('kpi')", data: wk,
     value: wk && wk.ok ? wk.today.walkins : '',
     sub: wk && wk.ok ? `Today · ${wk.yesterday.walkins} yesterday` : '' });
 
-  html += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock')", data: st,
+  fixedHtml += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock')", data: st,
     value: st && st.ok && st.today ? (st.today['SUBMITTED'] != null ? st.today['SUBMITTED'] : '') : '',
     sub: st && st.ok ? 'Today · tap for detail' : '' });
-  html += '</div>';
+  fixedHtml += '</div>';
 
   // ── Detail panels — one per module, arranged in dh-panels-grid so
   // desktop can lay them out 2-up while mobile just stacks them. ──
@@ -12285,7 +12440,7 @@ async function loadAdminDashboardHub(force) {
   // Pending, this month). Chart moved up into Charts Overview above.
   if (lv && lv.ok && lv.thisMonth) {
     const cm = lv.thisMonth;
-    html += `<div class="dh-panel dh-panel-wide" style="background:var(--purple-bg);">
+    html += `<div class="dh-panel dh-panel-wide" style="background:var(--purple-bg);--dh-accent:var(--purple);">
       <div class="dh-panel-title"><span class="t">🏖️ Leave — This Month</span><button class="dh-panel-view-btn" onclick="showAdminPage('dashboard')">View →</button></div>
       <div class="dh-stat-grid6">
         <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${cm.total}</div><div class="l">Total</div></div>
@@ -12303,7 +12458,7 @@ async function loadAdminDashboardHub(force) {
   if (ld && ld.ok) {
     const empRows = (ld.employees || []).slice().sort((a, b) => (b.completionPct || 0) - (a.completionPct || 0));
     const pctColor = p => p >= 80 ? '#1a7a4f' : p >= 40 ? '#c97a10' : '#c0392b';
-    html += `<div class="dh-panel dh-panel-wide" style="background:#fef5e7;">
+    html += `<div class="dh-panel dh-panel-wide" style="background:#fef5e7;--dh-accent:#c97a10;">
       <div class="dh-panel-title"><span class="t">👥 Leads (CRM) — Today</span><button class="dh-panel-view-btn" onclick="showAdminPage('leads')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:#c97a10">${ld.today.assigned}</div><div class="l">Sent</div></div>
@@ -12322,7 +12477,7 @@ async function loadAdminDashboardHub(force) {
     const lb = ly.leaderboard || [];
     const hist = (ly.incentiveHistory && ly.incentiveHistory.recent) || [];
     const up = ly.upcomingIncentive || { total: 0, byEmployee: [] };
-    html += `<div class="dh-panel dh-panel-wide" style="background:#fff8e1;">
+    html += `<div class="dh-panel dh-panel-wide" style="background:#fff8e1;--dh-accent:var(--gold);">
       <div class="dh-panel-title"><span class="t">💳 Loyalty Card</span><button class="dh-panel-view-btn" onclick="showAdminPage('loyalty')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.today.cardsApproved}</div><div class="l">Today</div></div>
@@ -12347,7 +12502,7 @@ async function loadAdminDashboardHub(force) {
   // Golden Plan — today/month/total + topper + plan-type split
   if (ga && ga.ok) {
     const byType = ga.byPlanType || {};
-    html += `<div class="dh-panel" style="background:var(--pink-bg,#fce7f3);">
+    html += `<div class="dh-panel" style="background:var(--pink-bg,#fce7f3);--dh-accent:#d6389a;">
       <div class="dh-panel-title"><span class="t">🥇 Golden Plan</span><button class="dh-panel-view-btn" onclick="showAdminPage('golden-aura')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.today.enrollments}</div><div class="l">Today</div></div>
@@ -12369,7 +12524,7 @@ async function loadAdminDashboardHub(force) {
   // that used to sit here has been removed entirely.
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     const t = kp.thisMonth.topper;
-    html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);">
+    html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);--dh-accent:#1a7a4f;">
       <div class="dh-panel-title"><span class="t">📈 KPI — This Month's Topper</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div style="text-align:center;padding:6px 0 10px;">
         <div style="font-size:16px;font-weight:800;color:var(--gold-dark,#B8860B);">🏆 ${t.employee}</div>
@@ -12382,7 +12537,7 @@ async function loadAdminDashboardHub(force) {
   // of showing a "No winner declared" empty state.
   if (kp && kp.ok && kp.lastMonthEOM && kp.lastMonthEOM.hasWinner) {
     const eom = kp.lastMonthEOM;
-    html += `<div class="dh-panel" style="background:#fef3c7;">
+    html += `<div class="dh-panel" style="background:#fef3c7;--dh-accent:#1a7a4f;">
       <div class="dh-panel-title"><span class="t">🏅 Employee of the Month — Last Month</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div style="text-align:center;padding:6px 0 4px;">
         <div style="font-size:16px;font-weight:800;color:#b8860b;">🥇 ${eom.name}</div>
@@ -12396,7 +12551,7 @@ async function loadAdminDashboardHub(force) {
   if (dr && dr.ok) {
     const missToday = (dr.today && dr.today.missing) || [];
     const missYest = dr.yesterdayPending || [];
-    html += `<div class="dh-panel dh-panel-wide" style="background:var(--blue-bg,#e8f0fb);">
+    html += `<div class="dh-panel dh-panel-wide" style="background:var(--blue-bg,#e8f0fb);--dh-accent:#1a5fa8;">
       <div class="dh-panel-title"><span class="t">🧾 DSR</span><button class="dh-panel-view-btn" onclick="showAdminPage('dsr')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
         <div class="dh-stat-box2"><div class="v" style="color:#1a5fa8">${dr.today.entries}</div><div class="l">Today Entries</div></div>
@@ -12414,7 +12569,7 @@ async function loadAdminDashboardHub(force) {
   // Walk-in Track — Yesterday + Last 5 Days (Today dropped — mid-day data was incomplete/confusing)
   if (wk && wk.ok) {
     const last5 = wk.last5 || [];
-    html += `<div class="dh-panel dh-panel-wide" style="background:#e6f7f5;">
+    html += `<div class="dh-panel dh-panel-wide" style="background:#e6f7f5;--dh-accent:#0e9488;">
       <div class="dh-panel-title"><span class="t">🚶 Walk-in Track (Customer Footfall)</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div class="dh-subhead">📆 Yesterday (${wk.yesterday.date || ''})</div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
@@ -12442,7 +12597,7 @@ async function loadAdminDashboardHub(force) {
           </tbody></table></div>`
         : '<div class="dh-empty-mini">Nothing to show.</div>');
     };
-    html += `<div class="dh-panel dh-panel-wide" style="background:#ede9fe;">
+    html += `<div class="dh-panel dh-panel-wide" style="background:#ede9fe;--dh-accent:#6b21a8;">
       <div class="dh-panel-title"><span class="t">📝 Stock Checklist — Today</span><button class="dh-panel-view-btn" onclick="showAdminPage('stock')">View →</button></div>
       ${stKeys.length ? `<div class="dh-stat-grid6" style="grid-template-columns:repeat(${Math.min(stKeys.length,4)},1fr)">
         ${stKeys.slice(0,4).map(k => `<div class="dh-stat-box2"><div class="v" style="color:#6b21a8">${st.today[k]}</div><div class="l">${k}</div></div>`).join('')}
@@ -12457,7 +12612,7 @@ async function loadAdminDashboardHub(force) {
   html += '</div>'; // /dh-panels-grid
 
   // Quick-access shortcuts — same modules as the section page, one tap away
-  html += `<div class="dh-quick-row">
+  fixedHtml += `<div class="dh-quick-row">
     <div class="dh-quick-item" onclick="showAdminPage('dashboard')"><span class="qi">🏖️</span>Leave</div>
     <div class="dh-quick-item" onclick="showAdminPage('leads')"><span class="qi">👥</span>Leads</div>
     <div class="dh-quick-item" onclick="showAdminPage('stock')"><span class="qi">📝</span>Checklist</div>
@@ -12467,7 +12622,9 @@ async function loadAdminDashboardHub(force) {
     <div class="dh-quick-item" onclick="showAdminPage('kpi')"><span class="qi">📊</span>KPI</div>
   </div>`;
 
+  document.getElementById('adminDashHubFixed').innerHTML = fixedHtml;
   body.innerHTML = html;
+  syncDashHubFixedHeight('adminDashHubFixedOuter', 'adminDashHubBody');
   dhDestroyGauges('dhAdmin');
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     dhMakeGauge('dhAdminKpiGauge', kp.thisMonth.topper.overallScore, '#d4a843');
@@ -13120,6 +13277,32 @@ if (window.ResizeObserver) {
   document.querySelectorAll('.header-group').forEach(hg => {
     new ResizeObserver(syncHeaderHeight).observe(hg);
   });
+}
+
+// Dashboard Hub — same reasoning as syncHeaderHeight above: the fixed
+// KPI-grid + quick-access strip (.dh-fixed-top) is removed from normal
+// flow, so the scrollable body below it needs top padding equal to the
+// strip's real rendered height (varies with data — e.g. whether the
+// quick-access row is present, how many KPI cards wrapped to a second
+// line). Called right after each render finishes; also watched with a
+// ResizeObserver so a later data refresh or a resize/rotation never
+// leaves content hidden underneath the strip or an awkward gap below it.
+function syncDashHubFixedHeight(fixedOuterId, scrollBodyId) {
+  const fixedEl = document.getElementById(fixedOuterId);
+  const bodyEl = document.getElementById(scrollBodyId);
+  if (!fixedEl || !bodyEl) return;
+  // .dh-fixed-top must sit right below the section's own title bar
+  // (.section-hdr — "📊 Dashboard" / Refresh button), not directly
+  // below the app's global header — otherwise it would overlap that
+  // title bar, since both would anchor to the same top offset.
+  const sectionHdr = fixedEl.parentElement && fixedEl.parentElement.querySelector('.section-hdr');
+  if (sectionHdr) fixedEl.style.top = sectionHdr.getBoundingClientRect().bottom + 'px';
+  const apply = () => bodyEl.style.setProperty('--dh-fixed-h', fixedEl.offsetHeight + 'px');
+  apply();
+  if (window.ResizeObserver && !fixedEl.dataset.dhHeightObserved) {
+    fixedEl.dataset.dhHeightObserved = '1';
+    new ResizeObserver(apply).observe(fixedEl);
+  }
 }
 
 // Try to restore a previous session first; only run the offline-queue
