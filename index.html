@@ -626,6 +626,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-mini-table td { padding: 6px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
 .dh-mini-table tr:last-child td { border-bottom: none; }
 .dh-chart-wrap { position: relative; height: 150px; margin-top: 4px; }
+/* All charts consolidated into one "Charts Overview" panel — see
+   loadAdminDashboardHub — instead of each chart living inside its own
+   module's data panel. */
+.dh-charts-row { display: flex; flex-wrap: wrap; gap: 18px; }
+.dh-chart-col { flex: 1 1 220px; min-width: 200px; }
+.dh-chart-col-title { font-size: 11px; font-weight: 800; color: var(--text2); margin-bottom: 6px; text-align: center; }
 
 /* ── Desktop (≥1024px) — richer multi-column dashboard, per the
    Desktop/Mobile spec: sidebar stays as-is (unchanged app chrome), but
@@ -5824,10 +5830,7 @@ function renderSettingsEmpBody(emp) {
   let html = `<div class="card">
     <div class="card-title">${nameLabel}</div>
     ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : ''}
-    <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
-      <input type="checkbox" id="empDashboardAccessCheck" ${emp && emp.dashboardAccess !== false ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">📊 Dashboard Access</span>
-    </label>
+    <p style="font-size:11px;color:var(--text3);margin:0 0 8px;">📊 Dashboard is always visible to every employee by default — no access setting for it.</p>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empLeaveAccessCheck" ${emp && emp.leaveAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">📋 Leave Access</span>
@@ -5957,7 +5960,6 @@ async function saveSettingsEmpGranular(empId, empName) {
 
 async function saveSettingsEmpAccess(empId, empName) {
   if (!empId) { toast('Select an employee first', 'error'); return; }
-  const dashboardEnabled = document.getElementById('empDashboardAccessCheck').checked;
   const enabled = document.getElementById('empLoyaltyAccessCheck').checked;
   const kpiEnabled = document.getElementById('empKpiAccessCheck').checked;
   const dsrEnabled = document.getElementById('empDsrAccessCheck').checked;
@@ -5967,7 +5969,6 @@ async function saveSettingsEmpAccess(empId, empName) {
   const goldenAuraEnabled = document.getElementById('empGoldenAuraAccessCheck').checked;
   const payload = {
     page: 'saveEmployeeLoyaltyAccessAPI', empId, empName,
-    dashboardEnabled: dashboardEnabled ? 'true' : 'false',
     enabled: enabled ? 'true' : 'false', kpiEnabled: kpiEnabled ? 'true' : 'false', dsrEnabled: dsrEnabled ? 'true' : 'false',
     leaveEnabled: leaveEnabled ? 'true' : 'false', leadsEnabled: leadsEnabled ? 'true' : 'false', stockEnabled: stockEnabled ? 'true' : 'false',
     goldenAuraEnabled: goldenAuraEnabled ? 'true' : 'false',
@@ -5981,7 +5982,7 @@ async function saveSettingsEmpAccess(empId, empName) {
       if (res.ok) {
         toast('✅ Access saved for ' + empName, 'success');
         const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
-        if (emp) { emp.dashboardAccess = dashboardEnabled; emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; emp.goldenAuraAccess = goldenAuraEnabled; }
+        if (emp) { emp.loyaltyAccess = enabled; emp.kpiAccess = kpiEnabled; emp.dsrAccess = dsrEnabled; emp.leaveAccess = leaveEnabled; emp.leadsAccess = leadsEnabled; emp.stockAccess = stockEnabled; emp.goldenAuraAccess = goldenAuraEnabled; }
       } else {
         toast(res.error || 'Save failed', 'error');
       }
@@ -12195,8 +12196,32 @@ async function loadAdminDashboardHub(force) {
   // desktop can lay them out 2-up while mobile just stacks them. ──
   html += '<div class="dh-panels-grid">';
 
+  // Charts Overview — every chart across every module lives together in
+  // ONE panel here (instead of being scattered one-per-module further
+  // down), so charts are all in one place and the module panels below
+  // become pure data (stats/tables/lists), all in one place too.
+  const hasLeaveChart = lv && lv.ok && lv.thisMonth;
+  const hasKpiChart = kp && kp.ok && kp.thisMonth && kp.thisMonth.topper;
+  if (hasLeaveChart || hasKpiChart) {
+    html += `<div class="dh-panel dh-panel-wide">
+      <div class="dh-panel-title">📊 Charts Overview</div>
+      <div class="dh-charts-row">
+        ${hasLeaveChart ? `<div class="dh-chart-col" onclick="showAdminPage('dashboard')">
+          <div class="dh-chart-col-title">🏖️ Leave Breakdown — This Month</div>
+          <div class="dh-chart-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminLeaveDonut"></canvas></div>
+        </div>` : ''}
+        ${hasKpiChart ? `<div class="dh-chart-col" onclick="showAdminPage('kpi')">
+          <div class="dh-chart-col-title">📈 KPI — This Month's Topper</div>
+          <div class="dh-gauge-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminKpiGauge"></canvas>
+            <div class="dh-gauge-label"><div class="num">${hasKpiChart ? kp.thisMonth.topper.overallScore : ''}</div><div class="sub">${hasKpiChart ? kp.thisMonth.topper.employee : ''}</div></div>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+
   // Leave — 6-stat grid (Total/Pending/Approved/Rejected/Absent/SM
-  // Pending, this month) + donut breakdown.
+  // Pending, this month). Chart moved up into Charts Overview above.
   if (lv && lv.ok && lv.thisMonth) {
     const cm = lv.thisMonth;
     html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('dashboard')">
@@ -12209,7 +12234,6 @@ async function loadAdminDashboardHub(force) {
         <div class="dh-stat-box2"><div class="v" style="color:#6b21a8">${cm.absent}</div><div class="l">Absent</div></div>
         <div class="dh-stat-box2"><div class="v" style="color:#d4a843">${cm.smPending}</div><div class="l">SM Pending</div></div>
       </div>
-      <div class="dh-chart-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminLeaveDonut"></canvas></div>
     </div>`;
   }
 
@@ -12259,15 +12283,16 @@ async function loadAdminDashboardHub(force) {
     </div>`;
   }
 
-  // KPI — gauge (topper score + conversion%) + Last Month's Employee of the Month
+  // KPI — Topper name/score + conversion% (data only; gauge chart lives
+  // in Charts Overview above) + Last Month's Employee of the Month.
+  // Note: per request, the separate "Top Performers" ranked-list panel
+  // that used to sit here has been removed entirely.
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
     const t = kp.thisMonth.topper;
     html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
-      <div class="dh-panel-title">📈 KPI Score — This Month's Topper</div>
-      <div class="dh-gauge-wrap" onclick="event.stopPropagation()"><canvas id="dhAdminKpiGauge"></canvas>
-        <div class="dh-gauge-label"><div class="num">${t.overallScore}</div><div class="sub">${t.employee}</div></div>
-      </div>
-      ${t.conversionPct != null ? `<div class="dh-mini-row" style="border-top:none;justify-content:center;gap:6px;"><span class="dh-mini-name">Conversion %</span><span class="dh-mini-val">${t.conversionPct}</span></div>` : ''}
+      <div class="dh-panel-title">📈 KPI — This Month's Topper</div>
+      <div class="dh-mini-row" style="border-top:none;"><span class="dh-mini-name">${t.employee}</span><span class="dh-mini-val">${t.overallScore}</span></div>
+      ${t.conversionPct != null ? `<div class="dh-mini-row"><span class="dh-mini-name">Conversion %</span><span class="dh-mini-val">${t.conversionPct}</span></div>` : ''}
     </div>`;
   }
   if (kp && kp.ok && kp.lastMonthEOM) {
@@ -12275,14 +12300,6 @@ async function loadAdminDashboardHub(force) {
     html += `<div class="dh-panel" onclick="showAdminPage('kpi')">
       <div class="dh-panel-title">🏅 Employee of the Month — Last Month</div>
       ${eom.hasWinner ? `<div class="dh-mini-row" style="border-top:none;"><span class="dh-mini-name">${eom.name}</span><span class="dh-mini-val">${eom.score}</span></div><div class="dh-kpi-sub">${eom.monthTitle||''}</div>` : `<div class="dh-empty-mini">No winner declared for last month${eom.monthTitle ? ' ('+eom.monthTitle+')' : ''}.</div>`}
-    </div>`;
-  }
-
-  // Top performers — unchanged data, restyled as a ranked list
-  if (kp && kp.ok && kp.thisMonth.top3 && kp.thisMonth.top3.length) {
-    html += `<div class="dh-panel dh-panel-wide" onclick="showAdminPage('kpi')">
-      <div class="dh-panel-title">🏆 Top Performers — KPI This Month</div>
-      ${kp.thisMonth.top3.map((r, i) => `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:7px 0;border-top:${i===0?'none':'1px solid var(--border)'};"><span>${['🥇','🥈','🥉'][i] || (i+1)+'.'} ${r.employee}</span><span style="font-weight:800;color:var(--purple);">${r.overallScore}</span></div>`).join('')}
     </div>`;
   }
 
