@@ -1011,23 +1011,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
 
-/* Dashboard home-screen section buttons ONLY (#emp-modulepicker /
-   #admin-modulepicker) — name-only, no emoji, ~50%+ shorter, one
-   uniform label size for every button. Scoped by container id so the
-   same .quick-action-btn markup reused inside Loyalty/KPI/DSR/Leads/
-   Stock sub-pages elsewhere is completely untouched. (Re-applied —
-   this was accidentally lost during later dashboard restructuring
-   work; verified the #emp-modulepicker/#admin-modulepicker containers
-   are still present before re-adding.) */
-#emp-modulepicker .quick-action-btn,
-#admin-modulepicker .quick-action-btn { padding: 10px 10px; display: flex; align-items: center; justify-content: center; min-height: 0; }
-#emp-modulepicker .quick-action-icon,
-#admin-modulepicker .quick-action-icon,
-#emp-modulepicker .quick-action-sub,
-#admin-modulepicker .quick-action-sub { display: none; }
-#emp-modulepicker .quick-action-label,
-#admin-modulepicker .quick-action-label { font-size: 11.5px; margin: 0; }
-
 /* Notices rendered box (employee view) */
 .notice-render { font-size: 12.5px; line-height: 1.8; color: var(--text2); }
 .notice-render b, .notice-render strong { color: var(--purple-dark); }
@@ -1691,6 +1674,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="profileEmpMeta">—</div>
         </div>
         <div id="profileEmpDetails"></div>
+        <div style="padding:14px 0 4px;">
+          <button class="btn-secondary" style="width:100%;" onclick="sharePortalLink()">🔗 Share Portal Link</button>
+        </div>
       </div>
     </div>
 
@@ -1923,6 +1909,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="showEmpPage('leads-pending')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Leads</div><div class="quick-action-sub">Pending — call now</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">Calls already done</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Report</div><div class="quick-action-sub">My % &amp; status break-up</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
       </div>
     </div>
 
@@ -1939,6 +1926,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-leads-report">
       <div class="section-hdr"><span class="section-title2">📊 My Leads Report — Today</span></div>
       <div class="card" id="empLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <div class="page-section" id="emp-customer-events">
+      <div class="section-hdr"><span class="section-title2">🎉 Customer Events</span></div>
+      <div id="empCustomerEventsList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="emp-more">
@@ -2506,6 +2498,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;" id="adminProfileMeta">—</div>
         </div>
         <div style="padding:16px 18px;" id="adminProfileDetails"></div>
+        <div style="padding:0 18px 18px;">
+          <button class="btn-secondary" style="width:100%;" onclick="sharePortalLink()">🔗 Share Portal Link</button>
+        </div>
       </div>
     </div>
 
@@ -2792,6 +2787,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQALeadsReport" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
       </div>
       <div class="card" style="margin-top:14px;">
         <div class="card-title">🛠️ More Tools</div>
@@ -2854,15 +2850,29 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="adminLeadsQuotaBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
+    <div class="page-section" id="admin-customer-events">
+      <div class="section-hdr"><span class="section-title2">🎉 Customer Events</span></div>
+      <div id="adminCustomerEventsList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
     <div class="page-section" id="admin-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
+        <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-backend-sheets">
+      <div class="section-hdr"><span class="section-title2">🗄️ Backend Sheets</span></div>
+      <div class="card">
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Direct links to open the raw Google Sheets behind each module.</p>
+        <div id="backendSheetsList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
     </div>
 
@@ -4326,6 +4336,7 @@ function showEmpPage(page) {
   if(page==='leads-pending') loadEmpLeadsPending();
   if(page==='leads-submitted') loadEmpLeadsSubmitted();
   if(page==='leads-report') loadEmpLeadsReport();
+  if(page==='customer-events') loadCustomerEventsPage('emp');
 }
 
 // ══════════════════════════════════════
@@ -6383,6 +6394,33 @@ function renderTrend() {
 // ══════════════════════════════════════
 // PROFILE (employee's own details)
 // ══════════════════════════════════════
+// Backend Sheets page — MIS always has access; anyone else needs the
+// 'backend_sheets' permission explicitly granted via Admin Access
+// (same pattern as Direct Action). Cached in memory for the session
+// since these URLs never change mid-session.
+let __backendSheetLinksCache = null;
+async function loadBackendSheetsPage() {
+  const box = document.getElementById('backendSheetsList');
+  if (__backendSheetLinksCache) { renderBackendSheetsList(__backendSheetLinksCache); return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonpReliable({ page: 'getBackendSheetLinksAPI', role: state.adminRole, adminEmail: state.adminEmail });
+    if (!res.ok) throw new Error(res.error || 'Load failed');
+    __backendSheetLinksCache = res.links || [];
+    renderBackendSheetsList(__backendSheetLinksCache);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>' + (e.message || 'Could not load sheet links.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="__backendSheetLinksCache=null;loadBackendSheetsPage()" title="Retry">🔄</button></div>';
+  }
+}
+
+function renderBackendSheetsList(links) {
+  const box = document.getElementById('backendSheetsList');
+  if (!links || !links.length) { box.innerHTML = '<div class="empty-state"><p>No sheet links available.</p></div>'; return; }
+  box.innerHTML = links.map(l =>
+    `<button class="btn-secondary" style="width:100%;margin-bottom:8px;text-align:left;" onclick="window.open('${l.url.replace(/'/g,"\\'")}', '_blank')">📄 ${l.label}</button>`
+  ).join('');
+}
+
 function renderAdminProfile() {
   const nameOrEmail = state.adminName || state.adminEmail || 'Admin';
   const initials = nameOrEmail.trim().split(/\s+/).map(w => w[0]).join('').substring(0,2).toUpperCase();
@@ -6457,6 +6495,38 @@ async function renderEmpBlockedDates() {
   }
 }
 
+// Shares the Portal's own URL — via the native share sheet (WhatsApp/
+// Mail/SMS/etc picker) where supported, otherwise copies it to the
+// clipboard so it can be pasted anywhere. Always uses the clean base
+// URL (no query string/hash), not whatever page state the person
+// sharing happens to currently be on.
+async function sharePortalLink() {
+  const cleanUrl = window.location.origin + window.location.pathname;
+  const shareData = {
+    title: 'VSR Gold — HR Portal',
+    text: 'VSR Gold HR Portal',
+    url: cleanUrl
+  };
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // person cancelled the share sheet — not an error
+      // fall through to clipboard on any other failure
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(cleanUrl);
+    toast('🔗 Portal link copied — paste it anywhere', 'success');
+  } catch (e) {
+    // Last-resort fallback for contexts where clipboard access itself
+    // is blocked (rare, but possible in some embedded webviews) — show
+    // the link in a prompt so it can still be manually copied.
+    window.prompt('Copy this Portal link:', cleanUrl);
+  }
+}
+
 function renderEmpProfile() {
   document.getElementById('profileEmpName').textContent = state.empName || '—';
   document.getElementById('profileEmpMeta').textContent = [state.empDesig, state.empDept].filter(Boolean).join(' · ') || '—';
@@ -6516,7 +6586,8 @@ const SM_FEATURE_ELEMENTS = {
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
   goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
-  stock: ['adminQAStockModule'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport']
+  stock: ['adminQAStockModule'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
+  backendSheets: ['adminQABackendSheets']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -6539,7 +6610,8 @@ const FEATURE_SUBKEYS = {
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
   dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'],
   goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList'],
-  stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport']
+  stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport'],
+  backendSheets: ['backend_sheets']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -6588,7 +6660,8 @@ async function applyAdminRoleRestrictions() {
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
     const isStockFeature = key.indexOf('stock') === 0;
-    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : sectionLeaveOn;
+    const isSectionless = key === 'backendSheets'; // cross-cutting utility, not tied to any one section
+    const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -6666,6 +6739,7 @@ function showAdminPage(page) {
   if(page==='direct') loadDirectActionPage();
   if(page==='blocked') loadBlockedDatesPage();
   if(page==='settings') loadSettingsPage();
+  if(page==='backend-sheets') loadBackendSheetsPage();
   if(page==='profile') renderAdminProfile();
   if(page==='login-activity') loadLoginActivity('admin');
   if(page==='empwise') loadEmployeeWisePage();
@@ -6678,6 +6752,7 @@ function showAdminPage(page) {
   if(page==='leads-report') loadAdminLeadsReport();
   if(page==='leads-overdue') loadAdminOverdueLeads();
   if(page==='leads-quota') loadAdminLeadsQuota();
+  if(page==='customer-events') loadCustomerEventsPage('admin');
 }
 
 // ══════════════════════════════════════
@@ -9964,18 +10039,52 @@ function openStockChecklistForm(who) {
 // ══════════════════════════════════════
 const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxGPbxuw3LtgXOrafcsC6cuLLZvPCPwkDkfb7whIrX_r8YmG1B5a_yU4XC-bLw6SGre6Q/exec';
 
+// v-fix: leadsApiGet/leadsApiPost previously used a bare fetch() with no
+// timeout at all. If the LEADS Apps Script deployment is unreachable —
+// stale deployment URL, access revoked, quota/auth issue — the fetch
+// hangs indefinitely instead of failing. That doesn't just break the
+// Leads page (which calls this directly): the Dashboard Hub ALSO awaits
+// this same function to build its Leads card, so an unbounded hang here
+// silently froze the ENTIRE Dashboard too, since nothing after that
+// await could ever run. This wraps every LEADS call in a 15s timeout via
+// AbortController, matching the timeout discipline every other network
+// call in this file already has — a real failure now surfaces as a
+// clear, retryable error instead of a permanent spinner.
+function _fetchWithTimeout(url, opts, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 15000);
+  return fetch(url, Object.assign({}, opts, { signal: controller.signal }))
+    .finally(() => clearTimeout(timer));
+}
+
 async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
-  const resp = await fetch(LEADS_WEB_APP_URL + '?' + qs);
+  let resp;
+  try {
+    resp = await _fetchWithTimeout(LEADS_WEB_APP_URL + '?' + qs, {}, 15000);
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      throw new Error('CRM server did not respond in time. It may need to be redeployed — please tell admin.');
+    }
+    throw e;
+  }
   return await _parseLeadsApiResponse(resp);
 }
 
 async function leadsApiPost(payload) {
-  const resp = await fetch(LEADS_WEB_APP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
-    body: JSON.stringify(payload)
-  });
+  let resp;
+  try {
+    resp = await _fetchWithTimeout(LEADS_WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
+      body: JSON.stringify(payload)
+    }, 15000);
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      throw new Error('CRM server did not respond in time. It may need to be redeployed — please tell admin.');
+    }
+    throw e;
+  }
   return await _parseLeadsApiResponse(resp);
 }
 
@@ -10174,9 +10283,30 @@ function renderEmpLeadsPendingTable() {
     const subLine = isRetryLead
       ? `<span style="color:var(--orange,#c97a10);">🔁 Last Sent: ${l.lastCalledDate || '-'}${l.lastStatus ? ' · ' + l.lastStatus : ''}</span>`
       : `<span style="color:var(--green);">🆕 Fresh</span>`;
+    // Event lead (birthday/anniversary, next 2 days) — red/pink for
+    // Birthday, purple for Anniversary, event date shown right next to
+    // it so the caller knows why this customer is in today's list
+    // before dialing, plus who last handled them (salesPerson, already
+    // tracked per-customer in Clean Leads) and a wish-card link (🎁 —
+    // opens the same branded, shareable wish page the daily email
+    // already links to) to send wishes on VSR GOLD's behalf.
+    let eventBlock = '';
+    if (l.isEvent) {
+      const isBday = (l.eventType || '').toLowerCase() === 'birthday';
+      const evColor = isBday ? '#e91e63' : '#7b1fa2';
+      const yearsTxt = (!isBday && l.years) ? ` (${l.years} yrs)` : '';
+      const wishUrl = LEADS_WEB_APP_URL + '?action=WISHES&customer=' + encodeURIComponent(l.name || '') +
+        '&type=' + encodeURIComponent((l.eventType || '').toLowerCase()) +
+        '&date=' + encodeURIComponent(l.eventDate || '') + (l.years ? '&years=' + l.years : '') +
+        '&phone=' + encodeURIComponent(l.phone || '');
+      eventBlock = ` <span class="kd-pill" style="font-size:9px;background:${evColor};color:#fff;">${isBday ? '🎂' : '💑'} ${l.eventType}${yearsTxt}</span>` +
+        `<br><span style="font-size:11px;font-weight:700;color:${evColor};">📅 ${l.eventDate || '-'}</span>` +
+        (l.salesPerson ? ` <span style="font-size:10.5px;color:var(--text3);">· Handled by: ${l.salesPerson}</span>` : '') +
+        ` <a href="${wishUrl}" target="_blank" style="text-decoration:none;font-size:14px;" title="Send wishes">🎁</a>`;
+    }
     html += `<tr style="${done ? 'opacity:0.5;' : ''}">` +
       `<td style="text-align:center;color:var(--text3);">${i + 1}</td>` +
-      `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${l.isEvent ? ` <span class="kd-pill gold" style="font-size:9px;">🎉 ${l.eventType}</span>` : ''}<br><span style="font-size:11px;">${subLine}</span></td>` +
+      `<td style="text-align:left;"><b>${l.name || 'Unknown'}</b>${eventBlock}<br><span style="font-size:11px;">${subLine}</span></td>` +
       `<td style="text-align:left;"><a href="tel:${l.phone}" style="color:var(--purple);font-weight:700;">${l.phone}</a><br><span style="font-size:11px;color:var(--text3);">${l.product || '-'}</span></td>` +
       `<td style="text-align:center;">${done
         ? `<span class="kd-pill green" style="font-size:10px;white-space:nowrap;">✅ Done</span>`
@@ -10963,6 +11093,69 @@ async function saveEmpQuota(email) {
   } catch (e) {
     toast('❌ Network error: ' + e.message, 'error');
   }
+}
+
+// ── Customer Events — Birthdays & Anniversaries, next 7 days ────────
+// Shared between Employee and Admin (same read-only data either way).
+// role is 'emp' or 'admin' — picks which page's container to render
+// into, since the two page-sections can't share one element id.
+async function loadCustomerEventsPage(role) {
+  const box = document.getElementById(role + 'CustomerEventsList');
+  if (!box) return;
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await leadsApiGet({ action: 'GET_CUSTOMER_EVENTS_LIST' });
+    if (!res.ok) throw new Error(res.error || 'Load failed');
+    renderCustomerEventsList(box, res.events || []);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>' + (e.message || 'Could not load customer events.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadCustomerEventsPage(\'' + role + '\')" title="Retry">🔄</button></div>';
+  }
+}
+
+function renderCustomerEventsList(box, events) {
+  if (!events.length) {
+    box.innerHTML = '<div class="empty-state"><span class="emoji">🎉</span><p>No customer birthdays or anniversaries in the next 7 days.</p></div>';
+    return;
+  }
+  const today = events.filter(e => e.daysAway === 0);
+  const tomorrow = events.filter(e => e.daysAway === 1);
+  const thisWeek = events.filter(e => e.daysAway >= 2);
+
+  const card = (ev) => {
+    const isBday = ev.eventType === 'Birthday';
+    const icon = isBday ? '🎂' : '💑';
+    const color = isBday ? '#e91e63' : '#7b1fa2';
+    const yearsTxt = (!isBday && ev.years) ? ` (${ev.years} yrs)` : '';
+    const whenLabel = ev.daysAway === 0 ? 'Today' : ev.daysAway === 1 ? 'Tomorrow' : `In ${ev.daysAway} days`;
+    const waMsg = encodeURIComponent(isBday
+      ? `🎂 Happy Birthday ${ev.name}! 💛 Team VSR GOLD`
+      : `💑 Happy Anniversary ${ev.name}${yearsTxt}! 💛 Team VSR GOLD`);
+    const waLink = ev.phone ? `https://wa.me/91${String(ev.phone).replace(/\D/g, '')}?text=${waMsg}` : '';
+    const wishUrl = LEADS_WEB_APP_URL + '?action=WISHES&customer=' + encodeURIComponent(ev.name || '') +
+      '&type=' + encodeURIComponent((ev.eventType || '').toLowerCase()) +
+      '&date=' + encodeURIComponent(ev.date || '') + (ev.years ? '&years=' + ev.years : '') +
+      '&phone=' + encodeURIComponent(ev.phone || '');
+    return `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;border-left:4px solid ${color};">
+      <div style="font-size:24px;">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13.5px;">${ev.name}${yearsTxt}</div>
+        <div style="font-size:11px;color:var(--text3);">${ev.phone || ''}${ev.address ? ' · ' + ev.address : ''}</div>
+        <div style="font-size:11.5px;font-weight:600;color:${color};margin-top:2px;">📅 ${ev.date} — ${whenLabel}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        ${ev.phone ? `<a href="tel:${ev.phone}" style="background:#1565c0;color:#fff;padding:5px 8px;border-radius:6px;font-size:11px;text-decoration:none;text-align:center;">📞</a>` : ''}
+        ${waLink ? `<a href="${waLink}" target="_blank" style="background:#25d366;color:#fff;padding:5px 8px;border-radius:6px;font-size:11px;text-decoration:none;text-align:center;">💬</a>` : ''}
+        <a href="${wishUrl}" target="_blank" style="background:${color};color:#fff;padding:5px 8px;border-radius:6px;font-size:11px;text-decoration:none;text-align:center;" title="Send wishes">🎁</a>
+      </div>
+    </div>`;
+  };
+
+  const section = (title, list) => {
+    if (!list.length) return '';
+    return `<div style="font-size:11.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">${title} (${list.length})</div>` + list.map(card).join('');
+  };
+
+  box.innerHTML = section('🔴 Today', today) + section('🟠 Tomorrow', tomorrow) + section('🟡 This Week', thisWeek);
 }
 
 function stockThisMonth(who, type) {
@@ -12298,7 +12491,7 @@ function dhMakeDonut(canvasId, labels, data, colors) {
 function dhKpiCard(opts) {
   const bad = !opts.data || opts.data.ok === false;
   return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}">
-    <div class="dh-kpi-label">${opts.title}</div>
+    <div class="dh-kpi-label">${opts.icon ? opts.icon + ' ' : ''}${opts.title}</div>
     ${bad
       ? '<div class="dh-kpi-sub" style="margin-top:6px;">No data yet</div>'
       : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
