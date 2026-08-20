@@ -508,6 +508,56 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 /* Page Content */
 .page-content { padding: 16px 14px 90px; max-width: 800px; margin: 0 auto; }
 
+/* Persistent left sidebar — DESKTOP ONLY. Mobile is completely
+   untouched (this stays display:none there); the existing
+   modulepicker/section-page navigation keeps working exactly as
+   before on phones. This is purely an additional, always-visible
+   navigation aid for wider screens, not a replacement for anything —
+   every item calls the exact same showAdminPage()/showEmpPage()
+   functions the modulepicker buttons already use. */
+.vsr-sidebar { display: none; }
+@media (min-width: 1024px) {
+  .vsr-sidebar {
+    display: flex; flex-direction: column; gap: 2px;
+    position: fixed; left: 0; top: var(--header-h, 60px); bottom: 0;
+    width: 216px; padding: 18px 10px;
+    background: linear-gradient(180deg, #123524 0%, #0b2417 100%);
+    border-right: 2px solid var(--gold, #d4af37);
+    box-shadow: 3px 0 14px rgba(0,0,0,0.18);
+    overflow-y: auto; z-index: 85;
+  }
+  .vsr-sidebar-brand {
+    font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 800;
+    color: var(--gold, #d4af37); letter-spacing: 1.5px;
+    padding: 4px 12px 18px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid rgba(212,175,55,0.25); margin-bottom: 10px;
+  }
+  .vsr-sidebar-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 13px; border-radius: 9px;
+    color: #e9e4d8; font-size: 13.5px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, color 0.15s, padding-left 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .vsr-sidebar-item:hover { background: rgba(212,175,55,0.14); }
+  .vsr-sidebar-item.active {
+    background: linear-gradient(90deg, rgba(212,175,55,0.28), rgba(212,175,55,0.04));
+    color: var(--gold, #d4af37); border-left-color: var(--gold, #d4af37);
+    padding-left: 15px; font-weight: 800;
+  }
+  .vsr-sidebar-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+  /* Shift main content right of the sidebar instead of centering under
+     it — max-width widened too, since desktop has the room now. */
+  #adminApp .page-content, #empApp .page-content {
+    margin-left: 216px; margin-right: 0; max-width: 900px; padding-left: 24px;
+  }
+  /* The Dashboard Hub's fixed KPI/quick-access strip spans left:0/
+     right:0 by default — needs to start after the sidebar on desktop
+     too, or it would render underneath/behind it. */
+  #adminApp .dh-fixed-top, #empApp .dh-fixed-top { left: 216px; }
+}
+
 /* Bottom footer tab bar — mirrors the primary destinations that used to be
    top nav tabs, now duplicated at the bottom for quick thumb-reach access. */
 .footer-nav {
@@ -1320,6 +1370,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
   </div>
 
+  <nav class="vsr-sidebar" id="empSidebar">
+    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD</div>
+    <div class="vsr-sidebar-item" data-page="dashboard-hub" onclick="showEmpPage('dashboard-hub')"><span class="vsr-sidebar-icon">📊</span>Dashboard</div>
+    <div class="vsr-sidebar-item" data-page="overview" id="empSidebarLeave" onclick="showEmpPage('overview')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
+    <div class="vsr-sidebar-item" data-page="leads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
+    <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
+    <div class="vsr-sidebar-item" data-page="loyalty" id="empSidebarLoyalty" onclick="showEmpPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
+    <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Plan</div>
+    <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
+    <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
+  </nav>
+
   <div class="page-content">
 
     <!-- OVERVIEW PAGE -->
@@ -1968,6 +2030,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
   </div>
+
+  <nav class="vsr-sidebar" id="adminSidebar">
+    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD</div>
+    <div class="vsr-sidebar-item" data-page="dashboard-hub" onclick="showAdminPage('dashboard-hub')"><span class="vsr-sidebar-icon">📊</span>Dashboard</div>
+    <div class="vsr-sidebar-item" data-page="dashboard" onclick="showAdminPage('dashboard')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
+    <div class="vsr-sidebar-item" data-page="leads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
+    <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
+    <div class="vsr-sidebar-item" data-page="loyalty" id="adminSidebarLoyalty" onclick="showAdminPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
+    <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Plan</div>
+    <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
+    <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
+  </nav>
 
   <div class="page-content">
 
@@ -2683,6 +2757,19 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
 
+    <div class="page-section" id="admin-walkins">
+      <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span></div>
+      <div class="card">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <input type="date" id="walkinsStartDate" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;">
+          <span style="color:var(--text3);">to</span>
+          <input type="date" id="walkinsEndDate" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;">
+          <button class="btn-primary" style="padding:8px 14px;" onclick="loadWalkinsReport()">Go</button>
+        </div>
+      </div>
+      <div id="walkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
     <div class="page-section" id="admin-stock-variance">
       <div class="section-hdr"><span class="section-title2">⚠️ Variance Log</span></div>
       <div class="card">
@@ -2861,6 +2948,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
+        <div class="quick-action-btn" id="adminQAWalkins" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-ins</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
@@ -4294,6 +4382,29 @@ function goHomeSmart(who) {
   (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker');
 }
 
+// Highlights the sidebar item matching the current page (desktop-only
+// sidebar — harmless no-op on mobile where it's hidden). Falls back to
+// a prefix match so sub-pages like 'kpi-target' or 'dsr-status' still
+// highlight their parent 'kpi'/'dsr' sidebar item rather than leaving
+// nothing highlighted.
+function syncSidebarActive(role, page) {
+  const sidebar = document.getElementById(role + 'Sidebar');
+  if (!sidebar) return;
+  const items = sidebar.querySelectorAll('.vsr-sidebar-item');
+  let matched = false;
+  items.forEach(it => {
+    const dp = it.dataset.page;
+    if (dp === page) { it.classList.add('active'); matched = true; }
+    else it.classList.remove('active');
+  });
+  if (!matched) {
+    items.forEach(it => {
+      const dp = it.dataset.page;
+      if (dp && dp !== 'dashboard-hub' && page.indexOf(dp) === 0) it.classList.add('active');
+    });
+  }
+}
+
 function showEmpPage(page) {
   state._currentPage_emp = page;
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
@@ -4301,6 +4412,7 @@ function showEmpPage(page) {
   if (sec) sec.classList.add('active');
   updateBackFabs('emp', page);
   renderFooterNav('emp', page);
+  syncSidebarActive('emp', page);
   window.scrollTo(0, 0);
   if(page==='dashboard-hub') loadEmpDashboardHub();
   if(page==='calendar') renderCalendar();
@@ -6433,8 +6545,7 @@ function renderAdminProfile() {
 
   const rows = [
     ['👤', 'Name', state.adminName || 'Not set'],
-    ['🎓', 'Designation', state.adminDesig || 'Not set'],
-    ['🔑', 'Role', state.adminRole || '—'],
+    ['🎓', 'Designation', state.adminDesig || state.adminRole || 'Not set'],
     ['📧', 'Email', state.adminEmail || '—']
   ];
 
@@ -6569,7 +6680,7 @@ const SM_FEATURE_ELEMENTS = {
   balance:   ['adminQABalance'],
   empwise:   ['adminQAEmpwise'],
   events:    ['adminQAEvents'],
-  loyalty: ['adminQALoyalty'],
+  loyalty: ['adminQALoyalty', 'adminSidebarLoyalty'],
   direct:    ['adminQADirect'],
   notices:   ['adminQANotices'],
   blocked:   ['adminQABlocked'],
@@ -6579,15 +6690,16 @@ const SM_FEATURE_ELEMENTS = {
   loyUpcoming:   ['adminQALoyUpcoming'],
   loyIncenthist: ['adminQALoyIncenthist'],
   leadsReport: ['adminQALeadsReport'],
-  kpi: ['adminQAKpi'],
+  kpi: ['adminQAKpi', 'adminSidebarKpi'],
   kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
-  dsr: ['adminQADsr'],
+  dsr: ['adminQADsr', 'adminSidebarDsr'],
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
-  goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
-  stock: ['adminQAStockModule'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
-  backendSheets: ['adminQABackendSheets']
+  goldenAura: ['adminQAGoldenAura', 'adminSidebarGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
+  stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
+  backendSheets: ['adminQABackendSheets'],
+  walkins: ['adminQAWalkins']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -6611,7 +6723,8 @@ const FEATURE_SUBKEYS = {
   dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'],
   goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList'],
   stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport'],
-  backendSheets: ['backend_sheets']
+  backendSheets: ['backend_sheets'],
+  walkins: ['walkins']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -6660,7 +6773,7 @@ async function applyAdminRoleRestrictions() {
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
     const isStockFeature = key.indexOf('stock') === 0;
-    const isSectionless = key === 'backendSheets'; // cross-cutting utility, not tied to any one section
+    const isSectionless = key === 'backendSheets' || key === 'walkins'; // cross-cutting utilities, not tied to any one section
     const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
@@ -6704,6 +6817,7 @@ function showAdminPage(page) {
   if (sec) sec.classList.add('active');
   updateBackFabs('admin', page);
   renderFooterNav('admin', page);
+  syncSidebarActive('admin', page);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
   if(page==='loyalty') { initLoyaltyPage('admin'); loadLoyaltyHighlights('admin'); }
@@ -6727,6 +6841,7 @@ function showAdminPage(page) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
+  if(page==='walkins') loadWalkinsReport();
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
@@ -7128,10 +7243,16 @@ function checkEmpLoyaltyAccess() {
       if (!res || !res.ok) return;
       const leaveBtn = document.getElementById('empQALeaveModule');
       if (leaveBtn) leaveBtn.style.display = (res.leaveAccess === false) ? 'none' : '';
+      const leaveSb = document.getElementById('empSidebarLeave');
+      if (leaveSb) leaveSb.style.display = (res.leaveAccess === false) ? 'none' : '';
       const loyBtn = document.getElementById('empQALoyaltyModule');
       if (loyBtn) loyBtn.style.display = (res.hasAccess === false) ? 'none' : '';
+      const loySb = document.getElementById('empSidebarLoyalty');
+      if (loySb) loySb.style.display = (res.hasAccess === false) ? 'none' : '';
       const kpiBtn = document.getElementById('empQAKpiModule');
       if (kpiBtn) kpiBtn.style.display = (res.kpiAccess === false) ? 'none' : '';
+      const kpiSb = document.getElementById('empSidebarKpi');
+      if (kpiSb) kpiSb.style.display = (res.kpiAccess === false) ? 'none' : '';
       // v-decision: DSR / Leads / Stock buttons are intentionally NEVER
       // hidden here, even though dsrAccess/leadsAccess/stockAccess are
       // still read above. Their real submission/data goes straight to
@@ -7145,9 +7266,12 @@ function checkEmpLoyaltyAccess() {
       // reasonably assume the employee is actually blocked. Real
       // enforcement for these three would require adding a permission
       // check inside each of those three separate projects — not done
-      // here; explicitly deferred, not an oversight.
+      // here; explicitly deferred, not an oversight. (Applies to the
+      // sidebar's matching items too, for the same reason.)
       const gaBtn = document.getElementById('empQAGoldenAuraModule');
       if (gaBtn) gaBtn.style.display = (res.goldenAuraAccess === false) ? 'none' : '';
+      const gaSb = document.getElementById('empSidebarGoldenAura');
+      if (gaSb) gaSb.style.display = (res.goldenAuraAccess === false) ? 'none' : '';
 
       // Granular sub-option restrictions now ride along in this same
       // response — applyEmpGranularRestrictions no longer makes its own
@@ -11288,6 +11412,55 @@ function stockReportThisMonth(who) {
   loadStockReport(who, 'month');
 }
 
+// ── Walk-ins — date-to-date deals/purchase/non-purchase/conversion% ──
+async function loadWalkinsReport() {
+  const box = document.getElementById('walkinsReportBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const startInp = document.getElementById('walkinsStartDate');
+  const endInp = document.getElementById('walkinsEndDate');
+  const reqParams = { page: 'walkinReportAPI', role: state.adminRole, adminEmail: state.adminEmail };
+  if (startInp.value) reqParams.start = startInp.value;
+  if (endInp.value) reqParams.end = endInp.value;
+  try {
+    const res = await jsonpReliable(reqParams);
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
+    // Reflect the actual range used (backend defaults to this-month-so-
+    // far if no dates were picked) back into the date pickers, so a
+    // blank-date first load still shows what period is being displayed.
+    if (!startInp.value) startInp.value = res.start;
+    if (!endInp.value) endInp.value = res.end;
+
+    const t = res.totals || {};
+    const empRows = res.byEmployee || [];
+    let html = `<div class="card">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center;">
+        <div><div style="font-size:22px;font-weight:900;color:var(--purple);">${t.walkins || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Walk-ins</div></div>
+        <div><div style="font-size:22px;font-weight:900;color:#0e9488;">${t.deals || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Deals</div></div>
+        <div><div style="font-size:22px;font-weight:900;color:var(--green);">${t.purchased || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Purchased</div></div>
+        <div><div style="font-size:22px;font-weight:900;color:#c0392b;">${t.nonPurchased || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Non-Purchase</div></div>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);text-align:center;">
+        <div style="font-size:26px;font-weight:900;color:var(--gold);">${(t.conversionPct || 0).toFixed(1)}%</div>
+        <div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Conversion Rate (Purchased ÷ Deals)</div>
+      </div>
+    </div>`;
+
+    if (empRows.length) {
+      html += `<div class="card"><div class="card-title">👤 By Employee</div>
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <tr style="background:var(--purple-bg);"><th style="padding:6px 8px;text-align:left;">Employee</th><th style="padding:6px 8px;">Deals</th><th style="padding:6px 8px;">Purchased</th><th style="padding:6px 8px;">Non-Purch</th><th style="padding:6px 8px;">Conv%</th></tr>
+        ${empRows.map(r => `<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">${r.employee}</td><td style="padding:6px 8px;text-align:center;">${r.deals}</td><td style="padding:6px 8px;text-align:center;">${r.purchased}</td><td style="padding:6px 8px;text-align:center;">${r.nonPurchased}</td><td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--gold);">${r.conversionPct.toFixed(1)}%</td></tr>`).join('')}
+        </table></div>
+      </div>`;
+    } else {
+      html += '<div class="empty-state"><p>No walk-in entries for this period.</p></div>';
+    }
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinsReport()" title="Retry">🔄</button></div>';
+  }
+}
+
 function loadStockReport(who, mode) {
   mode = mode || 'month';
   const box = document.getElementById('stockReportBox-' + who);
@@ -12534,19 +12707,19 @@ async function loadEmpDashboardHub(force) {
     value: lv && lv.ok ? (lv.balance && lv.balance.balance != null ? lv.balance.balance : (lv.thisMonth.count + '')) : '',
     sub: lv && lv.ok ? `${lv.today ? lv.today.status : 'Not on leave today'} · Pending ${lv.pendingCount}` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr')", data: dr,
+  fixedHtml += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr-today')", data: dr,
     value: dr && dr.ok ? dr.today.entries : '',
     sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi')", data: kp && kp.thisMonth ? kp : null,
+  fixedHtml += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi-tilldate')", data: kp && kp.thisMonth ? kp : null,
     value: kp && kp.ok && kp.thisMonth ? kp.thisMonth.score : '',
     sub: kp && kp.ok && kp.thisMonth ? `Grade ${kp.thisMonth.grade} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty')", data: ly,
+  fixedHtml += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty-mycards')", data: ly,
     value: ly && ly.ok ? ly.thisMonth.cardsApproved : '',
     sub: ly && ly.ok ? `This month · ${ly.total.cardsApproved} total` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🥇', title: 'My Golden Plan', accent: '#d6389a', onclick: "showEmpPage('golden-aura')", data: ga,
+  fixedHtml += dhKpiCard({ icon: '🥇', title: 'My Golden Plan', accent: '#d6389a', onclick: "showEmpPage('golden-aura-list')", data: ga,
     value: ga && ga.ok ? ga.thisMonth.enrollments : '',
     sub: ga && ga.ok ? `This month · ${ga.total.enrollments} total` : '' });
   fixedHtml += '</div>';
@@ -12576,63 +12749,80 @@ async function loadEmpDashboardHub(force) {
 async function loadAdminDashboardHub(force) {
   const body = document.getElementById('adminDashHubBody');
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
-  // Dashboard Hub is a summary screen, not a critical action — it
-  // shouldn't leave the admin staring at a spinner for up to ~90s
-  // (jsonpReliable's full 25s+30s+35s retry chain). One attempt at 20s,
-  // then a second attempt at 20s (40s worst case) is enough; anything
-  // slower than that almost always means the backend endpoint itself
-  // isn't reachable (e.g. a stale Apps Script deployment) rather than
-  // a slow-but-working response, so failing fast here gets the Retry
-  // button in front of the admin instead of an endless wait.
   const slowHintTimer = setTimeout(() => {
     const spinnerBox = body.querySelector('.loading');
     if (spinnerBox) spinnerBox.lastChild.textContent = 'Still loading... this is taking longer than usual';
   }, 8000);
-  const reqParams = { page: 'adminDashboardJSON' };
-  if (force) reqParams.force = '1'; // Refresh button — bypass the backend's short-TTL cache
-  let res;
-  try {
-    try {
-      res = await jsonp(reqParams, 20000);
-    } catch (e0) {
-      res = await jsonp(reqParams, 20000);
-    }
-  } catch (e) {
-    clearTimeout(slowHintTimer);
+
+  // v-new: every section now has its own fast endpoint (the exact same
+  // ones each section's own page already calls), fired CONCURRENTLY
+  // instead of one sequential mega-call that read every section's
+  // sheets one after another in a single execution. This is bounded by
+  // the SLOWEST single section instead of the SUM of all of them, and a
+  // slow/unreachable section can no longer take the whole Dashboard
+  // down with it — Promise.allSettled means one rejection doesn't stop
+  // the others from rendering.
+  const [leaveRes, kpiDsrRes, loyaltyRes, gaRes, stockWalkinRes, leadsRawSettled] = await Promise.allSettled([
+    jsonp({ page: 'dashLeaveJSON', force: force ? '1' : '0' }, 20000),
+    jsonp({ page: 'dashKpiDsrJSON', force: force ? '1' : '0' }, 20000),
+    jsonp({ page: 'dashLoyaltyJSON', force: force ? '1' : '0' }, 20000),
+    jsonp({ page: 'dashGoldenAuraJSON', force: force ? '1' : '0' }, 20000),
+    jsonp({ page: 'dashStockWalkinJSON', force: force ? '1' : '0' }, 20000),
+    leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() }).catch(() => null)
+  ]);
+  clearTimeout(slowHintTimer);
+
+  const settledVal = (s) => (s && s.status === 'fulfilled' && s.value) ? s.value : null;
+  const leaveData        = settledVal(leaveRes);
+  const kpiDsrData        = settledVal(kpiDsrRes);
+  const loyaltyData       = settledVal(loyaltyRes);
+  const gaData            = settledVal(gaRes);
+  const stockWalkinData   = settledVal(stockWalkinRes);
+  const leadsRawRes       = settledVal(leadsRawSettled);
+
+  // Only if EVERY section failed is this a genuine full-load failure
+  // (e.g. the whole deployment is unreachable) — same Retry state as
+  // before. A partial failure still renders normally; that one section's
+  // card just shows "No data yet", same as it always has.
+  if (!leaveData && !kpiDsrData && !loyaltyData && !gaData && !stockWalkinData) {
     body.innerHTML = '<div class="empty-state"><p>Could not load the dashboard.</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
     return;
   }
-  clearTimeout(slowHintTimer);
-  if (!res || !res.ok) {
-    body.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load dashboard.') + '</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
-    return;
-  }
-  const d = res.data || {};
-  const lv = d.leave, kp = d.kpi, dr = d.dsr, ly = d.loyalty, ga = d.goldenAura, st = d.stock, wk = d.walkin;
 
-  // Leads (CRM) isn't part of adminDashboardJSON (separate Apps Script
-  // deployment) — fetch it the same way the Leads Management home page
-  // does, so the Dashboard's Leads card shows real Sent/Submitted/
-  // Pending numbers + an employee-wise breakdown instead of always
-  // falling back to a placeholder. Fails open (ld stays not-ok) if the
-  // Leads backend is slow/unreachable — never blocks the rest of the
+  const lv = leaveData && leaveData.ok ? leaveData.leave : null;
+  const kp = kpiDsrData && kpiDsrData.ok ? kpiDsrData.kpi : null;
+  const dr = kpiDsrData && kpiDsrData.ok ? kpiDsrData.dsr : null;
+  const ly = loyaltyData && loyaltyData.ok ? loyaltyData.loyalty : null;
+  const ga = gaData && gaData.ok ? gaData.goldenPlan : null;
+  const st = stockWalkinData && stockWalkinData.ok ? stockWalkinData.stock : null;
+  const wk = stockWalkinData && stockWalkinData.ok ? stockWalkinData.walkin : null;
+
+  // Leads (CRM) isn't part of the Sheets-side endpoints above (separate
+  // Apps Script deployment) — fetched the same way the Leads Management
+  // home page does, now running IN PARALLEL with everything else above
+  // rather than after it. Fails open (ld stays not-ok) if the Leads
+  // backend is slow/unreachable — never blocks the rest of the
   // Dashboard from rendering.
   let ld = { ok: false };
   try {
-    const leadsRes = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() });
-    if (leadsRes && leadsRes.ok && leadsRes.rows && leadsRes.rows.length) {
-      const totalAssigned = leadsRes.rows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
-      const totalSubmitted = leadsRes.rows.reduce((s, r) => s + (Number(r.submitted) || 0), 0);
-      const totalPending = leadsRes.rows.reduce((s, r) => s + (Number(r.pending) || 0), 0);
-      ld = { ok: true, today: { assigned: totalAssigned, submitted: totalSubmitted, pending: totalPending }, employees: leadsRes.rows };
+    if (leadsRawRes && leadsRawRes.ok && leadsRawRes.rows && leadsRawRes.rows.length) {
+      const totalAssigned = leadsRawRes.rows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+      const totalSubmitted = leadsRawRes.rows.reduce((s, r) => s + (Number(r.submitted) || 0), 0);
+      const totalPending = leadsRawRes.rows.reduce((s, r) => s + (Number(r.pending) || 0), 0);
+      ld = { ok: true, today: { assigned: totalAssigned, submitted: totalSubmitted, pending: totalPending }, employees: leadsRawRes.rows };
     }
   } catch (eLd) { /* fail open — Leads card/panel just show 'No data yet' */ }
 
   let fixedHtml = '';
   let html = '';
 
-  // Alerts — unchanged behaviour, just restyled to match the new panel look
-  const alerts = d.alerts || [];
+  // Alerts now come from two of the split endpoints (Leave's pending
+  // count, DSR's missing-today count) — merged back into one array so
+  // the "Needs Action" banner below renders exactly as it always has.
+  const alerts = [].concat(
+    (leaveData && leaveData.alerts) || [],
+    (kpiDsrData && kpiDsrData.alerts) || []
+  );
   if (alerts.length) {
     html += `<div class="dh-alert-card">
       <div class="dh-alert-inner">
@@ -12647,37 +12837,37 @@ async function loadAdminDashboardHub(force) {
 
   // KPI summary cards — 2-col on mobile / 4-col on desktop (see @media rule), colored accent per module, tap to drill into that module
   fixedHtml += '<div class="dh-kpi-grid">';
-  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('dashboard')", data: lv,
+  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('pending')", data: lv,
     value: lv && lv.ok ? lv.today.onLeave.length : '',
     sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
 
   // Leads (CRM) tile — now backed by a real client-side fetch above
   // instead of always falling back to a placeholder.
-  fixedHtml += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads')", data: ld,
+  fixedHtml += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads-submitted')", data: ld,
     value: ld && ld.ok ? ld.today.assigned : '',
     sub: ld && ld.ok ? `Sent today · ${ld.today.submitted} submitted` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
+  fixedHtml += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi-tilldate')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
     value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
     sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? `Topper: ${kp.thisMonth.topper.employee}` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr')", data: dr,
+  fixedHtml += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr-today')", data: dr,
     value: dr && dr.ok ? dr.today.entries : '',
     sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty')", data: ly,
+  fixedHtml += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty-mycards')", data: ly,
     value: ly && ly.ok ? ly.today.cardsApproved : '',
     sub: ly && ly.ok ? `Today · ${ly.thisMonth.cardsApproved} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura')", data: ga,
+  fixedHtml += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura-list')", data: ga,
     value: ga && ga.ok ? ga.today.enrollments : '',
     sub: ga && ga.ok ? `Today · ${ga.thisMonth.enrollments} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('kpi')", data: wk,
+  fixedHtml += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('walkins')", data: wk,
     value: wk && wk.ok ? wk.today.walkins : '',
     sub: wk && wk.ok ? `Today · ${wk.yesterday.walkins} yesterday` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock')", data: st,
+  fixedHtml += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock-report')", data: st,
     value: st && st.ok && st.today ? (st.today['SUBMITTED'] != null ? st.today['SUBMITTED'] : '') : '',
     sub: st && st.ok ? 'Today · tap for detail' : '' });
   fixedHtml += '</div>';
