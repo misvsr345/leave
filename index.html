@@ -568,18 +568,18 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    ══════════════════════════════════════ */
 .dh-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 .dh-kpi-card {
-  background: var(--card); border-radius: var(--r2); padding: 13px 14px;
+  background: var(--card); border-radius: var(--r2); padding: 10px 12px;
   border-left: 4px solid var(--dh-accent, var(--purple)); box-shadow: 0 2px 10px rgba(107,33,168,0.08);
 }
 .dh-kpi-view-btn {
-  display: block; margin-top: 8px; width: 100%; text-align: left; background: none; border: none;
-  padding: 6px 0 0; font-size: 10.5px; font-weight: 800; color: var(--dh-accent, var(--purple));
+  display: block; margin-top: 6px; width: 100%; text-align: left; background: none; border: none;
+  padding: 5px 0 0; font-size: 10.5px; font-weight: 800; color: var(--dh-accent, var(--purple));
   cursor: pointer; border-top: 1px dashed rgba(0,0,0,0.08);
 }
 .dh-kpi-view-btn:active { opacity: 0.6; }
-.dh-kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 5px; }
-.dh-kpi-val { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800; color: var(--text); margin-top: 4px; }
-.dh-kpi-sub { font-size: 10.5px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+.dh-kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
+.dh-kpi-val { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: var(--text); margin-top: 3px; }
+.dh-kpi-sub { font-size: 10.5px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
 .dh-panel {
   background: var(--card); border-radius: var(--r); padding: 14px; margin-bottom: 10px;
   box-shadow: 0 2px 12px rgba(107,33,168,0.08);
@@ -604,7 +604,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-quick-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 4px; }
 .dh-quick-item {
   background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r2);
-  padding: 10px 4px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text2); cursor: pointer;
+  padding: 8px 4px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text2); cursor: pointer;
 }
 .dh-quick-item:active { background: var(--purple-bg); border-color: var(--gold); }
 .dh-quick-item .qi { font-size: 17px; display: block; margin-bottom: 4px; }
@@ -674,8 +674,30 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   }
   #admin-dashboard-hub .dh-panels-grid .dh-panel-wide { grid-column: 1 / -1; }
   #admin-dashboard-hub .dh-panel { margin-bottom: 0; }
-  #admin-dashboard-hub .dh-quick-row { grid-template-columns: repeat(7, 1fr); }
   #admin-dashboard-hub .dh-stat-grid6 { grid-template-columns: repeat(6,1fr); }
+
+  /* Quick-access shortcuts become a left sidebar column on desktop
+     (per the reference design's "left sidebar for primary navigation"),
+     frozen along with the KPI cards since both live inside the same
+     position:fixed .dh-fixed-top strip. Explicit grid-column values
+     below make this independent of source order — .dh-quick-row is
+     built after .dh-kpi-grid in the JS, but still renders in column 1. */
+  .dh-fixed-top-inner {
+    display: grid; grid-template-columns: 168px 1fr; gap: 16px; align-items: start;
+  }
+  .dh-fixed-top-inner .dh-kpi-grid { grid-column: 2; margin-bottom: 0; }
+  .dh-fixed-top-inner .dh-quick-row {
+    grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 8px; margin-top: 0;
+  }
+  .dh-fixed-top-inner .dh-quick-item {
+    display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px;
+  }
+  .dh-fixed-top-inner .dh-quick-item .qi { margin-bottom: 0; font-size: 16px; }
+
+  /* Scrollable panels below start under the same right-hand column so
+     the whole desktop dashboard reads as one aligned 2-column layout
+     (sidebar | content), not just the frozen strip on its own. */
+  #admin-dashboard-hub .dh-scroll-body, #emp-dashboard-hub .dh-scroll-body { margin-left: 184px; }
 }
 
 /* Stats Grid */
@@ -988,21 +1010,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .quick-action-icon { font-size: 26px; margin-bottom: 5px; display: block; }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
-
-/* Dashboard home-screen section buttons ONLY (#emp-modulepicker /
-   #admin-modulepicker) — name-only, no emoji, ~50%+ shorter, one
-   uniform label size for every button (same size the Checklist button
-   already used). Scoped by container id so the same .quick-action-btn
-   markup reused inside Loyalty/KPI/DSR/Leads/Stock sub-pages elsewhere
-   is completely untouched. */
-#emp-modulepicker .quick-action-btn,
-#admin-modulepicker .quick-action-btn { padding: 10px 10px; display: flex; align-items: center; justify-content: center; min-height: 0; }
-#emp-modulepicker .quick-action-icon,
-#admin-modulepicker .quick-action-icon,
-#emp-modulepicker .quick-action-sub,
-#admin-modulepicker .quick-action-sub { display: none; }
-#emp-modulepicker .quick-action-label,
-#admin-modulepicker .quick-action-label { font-size: 11.5px; margin: 0; }
 
 /* Notices rendered box (employee view) */
 .notice-render { font-size: 12.5px; line-height: 1.8; color: var(--text2); }
@@ -3899,22 +3906,24 @@ async function adminLogin() {
         state.adminDepartment = res.department || '';
         const roleUp = state.adminRole.toUpperCase();
         state.isStoreManager = (roleUp.indexOf('STORE') > -1 || roleUp.indexOf('MANAGER') > -1) && roleUp.indexOf('MIS') === -1;
-        // Any admin whose role is NOT MIS or Director is a permission-
-        // gated "Admin User" — this covers Store Manager and any other
+        // Any admin whose role is NOT MIS is a permission-gated "Admin
+        // User" — this covers Store Manager, Director, and any other
         // role text someone adds to the Authorities sheet later, all
         // controlled by the same Settings checkboxes.
-        // v-fix: this previously only excluded MIS (roleUp.indexOf('MIS')
-        // === -1), never Director, despite the comment directly above
-        // saying "NOT MIS or Director" — so every Director login was
-        // silently treated as a restricted Admin User, hiding Direct
-        // Action, full Loyalty search data, Notices edit, Blocked
-        // dates/days, etc. unless MIS had separately granted a full
-        // permissions row for that exact Director email. Now matches
-        // the backend's own isDirector checks (e.g.
-        // saveEmployeeLoyaltyAccessAPI's "!isMIS && !isDirector" guard),
-        // which already correctly treat MIS and Director as equally
-        // unrestricted.
-        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1 && roleUp.indexOf('DIRECTOR') === -1;
+        // v-fix (correction of an earlier mistaken "fix"): Director is
+        // intentionally NOT auto-excluded here. Per
+        // listAdminUsersForPermsAPI's own comment — "Director is now a
+        // normal configurable role" — Director's access to features is
+        // meant to be permission-gated exactly like Store Manager's,
+        // requiring MIS to explicitly grant it via Admin Access;
+        // directActionAPI already correctly reflects this (no Director
+        // special-case there at all). The backend's separate
+        // "!isMIS && !isDirector" checks on the various saveXAPI
+        // functions are a different thing entirely — they gate who is
+        // ALLOWED TO EDIT other people's settings (a legitimate elevated
+        // Director privilege), not whether Director's OWN feature access
+        // should be unrestricted. Conflating those two was the mistake.
+        state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1;
         state.__loginKind = 'admin';
         resetIdleTimer();
         saveSession();
@@ -4381,10 +4390,10 @@ function renderEmpOverview() {
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('apply')"><span class="quick-action-icon">✍️</span><div class="quick-action-label">Apply Leave</div><div class="quick-action-sub">Submit new request</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('myleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">My Leaves</div><div class="quick-action-sub">View history</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Leave schedule</div></div>
+        <div class="quick-action-btn" id="empQACalendarBtn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Leave schedule</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My Trends</div><div class="quick-action-sub">Usage analysis</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
+        <div class="quick-action-btn" id="empQAEventsBtn" onclick="showEmpPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Everything else</div></div>
       </div>
@@ -5768,26 +5777,31 @@ function switchSettingsTab(tab) {
   document.getElementById('settingsTab-admin').classList.toggle('active', tab === 'admin');
   document.getElementById('settingsEmpPane').style.display = tab === 'emp' ? 'block' : 'none';
   document.getElementById('settingsAdminPane').style.display = tab === 'admin' ? 'block' : 'none';
-  if (tab === 'emp') { loadPermFeatureList().then(() => { renderSettingsEmpBody(null); loadSettingsEmpList(); }); }
-  if (tab === 'admin') { loadPermFeatureList().then(() => { renderSettingsAdminBody(null); loadSettingsAdminList(); }); }
+  if (tab === 'emp') { loadPermFeatureList('emp').then(() => { renderSettingsEmpBody(null); loadSettingsEmpList(); }); }
+  if (tab === 'admin') { loadPermFeatureList('admin').then(() => { renderSettingsAdminBody(null); loadSettingsAdminList(); }); }
 }
 
-// Shared feature/section structure (labels, keys, groupings) used by
-// BOTH the Employee and Admin Access panels — fetched once per page
-// load (not per person) so every section/checkbox can be drawn
-// immediately when a tab opens, before any person is selected. Picking
-// a person from the dropdown never adds or removes sections — it only
-// ticks/unticks boxes that are already on screen.
-async function loadPermFeatureList() {
-  if (window.__permFeatures) return window.__permFeatures;
+// Feature/section structure (labels, keys, groupings) — cached
+// separately per role since the two tabs now genuinely differ: the
+// Employee tab's list has administrative-only sub-options (Approve/
+// Reject/Mark Absent, Pending Approvals, Employee Wise Profile, All
+// Leaves, Blocked Dates/Days, unmasked Loyalty data, All Employees,
+// Upcoming Approvals, Incentive History, KPI Target/Rules, DSR/Stock
+// management reports) filtered out server-side — those made no sense
+// as options MIS could tick on for a regular employee. The Admin tab
+// still gets the complete, unfiltered catalogue.
+async function loadPermFeatureList(forRole) {
+  window.__permFeaturesByRole = window.__permFeaturesByRole || {};
+  if (window.__permFeaturesByRole[forRole]) return window.__permFeaturesByRole[forRole];
   try {
-    const res = await jsonpReliable({ page: 'getPermFeatureListAPI' });
+    const res = await jsonpReliable({ page: 'getPermFeatureListAPI', forRole });
     if (!res.ok) throw new Error(res.error);
-    window.__permFeatures = res;
+    window.__permFeaturesByRole[forRole] = res;
     return res;
   } catch(e) {
-    window.__permFeatures = { features: [] };
-    return window.__permFeatures;
+    const empty = { features: [] };
+    window.__permFeaturesByRole[forRole] = empty;
+    return empty;
   }
 }
 
@@ -5871,7 +5885,7 @@ function renderSettingsEmpBody(emp) {
   const body = document.getElementById('settingsEmpPermBody');
   const disabled = emp ? '' : 'disabled';
   const nameLabel = emp ? `${emp.name} (${emp.empId})` : 'No employee selected';
-  const features = (window.__permFeatures && window.__permFeatures.features) || [];
+  const features = (window.__permFeaturesByRole && window.__permFeaturesByRole.emp && window.__permFeaturesByRole.emp.features) || [];
   const perms = emp ? emp.granularPerms : null; // filled in by loadSettingsEmpGranular once fetched
 
   let html = `<div class="card">
@@ -5892,20 +5906,21 @@ function renderSettingsEmpBody(emp) {
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empDsrAccessCheck" ${emp && emp.dsrAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access</span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(saved, but no longer hides the button — see note below)</span></span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empLeadsAccessCheck" ${emp && emp.leadsAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">📞 Leads Access</span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📞 Leads Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(saved, but no longer hides the button — see note below)</span></span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empStockAccessCheck" ${emp && emp.stockAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">📦 Stock Checklist Access</span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📦 Stock Checklist Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(saved, but no longer hides the button — see note below)</span></span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empGoldenAuraAccessCheck" ${emp && emp.goldenAuraAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">🌟 Golden Aura Access</span>
     </label>
+    <p style="font-size:11px;color:var(--text3);margin:6px 0 0;padding:8px 10px;background:#fff8e1;border:1px solid var(--gold);border-radius:8px;">⚠️ DSR, Leads and Stock Checklist run on separate systems from this Portal, so turning these off no longer hides that button — it would only hide the Portal shortcut while the employee could still reach the real form directly (bookmark, browser history). The value is still saved here for future use, but currently has no real effect for these three.</p>
     <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
@@ -6183,7 +6198,7 @@ function renderSettingsAdminBody(admin) {
   const body = document.getElementById('settingsAdminPermBody');
   const disabled = admin ? '' : 'disabled';
   const nameLabel = admin ? `${admin.name} · ${admin.role} · ${admin.email}` : 'No admin selected';
-  const features = (window.__permFeatures && window.__permFeatures.features) || [];
+  const features = (window.__permFeaturesByRole && window.__permFeaturesByRole.admin && window.__permFeaturesByRole.admin.features) || [];
   const perms = admin ? admin.perms : null;
 
   let html = `<div class="card" style="padding:10px 14px;margin-bottom:8px;">
@@ -6516,7 +6531,9 @@ async function applyAdminRoleRestrictions() {
   if (settingsQA) settingsQA.style.display = restrict ? 'none' : '';
 
   if (!restrict) {
-    // MIS / Director — everything visible, no restrictions
+    // MIS only — everything visible, no restrictions. Director now
+    // takes the "Restricted Admin User" branch below, same as Store
+    // Manager, per listAdminUsersForPermsAPI's design.
     Object.values(SM_FEATURE_ELEMENTS).flat().forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
@@ -7023,12 +7040,22 @@ function checkEmpLoyaltyAccess() {
       if (loyBtn) loyBtn.style.display = (res.hasAccess === false) ? 'none' : '';
       const kpiBtn = document.getElementById('empQAKpiModule');
       if (kpiBtn) kpiBtn.style.display = (res.kpiAccess === false) ? 'none' : '';
-      const dsrBtn = document.getElementById('empQADsrModule');
-      if (dsrBtn) dsrBtn.style.display = (res.dsrAccess === false) ? 'none' : '';
-      const leadsBtn = document.getElementById('empQALeadsModule');
-      if (leadsBtn) leadsBtn.style.display = (res.leadsAccess === false) ? 'none' : '';
-      const stockBtn = document.getElementById('empQAStockChecklist');
-      if (stockBtn) stockBtn.style.display = (res.stockAccess === false) ? 'none' : '';
+      // v-decision: DSR / Leads / Stock buttons are intentionally NEVER
+      // hidden here, even though dsrAccess/leadsAccess/stockAccess are
+      // still read above. Their real submission/data goes straight to
+      // three SEPARATE Apps Script systems (DSR.txt, LEADS.txt,
+      // STOCK_CHEKLIST.txt) that have no knowledge of this Portal's
+      // access settings at all — hiding the button would only hide the
+      // Portal's own shortcut while the actual feature stays fully
+      // reachable via that other system's own URL (bookmarked, browser
+      // history, etc). That's a false sense of control, worse than no
+      // control at all — an MIS who sees the button gone would
+      // reasonably assume the employee is actually blocked. Real
+      // enforcement for these three would require adding a permission
+      // check inside each of those three separate projects — not done
+      // here; explicitly deferred, not an oversight.
+      const gaBtn = document.getElementById('empQAGoldenAuraModule');
+      if (gaBtn) gaBtn.style.display = (res.goldenAuraAccess === false) ? 'none' : '';
 
       // Granular sub-option restrictions now ride along in this same
       // response — applyEmpGranularRestrictions no longer makes its own
@@ -7206,7 +7233,7 @@ async function submitNewLoyaltyCard() {
 
     const payload = {
       page: 'loyaltySubmitCardAPI',
-      empName: state.empName, empEmail: state.empEmail,
+      empName: state.empName, empEmail: state.empEmail, empId: state.empId,
       custName, occupation, orgName, phone, address, aadhaarNo, panNo,
       cardType, cardNo, cardIssuedDate: cardDate,
       sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto
@@ -8492,6 +8519,9 @@ function exportReportPDF(title, headers, rows) {
 // (from SM_PERM_FEATURES / FEATURE_SUBKEYS, already shared with admin),
 // pointing at the EMPLOYEE section's own button IDs instead.
 const EMP_FEATURE_ELEMENTS = {
+  leaveModule: ['empQALeaveModule'],
+  calendar: ['empQACalendarBtn'], events: ['empQAEventsBtn'], balance: ['empBalanceCard'],
+  notices_view: ['applyNoticesCard'],
   kpi: ['empQAKpiModule'],
   kpiTarget: ['empQAKpiTarget'], kpiTillDate: ['empQAKpiTillDate'], kpiLastMonth: ['empQAKpiLastMonth'],
   kpiCompare: ['empQAKpiCompare'], kpiRules: ['empQAKpiRules'],
@@ -8499,11 +8529,31 @@ const EMP_FEATURE_ELEMENTS = {
   dsrNewEntry: ['empQADsrNewEntry'], dsrToday: ['empQADsrToday'], dsrStatus: ['empQADsrStatus'],
   dsrMissing: ['empQADsrMissing'], dsrTillDate: ['empQADsrTillDate'], dsrDateRange: ['empQADsrDateRange'],
   loyalty: ['empQALoyaltyModule'],
-  loySearch: ['empQALoySearch'], loyStats: ['empQALoyStats'], loyDash: ['empQALoyDash'],
+  loySearch: ['empQALoySearch'],
+  // loyStats intentionally NOT mapped here — on the employee side this
+  // key's element (empQALoyStats) is actually "My Incentive" (the
+  // employee's own cards/rank/earnings), a completely different feature
+  // from what 'loyStats' means on the admin side ("All Employees" —
+  // other people's card timelines). It wrongly reused the same key
+  // name; un-gating it here means excluding admin's All-Employees view
+  // from the Employee tab (see EMP_EXCLUDED_PERM_KEYS) no longer
+  // collateral-damages the employee's own legitimate incentive view.
+  // loyDash also intentionally NOT mapped — there is no "Loyalty
+  // Dashboard" feature anywhere in the employee app (the employee
+  // Loyalty section only has Search / My Incentive / My Cards /
+  // Leaderboard) — excluded server-side instead, see
+  // EMP_EXCLUDED_PERM_KEYS.
   goldenAura: ['empQAGoldenAuraModule'],
   gaNew: ['empQAGaNew'], gaList: ['empQAGaList'],
-  stock: ['empQAStockModule'],
-  stockRetail: ['empQAStockRetail'], stockWholesale: ['empQAStockWholesale'], stockReport: ['empQAStockReport']
+  leads: ['empQALeadsModule'],
+  stock: ['empQAStockChecklist']
+  // stockReport not mapped — already excluded for employees (see
+  // EMP_EXCLUDED_PERM_KEYS) and empQAStockReport doesn't exist on the
+  // employee side anyway.
+  // stockRetail / stockWholesale intentionally NOT mapped — the
+  // employee side has one combined "New Entry" button
+  // (empQAStockNewEntry) covering both, not two separate entry
+  // points, so there's no way to independently control just one.
 };
 
 // Fetches this specific employee's granular sub-option permissions and
@@ -8519,6 +8569,21 @@ async function applyEmpGranularRestrictions() {
   } catch (e) {
     return; // fail open — leave everything visible
   }
+  applyEmpGranularRestrictionsFromPerms(perms);
+}
+
+// v-fix (critical — was called at every single employee login via
+// checkEmpLoyaltyAccess, but this function never existed anywhere in
+// the file; the ReferenceError it threw was silently swallowed by that
+// call site's trailing .catch(), so NO granular sub-option restriction
+// has ever actually been enforced on any employee's screen, regardless
+// of what MIS configured in Settings → Employee Access → Detailed
+// Sub-Option Access. This is the real implementation, shared with the
+// no-arg applyEmpGranularRestrictions() above so both the original
+// call sites (which fetch perms themselves) and the newer
+// checkEmpLoyaltyAccess call site (which already has perms from its
+// own login fetch, avoiding a redundant round-trip) do real work.
+function applyEmpGranularRestrictionsFromPerms(perms) {
   if (!perms || Object.keys(perms).length === 0) return;
 
   const sectionLoyaltyOn = perms.section_loyalty !== false;
@@ -9525,6 +9590,7 @@ async function submitGoldenAura(who) {
     const payload = {
       page: 'goldenAuraSubmitAPI',
       empName: who === 'admin' ? state.adminName : state.empName,
+      empId: who === 'admin' ? '' : state.empId,
       enrollDate: g('gaEnrollDate').value, planType, planNo, amount, custName, mobile,
       coDoWoSo: g('gaCoDoWoSo').value, street: g('gaStreet').value, area: g('gaArea').value,
       landmark: g('gaLandmark').value, town, district: g('gaDistrict').value, state: g('gaState').value,
@@ -12215,7 +12281,7 @@ function dhMakeDonut(canvasId, labels, data, colors) {
 function dhKpiCard(opts) {
   const bad = !opts.data || opts.data.ok === false;
   return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}">
-    <div class="dh-kpi-label">${opts.icon} ${opts.title}</div>
+    <div class="dh-kpi-label">${opts.title}</div>
     ${bad
       ? '<div class="dh-kpi-sub" style="margin-top:6px;">No data yet</div>'
       : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
@@ -12613,13 +12679,13 @@ async function loadAdminDashboardHub(force) {
 
   // Quick-access shortcuts — same modules as the section page, one tap away
   fixedHtml += `<div class="dh-quick-row">
-    <div class="dh-quick-item" onclick="showAdminPage('dashboard')"><span class="qi">🏖️</span>Leave</div>
-    <div class="dh-quick-item" onclick="showAdminPage('leads')"><span class="qi">👥</span>Leads</div>
-    <div class="dh-quick-item" onclick="showAdminPage('stock')"><span class="qi">📝</span>Checklist</div>
-    <div class="dh-quick-item" onclick="showAdminPage('loyalty')"><span class="qi">💳</span>Loyalty</div>
-    <div class="dh-quick-item" onclick="showAdminPage('golden-aura')"><span class="qi">🥇</span>Golden Plan</div>
-    <div class="dh-quick-item" onclick="showAdminPage('dsr')"><span class="qi">🧾</span>DSR</div>
-    <div class="dh-quick-item" onclick="showAdminPage('kpi')"><span class="qi">📊</span>KPI</div>
+    <div class="dh-quick-item" onclick="showAdminPage('dashboard')">Leave</div>
+    <div class="dh-quick-item" onclick="showAdminPage('leads')">Leads</div>
+    <div class="dh-quick-item" onclick="showAdminPage('stock')">Checklist</div>
+    <div class="dh-quick-item" onclick="showAdminPage('loyalty')">Loyalty</div>
+    <div class="dh-quick-item" onclick="showAdminPage('golden-aura')">Golden Plan</div>
+    <div class="dh-quick-item" onclick="showAdminPage('dsr')">DSR</div>
+    <div class="dh-quick-item" onclick="showAdminPage('kpi')">KPI</div>
   </div>`;
 
   document.getElementById('adminDashHubFixed').innerHTML = fixedHtml;
