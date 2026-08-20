@@ -1011,6 +1011,23 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
 
+/* Dashboard home-screen section buttons ONLY (#emp-modulepicker /
+   #admin-modulepicker) — name-only, no emoji, ~50%+ shorter, one
+   uniform label size for every button. Scoped by container id so the
+   same .quick-action-btn markup reused inside Loyalty/KPI/DSR/Leads/
+   Stock sub-pages elsewhere is completely untouched. (Re-applied —
+   this was accidentally lost during later dashboard restructuring
+   work; verified the #emp-modulepicker/#admin-modulepicker containers
+   are still present before re-adding.) */
+#emp-modulepicker .quick-action-btn,
+#admin-modulepicker .quick-action-btn { padding: 10px 10px; display: flex; align-items: center; justify-content: center; min-height: 0; }
+#emp-modulepicker .quick-action-icon,
+#admin-modulepicker .quick-action-icon,
+#emp-modulepicker .quick-action-sub,
+#admin-modulepicker .quick-action-sub { display: none; }
+#emp-modulepicker .quick-action-label,
+#admin-modulepicker .quick-action-label { font-size: 11.5px; margin: 0; }
+
 /* Notices rendered box (employee view) */
 .notice-render { font-size: 12.5px; line-height: 1.8; color: var(--text2); }
 .notice-render b, .notice-render strong { color: var(--purple-dark); }
