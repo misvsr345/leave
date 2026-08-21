@@ -521,7 +521,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     display: flex; flex-direction: column; gap: 2px;
     position: fixed; left: 0; top: var(--header-h, 60px); bottom: 0;
     width: 216px; padding: 18px 10px;
-    background: linear-gradient(180deg, #123524 0%, #0b2417 100%);
+    /* v-fix: was hardcoded dark-green regardless of selected theme —
+       now uses the same --purple-dark/--purple variables every theme
+       preset already defines, so changing theme in Settings recolors
+       the sidebar exactly like every other themed area. */
+    background: linear-gradient(180deg, var(--purple-dark, #123524) 0%, var(--purple-mid, #0b2417) 140%);
     border-right: 2px solid var(--gold, #d4af37);
     box-shadow: 3px 0 14px rgba(0,0,0,0.18);
     overflow-y: auto; z-index: 85;
@@ -532,6 +536,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     padding: 4px 12px 18px; display: flex; align-items: center; gap: 8px;
     border-bottom: 1px solid rgba(212,175,55,0.25); margin-bottom: 10px;
   }
+  .vsr-sidebar-divider { height: 1px; background: rgba(212,175,55,0.2); margin: 8px 10px; }
   .vsr-sidebar-item {
     display: flex; align-items: center; gap: 11px;
     padding: 11px 13px; border-radius: 9px;
@@ -546,6 +551,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     padding-left: 15px; font-weight: 800;
   }
   .vsr-sidebar-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+  /* Desktop only: hide the mobile footer nav bar entirely — the
+     sidebar is now the primary desktop navigation, the footer was
+     redundant and duplicated every link already in the sidebar. */
+  #adminApp .footer-nav, #empApp .footer-nav { display: none !important; }
 
   /* Shift main content right of the sidebar instead of centering under
      it — max-width widened too, since desktop has the room now. */
@@ -618,8 +628,15 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    ══════════════════════════════════════ */
 .dh-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 .dh-kpi-card {
-  background: var(--card); border-radius: var(--r2); padding: 10px 12px;
-  border-left: 4px solid var(--dh-accent, var(--purple)); box-shadow: 0 2px 10px rgba(107,33,168,0.08);
+  background: var(--card); border-radius: 14px; padding: 14px 14px 12px;
+  border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 10px rgba(20,20,40,0.06);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.dh-kpi-card:hover { box-shadow: 0 6px 18px rgba(20,20,40,0.1); transform: translateY(-1px); }
+.dh-kpi-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.dh-kpi-icon-badge {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
 }
 .dh-kpi-view-btn {
   display: block; margin-top: 6px; width: 100%; text-align: left; background: none; border: none;
@@ -1380,6 +1397,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Plan</div>
     <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
+    <div class="vsr-sidebar-divider"></div>
+    <div class="vsr-sidebar-item" data-page="more" onclick="showEmpPage('more')"><span class="vsr-sidebar-icon">⋯</span>More</div>
   </nav>
 
   <div class="page-content">
@@ -2041,6 +2060,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Plan</div>
     <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
+    <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
+    <div class="vsr-sidebar-divider"></div>
+    <div class="vsr-sidebar-item" data-page="more" onclick="showAdminPage('more')"><span class="vsr-sidebar-icon">⋯</span>More</div>
   </nav>
 
   <div class="page-content">
@@ -2084,6 +2106,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
         <button class="btn-sm btn-view" onclick="loadAdminDashboardHub(true)">🔄 Refresh</button>
       </div>
+      <div id="adminDashWelcome" style="font-size:12.5px;color:var(--text3);margin:-6px 0 10px;"></div>
       <div class="dh-fixed-top" id="adminDashHubFixedOuter"><div class="dh-fixed-top-inner" id="adminDashHubFixed"></div></div>
       <div class="dh-scroll-body" id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
@@ -6699,7 +6722,7 @@ const SM_FEATURE_ELEMENTS = {
   goldenAura: ['adminQAGoldenAura', 'adminSidebarGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
   stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
   backendSheets: ['adminQABackendSheets'],
-  walkins: ['adminQAWalkins']
+  walkins: ['adminQAWalkins', 'adminSidebarWalkins']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -12664,7 +12687,10 @@ function dhMakeDonut(canvasId, labels, data, colors) {
 function dhKpiCard(opts) {
   const bad = !opts.data || opts.data.ok === false;
   return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}">
-    <div class="dh-kpi-label">${opts.icon ? opts.icon + ' ' : ''}${opts.title}</div>
+    <div class="dh-kpi-card-top">
+      <div class="dh-kpi-icon-badge" style="background:${opts.accent}22;color:${opts.accent};">${opts.icon || ''}</div>
+      <div class="dh-kpi-label">${opts.title}</div>
+    </div>
     ${bad
       ? '<div class="dh-kpi-sub" style="margin-top:6px;">No data yet</div>'
       : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
@@ -12748,6 +12774,8 @@ async function loadEmpDashboardHub(force) {
 
 async function loadAdminDashboardHub(force) {
   const body = document.getElementById('adminDashHubBody');
+  const welcomeBox = document.getElementById('adminDashWelcome');
+  if (welcomeBox) welcomeBox.textContent = `Welcome back, ${state.adminName || state.adminRole || ''} 👋`;
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
   const slowHintTimer = setTimeout(() => {
     const spinnerBox = body.querySelector('.loading');
