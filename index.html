@@ -13311,6 +13311,7 @@ function adminLeaveCardHTML(l) {
     </div>
     <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
+    ${l.authorityName && isPending ? `<div style="background:#fff8e1;border:1.5px solid var(--gold);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:12px;"><b style="color:#92400e;">🔑 Authority: </b><b style="color:var(--text);">${l.authorityName}</b></div>` : ''}
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
     ${rejectionBlock}
     <div class="leave-card-actions" onclick="event.stopPropagation();">${actions}</div>
