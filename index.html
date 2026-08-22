@@ -338,6 +338,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 }
 .btn-secondary:hover { background: var(--purple-bg); transform: translateY(-1px); }
 .btn-secondary:active { transform: scale(0.98); }
+.walkins-quickbtn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 .export-icon-btn {
   display: none; align-items: center; justify-content: center;
@@ -2793,12 +2794,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="admin-walkins">
       <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span></div>
-      <div class="card">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
-          <input type="date" id="walkinsStartDate" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;">
-          <span style="color:var(--text3);">to</span>
-          <input type="date" id="walkinsEndDate" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;">
-          <button class="btn-primary" style="padding:8px 14px;" onclick="loadWalkinsReport()">Go</button>
+      <div class="card" style="padding:10px 12px;">
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button class="btn-secondary walkins-quickbtn active" id="walkinsBtnMonth" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setWalkinsMode('month')">This Month</button>
+          <button class="btn-secondary walkins-quickbtn" id="walkinsBtnToday" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setWalkinsMode('today')">Today</button>
+          <button class="btn-secondary walkins-quickbtn" id="walkinsBtnCustom" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setWalkinsMode('custom')">Custom</button>
+        </div>
+        <div id="walkinsCustomRow" style="display:none;gap:6px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="walkinsStartDate" style="flex:1;min-width:110px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+          <span style="color:var(--text3);font-size:11px;">to</span>
+          <input type="date" id="walkinsEndDate" style="flex:1;min-width:110px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
+          <button class="btn-primary" style="padding:5px 10px;font-size:11px;" onclick="loadWalkinsReport()">Go</button>
         </div>
       </div>
       <div id="walkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -6540,30 +6546,25 @@ function renderTrend() {
 // ══════════════════════════════════════
 // PROFILE (employee's own details)
 // ══════════════════════════════════════
-// Backend Sheets page — MIS always has access; anyone else needs the
-// 'backend_sheets' permission explicitly granted via Admin Access
-// (same pattern as Direct Action). Cached in memory for the session
-// since these URLs never change mid-session.
-let __backendSheetLinksCache = null;
-async function loadBackendSheetsPage() {
+// Backend Sheets page — simplified per explicit request: no API call,
+// no permission-check round-trip, no loading state. Just static links
+// to the known, stable spreadsheet IDs — click opens the sheet,
+// nothing else. Page-level access is already controlled by whether the
+// admin can even see/click the button to get here (SM_FEATURE_ELEMENTS
+// 'backendSheets' gating on the sidebar/More button).
+// ══════════════════════════════════════
+function loadBackendSheetsPage() {
   const box = document.getElementById('backendSheetsList');
-  if (__backendSheetLinksCache) { renderBackendSheetsList(__backendSheetLinksCache); return; }
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  try {
-    const res = await jsonpReliable({ page: 'getBackendSheetLinksAPI', role: state.adminRole, adminEmail: state.adminEmail });
-    if (!res.ok) throw new Error(res.error || 'Load failed');
-    __backendSheetLinksCache = res.links || [];
-    renderBackendSheetsList(__backendSheetLinksCache);
-  } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>' + (e.message || 'Could not load sheet links.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="__backendSheetLinksCache=null;loadBackendSheetsPage()" title="Retry">🔄</button></div>';
-  }
-}
-
-function renderBackendSheetsList(links) {
-  const box = document.getElementById('backendSheetsList');
-  if (!links || !links.length) { box.innerHTML = '<div class="empty-state"><p>No sheet links available.</p></div>'; return; }
+  const links = [
+    { label: 'Leave System (Main)',  url: 'https://docs.google.com/spreadsheets/d/1a2F1qUuIAB-XQ_s3uz9IrTsr4nLnkrKriVDkCmeHBmA/edit' },
+    { label: 'Loyalty Card',         url: 'https://docs.google.com/spreadsheets/d/1l4yzuIZlqbX-PvQ1kA6iDfMxkeLsrXklAJV2BwbIRbU/edit' },
+    { label: 'Golden Aura',          url: 'https://docs.google.com/spreadsheets/d/1JWr-32oLxj32V_ZTQACtRL6GuCHCbEuly9ZAqjgyTRE/edit' },
+    { label: 'KPI',                  url: 'https://docs.google.com/spreadsheets/d/1y7-gRZ0_SUh-dEBXKt3-5JrXfUfmAMEY4SLcFYEFGI0/edit' },
+    { label: 'Stock Checklist',      url: 'https://docs.google.com/spreadsheets/d/1qfRFIfA2cpkVgZzw_agk3Gpsbbi9tyzLAIyVcbWlQFQ/edit' },
+    { label: 'Employee Master',      url: 'https://docs.google.com/spreadsheets/d/1xZZdVvYp3Ke7Ot_leXyNnwvgT5VxnC1bn42_NvRma7E/edit' }
+  ];
   box.innerHTML = links.map(l =>
-    `<button class="btn-secondary" style="width:100%;margin-bottom:8px;text-align:left;" onclick="window.open('${l.url.replace(/'/g,"\\'")}', '_blank')">📄 ${l.label}</button>`
+    `<button class="btn-secondary" style="width:100%;margin-bottom:8px;text-align:left;" onclick="window.open('${l.url}', '_blank')">📄 ${l.label}</button>`
   ).join('');
 }
 
@@ -6875,7 +6876,7 @@ function showAdminPage(page) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
-  if(page==='walkins') loadWalkinsReport();
+  if(page==='walkins') setWalkinsMode('month');
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
@@ -11487,6 +11488,28 @@ function stockReportThisMonth(who) {
 }
 
 // ── Walk-ins — date-to-date deals/purchase/non-purchase/conversion% ──
+function setWalkinsMode(mode) {
+  document.querySelectorAll('.walkins-quickbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('walkinsBtn' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+  const customRow = document.getElementById('walkinsCustomRow');
+  const startInp = document.getElementById('walkinsStartDate');
+  const endInp = document.getElementById('walkinsEndDate');
+  if (mode === 'custom') {
+    customRow.style.display = 'flex';
+    return; // wait for the user to pick dates and press Go
+  }
+  customRow.style.display = 'none';
+  const today = new Date();
+  if (mode === 'today') {
+    const d = todayYMD();
+    startInp.value = d; endInp.value = d;
+  } else { // 'month'
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    startInp.value = toYMD(first); endInp.value = todayYMD();
+  }
+  loadWalkinsReport();
+}
+
 async function loadWalkinsReport() {
   const box = document.getElementById('walkinsReportBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
@@ -12737,14 +12760,18 @@ function dhMakeDonut(canvasId, labels, data, colors) {
 // the card body itself does nothing on click).
 function dhKpiCard(opts) {
   const bad = !opts.data || opts.data.ok === false;
+  const isLoading = opts.loading === true;
   return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}">
     <div class="dh-kpi-card-top">
       <div class="dh-kpi-icon-badge" style="background:${opts.accent}22;color:${opts.accent};">${opts.icon || ''}</div>
-      <div class="dh-kpi-label">${opts.title}</div>
+      <div class="dh-kpi-label" style="flex:1;">${opts.title}</div>
+      ${opts.refreshKey ? `<button onclick="event.stopPropagation();refreshDashSection('${opts.refreshKey}')" title="Refresh this section" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px 4px;">🔄</button>` : ''}
     </div>
-    ${bad
-      ? '<div class="dh-kpi-sub" style="margin-top:6px;">No data yet</div>'
-      : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
+    ${isLoading
+      ? '<div class="dh-kpi-sub" style="margin-top:6px;"><span class="spinner" style="width:11px;height:11px;"></span> Loading...</div>'
+      : bad
+        ? '<div class="dh-kpi-sub" style="margin-top:6px;">No data yet</div>'
+        : `<div class="dh-kpi-val">${opts.value}</div><div class="dh-kpi-sub">${opts.sub || ''}</div>`}
     <button class="dh-kpi-view-btn" onclick="${opts.onclick}">View Details ›</button>
   </div>`;
 }
@@ -12823,48 +12850,80 @@ async function loadEmpDashboardHub(force) {
   }
 }
 
+// Shared state for progressive per-section dashboard loading — each
+// key starts undefined (still loading → spinner shown), becomes the
+// real response object once its own fetch resolves. Kept at window
+// scope so the initial load and any later refreshDashSection() call
+// share the same state and re-render function.
+window.__adminDashState = {};
+
 async function loadAdminDashboardHub(force) {
-  const body = document.getElementById('adminDashHubBody');
   const welcomeBox = document.getElementById('adminDashWelcome');
   if (welcomeBox) welcomeBox.textContent = `Welcome back, ${state.adminName || state.adminRole || ''} 👋`;
-  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading dashboard...</div>';
-  const slowHintTimer = setTimeout(() => {
-    const spinnerBox = body.querySelector('.loading');
-    if (spinnerBox) spinnerBox.lastChild.textContent = 'Still loading... this is taking longer than usual';
-  }, 8000);
 
-  // v-new: every section now has its own fast endpoint (the exact same
-  // ones each section's own page already calls), fired CONCURRENTLY
-  // instead of one sequential mega-call that read every section's
-  // sheets one after another in a single execution. This is bounded by
-  // the SLOWEST single section instead of the SUM of all of them, and a
-  // slow/unreachable section can no longer take the whole Dashboard
-  // down with it — Promise.allSettled means one rejection doesn't stop
-  // the others from rendering.
-  const [leaveRes, kpiDsrRes, loyaltyRes, gaRes, stockWalkinRes, leadsRawSettled] = await Promise.allSettled([
-    jsonp({ page: 'dashLeaveJSON', force: force ? '1' : '0' }, 20000),
-    jsonp({ page: 'dashKpiDsrJSON', force: force ? '1' : '0' }, 20000),
-    jsonp({ page: 'dashLoyaltyJSON', force: force ? '1' : '0' }, 20000),
-    jsonp({ page: 'dashGoldenAuraJSON', force: force ? '1' : '0' }, 20000),
-    jsonp({ page: 'dashStockWalkinJSON', force: force ? '1' : '0' }, 20000),
-    leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() }).catch(() => null)
-  ]);
-  clearTimeout(slowHintTimer);
+  // v-new: reset to "everything loading" and render the skeleton
+  // immediately — per explicit request, each section now shows up the
+  // MOMENT its own data arrives instead of the whole Dashboard waiting
+  // on Promise.allSettled for the slowest one. A stuck/failing section
+  // can also be retried on its own via the 🔄 on that card, without
+  // reloading everything else.
+  window.__adminDashState = {
+    leaveData: undefined, kpiDsrData: undefined, loyaltyData: undefined,
+    gaData: undefined, stockWalkinData: undefined, leadsRawRes: undefined
+  };
+  renderAdminDashboardBody();
 
-  const settledVal = (s) => (s && s.status === 'fulfilled' && s.value) ? s.value : null;
-  const leaveData        = settledVal(leaveRes);
-  const kpiDsrData        = settledVal(kpiDsrRes);
-  const loyaltyData       = settledVal(loyaltyRes);
-  const gaData            = settledVal(gaRes);
-  const stockWalkinData   = settledVal(stockWalkinRes);
-  const leadsRawRes       = settledVal(leadsRawSettled);
+  fetchDashSection('leave', force);
+  fetchDashSection('kpiDsr', force);
+  fetchDashSection('loyalty', force);
+  fetchDashSection('goldenAura', force);
+  fetchDashSection('stockWalkin', force);
+  fetchDashSection('leads', force);
+}
 
-  // Only if EVERY section failed is this a genuine full-load failure
-  // (e.g. the whole deployment is unreachable) — same Retry state as
-  // before. A partial failure still renders normally; that one section's
-  // card just shows "No data yet", same as it always has.
-  if (!leaveData && !kpiDsrData && !loyaltyData && !gaData && !stockWalkinData) {
+// One place that knows how to fetch each logical section and where its
+// result lands in window.__adminDashState — used by both the initial
+// load above and refreshDashSection() below. Re-renders as soon as
+// THIS section resolves, independent of every other section's state.
+async function fetchDashSection(key, force) {
+  const pageMap = { leave: 'dashLeaveJSON', kpiDsr: 'dashKpiDsrJSON', loyalty: 'dashLoyaltyJSON', goldenAura: 'dashGoldenAuraJSON', stockWalkin: 'dashStockWalkinJSON' };
+  const stateKeyMap = { leave: 'leaveData', kpiDsr: 'kpiDsrData', loyalty: 'loyaltyData', goldenAura: 'gaData', stockWalkin: 'stockWalkinData' };
+  try {
+    if (key === 'leads') {
+      window.__adminDashState.leadsRawRes = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', date: todayISO() }).catch(() => null);
+    } else {
+      window.__adminDashState[stateKeyMap[key]] = await jsonp({ page: pageMap[key], force: force ? '1' : '0' }, 20000).catch(() => null);
+    }
+  } catch (e) { /* jsonp/leadsApiGet already .catch() internally — this is just an extra safety net */ }
+  renderAdminDashboardBody();
+}
+
+// Per-card 🔄 (see dhKpiCard's opts.refreshKey) — refetch just ONE
+// section and re-render, without touching any other section's
+// already-loaded data or making the admin wait on the whole Dashboard.
+function refreshDashSection(key) {
+  const stateKeyMap = { leave: 'leaveData', kpiDsr: 'kpiDsrData', loyalty: 'loyaltyData', goldenAura: 'gaData', stockWalkin: 'stockWalkinData', leads: 'leadsRawRes' };
+  window.__adminDashState[stateKeyMap[key]] = undefined; // show spinner again for just this one
+  renderAdminDashboardBody();
+  fetchDashSection(key, true);
+}
+
+function renderAdminDashboardBody() {
+  const body = document.getElementById('adminDashHubBody');
+  const s = window.__adminDashState;
+  const leaveData = s.leaveData, kpiDsrData = s.kpiDsrData, loyaltyData = s.loyaltyData,
+        gaData = s.gaData, stockWalkinData = s.stockWalkinData, leadsRawRes = s.leadsRawRes;
+
+  // Only once EVERY section has finished attempting (none still
+  // undefined/"loading") AND every single one came back empty/failed is
+  // this a genuine full-load failure (e.g. the whole deployment is
+  // unreachable) — same Retry state as before. A partial failure still
+  // renders normally; that one section's card just shows "No data yet"
+  // with its own 🔄, same as it always has.
+  const allSettled = [leaveData, kpiDsrData, loyaltyData, gaData, stockWalkinData].every(v => v !== undefined);
+  if (allSettled && !leaveData && !kpiDsrData && !loyaltyData && !gaData && !stockWalkinData) {
     body.innerHTML = '<div class="empty-state"><p>Could not load the dashboard.</p><button class="btn-secondary" style="margin-top:8px;padding:8px 16px;border-radius:20px;" onclick="loadAdminDashboardHub()">🔄 Retry</button></div>';
+    document.getElementById('adminDashHubFixed').innerHTML = '';
     return;
   }
 
@@ -12878,10 +12937,8 @@ async function loadAdminDashboardHub(force) {
 
   // Leads (CRM) isn't part of the Sheets-side endpoints above (separate
   // Apps Script deployment) — fetched the same way the Leads Management
-  // home page does, now running IN PARALLEL with everything else above
-  // rather than after it. Fails open (ld stays not-ok) if the Leads
-  // backend is slow/unreachable — never blocks the rest of the
-  // Dashboard from rendering.
+  // home page does. Fails open (ld stays not-ok) if the Leads backend
+  // is slow/unreachable — never blocks the rest of the Dashboard.
   let ld = { ok: false };
   try {
     if (leadsRawRes && leadsRawRes.ok && leadsRawRes.rows && leadsRawRes.rows.length) {
@@ -12916,37 +12973,37 @@ async function loadAdminDashboardHub(force) {
 
   // KPI summary cards — 2-col on mobile / 4-col on desktop (see @media rule), colored accent per module, tap to drill into that module
   fixedHtml += '<div class="dh-kpi-grid">';
-  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('pending')", data: lv,
+  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'Leave', accent: 'var(--purple)', onclick: "showAdminPage('pending')", data: lv, loading: leaveData === undefined, refreshKey: 'leave',
     value: lv && lv.ok ? lv.today.onLeave.length : '',
     sub: lv && lv.ok ? `On leave today · ${lv.today.pendingCount} pending` : '' });
 
   // Leads (CRM) tile — now backed by a real client-side fetch above
   // instead of always falling back to a placeholder.
-  fixedHtml += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads-submitted')", data: ld,
+  fixedHtml += dhKpiCard({ icon: '👥', title: 'Leads (CRM)', accent: '#c97a10', onclick: "showAdminPage('leads-submitted')", data: ld, loading: leadsRawRes === undefined, refreshKey: 'leads',
     value: ld && ld.ok ? ld.today.assigned : '',
     sub: ld && ld.ok ? `Sent today · ${ld.today.submitted} submitted` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi-tilldate')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null,
+  fixedHtml += dhKpiCard({ icon: '📊', title: 'KPI', accent: '#1a7a4f', onclick: "showAdminPage('kpi-tilldate')", data: kp && kp.thisMonth && kp.thisMonth.topper ? kp : null, loading: kpiDsrData === undefined, refreshKey: 'kpiDsr',
     value: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? kp.thisMonth.topper.overallScore : '',
     sub: kp && kp.ok && kp.thisMonth && kp.thisMonth.topper ? `Topper: ${kp.thisMonth.topper.employee}` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr-today')", data: dr,
+  fixedHtml += dhKpiCard({ icon: '🧾', title: 'DSR', accent: '#1a5fa8', onclick: "showAdminPage('dsr-today')", data: dr, loading: kpiDsrData === undefined, refreshKey: 'kpiDsr',
     value: dr && dr.ok ? dr.today.entries : '',
     sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty-mycards')", data: ly,
+  fixedHtml += dhKpiCard({ icon: '💳', title: 'Loyalty Card', accent: 'var(--gold)', onclick: "showAdminPage('loyalty-mycards')", data: ly, loading: loyaltyData === undefined, refreshKey: 'loyalty',
     value: ly && ly.ok ? ly.today.cardsApproved : '',
     sub: ly && ly.ok ? `Today · ${ly.thisMonth.cardsApproved} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura-list')", data: ga,
+  fixedHtml += dhKpiCard({ icon: '🥇', title: 'Golden Plan', accent: '#d6389a', onclick: "showAdminPage('golden-aura-list')", data: ga, loading: gaData === undefined, refreshKey: 'goldenAura',
     value: ga && ga.ok ? ga.today.enrollments : '',
     sub: ga && ga.ok ? `Today · ${ga.thisMonth.enrollments} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('walkins')", data: wk,
+  fixedHtml += dhKpiCard({ icon: '🚶', title: 'Walk-ins', accent: '#0e9488', onclick: "showAdminPage('walkins')", data: wk, loading: stockWalkinData === undefined, refreshKey: 'stockWalkin',
     value: wk && wk.ok ? wk.today.walkins : '',
     sub: wk && wk.ok ? `Today · ${wk.yesterday.walkins} yesterday` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock-report')", data: st,
+  fixedHtml += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock-report')", data: st, loading: stockWalkinData === undefined, refreshKey: 'stockWalkin',
     value: st && st.ok && st.today ? (st.today['SUBMITTED'] != null ? st.today['SUBMITTED'] : '') : '',
     sub: st && st.ok ? 'Today · tap for detail' : '' });
   fixedHtml += '</div>';
