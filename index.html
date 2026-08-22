@@ -556,6 +556,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
      sidebar is now the primary desktop navigation, the footer was
      redundant and duplicated every link already in the sidebar. */
   #adminApp .footer-nav, #empApp .footer-nav { display: none !important; }
+  /* Walk-in Track is now a direct sidebar item on desktop — the copy
+     inside More would be a duplicate button, which the spec explicitly
+     forbids. Mobile has no sidebar, so it still needs this one inside
+     More — only hidden here, at desktop widths. */
+  #adminQAWalkins { display: none !important; }
 
   /* Shift main content right of the sidebar instead of centering under
      it — max-width widened too, since desktop has the room now. */
@@ -2107,6 +2112,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="btn-sm btn-view" onclick="loadAdminDashboardHub(true)">🔄 Refresh</button>
       </div>
       <div id="adminDashWelcome" style="font-size:12.5px;color:var(--text3);margin:-6px 0 10px;"></div>
+      <div style="position:relative;margin-bottom:12px;">
+        <input type="text" id="empSearchBox" placeholder="🔍 Search employee by name or ID — jump straight to their profile"
+          oninput="onEmpSearchInput()" onkeydown="if(event.key==='Enter')onEmpSearchEnter()"
+          style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;background:var(--card);color:var(--text);">
+        <div id="empSearchResults" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 18px rgba(20,20,40,0.12);max-height:280px;overflow-y:auto;z-index:50;"></div>
+      </div>
       <div class="dh-fixed-top" id="adminDashHubFixedOuter"><div class="dh-fixed-top-inner" id="adminDashHubFixed"></div></div>
       <div class="dh-scroll-body" id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
@@ -7577,17 +7588,16 @@ function initLoyaltyPage(who) {
     if (to)   to.value   = '';
   }
   if (who === 'admin') {
-    const from = document.getElementById('loyRangeFromDate');
-    const to   = document.getElementById('loyRangeToDate');
-    if (from && !from.value) {
-      const d = new Date(); d.setDate(1);
-      from.value = toYMD(d);
-      to.value = todayYMD();
-    }
+    const from = document.getElementById('loyEmpDetailFromDate');
+    const to   = document.getElementById('loyEmpDetailToDate');
     // Full History / Employee Timeline — intentionally left BLANK by
     // default (not "1st of this month") so it shows this employee's
     // COMPLETE card history from the very start unless the admin
-    // explicitly narrows the range.
+    // explicitly narrows the range. (Matches the emp-side branch
+    // above — this used to set a 1st-of-month default here instead,
+    // contradicting this very comment.)
+    if (from) from.value = '';
+    if (to)   to.value   = '';
   }
 }
 
@@ -9296,29 +9306,70 @@ function loadDsrMissing(who, start, end) {
   const box = document.getElementById('dsrMissingBox-' + who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  // v-fix (corrected): the real Missing DSR mail uses a
+  // Purchases-vs-DSR-Entered reconciliation (WALKINTRACK.txt's
+  // runDSRMissingDatewiseReport) — an earlier attempt here wrongly
+  // switched to a much simpler 'zero entries that day' definition,
+  // which would have permanently disagreed with the mail. Reverted
+  // back to dsrMissingJSON (the correct, matching definition), with
+  // defensive guards added below against the specific garbage
+  // (duplicate/header rows, huge Date-like numbers) seen in a broken
+  // sheet state — a row is only ever treated as a real employee if its
+  // name doesn't look like report title/instruction text, and any
+  // numeric field is sanity-capped so a stray corrupted cell can never
+  // render as a nonsense number again.
   const reqParams = { page: 'dsrMissingJSON' };
   if (start) reqParams.start = start;
   if (end) reqParams.end = end;
   jsonpReliable(kpiEmpParams(who, reqParams)).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrMissing(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
-    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR entries!</p></div>'; return; }
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrMissing(\'' + who + '\')" title="Retry">🔄</button></div>'; return; }
+    // Defensive filter: a real employee name is short, human, and
+    // never contains report-instruction phrases or a date-range dash
+    // pattern — this is exactly what a stray title/legend/section-
+    // header row (accidentally read as if it were a data row) would
+    // look like instead.
+    const looksLikeHeaderJunk = (name) => {
+      const n = String(name || '').trim();
+      if (!n || n.length > 40) return true;
+      if (/detailed|missing list|report|^employee$|total|grand/i.test(n)) return true;
+      if (/\d{1,2}\s+\w{3}\s+\d{4}\s*-\s*\d{1,2}\s+\w{3}\s+\d{4}/i.test(n)) return true; // a date-range string
+      return false;
+    };
+    // A real purchases/DSR-entered count is always a small whole
+    // number in normal business use — a stray Date object coerced to
+    // milliseconds-since-epoch would be many billions, nowhere close.
+    const sanitizeCount = (v) => { const n = Number(v); return (isFinite(n) && n >= 0 && n < 100000) ? n : 0; };
+    const cleanRows = (res.rows || []).filter(r => !looksLikeHeaderJunk(r.employee));
+    // Dedupe by employee name — a duplicate row (same corrupted sheet
+    // state) would otherwise show the same person twice.
+    const seenNames = new Set();
+    const dedupedRows = cleanRows.filter(r => {
+      const key = String(r.employee).trim().toLowerCase();
+      if (seenNames.has(key)) return false;
+      seenNames.add(key);
+      return true;
+    });
+    if (!dedupedRows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR entries!</p></div>'; return; }
     let html = '';
-    res.rows.forEach(r => {
-      const missDates = Object.keys(r.perDate).filter(d => String(r.perDate[d]).indexOf('M:') === 0);
-      const noMissing = Number(r.totalMissing) === 0;
+    dedupedRows.forEach(r => {
+      const missDates = Object.keys(r.perDate || {}).filter(d => String(r.perDate[d]).indexOf('M:') === 0);
+      const totalPurchases = sanitizeCount(r.totalPurchases);
+      const dsrEntered = sanitizeCount(r.dsrEntered);
+      const totalMissing = sanitizeCount(r.totalMissing);
+      const noMissing = totalMissing === 0;
       html += `<div class="kd-card ${noMissing ? 'kd-ok' : 'kd-danger'}">
         <div class="kd-head"><span class="kd-name">${r.employee}</span>
-          <span class="kd-pill ${noMissing ? 'green' : 'red'}">${noMissing ? '✅ 0 Missing' : '🚫 ' + r.totalMissing + ' Missing'}</span></div>
+          <span class="kd-pill ${noMissing ? 'green' : 'red'}">${noMissing ? '✅ 0 Missing' : '🚫 ' + totalMissing + ' Missing'}</span></div>
         <div class="kd-stats">
-          <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.totalPurchases}</span><span class="kd-lbl">Purchases</span></div>
-          <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.dsrEntered}</span><span class="kd-lbl">DSR Entered</span></div>
+          <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${totalPurchases}</span><span class="kd-lbl">Purchases</span></div>
+          <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${dsrEntered}</span><span class="kd-lbl">DSR Entered</span></div>
         </div>
         ${missDates.length ? '<div class="kd-chiprow">' + missDates.map(d => `<span class="kd-chip">🔴 ${fmtDMY(d)}</span>`).join('') + '</div>' : ''}
       </div>`;
     });
     box.innerHTML = html;
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrMissing(\'" + who + "\')" title="Retry">🔄</button></div>'; });
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrMissing(\'' + who + '\')" title="Retry">🔄</button></div>'; });
 }
 
 function dsrRangeResultHtml(res) {
