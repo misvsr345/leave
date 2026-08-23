@@ -339,6 +339,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .btn-secondary:hover { background: var(--purple-bg); transform: translateY(-1px); }
 .btn-secondary:active { transform: scale(0.98); }
 .walkins-quickbtn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+.dh-actfilter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 .export-icon-btn {
   display: none; align-items: center; justify-content: center;
@@ -10667,7 +10668,7 @@ function openLeadCallPanel(lead) {
     </div>
 
     <div class="form-row"><label>Status *</label>
-      <select id="leadStatusSel" class="uniform-select">
+      <select id="leadStatusSel" class="uniform-select" onchange="onLeadStatusChange()">
         <option value="">Choose...</option>
         <option>Answered</option>
         <option>No Answer</option>
@@ -10675,7 +10676,12 @@ function openLeadCallPanel(lead) {
         <option>Interested</option><option>Converted</option>
         <option>Not Interested</option>
         <option>Will Visit</option><option>Busy</option>
+        <option value="Flag This Number">🚩 Flag This Number</option>
       </select>
+    </div>
+    <div id="leadFlagReasonRow" class="form-row" style="display:none;">
+      <label>Reason For Flagging</label>
+      <input type="text" id="leadFlagReasonInput" placeholder="e.g. Wrong Number, Abusive, Do-Not-Call Request">
     </div>
     <div style="font-size:10.5px;color:var(--text3);margin-top:-8px;margin-bottom:8px;">"Not Connected" covers Not Received and Switched Off — "No Answer" is for when it rang but nobody picked up.</div>
     <div class="form-2col">
@@ -10797,11 +10803,22 @@ function stopLeadCallTimer() {
 }
 function toggleLeadCallTimer() { __leadCallRunning ? stopLeadCallTimer() : startLeadCallTimer(); }
 
+function onLeadStatusChange() {
+  const status = document.getElementById('leadStatusSel').value;
+  const reasonRow = document.getElementById('leadFlagReasonRow');
+  reasonRow.style.display = (status === 'Flag This Number') ? 'block' : 'none';
+}
+
 async function submitLeadCall() {
   const errBox = document.getElementById('leadSubmitErr');
   errBox.style.display = 'none';
-  const status = document.getElementById('leadStatusSel').value;
+  let status = document.getElementById('leadStatusSel').value;
   if (!status) { errBox.textContent = 'Please choose a call status.'; errBox.style.display = 'block'; return; }
+  if (status === 'Flag This Number') {
+    const reason = document.getElementById('leadFlagReasonInput').value.trim();
+    if (!reason) { errBox.textContent = 'Please give a reason for flagging this number.'; errBox.style.display = 'block'; return; }
+    status = 'Flag This Number (' + reason + ')';
+  }
   const duration = document.getElementById('leadDurationInput').value || '00:00';
   const star = v => v ? (v + ' Star') : '';
 
@@ -12977,6 +12994,38 @@ function dhMakeDonut(canvasId, labels, data, colors) {
   });
 }
 
+// Line chart — used by the Dashboard Hub's "Leave Applications, Last
+// 14 Days" trend (per the master spec's "Line Chart: daily/weekly/
+// monthly trend" requirement).
+function dhMakeLine(canvasId, labels, data, color) {
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  window.__dhGauges = window.__dhGauges || {};
+  window.__dhGauges[canvasId] = new Chart(el, {
+    type: 'line',
+    data: { labels: labels, datasets: [{ data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.3, pointRadius: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }, x: { ticks: { font: { size: 8 }, maxRotation: 45, minRotation: 45 } } } }
+  });
+}
+
+// Bar chart — used by the Dashboard Hub's "DSR Entries by Employee"
+// comparison (per the master spec's "Bar Chart: employee/team
+// comparison" requirement).
+function dhMakeBar(canvasId, labels, data, color) {
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  window.__dhGauges = window.__dhGauges || {};
+  window.__dhGauges[canvasId] = new Chart(el, {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: color, borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } }
+  });
+}
+
 // KPI-style summary card: colored left accent, icon, label, big value, sub-line,
 // and an explicit "View Details" button (the only clickable/navigating part —
 // the card body itself does nothing on click).
@@ -13120,7 +13169,7 @@ async function fetchDashSection(key, force) {
       // Reshape into the same per-section state keys the render
       // function already expects, so renderAdminDashboardBody() below
       // needs no changes regardless of which fetch strategy is active.
-      window.__adminDashState.leaveData      = { ok: !!(res && res.ok), leave: d.leave, alerts: (d.alerts || []).filter(a => a.page === 'dashboard') };
+      window.__adminDashState.leaveData      = { ok: !!(res && res.ok), leave: d.leave, alerts: (d.alerts || []).filter(a => a.page === 'dashboard'), trend: d.trend, empComparison: d.empComparison, recentActivities: d.recentActivities };
       window.__adminDashState.kpiDsrData     = { ok: !!(res && res.ok), kpi: d.kpi, dsr: d.dsr, alerts: (d.alerts || []).filter(a => a.page === 'dsr') };
       window.__adminDashState.loyaltyData    = { ok: !!(res && res.ok), loyalty: d.loyalty };
       window.__adminDashState.gaData         = { ok: !!(res && res.ok), goldenPlan: d.goldenAura || d.goldenPlan };
@@ -13133,6 +13182,40 @@ async function fetchDashSection(key, force) {
 // Per-card 🔄 (see dhKpiCard's opts.refreshKey) — 'leads' refetches
 // just itself; any sheet-based section refetches the single combined
 // call, since all 5 of those now arrive together.
+// Date-Filter for the Dashboard's Recent Activities panel (per the
+// master spec's "Date filter: Today / This Week / This Month / Custom"
+// requirement) — filters the already-fetched 60-day window client-side,
+// so switching is instant with zero extra network calls.
+function setDashActivityFilter(range) {
+  document.querySelectorAll('.dh-actfilter-btn').forEach(b => b.classList.remove('active'));
+  const btnId = 'dhActFilter' + range.charAt(0).toUpperCase() + range.slice(1);
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.add('active');
+
+  const raw = window.__dhRecentActRaw || [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = toYMD(today);
+  let weekStart = new Date(today); weekStart.setDate(weekStart.getDate() - 6);
+  const weekStartStr = toYMD(weekStart);
+  const monthStartStr = toYMD(new Date(today.getFullYear(), today.getMonth(), 1));
+
+  let filtered = raw;
+  if (range === 'today') filtered = raw.filter(r => r.date === todayStr);
+  else if (range === 'week') filtered = raw.filter(r => r.date >= weekStartStr);
+  else if (range === 'month') filtered = raw.filter(r => r.date >= monthStartStr);
+  // 'all' — no filtering, shows the full 60-day window already fetched
+
+  const body = document.getElementById('dhRecentActBody');
+  if (!body) return;
+  if (!filtered.length) { body.innerHTML = '<div class="empty-state" style="padding:14px;"><p style="font-size:12px;">No activity in this period.</p></div>'; return; }
+  body.innerHTML = `<div class="dh-table-wrap"><table class="dh-mini-table">
+    <thead><tr><th>Module</th><th>User</th><th style="text-align:left;">Activity</th><th>Date</th></tr></thead>
+    <tbody>${filtered.map(r => `<tr>
+      <td>${r.module}</td><td>${r.user}</td><td style="text-align:left;white-space:normal;">${r.text}</td><td>${fmtDMY(r.date)}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
 function refreshDashSection(key) {
   if (key === 'emp') {
     loadEmpDashboardHub(true);
@@ -13170,6 +13253,9 @@ function renderAdminDashboardBody() {
   }
 
   const lv = leaveData && leaveData.ok ? leaveData.leave : null;
+  const trendData = leaveData && leaveData.ok ? leaveData.trend : null;
+  const empCompData = leaveData && leaveData.ok ? leaveData.empComparison : null;
+  const recentActData = leaveData && leaveData.ok ? leaveData.recentActivities : null;
   const kp = kpiDsrData && kpiDsrData.ok ? kpiDsrData.kpi : null;
   const dr = kpiDsrData && kpiDsrData.ok ? kpiDsrData.dsr : null;
   const ly = loyaltyData && loyaltyData.ok ? loyaltyData.loyalty : null;
@@ -13271,7 +13357,9 @@ function renderAdminDashboardBody() {
   // become pure data (stats/tables/lists), all in one place too.
   const hasLeaveChart = lv && lv.ok && lv.thisMonth;
   const hasKpiChart = kp && kp.ok && kp.thisMonth && kp.thisMonth.topper;
-  if (hasLeaveChart || hasKpiChart) {
+  const hasTrendChart = trendData && trendData.ok && trendData.data && trendData.data.some(v => v > 0);
+  const hasBarChart = empCompData && empCompData.ok && empCompData.data && empCompData.data.length;
+  if (hasLeaveChart || hasKpiChart || hasTrendChart || hasBarChart) {
     html += `<div class="dh-panel dh-panel-wide" style="background:#f7f5fc;">
       <div class="dh-panel-title"><span class="t">📊 Charts Overview</span></div>
       <div class="dh-charts-row">
@@ -13287,7 +13375,36 @@ function renderAdminDashboardBody() {
           </div>
           <button class="dh-panel-view-btn" style="display:block;margin:8px auto 0;" onclick="showAdminPage('kpi')">View →</button>
         </div>` : ''}
+        ${hasTrendChart ? `<div class="dh-chart-col">
+          <div class="dh-chart-col-title">📉 Leave Applications — Last 14 Days</div>
+          <div class="dh-chart-wrap"><canvas id="dhAdminLeaveTrend"></canvas></div>
+        </div>` : ''}
+        ${hasBarChart ? `<div class="dh-chart-col">
+          <div class="dh-chart-col-title">📊 DSR Entries by Employee — This Month</div>
+          <div class="dh-chart-wrap" style="height:${Math.max(150, empCompData.data.length * 26)}px;"><canvas id="dhAdminDsrBar"></canvas></div>
+          <button class="dh-panel-view-btn" style="display:block;margin:8px auto 0;" onclick="showAdminPage('kpi-tilldate')">View →</button>
+        </div>` : ''}
       </div>
+    </div>`;
+  }
+
+  // Recent Activities — chronological feed (per the master spec's
+  // explicit "Recent Activities table: records, timestamps, module,
+  // user" requirement), with a Today/This Week/This Month/Custom
+  // date-filter (per the spec's "Date filter" requirement) — filters
+  // client-side against the already-fetched 60-day window, so
+  // switching the filter is instant with no extra network round-trip.
+  window.__dhRecentActRaw = (recentActData && recentActData.ok) ? recentActData.rows : [];
+  if (recentActData && recentActData.ok && recentActData.rows && recentActData.rows.length) {
+    html += `<div class="dh-panel dh-panel-wide" style="background:var(--bg2, #f7f7fa);">
+      <div class="dh-panel-title"><span class="t">🕐 Recent Activities</span></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn-secondary dh-actfilter-btn active" id="dhActFilterToday" style="flex:1;min-width:70px;padding:6px 8px;font-size:11px;" onclick="setDashActivityFilter('today')">Today</button>
+        <button class="btn-secondary dh-actfilter-btn" id="dhActFilterWeek" style="flex:1;min-width:70px;padding:6px 8px;font-size:11px;" onclick="setDashActivityFilter('week')">This Week</button>
+        <button class="btn-secondary dh-actfilter-btn" id="dhActFilterMonth" style="flex:1;min-width:70px;padding:6px 8px;font-size:11px;" onclick="setDashActivityFilter('month')">This Month</button>
+        <button class="btn-secondary dh-actfilter-btn" id="dhActFilterAll" style="flex:1;min-width:70px;padding:6px 8px;font-size:11px;" onclick="setDashActivityFilter('all')">All (60d)</button>
+      </div>
+      <div id="dhRecentActBody"></div>
     </div>`;
   }
 
@@ -13501,6 +13618,7 @@ function renderAdminDashboardBody() {
 
   document.getElementById('adminDashHubFixed').innerHTML = fixedHtml;
   body.innerHTML = html;
+  if (window.__dhRecentActRaw && window.__dhRecentActRaw.length) setDashActivityFilter('today');
   syncDashHubFixedHeight('adminDashHubFixedOuter', 'adminDashHubBody');
   dhDestroyGauges('dhAdmin');
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
@@ -13512,6 +13630,12 @@ function renderAdminDashboardBody() {
       ['Approved', 'Pending', 'Rejected', 'Absent', 'SM Pending'],
       [cm.approved, cm.pending, cm.rejected, cm.absent, cm.smPending],
       ['#1a7a4f', '#c97a10', '#dc2626', '#6b21a8', '#d4a843']);
+  }
+  if (hasTrendChart) {
+    dhMakeLine('dhAdminLeaveTrend', trendData.labels, trendData.data, '#6b21a8');
+  }
+  if (hasBarChart) {
+    dhMakeBar('dhAdminDsrBar', empCompData.labels, empCompData.data, '#1a5fa8');
   }
 }
 
