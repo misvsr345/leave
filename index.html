@@ -12983,17 +12983,18 @@ function dhMakeDonut(canvasId, labels, data, colors) {
 function dhKpiCard(opts) {
   const bad = !opts.data || opts.data.ok === false;
   const isLoading = opts.loading === true;
-  // v-fix: this used to show the 🔄 refresh icon on EVERY card,
-  // permanently, regardless of load state — now only appears when this
-  // card's own data is genuinely stuck/failed (bad && not still
-  // loading). Successfully-loaded cards show no icon at all; loading
-  // cards show only the spinner.
-  const showRefresh = opts.refreshKey && bad && !isLoading;
+  // v-fix (explicit request): the refresh icon must be available even
+  // while stuck on "Loading..." — a fetch that hangs or never resolves
+  // used to leave zero way to manually retry that one card short of
+  // reloading the entire page. Now shows whenever data hasn't
+  // successfully loaded yet — failed OR still loading — hidden only
+  // once real data is actually showing.
+  const showRefresh = opts.refreshKey && (bad || isLoading);
   return `<div class="dh-kpi-card" style="--dh-accent:${opts.accent}">
     <div class="dh-kpi-card-top">
       <div class="dh-kpi-icon-badge" style="background:${opts.accent}22;color:${opts.accent};">${opts.icon || ''}</div>
       <div class="dh-kpi-label" style="flex:1;">${opts.title}</div>
-      ${showRefresh ? `<button onclick="event.stopPropagation();refreshDashSection('${opts.refreshKey}')" title="Reload this section" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px 4px;">🔄</button>` : ''}
+      ${showRefresh ? `<button onclick="event.stopPropagation();refreshDashSection('${opts.refreshKey}')" title="${isLoading ? 'Taking a while? Tap to retry' : 'Reload this section'}" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px 4px;">🔄</button>` : ''}
     </div>
     ${isLoading
       ? '<div class="dh-kpi-sub" style="margin-top:6px;"><span class="spinner" style="width:11px;height:11px;"></span> Loading...</div>'
@@ -13035,23 +13036,23 @@ async function loadEmpDashboardHub(force) {
   const lv = d.leave, dr = d.dsr, kp = d.kpi, ly = d.loyalty, ga = d.goldenAura;
 
   let fixedHtml = '<div class="dh-kpi-grid">';
-  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'My Leave', accent: 'var(--purple)', onclick: "showEmpPage('overview')", data: lv,
+  fixedHtml += dhKpiCard({ icon: '🏖️', title: 'My Leave', accent: 'var(--purple)', onclick: "showEmpPage('overview')", data: lv, refreshKey: 'emp',
     value: lv && lv.ok ? (lv.balance && lv.balance.balance != null ? lv.balance.balance : (lv.thisMonth.count + '')) : '',
     sub: lv && lv.ok ? `${lv.today ? lv.today.status : 'Not on leave today'} · Pending ${lv.pendingCount}` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr-today')", data: dr,
+  fixedHtml += dhKpiCard({ icon: '🧾', title: 'My DSR', accent: '#1a5fa8', onclick: "showEmpPage('dsr-today')", data: dr, refreshKey: 'emp',
     value: dr && dr.ok ? dr.today.entries : '',
     sub: dr && dr.ok ? `Today · ${dr.thisMonth.entries} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi-tilldate')", data: kp && kp.thisMonth ? kp : null,
+  fixedHtml += dhKpiCard({ icon: '📊', title: 'My KPI', accent: '#1a7a4f', onclick: "showEmpPage('kpi-tilldate')", data: kp && kp.thisMonth ? kp : null, refreshKey: 'emp',
     value: kp && kp.ok && kp.thisMonth ? kp.thisMonth.score : '',
     sub: kp && kp.ok && kp.thisMonth ? `Grade ${kp.thisMonth.grade} this month` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty-mycards')", data: ly,
+  fixedHtml += dhKpiCard({ icon: '💳', title: 'My Loyalty Cards', accent: 'var(--gold)', onclick: "showEmpPage('loyalty-mycards')", data: ly, refreshKey: 'emp',
     value: ly && ly.ok ? ly.thisMonth.cardsApproved : '',
     sub: ly && ly.ok ? `This month · ${ly.total.cardsApproved} total` : '' });
 
-  fixedHtml += dhKpiCard({ icon: '🥇', title: 'My Golden Aura', accent: '#d6389a', onclick: "showEmpPage('golden-aura-list')", data: ga,
+  fixedHtml += dhKpiCard({ icon: '🥇', title: 'My Golden Aura', accent: '#d6389a', onclick: "showEmpPage('golden-aura-list')", data: ga, refreshKey: 'emp',
     value: ga && ga.ok ? ga.thisMonth.enrollments : '',
     sub: ga && ga.ok ? `This month · ${ga.total.enrollments} total` : '' });
   fixedHtml += '</div>';
@@ -13133,6 +13134,10 @@ async function fetchDashSection(key, force) {
 // just itself; any sheet-based section refetches the single combined
 // call, since all 5 of those now arrive together.
 function refreshDashSection(key) {
+  if (key === 'emp') {
+    loadEmpDashboardHub(true);
+    return;
+  }
   if (key === 'leads') {
     window.__adminDashState.leadsRawRes = undefined;
     renderAdminDashboardBody();
