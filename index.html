@@ -580,10 +580,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   #adminApp .page-content, #empApp .page-content {
     margin-left: 216px; margin-right: 0; max-width: 900px; padding-left: 24px;
   }
-  /* The Dashboard Hub's fixed KPI/quick-access strip spans left:0/
-     right:0 by default — needs to start after the sidebar on desktop
-     too, or it would render underneath/behind it. */
-  #adminApp .dh-fixed-top, #empApp .dh-fixed-top { left: 216px; }
 }
 
 /* Bottom footer tab bar — mirrors the primary destinations that used to be
@@ -702,14 +698,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    (syncDashHubFixedHeight()) and used to pad .dh-scroll-body so content
    is never hidden underneath the fixed strip. */
 .dh-fixed-top {
-  position: fixed; left: 0; right: 0; top: var(--header-h, 60px); z-index: 90;
   background: var(--bg); border-bottom: 1px solid var(--border);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
 }
 .dh-fixed-top-inner { max-width: 800px; margin: 0 auto; padding: 10px 14px 8px; }
 .dh-fixed-top .dh-kpi-grid, .dh-fixed-top .dh-quick-row { margin-bottom: 0; }
 .dh-fixed-top .dh-quick-row { margin-top: 8px; }
-.dh-scroll-body { padding-top: var(--dh-fixed-h, 0px); }
+.dh-scroll-body { }
 
 /* ── Dashboard Hub v2 — per-module detail panels (Leave/Loyalty/Golden
    Plan/KPI/DSR/Walk-in/Checklist) added on top of the KPI-card row above.
@@ -14146,21 +14140,10 @@ if (window.ResizeObserver) {
 // ResizeObserver so a later data refresh or a resize/rotation never
 // leaves content hidden underneath the strip or an awkward gap below it.
 function syncDashHubFixedHeight(fixedOuterId, scrollBodyId) {
-  const fixedEl = document.getElementById(fixedOuterId);
-  const bodyEl = document.getElementById(scrollBodyId);
-  if (!fixedEl || !bodyEl) return;
-  // .dh-fixed-top must sit right below the section's own title bar
-  // (.section-hdr — "📊 Dashboard" / Refresh button), not directly
-  // below the app's global header — otherwise it would overlap that
-  // title bar, since both would anchor to the same top offset.
-  const sectionHdr = fixedEl.parentElement && fixedEl.parentElement.querySelector('.section-hdr');
-  if (sectionHdr) fixedEl.style.top = sectionHdr.getBoundingClientRect().bottom + 'px';
-  const apply = () => bodyEl.style.setProperty('--dh-fixed-h', fixedEl.offsetHeight + 'px');
-  apply();
-  if (window.ResizeObserver && !fixedEl.dataset.dhHeightObserved) {
-    fixedEl.dataset.dhHeightObserved = '1';
-    new ResizeObserver(apply).observe(fixedEl);
-  }
+  // v-fix: .dh-fixed-top no longer uses position:fixed (per explicit
+  // "don't freeze this part" request) — it scrolls normally with the
+  // rest of the page now, so there's nothing left for this to measure
+  // or position. Kept as a no-op rather than removing every call site.
 }
 
 // Try to restore a previous session first; only run the offline-queue
