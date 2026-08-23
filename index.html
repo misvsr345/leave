@@ -710,7 +710,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    Mobile: everything just stacks (dh-panel's own margin-bottom does the
    work). Desktop: dh-panels-grid below turns into a real multi-column
    grid — see the min-width:1024px block further down. ── */
-.dh-panels-grid { display: block; }
+.dh-panels-grid { display: block; margin-top: 24px; }
 .dh-stat-grid6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .dh-stat-box2 { background: var(--bg2, #f8f5ff); border-radius: 10px; padding: 9px 6px; text-align: center; }
 .dh-stat-box2 .v { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 800; }
@@ -733,6 +733,15 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-mini-table th { text-align: left; font-size: 9.5px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: .3px; padding: 4px 6px; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
 .dh-mini-table td { padding: 6px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
 .dh-mini-table tr:last-child td { border-bottom: none; }
+.duty-section-bar { background: #1a1a2e; color: #fff; font-weight: 700; font-size: 11.5px; padding: 7px 10px; border-radius: 6px 6px 0 0; margin-top: 8px; }
+.duty-table th { background: #eef7d8; }
+.duty-shift-label { font-weight: 700; color: var(--purple); text-align: left !important; white-space: nowrap; }
+.duty-person { font-weight: 600; }
+.duty-suggested-only { color: var(--text3); font-weight: 500; font-style: italic; }
+.duty-badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+.duty-badge.duty-done { background: #dcfce7; color: #166534; }
+.duty-badge.duty-pending { background: #fef3c7; color: #92400e; }
+.duty-empty { color: var(--text3); }
 .kpi-report-table { font-size: 11px; }
 .kpi-report-table th { text-align: center; background: var(--purple-bg); padding: 5px 7px; }
 .kpi-report-table td { text-align: center; padding: 5px 7px; }
@@ -2817,19 +2826,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
     <div class="page-section" id="admin-walkins">
-      <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span></div>
-      <div class="card" style="padding:10px 12px;">
-        <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <button class="btn-secondary walkins-quickbtn active" id="walkinsBtnMonth" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setWalkinsMode('month')">This Month</button>
-          <button class="btn-secondary walkins-quickbtn" id="walkinsBtnToday" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setWalkinsMode('today')">Today</button>
-          <button class="btn-secondary walkins-quickbtn" id="walkinsBtnCustom" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setWalkinsMode('custom')">Custom</button>
-        </div>
-        <div id="walkinsCustomRow" style="display:none;gap:6px;align-items:center;flex-wrap:wrap;">
-          <input type="date" id="walkinsStartDate" style="flex:1;min-width:110px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
-          <span style="color:var(--text3);font-size:11px;">to</span>
-          <input type="date" id="walkinsEndDate" style="flex:1;min-width:110px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:11px;">
-          <button class="btn-primary" style="padding:5px 10px;font-size:11px;" onclick="loadWalkinsReport()">Go</button>
-        </div>
+      <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span>
+        <button class="btn-sm btn-view" onclick="loadWalkinsReport()">🔄 Refresh</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button class="btn-secondary walkins-quickbtn active" id="walkinsBtnToday" style="flex:1;padding:7px 8px;font-size:12px;" onclick="showWalkinsPeriod('today')">Today</button>
+        <button class="btn-secondary walkins-quickbtn" id="walkinsBtnMonth" style="flex:1;padding:7px 8px;font-size:12px;" onclick="showWalkinsPeriod('thisMonth')">This Month</button>
       </div>
       <div id="walkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -6931,7 +6933,7 @@ function showAdminPage(page) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
-  if(page==='walkins') setWalkinsMode('month');
+  if(page==='walkins') loadWalkinsReport();
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
@@ -11693,103 +11695,87 @@ function stockReportThisMonth(who) {
 }
 
 // ── Walk-ins — date-to-date deals/purchase/non-purchase/conversion% ──
-function setWalkinsMode(mode) {
-  document.querySelectorAll('.walkins-quickbtn').forEach(b => b.classList.remove('active'));
-  document.getElementById('walkinsBtn' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-  const customRow = document.getElementById('walkinsCustomRow');
-  const startInp = document.getElementById('walkinsStartDate');
-  const endInp = document.getElementById('walkinsEndDate');
-  if (mode === 'custom') {
-    customRow.style.display = 'flex';
-    return; // wait for the user to pick dates and press Go
-  }
-  customRow.style.display = 'none';
-  const today = new Date();
-  if (mode === 'today') {
-    const d = todayYMD();
-    startInp.value = d; endInp.value = d;
-  } else { // 'month'
-    const first = new Date(today.getFullYear(), today.getMonth(), 1);
-    startInp.value = toYMD(first); endInp.value = todayYMD();
-  }
-  loadWalkinsReport();
-}
-
+// Radically simplified per explicit request: no date picker, no
+// totals/conversion% computation — just fetches the raw Walkintrack
+// sheet rows (most recent 200) and renders them exactly as they are,
+// same columns as the reference image (Date, Employee Name, Customer
+// Deals, Golden Plans, Loyalty Cards Enrolls, Purchased, Non
+// Purchased, Google Review, Instagram, Facebook, Whatsapp Channel,
+// Month, Total SMC).
+let __walkinsDataCache = null;
 async function loadWalkinsReport() {
   const box = document.getElementById('walkinsReportBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  const startInp = document.getElementById('walkinsStartDate');
-  const endInp = document.getElementById('walkinsEndDate');
-  const reqParams = { page: 'walkinReportAPI', role: state.adminRole, adminEmail: state.adminEmail };
-  if (startInp.value) reqParams.start = startInp.value;
-  if (endInp.value) reqParams.end = endInp.value;
   try {
-    const res = await jsonpReliable(reqParams);
+    const res = await jsonpReliable({ page: 'walkinReportAPI' });
     if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
-    // Reflect the actual range used (backend defaults to this-month-so-
-    // far if no dates were picked) back into the date pickers, so a
-    // blank-date first load still shows what period is being displayed.
-    if (!startInp.value) startInp.value = res.start;
-    if (!endInp.value) endInp.value = res.end;
-
-    const t = res.totals || {};
-    const empRows = res.byEmployee || [];
-    let html = `<div class="card">
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center;">
-        <div><div style="font-size:22px;font-weight:900;color:var(--purple);">${t.walkins || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Walk-ins</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:#0e9488;">${t.deals || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Deals</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:var(--green);">${t.purchased || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Purchased</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:#c0392b;">${t.nonPurchased || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Non-Purchase</div></div>
-      </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);text-align:center;">
-        <div style="font-size:26px;font-weight:900;color:var(--gold);">${(t.conversionPct || 0).toFixed(1)}%</div>
-        <div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Conversion Rate (Purchased ÷ Deals)</div>
-      </div>
-    </div>`;
-
-    if (empRows.length) {
-      html += `<div class="card"><div class="card-title">👤 By Employee (Summary)</div>
-        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <tr style="background:var(--purple-bg);"><th style="padding:6px 8px;text-align:left;">Employee</th><th style="padding:6px 8px;">Deals</th><th style="padding:6px 8px;">Purchased</th><th style="padding:6px 8px;">Non-Purch</th><th style="padding:6px 8px;">Conv%</th></tr>
-        ${empRows.map(r => `<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">${r.employee}</td><td style="padding:6px 8px;text-align:center;">${r.deals}</td><td style="padding:6px 8px;text-align:center;">${r.purchased}</td><td style="padding:6px 8px;text-align:center;">${r.nonPurchased}</td><td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--gold);">${r.conversionPct.toFixed(1)}%</td></tr>`).join('')}
-        </table></div>
-      </div>`;
-
-      // v-new: proper desktop business-report table — exact Walkintrack
-      // sheet columns (Date through Total SMC), ONLY this sheet's data,
-      // no cards, compact rows, numbers right-aligned, dates in one
-      // consistent format. This is the raw detail behind the summary
-      // table above.
-      const rawRows = res.rawRows || [];
-      if (rawRows.length) {
-        html += `<div class="card"><div class="card-title">📋 Walk-in Entries (${rawRows.length}) — Detail</div>
-          <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;white-space:nowrap;">
-          <thead><tr style="background:var(--purple-bg);">
-            <th style="padding:5px 8px;text-align:left;">Date</th><th style="padding:5px 8px;text-align:left;">Employee</th>
-            <th style="padding:5px 8px;">Deals</th><th style="padding:5px 8px;">Golden</th><th style="padding:5px 8px;">Loyalty</th>
-            <th style="padding:5px 8px;">Purch.</th><th style="padding:5px 8px;">Non-Purch.</th><th style="padding:5px 8px;">Google</th>
-            <th style="padding:5px 8px;">Insta</th><th style="padding:5px 8px;">FB</th><th style="padding:5px 8px;">WA</th>
-            <th style="padding:5px 8px;text-align:left;">Month</th><th style="padding:5px 8px;">Total SMC</th>
-          </tr></thead><tbody>
-          ${rawRows.map(r => `<tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:4px 8px;">${r.dateDisp}</td><td style="padding:4px 8px;">${r.employee}</td>
-            <td style="padding:4px 8px;text-align:center;">${r.customerDeals}</td><td style="padding:4px 8px;text-align:center;">${r.goldenPlans}</td>
-            <td style="padding:4px 8px;text-align:center;">${r.loyaltyCards}</td><td style="padding:4px 8px;text-align:center;">${r.purchased}</td>
-            <td style="padding:4px 8px;text-align:center;">${r.nonPurchased}</td><td style="padding:4px 8px;text-align:center;">${r.googleReview}</td>
-            <td style="padding:4px 8px;text-align:center;">${r.instagram}</td><td style="padding:4px 8px;text-align:center;">${r.facebook}</td>
-            <td style="padding:4px 8px;text-align:center;">${r.whatsappChannel}</td><td style="padding:4px 8px;">${r.month}</td>
-            <td style="padding:4px 8px;text-align:center;font-weight:700;">${r.totalSmc}</td>
-          </tr>`).join('')}
-          </tbody></table></div>
-        </div>`;
-      }
-    } else {
-      html += '<div class="empty-state"><p>No walk-in entries for this period.</p></div>';
-    }
-    box.innerHTML = html;
+    __walkinsDataCache = res;
+    const activeBtn = document.querySelector('#admin-walkins .walkins-quickbtn.active');
+    const period = (activeBtn && activeBtn.id === 'walkinsBtnMonth') ? 'thisMonth' : 'today';
+    renderWalkinsPeriod(period);
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinsReport()" title="Retry">🔄</button></div>';
   }
+}
+
+function showWalkinsPeriod(period) {
+  document.querySelectorAll('#admin-walkins .walkins-quickbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById(period === 'thisMonth' ? 'walkinsBtnMonth' : 'walkinsBtnToday').classList.add('active');
+  if (__walkinsDataCache) renderWalkinsPeriod(period);
+  else loadWalkinsReport();
+}
+
+function renderWalkinsPeriod(period) {
+  const box = document.getElementById('walkinsReportBox');
+  const res = __walkinsDataCache;
+  const rows = (period === 'thisMonth' ? res.thisMonth : res.today) || [];
+  const store = period === 'thisMonth' ? res.thisMonthStore : res.todayStore;
+  const periodLabel = period === 'thisMonth' ? 'This Month' : 'Today';
+
+  if (!rows.length) { box.innerHTML = `<div class="empty-state"><p>No walk-in entries for ${periodLabel}.</p></div>`; return; }
+
+  const rowHtml = r => `<tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:5px 8px;font-weight:600;text-align:left;">${r.employee}</td>
+    <td style="padding:5px 8px;text-align:center;">${r.customerDeals}</td><td style="padding:5px 8px;text-align:center;">${r.goldenPlans}</td>
+    <td style="padding:5px 8px;text-align:center;">${r.loyaltyCards}</td><td style="padding:5px 8px;text-align:center;">${r.purchased}</td>
+    <td style="padding:5px 8px;text-align:center;">${r.nonPurchased}</td><td style="padding:5px 8px;text-align:center;">${r.googleReview}</td>
+    <td style="padding:5px 8px;text-align:center;">${r.instagram}</td><td style="padding:5px 8px;text-align:center;">${r.facebook}</td>
+    <td style="padding:5px 8px;text-align:center;">${r.whatsappChannel}</td>
+    <td style="padding:5px 8px;text-align:center;font-weight:700;color:var(--gold);">${r.conversionPct.toFixed(1)}%</td>
+  </tr>`;
+
+  let html = `<div class="card"><div class="card-title">👤 By Employee — ${periodLabel}</div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;white-space:nowrap;">
+    <thead><tr style="background:var(--purple-bg);">
+      <th style="padding:5px 8px;text-align:left;">Employee Name</th>
+      <th style="padding:5px 8px;">Customer Deals</th><th style="padding:5px 8px;">Golden Plans</th><th style="padding:5px 8px;">Loyalty Cards Enrolls</th>
+      <th style="padding:5px 8px;">Purchased</th><th style="padding:5px 8px;">Non Purchased</th><th style="padding:5px 8px;">Google Review</th>
+      <th style="padding:5px 8px;">Instagram</th><th style="padding:5px 8px;">Facebook</th><th style="padding:5px 8px;">Whatsapp Channel</th>
+      <th style="padding:5px 8px;">Conversion%</th>
+    </tr></thead><tbody>
+    ${rows.map(rowHtml).join('')}
+    ${store ? `<tr style="background:var(--purple-bg);font-weight:800;border-top:2px solid var(--purple);">
+      <td style="padding:6px 8px;text-align:left;">🏪 ${store.employee}</td>
+      <td style="padding:6px 8px;text-align:center;">${store.customerDeals}</td><td style="padding:6px 8px;text-align:center;">${store.goldenPlans}</td>
+      <td style="padding:6px 8px;text-align:center;">${store.loyaltyCards}</td><td style="padding:6px 8px;text-align:center;">${store.purchased}</td>
+      <td style="padding:6px 8px;text-align:center;">${store.nonPurchased}</td><td style="padding:6px 8px;text-align:center;">${store.googleReview}</td>
+      <td style="padding:6px 8px;text-align:center;">${store.instagram}</td><td style="padding:6px 8px;text-align:center;">${store.facebook}</td>
+      <td style="padding:6px 8px;text-align:center;">${store.whatsappChannel}</td>
+      <td style="padding:6px 8px;text-align:center;color:var(--gold);">${store.conversionPct.toFixed(1)}%</td>
+    </tr>` : ''}
+    </tbody></table></div>
+  </div>`;
+
+  if (store) {
+    html += `<div class="card" style="margin-top:10px;">
+      <div class="card-title">📊 Store Overview — ${periodLabel}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center;">
+        <div><div style="font-size:22px;font-weight:900;color:var(--purple);">${store.avgDealsPerEmployee.toFixed(1)}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Avg. Deals / Employee</div></div>
+        <div><div style="font-size:22px;font-weight:900;color:var(--gold);">${store.conversionPct.toFixed(1)}%</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Conversion %</div></div>
+      </div>
+    </div>`;
+  }
+  box.innerHTML = html;
 }
 
 function setEmpWalkinsMode(mode) {
@@ -13436,27 +13422,49 @@ function renderAdminDashboardBody() {
     </div>`;
   }
 
-  // Stock Checklist — health stats as boxes + duty roster as Employee|Status tables, Retail & Wholesale shown separately
+  // Stock Checklist — health stats as boxes + "Today's Duty Assigned"
+  // table matching the Stock Checklist app's own home-screen table
+  // exactly: one row per shift (Opening/Closing), showing who's
+  // suggested/done today and who's suggested for tomorrow.
   if (st) {
     const stKeys = st.ok && st.today ? Object.keys(st.today) : [];
-    const dutyStatus = e => e.done ? '✅ Done' : (e.suggestedToday ? '⭐ Assigned Today' : e.suggestedTomorrow ? '⭐ Assigned Tomorrow' : e.status);
-    const dutyTable = (label, arr) => {
+    const personBadge = p => p.done
+      ? `<span class="duty-person">👤 ${p.employee}</span> <span class="duty-badge duty-done">✅ Done</span>`
+      : `<span class="duty-person duty-suggested-only">👤 ${p.employee} — Suggested</span>`;
+    const cellForShift = (arr) => {
       const list = arr || [];
-      return `<div class="dh-subhead">👤 ${label}</div>` + (list.length
-        ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Employee</th><th>Status</th></tr></thead><tbody>
-            ${list.map(e => `<tr><td>${e.employee}</td><td>${dutyStatus(e)}</td></tr>`).join('')}
-          </tbody></table></div>`
-        : '<div class="dh-empty-mini">Nothing to show.</div>');
+      if (!list.length) return '<span class="duty-empty">—</span>';
+      // A "Pending" person (suggested but not yet done) still needs its
+      // own badge, distinct from a bare "— Suggested" note — matches
+      // the reference table's Shishir Kumar Behera / Ch Sandeep rows.
+      return list.map(p => p.done
+        ? personBadge(p)
+        : (p.status === 'Pending'
+            ? `<span class="duty-person">👤 ${p.employee}</span> <span class="duty-badge duty-pending">⏳ Pending</span>`
+            : personBadge(p))
+      ).join('<br>');
     };
+    const tomorrowForShift = (arr) => {
+      const list = arr || [];
+      const name = list.map(p => p.suggestedTomorrow).find(n => n);
+      return name ? `<span class="duty-person">👤 ${name}</span>` : '<span class="duty-empty">—</span>';
+    };
+    const sectionTable = (label, icon, data) => `
+      <div class="duty-section-bar">${icon} ${label}</div>
+      <div class="dh-table-wrap"><table class="dh-mini-table duty-table"><thead>
+        <tr><th>Shift</th><th>Today Suggested / Done By</th><th>Tomorrow Suggested</th></tr>
+      </thead><tbody>
+        <tr><td class="duty-shift-label">Opening Duty</td><td>${cellForShift(data && data.opening)}</td><td>${tomorrowForShift(data && data.opening)}</td></tr>
+        <tr><td class="duty-shift-label">Closing Duty</td><td>${cellForShift(data && data.closing)}</td><td>${tomorrowForShift(data && data.closing)}</td></tr>
+      </tbody></table></div>`;
     html += `<div class="dh-panel dh-panel-wide" style="background:#ede9fe;--dh-accent:#6b21a8;">
       <div class="dh-panel-title"><span class="t">📝 Stock Checklist — Today</span><button class="dh-panel-view-btn" onclick="showAdminPage('stock')">View →</button></div>
       ${stKeys.length ? `<div class="dh-stat-grid6" style="grid-template-columns:repeat(${Math.min(stKeys.length,4)},1fr)">
         ${stKeys.slice(0,4).map(k => `<div class="dh-stat-box2"><div class="v" style="color:#6b21a8">${st.today[k]}</div><div class="l">${k}</div></div>`).join('')}
       </div>` : '<div class="dh-kpi-sub">No data yet</div>'}
-      ${dutyTable('Retail — Opening', st.retail && st.retail.opening)}
-      ${dutyTable('Retail — Closing', st.retail && st.retail.closing)}
-      ${dutyTable('Wholesale — Opening', st.wholesale && st.wholesale.opening)}
-      ${dutyTable('Wholesale — Closing', st.wholesale && st.wholesale.closing)}
+      <div class="dh-subhead">👥 Today's Duty Assigned</div>
+      ${sectionTable('Retail', '🏬', st.retail)}
+      ${sectionTable('Wholesale', '📦', st.wholesale)}
     </div>`;
   }
 
