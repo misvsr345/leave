@@ -9564,8 +9564,8 @@ function loadDsrDateRange(who) {
 // ══════════════════════════════════════
 var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbzfhY3c3oYw4lhON-KnIrgSsiF6WKwQiAUrX_1vNVhRTFr5xIa19ymrqcE837wr_TpC/exec";
 var DSR_ST = {
-  emp:   { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
-  admin: { gold: [], silver: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
+  emp:   { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
+  admin: { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
 };
 
 function dsrfEmpDisplayName(who) {
@@ -9610,7 +9610,7 @@ function renderDsrEntryForm(who) {
       </div>
 
       <div class="pay-status-section">
-        <div class="pay-status-title">💰 &nbsp;Payment Status <span class="req">★</span></div>
+        <div class="pay-status-title">💰 &nbsp;Purchase Status <span class="req">★</span></div>
         <div class="pay-tgl" id="dsrfPayTgl-${who}">
           <button id="dsrfBtnPurchased-${who}" class="on purchased" onclick="dsrfSetPayStatus('${who}','Purchased',this)">✅ Purchased</button>
           <button id="dsrfBtnAdvance-${who}" onclick="dsrfSetPayStatus('${who}','Advance',this)">⏳ Advance</button>
@@ -9639,7 +9639,7 @@ function renderDsrEntryForm(who) {
 
   if (!st.loaded) {
     fetch(DSR_GAS_URL + '?action=getData').then(r => r.json()).then(data => {
-      if (data.products) { st.gold = data.products.gold || []; st.silver = data.products.silver || []; }
+      if (data.products) { st.gold = data.products.gold || []; st.silver = data.products.silver || []; st.diamond = data.products.diamond || []; }
       st.loaded = true;
       document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
         dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, ''));
@@ -9658,12 +9658,23 @@ function renderDsrEntryForm(who) {
 
 function dsrfRefreshProducts(who, eid) {
   const st = DSR_ST[who];
-  const gOpts = '<option value="">-- Select --</option>' + st.gold.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
-  const gnEl = document.getElementById(`dsrfPn-${who}-${eid}`);
   const snEl = document.getElementById(`dsrfSn-${who}-${eid}`);
-  if (gnEl) gnEl.innerHTML = gOpts;
   if (snEl) snEl.innerHTML = sOpts;
+  dsrfRefreshGoldDiamondProducts(who, eid);
+}
+
+// Gold and Diamond share the SAME product-name dropdown (dsrfPn-*) and
+// the same field set — only the underlying product list swaps based on
+// which type is currently selected for this item entry.
+function dsrfRefreshGoldDiamondProducts(who, eid) {
+  const st = DSR_ST[who];
+  const typEl = document.getElementById(`dsrfTyp-${who}-${eid}`);
+  const typ = typEl ? typEl.value : 'Gold';
+  const list = (typ === 'Diamond') ? st.diamond : st.gold;
+  const gOpts = '<option value="">-- Select --</option>' + list.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const gnEl = document.getElementById(`dsrfPn-${who}-${eid}`);
+  if (gnEl) gnEl.innerHTML = gOpts;
 }
 
 function dsrfPhotoWidget(who, eid, pfx) {
@@ -9708,6 +9719,7 @@ function dsrfAddEntry(who) {
           <div class="tgl" id="dsrfTglTyp-${who}-${eid}">
             <button class="on" onclick="dsrfSetType('${who}',${eid},'Gold',this)">Gold</button>
             <button onclick="dsrfSetType('${who}',${eid},'Silver',this)">Silver</button>
+            <button onclick="dsrfSetType('${who}',${eid},'Diamond',this)">Diamond</button>
           </div><input type="hidden" id="dsrfTyp-${who}-${eid}" value="Gold"></div>
         <div><label>Product From <span class="req">★</span></label>
           <div class="tgl" id="dsrfTglPf-${who}-${eid}">
@@ -9718,7 +9730,7 @@ function dsrfAddEntry(who) {
     </div>
     <div id="dsrfGoldP-${who}-${eid}">
       <div class="card" style="margin:10px 14px 14px;">
-        <div class="ch">◈ &nbsp;Gold Item Details</div>
+        <div class="ch" id="dsrfGoldPTitle-${who}-${eid}">◈ &nbsp;Gold Item Details</div>
         <div class="cb">
           <div class="g2 mb12">
             <div><label>Tag Status</label>
@@ -9800,8 +9812,15 @@ function dsrfSetTgl(who, grpId, hidId, val, btn) {
 function dsrfSetType(who, eid, val, btn) {
   dsrfSetTgl(who, `dsrfTglTyp-${who}-${eid}`, `dsrfTyp-${who}-${eid}`, val, btn);
   const silver = val === 'Silver';
+  // Gold and Diamond use the exact same field panel (dsrfGoldP-*) — only
+  // Silver switches to the separate simpler panel (dsrfSilverP-*).
   document.getElementById(`dsrfGoldP-${who}-${eid}`).style.display = silver ? 'none' : 'block';
   document.getElementById(`dsrfSilverP-${who}-${eid}`).style.display = silver ? 'block' : 'none';
+  const titleEl = document.getElementById(`dsrfGoldPTitle-${who}-${eid}`);
+  if (titleEl) titleEl.innerHTML = (val === 'Diamond') ? '◈ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details';
+  // Product-name dropdown must show Gold items vs Diamond items depending
+  // on which type is now selected (Silver keeps its own separate dropdown).
+  if (!silver) dsrfRefreshGoldDiamondProducts(who, eid);
 }
 
 // Tag / Non Tag toggle — fixed so the Tag No field only shows for "Tag",
