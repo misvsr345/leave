@@ -1877,6 +1877,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="empQADsrTillDate" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="empQADsrDateRange" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
+        <div class="quick-action-btn" id="empQADsrAdvOrder" onclick="showEmpPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — update &amp; close</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-dsr-today">
@@ -1927,6 +1928,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-newentry">
       <div class="section-hdr"><span class="section-title2">➕ New DSR Entry</span></div>
       <div id="dsrEntryFormBox-emp"></div>
+    </div>
+    <div class="page-section" id="emp-dsr-advorder">
+      <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed</span></div>
+      <div class="card"><div id="aoeListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+      <div id="aoeEditBox-emp"></div>
     </div>
 
     <!-- ══════════════ GOLDEN AURA SECTION (employee) ══════════════ -->
@@ -2727,6 +2733,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
+        <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-dsr-today">
@@ -2782,6 +2789,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-newentry">
       <div class="section-hdr"><span class="section-title2">➕ New DSR Entry</span></div>
       <div id="dsrEntryFormBox-admin"></div>
+    </div>
+    <div class="page-section" id="admin-dsr-advorder">
+      <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed — All Employees</span></div>
+      <div class="card"><div id="aoeListBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+      <div id="aoeEditBox-admin"></div>
     </div>
 
     <!-- ══════════════ GOLDEN AURA SECTION (admin) ══════════════ -->
@@ -4313,7 +4325,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openEmpMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -4351,7 +4363,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openAdminMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -4422,7 +4434,7 @@ const SECTION_LABEL_MAP = {
   'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
-  'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR',
+  'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads',
   profile: 'Emp Details'
@@ -4545,6 +4557,7 @@ function showEmpPage(page) {
   if(page==='dsr-missing') loadDsrMissing('emp');
   if(page==='dsr-tilldate') loadDsrTillDate('emp');
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
+  if(page==='dsr-advorder') loadAdvanceOrderList('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
   if(page==='stock') loadStockDashboard('emp');
@@ -6948,6 +6961,7 @@ function showAdminPage(page) {
   if(page==='dsr-missing') loadDsrMissing('admin');
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
+  if(page==='dsr-advorder') loadAdvanceOrderList('admin');
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
   if(page==='golden-aura-list') loadGoldenAuraList('admin');
@@ -9610,7 +9624,7 @@ function renderDsrEntryForm(who) {
       </div>
 
       <div class="pay-status-section">
-        <div class="pay-status-title">💰 &nbsp;Purchase Status <span class="req">★</span></div>
+        <div class="pay-status-title">💰 &nbsp;Payment Status <span class="req">★</span></div>
         <div class="pay-tgl" id="dsrfPayTgl-${who}">
           <button id="dsrfBtnPurchased-${who}" class="on purchased" onclick="dsrfSetPayStatus('${who}','Purchased',this)">✅ Purchased</button>
           <button id="dsrfBtnAdvance-${who}" onclick="dsrfSetPayStatus('${who}','Advance',this)">⏳ Advance</button>
@@ -9658,23 +9672,15 @@ function renderDsrEntryForm(who) {
 
 function dsrfRefreshProducts(who, eid) {
   const st = DSR_ST[who];
-  const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
-  const snEl = document.getElementById(`dsrfSn-${who}-${eid}`);
-  if (snEl) snEl.innerHTML = sOpts;
-  dsrfRefreshGoldDiamondProducts(who, eid);
-}
-
-// Gold and Diamond share the SAME product-name dropdown (dsrfPn-*) and
-// the same field set — only the underlying product list swaps based on
-// which type is currently selected for this item entry.
-function dsrfRefreshGoldDiamondProducts(who, eid) {
-  const st = DSR_ST[who];
   const typEl = document.getElementById(`dsrfTyp-${who}-${eid}`);
-  const typ = typEl ? typEl.value : 'Gold';
-  const list = (typ === 'Diamond') ? st.diamond : st.gold;
-  const gOpts = '<option value="">-- Select --</option>' + list.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const curType = typEl ? typEl.value : 'Gold';
+  const gList = curType === 'Diamond' ? st.diamond : st.gold;
+  const gOpts = '<option value="">-- Select --</option>' + gList.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const gnEl = document.getElementById(`dsrfPn-${who}-${eid}`);
+  const snEl = document.getElementById(`dsrfSn-${who}-${eid}`);
   if (gnEl) gnEl.innerHTML = gOpts;
+  if (snEl) snEl.innerHTML = sOpts;
 }
 
 function dsrfPhotoWidget(who, eid, pfx) {
@@ -9730,7 +9736,7 @@ function dsrfAddEntry(who) {
     </div>
     <div id="dsrfGoldP-${who}-${eid}">
       <div class="card" style="margin:10px 14px 14px;">
-        <div class="ch" id="dsrfGoldPTitle-${who}-${eid}">◈ &nbsp;Gold Item Details</div>
+        <div class="ch" id="dsrfGoldHd-${who}-${eid}">◈ &nbsp;Gold Item Details</div>
         <div class="cb">
           <div class="g2 mb12">
             <div><label>Tag Status</label>
@@ -9812,15 +9818,14 @@ function dsrfSetTgl(who, grpId, hidId, val, btn) {
 function dsrfSetType(who, eid, val, btn) {
   dsrfSetTgl(who, `dsrfTglTyp-${who}-${eid}`, `dsrfTyp-${who}-${eid}`, val, btn);
   const silver = val === 'Silver';
-  // Gold and Diamond use the exact same field panel (dsrfGoldP-*) — only
-  // Silver switches to the separate simpler panel (dsrfSilverP-*).
+  // Diamond reuses the exact same field set as Gold (Tag Status, Tag No,
+  // Product Name, Design, Tunch, Weight, Photo) — only the product list
+  // and heading label change.
   document.getElementById(`dsrfGoldP-${who}-${eid}`).style.display = silver ? 'none' : 'block';
   document.getElementById(`dsrfSilverP-${who}-${eid}`).style.display = silver ? 'block' : 'none';
-  const titleEl = document.getElementById(`dsrfGoldPTitle-${who}-${eid}`);
-  if (titleEl) titleEl.innerHTML = (val === 'Diamond') ? '◈ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details';
-  // Product-name dropdown must show Gold items vs Diamond items depending
-  // on which type is now selected (Silver keeps its own separate dropdown).
-  if (!silver) dsrfRefreshGoldDiamondProducts(who, eid);
+  const hd = document.getElementById(`dsrfGoldHd-${who}-${eid}`);
+  if (hd) hd.innerHTML = val === 'Diamond' ? '◆ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details';
+  dsrfRefreshProducts(who, eid);
 }
 
 // Tag / Non Tag toggle — fixed so the Tag No field only shows for "Tag",
@@ -12147,6 +12152,366 @@ function dsrfConfirmSubmit(who, evt) {
       btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ Network error: ' + err + ' — safe to tap Submit again, it will not create a duplicate.';
+    });
+}
+
+// ══════════════════════════════════════
+// DSR — ADVANCE & ORDER PLACED (list pending pickups, edit/close them)
+// "aoe" = Advance/Order Edit
+// ══════════════════════════════════════
+var AOE_ST = { emp: { rows: [] }, admin: { rows: [] } };
+
+function loadAdvanceOrderList(who) {
+  const box = document.getElementById('aoeListBox-' + who);
+  document.getElementById('aoeEditBox-' + who).innerHTML = '';
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  const empName = who === 'admin' ? '' : state.empName;
+  fetch(DSR_GAS_URL + '?action=getAdvanceOrderList&role=' + encodeURIComponent(role) + '&empName=' + encodeURIComponent(empName || ''))
+    .then(r => r.json())
+    .then(res => {
+      if (!res || res.status !== 'success') { box.innerHTML = '<div class="empty-state"><p>Could not load pending list.</p></div>'; return; }
+      AOE_ST[who].rows = res.rows || [];
+      renderAdvanceOrderListRows(who);
+    })
+    .catch(() => { box.innerHTML = '<div class="empty-state"><p>Network error loading pending list.</p></div>'; });
+}
+
+function renderAdvanceOrderListRows(who) {
+  const box = document.getElementById('aoeListBox-' + who);
+  const rows = AOE_ST[who].rows;
+  if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ Nothing pending — no Advance or Order Placed DSRs.</p></div>'; return; }
+  let html = '';
+  rows.forEach(r => {
+    const tagIcon = r.tag === 'Advance' ? '⏳' : '📦';
+    const tagPill = r.tag === 'Advance'
+      ? `<span class="kd-pill gold">${tagIcon} ${r.tag}</span>`
+      : `<span class="kd-pill" style="background:#e6f0ff;color:#1565C0;border:1px solid #1565C0;">${tagIcon} ${r.tag}</span>`;
+    html += `<div class="kd-card" style="cursor:pointer;margin-bottom:10px;" onclick="openAdvanceOrderEdit('${who}','${escJs(r.dsrId)}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b>${r.customerName || '—'}</b>
+        ${tagPill}
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">🧾 ${r.dsrId} &nbsp;·&nbsp; 👤 ${r.employeeName} &nbsp;·&nbsp; 📱 ${r.mobile || '—'}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">📅 Bill: ${fmtDMY(r.billDate) || '—'} &nbsp;·&nbsp; 🧿 ${r.itemCount} item(s)</div>
+    </div>`;
+  });
+  box.innerHTML = html;
+}
+
+function aoeRefreshProducts(who, eid) {
+  const st = DSR_ST[who];
+  const typEl = document.getElementById(`aoeTyp-${who}-${eid}`);
+  const curType = typEl ? typEl.value : 'Gold';
+  const gList = curType === 'Diamond' ? st.diamond : st.gold;
+  const gOpts = '<option value="">-- Select --</option>' + gList.map(p => `<option${p === document.getElementById(`aoePnPre-${who}-${eid}`).value ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option${p === document.getElementById(`aoeSnPre-${who}-${eid}`).value ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const gnEl = document.getElementById(`aoePn-${who}-${eid}`);
+  const snEl = document.getElementById(`aoeSn-${who}-${eid}`);
+  if (gnEl) gnEl.innerHTML = gOpts;
+  if (snEl) snEl.innerHTML = sOpts;
+}
+
+function aoeSetType(who, eid, val, btn) {
+  dsrfSetTgl(who, `aoeTglTyp-${who}-${eid}`, `aoeTyp-${who}-${eid}`, val, btn);
+  const silver = val === 'Silver';
+  document.getElementById(`aoeGoldP-${who}-${eid}`).style.display = silver ? 'none' : 'block';
+  document.getElementById(`aoeSilverP-${who}-${eid}`).style.display = silver ? 'block' : 'none';
+  const hd = document.getElementById(`aoeGoldHd-${who}-${eid}`);
+  if (hd) hd.innerHTML = val === 'Diamond' ? '◆ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details';
+  aoeRefreshProducts(who, eid);
+}
+
+function aoeSetTagTgl(who, eid, val, btn) {
+  document.getElementById(`aoeTglTag-${who}-${eid}`).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(`aoeTagSt-${who}-${eid}`).value = val;
+  document.getElementById(`aoeTagNoWrap-${who}-${eid}`).style.display = (val === 'Tag') ? '' : 'none';
+}
+
+function aoeToggleOther(who, eid, kind) {
+  if (kind === 'gold') {
+    document.getElementById(`aoePnOther-${who}-${eid}`).style.display = document.getElementById(`aoePn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
+  } else {
+    document.getElementById(`aoeSnOther-${who}-${eid}`).style.display = document.getElementById(`aoeSn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
+  }
+}
+
+// One editable item block, pre-filled from an existing DSR item.
+function aoeItemBlockHtml(who, eid, num, it) {
+  const st = DSR_ST[who];
+  const tOpts = st.tunchs.map(t => `<option${t === it.tunch ? ' selected' : ''}>${t}</option>`).join('');
+  const type = it.type || 'Gold';
+  const isSilver = type === 'Silver';
+  const isDiamond = type === 'Diamond';
+  return `
+    <div class="entry" id="aoe-entry-${who}-${eid}">
+      <div class="entry-hd">
+        <span class="entry-title">◈ &nbsp;Item ${num}</span>
+        ${num > 1 ? `<button class="rm-entry" onclick="aoeRmEntry('${who}','${eid}')">✕ Remove</button>` : '<span></span>'}
+      </div>
+      <div class="card" style="margin:14px 14px 0;">
+        <div class="ch">⬡ &nbsp;Type &amp; Source</div>
+        <div class="cb"><div class="g2">
+          <div><label>Type <span class="req">★</span></label>
+            <div class="tgl" id="aoeTglTyp-${who}-${eid}">
+              <button class="${type==='Gold'?'on':''}" onclick="aoeSetType('${who}','${eid}','Gold',this)">Gold</button>
+              <button class="${isSilver?'on':''}" onclick="aoeSetType('${who}','${eid}','Silver',this)">Silver</button>
+              <button class="${isDiamond?'on':''}" onclick="aoeSetType('${who}','${eid}','Diamond',this)">Diamond</button>
+            </div><input type="hidden" id="aoeTyp-${who}-${eid}" value="${type}"></div>
+          <div><label>Product From <span class="req">★</span></label>
+            <div class="tgl" id="aoeTglPf-${who}-${eid}">
+              <button class="${it.productFrom!=='Main'?'on':''}" onclick="dsrfSetTgl('${who}','aoeTglPf-${who}-${eid}','aoePf-${who}-${eid}','Retail',this)">Retail</button>
+              <button class="${it.productFrom==='Main'?'on':''}" onclick="dsrfSetTgl('${who}','aoeTglPf-${who}-${eid}','aoePf-${who}-${eid}','Main',this)">Main</button>
+            </div><input type="hidden" id="aoePf-${who}-${eid}" value="${it.productFrom || 'Retail'}"></div>
+        </div></div>
+      </div>
+      <div id="aoeGoldP-${who}-${eid}" style="${isSilver ? 'display:none;' : ''}">
+        <div class="card" style="margin:10px 14px 14px;">
+          <div class="ch" id="aoeGoldHd-${who}-${eid}">${isDiamond ? '◆ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details'}</div>
+          <div class="cb">
+            <div class="g2 mb12">
+              <div><label>Tag Status</label>
+                <div class="tgl" id="aoeTglTag-${who}-${eid}">
+                  <button class="${it.tagStatus!=='No Tag'?'on':''}" onclick="aoeSetTagTgl('${who}','${eid}','Tag',this)">Tag</button>
+                  <button class="${it.tagStatus==='No Tag'?'on':''}" onclick="aoeSetTagTgl('${who}','${eid}','No Tag',this)">Non Tag</button>
+                </div><input type="hidden" id="aoeTagSt-${who}-${eid}" value="${it.tagStatus || 'Tag'}"></div>
+              <div id="aoeTagNoWrap-${who}-${eid}" style="${it.tagStatus==='No Tag'?'display:none;':''}"><label>Tag No <span class="req">★</span></label>
+                <input type="text" id="aoeTagNo-${who}-${eid}" value="${it.tagNo || ''}" placeholder="e.g. C498, R749"></div>
+            </div>
+            <div class="g2 mb12">
+              <div><label>Product Name <span class="req">★</span></label>
+                <select id="aoePn-${who}-${eid}" onchange="aoeToggleOther('${who}','${eid}','gold')"><option value="">-- Select --</option></select>
+                <input type="hidden" id="aoePnPre-${who}-${eid}" value="${it.productName || ''}">
+                <div id="aoePnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="aoePnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
+              <div><label>Design <span class="req">★</span></label><input type="text" id="aoeDes-${who}-${eid}" value="${it.design || ''}" placeholder="Bombay, Traditional..."></div>
+            </div>
+            <div class="g3">
+              <div><label>Tunch <span class="req">★</span></label><select id="aoeTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
+              <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="aoeWt-${who}-${eid}" value="${it.weight || ''}" placeholder="e.g. 21.37"></div>
+              <div><label>Photo</label>${dsrfPhotoWidget(who, 'aoe' + eid, 'g')}${it.photo ? `<div style="font-size:11px;color:var(--dmuted);margin-top:4px;">Current: <a href="${it.photo}" target="_blank">view</a> (leave blank to keep)</div>` : ''}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="aoeSilverP-${who}-${eid}" style="${isSilver ? '' : 'display:none;'}">
+        <div class="card" style="margin:10px 14px 14px;">
+          <div class="ch">◎ &nbsp;Silver Item Details</div>
+          <div class="cb">
+            <div class="g2 mb12">
+              <div><label>Silver Item <span class="req">★</span></label>
+                <select id="aoeSn-${who}-${eid}" onchange="aoeToggleOther('${who}','${eid}','silver')"><option value="">-- Select --</option></select>
+                <input type="hidden" id="aoeSnPre-${who}-${eid}" value="${it.silverItemName || ''}">
+                <div id="aoeSnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="aoeSnCustom-${who}-${eid}" placeholder="Enter silver item name"></div></div>
+              <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="aoeSw-${who}-${eid}" value="${it.silverItemWeight || ''}" placeholder="e.g. 12.50"></div>
+            </div>
+            <div><label>Photo</label>${dsrfPhotoWidget(who, 'aoe' + eid, 's')}${it.silverItemPhoto ? `<div style="font-size:11px;color:var(--dmuted);margin-top:4px;">Current: <a href="${it.silverItemPhoto}" target="_blank">view</a> (leave blank to keep)</div>` : ''}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function aoeAddEntry(who, item) {
+  const st = AOE_ST[who];
+  st._seq = (st._seq || 0) + 1;
+  const eid = 'e' + st._seq;
+  const list = document.getElementById('aoeItemsList-' + who);
+  const num = list.querySelectorAll('.entry').length + 1;
+  const it = item || { type: 'Gold', productFrom: 'Retail', tagStatus: 'Tag' };
+  const div = document.createElement('div');
+  div.innerHTML = aoeItemBlockHtml(who, eid, num, it);
+  list.appendChild(div.firstElementChild);
+  aoeRefreshProducts(who, eid);
+  aoeReNumEntries(who);
+}
+
+function aoeRmEntry(who, eid) {
+  const el = document.getElementById(`aoe-entry-${who}-${eid}`);
+  if (el) { el.remove(); aoeReNumEntries(who); }
+}
+
+function aoeReNumEntries(who) {
+  document.querySelectorAll(`#aoeItemsList-${who} .entry`).forEach((e, i) => {
+    const t = e.querySelector('.entry-title');
+    if (t) t.innerHTML = '◈ &nbsp;Item ' + (i + 1);
+  });
+}
+
+function aoeSetNewStatus(who, val, btn) {
+  document.getElementById('aoeStatusTgl-' + who).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('aoeNewStatus-' + who).value = val;
+  document.getElementById('aoeTakenDateWrap-' + who).style.display = (val === 'Purchased') ? '' : 'none';
+}
+
+function openAdvanceOrderEdit(who, dsrId) {
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  const editBox = document.getElementById('aoeEditBox-' + who);
+  editBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading DSR...</div>';
+  editBox.scrollIntoView({ behavior: 'smooth' });
+
+  fetch(DSR_GAS_URL + '?action=getDsrFullForEdit&dsrId=' + encodeURIComponent(dsrId) + '&role=' + encodeURIComponent(role))
+    .then(r => r.json())
+    .then(head => {
+      if (!head || head.status !== 'success') { editBox.innerHTML = `<div class="empty-state"><p>${(head && head.message) || 'Could not load this DSR.'}</p></div>`; return; }
+      window['__aoeHead_' + who] = head;
+
+      editBox.innerHTML = `
+        <div class="dsrf-scope">
+          <div class="card">
+            <div class="ch">✎ &nbsp;Bill Details</div>
+            <div class="cb">
+              <div class="g2 mb14">
+                <div><label>Bill Date <span class="req">★</span></label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}"></div>
+                <div><label>Customer Name <span class="req">★</span></label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}"></div>
+              </div>
+              <div class="g2">
+                <div><label>Mobile Number <span class="req">★</span></label><input type="tel" id="aoeMobile-${who}" maxlength="10" value="${head.mobileNumber || ''}"></div>
+                <div><label>Address <span class="req">★</span></label><input type="text" id="aoeAddr-${who}" value="${head.address || ''}"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pay-status-section">
+            <div class="pay-status-title">💰 &nbsp;New Status <span class="req">★</span></div>
+            <div class="pay-tgl" id="aoeStatusTgl-${who}">
+              <button class="${head.paymentStatus==='Advance'?'on advance':''}" onclick="aoeSetNewStatus('${who}','Advance',this)">⏳ Still Advance</button>
+              <button class="${head.paymentStatus==='Order Placed'?'on order':''}" onclick="aoeSetNewStatus('${who}','Order Placed',this)">📦 Still Order Placed</button>
+              <button class="on purchased" onclick="aoeSetNewStatus('${who}','Purchased',this)">✅ Purchased Now</button>
+            </div>
+            <input type="hidden" id="aoeNewStatus-${who}" value="Purchased">
+            <div class="form-row" id="aoeTakenDateWrap-${who}" style="margin-top:10px;">
+              <label>Customer Taken Date <span class="req">★</span></label>
+              <input type="date" lang="en-GB" id="aoeTakenDate-${who}">
+            </div>
+          </div>
+
+          <div id="aoeItemsList-${who}"></div>
+          <button class="add-entry-btn" onclick="aoeAddEntry('${who}')">＋ &nbsp; Add Another Item</button>
+
+          <button class="sbtn" id="aoeSubmitBtn-${who}" onclick="submitAdvanceOrderUpdate('${who}')" style="margin-top:14px;">💾 &nbsp; Save Update &nbsp; 💾</button>
+          <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById('aoeEditBox-${who}').innerHTML=''">Cancel</button>
+          <div id="aoeStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
+        </div>`;
+
+      document.getElementById('aoeTakenDate-' + who).value = toYMD(new Date());
+      document.getElementById('aoeTakenDateWrap-' + who).style.display = '';
+
+      const renderItems = () => {
+        document.getElementById('aoeItemsList-' + who).innerHTML = '';
+        (head.items || []).forEach(it => aoeAddEntry(who, it));
+      };
+      if (!DSR_ST[who].loaded) {
+        fetch(DSR_GAS_URL + '?action=getData').then(r => r.json()).then(data => {
+          if (data.products) { DSR_ST[who].gold = data.products.gold || []; DSR_ST[who].silver = data.products.silver || []; DSR_ST[who].diamond = data.products.diamond || []; }
+          DSR_ST[who].loaded = true;
+          renderItems();
+        }).catch(renderItems);
+      } else {
+        renderItems();
+      }
+    })
+    .catch(() => { editBox.innerHTML = '<div class="empty-state"><p>Network error loading this DSR.</p></div>'; });
+}
+
+function submitAdvanceOrderUpdate(who) {
+  const head = window['__aoeHead_' + who];
+  if (!head) { toast('Nothing loaded to update', 'error'); return; }
+
+  const newStatus = dsrfGv(`aoeNewStatus-${who}`);
+  const takenDate = document.getElementById('aoeTakenDate-' + who) ? document.getElementById('aoeTakenDate-' + who).value : '';
+  if (newStatus === 'Purchased' && !takenDate) { toast('Please enter the date the customer took the item!', 'error'); return; }
+
+  const cust = (dsrfGv(`aoeCust-${who}`) || '').toUpperCase();
+  const mob  = dsrfGv(`aoeMobile-${who}`);
+  const addr = (dsrfGv(`aoeAddr-${who}`) || '').toUpperCase();
+  const date = dsrfGv(`aoeBillDate-${who}`);
+  if (!cust || !mob || !addr || !date) { toast('Please fill Bill Date, Customer, Mobile and Address!', 'error'); return; }
+  if (!/^\d{10}$/.test(mob)) { toast('Mobile must be 10 digits!', 'error'); return; }
+
+  const entries = document.querySelectorAll(`#aoeItemsList-${who} .entry`);
+  if (!entries.length) { toast('At least one item is required!', 'error'); return; }
+
+  const rows = []; let ok = true, errMsg = '';
+  entries.forEach(block => {
+    if (!ok) return;
+    const eid = block.id.replace(`aoe-entry-${who}-`, '');
+    const type = dsrfGv(`aoeTyp-${who}-${eid}`), pf = dsrfGv(`aoePf-${who}-${eid}`);
+
+    if (type === 'Silver') {
+      let sn = dsrfGv(`aoeSn-${who}-${eid}`); if (sn === 'Other' || !sn) sn = dsrfGv(`aoeSnCustom-${who}-${eid}`) || dsrfGv(`aoeSnPre-${who}-${eid}`);
+      const sw = dsrfGv(`aoeSw-${who}-${eid}`);
+      if (!sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
+      if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
+      const sPhotoNew = dsrfGv(`dsrfPh-s-${who}-aoe${eid}`);
+      rows.push({
+        type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
+        silverItemName: sn, silverItemWeight: sw,
+        silverItemPhoto: sPhotoNew.length > 100 ? sPhotoNew : ''
+      });
+    } else {
+      let pn = dsrfGv(`aoePn-${who}-${eid}`); if (pn === 'Other' || !pn) pn = dsrfGv(`aoePnCustom-${who}-${eid}`) || dsrfGv(`aoePnPre-${who}-${eid}`);
+      const des = dsrfGv(`aoeDes-${who}-${eid}`), tch = dsrfGv(`aoeTch-${who}-${eid}`), wt = dsrfGv(`aoeWt-${who}-${eid}`),
+            ts = dsrfGv(`aoeTagSt-${who}-${eid}`), tn = dsrfGv(`aoeTagNo-${who}-${eid}`);
+      if (!pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
+      if (!des) { ok = false; errMsg = 'Please enter Design!'; return; }
+      if (!tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
+      if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+      if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+      const gPhotoNew = dsrfGv(`dsrfPh-g-${who}-aoe${eid}`);
+      rows.push({
+        type, productFrom: pf, tagStatus: ts || '', tagNo: tn || '', productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
+        photo: gPhotoNew.length > 100 ? gPhotoNew : '',
+        silverItemName: '', silverItemWeight: '', silverItemPhoto: ''
+      });
+    }
+  });
+
+  // Carry forward each item's existing (already-uploaded) photo URL when
+  // the employee didn't pick a new one — matched positionally against
+  // what the form was pre-filled with.
+  (head.items || []).forEach((orig, i) => {
+    if (rows[i]) {
+      if (!rows[i].photo && orig.photo) rows[i].photo = orig.photo;
+      if (!rows[i].silverItemPhoto && orig.silverItemPhoto) rows[i].silverItemPhoto = orig.silverItemPhoto;
+    }
+  });
+
+  if (!ok) { toast(errMsg, 'error'); return; }
+
+  const btn = document.getElementById('aoeSubmitBtn-' + who);
+  const msg = document.getElementById('aoeStatusMsg-' + who);
+  btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Saving...';
+  msg.textContent = '';
+
+  const payload = {
+    action: 'updateAdvanceOrderDsr',
+    dsrId: head.dsrId,
+    employeeName: head.employeeName,
+    billDate: date, customerName: cust, mobileNumber: mob, address: addr,
+    newPaymentStatus: newStatus,
+    takenDate: newStatus === 'Purchased' ? takenDate : '',
+    rows: rows
+  };
+
+  fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(r => r.json())
+    .then(result => {
+      btn.disabled = false; btn.innerHTML = '💾 &nbsp; Save Update &nbsp; 💾';
+      if (result.status === 'success') {
+        toast('✅ DSR updated' + (newStatus === 'Purchased' ? ' — closed out' : ''), 'success');
+        document.getElementById('aoeEditBox-' + who).innerHTML = '';
+        loadAdvanceOrderList(who);
+      } else {
+        msg.style.color = 'var(--red)';
+        msg.textContent = '❌ ' + (result.message || 'Update failed');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false; btn.innerHTML = '💾 &nbsp; Save Update &nbsp; 💾';
+      msg.style.color = 'var(--red)';
+      msg.textContent = '❌ Network error: ' + err;
     });
 }
 
