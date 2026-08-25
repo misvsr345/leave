@@ -574,7 +574,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
      Mobile is untouched — this page stays the main landing screen there. */
   #admin-modulepicker, #emp-modulepicker,
   #adminSectionsFab, #empSectionsFab,
-  #adminBackFab, #empBackFab { display: none !important; }
+  #adminSectionBackFab, #empSectionBackFab,
+  #adminDashboardFabTop, #empDashboardFabTop { display: none !important; }
+  /* The single "← Back" fab is desktop-visible too now (JS toggles it
+     with .show — see updateBackFabs) so there's always exactly one way
+     back, one step at a time, even on desktop. */
 
   /* Shift main content right of the sidebar instead of centering under
      it — max-width widened too, since desktop has the room now. */
@@ -735,6 +739,14 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-mini-table td { padding: 6px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; text-align: center; }
 .dh-mini-table td:first-child, .dh-mini-table th:first-child { text-align: left; }
 .dh-mini-table tr:last-child td { border-bottom: none; }
+/* Excel-style full grid borders (every cell boxed, not just row
+   underlines) — requested specifically for the Loyalty Card dashboard
+   panel's tables. */
+.dh-mini-table-bordered, .dh-mini-table-bordered th, .dh-mini-table-bordered td {
+  border: 1px solid var(--border, #d8d8d8) !important;
+}
+.dh-mini-table-bordered { border-collapse: collapse; }
+.dh-mini-table-bordered tr:last-child td { border-bottom: 1px solid var(--border, #d8d8d8) !important; }
 .duty-section-bar { background: #1a1a2e; color: #fff; font-weight: 700; font-size: 11.5px; padding: 7px 10px; border-radius: 6px 6px 0 0; margin-top: 8px; }
 .duty-table th { background: #eef7d8; }
 .duty-shift-label { font-weight: 700; color: var(--purple); text-align: left !important; white-space: nowrap; }
@@ -1420,8 +1432,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
         <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
-        <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="showEmpPage('modulepicker')">← Back</button>
-        <button class="tb-chip back-fab-top back-fab-section" id="empSectionBackFab" onclick="goToSectionDashboard('emp')">↩ Back</button>
+        <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -2107,8 +2118,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <button class="tb-chip" id="adminDashboardFabTop" onclick="showAdminPage('dashboard-hub')" title="Dashboard">📊 Dashboard</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
-        <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="showAdminPage('modulepicker')">← Back</button>
-        <button class="tb-chip back-fab-top back-fab-section" id="adminSectionBackFab" onclick="goToSectionDashboard('admin')">↩ Back</button>
+        <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -3045,9 +3055,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="admin-flagged-numbers">
       <div class="section-hdr"><span class="section-title2">🚫 Flagged Numbers</span></div>
-      <div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" id="flagSelectAll" onchange="toggleAllFlaggedNumbers(this.checked)"> Select All</label>
-        <button class="btn-primary" style="padding:7px 14px;font-size:12px;background:#c0392b;" onclick="deleteSelectedFlaggedNumbers()">🗑️ Delete Selected</button>
+      <div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div id="flagBulkBar" style="display:flex;align-items:center;gap:10px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" id="flagSelectAll" onchange="toggleAllFlaggedNumbers(this.checked)"> Select All</label>
+          <button class="btn-primary" style="padding:7px 14px;font-size:12px;background:#c0392b;" onclick="deleteSelectedFlaggedNumbers()">🗑️ Delete Selected</button>
+        </div>
+        <button class="btn-secondary" id="flagHistoryToggleBtn" style="padding:7px 14px;font-size:12px;" onclick="toggleFlagHistoryMode()">🕘 View Full History</button>
       </div>
       <div id="flaggedNumbersList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -4462,23 +4475,30 @@ function goToSectionDashboard(who) {
   const dash = getSectionDashboardPage(who, current);
   if (dash) (who === 'admin' ? showAdminPage : showEmpPage)(dash);
 }
-// Shows exactly one of the two back buttons at a time:
-//  - on a section's own dashboard (or main landing / no-section pages like
-//    Emp Details) -> only the generic "← Back" (to main landing) shows
-//  - on any OTHER page inside a section -> only "↩ Back to <Section>" shows,
-//    since going to the main landing isn't the useful action there
+
+// Single unified "← Back" — goes exactly one step back through actual
+// navigation history (not a fixed section/dashboard anchor). Falls
+// back to the main landing page once history is empty.
+function goBackOneStep(who) {
+  const stack = state['_pageHistory_' + who] || [];
+  const prev = stack.pop();
+  if (!prev) { goHomeSmart(who); return; }
+  (who === 'admin' ? showAdminPage : showEmpPage)(prev, { isBack: true });
+}
+
+// Shows the single "← Back" fab whenever there's a previous page to
+// return to (one step, via the real navigation stack) — replaces the
+// old two-button main/section split, which force-hid on desktop and
+// could leave a page with no way back at all.
 function updateBackFabs(who, page) {
-  const mainFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
-  const sectionFab = document.getElementById(who === 'admin' ? 'adminSectionBackFab' : 'empSectionBackFab');
+  const backFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
   const sectionsFab = document.getElementById(who === 'admin' ? 'adminSectionsFab' : 'empSectionsFab');
-  const dash = getSectionDashboardPage(who, page);
-  const onDashboardItself = dash === page;
-  const showSectionFab = !!dash && !onDashboardItself;
-  if (sectionFab) {
-    sectionFab.classList.toggle('show', showSectionFab);
-    if (showSectionFab) sectionFab.textContent = '↩ Back to ' + SECTION_LABEL_MAP[page];
+  const stack = state['_pageHistory_' + who] || [];
+  if (backFab) {
+    backFab.classList.toggle('show', stack.length > 0);
+    backFab.onclick = function() { goBackOneStep(who); };
+    backFab.textContent = '← Back';
   }
-  if (mainFab) mainFab.classList.toggle('show', page !== 'modulepicker' && !showSectionFab);
   if (sectionsFab) sectionsFab.classList.toggle('show', page !== 'modulepicker');
 }
 
@@ -4526,11 +4546,18 @@ function syncSidebarActive(role, page) {
   }
 }
 
-function showEmpPage(page) {
+function showEmpPage(page, opts) {
+  opts = opts || {};
   // Section/modulepicker page is hidden on desktop (see CSS) — redirect
   // to the Dashboard instead so desktop never lands on an empty screen
   // (e.g. right after login, which normally opens modulepicker first).
   if (page === 'modulepicker' && window.innerWidth >= 1024) page = 'dashboard-hub';
+  const prevPage = state._currentPage_emp;
+  if (!opts.isBack && prevPage && prevPage !== page) {
+    state._pageHistory_emp = state._pageHistory_emp || [];
+    state._pageHistory_emp.push(prevPage);
+    if (state._pageHistory_emp.length > 40) state._pageHistory_emp.shift();
+  }
   state._currentPage_emp = page;
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
@@ -6934,10 +6961,17 @@ function resetAdminRoleRestrictions() {
 // ══════════════════════════════════════
 // ADMIN NAV
 // ══════════════════════════════════════
-function showAdminPage(page) {
+function showAdminPage(page, opts) {
+  opts = opts || {};
   // Section/modulepicker page is hidden on desktop (see CSS) — redirect
   // to the Dashboard instead so desktop never lands on an empty screen.
   if (page === 'modulepicker' && window.innerWidth >= 1024) page = 'dashboard-hub';
+  const prevPage = state._currentPage_admin;
+  if (!opts.isBack && prevPage && prevPage !== page) {
+    state._pageHistory_admin = state._pageHistory_admin || [];
+    state._pageHistory_admin.push(prevPage);
+    if (state._pageHistory_admin.length > 40) state._pageHistory_admin.shift();
+  }
   state._currentPage_admin = page;
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
@@ -11514,27 +11548,81 @@ async function saveEmpQuota(email) {
 // ── Flagged Numbers — MIS review queue for employee-flagged bad
 // numbers (wrong/inter-state/misbehaving). Checkboxes let MIS select
 // many at once before confirming permanent deletion from Clean Leads.
+// Renders as a table; each row also gets a Restore button in case a
+// number was flagged by mistake. "View Full History" switches to
+// showing every flag ever raised (Pending / Restored / Deleted).
+let flagHistoryMode = false;
+
 async function loadFlaggedNumbersPage() {
   const box = document.getElementById('flaggedNumbersList');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  document.getElementById('flagSelectAll').checked = false;
+  const selAll = document.getElementById('flagSelectAll');
+  if (selAll) selAll.checked = false;
   try {
-    const res = await leadsApiPost({ action: 'GET_FLAGGED_NUMBERS' });
+    const res = await leadsApiPost({ action: flagHistoryMode ? 'GET_FLAG_REPORT' : 'GET_FLAGGED_NUMBERS' });
     if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
     if (!res.rows || !res.rows.length) {
-      box.innerHTML = '<div class="empty-state"><p>✅ No flagged numbers awaiting review.</p></div>';
+      box.innerHTML = '<div class="empty-state"><p>✅ ' + (flagHistoryMode ? 'No flag history yet.' : 'No flagged numbers awaiting review.') + '</p></div>';
       return;
     }
-    box.innerHTML = res.rows.map(r => `<div class="card" style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">
-      <input type="checkbox" class="flag-num-checkbox" value="${r.phone}" style="margin-top:3px;">
-      <div style="flex:1;">
-        <div style="font-weight:700;font-size:13px;">${r.customerName || 'Unknown'} — <a href="tel:${r.phone}" style="color:var(--purple);">${r.phone}</a></div>
-        <div style="font-size:11.5px;color:#c0392b;font-weight:600;margin-top:2px;">🚫 ${r.reason}</div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:2px;">Flagged by ${r.flaggedBy}</div>
-      </div>
-    </div>`).join('');
+    const statusBadge = (s) => {
+      const low = (s || 'Pending').toLowerCase();
+      const color = low.indexOf('restored') === 0 ? '#2e7d32' : low.indexOf('deleted') === 0 ? '#c0392b' : '#e67e22';
+      return `<span style="color:${color};font-weight:700;">${s || 'Pending'}</span>`;
+    };
+    const rowsHtml = res.rows.map(r => {
+      const status = r.status || 'Pending';
+      const isPending = status.toLowerCase() === 'pending';
+      return `<tr>
+        ${!flagHistoryMode ? `<td style="padding:6px 4px;"><input type="checkbox" class="flag-num-checkbox" value="${r.phone}"></td>` : ''}
+        <td style="padding:6px 4px;font-weight:600;">${r.customerName || 'Unknown'}</td>
+        <td style="padding:6px 4px;"><a href="tel:${r.phone}" style="color:var(--purple);">${r.phone}</a></td>
+        <td style="padding:6px 4px;color:#c0392b;">${r.reason || ''}</td>
+        <td style="padding:6px 4px;">${r.flaggedBy || ''}</td>
+        ${flagHistoryMode ? `<td style="padding:6px 4px;">${statusBadge(status)}</td>` : ''}
+        <td style="padding:6px 4px;white-space:nowrap;">${isPending ? `<button class="btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="restoreFlaggedNumber('${r.phone}')">↩️ Restore</button>` : ''}</td>
+      </tr>`;
+    }).join('');
+    box.innerHTML = `<div class="card" style="padding:0;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="border-bottom:2px solid var(--border,#e0e0e0);text-align:left;">
+          ${!flagHistoryMode ? '<th style="padding:6px 4px;"></th>' : ''}
+          <th style="padding:6px 4px;">Customer</th>
+          <th style="padding:6px 4px;">Phone</th>
+          <th style="padding:6px 4px;">Reason</th>
+          <th style="padding:6px 4px;">Flagged By</th>
+          ${flagHistoryMode ? '<th style="padding:6px 4px;">Status</th>' : ''}
+          <th style="padding:6px 4px;"></th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadFlaggedNumbersPage()" title="Retry">🔄</button></div>';
+  }
+}
+
+function toggleFlagHistoryMode() {
+  flagHistoryMode = !flagHistoryMode;
+  const btn = document.getElementById('flagHistoryToggleBtn');
+  if (btn) btn.textContent = flagHistoryMode ? '🚫 Pending Only' : '🕘 View Full History';
+  const bulkBar = document.getElementById('flagBulkBar');
+  if (bulkBar) bulkBar.style.display = flagHistoryMode ? 'none' : 'flex';
+  loadFlaggedNumbersPage();
+}
+
+async function restoreFlaggedNumber(phone) {
+  if (!confirm('Restore this number? It will be added back to the flagging employee\'s leads for today.')) return;
+  try {
+    const res = await leadsApiPost({ action: 'UNFLAG_NUMBER', phone: phone, misName: state.adminName || state.adminRole });
+    if (res && res.ok) {
+      toast('↩️ ' + res.message, 'success');
+      loadFlaggedNumbersPage();
+    } else {
+      toast('❌ ' + ((res && res.error) || 'Restore failed'), 'error');
+    }
+  } catch (e) {
+    toast('❌ Network error: ' + e.message, 'error');
   }
 }
 
@@ -12204,12 +12292,36 @@ function aoeRefreshProducts(who, eid) {
   const typEl = document.getElementById(`aoeTyp-${who}-${eid}`);
   const curType = typEl ? typEl.value : 'Gold';
   const gList = curType === 'Diamond' ? st.diamond : st.gold;
-  const gOpts = '<option value="">-- Select --</option>' + gList.map(p => `<option${p === document.getElementById(`aoePnPre-${who}-${eid}`).value ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
-  const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option${p === document.getElementById(`aoeSnPre-${who}-${eid}`).value ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const gPreVal = document.getElementById(`aoePnPre-${who}-${eid}`).value;
+  const sPreVal = document.getElementById(`aoeSnPre-${who}-${eid}`).value;
+  const gOpts = '<option value="">-- Select --</option>' + gList.map(p => `<option${p === gPreVal ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option${p === sPreVal ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const gnEl = document.getElementById(`aoePn-${who}-${eid}`);
   const snEl = document.getElementById(`aoeSn-${who}-${eid}`);
-  if (gnEl) gnEl.innerHTML = gOpts;
-  if (snEl) snEl.innerHTML = sOpts;
+  if (gnEl) {
+    gnEl.innerHTML = gOpts;
+    // If the item's saved name isn't in the current catalog (it was typed
+    // manually at DSR entry time), don't let it silently fall back to a
+    // blank "-- Select --" — select "Other" and pre-fill the manual box
+    // with the real saved name so the edit screen shows what it will save.
+    if (gPreVal && gList.indexOf(gPreVal) === -1) {
+      gnEl.value = 'Other';
+      const customEl = document.getElementById(`aoePnCustom-${who}-${eid}`);
+      const otherWrap = document.getElementById(`aoePnOther-${who}-${eid}`);
+      if (customEl) customEl.value = gPreVal;
+      if (otherWrap) otherWrap.style.display = 'block';
+    }
+  }
+  if (snEl) {
+    snEl.innerHTML = sOpts;
+    if (sPreVal && st.silver.indexOf(sPreVal) === -1) {
+      snEl.value = 'Other';
+      const customElS = document.getElementById(`aoeSnCustom-${who}-${eid}`);
+      const otherWrapS = document.getElementById(`aoeSnOther-${who}-${eid}`);
+      if (customElS) customElS.value = sPreVal;
+      if (otherWrapS) otherWrapS.style.display = 'block';
+    }
+  }
 }
 
 function aoeSetType(who, eid, val, btn) {
@@ -12363,8 +12475,8 @@ function openAdvanceOrderEdit(who, dsrId) {
             <div class="ch">✎ &nbsp;Bill Details</div>
             <div class="cb">
               <div class="g2 mb14">
-                <div><label>Bill Date <span class="req">★</span></label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}"></div>
-                <div><label>Customer Name <span class="req">★</span></label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}"></div>
+                <div><label>Bill Date <span class="req">★</span></label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}" readonly onclick="return false;" onkeydown="return false;" style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;pointer-events:none;"></div>
+                <div><label>Customer Name <span class="req">★</span></label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}" readonly style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;"></div>
               </div>
               <div class="g2">
                 <div><label>Mobile Number <span class="req">★</span></label><input type="tel" id="aoeMobile-${who}" maxlength="10" value="${head.mobileNumber || ''}"></div>
@@ -13722,9 +13834,18 @@ function renderAdminDashboardBody() {
   // — now Done/Pending, computed from the same retail+wholesale duty
   // lists the Checklist detail page itself already uses, so this can
   // never disagree with that page.
+  // BUG FIX: st.retail / st.wholesale are { opening:[...], closing:[...] }
+  // objects, not arrays — (st[k]||[]).forEach() was throwing a
+  // TypeError every time, which silently aborted the rest of this
+  // function (including the "Today's Duty Assigned" table below),
+  // which is why that table always showed only names / dashes and
+  // this card always read 0.
   let stDone = 0, stPending = 0;
   if (st && st.ok) {
-    ['retail', 'wholesale'].forEach(k => (st[k] || []).forEach(person => { if (person.done) stDone++; else stPending++; }));
+    ['retail', 'wholesale'].forEach(k => {
+      const sect = st[k] || {};
+      ['opening', 'closing'].forEach(shift => (sect[shift] || []).forEach(person => { if (person.done) stDone++; else stPending++; }));
+    });
   }
   fixedHtml += dhKpiCard({ icon: '📝', title: 'Checklist', accent: '#6b21a8', onclick: "showAdminPage('stock-report')", data: st, loading: stockWalkinData === undefined, refreshKey: 'stockWalkin',
     value: st && st.ok ? stDone : '',
@@ -13841,15 +13962,15 @@ function renderAdminDashboardBody() {
         <div class="dh-stat-box2"><div class="v" style="color:var(--gold-dark,#B8860B)">${ly.total.cardsApproved}</div><div class="l">Total</div></div>
       </div>
       <div class="dh-subhead">🏆 Leaderboard (All-Time)</div>
-      ${lb.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Rank</th><th>Employee</th><th style="text-align:right;">Cards</th><th style="text-align:right;">% of Total</th></tr></thead><tbody>
+      ${lb.length ? `<div class="dh-table-wrap"><table class="dh-mini-table dh-mini-table-bordered"><thead><tr><th>Rank</th><th>Employee</th><th style="text-align:right;">Cards</th><th style="text-align:right;">% of Total</th></tr></thead><tbody>
         ${lb.map(r => `<tr><td>${['🥇','🥈','🥉'][r.rank-1] || ('#'+r.rank)}</td><td>${r.employee}</td><td style="text-align:right;">${r.cardsIssued}</td><td style="text-align:right;">${r.pctOfTotal}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">No cards yet.</div>'}
       <div class="dh-subhead">💰 Incentive History — Recent (Total Paid: ₹${(ly.incentiveHistory && ly.incentiveHistory.totalPaid) || 0})</div>
-      ${hist.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Name</th><th>Date</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+      ${hist.length ? `<div class="dh-table-wrap"><table class="dh-mini-table dh-mini-table-bordered"><thead><tr><th>Name</th><th>Date</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
         ${hist.map(r => `<tr><td>${r.empName}</td><td>${r.date}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.amount}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">No payments recorded yet.</div>'}
       <div class="dh-subhead">⏳ Upcoming Incentive — Pending (Total: ₹${up.total})</div>
-      ${(up.byEmployee||[]).length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Name</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+      ${(up.byEmployee||[]).length ? `<div class="dh-table-wrap"><table class="dh-mini-table dh-mini-table-bordered"><thead><tr><th>Name</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
         ${up.byEmployee.map(r => `<tr><td>${r.employee}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.pendingIncentive}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">Nothing pending.</div>'}
     </div>`;
@@ -13857,7 +13978,12 @@ function renderAdminDashboardBody() {
 
   // Golden Aura — today/month/total + topper + plan-type split
   if (ga && ga.ok) {
-    const byType = ga.byPlanType || {};
+    // BUG FIX: backend sends planTypeBreakdown (not byPlanType) and
+    // topper.count (not topper.enrollments) — these two mismatches
+    // are exactly why "Plan Type Split" always showed "No data" and
+    // the topper line would have shown "undefined plan(s)" once the
+    // underlying date bug above was fixed.
+    const byType = ga.planTypeBreakdown || {};
     html += `<div class="dh-panel" style="background:var(--pink-bg,#fce7f3);--dh-accent:#d6389a;">
       <div class="dh-panel-title"><span class="t">🥇 Golden Aura</span><button class="dh-panel-view-btn" onclick="showAdminPage('golden-aura')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(3,1fr)">
@@ -13866,7 +13992,7 @@ function renderAdminDashboardBody() {
         <div class="dh-stat-box2"><div class="v" style="color:#d6389a">${ga.total.enrollments}</div><div class="l">Total</div></div>
       </div>
       <div class="dh-subhead">🏆 Topper (This Month)</div>
-      <div class="dh-mini-row">${ga.topper ? `<span class="dh-mini-name">${ga.topper.employee}</span><span class="dh-mini-val">${ga.topper.enrollments} plan(s)</span>` : '<span class="dh-empty-mini">No enrollments this month yet.</span>'}</div>
+      <div class="dh-mini-row">${ga.topper ? `<span class="dh-mini-name">${ga.topper.employee}</span><span class="dh-mini-val">${ga.topper.count} plan(s)</span>` : '<span class="dh-empty-mini">No enrollments this month yet.</span>'}</div>
       <div class="dh-subhead">📋 Plan Type Split</div>
       ${Object.keys(byType).length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Plan Type</th><th style="text-align:right;">Count</th></tr></thead><tbody>
         ${Object.keys(byType).map(k => `<tr><td>${k}</td><td style="text-align:right;font-weight:800;color:var(--purple);">${byType[k]}</td></tr>`).join('')}
@@ -13905,8 +14031,14 @@ function renderAdminDashboardBody() {
 
   // DSR — today entries / till-date total, missing-today & yesterday-pending name lists
   if (dr && dr.ok) {
-    const missToday = (dr.today && dr.today.missing) || [];
-    const missYest = dr.yesterdayPending || [];
+    // BUG FIX: backend sends missingToday:{count,names} and
+    // yesterdayPending:{count,names} — this was reading dr.today.missing
+    // (doesn't exist) and dr.yesterdayPending directly as an array
+    // (it's an object), so both silently evaluated to [] and the panel
+    // always showed "✅ All entered" / "✅ None pending" even when
+    // entries were genuinely missing.
+    const missToday = (dr.missingToday && dr.missingToday.names) || [];
+    const missYest = (dr.yesterdayPending && dr.yesterdayPending.names) || [];
     html += `<div class="dh-panel dh-panel-wide" style="background:var(--blue-bg,#e8f0fb);--dh-accent:#1a5fa8;">
       <div class="dh-panel-title"><span class="t">🧾 DSR</span><button class="dh-panel-view-btn" onclick="showAdminPage('dsr')">View →</button></div>
       <div class="dh-stat-grid6" style="grid-template-columns:repeat(4,1fr)">
@@ -13922,9 +14054,9 @@ function renderAdminDashboardBody() {
     </div>`;
   }
 
-  // Walk-in Track — Yesterday + Last 5 Days (Today dropped — mid-day data was incomplete/confusing)
+  // Walk-in Track — Yesterday only (Last 5 Days section removed per
+  // explicit request — that table is no longer wanted here).
   if (wk && wk.ok) {
-    const last5 = wk.last5 || [];
     html += `<div class="dh-panel dh-panel-wide" style="background:#e6f7f5;--dh-accent:#0e9488;">
       <div class="dh-panel-title"><span class="t">🚶 Walk-in Track (Customer Footfall)</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div class="dh-subhead">📆 Yesterday (${wk.yesterday.date || ''})</div>
@@ -13934,10 +14066,6 @@ function renderAdminDashboardBody() {
         <div class="dh-stat-box2"><div class="v">${wk.yesterday.purchased}</div><div class="l">Purchased</div></div>
         <div class="dh-stat-box2"><div class="v">${wk.yesterday.nonPurchased}</div><div class="l">Non-Purchased</div></div>
       </div>
-      <div class="dh-subhead">🗓️ Last 5 Days</div>
-      ${last5.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Date</th><th>Walk-ins</th><th>Deals</th><th>Purch.</th><th>Non-Purch.</th></tr></thead><tbody>
-        ${last5.map(r => `<tr><td>${r.date}</td><td>${r.walkins}</td><td>${r.deals}</td><td>${r.purchased}</td><td>${r.nonPurchased}</td></tr>`).join('')}
-      </tbody></table></div>` : '<div class="dh-empty-mini">No walk-in data recorded for the last 5 days.</div>'}
     </div>`;
   }
 
