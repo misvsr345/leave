@@ -585,6 +585,14 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   #adminApp .page-content, #empApp .page-content {
     margin-left: 216px; margin-right: 0; max-width: 900px; padding-left: 24px;
   }
+  /* Wide-data pages (KPI report especially — see .kpi-fit-wrap) opt out
+     of the 900px cap so "fit to screen" scaling has the real screen
+     width to work with, instead of squeezing a 1400px table down to
+     fit an already-narrow 900px box (which made every column tiny and
+     left empty space on the right — not what "fit to screen" meant). */
+  #adminApp .page-content.page-content-wide, #empApp .page-content.page-content-wide {
+    max-width: calc(100vw - 216px - 48px);
+  }
 }
 
 /* Bottom footer tab bar — mirrors the primary destinations that used to be
@@ -1853,12 +1861,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="emp-walkins">
       <div class="section-hdr"><span class="section-title2">🚶 My Walk-ins</span></div>
-      <div class="card" style="padding:10px 12px;">
-        <div style="display:flex;gap:6px;">
-          <button class="btn-secondary walkins-quickbtn active" id="empWalkinsBtnMonth" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setEmpWalkinsMode('month')">This Month</button>
-          <button class="btn-secondary walkins-quickbtn" id="empWalkinsBtnToday" style="flex:1;padding:6px 8px;font-size:11.5px;" onclick="setEmpWalkinsMode('today')">Today</button>
-        </div>
-      </div>
       <div id="empWalkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
     <div class="page-section" id="emp-kpi-compare">
@@ -2871,11 +2873,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="admin-walkins">
       <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span>
-        <button class="btn-sm btn-view" onclick="loadWalkinsReport()">🔄 Refresh</button>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button class="btn-secondary walkins-quickbtn active" id="walkinsBtnToday" style="flex:1;padding:7px 8px;font-size:12px;" onclick="showWalkinsPeriod('today')">Today</button>
-        <button class="btn-secondary walkins-quickbtn" id="walkinsBtnMonth" style="flex:1;padding:7px 8px;font-size:12px;" onclick="showWalkinsPeriod('thisMonth')">This Month</button>
+        <button class="btn-sm btn-view" onclick="loadWalkinTrackTable('admin')">🔄 Refresh</button>
       </div>
       <div id="walkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -4560,6 +4558,7 @@ function showEmpPage(page, opts) {
     if (state._pageHistory_emp.length > 40) state._pageHistory_emp.shift();
   }
   state._currentPage_emp = page;
+  document.querySelector('#empApp .page-content').classList.toggle('page-content-wide', page === 'kpi');
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
   if (sec) sec.classList.add('active');
@@ -4576,7 +4575,7 @@ function showEmpPage(page, opts) {
   if(page==='kpi-rules') renderKpiRules('emp');
   if(page==='kpi-target') loadKpiTarget('emp');
   if(page==='kpi-tilldate') loadKpiTillDate('emp');
-  if(page==='walkins') setEmpWalkinsMode('month');
+  if(page==='walkins') loadWalkinTrackTable('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
   if(page==='kpi-compare') loadKpiCompare('emp');
   if(page==='dsr') loadDsrHighlights('emp');
@@ -6974,6 +6973,11 @@ function showAdminPage(page, opts) {
     if (state._pageHistory_admin.length > 40) state._pageHistory_admin.shift();
   }
   state._currentPage_admin = page;
+  // Wide-data pages (currently just KPI, whose report table is much
+  // wider than the normal 900px content column) opt the shared
+  // .page-content wrapper out of that cap — see the CSS comment above
+  // .page-content-wide for why.
+  document.querySelector('#adminApp .page-content').classList.toggle('page-content-wide', page === 'kpi');
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
   if (sec) sec.classList.add('active');
@@ -7004,7 +7008,7 @@ function showAdminPage(page, opts) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
-  if(page==='walkins') loadWalkinsReport();
+  if(page==='walkins') loadWalkinTrackTable('admin');
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
@@ -11894,125 +11898,99 @@ function stockReportThisMonth(who) {
   loadStockReport(who, 'month');
 }
 
-// ── Walk-ins — date-to-date deals/purchase/non-purchase/conversion% ──
-// Radically simplified per explicit request: no date picker, no
-// totals/conversion% computation — just fetches the raw Walkintrack
-// sheet rows (most recent 200) and renders them exactly as they are,
-// same columns as the reference image (Date, Employee Name, Customer
-// Deals, Golden Plans, Loyalty Cards Enrolls, Purchased, Non
-// Purchased, Google Review, Instagram, Facebook, Whatsapp Channel,
-// Month, Total SMC).
-let __walkinsDataCache = null;
-async function loadWalkinsReport() {
-  const box = document.getElementById('walkinsReportBox');
+// ── Walk-in Track — per-row, date-wise table straight from the
+// "Walkintrack" tab (Customer Footfall Report spreadsheet), per exact
+// request: Column A (Timestamp) not shown; Column B (Date) and Column
+// C (Employee Name) are the lookup keys. Admin sees every employee's
+// rows with an Edit button per row (writes back to the sheet);
+// Employee sees only their own rows (name-matched server-side).
+async function loadWalkinTrackTable(who) {
+  const box = document.getElementById(who === 'admin' ? 'walkinsReportBox' : 'empWalkinsReportBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const params = { page: 'walkinTrackTableAPI', role: who === 'admin' ? 'ADMIN' : 'EMP' };
+  if (who !== 'admin') params.empName = state.empName;
   try {
-    const res = await jsonpReliable({ page: 'walkinReportAPI' });
+    const res = await jsonpReliable(params);
     if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
-    __walkinsDataCache = res;
-    const activeBtn = document.querySelector('#admin-walkins .walkins-quickbtn.active');
-    const period = (activeBtn && activeBtn.id === 'walkinsBtnMonth') ? 'thisMonth' : 'today';
-    renderWalkinsPeriod(period);
+    renderWalkinTrackTable(who, res.rows || []);
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinsReport()" title="Retry">🔄</button></div>';
+    box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinTrackTable(\'' + who + '\')" title="Retry">🔄</button></div>';
   }
 }
 
-function showWalkinsPeriod(period) {
-  document.querySelectorAll('#admin-walkins .walkins-quickbtn').forEach(b => b.classList.remove('active'));
-  document.getElementById(period === 'thisMonth' ? 'walkinsBtnMonth' : 'walkinsBtnToday').classList.add('active');
-  if (__walkinsDataCache) renderWalkinsPeriod(period);
-  else loadWalkinsReport();
-}
+function renderWalkinTrackTable(who, rows) {
+  const box = document.getElementById(who === 'admin' ? 'walkinsReportBox' : 'empWalkinsReportBox');
+  if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>No walk-in entries found.</p></div>'; return; }
+  const isAdmin = who === 'admin';
 
-function renderWalkinsPeriod(period) {
-  const box = document.getElementById('walkinsReportBox');
-  const res = __walkinsDataCache;
-  const rows = (period === 'thisMonth' ? res.thisMonth : res.today) || [];
-  const store = period === 'thisMonth' ? res.thisMonthStore : res.todayStore;
-  const periodLabel = period === 'thisMonth' ? 'This Month' : 'Today';
-
-  if (!rows.length) { box.innerHTML = `<div class="empty-state"><p>No walk-in entries for ${periodLabel}.</p></div>`; return; }
-
-  const rowHtml = r => `<tr style="border-bottom:1px solid var(--border);">
-    <td style="padding:5px 8px;font-weight:600;text-align:left;">${r.employee}</td>
-    <td style="padding:5px 8px;text-align:center;">${r.customerDeals}</td><td style="padding:5px 8px;text-align:center;">${r.goldenPlans}</td>
-    <td style="padding:5px 8px;text-align:center;">${r.loyaltyCards}</td><td style="padding:5px 8px;text-align:center;">${r.purchased}</td>
-    <td style="padding:5px 8px;text-align:center;">${r.nonPurchased}</td><td style="padding:5px 8px;text-align:center;">${r.googleReview}</td>
-    <td style="padding:5px 8px;text-align:center;">${r.instagram}</td><td style="padding:5px 8px;text-align:center;">${r.facebook}</td>
-    <td style="padding:5px 8px;text-align:center;">${r.whatsappChannel}</td>
-    <td style="padding:5px 8px;text-align:center;font-weight:700;color:var(--gold);">${r.conversionPct.toFixed(1)}%</td>
+  const rowHtml = r => `<tr id="wtRow-${r.rowNum}" style="border-bottom:1px solid var(--border);">
+    <td style="padding:5px 8px;white-space:nowrap;">${r.date}</td>
+    ${isAdmin ? `<td style="padding:5px 8px;font-weight:600;white-space:nowrap;">${r.employee}</td>` : ''}
+    <td class="wt-cell" data-k="deals" style="padding:5px 8px;text-align:center;">${r.deals}</td>
+    <td class="wt-cell" data-k="goldenPlans" style="padding:5px 8px;text-align:center;">${r.goldenPlans}</td>
+    <td class="wt-cell" data-k="loyaltyCards" style="padding:5px 8px;text-align:center;">${r.loyaltyCards}</td>
+    <td class="wt-cell" data-k="purchased" style="padding:5px 8px;text-align:center;">${r.purchased}</td>
+    <td class="wt-cell" data-k="nonPurchased" style="padding:5px 8px;text-align:center;">${r.nonPurchased}</td>
+    <td class="wt-cell" data-k="googleReview" style="padding:5px 8px;text-align:center;">${r.googleReview}</td>
+    <td class="wt-cell" data-k="instagram" style="padding:5px 8px;text-align:center;">${r.instagram}</td>
+    <td class="wt-cell" data-k="facebook" style="padding:5px 8px;text-align:center;">${r.facebook}</td>
+    <td class="wt-cell" data-k="whatsapp" style="padding:5px 8px;text-align:center;">${r.whatsapp}</td>
+    ${isAdmin ? `<td style="padding:5px 8px;text-align:center;white-space:nowrap;">
+        <button class="btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="startWalkinRowEdit(${r.rowNum})">✏️ Edit</button>
+      </td>` : ''}
   </tr>`;
 
-  let html = `<div class="card"><div class="card-title">👤 By Employee — ${periodLabel}</div>
+  const html = `<div class="card"><div class="card-title">🚶 Walk-in Track ${isAdmin ? '— All Employees' : '— My Entries'}</div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;white-space:nowrap;">
     <thead><tr style="background:var(--purple-bg);">
-      <th style="padding:5px 8px;text-align:left;">Employee Name</th>
-      <th style="padding:5px 8px;">Customer Deals</th><th style="padding:5px 8px;">Golden Plans</th><th style="padding:5px 8px;">Loyalty Cards Enrolls</th>
-      <th style="padding:5px 8px;">Purchased</th><th style="padding:5px 8px;">Non Purchased</th><th style="padding:5px 8px;">Google Review</th>
-      <th style="padding:5px 8px;">Instagram</th><th style="padding:5px 8px;">Facebook</th><th style="padding:5px 8px;">Whatsapp Channel</th>
-      <th style="padding:5px 8px;">Conversion%</th>
+      <th style="padding:5px 8px;text-align:left;">Date</th>
+      ${isAdmin ? '<th style="padding:5px 8px;text-align:left;">Employee</th>' : ''}
+      <th style="padding:5px 8px;">Deals</th><th style="padding:5px 8px;">Golden Plans</th><th style="padding:5px 8px;">Loyalty Cards</th>
+      <th style="padding:5px 8px;">Purchased</th><th style="padding:5px 8px;">Non-Purchased</th><th style="padding:5px 8px;">Google Review</th>
+      <th style="padding:5px 8px;">Instagram</th><th style="padding:5px 8px;">Facebook</th><th style="padding:5px 8px;">Whatsapp</th>
+      ${isAdmin ? '<th style="padding:5px 8px;"></th>' : ''}
     </tr></thead><tbody>
     ${rows.map(rowHtml).join('')}
-    ${store ? `<tr style="background:var(--purple-bg);font-weight:800;border-top:2px solid var(--purple);">
-      <td style="padding:6px 8px;text-align:left;">🏪 ${store.employee}</td>
-      <td style="padding:6px 8px;text-align:center;">${store.customerDeals}</td><td style="padding:6px 8px;text-align:center;">${store.goldenPlans}</td>
-      <td style="padding:6px 8px;text-align:center;">${store.loyaltyCards}</td><td style="padding:6px 8px;text-align:center;">${store.purchased}</td>
-      <td style="padding:6px 8px;text-align:center;">${store.nonPurchased}</td><td style="padding:6px 8px;text-align:center;">${store.googleReview}</td>
-      <td style="padding:6px 8px;text-align:center;">${store.instagram}</td><td style="padding:6px 8px;text-align:center;">${store.facebook}</td>
-      <td style="padding:6px 8px;text-align:center;">${store.whatsappChannel}</td>
-      <td style="padding:6px 8px;text-align:center;color:var(--gold);">${store.conversionPct.toFixed(1)}%</td>
-    </tr>` : ''}
     </tbody></table></div>
   </div>`;
-
-  if (store) {
-    html += `<div class="card" style="margin-top:10px;">
-      <div class="card-title">📊 Store Overview — ${periodLabel}</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center;">
-        <div><div style="font-size:22px;font-weight:900;color:var(--purple);">${store.avgDealsPerEmployee.toFixed(1)}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Avg. Deals / Employee</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:var(--gold);">${store.conversionPct.toFixed(1)}%</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Conversion %</div></div>
-      </div>
-    </div>`;
-  }
   box.innerHTML = html;
 }
 
-function setEmpWalkinsMode(mode) {
-  document.querySelectorAll('#emp-walkins .walkins-quickbtn').forEach(b => b.classList.remove('active'));
-  document.getElementById('empWalkinsBtn' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-  const today = new Date();
-  let start, end;
-  if (mode === 'today') {
-    start = end = todayYMD();
-  } else { // 'month'
-    start = toYMD(new Date(today.getFullYear(), today.getMonth(), 1));
-    end = todayYMD();
-  }
-  loadEmpWalkinsReport(start, end);
+// Turns one row's editable cells into number inputs in place, with a
+// Save/Cancel pair replacing the Edit button — writes back to the
+// actual Walkintrack sheet on Save (updateWalkinTrackRow).
+const WT_EDIT_KEYS = ['deals','goldenPlans','loyaltyCards','purchased','nonPurchased','googleReview','instagram','facebook','whatsapp'];
+function startWalkinRowEdit(rowNum) {
+  const tr = document.getElementById('wtRow-' + rowNum);
+  if (!tr) return;
+  tr.querySelectorAll('.wt-cell').forEach(td => {
+    const val = td.textContent.trim();
+    td.dataset.orig = val;
+    td.innerHTML = `<input type="number" min="0" value="${val}" style="width:56px;padding:3px;text-align:center;border:1px solid var(--purple);border-radius:5px;">`;
+  });
+  const actionTd = tr.querySelector('td:last-child');
+  actionTd.innerHTML = `
+    <button class="btn-primary" style="padding:4px 8px;font-size:11px;" onclick="saveWalkinRowEdit(${rowNum})">💾 Save</button>
+    <button class="btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="loadWalkinTrackTable('admin')">✕</button>`;
 }
-
-async function loadEmpWalkinsReport(start, end) {
-  const box = document.getElementById('empWalkinsReportBox');
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+async function saveWalkinRowEdit(rowNum) {
+  const tr = document.getElementById('wtRow-' + rowNum);
+  if (!tr) return;
+  const payload = { page: 'updateWalkinTrackRow', role: state.adminRole, rowNum: rowNum };
+  tr.querySelectorAll('.wt-cell').forEach(td => {
+    payload[td.dataset.k] = td.querySelector('input').value || 0;
+  });
+  toast('⏳ Saving...', 'info');
   try {
-    const res = await jsonpReliable({ page: 'walkinReportAPI', role: 'EMP', empName: state.empName, start: start, end: end });
-    if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
-    const t = res.totals || {};
-    box.innerHTML = `<div class="card">
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center;">
-        <div><div style="font-size:22px;font-weight:900;color:var(--purple);">${t.walkins || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Walk-ins</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:#0e9488;">${t.deals || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Deals</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:var(--green);">${t.purchased || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Purchased</div></div>
-        <div><div style="font-size:22px;font-weight:900;color:#c0392b;">${t.nonPurchased || 0}</div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Non-Purchase</div></div>
-      </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);text-align:center;">
-        <div style="font-size:26px;font-weight:900;color:var(--gold);">${(t.conversionPct || 0).toFixed(1)}%</div>
-        <div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;">Conversion Rate (Purchased ÷ Deals)</div>
-      </div>
-    </div>`;
+    const res = await jsonpWriteOnce(payload, makeIdemKey(['wtEdit', rowNum]));
+    if (res && res.ok) {
+      toast('✅ Row updated', 'success');
+      loadWalkinTrackTable('admin');
+    } else {
+      toast('❌ ' + ((res && res.error) || 'Update failed'), 'error');
+    }
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="setEmpWalkinsMode(\'month\')" title="Retry">🔄</button></div>';
+    toast('❌ Network error: ' + e.message, 'error');
   }
 }
 
