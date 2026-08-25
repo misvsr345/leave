@@ -8785,7 +8785,24 @@ function runBoxExport(boxId, title, format) {
   }
   if (format === 'pdf') {
     toast('⏳ Generating PDF...', 'info');
-    html2canvas(box, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+    // BUG FIX: wide content (like the KPI table, which scrolls
+    // sideways) was getting cut off at the container's visible width —
+    // html2canvas defaults to the element's on-screen clientWidth, not
+    // its full scrollWidth, so anything past the visible edge (Loyalty/
+    // Golden Aura columns etc.) was silently missing from the PDF.
+    // Reset horizontal scroll to the start and explicitly tell
+    // html2canvas to render the FULL scrollable width/height.
+    const prevScrollLeft = box.scrollLeft;
+    box.scrollLeft = 0;
+    html2canvas(box, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      width: box.scrollWidth,
+      height: box.scrollHeight,
+      windowWidth: box.scrollWidth,
+      windowHeight: box.scrollHeight
+    }).then(canvas => {
+      box.scrollLeft = prevScrollLeft;
       const { jsPDF } = window.jspdf;
       const imgW = canvas.width, imgH = canvas.height;
       const pdf = new jsPDF({ orientation: imgW > imgH ? 'l' : 'p', unit: 'px', format: [imgW + 40, imgH + 60] });
@@ -8794,7 +8811,7 @@ function runBoxExport(boxId, title, format) {
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 20, 40, imgW, imgH);
       pdf.save(title.replace(/[^\w\- ]/g, '') + '.pdf');
       toast('✅ PDF downloaded', 'success');
-    }).catch(() => toast('PDF generation failed', 'error'));
+    }).catch(() => { box.scrollLeft = prevScrollLeft; toast('PDF generation failed', 'error'); });
     return;
   }
   // Excel — scrape .kd-card structure (Name + each stat box's label→value),
