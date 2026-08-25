@@ -4558,7 +4558,18 @@ function showEmpPage(page, opts) {
     if (state._pageHistory_emp.length > 40) state._pageHistory_emp.shift();
   }
   state._currentPage_emp = page;
-  document.querySelector('#empApp .page-content').classList.toggle('page-content-wide', page === 'kpi');
+  // v-fix (KPI table not fitting screen — box sat inside the 900px-capped
+  // content column with empty space beside it): this used to only widen
+  // the container on the 'kpi' HUB page, but the actual wide table (via
+  // fitWideTableToScreen/.kpi-fit-wrap) renders on the SUBPAGES —
+  // kpi-tilldate, kpi-monthly, kpi-compare, and walkins. On those, the
+  // condition was false, the container snapped back to max-width:900px,
+  // and the table then scaled DOWN to fit that narrow 900px box instead
+  // of the real screen width — leaving a small squeezed table with a
+  // large blank gap to its right. Now widened on every page that can
+  // render a .kpi-fit-wrap table.
+  const WIDE_TABLE_PAGES = ['kpi', 'kpi-tilldate', 'kpi-monthly', 'kpi-compare', 'walkins'];
+  document.querySelector('#empApp .page-content').classList.toggle('page-content-wide', WIDE_TABLE_PAGES.indexOf(page) > -1);
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
   if (sec) sec.classList.add('active');
@@ -6973,11 +6984,16 @@ function showAdminPage(page, opts) {
     if (state._pageHistory_admin.length > 40) state._pageHistory_admin.shift();
   }
   state._currentPage_admin = page;
-  // Wide-data pages (currently just KPI, whose report table is much
-  // wider than the normal 900px content column) opt the shared
-  // .page-content wrapper out of that cap — see the CSS comment above
-  // .page-content-wide for why.
-  document.querySelector('#adminApp .page-content').classList.toggle('page-content-wide', page === 'kpi');
+  // Wide-data pages (whose report table is much wider than the normal
+  // 900px content column) opt the shared .page-content wrapper out of
+  // that cap — see the CSS comment above .page-content-wide for why.
+  // v-fix: was gated to page === 'kpi' only (the hub page), but the
+  // actual wide .kpi-fit-wrap table renders on the SUBPAGES below —
+  // kept the container capped at 900px there, so the fitted table
+  // shrank to fit that narrow box with empty space beside it instead
+  // of using the real screen width. See matching fix in showEmpPage.
+  const WIDE_TABLE_PAGES = ['kpi', 'kpi-tilldate', 'kpi-monthly', 'kpi-compare', 'walkins'];
+  document.querySelector('#adminApp .page-content').classList.toggle('page-content-wide', WIDE_TABLE_PAGES.indexOf(page) > -1);
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
   if (sec) sec.classList.add('active');
