@@ -8516,10 +8516,48 @@ function kpiTableHtml(rows) {
     <td>${r.dsrOnTime}</td><td>${r.dsrLate}</td><td>${r.dsrNoEntry}</td><td>${r.dsrScore}</td>
     <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.lastUpdated}</td>
   </tr>`).join('');
-  return `<div class="dh-table-wrap" style="overflow-x:auto;"><table class="dh-mini-table kpi-report-table" style="min-width:1400px;">
+  return `<div class="dh-table-wrap kpi-fit-wrap" style="overflow-x:auto;"><table class="dh-mini-table kpi-report-table" style="min-width:1400px;">
     <thead>${head}</thead><tbody>${body}</tbody>
   </table></div>`;
 }
+
+// Desktop mode was cutting wide tables (KPI report especially) off at
+// the screen edge, needing a horizontal scroll to see the last columns
+// — this scales the whole table down to fit the available width
+// instead, so every column is visible at once with no scrolling.
+// Mobile is left untouched (shrinking text small enough to fit ~1400px
+// of columns into a phone screen would be unreadable — horizontal
+// scroll stays the right call there).
+function fitWideTableToScreen(wrapEl) {
+  if (!wrapEl) return;
+  const table = wrapEl.querySelector('table');
+  if (!table) return;
+  if (window.innerWidth < 1024) {
+    table.style.transform = '';
+    wrapEl.style.height = '';
+    wrapEl.style.overflowX = 'auto';
+    return;
+  }
+  table.style.transform = '';
+  wrapEl.style.height = '';
+  const wrapWidth = wrapEl.clientWidth;
+  const tableWidth = table.scrollWidth;
+  if (tableWidth > wrapWidth && wrapWidth > 0) {
+    const scale = wrapWidth / tableWidth;
+    table.style.transformOrigin = 'top left';
+    table.style.transform = `scale(${scale})`;
+    wrapEl.style.height = (table.scrollHeight * scale) + 'px';
+    wrapEl.style.overflowX = 'hidden';
+  } else {
+    wrapEl.style.overflowX = 'visible';
+  }
+}
+window.addEventListener('resize', () => {
+  clearTimeout(window.__kpiFitResizeT);
+  window.__kpiFitResizeT = setTimeout(() => {
+    document.querySelectorAll('.kpi-fit-wrap').forEach(fitWideTableToScreen);
+  }, 150);
+});
 
 function kpiRowCardHtml(r) {
   const score = Number(r.overallScore); const scoreDisp = isNaN(score) ? r.overallScore : score.toFixed(2);
@@ -8634,6 +8672,7 @@ function loadKpiTillDate(who) {
     }
     box.innerHTML = html;
     showExportBtn(box.id);
+    fitWideTableToScreen(box.querySelector('.kpi-fit-wrap'));
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTillDate(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
@@ -8658,6 +8697,7 @@ function loadKpiMonthly(who) {
     }
     box.innerHTML = html;
     showExportBtn(box.id);
+    fitWideTableToScreen(box.querySelector('.kpi-fit-wrap'));
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiMonthly(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
