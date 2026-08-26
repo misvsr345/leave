@@ -994,6 +994,14 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   .btn-row { flex-wrap: wrap; }
   .btn-row > button { flex: 1 1 45%; }
 }
+/* v-fix (BRO's "Excel/Print button peru chivara hide avutundi" —
+   4 buttons squeezed into one .btn-row left no room for their full
+   text, e.g. "📗 Excel" got clipped to "Ex..."): a proper 2-column grid
+   for exactly this case instead of forcing everything into one row.
+   Each button gets a full row's-worth of width every 2 buttons, so
+   labels like "🖨️ Print" and "📗 Excel" render whole, never truncated. */
+.btn-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-grid-2 > button { white-space: nowrap; font-size: 13px; padding: 10px 6px; }
 
 /* v-fix (BRO's "3rd image lo unna line freeze avali" — the Walk-in
    Track table header row should stay visible while scrolling): sticky
@@ -1093,7 +1101,31 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; flex-wrap: wrap; gap: 8px; }
 .section-title2 { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--purple); }
 
-.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 13px; justify-content: center; }
+/* v-fix (BRO's "Running Month / All Leaves 2 lines kakunda 1 line lo chei"
+   request — surveyed EVERY .filter-bar in the file, 9 total, listed below):
+   flex-wrap:wrap let a filter-bar's buttons drop to a second line whenever
+   they didn't all fit the screen width — Today/Running Month/Custom Date,
+   Running Month/All Leaves, the 4-6 button Leave status/time filters, etc.
+   Now guaranteed single-line always: buttons never wrap AND never get
+   truncated — if there genuinely isn't room (5-6 button bars on a narrow
+   phone), the bar scrolls horizontally instead, same pattern as the wide
+   tables fixed earlier. Affects every filter-bar in the app at once:
+   1. Leave (emp) — Running Month / All Leaves
+   2. Leave (emp) — All / Past / Today / Upcoming
+   3. Leave (emp) — All Status / Approved / Pending / Rejected / Absent
+   4. Loyalty All Cards (admin) — All Time / Today / Running Month / Custom Date
+   5. Employee Wise (admin) — Running Month / All Leaves (the exact one in BRO's screenshot)
+   6. Employee Wise (admin) — All / Past / Today / Upcoming
+   7. Employee Wise (admin) — All / Approved / Rejected / Cancelled / Absent / Pending
+   8. Settings — Employee Access / Admin Access
+   9. Shared Today/Running Month/Custom Date bar (dateScopeBarHtml) — used by
+      KPI Till Date, Walk-in Track, Leads Report, and anywhere else it's mounted */
+.filter-bar {
+  display: flex; gap: 6px; margin-bottom: 13px; justify-content: center;
+  flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-bar .filter-btn { flex: 0 0 auto; white-space: nowrap; }
 .filter-btn {
   height: 34px; padding: 0 15px; border: 1.5px solid var(--border); border-radius: 20px; background: #fff;
   color: var(--text2); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
@@ -6756,10 +6788,8 @@ function renderSettingsEmpBody(emp) {
   <div id="settingsEmpGranularBody" style="margin-top:14px;">
     <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>
     ${buildPermAccordionHtml(features, perms, 'settings-perm-check-emp', 'emp', 'onSettingsCheckChangeEmp')}
-    <div class="btn-row">
-      <button class="btn-secondary" id="settingsResetEmpBtn" style="margin-top:6px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset</button>
-      <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
-    </div>
+    <button class="btn-secondary" id="settingsResetEmpBtn" style="width:100%;margin-top:6px;margin-bottom:8px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset (Select All / Deselect All)</button>
+    <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
   </div>`;
   body.innerHTML = html;
 }
@@ -7033,10 +7063,8 @@ function renderSettingsAdminBody(admin) {
   </div>`;
 
   html += buildPermAccordionHtml(features, perms, 'settings-perm-check', 'adm', 'onSettingsCheckChange');
-  html += `<div class="btn-row">
-    <button class="btn-secondary" id="settingsResetAdminBtn" style="margin-top:6px;" ${disabled} onclick="resetSettingsAdminChecks()">🔄 Reset</button>
-    <button class="btn-primary" id="settingsSaveAdminBtn" style="margin-top:6px;" ${disabled} onclick="saveSettingsAdminAccess('${admin ? escJs(admin.email) : ''}','${admin ? escJs(admin.name) : ''}','${admin ? escJs(admin.role) : ''}')">💾 Save Access${admin ? ' for ' + admin.name : ''}</button>
-  </div>`;
+  html += `<button class="btn-secondary" id="settingsResetAdminBtn" style="width:100%;margin-top:6px;margin-bottom:8px;" ${disabled} onclick="resetSettingsAdminChecks()">🔄 Reset (Select All / Deselect All)</button>
+  <button class="btn-primary" id="settingsSaveAdminBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsAdminAccess('${admin ? escJs(admin.email) : ''}','${admin ? escJs(admin.name) : ''}','${admin ? escJs(admin.role) : ''}')">💾 Save Access${admin ? ' for ' + admin.name : ''}</button>`;
   body.innerHTML = html;
 }
 
@@ -7827,10 +7855,8 @@ function showNextMISLeaveLeadPopup() {
     </div>
     <p style="font-size:12.5px;color:var(--text2);margin-bottom:12px;">Did ${item.empName} genuinely leave the store, or was this leave applied by mistake?</p>
     <div id="misLeaveLeadErr" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:6px;"></div>
-    <div class="btn-row">
-      <button class="btn-primary" style="margin-bottom:8px;background:var(--green);" id="misLeaveGenuineBtn" onclick="misLeaveLeadDecide('GENUINE')">✅ YES — Leave Genuine (void the ${item.remainingLeads} remaining lead(s))</button>
-      <button class="btn-secondary" style="" id="misLeaveMistakeBtn" onclick="misLeaveLeadDecide('MISTAKE')">❌ NO — Mistake</button>
-    </div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px;background:var(--green);" id="misLeaveGenuineBtn" onclick="misLeaveLeadDecide('GENUINE')">✅ YES — Leave Genuine (void the ${item.remainingLeads} remaining lead(s))</button>
+    <button class="btn-secondary" style="width:100%;" id="misLeaveMistakeBtn" onclick="misLeaveLeadDecide('MISTAKE')">❌ NO — Leave by Mistake (keep leads active)</button>
   </div>`;
   document.body.appendChild(div);
 }
@@ -9425,11 +9451,11 @@ function openBoxExportModal(boxId, title) {
   div.innerHTML = `<div class="modal-box" style="max-width:320px;"><button class="modal-close-x" onclick="document.getElementById('reportChoiceModal').remove()" title="Close">✕</button>
     <div class="modal-title">📊 Export This Page</div>
     <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;">${title}</p>
-    <div class="btn-row">
+    <div class="btn-grid-2">
       <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','excel')">📗 Excel</button>
       <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','pdf')">📕 PDF</button>
-      <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','print')">🖨️ Print</button>
-      <button class="btn-secondary" style="" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
+      <button class="btn-primary" onclick="runBoxExport('${boxId}','${escJs(title)}','print')">🖨️ Print</button>
+      <button class="btn-secondary" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
     </div>
   </div>`;
   document.body.appendChild(div);
