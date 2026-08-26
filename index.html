@@ -1697,11 +1697,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardAllTime('emp')">🏁 All-Time</button>
           <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardThisMonth('emp')">📅 This Month</button>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="loyLbStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="loyLbEnd-emp"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('loyLb-emp', this)">🔍 Custom Date</button>
+        <div id="loyLb-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="loyLbStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="loyLbEnd-emp"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('emp')">🔍 Load Custom Range</button>
         </div>
-        <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('emp')">🔍 Custom Range</button>
       </div>
       <div class="card"><div id="loyLeaderboardBox"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
@@ -1778,9 +1781,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📊 My Incentive</span>
       </div>
       <div class="card" style="padding:12px 14px;">
-        <div style="display:flex;gap:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyEmpFromDate" class="uniform-input"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyEmpToDate" class="uniform-input"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('loyEmpStats', this)">🔍 Custom Date</button>
+        <div id="loyEmpStats-wrap" style="display:none;">
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="loyEmpFromDate" class="uniform-input"></div>
+            <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="loyEmpToDate" class="uniform-input"></div>
+          </div>
         </div>
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadLoyaltyMyStats()">🔄 Load My Incentive</button>
       </div>
@@ -1869,11 +1875,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📈 Month / Date Comparison</span></div>
       <div class="card">
         <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiRangeStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiRangeEnd-emp"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('kpiRange-emp', this)">🔍 Custom Date</button>
+        <div id="kpiRange-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiRangeStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiRangeEnd-emp"></div>
+          </div>
+          <button class="btn-primary" onclick="loadKpiRangeSummary('emp')" style="width:100%;">🔍 Show Data</button>
         </div>
-        <button class="btn-primary" onclick="loadKpiRangeSummary('emp')" style="width:100%;">🔍 Show Data</button>
       </div>
       <div class="card"><div id="kpiRangeBox-emp"></div></div>
       <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
@@ -1911,13 +1920,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR</span></div>
       <div class="card">
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-emp"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('emp')">📅 This Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('emp')">🔍 Custom Range</button>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrMiss-emp', this)">🔍 Custom Date</button>
+        <div id="dsrMiss-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-emp"></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('emp')">📅 This Month</button>
+            <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('emp')">🔍 Load Custom Range</button>
+          </div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrMissingBox-emp" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-emp','Missing DSR')" title="Export">📥</button>
@@ -1931,11 +1943,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-daterange">
       <div class="section-hdr"><span class="section-title2">🗓️ DSR — Date to Date</span></div>
       <div class="card">
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrRangeStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrRangeEnd-emp"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrRange-emp', this)">🔍 Custom Date</button>
+        <div id="dsrRange-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrRangeStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrRangeEnd-emp"></div>
+          </div>
+          <button class="btn-primary" onclick="loadDsrDateRange('emp')" style="width:100%;">🔍 Show DSR</button>
         </div>
-        <button class="btn-primary" onclick="loadDsrDateRange('emp')" style="width:100%;">🔍 Show DSR</button>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrRangeBox-emp" style="display:none;" onclick="openBoxExportModal('dsrRangeBox-emp','DSR Date Range')" title="Export">📥</button>
       <div class="card"><div id="dsrRangeBox-emp"></div></div>
@@ -2004,14 +2019,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Employee</label>
           <select id="stockRetailEmp-emp"><option value="">All Employees</option></select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-emp"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
           <button class="btn-secondary" style="flex:1;" onclick="stockToday('emp','Retail')">📌 Today</button>
           <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('emp','Retail')">📅 Running Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('emp','Retail','custom')">🔍 Load</button>
+        </div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockRetail-emp', this)">🔍 Custom Date</button>
+        <div id="stockRetail-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-emp"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loadStockDetail('emp','Retail','custom')">🔍 Load</button>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockRetailBox-emp" style="display:none;" onclick="openBoxExportModal('stockRetailBox-emp','Retail Checklist')" title="Export">📥</button>
@@ -2024,14 +2042,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Employee</label>
           <select id="stockWholesaleEmp-emp"><option value="">All Employees</option></select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-emp"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
           <button class="btn-secondary" style="flex:1;" onclick="stockToday('emp','Wholesale')">📌 Today</button>
           <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('emp','Wholesale')">📅 Running Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('emp','Wholesale','custom')">🔍 Load</button>
+        </div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockWholesale-emp', this)">🔍 Custom Date</button>
+        <div id="stockWholesale-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-emp"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loadStockDetail('emp','Wholesale','custom')">🔍 Load</button>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockWholesaleBox-emp" style="display:none;" onclick="openBoxExportModal('stockWholesaleBox-emp','Wholesale Checklist')" title="Export">📥</button>
@@ -2047,13 +2068,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <option value="Wholesale">Wholesale</option>
           </select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockReportStart-emp"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockReportEnd-emp"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-secondary" style="flex:1;" onclick="stockReportThisMonth('emp')">📅 Running Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockReport('emp','custom')">🔍 Load</button>
+        <button class="btn-secondary" style="width:100%;margin-bottom:8px;" onclick="stockReportThisMonth('emp')">📅 Running Month</button>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockReport-emp', this)">🔍 Custom Date</button>
+        <div id="stockReport-emp-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockReportStart-emp"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockReportEnd-emp"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loadStockReport('emp','custom')">🔍 Load</button>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockReportBox-emp" style="display:none;" onclick="openBoxExportModal('stockReportBox-emp','Stock Checklist Report')" title="Export">📥</button>
@@ -2344,11 +2366,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardAllTime('admin')">🏁 All-Time</button>
           <button class="btn-secondary" style="flex:1;" onclick="loyLeaderboardThisMonth('admin')">📅 This Month</button>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="loyLbStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="loyLbEnd-admin"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('loyLb-admin', this)">🔍 Custom Date</button>
+        <div id="loyLb-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="loyLbStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="loyLbEnd-admin"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('admin')">🔍 Load Custom Range</button>
         </div>
-        <button class="btn-primary" style="width:100%;" onclick="loyLeaderboardCustom('admin')">🔍 Custom Range</button>
       </div>
       <div class="card"><div id="loyLeaderboardBoxAdmin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
@@ -2531,15 +2556,20 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             style="display:none;width:160px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
         </div>
         <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
-          <div class="form-group" style="flex:1;min-width:130px;margin:0;">
-            <label style="font-size:10px;">From Date</label>
-            <input type="date" lang="en-GB" id="allLeavesDateFrom" class="uniform-input" onchange="renderEmployeeWiseProfile()">
+          <button class="btn-sm" onclick="toggleCustomDateGroup('allLeavesDate', this)">🔍 Custom Date</button>
+        </div>
+        <div id="allLeavesDate-wrap" style="display:none;margin-top:8px;">
+          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:130px;margin:0;">
+              <label style="font-size:10px;">From Date</label>
+              <input type="date" lang="en-GB" id="allLeavesDateFrom" class="uniform-input" onchange="renderEmployeeWiseProfile()">
+            </div>
+            <div class="form-group" style="flex:1;min-width:130px;margin:0;">
+              <label style="font-size:10px;">To Date</label>
+              <input type="date" lang="en-GB" id="allLeavesDateTo" class="uniform-input" onchange="renderEmployeeWiseProfile()">
+            </div>
+            <button class="btn-sm btn-view" style="height:38px;" onclick="clearAllLeavesFilters()">✕ Clear</button>
           </div>
-          <div class="form-group" style="flex:1;min-width:130px;margin:0;">
-            <label style="font-size:10px;">To Date</label>
-            <input type="date" lang="en-GB" id="allLeavesDateTo" class="uniform-input" onchange="renderEmployeeWiseProfile()">
-          </div>
-          <button class="btn-sm btn-view" style="height:38px;" onclick="clearAllLeavesFilters()">✕ Clear</button>
         </div>
       </div>
       <div class="filter-bar">
@@ -2615,12 +2645,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="card">
             <div class="card-title">🗓️ Block a Date Range</div>
             <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Block every date in a range at once — e.g. a week-long stock audit or store closure — instead of adding each day one by one.</p>
-            <div class="form-2col">
-              <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="blockRangeStart"></div>
-              <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="blockRangeEnd"></div>
+            <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('blockRange', this)">🔍 Custom Date</button>
+            <div id="blockRange-wrap" style="display:none;">
+              <div class="form-2col">
+                <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="blockRangeStart"></div>
+                <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="blockRangeEnd"></div>
+              </div>
+              <div class="form-row"><label>Reason (optional)</label><input type="text" id="blockRangeReason" placeholder="e.g. Diwali week, Stock Audit"></div>
+              <button class="btn-primary" id="addBlockRangeBtn" onclick="addBlockedDateRange()">🚫 Block This Range</button>
             </div>
-            <div class="form-row"><label>Reason (optional)</label><input type="text" id="blockRangeReason" placeholder="e.g. Diwali week, Stock Audit"></div>
-            <button class="btn-primary" id="addBlockRangeBtn" onclick="addBlockedDateRange()">🚫 Block This Range</button>
           </div>
 
           <div class="card">
@@ -2732,11 +2765,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📈 Month / Date Comparison — All Employees</span></div>
       <div class="card">
         <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiRangeStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiRangeEnd-admin"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('kpiRange-admin', this)">🔍 Custom Date</button>
+        <div id="kpiRange-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiRangeStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiRangeEnd-admin"></div>
+          </div>
+          <button class="btn-primary" onclick="loadKpiRangeSummary('admin')" style="width:100%;">🔍 Show Data</button>
         </div>
-        <button class="btn-primary" onclick="loadKpiRangeSummary('admin')" style="width:100%;">🔍 Show Data</button>
       </div>
       <div class="card"><div id="kpiRangeBox-admin"></div></div>
       <div class="section-hdr" style="margin-top:18px;"><span class="section-title2">📊 Saved Comparison Report</span></div>
@@ -2779,13 +2815,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — All Employees</span></div>
       <div class="card">
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-admin"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('admin')">📅 This Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('admin')">🔍 Custom Range</button>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrMiss-admin', this)">🔍 Custom Date</button>
+        <div id="dsrMiss-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-admin"></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('admin')">📅 This Month</button>
+            <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('admin')">🔍 Load Custom Range</button>
+          </div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrMissingBox-admin" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-admin','Missing DSR')" title="Export">📥</button>
@@ -2799,11 +2838,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-daterange">
       <div class="section-hdr"><span class="section-title2">🗓️ DSR — Date to Date</span></div>
       <div class="card">
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrRangeStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrRangeEnd-admin"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrRange-admin', this)">🔍 Custom Date</button>
+        <div id="dsrRange-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrRangeStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrRangeEnd-admin"></div>
+          </div>
+          <button class="btn-primary" onclick="loadDsrDateRange('admin')" style="width:100%;">🔍 Show DSR</button>
         </div>
-        <button class="btn-primary" onclick="loadDsrDateRange('admin')" style="width:100%;">🔍 Show DSR</button>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrRangeBox-admin" style="display:none;" onclick="openBoxExportModal('dsrRangeBox-admin','DSR Date Range')" title="Export">📥</button>
       <div class="card"><div id="dsrRangeBox-admin"></div></div>
@@ -2849,9 +2891,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <option value="Golden Reward">Golden Reward</option>
           </select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Enroll Start Date</label><input type="date" lang="en-GB" id="gaStartDate-admin" onchange="loadGoldenAuraList('admin')"></div>
-          <div class="form-row"><label>Enroll End Date</label><input type="date" lang="en-GB" id="gaEndDate-admin" onchange="loadGoldenAuraList('admin')"></div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('gaDate-admin', this)">🔍 Custom Date</button>
+        <div id="gaDate-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Enroll Start Date</label><input type="date" lang="en-GB" id="gaStartDate-admin" onchange="loadGoldenAuraList('admin')"></div>
+            <div class="form-row"><label>Enroll End Date</label><input type="date" lang="en-GB" id="gaEndDate-admin" onchange="loadGoldenAuraList('admin')"></div>
+          </div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-gaListBox-admin" style="display:none;" onclick="openBoxExportModal('gaListBox-admin','Golden Aura Schemes')" title="Export">📥</button>
@@ -2892,13 +2937,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-stock-variance">
       <div class="section-hdr"><span class="section-title2">⚠️ Variance Log</span></div>
       <div class="card">
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockVarianceStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockVarianceEnd-admin"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-secondary" style="flex:1;" onclick="stockVarianceClearDates('admin')">📋 All</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockVarianceLog('admin')">🔍 Load</button>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockVariance-admin', this)">🔍 Custom Date</button>
+        <div id="stockVariance-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockVarianceStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockVarianceEnd-admin"></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-secondary" style="flex:1;" onclick="stockVarianceClearDates('admin')">📋 All</button>
+            <button class="btn-primary" style="flex:1;" onclick="loadStockVarianceLog('admin')">🔍 Load</button>
+          </div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockVarianceBox-admin" style="display:none;" onclick="openBoxExportModal('stockVarianceBox-admin','Variance Log')" title="Export">📥</button>
@@ -2908,13 +2956,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-stock-changelog">
       <div class="section-hdr"><span class="section-title2">📝 Change Log</span></div>
       <div class="card">
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockChangeLogStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockChangeLogEnd-admin"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-secondary" style="flex:1;" onclick="stockChangeLogClearDates('admin')">📋 All</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockChangeLog('admin')">🔍 Load</button>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockChangeLog-admin', this)">🔍 Custom Date</button>
+        <div id="stockChangeLog-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockChangeLogStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockChangeLogEnd-admin"></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-secondary" style="flex:1;" onclick="stockChangeLogClearDates('admin')">📋 All</button>
+            <button class="btn-primary" style="flex:1;" onclick="loadStockChangeLog('admin')">🔍 Load</button>
+          </div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockChangeLogBox-admin" style="display:none;" onclick="openBoxExportModal('stockChangeLogBox-admin','Change Log')" title="Export">📥</button>
@@ -2927,14 +2978,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Employee</label>
           <select id="stockRetailEmp-admin"><option value="">All Employees</option></select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-admin"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
           <button class="btn-secondary" style="flex:1;" onclick="stockToday('admin','Retail')">📌 Today</button>
           <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('admin','Retail')">📅 Running Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('admin','Retail','custom')">🔍 Load</button>
+        </div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockRetail-admin', this)">🔍 Custom Date</button>
+        <div id="stockRetail-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockRetailStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockRetailEnd-admin"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loadStockDetail('admin','Retail','custom')">🔍 Load</button>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockRetailBox-admin" style="display:none;" onclick="openBoxExportModal('stockRetailBox-admin','Retail Checklist')" title="Export">📥</button>
@@ -2947,14 +3001,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Employee</label>
           <select id="stockWholesaleEmp-admin"><option value="">All Employees</option></select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-admin"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
           <button class="btn-secondary" style="flex:1;" onclick="stockToday('admin','Wholesale')">📌 Today</button>
           <button class="btn-secondary" style="flex:1;" onclick="stockThisMonth('admin','Wholesale')">📅 Running Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockDetail('admin','Wholesale','custom')">🔍 Load</button>
+        </div>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockWholesale-admin', this)">🔍 Custom Date</button>
+        <div id="stockWholesale-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockWholesaleStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockWholesaleEnd-admin"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loadStockDetail('admin','Wholesale','custom')">🔍 Load</button>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockWholesaleBox-admin" style="display:none;" onclick="openBoxExportModal('stockWholesaleBox-admin','Wholesale Checklist')" title="Export">📥</button>
@@ -2970,13 +3027,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <option value="Wholesale">Wholesale</option>
           </select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockReportStart-admin"></div>
-          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockReportEnd-admin"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-secondary" style="flex:1;" onclick="stockReportThisMonth('admin')">📅 Running Month</button>
-          <button class="btn-primary" style="flex:1;" onclick="loadStockReport('admin','custom')">🔍 Load</button>
+        <button class="btn-secondary" style="width:100%;margin-bottom:8px;" onclick="stockReportThisMonth('admin')">📅 Running Month</button>
+        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('stockReport-admin', this)">🔍 Custom Date</button>
+        <div id="stockReport-admin-wrap" style="display:none;">
+          <div class="form-2col">
+            <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="stockReportStart-admin"></div>
+            <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="stockReportEnd-admin"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="loadStockReport('admin','custom')">🔍 Load</button>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-stockReportBox-admin" style="display:none;" onclick="openBoxExportModal('stockReportBox-admin','Stock Checklist Report')" title="Export">📥</button>
@@ -3037,9 +3095,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" style="padding:12px 14px;">
         <label>Employee (optional)</label>
         <select id="overdueEmpFilter" class="uniform-select" onchange="renderOverdueLeadsTable()"><option value="">-- All Employees --</option></select>
-        <div style="display:flex;gap:10px;margin-top:10px;">
-          <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="overdueFromDate" class="uniform-input" onchange="renderOverdueLeadsTable()"></div>
-          <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="overdueToDate" class="uniform-input" onchange="renderOverdueLeadsTable()"></div>
+        <button class="btn-sm" style="margin-top:10px;" onclick="toggleCustomDateGroup('overdue', this)">🔍 Custom Date</button>
+        <div id="overdue-wrap" style="display:none;margin-top:8px;">
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;"><label>From Date</label><input type="date" lang="en-GB" id="overdueFromDate" class="uniform-input" onchange="renderOverdueLeadsTable()"></div>
+            <div style="flex:1;"><label>To Date</label><input type="date" lang="en-GB" id="overdueToDate" class="uniform-input" onchange="renderOverdueLeadsTable()"></div>
+          </div>
         </div>
         <button class="btn-modal-confirm" style="width:100%;margin-top:10px;background:var(--purple);" onclick="loadAdminOverdueLeads()">🔄 Refresh</button>
       </div>
@@ -3301,11 +3362,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
     <div class="modal-title" id="loyEmpDetailTitle">👤 Employee Detail</div>
     <div class="card" style="padding:10px 14px;margin:8px 0;">
-      <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:11px;">From Date</label><input type="date" lang="en-GB" id="loyEmpDetailFromDate" class="uniform-input"></div>
-        <div style="flex:1;"><label style="font-size:11px;">To Date</label><input type="date" lang="en-GB" id="loyEmpDetailToDate" class="uniform-input"></div>
+      <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('loyEmpDetail', this)">🔍 Custom Date</button>
+      <div id="loyEmpDetail-wrap" style="display:none;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;"><label style="font-size:11px;">From Date</label><input type="date" lang="en-GB" id="loyEmpDetailFromDate" class="uniform-input"></div>
+          <div style="flex:1;"><label style="font-size:11px;">To Date</label><input type="date" lang="en-GB" id="loyEmpDetailToDate" class="uniform-input"></div>
+        </div>
+        <button class="btn-modal-confirm" style="width:100%;margin-top:8px;background:var(--purple);" onclick="loadLoyEmpDetail()">🔄 Load</button>
       </div>
-      <button class="btn-modal-confirm" style="width:100%;margin-top:8px;background:var(--purple);" onclick="loadLoyEmpDetail()">🔄 Load</button>
     </div>
     <div id="loyEmpDetailContent"></div>
     <div class="modal-btns">
@@ -3541,6 +3605,22 @@ function applyDateScopeCustom(scopeId) {
 function mountDateScope(scopeId, opts) {
   const mount = document.getElementById(scopeId + '-mount');
   if (mount) mount.innerHTML = dateScopeBarHtml(scopeId, opts);
+}
+
+// Small standalone toggle used on every OTHER Start/End date pair in the
+// portal (KPI comparison, DSR range/missing, Stock reports, Loyalty
+// filters, Leads overdue, Leave block/modify, etc). Unlike the full
+// dateScopeBarHtml() component above (Today/Running Month/Custom Date,
+// used on KPI Till-Date & Walk-in Track), these are plain filters with
+// no "Today"/"Running Month" meaning of their own — so it's just one
+// small "Custom Date" button that reveals the pickers, and a "Hide"
+// state to put them away again. Hidden by default on every page load.
+function toggleCustomDateGroup(groupId, btnEl) {
+  const wrap = document.getElementById(groupId + '-wrap');
+  if (!wrap) return;
+  const willShow = wrap.style.display === 'none' || !wrap.style.display;
+  wrap.style.display = willShow ? '' : 'none';
+  if (btnEl) btnEl.textContent = willShow ? '✖ Hide Custom Date' : '🔍 Custom Date';
 }
 function normalizeDateStr(s) {
   // Server dates may arrive as 'yyyy-MM-dd' or 'yyyy-MM-dd HH:mm:ss' or full ISO —
