@@ -12233,16 +12233,44 @@ async function loadWalkinTrackTable(who, start, end) {
   try {
     const res = await jsonpReliable(params);
     if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
+    // Cache the full unfiltered set for admin so the employee-name search
+    // box below can filter instantly client-side, without a re-fetch.
+    if (who === 'admin') {
+      window.__walkinRowsAdmin = res.rows || [];
+      window.__walkinSearchTerm = ''; // fresh date range = fresh search box
+    }
     renderWalkinTrackTable(who, res.rows || []);
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinTrackTable(\'' + who + '\',\'' + (start||'') + '\',\'' + (end||'') + '\')" title="Retry">🔄</button></div>';
   }
 }
 
+// Employee-name search box (admin only) — filters the already-loaded
+// rows client-side, no re-fetch needed. Clearing the box (or "All")
+// goes back to showing every employee + the full Grand Total.
+function filterWalkinTrackByEmployee(term) {
+  window.__walkinSearchTerm = term || '';
+  const all = window.__walkinRowsAdmin || [];
+  const t = (term || '').trim().toLowerCase();
+  const filtered = t ? all.filter(r => (r.employee || '').toLowerCase().includes(t)) : all;
+  renderWalkinTrackTable('admin', filtered);
+}
+
 function renderWalkinTrackTable(who, rows) {
   const box = document.getElementById(who === 'admin' ? 'walkinsReportBox' : 'empWalkinsReportBox');
-  if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>No walk-in entries found.</p></div>'; return; }
   const isAdmin = who === 'admin';
+
+  // Admin's employee-name search box sits above the table/empty-state
+  // either way, so it's never lost when a filter returns zero rows.
+  const searchBarHtml = isAdmin ? `
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input type="text" id="walkinEmpSearch" placeholder="🔎 Search employee name... (leave blank for All)"
+        oninput="filterWalkinTrackByEmployee(this.value)"
+        style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);outline:none;">
+      <button class="btn-secondary" onclick="document.getElementById('walkinEmpSearch').value='';filterWalkinTrackByEmployee('');">✕ All</button>
+    </div>` : '';
+
+  if (!rows.length) { box.innerHTML = searchBarHtml + '<div class="empty-state"><p>No walk-in entries found.</p></div>'; return; }
 
   const rowHtml = r => `<tr id="wtRow-${r.rowNum}" style="border-bottom:1px solid var(--border);">
     <td style="padding:5px 8px;white-space:nowrap;">${r.date}</td>
@@ -12261,7 +12289,19 @@ function renderWalkinTrackTable(who, rows) {
       </td>` : ''}
   </tr>`;
 
-  const html = `<div class="card"><div class="card-title">🚶 Walk-in Track ${isAdmin ? '— All Employees' : '— My Entries'}</div>
+  // Grand Total row — sums every numeric column across whatever's
+  // currently shown (all employees, or just the ones matching search).
+  const numKeys = ['deals','goldenPlans','loyaltyCards','purchased','nonPurchased','googleReview','instagram','facebook','whatsapp'];
+  const totals = {};
+  numKeys.forEach(k => { totals[k] = rows.reduce((sum, r) => sum + (Number(r[k]) || 0), 0); });
+  const totalHtml = `<tr style="border-top:2px solid var(--purple);background:var(--purple-bg);font-weight:800;">
+    <td style="padding:6px 8px;">GRAND TOTAL</td>
+    ${isAdmin ? '<td style="padding:6px 8px;"></td>' : ''}
+    ${numKeys.map(k => `<td style="padding:6px 8px;text-align:center;">${totals[k]}</td>`).join('')}
+    ${isAdmin ? '<td style="padding:6px 8px;"></td>' : ''}
+  </tr>`;
+
+  const html = `${searchBarHtml}<div class="card"><div class="card-title">🚶 Walk-in Track ${isAdmin ? '— All Employees' : '— My Entries'}</div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;white-space:nowrap;">
     <thead><tr style="background:var(--purple-bg);">
       <th style="padding:5px 8px;text-align:left;">Date</th>
@@ -12272,9 +12312,23 @@ function renderWalkinTrackTable(who, rows) {
       ${isAdmin ? '<th style="padding:5px 8px;"></th>' : ''}
     </tr></thead><tbody>
     ${rows.map(rowHtml).join('')}
+    ${totalHtml}
     </tbody></table></div>
   </div>`;
   box.innerHTML = html;
+
+  // Re-focus + restore the search box's own text and cursor position
+  // (innerHTML replace above wipes the whole element) so re-rendering on
+  // every keystroke doesn't interrupt typing.
+  if (isAdmin) {
+    const searchInp = document.getElementById('walkinEmpSearch');
+    if (searchInp && window.__walkinSearchTerm) {
+      searchInp.value = window.__walkinSearchTerm;
+      searchInp.focus();
+      const len = searchInp.value.length;
+      searchInp.setSelectionRange(len, len);
+    }
+  }
 }
 
 // Turns one row's editable cells into number inputs in place, with a
