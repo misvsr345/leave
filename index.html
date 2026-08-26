@@ -764,11 +764,27 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .duty-badge.duty-done { background: #dcfce7; color: #166534; }
 .duty-badge.duty-pending { background: #fef3c7; color: #92400e; }
 .duty-empty { color: var(--text3); }
-.kpi-report-table { font-size: 11px; }
-.kpi-report-table th { text-align: center; background: var(--purple-bg); padding: 5px 7px; }
-.kpi-report-table td { text-align: center; padding: 5px 7px; }
+.kpi-report-table { font-size: 13px; }
+.kpi-report-table th { text-align: center; background: var(--purple-bg); padding: 6px 9px; }
+.kpi-report-table td { text-align: center; padding: 6px 9px; }
 .kpi-report-table tbody tr:nth-child(even) { background: rgba(107,33,168,0.03); }
 .kpi-report-table tbody tr:hover { background: var(--purple-bg); }
+/* v-fix (BRO's "KPI lo kuda left-right scroll petti data size penchu"
+   request): this table used to be shrunk down with a JS transform:scale
+   on desktop (see the old fitWideTableToScreen) to force every column
+   visible without scrolling — which made the text tiny and hard to read.
+   Font size is back up to a normal, readable size; the table now scrolls
+   horizontally instead (same .scroll-x-visible treatment as Walk-in
+   Track), and both header rows stay frozen on top while scrolling down
+   through many employees.
+   Row 1 (group headers: Purchase+Deals Bonus / Loyalty Cards / etc.)
+   sticks at top:0; Row 2 (the per-column sub-headers under them) sticks
+   right below it — the fixed 30px offset matches this table's actual
+   row-1 height (6px padding × 2 + ~13px line height ≈ 30px) so the two
+   rows lock together with no gap or overlap. */
+.kpi-report-table thead tr:first-child th { position: sticky; top: 0; z-index: 3; }
+.kpi-report-table thead tr:last-child th { position: sticky; top: 30px; z-index: 3; background: var(--bg); }
+.kpi-report-table-minw { min-width: 1400px; }
 .dh-chart-wrap { position: relative; height: 150px; margin-top: 4px; }
 /* All charts consolidated into one "Charts Overview" panel — see
    loadAdminDashboardHub — instead of each chart living inside its own
@@ -934,6 +950,67 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .uniform-input:focus { border-color: var(--purple-mid); background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* v-fix (BRO's "Start Date, End Date, Load — mudu oke line" request):
+   Start Date + End Date + Load button, all three in a single row instead
+   of Load dropping to its own full-width line below. Each date field
+   shrinks its own label/input to stay compact; Load sizes to its text
+   (not full width) so the row doesn't feel lopsided. Wraps to 2 lines
+   only on genuinely narrow phone screens, where 3-across would make the
+   date inputs too small to tap accurately. */
+/* v-fix (BRO's DSR Entries — All Employees admin page: Date + Employee
+   filter side-by-side, smaller): a compact 2-up row for exactly this
+   kind of small filter pair, distinct from .form-2col (which is used for
+   bigger form fields elsewhere and isn't as compact). */
+.filter-row-2col { display: flex; gap: 8px; }
+.filter-row-2col .form-row { flex: 1; margin-bottom: 0; }
+.filter-row-2col .form-row label { font-size: 11px; }
+.filter-row-2col input, .filter-row-2col select { padding: 8px 10px; font-size: 13px; }
+@media (max-width: 380px) {
+  .filter-row-2col { flex-wrap: wrap; }
+  .filter-row-2col .form-row { flex: 1 1 100%; }
+}
+
+.date-scope-custom-row { display: flex; gap: 8px; align-items: flex-end; margin: 0 0 10px; flex-wrap: wrap; }
+.date-scope-custom-row .form-row { flex: 1 1 130px; margin-bottom: 0; }
+.date-scope-custom-row .form-row label { font-size: 11px; }
+.date-scope-custom-row input[type="date"] { padding: 8px 10px; font-size: 13px; }
+.date-scope-custom-row button { flex: 0 0 auto; white-space: nowrap; padding: 9px 16px; font-size: 13px; }
+@media (max-width: 420px) {
+  .date-scope-custom-row button { flex: 1 1 100%; }
+}
+
+/* v-fix (BRO's "2/3 buttons together should sit side by side, smaller,
+   single-line text" request): a reusable row for any place in the app
+   where 2 or 3 action buttons sit together. Each button shrinks to fit
+   its own text on one line (no wrapping) instead of stretching
+   full-width and stacking vertically. */
+.btn-row { display: flex; gap: 8px; }
+.btn-row > button {
+  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12.5px; padding: 9px 6px;
+}
+@media (max-width: 380px) {
+  .btn-row { flex-wrap: wrap; }
+  .btn-row > button { flex: 1 1 45%; }
+}
+
+/* v-fix (BRO's "3rd image lo unna line freeze avali" — the Walk-in
+   Track table header row should stay visible while scrolling): sticky
+   header, same pattern already used by .kd-table th elsewhere. */
+.wt-table th { position: sticky; top: 0; background: var(--purple-bg); z-index: 2; }
+
+/* v-fix (BRO's "left right scroller pettu" — a wide table's horizontal
+   scrollbar should be visibly obvious, not a thin near-invisible OS
+   default): a fatter, colored, always-noticeable scrollbar. Firefox uses
+   scrollbar-width/scrollbar-color; Chrome/Edge/Safari use the older
+   ::-webkit-scrollbar rules — both included so it looks the same
+   everywhere the portal actually runs. */
+.scroll-x-visible { scrollbar-width: auto; scrollbar-color: var(--purple) var(--purple-bg); }
+.scroll-x-visible::-webkit-scrollbar { height: 10px; }
+.scroll-x-visible::-webkit-scrollbar-track { background: var(--purple-bg); border-radius: 6px; }
+.scroll-x-visible::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 6px; }
+.scroll-x-visible::-webkit-scrollbar-thumb:hover { background: var(--purple-mid); }
 
 /* Calendar — shrunk to ~75% of original */
 .cal-wrap { max-width: 375px; margin: 0 auto; }
@@ -1437,8 +1514,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="topbar-row2">
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="empDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
-        <button class="tb-chip" id="syncNowBtn" onclick="flushOfflineQueue()" style="display:none;background:rgba(212,168,67,0.25);border-color:var(--gold);">🔄 Sync</button>
-        <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
+        <button class="tb-chip" id="syncNowBtn" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
+        <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
         <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
@@ -1755,7 +1832,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Card Issued Date *</label><input type="date" lang="en-GB" id="ncCardDate"></div>
 
         <div id="ncErrorMsg" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;padding:8px 10px;background:var(--red-bg,#fdecea);border-radius:8px;"></div>
-        <button class="btn-primary" id="ncSubmitBtn" style="width:100%;" onclick="submitNewLoyaltyCard()">💾 Submit New Card Entry</button>
+        <div class="btn-row">
+          <button class="btn-primary" id="ncSubmitBtn" style="margin-bottom:10px;" onclick="submitNewLoyaltyCard()">💾 Submit New Card Entry</button>
+          <button class="btn-secondary" style="" onclick="ncClearForm()">🗑️ Clear Form</button>
+        </div>
       </div>
     </div>
 
@@ -2520,9 +2600,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="card">
           <div class="card-title">⚡ Outcome</div>
           <div class="quick-actions-grid" style="grid-template-columns:1fr 1fr 1fr;">
-            <button class="btn-sm btn-approve" id="directApproveBtn" style="width:100%;height:40px;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
-            <button class="btn-sm btn-absent" id="directAbsentBtn" style="width:100%;height:40px;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
-            <button class="btn-sm btn-reject" id="directRejectBtn" style="width:100%;height:40px;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
+            <div class="btn-row">
+              <button class="btn-sm btn-approve" id="directApproveBtn" style="height:40px;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
+              <button class="btn-sm btn-absent" id="directAbsentBtn" style="height:40px;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
+              <button class="btn-sm btn-reject" id="directRejectBtn" style="height:40px;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
+            </div>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:10px;">This directly writes an entry (no pending request needed) — same as the Sheets-side "Direct Approve / Reject / Absent" tool. A rejection reason is required for Reject.</div>
         </div>
@@ -2797,11 +2879,13 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-today">
       <div class="section-hdr"><span class="section-title2">📝 DSR Entries — All Employees</span></div>
       <div class="card">
-        <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="dsrTodayDate-admin" onchange="loadDsrTodayForDate('admin')"></div>
-        <div class="form-row"><label>Employee</label>
-          <select id="dsrTodayEmpFilter-admin" class="uniform-select" onchange="renderDsrTodayFiltered('admin')">
-            <option value="">-- All Employees --</option>
-          </select>
+        <div class="filter-row-2col">
+          <div class="form-row"><label>Date</label><input type="date" lang="en-GB" id="dsrTodayDate-admin" onchange="loadDsrTodayForDate('admin')"></div>
+          <div class="form-row"><label>Employee</label>
+            <select id="dsrTodayEmpFilter-admin" class="uniform-select" onchange="renderDsrTodayFiltered('admin')">
+              <option value="">-- All Employees --</option>
+            </select>
+          </div>
         </div>
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrTodayBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-admin','DSR Entries')" title="Export">📥</button>
@@ -3056,8 +3140,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
       <div class="card" style="margin-top:14px;">
         <div class="card-title">🛠️ More Tools</div>
-        <button class="btn-secondary" style="width:100%;margin-bottom:8px;" onclick="sendPendingFollowUpReportNow()">🔁 Send Pending Follow-up Report</button>
-        <button class="btn-secondary" style="width:100%;" onclick="sendCallingStatusReportNow()">📞 Send Today's Calling Status Report</button>
+        <div class="btn-row">
+          <button class="btn-secondary" style="margin-bottom:8px;" onclick="sendPendingFollowUpReportNow()">🔁 Pending Follow-ups</button>
+          <button class="btn-secondary" style="" onclick="sendCallingStatusReportNow()">📞 Calling Status</button>
+        </div>
       </div>
     </div>
 
@@ -3489,6 +3575,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzgQijYVOPrVzF21TMDg8Cjd5M0QHs1A3aaez4cHZ81WH8if8mJer7V3UlkOgGNfqJdPg/exec";
 const SESSION_KEY = 'vsrGoldPortalSession';
 const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
+// v-fix (DSR/Loyalty silent-fail-on-bad-network bug): Leave already had a
+// localStorage offline queue + auto-sync-on-reconnect safety net. DSR and
+// Loyalty Card submission had NONE of that — they used a bare fetch() with
+// no timeout, no navigator.onLine check, and no offline queue, so on a
+// flaky/dropping mobile connection the request could silently fail (or
+// hang forever) with nothing saved anywhere except what the employee typed
+// on screen. These give DSR and Loyalty Card the exact same safety net
+// Leave already has.
+const DSR_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineDsrQueue';
+const LOYALTY_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLoyaltyQueue';
+const GOLDEN_AURA_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineGoldenAuraQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
 
 const DEFAULT_NOTICES =
@@ -3552,8 +3649,12 @@ function registerDateScope(scopeId, onApply) { __dateScopes[scopeId] = { onApply
 function dateScopeBarHtml(scopeId, opts) {
   opts = opts || {};
   const defaultMode = opts.defaultMode || 'today';
+  // v-fix: added data-mode so setDateScope can reliably find "the Today
+  // button" to revert to when Custom Date is toggled off — matching by
+  // onclick-string was fragile and this needs to work regardless of
+  // which modes a given page enables (allTime or not).
   const btn = (mode, label, icon) =>
-    `<button class="filter-btn${mode === defaultMode ? ' active' : ''}" onclick="setDateScope('${scopeId}',this,'${mode}')">${icon} ${label}</button>`;
+    `<button class="filter-btn${mode === defaultMode ? ' active' : ''}" data-mode="${mode}" onclick="setDateScope('${scopeId}',this,'${mode}')">${icon} ${label}</button>`;
   return `
     <div class="filter-bar" id="${scopeId}-bar">
       ${opts.allTime ? btn('all', 'All Time', '🏁') : ''}
@@ -3561,10 +3662,10 @@ function dateScopeBarHtml(scopeId, opts) {
       ${btn('month', 'Running Month', '🗓️')}
       ${btn('custom', 'Custom Date', '🔍')}
     </div>
-    <div class="form-2col" id="${scopeId}-custom" style="display:none;margin:0 0 10px;">
+    <div class="date-scope-custom-row" id="${scopeId}-custom" style="display:none;">
       <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="${scopeId}-start"></div>
       <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="${scopeId}-end"></div>
-      <button class="btn-primary" style="grid-column:1/-1;" onclick="applyDateScopeCustom('${scopeId}')">🔍 Load</button>
+      <button class="btn-primary" onclick="applyDateScopeCustom('${scopeId}')">🔍 Load</button>
     </div>`;
 }
 
@@ -3578,9 +3679,22 @@ function dateScopeRange(mode) {
 
 function setDateScope(scopeId, btnEl, mode) {
   const bar = document.getElementById(scopeId + '-bar');
+  const customBox = document.getElementById(scopeId + '-custom');
+  // v-fix (BRO's "Custom Date click chesthe hide avvatledu" bug, reported
+  // across every page that uses this Today/Running Month/Custom Date bar
+  // — KPI Till Date, Walk-in Track, Leads Report, Loyalty All Cards):
+  // clicking "Custom Date" while it's ALREADY the active/open one used to
+  // just re-show the same picker (no-op, since it was already showing) —
+  // there was no way to click it again to close it. Now a second click on
+  // an already-active Custom Date hides the picker and falls back to
+  // "Today", the same way it would if you'd tapped Today yourself.
+  if (mode === 'custom' && btnEl && btnEl.classList.contains('active')) {
+    const todayBtn = bar ? bar.querySelector('[data-mode="today"]') : null;
+    setDateScope(scopeId, todayBtn, 'today');
+    return;
+  }
   if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   if (btnEl) btnEl.classList.add('active');
-  const customBox = document.getElementById(scopeId + '-custom');
   if (mode === 'custom') {
     if (customBox) customBox.style.display = '';
     return; // wait for the Load button — see applyDateScopeCustom()
@@ -3618,9 +3732,18 @@ function mountDateScope(scopeId, opts) {
 function toggleCustomDateGroup(groupId, btnEl) {
   const wrap = document.getElementById(groupId + '-wrap');
   if (!wrap) return;
-  const willShow = wrap.style.display === 'none' || !wrap.style.display;
-  wrap.style.display = willShow ? '' : 'none';
-  if (btnEl) btnEl.textContent = willShow ? '✖ Hide Custom Date' : '🔍 Custom Date';
+  // v-fix (BRO's "Hide Custom Date click chesina hide avvatledu" bug):
+  // this used to be `wrap.style.display === 'none' || !wrap.style.display`
+  // — but right after the FIRST click, display gets set to '' (empty
+  // string) to show the pickers, and '' is falsy in JS, so `!wrap.style.
+  // display` was ALSO true on the second click. That made toggle always
+  // think it was hidden and re-"show" it (no visible change, since it was
+  // already visible), while the button label still flipped back to "🔍
+  // Custom Date" — so Hide looked broken. Only 'none' means hidden here,
+  // since that's the only value this function ever sets when hiding.
+  const isHidden = wrap.style.display === 'none';
+  wrap.style.display = isHidden ? '' : 'none';
+  if (btnEl) btnEl.textContent = isHidden ? '✖ Hide Custom Date' : '🔍 Custom Date';
 }
 function normalizeDateStr(s) {
   // Server dates may arrive as 'yyyy-MM-dd' or 'yyyy-MM-dd HH:mm:ss' or full ISO —
@@ -4647,28 +4770,36 @@ function goToSectionDashboard(who) {
   if (dash) (who === 'admin' ? showAdminPage : showEmpPage)(dash);
 }
 
-// Single unified "← Back" — goes exactly one step back through actual
-// navigation history (not a fixed section/dashboard anchor). Falls
-// back to the main landing page once history is empty.
+// Single unified "← Back" — per BRO's explicit request, this no longer
+// goes one step back through history at all; it always jumps straight to
+// the current page's SECTION home (e.g. any DSR sub-page → the DSR home
+// page), or the overall main/module-picker home if the page has no
+// section or IS already that section's home. goToSectionDashboard/
+// SECTION_DASHBOARD_PAGE already existed for exactly this but were never
+// actually wired to the Back button — it used a one-step history stack
+// instead. This is what's now wired up.
 function goBackOneStep(who) {
-  const stack = state['_pageHistory_' + who] || [];
-  const prev = stack.pop();
-  if (!prev) { goHomeSmart(who); return; }
-  (who === 'admin' ? showAdminPage : showEmpPage)(prev, { isBack: true });
+  const current = state['_currentPage_' + who];
+  const dash = getSectionDashboardPage(who, current);
+  if (dash && dash !== current) {
+    (who === 'admin' ? showAdminPage : showEmpPage)(dash);
+  } else {
+    goHomeSmart(who);
+  }
 }
 
-// Shows the single "← Back" fab whenever there's a previous page to
-// return to (one step, via the real navigation stack) — replaces the
-// old two-button main/section split, which force-hid on desktop and
-// could leave a page with no way back at all.
+// Shows the single "← Back" fab whenever the current page isn't already a
+// home page (main module-picker/dashboard-hub, or a section's own home —
+// clicking Back from there would just reload the same page).
 function updateBackFabs(who, page) {
   const backFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
   const sectionsFab = document.getElementById(who === 'admin' ? 'adminSectionsFab' : 'empSectionsFab');
-  const stack = state['_pageHistory_' + who] || [];
+  const dash = getSectionDashboardPage(who, page);
+  const isHomePage = page === 'modulepicker' || page === 'dashboard-hub' || (dash === page);
   if (backFab) {
-    backFab.classList.toggle('show', stack.length > 0);
+    backFab.classList.toggle('show', !isHomePage);
     backFab.onclick = function() { goBackOneStep(who); };
-    backFab.textContent = '← Back';
+    backFab.textContent = backLabelFor(page);
   }
   if (sectionsFab) sectionsFab.classList.toggle('show', page !== 'modulepicker');
 }
@@ -4774,7 +4905,15 @@ function showEmpPage(page, opts) {
   if(page==='stock-retail') loadStockDetail('emp','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('emp','Wholesale','today');
   if(page==='stock-report') loadStockReport('emp');
-  if(page==='loyalty-newcard') resetNewLoyaltyCardForm();
+  // v-fix (BRO's "form data ventane clear cheyaku" request): this used to
+  // call resetNewLoyaltyCardForm() unconditionally on EVERY visit to this
+  // page — so just tapping away and back wiped out anything already
+  // typed. Now it only initializes (sets today's default Card Issued
+  // Date, etc.) the FIRST time this page is opened in the session; after
+  // that, re-visiting leaves whatever's entered untouched. A real reset
+  // still happens after a successful Submit (see confirmSubmitLoyaltyCard/
+  // submitLoyaltyOffline) or the new explicit "🗑️ Clear Form" button.
+  if(page==='loyalty-newcard' && !window.__ncFormInitialized) { resetNewLoyaltyCardForm(); window.__ncFormInitialized = true; }
   if(page==='events') initEventsBrowser('emp');
   if(page==='trend') renderTrend();
   if(page==='profile') renderEmpProfile();
@@ -5363,8 +5502,10 @@ function leaveShowPreview(d) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitLeave()">✅ Confirm &amp; Submit</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('leavePreviewModal').remove()">✏️ Edit</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="confirmSubmitLeave()">✅ Confirm &amp; Submit</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('leavePreviewModal').remove()">✏️ Edit</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -5568,9 +5709,27 @@ function updateConnStatus() {
     lbl.textContent = online ? 'Online' : 'Offline';
   });
   const syncBtn = document.getElementById('syncNowBtn');
-  if(syncBtn) syncBtn.style.display = getOfflineQueue().length ? 'flex' : 'none';
+  // v-fix (BRO's "Refresh and Sync button okelaga undi" feedback): Sync
+  // and Refresh used the same 🔄 icon and near-identical chip styling, so
+  // they were impossible to tell apart at a glance. Sync now uses a
+  // distinct 📤 (outbox) icon, a gold/amber fill+text color instead of the
+  // plain default, and shows the actual pending count in its own label —
+  // Refresh stays the plain neutral 🔄 chip. Two visually different
+  // buttons with two different jobs.
+  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length;
+  if(syncBtn) {
+    syncBtn.style.display = pendingCount ? 'flex' : 'none';
+    syncBtn.innerHTML = '📤 Sync (' + pendingCount + ')';
+    syncBtn.title = pendingCount + ' item(s) saved offline — tap to upload now';
+  }
 }
-window.addEventListener('online', () => { updateConnStatus(); flushOfflineQueue(); });
+function flushAllOfflineQueues() {
+  flushOfflineQueue();
+  flushDsrOfflineQueue();
+  flushLoyaltyOfflineQueue();
+  flushGoldenAuraOfflineQueue();
+}
+window.addEventListener('online', () => { updateConnStatus(); flushAllOfflineQueues(); });
 window.addEventListener('offline', updateConnStatus);
 
 // ══════════════════════════════════════
@@ -5608,6 +5767,161 @@ async function flushOfflineQueue() {
   const synced = q.length - remaining.length;
   if(synced > 0) toast('✅ ' + synced + ' offline application(s) synced successfully', 'success');
   if(state.empId) await loadEmpData();
+}
+
+// ══════════════════════════════════════
+// OFFLINE QUEUE — DSR, Loyalty Card, Golden Aura
+// Same pattern as the Leave queue above (getOfflineQueue/saveOfflineQueue/
+// flushOfflineQueue), generalized so each gets its own queue: these
+// payloads carry base64 photos and can be large, so they go through
+// fetch()+_fetchWithTimeout() on reconnect rather than JSONP (Leave's
+// transport), but the "save locally, retry when online" logic is
+// identical.
+// ══════════════════════════════════════
+function getQueueGeneric(key) {
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { return []; }
+}
+// v-fix ("data miss avvadu kada?" — does the data actually persist
+// offline, or can it silently get lost?): this used to swallow EVERY
+// localStorage.setItem failure with an empty catch, including
+// QuotaExceededError. A device's localStorage is only ~5-10MB total, and
+// each Golden Aura entry alone can carry 7 full-size photos — so a phone
+// that's been offline for a while (several DSRs/cards/enrollments queued
+// up) really can hit that limit. When that happened, this used to report
+// nothing: the toast, the "saved offline" message, and the cleared form
+// all fired exactly as if it worked, while the actual write silently
+// failed and the item never made it into localStorage at all — the one
+// case where data really WOULD have been lost with no warning. Now it
+// returns whether the write actually succeeded, so every caller below can
+// tell the employee the truth instead of a false "saved offline".
+function saveQueueGeneric(key, q) {
+  try { localStorage.setItem(key, JSON.stringify(q)); return true; } catch(e) { return false; }
+}
+
+function submitDsrOffline(rows, idemKey, who) {
+  const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
+  q.push({ rows, idemKey, savedAt: Date.now() });
+  const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
+  updateConnStatus();
+  const msg = document.getElementById('dsrfStatusMsg-' + who);
+  if (!saved) {
+    // Storage genuinely failed (most likely full) — do NOT clear the
+    // form or claim success. The employee's typed data stays on screen
+    // exactly as they entered it, safe to retry as soon as there's a
+    // connection (or after freeing device storage / syncing older queued
+    // items first).
+    toast('❌ Could not save offline — this device\'s storage is full. Please connect to the internet and tap Submit again now (do not close the app), or Sync any older offline items first.', 'error');
+    if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; }
+    return;
+  }
+  toast('📴 No network — DSR saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
+  if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = '📴 Saved offline on this device — will auto-sync when back online. Do not re-enter this DSR.'; }
+  // Clear the form exactly like a successful submit, so the employee
+  // doesn't accidentally resubmit the same items again while offline.
+  const list = document.getElementById('dsrfEntriesList-' + who);
+  if (list) { list.innerHTML = ''; dsrfAddEntry(who); }
+  const custEl = document.getElementById('dsrfCust-' + who); if (custEl) custEl.value = '';
+  const mobEl = document.getElementById('dsrfMobile-' + who); if (mobEl) mobEl.value = '';
+  const addrEl = document.getElementById('dsrfAddr-' + who); if (addrEl) addrEl.value = '';
+  const dateEl = document.getElementById('dsrfBillDate-' + who); if (dateEl) dateEl.value = toYMD(new Date());
+}
+
+async function flushDsrOfflineQueue() {
+  if (!navigator.onLine) return;
+  let q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
+  if (!q.length) { updateConnStatus(); return; }
+  const remaining = [];
+  for (const item of q) {
+    try {
+      // 60s — same photo-heavy write as a live submit, just replayed once
+      // back online. idemKey makes this safe even if it turns out the
+      // original attempt actually DID reach the server before dropping.
+      const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: item.rows, idemKey: item.idemKey }) }, 60000);
+      const result = await resp.json();
+      if (!(result && result.status === 'success')) remaining.push(item);
+    } catch (e) {
+      remaining.push(item);
+    }
+  }
+  saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, remaining);
+  updateConnStatus();
+  const synced = q.length - remaining.length;
+  if (synced > 0) toast('✅ ' + synced + ' offline DSR(s) synced successfully', 'success');
+}
+
+function submitLoyaltyOffline(payload) {
+  const q = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
+  q.push({ payload, savedAt: Date.now() });
+  const saved = saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, q);
+  updateConnStatus();
+  if (!saved) {
+    toast('❌ Could not save offline — this device\'s storage is full. Please connect to the internet and tap Submit again now (do not close the app), or Sync any older offline items first.', 'error');
+    const errBox = document.getElementById('ncErrorMsg');
+    if (errBox) { errBox.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; errBox.style.display = 'block'; }
+    return;
+  }
+  toast('📴 No network — Loyalty Card saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
+  resetNewLoyaltyCardForm();
+  showEmpPage('loyalty');
+}
+
+async function flushLoyaltyOfflineQueue() {
+  if (!navigator.onLine) return;
+  let q = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
+  if (!q.length) { updateConnStatus(); return; }
+  const remaining = [];
+  for (const item of q) {
+    try {
+      const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 60000);
+      const result = await _parseMainApiResponse(resp);
+      if (!(result && result.ok)) remaining.push(item);
+    } catch (e) {
+      remaining.push(item);
+    }
+  }
+  saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, remaining);
+  updateConnStatus();
+  const synced = q.length - remaining.length;
+  if (synced > 0) toast('✅ ' + synced + ' offline Loyalty Card(s) synced successfully', 'success');
+}
+
+// Golden Aura carries up to 7 photos in one payload — the heaviest of the
+// three — so it's the one most likely to actually hit a storage limit.
+// Same offline-queue treatment as DSR/Loyalty above.
+function submitGoldenAuraOffline(payload, who) {
+  const q = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
+  q.push({ payload, savedAt: Date.now() });
+  const saved = saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, q);
+  updateConnStatus();
+  const msg = document.getElementById('gaStatusMsg-' + who);
+  if (!saved) {
+    toast('❌ Could not save offline — this device\'s storage is full. Please connect to the internet and tap Submit again now (do not close the app), or Sync any older offline items first.', 'error');
+    if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; }
+    return;
+  }
+  toast('📴 No network — Golden Aura enrollment saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
+  if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = '📴 Saved offline on this device — will auto-sync when back online. Do not re-enter this enrollment.'; }
+  renderGoldenAuraForm(who, true); // force — real clear after a successful offline-queue save
+}
+
+async function flushGoldenAuraOfflineQueue() {
+  if (!navigator.onLine) return;
+  let q = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
+  if (!q.length) { updateConnStatus(); return; }
+  const remaining = [];
+  for (const item of q) {
+    try {
+      const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 90000);
+      const result = await _parseMainApiResponse(resp);
+      if (!(result && result.ok)) remaining.push(item);
+    } catch (e) {
+      remaining.push(item);
+    }
+  }
+  saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, remaining);
+  updateConnStatus();
+  const synced = q.length - remaining.length;
+  if (synced > 0) toast('✅ ' + synced + ' offline Golden Aura enrollment(s) synced successfully', 'success');
 }
 
 // ══════════════════════════════════════
@@ -6442,8 +6756,10 @@ function renderSettingsEmpBody(emp) {
   <div id="settingsEmpGranularBody" style="margin-top:14px;">
     <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>
     ${buildPermAccordionHtml(features, perms, 'settings-perm-check-emp', 'emp', 'onSettingsCheckChangeEmp')}
-    <button class="btn-secondary" id="settingsResetEmpBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset (Select All / Deselect All)</button>
-    <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
+    <div class="btn-row">
+      <button class="btn-secondary" id="settingsResetEmpBtn" style="margin-top:6px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset</button>
+      <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
+    </div>
   </div>`;
   body.innerHTML = html;
 }
@@ -6717,8 +7033,10 @@ function renderSettingsAdminBody(admin) {
   </div>`;
 
   html += buildPermAccordionHtml(features, perms, 'settings-perm-check', 'adm', 'onSettingsCheckChange');
-  html += `<button class="btn-secondary" id="settingsResetAdminBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="resetSettingsAdminChecks()">🔄 Reset (Select All / Deselect All)</button>`;
-  html += `<button class="btn-primary" id="settingsSaveAdminBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsAdminAccess('${admin ? escJs(admin.email) : ''}','${admin ? escJs(admin.name) : ''}','${admin ? escJs(admin.role) : ''}')">💾 Save Access${admin ? ' for ' + admin.name : ''}</button>`;
+  html += `<div class="btn-row">
+    <button class="btn-secondary" id="settingsResetAdminBtn" style="margin-top:6px;" ${disabled} onclick="resetSettingsAdminChecks()">🔄 Reset</button>
+    <button class="btn-primary" id="settingsSaveAdminBtn" style="margin-top:6px;" ${disabled} onclick="saveSettingsAdminAccess('${admin ? escJs(admin.email) : ''}','${admin ? escJs(admin.name) : ''}','${admin ? escJs(admin.role) : ''}')">💾 Save Access${admin ? ' for ' + admin.name : ''}</button>
+  </div>`;
   body.innerHTML = html;
 }
 
@@ -7286,8 +7604,10 @@ async function checkLeaveLeadsConflictsPopup() {
       <div class="modal-sub">${conflicts.today} — ${conflicts.rows.length} employee(s) on leave with leads assigned</div>
       <p style="font-size:12px;color:var(--text3);margin:10px 0;">These employees have today's calling leads assigned but their leave status is Pending/Absent/Approved. Review and Avoid their leads if needed — nothing happens automatically.</p>
       <div style="margin:12px 0;">${rowsHtml}</div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('leaveLeadsAlertModal').remove(); showAdminPage('leads-overdue');">🚫 Review in Overdue / Avoid</button>
-      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('leaveLeadsAlertModal').remove();">Dismiss</button>
+      <div class="btn-row">
+        <button class="btn-primary" style="margin-bottom:8px;" onclick="document.getElementById('leaveLeadsAlertModal').remove(); showAdminPage('leads-overdue');">🚫 Review Overdue</button>
+        <button class="btn-secondary" style="" onclick="document.getElementById('leaveLeadsAlertModal').remove();">Dismiss</button>
+      </div>
     </div>`;
     document.body.appendChild(div);
   } catch (e) {
@@ -7507,8 +7827,10 @@ function showNextMISLeaveLeadPopup() {
     </div>
     <p style="font-size:12.5px;color:var(--text2);margin-bottom:12px;">Did ${item.empName} genuinely leave the store, or was this leave applied by mistake?</p>
     <div id="misLeaveLeadErr" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:6px;"></div>
-    <button class="btn-primary" style="width:100%;margin-bottom:8px;background:var(--green);" id="misLeaveGenuineBtn" onclick="misLeaveLeadDecide('GENUINE')">✅ YES — Leave Genuine (void the ${item.remainingLeads} remaining lead(s))</button>
-    <button class="btn-secondary" style="width:100%;" id="misLeaveMistakeBtn" onclick="misLeaveLeadDecide('MISTAKE')">❌ NO — Leave by Mistake (keep leads active)</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:8px;background:var(--green);" id="misLeaveGenuineBtn" onclick="misLeaveLeadDecide('GENUINE')">✅ YES — Leave Genuine (void the ${item.remainingLeads} remaining lead(s))</button>
+      <button class="btn-secondary" style="" id="misLeaveMistakeBtn" onclick="misLeaveLeadDecide('MISTAKE')">❌ NO — Mistake</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -7737,6 +8059,17 @@ function resetNewLoyaltyCardForm() {
   const errBox = document.getElementById('ncErrorMsg'); if (errBox) errBox.style.display = 'none';
 }
 
+// Explicit "Clear Form" — same confirm-if-dirty pattern as the DSR/Golden
+// Aura ones above, per BRO's "Submit or Clear click chestene data clear
+// avali" request.
+function ncClearForm() {
+  const v = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const hasData = v('ncCustName') || v('ncPhone') || v('ncCardNo') || v('ncAadhaarNo');
+  if (hasData && !confirm('Clear all entered Loyalty Card data? This cannot be undone.')) return;
+  resetNewLoyaltyCardForm();
+  toast('Form cleared', 'info');
+}
+
 // Reads a <input type="file"> as a base64 data: URL — resolves to '' if
 // no file was chosen (so optional photo fields don't block submission).
 // Shows a clear "✓ filename selected" confirmation under a photo input,
@@ -7864,8 +8197,10 @@ function loyaltyShowPreview(p) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitLoyaltyCard(event)">✅ Confirm &amp; Submit</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyPreviewModal').remove()">✏️ Edit</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="confirmSubmitLoyaltyCard(event)">✅ Confirm &amp; Submit</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('loyPreviewModal').remove()">✏️ Edit</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -7881,6 +8216,24 @@ async function confirmSubmitLoyaltyCard(evt) {
   // a second real card entry.
   const loyIdemKey = makeIdemKey(['loyaltycard', payload.empEmail, payload.cardNo, payload.custName, payload.phone, payload.cardIssuedDate]);
   if (isDuplicateSubmission(loyIdemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+  // v-fix: loyIdemKey was computed but never actually sent to the server —
+  // it only protected against a double-tap on THIS page load. Now it rides
+  // along in the payload so the backend can dedupe a genuine retry (e.g.
+  // an offline-queued item that turns out to have already gone through)
+  // the same way DSR's idemKey already does.
+  payload.idemKey = loyIdemKey;
+
+  // v-fix (Loyalty silent-fail-on-bad-network bug): same gap DSR had — no
+  // offline check at all. Goes into the same local offline queue and
+  // auto-uploads (photos included) once the device reconnects.
+  updateConnStatus();
+  if (!navigator.onLine) {
+    const modalOff = document.getElementById('loyPreviewModal');
+    if (modalOff) modalOff.remove();
+    submitLoyaltyOffline(payload);
+    return;
+  }
+
   if (evt && evt.target) { evt.target.disabled = true; evt.target.textContent = '⏳ Submitting...'; }
 
   const modal = document.getElementById('loyPreviewModal');
@@ -7891,11 +8244,14 @@ async function confirmSubmitLoyaltyCard(evt) {
   btn.disabled = true; btn.textContent = '⏳ Uploading photos & saving...';
 
   try {
-    const resp = await fetch(WEB_APP_URL, {
+    // v-fix: bare fetch() with NO timeout — could hang forever on a bad
+    // connection with nothing saved anywhere. 90s to allow for up to 5
+    // photos (signature, customer, Aadhaar front/back, PAN) in one payload.
+    const resp = await _fetchWithTimeout(WEB_APP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
       body: JSON.stringify(payload)
-    });
+    }, 90000);
     const result = await _parseMainApiResponse(resp);
 
     if (result && result.ok) {
@@ -7907,6 +8263,13 @@ async function confirmSubmitLoyaltyCard(evt) {
       errBox.style.display = 'block';
     }
   } catch (err) {
+    // v-fix: if the connection actually dropped mid-request (or it timed
+    // out because of it), queue it offline instead of just showing an
+    // error and hoping the employee remembers to retry later.
+    if (!navigator.onLine || err.name === 'AbortError') {
+      submitLoyaltyOffline(payload);
+      return;
+    }
     errBox.textContent = 'Network error: ' + err.message;
     errBox.style.display = 'block';
   } finally {
@@ -8748,41 +9111,32 @@ function kpiTableHtml(rows) {
     <td>${r.dsrOnTime}</td><td>${r.dsrLate}</td><td>${r.dsrNoEntry}</td><td>${r.dsrScore}</td>
     <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.lastUpdated}</td>
   </tr>`).join('');
-  return `<div class="dh-table-wrap kpi-fit-wrap" style="overflow-x:auto;"><table class="dh-mini-table kpi-report-table" style="min-width:1400px;">
+  // v-fix: min-width lives in its own class (kpi-report-table-minw) now
+  // instead of an inline style, so print CSS can override it with a
+  // plain class-selector rule — inline styles otherwise beat everything
+  // except !important, which made the printed table impossible to
+  // shrink to one page width.
+  return `<div class="dh-table-wrap kpi-fit-wrap scroll-x-visible" style="overflow-x:auto;"><table class="dh-mini-table kpi-report-table kpi-report-table-minw">
     <thead>${head}</thead><tbody>${body}</tbody>
   </table></div>`;
 }
 
-// Desktop mode was cutting wide tables (KPI report especially) off at
-// the screen edge, needing a horizontal scroll to see the last columns
-// — this scales the whole table down to fit the available width
-// instead, so every column is visible at once with no scrolling.
-// Mobile is left untouched (shrinking text small enough to fit ~1400px
-// of columns into a phone screen would be unreadable — horizontal
-// scroll stays the right call there).
+// v-fix (BRO's "KPI lo left-right scroll petti, data size penchu"
+// request): this used to scale the whole table down with a CSS transform
+// on desktop so every column fit on screen with no scrolling — which is
+// exactly what made the KPI report's text so tiny it was hard to read
+// (see the old comment below, kept for history). Now it always leaves
+// the table at full, readable size and lets it scroll horizontally
+// instead — same behavior on desktop and mobile, matching Walk-in
+// Track's table. Kept as a function (rather than deleting every call
+// site) so nothing else has to change.
 function fitWideTableToScreen(wrapEl) {
   if (!wrapEl) return;
   const table = wrapEl.querySelector('table');
   if (!table) return;
-  if (window.innerWidth < 1024) {
-    table.style.transform = '';
-    wrapEl.style.height = '';
-    wrapEl.style.overflowX = 'auto';
-    return;
-  }
   table.style.transform = '';
   wrapEl.style.height = '';
-  const wrapWidth = wrapEl.clientWidth;
-  const tableWidth = table.scrollWidth;
-  if (tableWidth > wrapWidth && wrapWidth > 0) {
-    const scale = wrapWidth / tableWidth;
-    table.style.transformOrigin = 'top left';
-    table.style.transform = `scale(${scale})`;
-    wrapEl.style.height = (table.scrollHeight * scale) + 'px';
-    wrapEl.style.overflowX = 'hidden';
-  } else {
-    wrapEl.style.overflowX = 'visible';
-  }
+  wrapEl.style.overflowX = 'auto';
 }
 window.addEventListener('resize', () => {
   clearTimeout(window.__kpiFitResizeT);
@@ -9071,10 +9425,12 @@ function openBoxExportModal(boxId, title) {
   div.innerHTML = `<div class="modal-box" style="max-width:320px;"><button class="modal-close-x" onclick="document.getElementById('reportChoiceModal').remove()" title="Close">✕</button>
     <div class="modal-title">📊 Export This Page</div>
     <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;">${title}</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','excel')">📗 Excel (.xlsx)</button>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','pdf')">📕 PDF</button>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','print')">🖨️ Print</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','excel')">📗 Excel</button>
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','pdf')">📕 PDF</button>
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','print')">🖨️ Print</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -9087,12 +9443,29 @@ function runBoxExport(boxId, title, format) {
   if (format === 'print') {
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
-      <style>body{font-family:Arial,sans-serif;padding:20px;} h2{color:#6b21a8;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:6px 10px;font-size:12px;}
+      <style>
+      @page{size:landscape;}
+      body{font-family:Arial,sans-serif;padding:20px;} h2{color:#6b21a8;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:6px 10px;font-size:12px;}
       .kd-card{border:1.5px solid #ccc;border-left:4px solid #6b21a8;border-radius:8px;padding:12px 14px;margin-bottom:10px;}
       .kd-head{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px;}
       .kd-stats{display:flex;flex-wrap:wrap;gap:8px;} .kd-box{border:1px solid #ddd;border-radius:6px;padding:6px 10px;text-align:center;min-width:70px;}
       .kd-val{display:block;font-weight:800;font-size:14px;} .kd-lbl{display:block;font-size:9px;color:#666;text-transform:uppercase;}
       .kd-pill{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:#eee;} .kd-note{font-size:11px;color:#666;margin-top:4px;}
+      /* v-fix (BRO's "print lo total data oke page lo raavali" request):
+         the KPI report table (and any similarly wide table) is now shown
+         on-screen at full readable size with horizontal scroll — but that
+         same width would spill across multiple printed pages. This forces
+         it back down to exactly one page's width for print ONLY, using
+         landscape + a tiny font + wrapping cells instead of nowrap, while
+         leaving the on-screen version untouched. .kpi-report-table-minw
+         is a plain class now (not an inline style) specifically so this
+         plain class-selector override can win without needing !important
+         on every single rule. */
+      .kpi-report-table-minw{min-width:0;width:100%;table-layout:fixed;}
+      .kpi-report-table{font-size:6.5px;}
+      .kpi-report-table th,.kpi-report-table td{padding:2px 3px;white-space:normal;word-break:break-word;position:static;}
+      .kpi-fit-wrap,.dh-table-wrap{overflow:visible;}
+      .wt-table th{position:static;}
       @media print{ button{display:none;} }</style></head><body>
       <h2>VSR GOLD — ${title}</h2>${box.innerHTML}
       <script>window.onload=()=>{window.print();}<\/script></body></html>`);
@@ -9101,13 +9474,25 @@ function runBoxExport(boxId, title, format) {
   }
   if (format === 'pdf') {
     toast('⏳ Generating PDF...', 'info');
-    // BUG FIX: wide content (like the KPI table, which scrolls
-    // sideways) was getting cut off at the container's visible width —
-    // html2canvas defaults to the element's on-screen clientWidth, not
-    // its full scrollWidth, so anything past the visible edge (Loyalty/
-    // Golden Aura columns etc.) was silently missing from the PDF.
-    // Reset horizontal scroll to the start and explicitly tell
-    // html2canvas to render the FULL scrollable width/height.
+    // v-fix (BRO's "10 columns unnai kani view 6 matrame, download
+    // cheste aa 6 matrame vastundi" bug): the previous fix here reset
+    // box.scrollLeft and told html2canvas to use box.scrollWidth —
+    // but box ITSELF isn't the horizontally-scrolling element anymore
+    // (that's a child div — .scroll-x-visible / .kpi-fit-wrap — now
+    // that wide tables scroll instead of shrinking to fit). Resetting
+    // box.scrollLeft did nothing, since box was never scrolled in the
+    // first place; only its child was, and that child's off-screen
+    // columns were exactly what got clipped out of the PDF.
+    // Fix: find every actual overflowing descendant inside box (not
+    // just box itself) and temporarily force each one to lay out at
+    // its full natural width for the snapshot — no scrolling, nothing
+    // left to clip — then restore its original inline styles right
+    // after, so the on-screen scrollable view is completely unaffected.
+    const scrollers = Array.from(box.querySelectorAll('*')).filter(el => el.scrollWidth > el.clientWidth + 2);
+    scrollers.push(box);
+    const savedStyles = scrollers.map(el => ({ el, overflow: el.style.overflow, width: el.style.width }));
+    scrollers.forEach(el => { el.style.overflow = 'visible'; el.style.width = 'max-content'; });
+    const restoreScrollers = () => savedStyles.forEach(s => { s.el.style.overflow = s.overflow; s.el.style.width = s.width; });
     const prevScrollLeft = box.scrollLeft;
     box.scrollLeft = 0;
     html2canvas(box, {
@@ -9119,6 +9504,7 @@ function runBoxExport(boxId, title, format) {
       windowHeight: box.scrollHeight
     }).then(canvas => {
       box.scrollLeft = prevScrollLeft;
+      restoreScrollers();
       const { jsPDF } = window.jspdf;
       const imgW = canvas.width, imgH = canvas.height;
       const pdf = new jsPDF({ orientation: imgW > imgH ? 'l' : 'p', unit: 'px', format: [imgW + 40, imgH + 60] });
@@ -9127,7 +9513,7 @@ function runBoxExport(boxId, title, format) {
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 20, 40, imgW, imgH);
       pdf.save(title.replace(/[^\w\- ]/g, '') + '.pdf');
       toast('✅ PDF downloaded', 'success');
-    }).catch(() => { box.scrollLeft = prevScrollLeft; toast('PDF generation failed', 'error'); });
+    }).catch(() => { box.scrollLeft = prevScrollLeft; restoreScrollers(); toast('PDF generation failed', 'error'); });
     return;
   }
   // Excel — scrape .kd-card structure (Name + each stat box's label→value),
@@ -9177,9 +9563,11 @@ function openReportModal(who, section) {
   div.innerHTML = `<div class="modal-box" style="max-width:320px;"><button class="modal-close-x" onclick="document.getElementById('reportChoiceModal').remove()" title="Close">✕</button>
     <div class="modal-title">📊 Download Report</div>
     <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;">Choose a format for the ${section.toUpperCase()} report.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runSectionReport('${who}','${section}','excel')">📗 Excel (.xlsx)</button>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="runSectionReport('${who}','${section}','pdf')">📕 PDF</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="runSectionReport('${who}','${section}','excel')">📗 Excel</button>
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="runSectionReport('${who}','${section}','pdf')">📕 PDF</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -9613,9 +10001,11 @@ function openDsrEditModal(idx, who) {
     <div class="form-row"><label>Tunch</label><input type="text" id="dsrEditTunch" value="${it.tunch || ''}"></div>
     <div class="form-row"><label>Weight</label><input type="text" id="dsrEditWeight" value="${it.weight || ''}"></div>
     <div class="form-row"><label>Tag No</label><input type="text" id="dsrEditTagNo" value="${it.tagNo || ''}"></div>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="saveDsrEdit(${idx},'${who}')">💾 Save Changes</button>
-    <button class="btn-secondary" style="width:100%;margin-bottom:10px;color:var(--red);border-color:var(--red);" onclick="confirmDeleteDsrEntry(${idx},'${who}')">🗑️ Delete This Entry</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrEditModal').remove()">Cancel</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="saveDsrEdit(${idx},'${who}')">💾 Save Changes</button>
+      <button class="btn-secondary" style="margin-bottom:10px;color:var(--red);border-color:var(--red);" onclick="confirmDeleteDsrEntry(${idx},'${who}')">🗑️ Delete This Entry</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('dsrEditModal').remove()">Cancel</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -9631,8 +10021,10 @@ function confirmDeleteDsrEntry(idx, who) {
   confirmDiv.innerHTML = `<div class="modal-box" style="max-width:360px;"><button class="modal-close-x" onclick="document.getElementById('dsrDeleteConfirmModal').remove()" title="Close">✕</button>
     <div class="modal-title">🗑️ Delete DSR Entry?</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">This permanently removes <b>${it.itemName || 'this item'}</b> for <b>${it.customerName || 'this customer'}</b>. This cannot be undone.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#c0392b,#e74c3c);" onclick="deleteDsrEntry(${idx},'${who}')">🗑️ Yes, Delete Permanently</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrDeleteConfirmModal').remove()">Cancel</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;background:linear-gradient(135deg,#c0392b,#e74c3c);" onclick="deleteDsrEntry(${idx},'${who}')">🗑️ Yes, Delete Permanently</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('dsrDeleteConfirmModal').remove()">Cancel</button>
+    </div>
   </div>`;
   document.body.appendChild(confirmDiv);
 }
@@ -9954,9 +10346,20 @@ function dsrfEmpDisplayName(who) {
   return (who === 'admin' ? state.adminName : state.empName) || '';
 }
 
-function renderDsrEntryForm(who) {
+function renderDsrEntryForm(who, force) {
   const box = document.getElementById('dsrEntryFormBox-' + who);
   if (!box) return;
+  // v-fix (BRO's "form data ventane clear cheyaku" request): this used to
+  // rebuild the ENTIRE form (Bill Details, Payment Status, every added
+  // item) from scratch every single time the employee navigated to this
+  // page — including just tapping away to check something else and
+  // coming straight back. That silently wiped out anything they'd already
+  // typed with zero warning. Now it only builds fresh the first time this
+  // session, or when explicitly asked to (force=true — used right after a
+  // real Submit success, and by the new Clear Form button below). Simply
+  // re-visiting the page leaves whatever's already entered exactly as is.
+  if (box.dataset.dsrfRendered === '1' && !force) return;
+  box.dataset.dsrfRendered = '1';
   const st = DSR_ST[who];
   box.innerHTML = `
     <div class="dsrf-scope">
@@ -10012,6 +10415,7 @@ function renderDsrEntryForm(who) {
       </div>
 
       <button class="sbtn" id="dsrfSubmitBtn-${who}" onclick="dsrfSubmit('${who}')" style="margin-top:6px;">★ &nbsp; Submit DSR &nbsp; ★</button>
+      <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="dsrfClearForm('${who}')">🗑️ Clear Form</button>
       <div id="dsrfStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
     </div>
   `;
@@ -10036,6 +10440,18 @@ function renderDsrEntryForm(who) {
     const banner = document.getElementById('dsrfInitBanner-' + who);
     if (banner) banner.style.display = 'none';
   }
+}
+
+// Explicit "Clear Form" — the ONLY way (besides a real successful Submit)
+// this form's data should ever go away, per BRO's request. Confirms first
+// if anything's actually been typed, same pattern as Leave's
+// clearApplyForm(), so an accidental tap can't wipe a half-filled DSR.
+function dsrfClearForm(who) {
+  const cust = dsrfGv('dsrfCust-' + who), mob = dsrfGv('dsrfMobile-' + who), addr = dsrfGv('dsrfAddr-' + who);
+  const hasData = cust || mob || addr || document.querySelectorAll(`#dsrfEntriesList-${who} .entry`).length > 1;
+  if (hasData && !confirm('Clear all entered DSR data? This cannot be undone.')) return;
+  renderDsrEntryForm(who, true);
+  toast('Form cleared', 'info');
 }
 
 function dsrfRefreshProducts(who, eid) {
@@ -10282,8 +10698,15 @@ const INDIAN_STATES = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chh
   "Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands","Chandigarh",
   "Dadra and Nagar Haveli and Daman and Diu","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"];
 
-function renderGoldenAuraForm(who) {
+function renderGoldenAuraForm(who, force) {
   const box = document.getElementById('gaFormBox-' + who);
+  if (!box) return;
+  // v-fix (same fix as renderDsrEntryForm above): don't rebuild (and wipe)
+  // this form every time the employee just navigates back to it. Only
+  // build fresh the first time this session, or when explicitly forced
+  // (a real Submit success, or the Clear Form button).
+  if (box.dataset.gaRendered === '1' && !force) return;
+  box.dataset.gaRendered = '1';
   const empName = who === 'admin' ? state.adminName : state.empName;
   const stateOptions = INDIAN_STATES.map(s => `<option value="${s}">${s}</option>`).join('');
   const photoField = (id, label) => `<div class="form-row"><label>${label}</label><input type="file" id="${id}" accept="image/*" onchange="ncPhotoChanged('${id}')"><div id="${id}-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div></div>`;
@@ -10347,11 +10770,24 @@ function renderGoldenAuraForm(who) {
       <div class="form-row"><label>Employee Name</label><input type="text" value="${empName || ''}" disabled style="background:var(--bg);opacity:0.8;"></div>
     </div>
 
-    <button class="btn-primary" style="width:100%;margin-bottom:20px;" id="gaSubmitBtn-${who}" onclick="submitGoldenAura('${who}')">💾 Submit Enrollment</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" id="gaSubmitBtn-${who}" onclick="submitGoldenAura('${who}')">💾 Submit Enrollment</button>
+      <button class="btn-secondary" style="margin-bottom:20px;" onclick="gaClearForm('${who}')">🗑️ Clear Form</button>
+    </div>
     <div id="gaStatusMsg-${who}" style="text-align:center;font-size:13px;margin-bottom:20px;"></div>
   `;
   const today = document.getElementById('gaEnrollDate-' + who);
   if (today) today.value = toYMD(new Date());
+}
+
+// Explicit "Clear Form" — same reasoning and confirm-if-dirty pattern as
+// dsrfClearForm() above.
+function gaClearForm(who) {
+  const g = id => { const e = document.getElementById(id + '-' + who); return e ? e.value.trim() : ''; };
+  const hasData = g('gaCustName') || g('gaMobile') || g('gaPlanNo') || g('gaAmount');
+  if (hasData && !confirm('Clear all entered Golden Aura data? This cannot be undone.')) return;
+  renderGoldenAuraForm(who, true);
+  toast('Form cleared', 'info');
 }
 
 async function submitGoldenAura(who) {
@@ -10440,8 +10876,10 @@ function gaShowPreview(p, who) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="confirmSubmitGoldenAura('${who}', event)">✅ Confirm &amp; Submit</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('gaPreviewModal').remove()">✏️ Edit</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="confirmSubmitGoldenAura('${who}', event)">✅ Confirm &amp; Submit</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('gaPreviewModal').remove()">✏️ Edit</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -10455,6 +10893,24 @@ async function confirmSubmitGoldenAura(who, evt) {
   // click on Confirm & Submit can never enroll the same plan twice.
   const gaIdemKey = makeIdemKey(['goldenaura', payload.empName, payload.planType, payload.planNo, payload.custName, payload.mobile]);
   if (isDuplicateSubmission(gaIdemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+  // v-fix: idemKey was computed but never sent to the server — now the
+  // backend can dedupe a genuine retry (offline-queue flush, or a
+  // reconnect-and-resubmit) the same way DSR/Loyalty already do.
+  payload.idemKey = gaIdemKey;
+
+  // v-fix (Golden Aura silent-fail-on-bad-network bug): same gap DSR and
+  // Loyalty had — no offline check at all, despite this form carrying the
+  // MOST photos (up to 7) of any form in the app, and so being the most
+  // likely to hang or drop on a bad connection. Goes into the same local
+  // offline queue and auto-uploads once the device reconnects.
+  updateConnStatus();
+  if (!navigator.onLine) {
+    const modalOff = document.getElementById('gaPreviewModal');
+    if (modalOff) modalOff.remove();
+    submitGoldenAuraOffline(payload, who);
+    return;
+  }
+
   if (evt && evt.target) { evt.target.disabled = true; evt.target.textContent = '⏳ Submitting...'; }
 
   const modal = document.getElementById('gaPreviewModal');
@@ -10470,22 +10926,32 @@ async function confirmSubmitGoldenAura(who, evt) {
     // the <script src="..."> tag simply failed to load). Submitted as a
     // raw JSON POST body instead — same proven approach already used by
     // the Loyalty Card form's confirmSubmitLoyaltyCard().
-    const resp = await fetch(WEB_APP_URL, {
+    // v-fix: bare fetch() with NO timeout — could hang indefinitely on a
+    // bad connection with nothing saved anywhere. 90s to allow for all 7
+    // photos in one payload.
+    const resp = await _fetchWithTimeout(WEB_APP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
       body: JSON.stringify(payload)
-    });
+    }, 90000);
     const res = await _parseMainApiResponse(resp);
     if (res && res.ok) {
       msg.style.color = 'var(--green)';
       msg.innerHTML = `✅ Saved! Plan No: <b>${res.planNo}</b>`;
       toast('Golden Aura enrollment saved!', 'success');
-      renderGoldenAuraForm(who);
+      renderGoldenAuraForm(who, true); // force — real clear after a successful submit
     } else {
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ ' + ((res && res.error) || 'Failed to save');
     }
   } catch (e) {
+    // v-fix: if the connection actually dropped mid-request (or it timed
+    // out because of it), queue it offline instead of just showing an
+    // error and hoping the employee remembers to retry later.
+    if (!navigator.onLine || e.name === 'AbortError') {
+      submitGoldenAuraOffline(payload, who);
+      return;
+    }
     msg.style.color = 'var(--red)';
     msg.textContent = '❌ Network error: ' + e.message;
   } finally {
@@ -11107,9 +11573,11 @@ function openLeadCallPanel(lead) {
     </details>
 
     <div id="leadSubmitErr" style="display:none;color:var(--red-t,#c0392b);font-size:12px;margin-bottom:8px;"></div>
-    <button class="btn-primary" style="width:100%;margin-bottom:8px;" id="leadSubmitBtn" onclick="submitLeadCall()">💾 Submit</button>
-    <button class="btn-secondary" style="width:100%;margin-bottom:8px;" onclick="closeLeadCallPanel()">Cancel</button>
-    <button class="btn-secondary" style="width:100%;color:#c0392b;border-color:#c0392b;" onclick="openFlagNumberPanel()">🚫 Flag this Number</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:8px;" id="leadSubmitBtn" onclick="submitLeadCall()">💾 Submit</button>
+      <button class="btn-secondary" style="margin-bottom:8px;" onclick="closeLeadCallPanel()">Cancel</button>
+      <button class="btn-secondary" style="color:#c0392b;border-color:#c0392b;" onclick="openFlagNumberPanel()">🚫 Flag this Number</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -11138,8 +11606,10 @@ function openFlagNumberPanel() {
         <option>Other — No Longer Needed</option>
       </select>
     </div>
-    <button class="btn-primary" style="width:100%;margin-bottom:8px;background:#c0392b;" onclick="submitFlagNumber()">🚫 Send to MIS for Review</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('flagNumberModal').remove()">Cancel</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:8px;background:#c0392b;" onclick="submitFlagNumber()">🚫 Send to MIS for Review</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('flagNumberModal').remove()">Cancel</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -12302,14 +12772,14 @@ function renderWalkinTrackTable(who, rows) {
   </tr>`;
 
   const html = `${searchBarHtml}<div class="card"><div class="card-title">🚶 Walk-in Track ${isAdmin ? '— All Employees' : '— My Entries'}</div>
-    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;white-space:nowrap;">
+    <div class="scroll-x-visible" style="overflow-x:auto;"><table class="wt-table" style="width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;">
     <thead><tr style="background:var(--purple-bg);">
-      <th style="padding:5px 8px;text-align:left;">Date</th>
-      ${isAdmin ? '<th style="padding:5px 8px;text-align:left;">Employee</th>' : ''}
-      <th style="padding:5px 8px;">Deals</th><th style="padding:5px 8px;">Golden Plans</th><th style="padding:5px 8px;">Loyalty Cards</th>
-      <th style="padding:5px 8px;">Purchased</th><th style="padding:5px 8px;">Non-Purchased</th><th style="padding:5px 8px;">Google Review</th>
-      <th style="padding:5px 8px;">Instagram</th><th style="padding:5px 8px;">Facebook</th><th style="padding:5px 8px;">Whatsapp</th>
-      ${isAdmin ? '<th style="padding:5px 8px;"></th>' : ''}
+      <th style="padding:6px 10px;text-align:left;">Date</th>
+      ${isAdmin ? '<th style="padding:6px 10px;text-align:left;">Employee</th>' : ''}
+      <th style="padding:6px 10px;">Deals</th><th style="padding:6px 10px;">Golden Plans</th><th style="padding:6px 10px;">Loyalty Cards</th>
+      <th style="padding:6px 10px;">Purchased</th><th style="padding:6px 10px;">Non-Purchased</th><th style="padding:6px 10px;">Google Review</th>
+      <th style="padding:6px 10px;">Instagram</th><th style="padding:6px 10px;">Facebook</th><th style="padding:6px 10px;">Whatsapp</th>
+      ${isAdmin ? '<th style="padding:6px 10px;"></th>' : ''}
     </tr></thead><tbody>
     ${rows.map(rowHtml).join('')}
     ${totalHtml}
@@ -12579,8 +13049,10 @@ function dsrfShowPreview(who, rows) {
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
-    <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="dsrfConfirmSubmit('${who}', event)">✅ Confirm &amp; Submit</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('dsrPreviewModal').remove()">✏️ Edit</button>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="dsrfConfirmSubmit('${who}', event)">✅ Confirm &amp; Submit</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('dsrPreviewModal').remove()">✏️ Edit</button>
+    </div>
   </div>`;
   document.body.appendChild(div);
 }
@@ -12600,6 +13072,20 @@ function dsrfConfirmSubmit(who, evt) {
   // same DSR twice. Checked synchronously, first thing, before the modal
   // is even removed.
   if (isDuplicateSubmission(idemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+
+  // v-fix (DSR silent-fail-on-bad-network bug): DSR had no offline check
+  // at all, unlike Leave. On a genuinely dropped connection this used to
+  // just hang/fail with nothing saved anywhere but the on-screen form. Now
+  // it goes straight into the same local offline queue Leave uses, and
+  // auto-uploads (photos included) the moment the device reconnects.
+  updateConnStatus();
+  if (!navigator.onLine) {
+    const modalOff = document.getElementById('dsrPreviewModal');
+    if (modalOff) modalOff.remove();
+    submitDsrOffline(rows, idemKey, who);
+    return;
+  }
+
   if (evt && evt.target) { evt.target.disabled = true; evt.target.textContent = '⏳ Submitting...'; }
 
   const modal = document.getElementById('dsrPreviewModal');
@@ -12621,7 +13107,11 @@ function dsrfConfirmSubmit(who, evt) {
     }
   }, 800);
 
-  fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows, idemKey }) })
+  // v-fix: bare fetch() with NO timeout — on a bad connection this could
+  // hang indefinitely with the "Saving..." spinner stuck forever and
+  // nothing ever saved anywhere. 90s (longer than Leave's 45s) because a
+  // multi-item DSR can carry several full-size photos in one payload.
+  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows, idemKey }) }, 90000)
     .then(r => r.json())
     .then(result => {
       clearInterval(progInt);
@@ -12649,6 +13139,16 @@ function dsrfConfirmSubmit(who, evt) {
       clearInterval(progInt);
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
       btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
+      // v-fix: if the connection actually dropped mid-request (or the
+      // request timed out because of it), don't just show an error and
+      // leave it on the employee to remember to retry — queue it offline
+      // the same as a genuine navigator.onLine===false case. idemKey still
+      // protects against a double-save if the original request actually
+      // reached the server before dropping.
+      if (!navigator.onLine || err.name === 'AbortError') {
+        submitDsrOffline(rows, idemKey, who);
+        return;
+      }
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ Network error: ' + err + ' — safe to tap Submit again, it will not create a duplicate.';
     });
@@ -13210,8 +13710,10 @@ function openLoyaltyApprovalModal(empName, balanceCards) {
         <input type="number" id="loyApprovalCustomQty" min="1" max="${balanceCards}" placeholder="e.g. 5" style="margin-top:8px;" onfocus="document.querySelector('input[name=loyApprovalQty][value=CUSTOM]').checked=true" oninput="document.querySelector('input[name=loyApprovalQty][value=CUSTOM]').checked=true">
       </div>
       <div id="loyApprovalStep1Err" style="color:var(--red);font-size:12px;min-height:16px;margin:6px 0;"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px;" onclick="loyaltyApprovalGoToPreview('${escJs(empName)}')">Continue</button>
-      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyApprovalModal').remove()">Cancel</button>
+      <div class="btn-row">
+        <button class="btn-primary" style="margin-bottom:8px;" onclick="loyaltyApprovalGoToPreview('${escJs(empName)}')">Continue</button>
+        <button class="btn-secondary" style="" onclick="document.getElementById('loyApprovalModal').remove()">Cancel</button>
+      </div>
     </div>
     <div id="loyApprovalStep2" style="display:none;"></div>
   </div>`;
@@ -13255,8 +13757,10 @@ function loyaltyApprovalGoToPreview(empName) {
         </table>
       </div>
       <div id="loyApprovalStep2Err" style="color:var(--red);font-size:12px;min-height:16px;margin:6px 0;"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px;" id="loyApprovalConfirmBtn" onclick="loyaltyApprovalConfirm()">Confirm & Approve</button>
-      <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('loyApprovalModal').remove()">Cancel</button>`;
+      <div class="btn-row">
+        <button class="btn-primary" style="margin-bottom:8px;" id="loyApprovalConfirmBtn" onclick="loyaltyApprovalConfirm()">Confirm & Approve</button>
+        <button class="btn-secondary" style="" onclick="document.getElementById('loyApprovalModal').remove()">Cancel</button>
+      </div>`;
   }).catch(() => {
     step2.innerHTML = `<div class="empty-state"><p>Connection error.</p></div>
       <button class="btn-secondary" style="display:block;margin:8px auto;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" title="Retry" onclick="loyaltyApprovalGoToPreview('${escJs(empName)}')">🔄</button>
@@ -13830,6 +14334,7 @@ function printCurrentView(title) {
   const dateStr = fmtDMY(todayYMD());
   printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — VSR GOLD</title>
     <style>
+      @page{size:landscape;}
       body{font-family:Arial,sans-serif;padding:20px;color:#1a0f2e;}
       h1{font-size:18px;color:#6b21a8;border-bottom:2px solid #d4a843;padding-bottom:8px;}
       .print-meta{font-size:11px;color:#8a78a8;margin-bottom:16px;}
@@ -13837,6 +14342,15 @@ function printCurrentView(title) {
       .filter-bar,.btn-sm,.leave-card-actions,button,select,input{display:none !important;}
       .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#eee;}
       .loading,.spinner{display:none !important;}
+      /* v-fix: same "fit one printed page" treatment as runBoxExport's
+         print path — any wide table (KPI report especially) gets forced
+         back down to page width for print, independent of how big it's
+         shown on screen. */
+      .kpi-report-table-minw{min-width:0;width:100%;table-layout:fixed;}
+      .kpi-report-table{font-size:6.5px;}
+      .kpi-report-table th,.kpi-report-table td{padding:2px 3px;white-space:normal;word-break:break-word;position:static;}
+      .kpi-fit-wrap,.dh-table-wrap{overflow:visible;}
+      .wt-table{font-size:9px;} .wt-table th{position:static;}
     </style></head><body>
     <h1>${title} — VSR GOLD</h1>
     <div class="print-meta">Generated: ${dateStr}</div>
@@ -15224,7 +15738,7 @@ function syncDashHubFixedHeight(fixedOuterId, scrollBodyId) {
 if (!restoreSession()) {
   // stay on login page
 }
-flushOfflineQueue();
+flushAllOfflineQueues();
 syncHeaderHeight();
 </script>
 </body>
