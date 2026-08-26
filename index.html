@@ -1851,6 +1851,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-kpi-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date)</span></div>
       <button class="export-icon-btn" id="exportBtn-kpiTillDateBox-emp" style="display:none;" onclick="openBoxExportModal('kpiTillDateBox-emp','Running Month KPI')" title="Export">📥</button>
+      <div id="kpiTillDate-emp-mount"></div>
       <div class="card"><div id="kpiTillDateBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="emp-kpi-monthly">
@@ -1861,6 +1862,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="emp-walkins">
       <div class="section-hdr"><span class="section-title2">🚶 My Walk-ins</span></div>
+      <div id="walkin-emp-mount"></div>
       <div id="empWalkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
     <div class="page-section" id="emp-kpi-compare">
@@ -2081,7 +2083,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
     <div class="page-section" id="emp-leads-report">
-      <div class="section-hdr"><span class="section-title2">📊 My Leads Report — Today</span></div>
+      <div class="section-hdr"><span class="section-title2">📊 My Leads Report</span></div>
+      <div id="leadsReport-emp-mount"></div>
       <div class="card" id="empLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -2313,9 +2316,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="form-row"><label>Filter by Employee (optional)</label>
           <select id="loyMyCardsEmpFilter"><option value="">-- All Employees --</option></select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>From Date (optional)</label><input type="date" lang="en-GB" id="loyMyCardsFromDate"></div>
-          <div class="form-row"><label>To Date (optional)</label><input type="date" lang="en-GB" id="loyMyCardsToDate"></div>
+        <div class="filter-bar" id="loyAllCards-admin-bar">
+          <button class="filter-btn active" onclick="setLoyAllCardsScope('all', this)">🏁 All Time</button>
+          <button class="filter-btn" onclick="setLoyAllCardsScope('today', this)">📍 Today</button>
+          <button class="filter-btn" onclick="setLoyAllCardsScope('month', this)">🗓️ Running Month</button>
+          <button class="filter-btn" onclick="setLoyAllCardsScope('custom', this)">🔍 Custom Date</button>
+        </div>
+        <div class="form-2col" id="loyAllCards-admin-dates" style="display:none;">
+          <div class="form-row"><label>From Date</label><input type="date" lang="en-GB" id="loyMyCardsFromDate"></div>
+          <div class="form-row"><label>To Date</label><input type="date" lang="en-GB" id="loyMyCardsToDate"></div>
         </div>
         <div class="form-row"><label>Search — customer name or card no (optional)</label>
           <input type="text" id="loyMyCardsSearch" placeholder="Search..." autocomplete="off"
@@ -2711,6 +2720,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-kpi-tilldate">
       <div class="section-hdr"><span class="section-title2">📅 Running Month KPI (Till Date) — All Employees</span></div>
       <button class="export-icon-btn" id="exportBtn-kpiTillDateBox-admin" style="display:none;" onclick="openBoxExportModal('kpiTillDateBox-admin','Running Month KPI')" title="Export">📥</button>
+      <div id="kpiTillDate-admin-mount"></div>
       <div class="card"><div id="kpiTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-monthly">
@@ -2873,8 +2883,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="admin-walkins">
       <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span>
-        <button class="btn-sm btn-view" onclick="loadWalkinTrackTable('admin')">🔄 Refresh</button>
+        <button class="btn-sm btn-view" onclick="refreshWalkinTrackTable('admin')">🔄 Refresh</button>
       </div>
+      <div id="walkin-admin-mount"></div>
       <div id="walkinsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -3002,17 +3013,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
     <div class="page-section" id="admin-leads-report">
-      <div class="section-hdr"><span class="section-title2">📊 Leads Report — Employee Wise</span></div>
+      <div class="section-hdr"><span class="section-title2">📊 Leads Report — Employee Wise</span>
+        <button class="export-icon-btn" style="display:inline-flex;" onclick="exportAdminLeadsReport()" title="Export">📥</button>
+      </div>
       <div class="card">
-        <div style="display:flex;gap:8px;">
-          <div class="form-row" style="flex:1;"><label>Start Date</label><input type="date" lang="en-GB" id="adminLeadsReportStartDate"></div>
-          <div class="form-row" style="flex:1;"><label>End Date</label><input type="date" lang="en-GB" id="adminLeadsReportEndDate"></div>
-        </div>
-        <p style="font-size:10.5px;color:var(--text3);margin:-4px 0 8px;">Leave both dates the same for a single day, or pick a range for multiple days combined.</p>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-primary" style="flex:1;" onclick="loadAdminLeadsReport()">🔍 Search / View Report</button>
-          <button class="btn-secondary" style="width:44px;flex-shrink:0;" title="Export" onclick="exportAdminLeadsReport()">📥</button>
-        </div>
+        <div id="leadsReport-admin-mount"></div>
       </div>
       <div id="adminLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -3395,6 +3400,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   </div>
 </div>
 
+<!-- Walk-in Track missing-entry alert (checked once on every admin login) -->
+<div class="loy-img-modal" id="walkinAlertModal">
+  <div class="loy-img-modal-box" style="max-width:440px;text-align:left;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:22px;">🚶</span>
+      <div style="font-size:16px;font-weight:800;color:var(--red);">Walk-in Track — No Entries</div>
+    </div>
+    <div id="walkinAlertBody" style="font-size:13px;color:var(--text2);"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-secondary" style="flex:1;" onclick="closeWalkinAlertModal()">Dismiss</button>
+      <button class="btn-primary" style="flex:1;" onclick="closeWalkinAlertModal();showAdminPage('walkins');">🚶 View Walk-ins</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -3451,6 +3471,77 @@ function toYMD(dateObj) {
   return y + '-' + m + '-' + d;
 }
 function todayYMD() { return toYMD(new Date()); }
+
+// ══════════════════════════════════════════════════════════════
+// DATE SCOPE FILTER — shared "Today / Running Month / Custom Date"
+// toggle used on KPI Till Date, Walk-in Track, Leads Report and
+// Loyalty All Cards. Each page calls registerDateScope() once with a
+// callback; clicking Today / Running Month fires that callback right
+// away with resolved yyyy-MM-dd dates, Custom Date only reveals the
+// hidden start/end pickers and waits for its own "Load" button so a
+// request never fires mid-typing.
+// ══════════════════════════════════════════════════════════════
+const __dateScopes = {};
+
+function registerDateScope(scopeId, onApply) { __dateScopes[scopeId] = { onApply: onApply }; }
+
+function dateScopeBarHtml(scopeId, opts) {
+  opts = opts || {};
+  const defaultMode = opts.defaultMode || 'today';
+  const btn = (mode, label, icon) =>
+    `<button class="filter-btn${mode === defaultMode ? ' active' : ''}" onclick="setDateScope('${scopeId}',this,'${mode}')">${icon} ${label}</button>`;
+  return `
+    <div class="filter-bar" id="${scopeId}-bar">
+      ${opts.allTime ? btn('all', 'All Time', '🏁') : ''}
+      ${btn('today', 'Today', '📍')}
+      ${btn('month', 'Running Month', '🗓️')}
+      ${btn('custom', 'Custom Date', '🔍')}
+    </div>
+    <div class="form-2col" id="${scopeId}-custom" style="display:none;margin:0 0 10px;">
+      <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="${scopeId}-start"></div>
+      <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="${scopeId}-end"></div>
+      <button class="btn-primary" style="grid-column:1/-1;" onclick="applyDateScopeCustom('${scopeId}')">🔍 Load</button>
+    </div>`;
+}
+
+function dateScopeRange(mode) {
+  const t = todayYMD();
+  if (mode === 'today') return { start: t, end: t };
+  if (mode === 'month') { const d = new Date(); return { start: toYMD(new Date(d.getFullYear(), d.getMonth(), 1)), end: t }; }
+  if (mode === 'all') return { start: '', end: '' };
+  return null; // 'custom' — caller reads the pickers itself
+}
+
+function setDateScope(scopeId, btnEl, mode) {
+  const bar = document.getElementById(scopeId + '-bar');
+  if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  const customBox = document.getElementById(scopeId + '-custom');
+  if (mode === 'custom') {
+    if (customBox) customBox.style.display = '';
+    return; // wait for the Load button — see applyDateScopeCustom()
+  }
+  if (customBox) customBox.style.display = 'none';
+  const range = dateScopeRange(mode);
+  const entry = __dateScopes[scopeId];
+  if (entry && entry.onApply) entry.onApply(mode, range.start, range.end);
+}
+
+function applyDateScopeCustom(scopeId) {
+  const start = (document.getElementById(scopeId + '-start') || {}).value;
+  const end = (document.getElementById(scopeId + '-end') || {}).value;
+  if (!start || !end) { toast('Select both dates', 'error'); return; }
+  if (start > end) { toast('Start date is after end date', 'error'); return; }
+  const entry = __dateScopes[scopeId];
+  if (entry && entry.onApply) entry.onApply('custom', start, end);
+}
+
+// Injects a date-scope bar into a placeholder <div id="{scopeId}-mount">
+// left in the page's static HTML, right below the section header.
+function mountDateScope(scopeId, opts) {
+  const mount = document.getElementById(scopeId + '-mount');
+  if (mount) mount.innerHTML = dateScopeBarHtml(scopeId, opts);
+}
 function normalizeDateStr(s) {
   // Server dates may arrive as 'yyyy-MM-dd' or 'yyyy-MM-dd HH:mm:ss' or full ISO —
   // always reduce to the first 10 chars (yyyy-MM-dd) for safe string comparison.
@@ -4173,6 +4264,7 @@ async function adminLogin() {
         await applyAdminRoleRestrictions();
         loadAdminData();
         checkLoyaltyAlerts('admin');
+        checkWalkinMissingAlert();
         // MIS-only: check for Pending leaves (today) that still have
         // active/uncalled leads assigned — see checkPendingLeaveWithLeadsAPI.
         // Never shown to Store Manager or any other admin role.
@@ -4585,8 +4677,8 @@ function showEmpPage(page, opts) {
   if(page==='kpi') { loadEomBanner('emp'); loadKpiHighlights('emp'); }
   if(page==='kpi-rules') renderKpiRules('emp');
   if(page==='kpi-target') loadKpiTarget('emp');
-  if(page==='kpi-tilldate') loadKpiTillDate('emp');
-  if(page==='walkins') loadWalkinTrackTable('emp');
+  if(page==='kpi-tilldate') initKpiTillDatePage('emp');
+  if(page==='walkins') initWalkinTrackPage('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
   if(page==='kpi-compare') loadKpiCompare('emp');
   if(page==='dsr') loadDsrHighlights('emp');
@@ -4612,7 +4704,7 @@ function showEmpPage(page, opts) {
   if(page==='leads') loadEmpLeadsHome();
   if(page==='leads-pending') loadEmpLeadsPending();
   if(page==='leads-submitted') loadEmpLeadsSubmitted();
-  if(page==='leads-report') loadEmpLeadsReport();
+  if(page==='leads-report') initEmpLeadsReportPage();
   if(page==='customer-events') loadCustomerEventsPage('emp');
 }
 
@@ -7007,7 +7099,7 @@ function showAdminPage(page, opts) {
   if(page==='kpi') { loadEomBanner('admin'); loadKpiHighlights('admin'); }
   if(page==='kpi-rules') renderKpiRules('admin');
   if(page==='kpi-target') loadKpiTarget('admin');
-  if(page==='kpi-tilldate') loadKpiTillDate('admin');
+  if(page==='kpi-tilldate') initKpiTillDatePage('admin');
   if(page==='kpi-monthly') loadKpiMonthly('admin');
   if(page==='kpi-compare') loadKpiCompare('admin');
   if(page==='dsr') loadDsrHighlights('admin');
@@ -7024,7 +7116,7 @@ function showAdminPage(page, opts) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
-  if(page==='walkins') loadWalkinTrackTable('admin');
+  if(page==='walkins') initWalkinTrackPage('admin');
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
@@ -7047,7 +7139,7 @@ function showAdminPage(page, opts) {
   if(page==='dashboard-hub') loadAdminDashboardHub();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
-  if(page==='leads-report') loadAdminLeadsReport();
+  if(page==='leads-report') initAdminLeadsReportPage();
   if(page==='leads-overdue') loadAdminOverdueLeads();
   if(page==='leads-quota') loadAdminLeadsQuota();
   if(page==='customer-events') loadCustomerEventsPage('admin');
@@ -7060,7 +7152,7 @@ function showAdminPage(page, opts) {
 async function loadAdminData() {
   try {
     const [leavesRes, calRes] = await Promise.all([
-      jsonpReliable({ page:'allLeavesAPI' }),
+      jsonpReliable({ page:'allLeavesAPI', role: 'ADMIN' }),
       jsonpReliable({ page:'calendarDataAPI' })
     ]);
     if(leavesRes.ok) state.allLeaves = leavesRes.leaves || [];
@@ -7415,6 +7507,25 @@ function checkLoyaltyAlerts(who) {
 }
 function closeLoyaltyAlertModal() {
   document.getElementById('loyAlertModal').classList.remove('open');
+}
+
+// On-open companion to the daily 9 AM "Walk-in Track — No Entries" mail
+// (checkWalkinMissingYesterday in the Walkintrack project script) — shows
+// the same "yesterday had zero rows" check as a popup right when admin
+// logs in, instead of only finding out via email later.
+function checkWalkinMissingAlert() {
+  jsonpReliable({ page: 'walkinMissingCheckAPI' })
+    .then(res => {
+      if (!res || !res.ok || !res.missing) return;
+      document.getElementById('walkinAlertBody').innerHTML =
+        `Not a single Walk-in Track entry was found for <b>${res.date}</b> — across every employee. ` +
+        `Please confirm with the floor team and remind whoever is on Greeter Duty to enter Walk-in Track daily.`;
+      document.getElementById('walkinAlertModal').classList.add('open');
+    })
+    .catch(() => { /* alert check failing silently is fine — never block login */ });
+}
+function closeWalkinAlertModal() {
+  document.getElementById('walkinAlertModal').classList.remove('open');
 }
 
 // Hides the Leave / Loyalty Card / KPI / DSR / Leads / Stock Checklist
@@ -8122,6 +8233,27 @@ function initLoyaltyAllCardsAdminPage() {
   loadLoyaltyAllCardsAdmin();
 }
 
+// Today / Running Month / Custom Date toggle for All Cards — All Time
+// (blank From/To, the page's original default) stays the first option
+// so nothing changes for anyone who doesn't touch the new buttons.
+function setLoyAllCardsScope(mode, btnEl) {
+  const bar = document.getElementById('loyAllCards-admin-bar');
+  if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  const datesBox = document.getElementById('loyAllCards-admin-dates');
+  const fromInp = document.getElementById('loyMyCardsFromDate');
+  const toInp = document.getElementById('loyMyCardsToDate');
+  if (mode === 'custom') {
+    if (datesBox) datesBox.style.display = '';
+    return; // wait for the existing "Load Cards" button
+  }
+  if (datesBox) datesBox.style.display = 'none';
+  const range = dateScopeRange(mode); // 'all' -> {start:'',end:''}, 'today'/'month' resolved live
+  if (fromInp) fromInp.value = range.start;
+  if (toInp) toInp.value = range.end;
+  loadLoyaltyAllCardsAdmin();
+}
+
 function loadLoyaltyAllCardsAdmin() {
   const summary = document.getElementById('loyAllCardsSummary-admin');
   const content = document.getElementById('loyAllCardsContent-admin');
@@ -8667,6 +8799,21 @@ function months3(d) {
   return months[d.getMonth()] + ' ' + d.getFullYear();
 }
 
+// Entry point for the KPI Till-Date page — mounts the Today / Running
+// Month / Custom Date bar once, then loads Running Month (the original,
+// pre-generated "TillDate_KPI" report) by default.
+function initKpiTillDatePage(who) {
+  const scopeId = 'kpiTillDate-' + who;
+  if (!__dateScopes[scopeId]) {
+    mountDateScope(scopeId, { defaultMode: 'month' });
+    registerDateScope(scopeId, (mode, start, end) => {
+      if (mode === 'month') loadKpiTillDate(who);
+      else loadKpiTillDateRange(who, start, end, mode);
+    });
+  }
+  loadKpiTillDate(who);
+}
+
 function loadKpiTillDate(who) {
   const box = document.getElementById('kpiTillDateBox-' + who);
   hideExportBtn(box.id);
@@ -8694,6 +8841,35 @@ function loadKpiTillDate(who) {
     showExportBtn(box.id);
     fitWideTableToScreen(box.querySelector('.kpi-fit-wrap'));
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTillDate(\'" + who + "\')" title="Retry">🔄</button></div>'; });
+}
+
+// Today / Custom Date on the KPI Till-Date page — computed live from
+// Walkintrack (same source + math as the Month Comparison box below),
+// since the pre-generated TillDate_KPI sheet only ever covers the
+// running month and can't answer an arbitrary single day or range.
+function loadKpiTillDateRange(who, start, end, mode) {
+  const box = document.getElementById('kpiTillDateBox-' + who);
+  hideExportBtn(box.id);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable(kpiEmpParams(who, { page: 'kpiRangeSummaryJSON', start: start, end: end })).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiTillDateRange(\'" + who + "\',\'" + start + "\',\'" + end + "\',\'" + mode + "\')\" title=\"Retry\">🔄</button></div>'; return; }
+    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No data for this date range.</p></div>'; return; }
+    const label = mode === 'today' ? '📍 Today — ' + fmtDMY(res.start) : '🔍 ' + fmtDMY(res.start) + ' to ' + fmtDMY(res.end);
+    let html = `<div class="kd-note">${label}</div>`;
+    res.rows.forEach(r => {
+      html += `<div class="kd-card">
+        <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill gold">🔁 ${r.conversionPct}% conversion</span></div>
+        <div class="kd-stats">
+          <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
+          <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
+          <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyalty}</span><span class="kd-lbl">Loyalty Cards</span></div>
+          <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.golden}</span><span class="kd-lbl">Golden Aura</span></div>
+          <div class="kd-box"><span class="kd-ic">📶</span><span class="kd-val">${r.dsrPct}%</span><span class="kd-lbl">DSR %</span></div>
+        </div>
+      </div>`;
+    });
+    box.innerHTML = html;
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTillDateRange(\'" + who + "\',\'" + start + "\',\'" + end + "\',\'" + mode + "\')" title="Retry">🔄</button></div>'; });
 }
 
 function loadKpiMonthly(who) {
@@ -8969,7 +9145,7 @@ async function generateReportData(who, section) {
     return { title: 'Loyalty Card Report — ' + today, headers, rows };
   }
   if (section === 'leave') {
-    const res = await jsonpReliable({ page: 'allBalancesAPI' });
+    const res = await jsonpReliable({ page: 'allBalancesAPI', role: 'ADMIN' });
     const headers = ['Employee', 'Balance', 'Extra Leave'];
     const rows = (res.balances || []).map(b => [b.empName, b.balance, b.extraLeave || 0]);
     return { title: 'Leave Balance Report — ' + today, headers, rows };
@@ -11179,13 +11355,27 @@ async function undoLeadSubmission(btn, payload) {
 }
 
 // ── EMPLOYEE: My Report ─────────────────────────────────────
-async function loadEmpLeadsReport() {
+// Entry point for My Leads Report — mounts the Today / Running Month /
+// Custom Date bar once, defaulting to Today (its original behaviour).
+function initEmpLeadsReportPage() {
+  const scopeId = 'leadsReport-emp';
+  if (!__dateScopes[scopeId]) {
+    mountDateScope(scopeId, { defaultMode: 'today' });
+    registerDateScope(scopeId, (mode, start, end) => loadEmpLeadsReport(start, end));
+  }
+  const range = dateScopeRange('today');
+  loadEmpLeadsReport(range.start, range.end);
+}
+
+async function loadEmpLeadsReport(startDate, endDate) {
   const box = document.getElementById('empLeadsReportBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  startDate = startDate || todayISO();
+  endDate = endDate || startDate;
   try {
-    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() });
+    const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, startDate: startDate, endDate: endDate });
     if (!res.ok || !res.rows || !res.rows.length) {
-      box.innerHTML = '<div class="empty-state"><p>No data for today.</p></div>';
+      box.innerHTML = '<div class="empty-state"><p>No data for this date range.</p></div>';
       return;
     }
     const r = res.rows[0];
@@ -11243,23 +11433,32 @@ async function loadAdminLeadsHome() {
 }
 
 // ── ADMIN: Report — employee-wise % + status break-up ───────
+// Entry point for the admin Leads Report page — mounts the Today /
+// Running Month / Custom Date bar once, defaulting to Today (its
+// original behaviour, when the pickers always defaulted to today-today).
+let __adminLeadsReportRange = { start: todayISO(), end: todayISO() };
+function initAdminLeadsReportPage() {
+  const scopeId = 'leadsReport-admin';
+  if (!__dateScopes[scopeId]) {
+    mountDateScope(scopeId, { defaultMode: 'today' });
+    registerDateScope(scopeId, (mode, start, end) => loadAdminLeadsReport(start, end));
+  }
+  const range = dateScopeRange('today');
+  loadAdminLeadsReport(range.start, range.end);
+}
+
 function exportAdminLeadsReport() {
-  const startInp = document.getElementById('adminLeadsReportStartDate');
-  const endInp = document.getElementById('adminLeadsReportEndDate');
-  const startDate = (startInp && startInp.value) || todayISO();
-  const endDate = (endInp && endInp.value) || startDate;
+  const startDate = __adminLeadsReportRange.start || todayISO();
+  const endDate = __adminLeadsReportRange.end || startDate;
   const url = LEADS_WEB_APP_URL + '?action=EXPORT_LEADS_REPORT_CSV&role=ADMIN&startDate=' + encodeURIComponent(startDate) + '&endDate=' + encodeURIComponent(endDate);
   window.open(url, '_blank');
 }
 
-async function loadAdminLeadsReport() {
+async function loadAdminLeadsReport(startDate, endDate) {
   const box = document.getElementById('adminLeadsReportBox');
-  const startInp = document.getElementById('adminLeadsReportStartDate');
-  const endInp = document.getElementById('adminLeadsReportEndDate');
-  if (startInp && !startInp.value) startInp.value = todayISO();
-  if (endInp && !endInp.value) endInp.value = startInp.value || todayISO();
-  const startDate = (startInp && startInp.value) || todayISO();
-  const endDate = (endInp && endInp.value) || startDate;
+  startDate = startDate || __adminLeadsReportRange.start || todayISO();
+  endDate = endDate || startDate;
+  __adminLeadsReportRange = { start: startDate, end: endDate };
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', startDate, endDate });
@@ -11920,17 +12119,43 @@ function stockReportThisMonth(who) {
 // C (Employee Name) are the lookup keys. Admin sees every employee's
 // rows with an Edit button per row (writes back to the sheet);
 // Employee sees only their own rows (name-matched server-side).
-async function loadWalkinTrackTable(who) {
+// Entry point for the Walk-in Track page — mounts the Today / Running
+// Month / Custom Date bar once (Running Month is the default, matching
+// the page's original "all rows" behaviour for the current month).
+function initWalkinTrackPage(who) {
+  const scopeId = 'walkin-' + who;
+  if (!__dateScopes[scopeId]) {
+    mountDateScope(scopeId, { defaultMode: 'month' });
+    registerDateScope(scopeId, (mode, start, end) => loadWalkinTrackTable(who, start, end));
+  }
+  const range = dateScopeRange('month');
+  loadWalkinTrackTable(who, range.start, range.end);
+}
+
+// The header's own 🔄 Refresh button re-runs whatever date scope is
+// currently selected, instead of always snapping back to this month.
+function refreshWalkinTrackTable(who) {
+  const scopeId = 'walkin-' + who;
+  const bar = document.getElementById(scopeId + '-bar');
+  const activeBtn = bar && bar.querySelector('.filter-btn.active');
+  const mode = activeBtn ? (activeBtn.getAttribute('onclick') || '').match(/,'([a-z]+)'\)/)[1] : 'month';
+  if (mode === 'custom') { applyDateScopeCustom(scopeId); return; }
+  const range = dateScopeRange(mode);
+  loadWalkinTrackTable(who, range.start, range.end);
+}
+
+async function loadWalkinTrackTable(who, start, end) {
   const box = document.getElementById(who === 'admin' ? 'walkinsReportBox' : 'empWalkinsReportBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const params = { page: 'walkinTrackTableAPI', role: who === 'admin' ? 'ADMIN' : 'EMP' };
   if (who !== 'admin') params.empName = state.empName;
+  if (start && end) { params.start = start; params.end = end; }
   try {
     const res = await jsonpReliable(params);
     if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load.');
     renderWalkinTrackTable(who, res.rows || []);
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinTrackTable(\'' + who + '\')" title="Retry">🔄</button></div>';
+    box.innerHTML = '<div class="empty-state"><p>' + e.message + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadWalkinTrackTable(\'' + who + '\',\'' + (start||'') + '\',\'' + (end||'') + '\')" title="Retry">🔄</button></div>';
   }
 }
 
@@ -11987,7 +12212,7 @@ function startWalkinRowEdit(rowNum) {
   const actionTd = tr.querySelector('td:last-child');
   actionTd.innerHTML = `
     <button class="btn-primary" style="padding:4px 8px;font-size:11px;" onclick="saveWalkinRowEdit(${rowNum})">💾 Save</button>
-    <button class="btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="loadWalkinTrackTable('admin')">✕</button>`;
+    <button class="btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="refreshWalkinTrackTable('admin')">✕</button>`;
 }
 async function saveWalkinRowEdit(rowNum) {
   const tr = document.getElementById('wtRow-' + rowNum);
@@ -12001,7 +12226,7 @@ async function saveWalkinRowEdit(rowNum) {
     const res = await jsonpWriteOnce(payload, makeIdemKey(['wtEdit', rowNum]));
     if (res && res.ok) {
       toast('✅ Row updated', 'success');
-      loadWalkinTrackTable('admin');
+      refreshWalkinTrackTable('admin');
     } else {
       toast('❌ ' + ((res && res.error) || 'Update failed'), 'error');
     }
@@ -14226,7 +14451,7 @@ async function loadEmployeeWisePage() {
 
   if (empWiseBalanceCache.length === 0) {
     try {
-      const res = await jsonpReliable({ page: 'allBalancesAPI' });
+      const res = await jsonpReliable({ page: 'allBalancesAPI', role: 'ADMIN' });
       if (res.ok) empWiseBalanceCache = res.balances || [];
     } catch(e) {}
   }
@@ -14704,7 +14929,7 @@ function adminCalNext() { state.adminCalMonth++; if(state.adminCalMonth>11){stat
 async function renderBalance() {
   document.getElementById('balanceContainer').innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await jsonpReliable({ page: 'allBalancesAPI' });
+    const res = await jsonpReliable({ page: 'allBalancesAPI', role: 'ADMIN' });
     if(!res.ok) throw new Error(res.error || 'Load failed');
     const balances = res.balances || [];
     if(balances.length === 0) {
