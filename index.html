@@ -2632,11 +2632,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="card">
           <div class="card-title">⚡ Outcome</div>
           <div class="quick-actions-grid" style="grid-template-columns:1fr 1fr 1fr;">
-            <div class="btn-row">
-              <button class="btn-sm btn-approve" id="directApproveBtn" style="height:40px;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
-              <button class="btn-sm btn-absent" id="directAbsentBtn" style="height:40px;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
-              <button class="btn-sm btn-reject" id="directRejectBtn" style="height:40px;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
-            </div>
+            <button class="btn-sm btn-approve" id="directApproveBtn" style="height:40px;white-space:nowrap;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
+            <button class="btn-sm btn-absent" id="directAbsentBtn" style="height:40px;white-space:nowrap;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
+            <button class="btn-sm btn-reject" id="directRejectBtn" style="height:40px;white-space:nowrap;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:10px;">This directly writes an entry (no pending request needed) — same as the Sheets-side "Direct Approve / Reject / Absent" tool. A rejection reason is required for Reject.</div>
         </div>
@@ -5557,7 +5555,7 @@ function showLeaveResultPopup(res) {
     Rejected:     { icon: '❌', color: 'var(--red)',   title: 'Leave Rejected' },
     Absent:       { icon: '⚠️', color: 'var(--orange)', title: 'Marked Absent' },
     Pending:      { icon: '⏳', color: 'var(--orange)', title: 'Leave Pending' },
-    MIS_Approved: { icon: '⏳', color: 'var(--blue)',  title: 'MIS Approved — Awaiting Store Manager' }
+    MIS_Approved: { icon: '⏳', color: 'var(--blue)',  title: 'MIS Approved — Awaiting SM' }
   };
   const p = presets[status] || { icon: '📋', color: 'var(--purple)', title: status };
 
@@ -15280,7 +15278,7 @@ function adminLeaveCardHTML(l) {
     // instead of just silently showing nothing (avoids "did my click not
     // register?" confusion for SM looking at a not-yet-MIS-approved card,
     // or MIS looking at one already at the SM stage).
-    const waitingOn = l.status === 'Pending' ? 'MIS' : 'Store Manager';
+    const waitingOn = l.status === 'Pending' ? 'MIS' : 'SM';
     actions += `<span class="pill" style="background:var(--purple-bg);color:var(--purple-dark);">⏳ Awaiting ${waitingOn}</span>`;
   }
   if (isFinal && isTodayOrFuture && canCancel) {
