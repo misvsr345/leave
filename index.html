@@ -11631,16 +11631,27 @@ function openFlagNumberPanel() {
       </select>
     </div>
     <div class="btn-row">
-      <button class="btn-primary" style="margin-bottom:8px;background:#c0392b;" onclick="submitFlagNumber()">🚫 Send to MIS for Review</button>
+      <button class="btn-primary" style="margin-bottom:8px;background:#c0392b;" id="flagSubmitBtn" onclick="submitFlagNumber()">🚫 Send to MIS for Review</button>
       <button class="btn-secondary" style="" onclick="document.getElementById('flagNumberModal').remove()">Cancel</button>
     </div>
   </div>`;
   document.body.appendChild(div);
 }
 
+// v-fix (BRO's "button click cheste double entry autundi" audit): this
+// had NO protection at all against a fast double-tap — no disabled
+// button, no lock — so two quick taps (common on a slow connection, the
+// person taps again thinking the first tap didn't register) fired the
+// SAME flag-for-deletion request twice, creating two rows in the MIS
+// review queue for one number. leadsApiPost itself is already a single
+// attempt (no auto-retry — see _fetchWithTimeout), so the only gap was
+// nothing stopping a second REAL click while the first was still in
+// flight. Disabling the button immediately closes that gap.
 async function submitFlagNumber() {
   const reason = document.getElementById('flagReasonSel').value;
   if (!reason) { toast('Please choose a reason', 'error'); return; }
+  const btn = document.getElementById('flagSubmitBtn');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = '⏳ Sending...'; }
   try {
     const res = await leadsApiPost({
       action: 'FLAG_NUMBER_FOR_DELETION',
@@ -11654,9 +11665,11 @@ async function submitFlagNumber() {
       document.getElementById('flagNumberModal').remove();
     } else {
       toast('❌ ' + ((res && res.error) || 'Could not flag this number'), 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '🚫 Send to MIS for Review'; }
     }
   } catch (e) {
     toast('❌ Network error: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '🚫 Send to MIS for Review'; }
   }
 }
 
