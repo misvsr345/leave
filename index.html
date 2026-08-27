@@ -10478,22 +10478,38 @@ function renderDsrEntryForm(who, force) {
   dsrfAddEntry(who);
 
   if (!st.loaded) {
-    fetch(DSR_GAS_URL + '?action=getData').then(r => r.json()).then(data => {
+    dsrfLoadProducts(who);
+  } else {
+    const banner = document.getElementById('dsrfInitBanner-' + who);
+    if (banner) banner.style.display = 'none';
+  }
+}
+
+// v-fix (BRO: "Product Name dropdown lo data DSR sheet nunchi ravatledu"
+// — screenshot showed only "-- Select --" / "Other (type manually)",
+// the real product list never arrived): this fetch had NO timeout (a
+// slow/dropped connection could hang forever) and NO way to retry —
+// on failure it just left a static "⚠ Could not load" message with
+// nothing clickable, so the ONLY way to recover was reloading the
+// entire page (losing anything already typed, since that resets DSR_ST
+// too). Extracted into its own function so both the initial load and
+// the new Retry link below can call the exact same logic.
+function dsrfLoadProducts(who) {
+  const st = DSR_ST[who];
+  const banner = document.getElementById('dsrfInitBanner-' + who);
+  if (banner) { banner.style.display = 'flex'; banner.innerHTML = '<span class="spinner"></span> Loading product list...'; }
+  _fetchWithTimeout(DSR_GAS_URL + '?action=getData', {}, 20000)
+    .then(r => r.json())
+    .then(data => {
       if (data.products) { st.gold = data.products.gold || []; st.silver = data.products.silver || []; st.diamond = data.products.diamond || []; }
       st.loaded = true;
       document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
         dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, ''));
       });
-      const banner = document.getElementById('dsrfInitBanner-' + who);
       if (banner) banner.style.display = 'none';
     }).catch(() => {
-      const banner = document.getElementById('dsrfInitBanner-' + who);
-      if (banner) banner.innerHTML = '⚠ Could not load product list from Google Sheet.';
+      if (banner) banner.innerHTML = '⚠ Could not load product list — <a href="#" onclick="dsrfLoadProducts(\'' + who + '\');return false;" style="color:var(--purple);font-weight:700;text-decoration:underline;">🔄 Tap to retry</a> (you can still type product names manually via "Other" in the meantime).';
     });
-  } else {
-    const banner = document.getElementById('dsrfInitBanner-' + who);
-    if (banner) banner.style.display = 'none';
-  }
 }
 
 // Explicit "Clear Form" — the ONLY way (besides a real successful Submit)
