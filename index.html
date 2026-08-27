@@ -2032,15 +2032,22 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR</span></div>
       <div class="card">
-        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrMiss-emp', this)">🔍 Custom Date</button>
+        <!-- v-fix (BRO's "Running Month kuda add chei" request): Running
+             Month used to be buried inside the collapsed Custom Date
+             panel (as "📅 This Month") — took 2 taps (open Custom Date,
+             then This Month) for what should be a 1-tap common case.
+             Now it's a standalone button right next to Custom Date,
+             loading immediately on tap; Custom Date still expands the
+             panel for a specific Start/End range. -->
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button class="btn-secondary" onclick="loadDsrMissingThisMonth('emp')">🗓️ Running Month</button>
+          <button class="btn-sm" onclick="toggleCustomDateGroup('dsrMiss-emp', this)">🔍 Custom Date</button>
+        </div>
         <div id="dsrMiss-emp-wrap" style="display:none;">
-          <div class="form-2col">
+          <div class="date-scope-custom-row">
             <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-emp"></div>
             <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-emp"></div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('emp')">📅 This Month</button>
-            <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('emp')">🔍 Load Custom Range</button>
+            <button class="btn-primary" onclick="loadDsrMissingCustom('emp')">🔍 Load</button>
           </div>
         </div>
       </div>
@@ -2254,7 +2261,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="topbar-row2">
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="adminDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
-        <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
+        <button class="tb-chip" id="syncNowBtnAdmin" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
+        <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
         <button class="tb-chip" id="adminDashboardFabTop" onclick="showAdminPage('dashboard-hub')" title="Dashboard">📊 Dashboard</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
@@ -2929,15 +2937,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR — All Employees</span></div>
       <div class="card">
-        <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrMiss-admin', this)">🔍 Custom Date</button>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button class="btn-secondary" onclick="loadDsrMissingThisMonth('admin')">🗓️ Running Month</button>
+          <button class="btn-sm" onclick="toggleCustomDateGroup('dsrMiss-admin', this)">🔍 Custom Date</button>
+        </div>
         <div id="dsrMiss-admin-wrap" style="display:none;">
-          <div class="form-2col">
+          <div class="date-scope-custom-row">
             <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrMissStart-admin"></div>
             <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrMissEnd-admin"></div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-secondary" style="flex:1;" onclick="loadDsrMissingThisMonth('admin')">📅 This Month</button>
-            <button class="btn-primary" style="flex:1;" onclick="loadDsrMissingCustom('admin')">🔍 Load Custom Range</button>
+            <button class="btn-primary" onclick="loadDsrMissingCustom('admin')">🔍 Load</button>
           </div>
         </div>
       </div>
@@ -5739,19 +5747,45 @@ function updateConnStatus() {
     lbl.textContent = online ? 'Online' : 'Offline';
   });
   const syncBtn = document.getElementById('syncNowBtn');
-  // v-fix (BRO's "Refresh and Sync button okelaga undi" feedback): Sync
-  // and Refresh used the same 🔄 icon and near-identical chip styling, so
-  // they were impossible to tell apart at a glance. Sync now uses a
-  // distinct 📤 (outbox) icon, a gold/amber fill+text color instead of the
-  // plain default, and shows the actual pending count in its own label —
-  // Refresh stays the plain neutral 🔄 chip. Two visually different
-  // buttons with two different jobs.
+  const syncBtnAdmin = document.getElementById('syncNowBtnAdmin');
+  // v-fix (BRO: "DSR data offline lo save ayindi kani sheet ki raledu,
+  // Sync button ekkada pettaru" — found the Admin topbar never had a
+  // Sync button at all, only the Employee one did): if a DSR/Loyalty/
+  // Golden Aura entry gets queued offline while logged in as Admin,
+  // there was literally nowhere on that screen to trigger a manual sync
+  // — the queued data was safe (it auto-flushes on reconnect/next page
+  // load regardless), but Admin had no visible way to check or force it.
+  // Both topbars now show the identical Sync pill.
+  // v-fix (BRO: "naku ALWAYS kanipinchali — data unte synced show avali,
+  // lekapote data emi ledu ani ravali" — after losing a real DSR entry to
+  // a bug that failed silently): hiding this pill entirely whenever
+  // nothing's pending meant there was NO visible confirmation that
+  // everything actually made it to the sheet — someone would only ever
+  // see this pill at all if something had ALREADY gone wrong. Now it's
+  // always on screen in both topbars, in one of two unmistakable states,
+  // so "did my data actually save?" never has to be a guess again:
+  //   pending > 0 → gold "📤 Sync (N)" — tap to upload now
+  //   pending = 0 → green "✅ Synced"  — confirms nothing is waiting
   const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length;
-  if(syncBtn) {
-    syncBtn.style.display = pendingCount ? 'flex' : 'none';
-    syncBtn.innerHTML = '📤 Sync (' + pendingCount + ')';
-    syncBtn.title = pendingCount + ' item(s) saved offline — tap to upload now';
-  }
+  [syncBtn, syncBtnAdmin].forEach(btn => {
+    if (!btn) return;
+    btn.style.display = 'flex';
+    if (pendingCount > 0) {
+      btn.innerHTML = '📤 Sync (' + pendingCount + ')';
+      btn.title = pendingCount + ' item(s) saved offline — tap to upload now';
+      btn.style.background = 'rgba(212,168,67,0.28)';
+      btn.style.borderColor = 'var(--gold)';
+      btn.style.color = '#7a5b00';
+      btn.disabled = false;
+    } else {
+      btn.innerHTML = '✅ Synced';
+      btn.title = 'Nothing pending — everything entered on this device has been sent';
+      btn.style.background = 'rgba(34,139,87,0.16)';
+      btn.style.borderColor = 'var(--green, #228b57)';
+      btn.style.color = '#1a5c3a';
+      btn.disabled = false; // still clickable — harmless no-op re-check
+    }
+  });
 }
 function flushAllOfflineQueues() {
   flushOfflineQueue();
@@ -8287,15 +8321,11 @@ async function confirmSubmitLoyaltyCard(evt) {
       errBox.style.display = 'block';
     }
   } catch (err) {
-    // v-fix: if the connection actually dropped mid-request (or it timed
-    // out because of it), queue it offline instead of just showing an
-    // error and hoping the employee remembers to retry later.
-    if (!navigator.onLine || err.name === 'AbortError') {
-      submitLoyaltyOffline(payload);
-      return;
-    }
-    errBox.textContent = 'Network error: ' + err.message;
-    errBox.style.display = 'block';
+    // v-fix (same "navigator.onLine lies" bug as DSR — see
+    // dsrfConfirmSubmit's comment): ANY failure here now queues offline,
+    // not just a detected-offline/timeout case. idemKey makes this safe
+    // even if the original request actually did reach the server.
+    submitLoyaltyOffline(payload);
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
   }
@@ -10969,15 +10999,11 @@ async function confirmSubmitGoldenAura(who, evt) {
       msg.textContent = '❌ ' + ((res && res.error) || 'Failed to save');
     }
   } catch (e) {
-    // v-fix: if the connection actually dropped mid-request (or it timed
-    // out because of it), queue it offline instead of just showing an
-    // error and hoping the employee remembers to retry later.
-    if (!navigator.onLine || e.name === 'AbortError') {
-      submitGoldenAuraOffline(payload, who);
-      return;
-    }
-    msg.style.color = 'var(--red)';
-    msg.textContent = '❌ Network error: ' + e.message;
+    // v-fix (same "navigator.onLine lies" bug as DSR/Loyalty): ANY
+    // failure here now queues offline, not just a detected-offline/
+    // timeout case. idemKey makes this safe even if the original request
+    // actually did reach the server.
+    submitGoldenAuraOffline(payload, who);
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
   }
@@ -13176,18 +13202,21 @@ function dsrfConfirmSubmit(who, evt) {
       clearInterval(progInt);
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
       btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
-      // v-fix: if the connection actually dropped mid-request (or the
-      // request timed out because of it), don't just show an error and
-      // leave it on the employee to remember to retry — queue it offline
-      // the same as a genuine navigator.onLine===false case. idemKey still
-      // protects against a double-save if the original request actually
-      // reached the server before dropping.
-      if (!navigator.onLine || err.name === 'AbortError') {
-        submitDsrOffline(rows, idemKey, who);
-        return;
-      }
-      msg.style.color = 'var(--red)';
-      msg.textContent = '❌ Network error: ' + err + ' — safe to tap Submit again, it will not create a duplicate.';
+      // v-fix (BRO: "DSR enter chesa, data raledu — offline queue anaru
+      // kani data save avvaledu" — root cause): this only queued offline
+      // for navigator.onLine===false or a genuine timeout (AbortError).
+      // But navigator.onLine is notoriously unreliable — it reports TRUE
+      // whenever the device is connected to ANY WiFi/mobile network, even
+      // one with no real internet access (very common on flaky store
+      // WiFi/mobile data). In that exact situation the fetch fails with a
+      // plain "Failed to fetch" — neither offline NOR a timeout — so
+      // neither condition matched, nothing got queued, and the DSR really
+      // did just vanish with only a red error text easy to miss/dismiss.
+      // Now ANY failure here queues offline, no exceptions. This is
+      // always safe: idemKey means a genuine duplicate (if the original
+      // request actually DID reach the server before failing) is caught
+      // and ignored server-side rather than saved twice.
+      submitDsrOffline(rows, idemKey, who);
     });
 }
 
