@@ -6245,6 +6245,34 @@ function renderCalendarFor(who, year, month, events) {
 // ══════════════════════════════════════
 // DIRECT ACTION (MIS/Director only) — mirrors Code.gs Sheets-side tool
 // ══════════════════════════════════════
+// v-fix (BRO: "employee name list dropdown anni chota ala fix chei" —
+// same offline-caching treatment just added to the DSR product list,
+// applied here to every Employee Name dropdown in the app): populates a
+// dropdown from localStorage INSTANTLY (works even fully offline, using
+// whatever list was last fetched successfully on this device), then
+// refreshes it from the network in the background — renderFn re-runs a
+// second time with the fresh list once that arrives. Each call site's
+// renderFn just builds/sorts its own dropdown HTML the way it already
+// did; this only adds the cache-first-then-refresh wrapper around it.
+function loadEmpListWithCache(cacheKey, fetchFn, renderFn) {
+  const cacheStorageKey = 'vsrGoldEmpListCache_' + cacheKey;
+  try {
+    const cached = localStorage.getItem(cacheStorageKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.employees && parsed.employees.length) renderFn(parsed.employees, true);
+    }
+  } catch (e) { /* localStorage unavailable or corrupted cache — fall through to network */ }
+  return fetchFn().then(res => {
+    const employees = res && (res.employees || (res.ok && res.employees));
+    if (res && (res.ok !== false) && employees) {
+      try { localStorage.setItem(cacheStorageKey, JSON.stringify({ employees: employees, savedAt: Date.now() })); } catch (e) {}
+      renderFn(employees, false);
+    }
+    return res;
+  }).catch(err => { throw err; });
+}
+
 let directEmpCache = [];
 
 async function loadDirectActionPage() {
@@ -6278,15 +6306,12 @@ async function loadDirectActionPage() {
 
   if (directEmpCache.length > 0) { populateDirectEmpSelect(); return; }
   try {
-    const res = await jsonpReliable({ page: 'directEmpListAPI' });
-    if (res.ok) {
-      directEmpCache = res.employees || [];
-      populateDirectEmpSelect();
-    } else {
-      toast(res.error || 'Could not load employee list', 'error');
-    }
+    await loadEmpListWithCache('directEmpList',
+      () => jsonpReliable({ page: 'directEmpListAPI' }),
+      (employees) => { directEmpCache = employees; populateDirectEmpSelect(); }
+    );
   } catch(e) {
-    toast('Connection error loading employees', 'error');
+    if (directEmpCache.length === 0) toast('Connection error loading employees — showing manual entry only', 'error');
   }
 }
 
@@ -6719,14 +6744,17 @@ async function loadSettingsEmpList() {
   const sel = document.getElementById('settingsEmpSelect');
   if (sel.dataset.loaded === '1') return;
   try {
-    const res = await jsonpReliable({ page: 'listEmployeesForPermsAPI' });
-    if (!res.ok) throw new Error(res.error);
-    window.__settingsEmpList = res.employees || [];
-    sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-      res.employees.map(e => `<option value="${escJs(e.empId)}">${e.name} (${e.empId})</option>`).join('');
-    sel.dataset.loaded = '1';
+    await loadEmpListWithCache('settingsEmpList',
+      () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
+      (employees) => {
+        window.__settingsEmpList = employees;
+        sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+          employees.map(e => `<option value="${escJs(e.empId)}">${e.name} (${e.empId})</option>`).join('');
+        sel.dataset.loaded = '1';
+      }
+    );
   } catch(e) {
-    sel.innerHTML = '<option value="">Could not load employees</option>';
+    if (sel.dataset.loaded !== '1') sel.innerHTML = '<option value="">Could not load employees</option>';
   }
 }
 
@@ -8719,13 +8747,16 @@ function loadLoyaltyMyCards() {
 function initLoyaltyAllCardsAdminPage() {
   const sel = document.getElementById('loyMyCardsEmpFilter');
   if (sel && sel.dataset.loaded !== '1') {
-    jsonpReliable({ page: 'listEmployeesForPermsAPI' }).then(res => {
-      if (res && res.ok) {
+    loadEmpListWithCache('loyaltyAllCardsFilter',
+      () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
+      (employees) => {
+        const current = sel.value;
         sel.innerHTML = '<option value="">-- All Employees --</option>' +
-          res.employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+          employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+        sel.value = current;
         sel.dataset.loaded = '1';
       }
-    }).catch(() => {});
+    ).catch(() => {});
   }
   loadLoyaltyAllCardsAdmin();
 }
@@ -10494,21 +10525,68 @@ function renderDsrEntryForm(who, force) {
 // entire page (losing anything already typed, since that resets DSR_ST
 // too). Extracted into its own function so both the initial load and
 // the new Retry link below can call the exact same logic.
+// v-fix (BRO: "off line unte DSR enter cheste product item names DSR
+// sheet nundi vastundi kani adi kuda work cheyadam ledu" — root cause):
+// this fetch genuinely CANNOT succeed while the device is offline —
+// there's no network to fetch anything over, timeout/retry can't change
+// that. Without the product list, the employee is forced into "Other
+// (type manually)" for every single item, which is exactly where
+// spelling/naming inconsistencies creep into the DSR sheet's Product
+// Name column. The actual fix: cache the product list in localStorage
+// every time it's SUCCESSFULLY fetched (any earlier online moment —
+// logging in, opening the DSR page with signal, etc.), and load that
+// cache FIRST, instantly, before even attempting the network — so an
+// employee who goes offline later still has last-known-good product
+// names to pick from, without waiting on or depending on a fetch that
+// can't work right then.
+const DSR_PRODUCTS_CACHE_KEY = 'vsrGoldDsrProductsCache';
 function dsrfLoadProducts(who) {
   const st = DSR_ST[who];
   const banner = document.getElementById('dsrfInitBanner-' + who);
-  if (banner) { banner.style.display = 'flex'; banner.innerHTML = '<span class="spinner"></span> Loading product list...'; }
+
+  // 1) Instant offline-safe path — load whatever was cached last time
+  // this device was online, so the dropdown is never empty just because
+  // right now there's no signal.
+  try {
+    const cached = localStorage.getItem(DSR_PRODUCTS_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      st.gold = parsed.gold || []; st.silver = parsed.silver || []; st.diamond = parsed.diamond || [];
+      st.loaded = true;
+      document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
+        dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, ''));
+      });
+      if (banner) {
+        banner.innerHTML = '📦 Using saved product list' + (parsed.savedAt ? ' (last updated ' + new Date(parsed.savedAt).toLocaleDateString() + ')' : '') + ' — refreshing in the background...';
+      }
+    }
+  } catch (e) { /* localStorage unavailable or corrupted cache — fall through to network */ }
+
+  // 2) Always still try the network too — refreshes the cache with the
+  // latest product names when there IS a connection, without blocking
+  // on it or clearing what's already showing from the cache above.
+  if (banner && !st.loaded) { banner.style.display = 'flex'; banner.innerHTML = '<span class="spinner"></span> Loading product list...'; }
   _fetchWithTimeout(DSR_GAS_URL + '?action=getData', {}, 20000)
     .then(r => r.json())
     .then(data => {
-      if (data.products) { st.gold = data.products.gold || []; st.silver = data.products.silver || []; st.diamond = data.products.diamond || []; }
+      if (data.products) {
+        st.gold = data.products.gold || []; st.silver = data.products.silver || []; st.diamond = data.products.diamond || [];
+        try { localStorage.setItem(DSR_PRODUCTS_CACHE_KEY, JSON.stringify({ gold: st.gold, silver: st.silver, diamond: st.diamond, savedAt: Date.now() })); } catch (e) {}
+      }
       st.loaded = true;
       document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
         dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, ''));
       });
       if (banner) banner.style.display = 'none';
     }).catch(() => {
-      if (banner) banner.innerHTML = '⚠ Could not load product list — <a href="#" onclick="dsrfLoadProducts(\'' + who + '\');return false;" style="color:var(--purple);font-weight:700;text-decoration:underline;">🔄 Tap to retry</a> (you can still type product names manually via "Other" in the meantime).';
+      if (st.loaded) {
+        // We're already showing a cached list — say so plainly instead of
+        // a scary "could not load" for what's actually a normal offline
+        // moment with a safety net already in place.
+        if (banner) { banner.style.display = 'flex'; banner.innerHTML = '📴 Offline — using saved product list from last time you were online.'; setTimeout(() => { if (banner) banner.style.display = 'none'; }, 3000); }
+      } else if (banner) {
+        banner.innerHTML = '⚠ Could not load product list (no internet, and nothing saved on this device yet) — <a href="#" onclick="dsrfLoadProducts(\'' + who + '\');return false;" style="color:var(--purple);font-weight:700;text-decoration:underline;">🔄 Tap to retry</a>, or type product names manually via "Other" for now.';
+      }
     });
 }
 
@@ -11042,6 +11120,26 @@ function loadGoldenAuraList(who) {
     if (empFilterEl && empFilterEl.value) reqParams.empFilter = empFilterEl.value;
     if (startEl && startEl.value) reqParams.startDate = startEl.value;
     if (endEl && endEl.value) reqParams.endDate = endEl.value;
+    // v-fix (BRO: "employee name list dropdown anni chota ala fix chei"):
+    // this employee list travels bundled inside the main list response
+    // below (not its own endpoint), so it can't go through
+    // loadEmpListWithCache directly — instead, pre-populate instantly
+    // from whatever was cached last time, before the network call even
+    // starts, so the filter isn't empty while waiting/offline.
+    const selPre = document.getElementById('gaEmpFilter-admin');
+    if (selPre && selPre.dataset.loaded !== '1') {
+      try {
+        const cached = localStorage.getItem('vsrGoldEmpListCache_goldenAuraFilter');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.employees && parsed.employees.length) {
+            const current = selPre.value;
+            selPre.innerHTML = '<option value="">All Employees</option>' + parsed.employees.map(n => `<option value="${n}">${n}</option>`).join('');
+            selPre.value = current;
+          }
+        }
+      } catch (e) {}
+    }
   }
   jsonpReliable(reqParams).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadGoldenAuraList(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
@@ -11054,6 +11152,7 @@ function loadGoldenAuraList(who) {
         sel.innerHTML = '<option value="">All Employees</option>' + res.employees.map(n => `<option value="${n}">${n}</option>`).join('');
         sel.value = current;
         sel.dataset.loaded = '1';
+        try { localStorage.setItem('vsrGoldEmpListCache_goldenAuraFilter', JSON.stringify({ employees: res.employees, savedAt: Date.now() })); } catch (e) {}
       }
     }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No schemes found.</p></div>'; return; }
