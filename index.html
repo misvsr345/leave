@@ -6083,9 +6083,30 @@ async function flushDsrOfflineQueue() {
         // back online. idemKey makes this safe even if it turns out the
         // original attempt actually DID reach the server before dropping.
         const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: item.rows, idemKey: item.idemKey }) }, 60000);
-        const result = await resp.json();
-        if (!(result && result.status === 'success')) remaining.push(item);
+        // v-fix (BRO: "Console lo ఏమీ కనిపించలేదు" — the catch block below
+        // and this "not success" branch used to fail completely silently,
+        // with no console output at all, making live debugging impossible
+        // from DevTools. Every failure path now logs exactly what
+        // happened — HTTP status, raw response text (if JSON parsing
+        // itself is what failed), or the parsed error payload — so a
+        // stuck item's Console tab actually shows something useful.
+        console.log('[DSR Sync] HTTP status:', resp.status, resp.statusText);
+        let rawText = '';
+        let result = null;
+        try {
+          rawText = await resp.clone().text();
+          result = JSON.parse(rawText);
+        } catch (parseErr) {
+          console.error('[DSR Sync] Response was not valid JSON. First 500 chars:', rawText.substring(0, 500));
+        }
+        if (!(result && result.status === 'success')) {
+          console.error('[DSR Sync] Item NOT marked success by server. Parsed response:', result);
+          remaining.push(item);
+        } else {
+          console.log('[DSR Sync] Item synced OK. DSR ID:', result.dsrId);
+        }
       } catch (e) {
+        console.error('[DSR Sync] Request itself threw (network/CORS/timeout):', e.name, e.message);
         remaining.push(item);
       }
     }
