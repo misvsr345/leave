@@ -5862,12 +5862,13 @@ function saveQueueGeneric(key, q) {
   try { localStorage.setItem(key, JSON.stringify(q)); return true; } catch(e) { return false; }
 }
 
-function submitDsrOffline(rows, idemKey, who) {
+function submitDsrOffline(rows, idemKey, who, reason) {
   const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
   q.push({ rows, idemKey, savedAt: Date.now() });
   const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('dsrfStatusMsg-' + who);
+  const label = reason || '📴 No network';
   if (!saved) {
     // Storage genuinely failed (most likely full) — do NOT clear the
     // form or claim success. The employee's typed data stays on screen
@@ -5878,8 +5879,8 @@ function submitDsrOffline(rows, idemKey, who) {
     if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; }
     return;
   }
-  toast('📴 No network — DSR saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
-  if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = '📴 Saved offline on this device — will auto-sync when back online. Do not re-enter this DSR.'; }
+  toast(label + ' — DSR saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
+  if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = label + ' — saved offline on this device — will auto-sync automatically. Do not re-enter this DSR.'; }
   // Clear the form exactly like a successful submit, so the employee
   // doesn't accidentally resubmit the same items again while offline.
   const list = document.getElementById('dsrfEntriesList-' + who);
@@ -5890,27 +5891,74 @@ function submitDsrOffline(rows, idemKey, who) {
   const dateEl = document.getElementById('dsrfBillDate-' + who); if (dateEl) dateEl.value = toYMD(new Date());
 }
 
+// v-fix (BRO's exact bug — found with hard proof in the DSR execution
+// log: the SAME "Malleswara Nayako | SRIKANT" submission fired 8-9 times
+// within 46 seconds, several racing hard enough to hit the backend's
+// lock and CRASH with "Lock timeout: another process was holding the
+// lock for too long" — this is EXACTLY why data sometimes silently
+// failed to save while a confirmation mail still went out from a
+// DIFFERENT one of the racing copies): flushDsrOfflineQueue() had FOUR
+// separate triggers (page load, the 'online' event, and two Sync
+// buttons) and no guard against them overlapping. It reads the whole
+// queue, awaits every item's fetch one by one, and only writes the
+// queue back at the very end — so if a second trigger fires while the
+// first is still mid-flight (very plausible: page load can fire, then
+// the browser's 'online' event fires moments later, then the user taps
+// "Sync" because they see a pending badge), the SECOND run reads the
+// exact same still-present queue and re-sends the exact same item(s) —
+// with a photo-heavy DSR this loop can run long enough for several
+// overlapping flushes to stack up, exactly matching the log evidence.
+// Two changes close this: (1) a simple in-flight guard so only one
+// flush ever actually runs at a time — any overlapping call just
+// returns immediately (the item stays safely queued and gets picked up
+// by whichever flush is already in progress, or the next one); (2) each
+// item is removed from the persisted queue the moment it's *claimed*
+// for sending (not only after success), so even a flush that somehow
+// still overlaps this one no longer sees an already-claimed item.
+let __dsrFlushInFlight = false;
 async function flushDsrOfflineQueue() {
   if (!navigator.onLine) return;
-  let q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
-  if (!q.length) { updateConnStatus(); return; }
-  const remaining = [];
-  for (const item of q) {
-    try {
-      // 60s — same photo-heavy write as a live submit, just replayed once
-      // back online. idemKey makes this safe even if it turns out the
-      // original attempt actually DID reach the server before dropping.
-      const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: item.rows, idemKey: item.idemKey }) }, 60000);
-      const result = await resp.json();
-      if (!(result && result.status === 'success')) remaining.push(item);
-    } catch (e) {
-      remaining.push(item);
+  if (__dsrFlushInFlight) return;
+  __dsrFlushInFlight = true;
+  let q = [];
+  try {
+    q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
+    if (!q.length) { updateConnStatus(); return; }
+    // Claim every item up front — nothing left in the persisted queue
+    // for a racing call to see, even if our own in-flight guard above
+    // somehow didn't catch it (e.g. a stale flag from a crashed prior run).
+    saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, []);
+    const remaining = [];
+    for (const item of q) {
+      try {
+        // 60s — same photo-heavy write as a live submit, just replayed once
+        // back online. idemKey makes this safe even if it turns out the
+        // original attempt actually DID reach the server before dropping.
+        const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: item.rows, idemKey: item.idemKey }) }, 60000);
+        const result = await resp.json();
+        if (!(result && result.status === 'success')) remaining.push(item);
+      } catch (e) {
+        remaining.push(item);
+      }
     }
+    // Merge back with anything a legitimately-new offline save queued
+    // WHILE this flush was running, rather than clobbering it.
+    const stillQueued = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
+    saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
+    updateConnStatus();
+    const synced = q.length - remaining.length;
+    if (synced > 0) toast('✅ ' + synced + ' offline DSR(s) synced successfully', 'success');
+  } catch (outerErr) {
+    // Safety net: something genuinely unexpected happened (not a normal
+    // per-item network failure, which is already handled above) — put
+    // the claimed items back rather than silently losing them.
+    try {
+      const stillQueued = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
+      saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __dsrFlushInFlight = false;
   }
-  saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, remaining);
-  updateConnStatus();
-  const synced = q.length - remaining.length;
-  if (synced > 0) toast('✅ ' + synced + ' offline DSR(s) synced successfully', 'success');
 }
 
 function submitLoyaltyOffline(payload) {
@@ -5929,24 +5977,39 @@ function submitLoyaltyOffline(payload) {
   showEmpPage('loyalty');
 }
 
+let __loyaltyFlushInFlight = false;
 async function flushLoyaltyOfflineQueue() {
   if (!navigator.onLine) return;
-  let q = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
-  if (!q.length) { updateConnStatus(); return; }
-  const remaining = [];
-  for (const item of q) {
-    try {
-      const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 60000);
-      const result = await _parseMainApiResponse(resp);
-      if (!(result && result.ok)) remaining.push(item);
-    } catch (e) {
-      remaining.push(item);
+  if (__loyaltyFlushInFlight) return;
+  __loyaltyFlushInFlight = true;
+  let q = [];
+  try {
+    q = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
+    if (!q.length) { updateConnStatus(); return; }
+    saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, []); // claim before sending — see flushDsrOfflineQueue's comment for the full race-condition explanation
+    const remaining = [];
+    for (const item of q) {
+      try {
+        const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 60000);
+        const result = await _parseMainApiResponse(resp);
+        if (!(result && result.ok)) remaining.push(item);
+      } catch (e) {
+        remaining.push(item);
+      }
     }
+    const stillQueued = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
+    saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
+    updateConnStatus();
+    const synced = q.length - remaining.length;
+    if (synced > 0) toast('✅ ' + synced + ' offline Loyalty Card(s) synced successfully', 'success');
+  } catch (outerErr) {
+    try {
+      const stillQueued = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
+      saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __loyaltyFlushInFlight = false;
   }
-  saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, remaining);
-  updateConnStatus();
-  const synced = q.length - remaining.length;
-  if (synced > 0) toast('✅ ' + synced + ' offline Loyalty Card(s) synced successfully', 'success');
 }
 
 // Golden Aura carries up to 7 photos in one payload — the heaviest of the
@@ -5968,24 +6031,39 @@ function submitGoldenAuraOffline(payload, who) {
   renderGoldenAuraForm(who, true); // force — real clear after a successful offline-queue save
 }
 
+let __gaFlushInFlight = false;
 async function flushGoldenAuraOfflineQueue() {
   if (!navigator.onLine) return;
-  let q = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
-  if (!q.length) { updateConnStatus(); return; }
-  const remaining = [];
-  for (const item of q) {
-    try {
-      const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 90000);
-      const result = await _parseMainApiResponse(resp);
-      if (!(result && result.ok)) remaining.push(item);
-    } catch (e) {
-      remaining.push(item);
+  if (__gaFlushInFlight) return;
+  __gaFlushInFlight = true;
+  let q = [];
+  try {
+    q = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
+    if (!q.length) { updateConnStatus(); return; }
+    saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, []); // claim before sending — see flushDsrOfflineQueue's comment for the full race-condition explanation
+    const remaining = [];
+    for (const item of q) {
+      try {
+        const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 90000);
+        const result = await _parseMainApiResponse(resp);
+        if (!(result && result.ok)) remaining.push(item);
+      } catch (e) {
+        remaining.push(item);
+      }
     }
+    const stillQueued = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
+    saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
+    updateConnStatus();
+    const synced = q.length - remaining.length;
+    if (synced > 0) toast('✅ ' + synced + ' offline Golden Aura enrollment(s) synced successfully', 'success');
+  } catch (outerErr) {
+    try {
+      const stillQueued = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
+      saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __gaFlushInFlight = false;
   }
-  saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, remaining);
-  updateConnStatus();
-  const synced = q.length - remaining.length;
-  if (synced > 0) toast('✅ ' + synced + ' offline Golden Aura enrollment(s) synced successfully', 'success');
 }
 
 // ══════════════════════════════════════
@@ -10421,7 +10499,7 @@ function loadDsrDateRange(who) {
 // ══════════════════════════════════════
 // DSR — NEW ENTRY FORM (separate DSR web app — Main file spreadsheet)
 // ══════════════════════════════════════
-var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbzVcx1gCarn3TOkfU2alr3Itic_yegvizyevrSydF5mPuQKv66H_PclD_Mgpg1cTQEq/exec";
+var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbx2O63qIcrbMDPQCut8HaLzk5QRnJVMaGjVff4MK_LhLpQP69BpbS8408W76BF3b9mqBQ/exec";
 var DSR_ST = {
   emp:   { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
   admin: { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
@@ -13310,7 +13388,26 @@ function dsrfConfirmSubmit(who, evt) {
         dsrfSetPayStatus(who, 'Purchased', document.getElementById('dsrfBtnPurchased-' + who));
       } else {
         msg.style.color = 'var(--red)';
-        msg.textContent = '❌ ' + (result.message || 'Failed to save');
+        msg.textContent = '❌ ' + (result.message || 'Failed to save') + ' — saved offline instead, will retry automatically.';
+        // v-fix (BRO: "employee submitted right in front of me, but it's
+        // not even in the log — the data is just GONE" — root cause): a
+        // server-side error response (e.g. doPost's JSON.parse choking on
+        // a truncated/corrupted body — very plausible for a multi-photo
+        // DSR over flaky mobile data) is a completely VALID, successful
+        // HTTP response with {status:"error"} in it. It never touches the
+        // .catch() below (that's for network-level failures only), so
+        // this branch used to just show red text and otherwise do
+        // NOTHING — no offline queue, no retry, nothing. If the employee
+        // didn't notice/preserve that exact red message before navigating
+        // away, the DSR vanished with zero trace anywhere: not in the
+        // sheet, not in the Log tab (the request never even reached
+        // saveData() to log its own start), not in any local queue. Any
+        // unsuccessful server response now falls back to the same local
+        // offline queue as a genuine network failure — idemKey keeps this
+        // safe even on the rare case the original request actually did
+        // partially succeed server-side.
+        submitDsrOffline(rows, idemKey, who, '⚠️ Server error');
+        return;
       }
     })
     .catch(err => {
