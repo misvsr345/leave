@@ -2240,6 +2240,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="openChangePassword('emp')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
+        <div class="quick-action-btn" onclick="openSyncOfflineModal()"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync Offline Data</div><div class="quick-action-sub" id="empMoreSyncLabel">Checking...</div></div>
       </div>
     </div>
 
@@ -3263,6 +3264,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
+        <div class="quick-action-btn" onclick="openSyncOfflineModal()"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync Offline Data</div><div class="quick-action-sub" id="adminMoreSyncLabel">Checking...</div></div>
       </div>
     </div>
 
@@ -4449,6 +4451,18 @@ async function empLogin() {
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
         toast('Welcome, ' + state.empName + '!', 'success');
+        // v-fix (BRO: "Malleswara DSR device lo pending unte, Liza login
+        // ayithe adi sync avutunda?" — answer was no, login wasn't one of
+        // the trigger points): a shared device passing between employees
+        // is exactly when a leftover pending item from the PREVIOUS
+        // employee's session is most likely to sit forgotten — nobody
+        // watching for it, no page reload happening, no 'online' event
+        // firing on its own. A fresh login (this device clearly has a
+        // network connection right now, since the login call itself just
+        // succeeded) is a natural, low-risk moment to also sweep up
+        // anything still waiting from whoever used this device before.
+        updateConnStatus();
+        flushAllOfflineQueues();
       } else {
         document.getElementById('empLoginErr').style.display = 'block';
         document.getElementById('empLoginErr').textContent = res.error || 'Employee ID or password incorrect';
@@ -4511,6 +4525,11 @@ async function adminLogin() {
         // Never shown to Store Manager or any other admin role.
         if (roleUp.indexOf('MIS') > -1) checkMISPendingLeavePopup();
         toast('Welcome, ' + state.adminRole + '!', 'success');
+        // v-fix: same reasoning as empLogin above — a fresh admin login is
+        // also a good moment to sweep up anything left pending on this
+        // device from a previous employee's or admin's session.
+        updateConnStatus();
+        flushAllOfflineQueues();
       } else {
         document.getElementById('adminLoginErr').style.display = 'block';
         document.getElementById('adminLoginErr').textContent = res.error || 'Invalid credentials';
@@ -5767,6 +5786,10 @@ function updateConnStatus() {
   //   pending > 0 → gold "📤 Sync (N)" — tap to upload now
   //   pending = 0 → green "✅ Synced"  — confirms nothing is waiting
   const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length;
+  ['empMoreSyncLabel', 'adminMoreSyncLabel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = pendingCount > 0 ? pendingCount + ' item(s) pending' : 'All synced';
+  });
   [syncBtn, syncBtnAdmin].forEach(btn => {
     if (!btn) return;
     btn.style.display = 'flex';
@@ -5787,14 +5810,114 @@ function updateConnStatus() {
     }
   });
 }
-function flushAllOfflineQueues() {
-  flushOfflineQueue();
-  flushDsrOfflineQueue();
-  flushLoyaltyOfflineQueue();
-  flushGoldenAuraOfflineQueue();
+async function flushAllOfflineQueues() {
+  await Promise.all([
+    flushOfflineQueue(),
+    flushDsrOfflineQueue(),
+    flushLoyaltyOfflineQueue(),
+    flushGoldenAuraOfflineQueue()
+  ]);
 }
 window.addEventListener('online', () => { updateConnStatus(); flushAllOfflineQueues(); });
 window.addEventListener('offline', updateConnStatus);
+
+// ══════════════════════════════════════
+// OFFLINE PENDING ITEMS VIEWER — "More" → "🔄 Sync Offline Data"
+// v-add (BRO: "offline save aithe e data save aindo box lo kanipinchali" —
+// up to now the only visible signal was a bare count on the Sync pill,
+// "📤 Sync (3)" — no way to see WHAT those 3 things actually were before
+// syncing. This builds that visibility: a plain-language description of
+// each pending item (who, what, when it was saved on this device) so
+// nobody has to just trust a number, plus a "Sync Now" button right there
+// so checking and syncing is one screen instead of two.
+// ══════════════════════════════════════
+function getOfflinePendingSummary() {
+  const items = [];
+  getOfflineQueue().forEach(it => {
+    const d = it.data || {};
+    items.push({
+      type: '🏖️ Leave Application', savedAt: it.savedAt,
+      desc: (d.leaveType || 'Leave') + ' — ' + (d.startDate || '?') + ' to ' + (d.endDate || '?')
+    });
+  });
+  getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).forEach(it => {
+    const rows = it.rows || [];
+    const first = rows[0] || {};
+    items.push({
+      type: '📝 DSR Entry', savedAt: it.savedAt,
+      desc: (first.customerName || 'Unknown customer') + ' — ' + (first.employeeName || '') +
+            ' — Bill: ' + (first.billDate || '?') + ' — ' + rows.length + ' item(s)'
+    });
+  });
+  getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).forEach(it => {
+    const p = it.payload || {};
+    items.push({
+      type: '💳 Loyalty Card', savedAt: it.savedAt,
+      desc: (p.custName || 'Unknown customer') + ' — Card ' + (p.cardNo || '?') + ' — ' + (p.phone || '')
+    });
+  });
+  getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).forEach(it => {
+    const p = it.payload || {};
+    items.push({
+      type: '✨ Golden Aura', savedAt: it.savedAt,
+      desc: (p.custName || 'Unknown customer') + ' — ' + (p.planType || 'Plan') + ' ' + (p.planNo || '') + ' — ' + (p.empName || '')
+    });
+  });
+  items.sort((a, b) => (a.savedAt || 0) - (b.savedAt || 0));
+  return items;
+}
+
+function renderSyncOfflineModalBody() {
+  const items = getOfflinePendingSummary();
+  const listHtml = items.length
+    ? items.map(it => {
+        const when = it.savedAt ? new Date(it.savedAt).toLocaleString() : '—';
+        return '<div style="padding:10px 12px;border:1px solid var(--border,#e5d9c0);border-radius:8px;margin-bottom:8px;background:var(--card-bg,#fffaf3);">' +
+          '<div style="font-weight:700;font-size:12.5px;">' + it.type + '</div>' +
+          '<div style="font-size:12px;color:var(--text2,#5b4a2e);margin-top:2px;">' + it.desc + '</div>' +
+          '<div style="font-size:10.5px;color:var(--text3,#9a8a6a);margin-top:4px;">Saved on this device: ' + when + '</div>' +
+        '</div>';
+      }).join('')
+    : '<div class="empty-state" style="padding:20px;text-align:center;color:var(--text3,#9a8a6a);">✅ Nothing pending — everything entered on this device has been sent.</div>';
+  return '<div id="syncOfflineList">' + listHtml + '</div>';
+}
+
+function openSyncOfflineModal() {
+  const existing = document.getElementById('syncOfflineModal');
+  if (existing) existing.remove();
+  const online = navigator.onLine;
+  const modal = document.createElement('div');
+  modal.id = 'syncOfflineModal';
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML =
+    '<div style="background:var(--bg,#fff);border-radius:14px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto;padding:20px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+        '<div style="font-weight:800;font-size:16px;">🔄 Offline Data</div>' +
+        '<div onclick="document.getElementById(\'syncOfflineModal\').remove()" style="cursor:pointer;font-size:20px;color:var(--text3,#9a8a6a);">×</div>' +
+      '</div>' +
+      '<div style="font-size:11.5px;color:var(--text3,#9a8a6a);margin-bottom:12px;">Status: ' + (online ? '🟢 Online' : '🔴 Offline — connect to sync') + '</div>' +
+      renderSyncOfflineModalBody() +
+      '<button class="btn btn-primary" id="syncOfflineNowBtn" style="width:100%;margin-top:12px;" onclick="syncOfflineModalSyncNow()">📤 Sync Now</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+async function syncOfflineModalSyncNow() {
+  const btn = document.getElementById('syncOfflineNowBtn');
+  if (!navigator.onLine) { toast('Still offline — connect to the internet first', 'error'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing...'; }
+  const before = getOfflinePendingSummary().length;
+  await flushAllOfflineQueues();
+  const after = getOfflinePendingSummary().length;
+  const synced = before - after;
+  const list = document.getElementById('syncOfflineList');
+  if (list) list.outerHTML = renderSyncOfflineModalBody();
+  if (btn) { btn.disabled = false; btn.textContent = '📤 Sync Now'; }
+  if (synced > 0) toast('✅ ' + synced + ' item(s) synced successfully', 'success');
+  else if (after > 0) toast('⚠️ Some items are still stuck — check your connection and try again', 'error');
+  else toast('✅ Nothing was pending', 'info');
+}
 
 // ══════════════════════════════════════
 // OFFLINE QUEUE
@@ -5813,24 +5936,47 @@ function submitLeaveOffline(data) {
   toast('📴 Saved offline on this device — will auto-sync when you\'re back online', 'info');
   resetApplyForm();
 }
+let __leaveFlushInFlight = false;
 async function flushOfflineQueue() {
   if(!navigator.onLine) return;
-  let q = getOfflineQueue();
-  if(!q.length) { updateConnStatus(); return; }
-  const remaining = [];
-  for(const item of q) {
-    try {
-      const res = await jsonp(Object.assign({}, item.data));
-      if(!(res && res.status && res.status !== 'Error')) remaining.push(item);
-    } catch(e) {
-      remaining.push(item);
+  // v-fix (same class of bug as flushDsrOfflineQueue, found while
+  // answering "flush button correct-ga work avutunda?" — this Leave-
+  // application queue is triggered by the exact same Sync button /
+  // 'online' event / page-load calls as DSR, but had been missed when
+  // those got their in-flight guard + claim-before-send fix): without
+  // this guard, two overlapping flushes (e.g. page load firing right as
+  // the 'online' event also fires) could both read the same still-queued
+  // leave application and submit it twice.
+  if (__leaveFlushInFlight) return;
+  __leaveFlushInFlight = true;
+  let q = [];
+  try {
+    q = getOfflineQueue();
+    if(!q.length) { updateConnStatus(); return; }
+    saveOfflineQueue([]); // claim before sending — nothing left for a racing flush to see
+    const remaining = [];
+    for(const item of q) {
+      try {
+        const res = await jsonp(Object.assign({}, item.data));
+        if(!(res && res.status && res.status !== 'Error')) remaining.push(item);
+      } catch(e) {
+        remaining.push(item);
+      }
     }
+    const stillQueued = getOfflineQueue();
+    saveOfflineQueue(remaining.concat(stillQueued));
+    updateConnStatus();
+    const synced = q.length - remaining.length;
+    if(synced > 0) toast('✅ ' + synced + ' offline application(s) synced successfully', 'success');
+    if(state.empId) await loadEmpData();
+  } catch (outerErr) {
+    try {
+      const stillQueued = getOfflineQueue();
+      saveOfflineQueue(q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __leaveFlushInFlight = false;
   }
-  saveOfflineQueue(remaining);
-  updateConnStatus();
-  const synced = q.length - remaining.length;
-  if(synced > 0) toast('✅ ' + synced + ' offline application(s) synced successfully', 'success');
-  if(state.empId) await loadEmpData();
 }
 
 // ══════════════════════════════════════
@@ -5947,7 +6093,21 @@ async function flushDsrOfflineQueue() {
     saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
     updateConnStatus();
     const synced = q.length - remaining.length;
-    if (synced > 0) toast('✅ ' + synced + ' offline DSR(s) synced successfully', 'success');
+    // v-fix (BRO: "vere emp login ai sync click cheste, mundu login aina
+    // emp data sync status kanipistunda?" — a generic "3 offline DSR(s)
+    // synced" toast doesn't say WHOSE, so whoever's logged in now sees a
+    // confusing confirmation for a submission they never made): name the
+    // employee(s) whose leftover data this actually was, so the person
+    // currently at the screen understands what just happened instead of
+    // being left to guess.
+    if (synced > 0) {
+      const syncedItems = q.filter(item => !remaining.includes(item));
+      const names = [...new Set(syncedItems.map(item => (item.rows && item.rows[0] && item.rows[0].employeeName) || 'Unknown'))];
+      const whose = names.length === 1 && names[0] !== state.empName
+        ? ' (from ' + names[0] + '\'s earlier session on this device)'
+        : '';
+      toast('✅ ' + synced + ' offline DSR(s) synced successfully' + whose, 'success');
+    }
   } catch (outerErr) {
     // Safety net: something genuinely unexpected happened (not a normal
     // per-item network failure, which is already handled above) — put
