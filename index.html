@@ -15964,16 +15964,24 @@ async function confirmAdminModify() {
         role: state.adminRole
       }, idem);
       if (res.ok) {
-        closeModal('adminModifyModal');
         toast(res.message || 'Leave modified successfully', 'success');
-        loadAdminData();
       } else {
         toast(res.error || 'Modify failed', 'error');
       }
     } catch (e) {
       toast('⚠️ No confirmation from server — check "All Leaves" before repeating this modification.', 'error');
-      loadAdminData();
     }
+    // v-fix (BRO: "submit chesina tarvata auto close avali" — this popup
+    // used to only close on the res.ok success path, staying open on
+    // any error OR on a network exception. A stuck-open modal after the
+    // admin already acted on it (and already saw the toast explaining
+    // what happened) just adds a confusing extra step — closing it here
+    // unconditionally, success or failure, matches what every other
+    // confirm-and-close modal in the portal does. The toast already
+    // told them the actual outcome; loadAdminData() below refreshes the
+    // list either way so the real state is always visible right after.
+    closeModal('adminModifyModal');
+    loadAdminData();
     setLock('adminmodify_' + leaveId, false);
   });
 }
