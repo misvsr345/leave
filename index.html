@@ -756,6 +756,17 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-mini-table-bordered { border-collapse: collapse; }
 .dh-mini-table-bordered tr:last-child td { border-bottom: 1px solid var(--border, #d8d8d8) !important; }
 .duty-section-bar { background: #1a1a2e; color: #fff; font-weight: 700; font-size: 11.5px; padding: 7px 10px; border-radius: 6px 6px 0 0; margin-top: 8px; }
+/* v-fix (BRO: "ee part table laga chei" — the duty-assignment widget was
+   already a real <table> in the markup, but with no visible column
+   dividers or a boxed outer edge it read as flat colored blocks rather
+   than a table. This makes the grid actually visible: a border on every
+   cell (not just row underlines), a solid frame around the whole table,
+   and left-aligned name/badge cells instead of centered — multi-name
+   <br>-separated lists look cramped and off-balance when centered. */
+.duty-table { border: 1.5px solid var(--border, #c9b8f0); border-radius: 0 0 6px 6px; overflow: hidden; }
+.duty-table th, .duty-table td { border: 1px solid var(--border, #d8d8d8) !important; }
+.duty-table td { text-align: left !important; white-space: normal; line-height: 1.6; }
+.duty-table tbody tr:nth-child(even) { background: rgba(107,33,168,0.04); }
 .duty-table th { background: #eef7d8; }
 .duty-shift-label { font-weight: 700; color: var(--purple); text-align: left !important; white-space: nowrap; }
 .duty-person { font-weight: 600; }
@@ -3628,6 +3639,7 @@ const OFFLINE_QUEUE_KEY = 'vsrGoldOfflinePortalQueue';
 const DSR_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineDsrQueue';
 const LOYALTY_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLoyaltyQueue';
 const GOLDEN_AURA_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineGoldenAuraQueue';
+const LEADS_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLeadsQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
 
 const DEFAULT_NOTICES =
@@ -5787,7 +5799,7 @@ function updateConnStatus() {
   // so "did my data actually save?" never has to be a guess again:
   //   pending > 0 → gold "📤 Sync (N)" — tap to upload now
   //   pending = 0 → green "✅ Synced"  — confirms nothing is waiting
-  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length;
+  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).length;
   ['empMoreSyncLabel', 'adminMoreSyncLabel', 'empSidebarSyncLabel', 'adminSidebarSyncLabel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = pendingCount > 0 ? pendingCount + ' item(s) pending' : 'All synced';
@@ -5817,7 +5829,8 @@ async function flushAllOfflineQueues() {
     flushOfflineQueue(),
     flushDsrOfflineQueue(),
     flushLoyaltyOfflineQueue(),
-    flushGoldenAuraOfflineQueue()
+    flushGoldenAuraOfflineQueue(),
+    flushLeadsOfflineQueue()
   ]);
 }
 window.addEventListener('online', () => { updateConnStatus(); flushAllOfflineQueues(); });
@@ -5863,6 +5876,13 @@ function getOfflinePendingSummary() {
     items.push({
       type: '✨ Golden Aura', savedAt: it.savedAt,
       desc: (p.custName || 'Unknown customer') + ' — ' + (p.planType || 'Plan') + ' ' + (p.planNo || '') + ' — ' + (p.empName || '')
+    });
+  });
+  getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).forEach(it => {
+    const p = it.payload || {};
+    items.push({
+      type: '📞 Lead Call Log', savedAt: it.savedAt,
+      desc: (p.customerName || 'Unknown customer') + ' — ' + (p.status || '') + ' — ' + (p.callingDoneBy || '')
     });
   });
   items.sort((a, b) => (a.savedAt || 0) - (b.savedAt || 0));
@@ -6246,6 +6266,50 @@ async function flushGoldenAuraOfflineQueue() {
     } catch (e2) {}
   } finally {
     __gaFlushInFlight = false;
+  }
+}
+
+let __leadsFlushInFlight = false;
+async function flushLeadsOfflineQueue() {
+  // v-add (BRO: "submit chesina lead data save avutunda" — following the
+  // exact same discovery pattern as DSR/Loyalty/Golden Aura/Leave: lead
+  // call-log submissions had NO offline safety net at all. A weak-signal
+  // submit just failed with a red "Network error" message and nothing
+  // else — no queue, no retry, no trace. Whatever the employee had typed
+  // (ratings, feedback, call duration) was gone the moment they navigated
+  // away without noticing that specific error. This brings Leads up to
+  // the same standard as every other module: queue on failure, retry
+  // automatically once online, visible in the same Sync Offline Data box.
+  if (!navigator.onLine) return;
+  if (__leadsFlushInFlight) return;
+  __leadsFlushInFlight = true;
+  let q = [];
+  try {
+    q = getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY);
+    if (!q.length) { updateConnStatus(); return; }
+    saveQueueGeneric(LEADS_OFFLINE_QUEUE_KEY, []); // claim before sending — see flushDsrOfflineQueue's comment for the full race-condition explanation
+    const remaining = [];
+    for (const item of q) {
+      try {
+        const resp = await _fetchWithTimeout(LEADS_WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 30000);
+        const result = await _parseLeadsApiResponse(resp);
+        if (!(result && result.ok)) remaining.push(item);
+      } catch (e) {
+        remaining.push(item);
+      }
+    }
+    const stillQueued = getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY);
+    saveQueueGeneric(LEADS_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
+    updateConnStatus();
+    const synced = q.length - remaining.length;
+    if (synced > 0) toast('✅ ' + synced + ' offline lead call log(s) synced successfully', 'success');
+  } catch (outerErr) {
+    try {
+      const stillQueued = getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY);
+      saveQueueGeneric(LEADS_OFFLINE_QUEUE_KEY, q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __leadsFlushInFlight = false;
   }
 }
 
@@ -11767,6 +11831,46 @@ let __empPendingLeadsAll = [];
 let __empLeadsSearchTerm = '';
 let __empPendingSummary = null; // { assigned, submitted, pending } for today, shown above the list
 
+// v-add (BRO: urgent request — "morning open cheste leads vastundi, tarvata
+// net speed taggithe reload avvakapote ibbandi" — employees open the app
+// once in the morning when signal is usually decent, but if the connection
+// gets weak later and something forces a reload (tab suspend, app
+// backgrounded and resumed, a stray refresh), the leads list used to just
+// fail outright with nothing to show, right when they need it most): once
+// a load genuinely succeeds, the result is cached on this device for
+// TODAY only (leads reset with the ~10 AM automated dispatch, so
+// yesterday's cache would be actively misleading, not just stale — hence
+// scoping the key by date). If a later load fails, this falls back to
+// showing that cached list instead of a dead end — clearly marked as
+// possibly outdated, with a one-tap retry, rather than pretending it's live.
+function empLeadsCacheKey() {
+  return 'vsrGoldLeadsCache_' + (state.empId || 'x') + '_' + todayISO();
+}
+function saveEmpLeadsCache() {
+  try {
+    localStorage.setItem(empLeadsCacheKey(), JSON.stringify({
+      leadsAll: __empPendingLeadsAll, summary: __empPendingSummary, savedAt: Date.now()
+    }));
+  } catch (e) { /* storage full or unavailable — silently skip, this is a nice-to-have, not critical data */ }
+}
+function tryRenderEmpLeadsFromCache(box, errMsg) {
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(empLeadsCacheKey())); } catch (e) {}
+  if (!cached || !cached.leadsAll) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + errMsg + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpLeadsPending()" title="Retry">🔄</button></div>';
+    return;
+  }
+  __empPendingLeadsAll = cached.leadsAll;
+  __empPendingSummary = cached.summary;
+  window.__empLeadsData = {};
+  __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
+  renderEmpLeadsPendingTable();
+  const when = new Date(cached.savedAt).toLocaleTimeString();
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+  banner.innerHTML = '<span>📴 Showing leads saved at ' + when + ' — connection is weak, this may not include the very latest updates.</span><button class="btn-secondary" style="flex-shrink:0;padding:4px 10px;font-size:11px;" onclick="loadEmpLeadsPending()">🔄 Retry</button>';
+  box.prepend(banner);
+}
 async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
@@ -11777,9 +11881,10 @@ async function loadEmpLeadsPending() {
       leadsApiGet({ action: 'GET_DAILY_REPORT', employee: state.empName, role: 'employee', date: todayISO() }).catch(() => null)
     ]);
     if (res.error) {
-      box.innerHTML = '<div class="empty-state"><p>Backend error: ' + res.error + '</p>' +
-        (res.stack ? '<pre style="font-size:9px;text-align:left;white-space:pre-wrap;color:var(--text3);background:var(--bg);padding:8px;border-radius:8px;margin-top:8px;">' + res.stack.replace(/</g,'&lt;') + '</pre>' : '') +
-        '</div>';
+      // A real backend error response (not a network failure) — still try
+      // the cache rather than giving up, since the underlying cause could
+      // be the same flaky connection corrupting the request.
+      tryRenderEmpLeadsFromCache(box, 'Backend error: ' + res.error);
       return;
     }
     // v-fix (a submitted lead used to disappear from the list right
@@ -11820,8 +11925,9 @@ async function loadEmpLeadsPending() {
     __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
     __empPendingSummary = (reportRes && reportRes.ok && reportRes.rows && reportRes.rows[0]) ? reportRes.rows[0] : null;
     renderEmpLeadsPendingTable();
+    saveEmpLeadsCache();
   } catch (e) {
-    box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadEmpLeadsPending()\" title=\"Retry\">🔄</button></div>';
+    tryRenderEmpLeadsFromCache(box, e.message);
   }
 }
 
@@ -12176,15 +12282,47 @@ async function submitLeadCall() {
         renderEmpLeadsSummaryBox();
       }
     } else {
-      errBox.textContent = (res && (res.error || res.message)) || 'Save failed — please try again.';
-      errBox.style.display = 'block';
+      // v-fix (BRO's exact question: "submit chesina data save avutunda"):
+      // a non-network failure response (e.g. the CRM Apps Script itself
+      // erroring, or a flaky-connection response that came back malformed
+      // rather than as a clean timeout) used to just show red text and
+      // stop there — same gap as DSR's doPost error path before that got
+      // fixed. Any unsuccessful attempt now falls back to the offline
+      // queue instead of discarding what the employee just typed.
+      submitLeadCallOffline(payload);
     }
   } catch (e) {
-    errBox.textContent = 'Network error: ' + e.message;
-    errBox.style.display = 'block';
+    // A genuine network failure (offline, timeout, DNS, CORS) — same
+    // treatment: queue it, don't lose it.
+    submitLeadCallOffline(payload);
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit';
   }
+}
+
+function submitLeadCallOffline(payload) {
+  const q = getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY);
+  q.push({ payload, savedAt: Date.now() });
+  const saved = saveQueueGeneric(LEADS_OFFLINE_QUEUE_KEY, q);
+  updateConnStatus();
+  if (!saved) {
+    toast('❌ Could not save offline — this device\'s storage is full. Please connect to the internet and tap Submit again now.', 'error');
+    return;
+  }
+  toast('📴 Saved offline on this device — will auto-sync once back online. Do not re-enter this call log.', 'info');
+  closeLeadCallPanel();
+  // Mark it completed on-screen right away, same as a live success —
+  // the employee shouldn't have to wonder whether it "really" went
+  // through or worry they need to redo it; it's safely queued.
+  const normPhone = p => String(p == null ? '' : p).replace(/\D/g, '');
+  const submittedPhone = normPhone(payload.mobileNumber);
+  __empPendingLeadsAll.forEach(l => { if (normPhone(l.phone) === submittedPhone) l.completedJustNow = true; });
+  if (window.__empLeadsData) {
+    Object.keys(window.__empLeadsData).forEach(k => {
+      if (normPhone(k) === submittedPhone) window.__empLeadsData[k].completedJustNow = true;
+    });
+  }
+  renderEmpLeadsPendingTable();
 }
 
 // ── EMPLOYEE: Submitted Today (table + checkbox, with Undo) ─────────
