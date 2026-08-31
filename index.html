@@ -2877,6 +2877,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <button class="btn-secondary" style="width:100%;" onclick="sharePortalLink()">🔗 Share Portal Link</button>
         </div>
       </div>
+
+      <!-- v-add (BRO: "admin login lo admin self data and kinda ku emp
+           dropdown chinnadi okati pettu, adi click chesi emp select
+           cheste, aa emp data ravali") -->
+      <div class="section-hdr" style="margin:16px 0 8px;"><span class="section-title2" style="font-size:13px;">🔍 View Employee Details</span></div>
+      <div class="card">
+        <select id="viewEmpSelect" onchange="onViewEmpSelectChange()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-size:13px;">
+          <option value="">-- Select an Employee --</option>
+        </select>
+        <div id="viewEmpDetailsBox" style="margin-top:10px;"></div>
+      </div>
     </div>
 
     <!-- ══════════════ KPI SECTION (admin) ══════════════ -->
@@ -7606,6 +7617,7 @@ function loadBackendSheetsPage() {
     { label: 'Golden Aura',          url: 'https://docs.google.com/spreadsheets/d/1JWr-32oLxj32V_ZTQACtRL6GuCHCbEuly9ZAqjgyTRE/edit?resourcekey=&gid=2138642606#gid=2138642606' },
     { label: 'KPI',                  url: 'https://docs.google.com/spreadsheets/d/1y7-gRZ0_SUh-dEBXKt3-5JrXfUfmAMEY4SLcFYEFGI0/edit' },
     { label: 'DSR',                  url: 'https://docs.google.com/spreadsheets/d/1bxfpoIP0qdZYoyNaTActQJL-Edu0Ce8zmYl-jKIiVk4/edit?gid=153487399#gid=153487399' },
+    { label: 'Leads',                url: 'https://docs.google.com/spreadsheets/d/1J8N7OyXAbKb2i8qwUMSAS3XAIpKsw7IY3zjz91XK0bs/edit?resourcekey=&gid=1742228891#gid=1742228891' },
     { label: 'Stock Checklist',      url: 'https://docs.google.com/spreadsheets/d/1qfRFIfA2cpkVgZzw_agk3Gpsbbi9tyzLAIyVcbWlQFQ/edit' },
     { label: 'Employee Master',      url: 'https://docs.google.com/spreadsheets/d/1xZZdVvYp3Ke7Ot_leXyNnwvgT5VxnC1bn42_NvRma7E/edit' }
   ];
@@ -7645,6 +7657,44 @@ function renderAdminProfile() {
     html += `<div style="margin-top:12px;padding:10px 12px;background:var(--orange-bg);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;font-size:11.5px;color:var(--orange);">⚠️ Name/Designation not set for this login. Ask MIS/Director to fill Columns D &amp; E in the Authorities sheet for your email (${state.adminEmail || 'your login email'}).</div>`;
   }
   document.getElementById('adminProfileDetails').innerHTML = html;
+}
+
+// v-add: dropdown population + selection handler for Admin's "View
+// Employee Details" box — reuses the same directEmpListAPI + caching
+// pattern already used elsewhere (Direct Approve/Reject), so this adds
+// no new list-loading code path, just a new consumer of an existing one.
+let viewEmpCache = [];
+function populateViewEmpDropdown() {
+  loadEmpListWithCache('viewEmpList',
+    () => jsonpReliable({ page: 'directEmpListAPI' }),
+    (employees) => {
+      viewEmpCache = employees;
+      const sel = document.getElementById('viewEmpSelect');
+      if (!sel) return;
+      const prevVal = sel.value;
+      let html = '<option value="">-- Select an Employee --</option>';
+      employees.forEach(emp => {
+        html += `<option value="${emp.empId}">${emp.name} (${emp.empId})${emp.dept ? ' — ' + emp.dept : ''}</option>`;
+      });
+      sel.innerHTML = html;
+      if (prevVal) sel.value = prevVal;
+    }
+  ).catch(() => {});
+}
+
+async function onViewEmpSelectChange() {
+  const empId = document.getElementById('viewEmpSelect').value;
+  const box = document.getElementById('viewEmpDetailsBox');
+  if (!empId) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const full = await jsonp({ page: 'getFullEmployeeDetailAPI', empId });
+    if (!full || !full.ok) { box.innerHTML = `<div class="empty-state"><p>${(full && full.error) || 'Could not load'}</p></div>`; return; }
+    box.innerHTML = '';
+    renderProfileRows_(fullProfileRows_(full), 'viewEmpDetailsBox');
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state"><p>Could not load. Check connection and try again.</p></div>';
+  }
 }
 
 async function renderEmpBlockedDates() {
@@ -7720,10 +7770,12 @@ async function sharePortalLink() {
   }
 }
 
-function renderEmpProfile() {
+async function renderEmpProfile() {
   document.getElementById('profileEmpName').textContent = state.empName || '—';
   document.getElementById('profileEmpMeta').textContent = [state.empDesig, state.empDept].filter(Boolean).join(' · ') || '—';
 
+  // Basic rows from the login session — shown immediately, before the
+  // fuller detail call (below) resolves, so the page never looks empty.
   const rows = [
     ['🆔', 'Employee ID', state.empId],
     ['👤', 'Name', state.empName],
@@ -7733,18 +7785,56 @@ function renderEmpProfile() {
     ['📧', 'Email', state.empEmail],
     ['📊', 'Monthly Quota', state.empQuota + ' day(s)']
   ];
+  renderProfileRows_(rows, 'profileEmpDetails');
 
+  // v-add (BRO: "emp details kosam oka option — address, aadhaar, pan
+  // card, leave quota, balance, mobile, DOB, DOJ, anniversary anni
+  // kanipincali" — self data only on the Employee side): a fuller
+  // detail call fills in everything the login response doesn't carry.
+  try {
+    const full = await jsonp({ page: 'getFullEmployeeDetailAPI', empId: state.empId });
+    if (full && full.ok) {
+      renderProfileRows_(fullProfileRows_(full), 'profileEmpDetails');
+    }
+  } catch (e) { /* keep showing the basic rows above — not a hard failure */ }
+}
+
+// Shared row list builder for the full detail view (used by both the
+// Employee's own Profile page and the Admin's "View Employee Details"
+// picker below) — one definition, so the two stay in sync automatically.
+function fullProfileRows_(d) {
+  return [
+    ['🆔', 'Employee ID', d.empId],
+    ['👤', 'Name', d.name],
+    ['🏢', 'Department', d.department],
+    ['🏪', 'Counter', d.counter],
+    ['🎓', 'Designation', d.designation],
+    ['📧', 'Email', d.email],
+    ['📱', 'Mobile Number', d.mobile],
+    ['🏠', 'Address', [d.address, d.city, d.state, d.pincode].filter(Boolean).join(', ')],
+    ['🪪', 'Aadhaar Card', d.aadhaar],
+    ['💳', 'PAN Card', d.panCard || 'Not on file'],
+    ['🎂', 'Date of Birth', d.dob],
+    ['📅', 'Date of Joining', d.doj],
+    ['💍', 'Marriage Anniversary', d.anniversary],
+    ['📊', 'Monthly Quota', d.monthlyQuota ? d.monthlyQuota + ' day(s)' : ''],
+    ['🏖️', 'Leave Balance', d.leaveBalance],
+    ['✅', 'Status', d.status]
+  ];
+}
+
+function renderProfileRows_(rows, targetId) {
   let html = '';
   rows.forEach(([icon, label, val], i) => {
     html += `<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;${i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}background:${i % 2 === 0 ? 'var(--bg)' : 'transparent'};">
       <div style="width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--purple-bg);border:1px solid var(--purple-mid);display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>
-        <div style="font-size:14px;color:var(--text);font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val || '—'}</div>
+        <div style="font-size:14px;color:var(--text);font-weight:800;margin-top:2px;overflow-wrap:break-word;">${val || '—'}</div>
       </div>
     </div>`;
   });
-  document.getElementById('profileEmpDetails').innerHTML = html;
+  document.getElementById(targetId).innerHTML = html;
 }
 
 // Maps each SM_Permissions feature key to the DOM elements it controls
@@ -7958,7 +8048,7 @@ function showAdminPage(page, opts) {
   if(page==='blocked') loadBlockedDatesPage();
   if(page==='settings') loadSettingsPage();
   if(page==='backend-sheets') loadBackendSheetsPage();
-  if(page==='profile') renderAdminProfile();
+  if(page==='profile') { renderAdminProfile(); populateViewEmpDropdown(); }
   if(page==='login-activity') loadLoginActivity('admin');
   if(page==='empwise') loadEmployeeWisePage();
   if(page==='pending') renderPending();
