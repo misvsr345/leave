@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>VSR GOLD — HR Management Portal</title>
+<!-- ═══ PWA — "Add to Home Screen" support ═══
+     v-add: turns this into an installable app on phones — a proper icon,
+     no browser address bar once opened from the home screen, and the
+     app shell still opens with zero signal (service-worker.js handles
+     that; the existing in-app DSR/Leads/Loyalty/Golden Aura/Leave
+     offline-queue system is untouched and still does all the real data
+     safety work). manifest.json, service-worker.js, icon-192.png, and
+     icon-512.png must sit in this SAME folder in the GitHub repo
+     (next to this HTML file) for these links to resolve correctly. -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6B1730">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<!-- iOS Safari needs its own separate tags (ignores <link rel="manifest">) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VSR GOLD">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -16347,6 +16364,15 @@ if (!restoreSession()) {
 }
 flushAllOfflineQueues();
 syncHeaderHeight();
+
+// Register the PWA service worker (app-shell caching for "Add to Home
+// Screen" installs — see service-worker.js for what this does and does
+// not handle). Safe no-op in browsers without SW support.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
