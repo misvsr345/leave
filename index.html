@@ -1581,6 +1581,23 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
+    <!-- v-add (BRO's global-banner request, items 7-9): moved out of
+         emp-overview (Leave section landing) into header-group itself —
+         header-group is position:fixed and lives OUTSIDE .page-content's
+         section-swapping, so this now survives every showEmpPage() call
+         instead of disappearing the moment the employee leaves Leave.
+         syncHeaderHeight() already measures header-group's total
+         rendered height via ResizeObserver for the page-content top
+         padding, so this needs no separate layout wiring — it's just
+         part of what that existing system already accounts for. Nothing
+         about populateEventScroller()'s own date logic changed, only
+         WHERE its target element lives and WHEN it gets populated (see
+         the loadEmpData() change below — no longer tied to visiting
+         Leave specifically). -->
+    <div class="bday-marquee-wrap" id="empEventScroller">
+      <button class="bday-marquee-refresh" onclick="populateEventScroller('empEventScroller','empEventScrollerInner')" title="Refresh">🔄</button>
+      <div class="bday-marquee-track" id="empEventScrollerInner"></div>
+    </div>
   </div>
 
   <nav class="vsr-sidebar" id="empSidebar">
@@ -1645,10 +1662,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <!-- HOME / OVERVIEW (Leave section landing) -->
     <div class="page-section" id="emp-overview">
-      <div class="bday-marquee-wrap" id="empEventScroller">
-        <button class="bday-marquee-refresh" onclick="populateEventScroller('empEventScroller','empEventScrollerInner')" title="Refresh">🔄</button>
-        <div class="bday-marquee-track" id="empEventScrollerInner"></div>
-      </div>
       <div class="card" id="empBalanceCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="card" id="empRecentCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -2299,6 +2312,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
+    <!-- v-add — see the matching comment on the Employee side above for
+         the full reasoning; identical treatment here for the Admin app. -->
+    <div class="bday-marquee-wrap" id="adminBdayMarquee">
+      <button class="bday-marquee-refresh" onclick="populateEventScroller('adminBdayMarquee','adminBdayMarqueeTrack')" title="Refresh">🔄</button>
+      <div class="bday-marquee-track" id="adminBdayMarqueeTrack"></div>
+    </div>
   </div>
 
   <nav class="vsr-sidebar" id="adminSidebar">
@@ -2374,10 +2393,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <!-- DASHBOARD (Leave section landing) -->
     <div class="page-section" id="admin-dashboard">
-      <div class="bday-marquee-wrap" id="adminBdayMarquee">
-        <button class="bday-marquee-refresh" onclick="populateEventScroller('adminBdayMarquee','adminBdayMarqueeTrack')" title="Refresh">🔄</button>
-        <div class="bday-marquee-track" id="adminBdayMarqueeTrack"></div>
-      </div>
       <div class="card" id="adminStatsCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-section" style="margin-bottom:14px;">
         <div class="quick-actions-title">⚡ Quick Actions</div>
@@ -5047,6 +5062,11 @@ async function loadEmpData() {
       state.calEvents = (calRes.events || []).map(ev => Object.assign({}, ev, { date: normalizeDateStr(ev.date) }));
       state.calBirthdays = calRes.birthdays || [];
       state.calHolidays = calRes.holidays || [];
+      // v-add: banner now lives in header-group (global, not tied to
+      // the Leave page) — populate it right here, the one place
+      // calBirthdays is set after login, instead of inside
+      // renderEmpOverview() (which only ran when Leave was visited).
+      populateEventScroller('empEventScroller', 'empEventScrollerInner');
     }
     // Each render runs independently — a bug in one must never block the others
     try { renderEmpOverview(); } catch(e1) { console.error('renderEmpOverview failed:', e1); }
@@ -5077,7 +5097,6 @@ async function loadNoticesForEmployee() {
 // EMPLOYEE OVERVIEW
 // ══════════════════════════════════════
 function renderEmpOverview() {
-  populateEventScroller('empEventScroller', 'empEventScrollerInner');
   const b = state.empBalance;
   const q = state.empQuota;
   const u = state.empUsed;
@@ -8078,6 +8097,8 @@ async function loadAdminData() {
       state.calEvents = (calRes.events || []).map(ev => Object.assign({}, ev, { date: normalizeDateStr(ev.date) }));
       state.calBirthdays = calRes.birthdays || [];
       state.calHolidays = calRes.holidays || [];
+      // v-add: same reasoning as the Employee side — see that comment.
+      populateEventScroller('adminBdayMarquee', 'adminBdayMarqueeTrack');
     }
     // Each render runs independently — a bug in one must never block the others
     try { renderAdminDashboard(); } catch(e1) { console.error('renderAdminDashboard failed:', e1); }
@@ -14787,7 +14808,11 @@ function renderAdminDashboard() {
   }
   document.getElementById('adminBirthdayCard').innerHTML = bdayHTML;
 
-  populateEventScroller('adminBdayMarquee', 'adminBdayMarqueeTrack');
+  // v-fix: no longer called here — this is now populated once at
+  // login-time in loadAdminData() (see that comment), since the banner
+  // is global now, not tied to whichever page happens to render this
+  // birthday card. Removed to avoid a harmless but redundant duplicate
+  // repopulation on every dashboard refresh.
 
   let ctrHTML = '<div class="card-title">🏪 Counter-wise Attendance (Today)</div>';
   const ctrKeys = Object.keys(counterMap).sort();
