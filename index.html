@@ -10713,7 +10713,16 @@ function loadDsrStatus(who) {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrStatus(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
-    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No DSR status data yet.</p></div>'; return; }
+    if (!res.rows.length) {
+      // v-fix (BRO's exact bug): the backend now explicitly flags a
+      // stale (un-refreshed) sheet with res.stale + a specific message
+      // instead of just handing back old data as if it were today's —
+      // show that reason when present, so this reads as "the daily
+      // refresh hasn't run yet" rather than a vague, unexplained blank.
+      const msg = (res.stale && res.message) ? res.message : 'No DSR status data yet.';
+      box.innerHTML = `<div class="empty-state"><p>${msg}</p></div>`;
+      return;
+    }
     let html = '';
     res.rows.forEach(r => {
       // Defensive override (works even against a stale/un-regenerated
