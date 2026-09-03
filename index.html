@@ -8685,10 +8685,18 @@ let _jscanifyInstance = null;
 // than only occasionally.
 
 function _photoFieldKind(inputId) {
-  const id = inputId.toLowerCase();
-  if (id.indexOf('sig') > -1 || id.indexOf('pan') > -1) return 'plain';
-  if (id.indexOf('aadhaar') > -1) return 'aadhaar';
-  if (id.indexOf('custphoto') > -1 || id.indexOf('nomphoto') > -1) return 'portrait';
+  // v-fix (BRO: "photos ela upload chestaro alane avali, no document
+  // crop, address check kuda vaddu, nenu manual ga check chesukuntanu"
+  // — full reversal): every photo field (Customer, Signature, PAN, and
+  // now Aadhaar too) goes through completely untouched, exactly as
+  // captured/selected — no auto-crop, no perspective-correction, no
+  // preview/confirm step, and (since this is the only path that ever
+  // populated state.confirmedPhotos['ncAadhaarBack']) the OCR address-
+  // match check below no longer runs either, since it was only ever
+  // triggered once that field had a processed photo to check. Kept as
+  // one single change here rather than separately touching every place
+  // that referenced 'aadhaar'/'portrait' — lowest-risk way to fully
+  // disable this without a wider, more error-prone rewrite.
   return 'plain';
 }
 
@@ -8739,29 +8747,51 @@ async function _processPortraitPhoto(dataUrl) {
   }
   return canvas.toDataURL('image/jpeg', 0.75);
 }
+// v-fix (BRO: "retake kadu, continue kadu, ichina photo ne modify
+// cheyali, tarvata review chupinchali" — this function must never just
+// give up and hand back the raw original unmodified, and must never
+// throw an error the caller turns into a dead-end message either. It
+// now ALWAYS returns some genuinely modified version of whatever photo
+// was given — a proper perspective-corrected crop when the card's
+// corners are confidently found, and a sensible generic crop+contrast
+// enhance as a fallback when they aren't — so the normal Original-vs-
+// Processed review step always has something real to compare, and the
+// employee's own OK/No choice on THAT screen is the only "continue".
 async function _processAadhaarPhoto(dataUrl) {
-  if (!window.cvReadyForForms) {
-    // v-fix: also gave this more time (15s, was 8s) — OpenCV.js is a
-    // large (~8MB) file; on a slower mobile connection 8 seconds could
-    // elapse before it's even finished downloading, which would have
-    // looked identical to "detection failed" even after the actual
-    // readiness-signal bug above is fixed.
-    await new Promise(res => {
-      const t = setInterval(() => { if (window.cvReadyForForms) { clearInterval(t); res(); } }, 200);
-      setTimeout(() => { clearInterval(t); res(); }, 15000);
-    });
-  }
-  if (!window.cvReadyForForms || typeof jscanify === 'undefined') throw new Error('SCANNER_UNAVAILABLE');
-  if (!_jscanifyInstance) _jscanifyInstance = new jscanify();
   const bitmap = await _loadImageOriented(dataUrl);
   const srcCanvas = _drawBitmapToCanvas(bitmap, 1400);
-  const resultCanvas = _jscanifyInstance.extractPaper(srcCanvas, srcCanvas.width, Math.round(srcCanvas.height * 0.63));
-  const ctx = resultCanvas.getContext('2d');
-  const sample = ctx.getImageData(0, 0, resultCanvas.width, resultCanvas.height).data;
-  let nonBlack = 0;
-  for (let i = 0; i < sample.length; i += 400) { if (sample[i] + sample[i+1] + sample[i+2] > 30) nonBlack++; }
-  if (nonBlack < 5) throw new Error('DETECTION_FAILED');
-  return resultCanvas.toDataURL('image/jpeg', 0.8);
+
+  // Best case: OpenCV.js/jscanify are loaded and confidently find the
+  // card's four corners — a true perspective-corrected, flattened crop.
+  if (window.cvReadyForForms && typeof jscanify !== 'undefined') {
+    try {
+      if (!_jscanifyInstance) _jscanifyInstance = new jscanify();
+      const resultCanvas = _jscanifyInstance.extractPaper(srcCanvas, srcCanvas.width, Math.round(srcCanvas.height * 0.63));
+      const ctx = resultCanvas.getContext('2d');
+      const sample = ctx.getImageData(0, 0, resultCanvas.width, resultCanvas.height).data;
+      let nonBlack = 0;
+      for (let i = 0; i < sample.length; i += 400) { if (sample[i] + sample[i+1] + sample[i+2] > 30) nonBlack++; }
+      if (nonBlack >= 5) return resultCanvas.toDataURL('image/jpeg', 0.8);
+      // else fall through to the generic fallback below — corners
+      // weren't confidently found, but we still produce SOMETHING.
+    } catch (e) { /* fall through to the generic fallback below */ }
+  }
+
+  // Fallback (corners weren't confidently detected, OR OpenCV.js/
+  // jscanify never finished loading in time): still genuinely modify
+  // the given photo — a mild inward crop (trims obvious background/
+  // desk/hand around the card) plus a light contrast boost (helps a
+  // dim or glare-heavy card scan read a bit more clearly) — rather
+  // than silently doing nothing and passing the raw original through.
+  const marginX = Math.round(srcCanvas.width * 0.05);
+  const marginY = Math.round(srcCanvas.height * 0.05);
+  const cropped = document.createElement('canvas');
+  cropped.width = srcCanvas.width - marginX * 2;
+  cropped.height = srcCanvas.height - marginY * 2;
+  const cctx = cropped.getContext('2d');
+  cctx.filter = 'contrast(1.12) brightness(1.04)';
+  cctx.drawImage(srcCanvas, marginX, marginY, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+  return cropped.toDataURL('image/jpeg', 0.8);
 }
 function _normalizeAddr(s) {
   return String(s || '').toLowerCase().replace(/[.,\-\/]/g, ' ').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -8807,32 +8837,26 @@ function _showPhotoConfirmModal(title, originalUrl, processProm, onDone, inputId
     document.getElementById('pcmOkBtn').addEventListener('click', () => { div.remove(); onDone(processedUrl); });
     document.getElementById('pcmNoBtn').addEventListener('click', () => { div.remove(); onDone(originalUrl); });
   }).catch(err => {
-    // v-fix (BRO caught it live: corner detection failed, it said
-    // "please retake" but still offered a "Use Original" button that
-    // let the bad/uncorrected photo through anyway — the retake message
-    // meant nothing if there was always a one-tap way around it). Now a
-    // genuine DETECTION_FAILED (jscanify couldn't find a document
-    // boundary at all — almost always a bad angle/lighting/cropped
-    // corners) gives ONLY a Retake button, no bypass. SCANNER_UNAVAILABLE
-    // (the library itself never loaded — e.g. no signal) is a different,
-    // more forgiving case and still allows Original, since that isn't
-    // the employee's fault and shouldn't block them.
-    const isHardFailure = err.message === 'DETECTION_FAILED';
-    const msg = isHardFailure
-      ? 'Could not detect the card\'s corners clearly. Please retake the photo with all four corners of the Aadhaar card visible, flat, and well-lit.'
-      : 'Could not auto-process this photo right now — you can still use the original.';
-    document.getElementById('pcmBody').innerHTML = `<div style="color:var(--red);font-size:12.5px;padding:6px 0;">${msg}</div>
+    // v-note: _processAadhaarPhoto() itself no longer throws for a
+    // failed corner-detection or an unavailable library (see that
+    // function) — it always falls back to a generic crop+enhance
+    // instead of erroring, per BRO's "always modify the given photo,
+    // never just error out" request. This catch is now only a safety
+    // net for a genuinely unexpected exception (e.g. a corrupt image
+    // file that fails to even load) — still lets the employee continue
+    // with what they gave rather than getting stuck.
+    const msg = 'Could not auto-process this photo — using your original photo as given.';
+    document.getElementById('pcmBody').innerHTML = `<div style="color:var(--text3);font-size:12.5px;padding:6px 0;">${msg}</div>
       <div class="btn-row" style="margin-top:10px;">
-        <button class="btn-primary" id="pcmRetakeBtn">🔄 Retake Photo</button>
-        ${isHardFailure ? '' : '<button class="btn-secondary" id="pcmFallbackBtn">↩️ Use Original</button>'}
+        <button class="btn-primary" id="pcmFallbackBtn">✅ Continue with This Photo</button>
+        <button class="btn-secondary" id="pcmRetakeBtn">🔄 Retake Instead</button>
       </div>`;
     document.getElementById('pcmRetakeBtn').addEventListener('click', () => {
       div.remove();
       const inp = document.getElementById(inputId);
       if (inp) { inp.value = ''; inp.click(); }
     });
-    const fallbackBtn = document.getElementById('pcmFallbackBtn');
-    if (fallbackBtn) fallbackBtn.addEventListener('click', () => { div.remove(); onDone(originalUrl); });
+    document.getElementById('pcmFallbackBtn').addEventListener('click', () => { div.remove(); onDone(originalUrl); });
   });
 }
 
