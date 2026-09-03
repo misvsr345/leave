@@ -30,8 +30,34 @@
      - Tesseract.js → in-browser OCR to read the Aadhaar back-side
        address for the 50%-match check. Loaded once here, shared by
        both forms — see ncPhotoChanged() / the photoProcessing module
-       further down for where these actually get used. -->
-<script async src="https://docs.opencv.org/4.5.0/opencv.js"></script>
+       further down for where these actually get used.
+     v-fix (BRO: "aadhar card corner auto finding avvadam ledu"): the
+     readiness signal for OpenCV.js's WASM runtime must be set on the
+     `cv` object itself (cv.onRuntimeInitialized) — NOT on a global
+     `Module.onRuntimeInitialized`, which is a different, lower-level
+     Emscripten config hook that this build of OpenCV.js does not
+     actually call back through. With the wrong hook, window.cvReadyForForms
+     never became true, so every Aadhaar photo hit the 8-second
+     timeout and fell through to "detection failed" — every time,
+     not intermittently. This inline script (defining the flag +
+     onOpenCvReady BEFORE the opencv.js tag loads, and wiring it via
+     the tag's own onload attribute) is the pattern OpenCV.js's own
+     documentation uses. -->
+<script>
+  window.cvReadyForForms = false;
+  function onOpenCvReady() {
+    // cv may exist as a lightweight stub the instant the script tag's
+    // own code has run, but the actual WASM runtime (what jscanify
+    // needs) finishes slightly after that — cv.onRuntimeInitialized is
+    // OpenCV.js's own documented hook for "now it's actually usable".
+    if (typeof cv !== 'undefined' && cv.getBuildInformation) {
+      window.cvReadyForForms = true;
+    } else if (typeof cv !== 'undefined') {
+      cv['onRuntimeInitialized'] = () => { window.cvReadyForForms = true; };
+    }
+  }
+</script>
+<script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady()"></script>
 <script src="https://cdn.jsdelivr.net/npm/jscanify@1.2.0/src/jscanify.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -8655,10 +8681,14 @@ function ncClearForm() {
 // all. Flagged here rather than silently guessing.
 // ══════════════════════════════════════════════════════════════
 state.confirmedPhotos = state.confirmedPhotos || {};
-let _cvReadyForForms = false;
 let _jscanifyInstance = null;
-window.Module = window.Module || {};
-window.Module.onRuntimeInitialized = () => { _cvReadyForForms = true; };
+// v-fix: readiness is now tracked via window.cvReadyForForms, set by
+// onOpenCvReady() in <head> using OpenCV.js's actual documented hook
+// (cv.onRuntimeInitialized) — see that inline script's comment for the
+// full reasoning. The old window.Module.onRuntimeInitialized approach
+// here never fired for this OpenCV.js build, which is exactly why
+// corner-detection was failing on every single Aadhaar photo rather
+// than only occasionally.
 
 function _photoFieldKind(inputId) {
   const id = inputId.toLowerCase();
@@ -8694,13 +8724,18 @@ async function _processPortraitPhoto(dataUrl) {
   return canvas.toDataURL('image/jpeg', 0.75);
 }
 async function _processAadhaarPhoto(dataUrl) {
-  if (!_cvReadyForForms) {
+  if (!window.cvReadyForForms) {
+    // v-fix: also gave this more time (15s, was 8s) — OpenCV.js is a
+    // large (~8MB) file; on a slower mobile connection 8 seconds could
+    // elapse before it's even finished downloading, which would have
+    // looked identical to "detection failed" even after the actual
+    // readiness-signal bug above is fixed.
     await new Promise(res => {
-      const t = setInterval(() => { if (_cvReadyForForms) { clearInterval(t); res(); } }, 200);
-      setTimeout(() => { clearInterval(t); res(); }, 8000);
+      const t = setInterval(() => { if (window.cvReadyForForms) { clearInterval(t); res(); } }, 200);
+      setTimeout(() => { clearInterval(t); res(); }, 15000);
     });
   }
-  if (!_cvReadyForForms || typeof jscanify === 'undefined') throw new Error('SCANNER_UNAVAILABLE');
+  if (!window.cvReadyForForms || typeof jscanify === 'undefined') throw new Error('SCANNER_UNAVAILABLE');
   if (!_jscanifyInstance) _jscanifyInstance = new jscanify();
   const bitmap = await _loadImageOriented(dataUrl);
   const srcCanvas = _drawBitmapToCanvas(bitmap, 1400);
