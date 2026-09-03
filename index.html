@@ -23,6 +23,17 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- v-add (BRO: Loyalty Card + Golden Aura photo auto-processing —
+     free/open-source only, no paid API):
+     - OpenCV.js + jscanify → Aadhaar document edge-detection &
+       perspective correction ("CamScanner" behaviour).
+     - Tesseract.js → in-browser OCR to read the Aadhaar back-side
+       address for the 50%-match check. Loaded once here, shared by
+       both forms — see ncPhotoChanged() / the photoProcessing module
+       further down for where these actually get used. -->
+<script async src="https://docs.opencv.org/4.5.0/opencv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jscanify@1.2.0/src/jscanify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -8617,19 +8628,215 @@ function ncClearForm() {
 // visual feedback on their own, which is what made it look like "upload
 // stopped working after removing a photo" — the file WAS still selectable,
 // it just wasn't visible that anything had (or hadn't) changed.
+// ══════════════════════════════════════════════════════════════
+// SHARED PHOTO AUTO-PROCESSING MODULE (BRO's Employee_Application.docx
+// requirements, applied to the EXISTING Loyalty Card + Golden Aura
+// entry forms rather than a separate new form). One implementation,
+// used by both forms' ncPhotoChanged() below — not duplicated per form.
+//
+// Scope (Requirement 14 — "apply ONLY to Employee/Aadhaar photos, not
+// other fields"): Customer/Nominee PHOTO fields get portrait-crop
+// treatment; AADHAAR photo fields get CamScanner-style perspective
+// correction; Signature and PAN Card photo fields are deliberately
+// left completely untouched (their existing plain-upload behavior is
+// unchanged) — matching that requirement exactly.
+//
+// Address-match (50% rule) is wired up ONLY for Loyalty Card's
+// Aadhaar-Back field specifically (ncAadhaarBack), because that form
+// has genuinely separate Front/Back inputs so "the back side, which
+// carries the address, was/wasn't provided" is unambiguous. Golden
+// Aura's Aadhaar photo is a single combined Front+Back upload in its
+// existing design — splitting that into two fields would also require
+// changing its backend payload and Google Sheet columns, a bigger
+// structural change than "add auto-processing" — so Golden Aura's
+// Aadhaar photo gets the SAME crop/straighten treatment but is
+// deliberately not wired into address-matching, since there is no
+// reliable way to know that single photo shows the address side at
+// all. Flagged here rather than silently guessing.
+// ══════════════════════════════════════════════════════════════
+state.confirmedPhotos = state.confirmedPhotos || {};
+let _cvReadyForForms = false;
+let _jscanifyInstance = null;
+window.Module = window.Module || {};
+window.Module.onRuntimeInitialized = () => { _cvReadyForForms = true; };
+
+function _photoFieldKind(inputId) {
+  const id = inputId.toLowerCase();
+  if (id.indexOf('sig') > -1 || id.indexOf('pan') > -1) return 'plain';
+  if (id.indexOf('aadhaar') > -1) return 'aadhaar';
+  if (id.indexOf('custphoto') > -1 || id.indexOf('nomphoto') > -1) return 'portrait';
+  return 'plain';
+}
+
+function _loadImageOriented(dataUrl) {
+  return fetch(dataUrl).then(r => r.blob()).then(blob => createImageBitmap(blob, { imageOrientation: 'from-image' }));
+}
+function _drawBitmapToCanvas(bitmap, maxDim) {
+  let w = bitmap.width, h = bitmap.height;
+  if (Math.max(w, h) > maxDim) { const s = maxDim / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  return c;
+}
+async function _processPortraitPhoto(dataUrl) {
+  const bitmap = await _loadImageOriented(dataUrl);
+  let canvas = _drawBitmapToCanvas(bitmap, 1000);
+  const targetRatio = 3 / 4;
+  const w = canvas.width, h = canvas.height;
+  if (w / h > targetRatio * 1.15) {
+    const newW = Math.round(h * targetRatio);
+    const cropX = Math.round((w - newW) / 2);
+    const cropped = document.createElement('canvas');
+    cropped.width = newW; cropped.height = h;
+    cropped.getContext('2d').drawImage(canvas, cropX, 0, newW, h, 0, 0, newW, h);
+    canvas = cropped;
+  }
+  return canvas.toDataURL('image/jpeg', 0.75);
+}
+async function _processAadhaarPhoto(dataUrl) {
+  if (!_cvReadyForForms) {
+    await new Promise(res => {
+      const t = setInterval(() => { if (_cvReadyForForms) { clearInterval(t); res(); } }, 200);
+      setTimeout(() => { clearInterval(t); res(); }, 8000);
+    });
+  }
+  if (!_cvReadyForForms || typeof jscanify === 'undefined') throw new Error('SCANNER_UNAVAILABLE');
+  if (!_jscanifyInstance) _jscanifyInstance = new jscanify();
+  const bitmap = await _loadImageOriented(dataUrl);
+  const srcCanvas = _drawBitmapToCanvas(bitmap, 1400);
+  const resultCanvas = _jscanifyInstance.extractPaper(srcCanvas, srcCanvas.width, Math.round(srcCanvas.height * 0.63));
+  const ctx = resultCanvas.getContext('2d');
+  const sample = ctx.getImageData(0, 0, resultCanvas.width, resultCanvas.height).data;
+  let nonBlack = 0;
+  for (let i = 0; i < sample.length; i += 400) { if (sample[i] + sample[i+1] + sample[i+2] > 30) nonBlack++; }
+  if (nonBlack < 5) throw new Error('DETECTION_FAILED');
+  return resultCanvas.toDataURL('image/jpeg', 0.8);
+}
+function _normalizeAddr(s) {
+  return String(s || '').toLowerCase().replace(/[.,\-\/]/g, ' ').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function _addressMatchPct(manual, ocr) {
+  const mWords = _normalizeAddr(manual).split(' ').filter(w => w.length > 1);
+  const oWords = new Set(_normalizeAddr(ocr).split(' ').filter(w => w.length > 1));
+  if (!mWords.length) return 0;
+  let hit = 0; mWords.forEach(w => { if (oWords.has(w)) hit++; });
+  return Math.round((hit / mWords.length) * 100);
+}
+
+// Generic Original-vs-Processed preview modal, shared by every photo
+// field that gets auto-processed. `onDone(chosenDataUrl)` fires once
+// the employee picks OK or No — nothing is ever saved without this.
+function _showPhotoConfirmModal(title, originalUrl, processProm, onDone) {
+  const existing = document.getElementById('photoConfirmModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'photoConfirmModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;">
+    <div class="modal-title">${title}</div>
+    <div id="pcmBody" style="text-align:center;padding:16px 0;"><span class="spinner"></span> Processing...</div>
+  </div>`;
+  document.body.appendChild(div);
+
+  processProm.then(processedUrl => {
+    document.getElementById('pcmBody').innerHTML = `
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;text-align:center;"><img src="${originalUrl}" style="width:100%;border-radius:8px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text3);margin-top:3px;font-weight:700;">ORIGINAL</div></div>
+        <div style="flex:1;text-align:center;"><img src="${processedUrl}" style="width:100%;border-radius:8px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text3);margin-top:3px;font-weight:700;">AUTO-PROCESSED</div></div>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn-primary" id="pcmOkBtn" style="margin-bottom:8px;">✅ OK — Use Processed</button>
+        <button class="btn-secondary" id="pcmNoBtn">↩️ No — Use Original</button>
+      </div>`;
+    // v-fix: attach real listeners with a genuine closure over
+    // processedUrl/originalUrl/onDone/div, instead of serializing the
+    // callback into an inline onclick string via .toString() — that
+    // approach silently loses the closure (inputId etc. it needs) and
+    // throws "not defined" the moment the button is actually clicked.
+    document.getElementById('pcmOkBtn').addEventListener('click', () => { div.remove(); onDone(processedUrl); });
+    document.getElementById('pcmNoBtn').addEventListener('click', () => { div.remove(); onDone(originalUrl); });
+  }).catch(err => {
+    const msg = (err.message === 'DETECTION_FAILED' || err.message === 'SCANNER_UNAVAILABLE')
+      ? 'Please retake the Aadhaar photo and make sure all four corners are clearly visible.'
+      : 'Could not auto-process this photo — you can still use the original.';
+    document.getElementById('pcmBody').innerHTML = `<div style="color:var(--red);font-size:12.5px;padding:6px 0;">${msg}</div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn-primary" id="pcmFallbackBtn">↩️ Use Original</button>
+      </div>`;
+    document.getElementById('pcmFallbackBtn').addEventListener('click', () => { div.remove(); onDone(originalUrl); });
+  });
+}
+
 function ncPhotoChanged(inputId) {
   const inp = document.getElementById(inputId);
   const fb = document.getElementById(inputId + '-fb');
   if (!fb) return;
   const f = inp.files && inp.files[0];
-  if (!f) { fb.innerHTML = ''; return; }
-  fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+  if (!f) { fb.innerHTML = ''; delete state.confirmedPhotos[inputId]; return; }
+
+  const kind = _photoFieldKind(inputId);
+  if (kind === 'plain') {
+    // Unchanged — Signature/PAN photos are explicitly out of scope for
+    // auto-processing (Requirement 14).
+    fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+    return;
+  }
+
+  fb.innerHTML = `<span class="spinner"></span> Reading photo...`;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const originalUrl = reader.result;
+    const processProm = kind === 'portrait' ? _processPortraitPhoto(originalUrl) : _processAadhaarPhoto(originalUrl);
+    const title = kind === 'portrait' ? '📷 Review Photo' : '🪪 Review Aadhaar Photo';
+    _showPhotoConfirmModal(title, originalUrl, processProm, (chosenUrl) => {
+      state.confirmedPhotos[inputId] = chosenUrl;
+      fb.innerHTML = `✓ Photo confirmed <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+      // v-add: Loyalty Card's Aadhaar-Back specifically feeds the
+      // address-match check — see the module comment above for why
+      // this is scoped to this one field only.
+      if (inputId === 'ncAadhaarBack') _runLoyaltyAddressMatch();
+    });
+  };
+  reader.readAsDataURL(f);
 }
+
+async function _runLoyaltyAddressMatch() {
+  const box = document.getElementById('ncAddressMatchResult') || (() => {
+    const d = document.createElement('div'); d.id = 'ncAddressMatchResult';
+    document.getElementById('ncAddress').insertAdjacentElement('afterend', d);
+    return d;
+  })();
+  const manual = document.getElementById('ncAddress').value.trim();
+  const img = state.confirmedPhotos['ncAadhaarBack'];
+  if (!manual || !img) return;
+  box.innerHTML = `<div style="font-size:11.5px;color:var(--text3);margin-top:4px;"><span class="spinner"></span> Verifying address against Aadhaar (in your browser)...</div>`;
+  try {
+    const { data: { text } } = await Tesseract.recognize(img, 'eng');
+    const pct = _addressMatchPct(manual, text);
+    state.ncAddressMatchPct = pct;
+    if (pct >= 50) {
+      box.innerHTML = `<div style="font-size:11.5px;color:var(--green);margin-top:4px;">✅ Address matches Aadhaar — ${pct}% match</div>`;
+    } else {
+      box.innerHTML = `<div style="font-size:11.5px;color:var(--red);margin-top:4px;">❌ Address does not sufficiently match the Aadhaar Card (${pct}%). Please correct the address above and it will re-check automatically.</div>`;
+    }
+  } catch (e) {
+    state.ncAddressMatchPct = null;
+    box.innerHTML = `<div style="font-size:11.5px;color:var(--text3);margin-top:4px;">Could not read the Aadhaar back photo clearly — try re-uploading it.</div>`;
+  }
+}
+// Address field is often typed/corrected AFTER the Aadhaar-Back photo
+// is already confirmed — re-check on every edit, not just once.
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'ncAddress' && state.confirmedPhotos['ncAadhaarBack']) _runLoyaltyAddressMatch();
+});
+
 function ncPhotoClear(inputId) {
   const inp = document.getElementById(inputId);
   inp.value = '';
+  delete state.confirmedPhotos[inputId];
   const fb = document.getElementById(inputId + '-fb');
   if (fb) fb.innerHTML = '';
+  if (inputId === 'ncAadhaarBack') { const r = document.getElementById('ncAddressMatchResult'); if (r) r.innerHTML = ''; state.ncAddressMatchPct = null; }
 }
 
 function fileToBase64(inputEl) {
@@ -8682,24 +8889,48 @@ async function submitNewLoyaltyCard() {
     return;
   }
 
+  // v-add (BRO's Employee_Application.docx Rule 6, applied here to
+  // Customer verification): if an Aadhaar-Back photo was provided, the
+  // address-match must have actually passed 50% before this can go any
+  // further — same check will run again independently on the server
+  // (see loyaltySubmitCardAPI), this is just the fast, friendly
+  // front-end version so the employee doesn't wait for a round-trip to
+  // find out.
+  const aadhaarBackFile = document.getElementById('ncAadhaarBack').files[0];
+  if (aadhaarBackFile && (state.ncAddressMatchPct == null || state.ncAddressMatchPct < 50)) {
+    errBox.textContent = 'Address does not sufficiently match the Aadhaar Card yet. Please correct the address above, or remove the Aadhaar Back photo to skip verification.';
+    errBox.style.display = 'block';
+    return;
+  }
+
   const btn = document.getElementById('ncSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
 
   try {
-    const [sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto] = await Promise.all([
+    // v-fix: prefer the employee-CONFIRMED (post auto-process, OK/No)
+    // version for Customer Photo and both Aadhaar photos; Signature and
+    // PAN photos were never auto-processed (out of scope, see the
+    // module comment above) so they still come straight from the raw
+    // file input exactly as before this change.
+    const [sigPhoto, panPhoto] = await Promise.all([
       fileToBase64(document.getElementById('ncSigPhoto')),
-      fileToBase64(document.getElementById('ncCustPhoto')),
-      fileToBase64(document.getElementById('ncAadhaarFront')),
-      fileToBase64(document.getElementById('ncAadhaarBack')),
       fileToBase64(document.getElementById('ncPanPhoto'))
     ]);
+    const custPhoto    = state.confirmedPhotos['ncCustPhoto']    || await fileToBase64(document.getElementById('ncCustPhoto'));
+    const aadhaarFront = state.confirmedPhotos['ncAadhaarFront'] || await fileToBase64(document.getElementById('ncAadhaarFront'));
+    const aadhaarBack  = state.confirmedPhotos['ncAadhaarBack']  || (aadhaarBackFile ? await fileToBase64(document.getElementById('ncAadhaarBack')) : '');
 
     const payload = {
       page: 'loyaltySubmitCardAPI',
       empName: state.empName, empEmail: state.empEmail, empId: state.empId,
       custName, occupation, orgName, phone, address, aadhaarNo, panNo,
       cardType, cardNo, cardIssuedDate: cardDate,
-      sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto
+      sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto,
+      // v-add: clientMatchPct is informational only — the backend
+      // redoes this OCR check itself independently (see
+      // loyaltySubmitCardAPI) rather than trusting a value a modified
+      // frontend could simply fabricate.
+      clientMatchPct: aadhaarBackFile ? state.ncAddressMatchPct : null
     };
     window.__loyaltyPendingPayload = payload;
     loyaltyShowPreview(payload);
@@ -11442,7 +11673,18 @@ async function submitGoldenAura(who) {
   try {
     const photoIds = ['gaAadhaarPhoto','gaPanPhoto','gaCustPhoto','gaNomAadhaarPhoto','gaNomPanPhoto','gaNomSigPhoto','gaNomPhoto'];
     const photos = {};
-    for (const pid of photoIds) { photos[pid] = await fileToBase64(g(pid)); }
+    // v-fix: prefer the employee-CONFIRMED (post auto-process, OK/No)
+    // version for Aadhaar/Customer/Nominee-photo fields — the same
+    // ncPhotoChanged() upgrade used by Loyalty Card's form also covers
+    // these fields here automatically, since photoField() above already
+    // wires them to the same shared handler. Signature/PAN fields were
+    // never auto-processed (out of scope, see the module comment near
+    // ncPhotoChanged) so they still come straight from the raw file
+    // input exactly as before this change.
+    for (const pid of photoIds) {
+      const fullId = pid + '-' + who;
+      photos[pid] = state.confirmedPhotos[fullId] || await fileToBase64(g(pid));
+    }
 
     const payload = {
       page: 'goldenAuraSubmitAPI',
