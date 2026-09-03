@@ -31,7 +31,7 @@
        address for the 50%-match check. Loaded once here, shared by
        both forms — see ncPhotoChanged() / the photoProcessing module
        further down for where these actually get used.
-     v-fix (BRO: "aadhar card corner auto finding avvadam ledu"): the
+     v-fix (BRO: "Aadhaar card corner auto-detection isn't working"): the
      readiness signal for OpenCV.js's WASM runtime must be set on the
      `cv` object itself (cv.onRuntimeInitialized) — NOT on a global
      `Module.onRuntimeInitialized`, which is a different, lower-level
@@ -810,7 +810,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-mini-table-bordered { border-collapse: collapse; }
 .dh-mini-table-bordered tr:last-child td { border-bottom: 1px solid var(--border, #d8d8d8) !important; }
 .duty-section-bar { background: #1a1a2e; color: #fff; font-weight: 700; font-size: 11.5px; padding: 7px 10px; border-radius: 6px 6px 0 0; margin-top: 8px; }
-/* v-fix (BRO: "ee part table laga chei" — the duty-assignment widget was
+/* v-fix (BRO: "make this section look like a table" — the duty-assignment widget was
    already a real <table> in the markup, but with no visible column
    dividers or a boxed outer edge it read as flat colored blocks rather
    than a table. This makes the grid actually visible: a border on every
@@ -834,7 +834,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .kpi-report-table td { text-align: center; padding: 6px 9px; }
 .kpi-report-table tbody tr:nth-child(even) { background: rgba(107,33,168,0.03); }
 .kpi-report-table tbody tr:hover { background: var(--purple-bg); }
-/* v-fix (BRO's "KPI lo kuda left-right scroll petti data size penchu"
+/* v-fix (BRO's "add a left-right scroll to KPI too and increase the data size"
    request): this table used to be shrunk down with a JS transform:scale
    on desktop (see the old fitWideTableToScreen) to force every column
    visible without scrolling — which made the text tiny and hard to read.
@@ -1016,7 +1016,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .uniform-input:focus { border-color: var(--purple-mid); background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-/* v-fix (BRO's "Start Date, End Date, Load — mudu oke line" request):
+/* v-fix (BRO's "Start Date, End Date, and Load should all sit on one line" request):
    Start Date + End Date + Load button, all three in a single row instead
    of Load dropping to its own full-width line below. Each date field
    shrinks its own label/input to stay compact; Load sizes to its text
@@ -1059,7 +1059,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   .btn-row { flex-wrap: wrap; }
   .btn-row > button { flex: 1 1 45%; }
 }
-/* v-fix (BRO's "Excel/Print button peru chivara hide avutundi" —
+/* v-fix (BRO's "the Excel/Print button's label gets cut off/hidden at the end" —
    4 buttons squeezed into one .btn-row left no room for their full
    text, e.g. "📗 Excel" got clipped to "Ex..."): a proper 2-column grid
    for exactly this case instead of forcing everything into one row.
@@ -1068,12 +1068,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .btn-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .btn-grid-2 > button { white-space: nowrap; font-size: 13px; padding: 10px 6px; }
 
-/* v-fix (BRO's "3rd image lo unna line freeze avali" — the Walk-in
+/* v-fix (BRO's "the line shown in the 3rd screenshot should stay frozen" — the Walk-in
    Track table header row should stay visible while scrolling): sticky
    header, same pattern already used by .kd-table th elsewhere. */
 .wt-table th { position: sticky; top: 0; background: var(--purple-bg); z-index: 2; }
 
-/* v-fix (BRO's "left right scroller pettu" — a wide table's horizontal
+/* v-fix (BRO's "add a left-right scroller" — a wide table's horizontal
    scrollbar should be visibly obvious, not a thin near-invisible OS
    default): a fatter, colored, always-noticeable scrollbar. Firefox uses
    scrollbar-width/scrollbar-color; Chrome/Edge/Safari use the older
@@ -1166,7 +1166,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; flex-wrap: wrap; gap: 8px; }
 .section-title2 { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--purple); }
 
-/* v-fix (BRO's "Running Month / All Leaves 2 lines kakunda 1 line lo chei"
+/* v-fix (BRO's "make "Running Month / All Leaves" fit on 1 line instead of 2"
    request — surveyed EVERY .filter-bar in the file, 9 total, listed below):
    flex-wrap:wrap let a filter-bar's buttons drop to a second line whenever
    they didn't all fit the screen width — Today/Running Month/Custom Date,
@@ -1914,6 +1914,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
         <div class="form-row"><label>Customer Photo *</label>
           <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
+          <div style="font-size:10.5px;color:var(--text3);margin-top:3px;">📌 Upload the actual photo file directly — avoid taking a photo of a photo displayed on another screen/phone, as that captures screen glare and UI icons along with it.</div>
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
@@ -2111,7 +2112,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-missing">
       <div class="section-hdr"><span class="section-title2">🚫 Missing DSR</span></div>
       <div class="card">
-        <!-- v-fix (BRO's "Running Month kuda add chei" request): Running
+        <!-- v-fix (BRO's "add Running Month too" request): Running
              Month used to be buried inside the collapsed Custom Date
              panel (as "📅 This Month") — took 2 taps (open Custom Date,
              then This Month) for what should be a 1-tap common case.
@@ -2930,9 +2931,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
       </div>
 
-      <!-- v-add (BRO: "admin login lo admin self data and kinda ku emp
-           dropdown chinnadi okati pettu, adi click chesi emp select
-           cheste, aa emp data ravali") -->
+      <!-- v-add (BRO: on Admin login, show admin's own data plus a small
+           employee dropdown below it — selecting an employee should
+           show that employee's data) -->
       <div class="section-hdr" style="margin:16px 0 8px;"><span class="section-title2" style="font-size:13px;">🔍 View Employee Details</span></div>
       <div class="card">
         <select id="viewEmpSelect" onchange="onViewEmpSelectChange()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-size:13px;">
@@ -3814,7 +3815,7 @@ function dateScopeRange(mode) {
 function setDateScope(scopeId, btnEl, mode) {
   const bar = document.getElementById(scopeId + '-bar');
   const customBox = document.getElementById(scopeId + '-custom');
-  // v-fix (BRO's "Custom Date click chesthe hide avvatledu" bug, reported
+  // v-fix (BRO's "clicking Custom Date wasn't hiding the other option" bug, reported
   // across every page that uses this Today/Running Month/Custom Date bar
   // — KPI Till Date, Walk-in Track, Leads Report, Loyalty All Cards):
   // clicking "Custom Date" while it's ALREADY the active/open one used to
@@ -3866,7 +3867,7 @@ function mountDateScope(scopeId, opts) {
 function toggleCustomDateGroup(groupId, btnEl) {
   const wrap = document.getElementById(groupId + '-wrap');
   if (!wrap) return;
-  // v-fix (BRO's "Hide Custom Date click chesina hide avvatledu" bug):
+  // v-fix (BRO's "clicking to hide Custom Date wasn't actually hiding it" bug):
   // this used to be `wrap.style.display === 'none' || !wrap.style.display`
   // — but right after the FIRST click, display gets set to '' (empty
   // string) to show the pickers, and '' is falsy in JS, so `!wrap.style.
@@ -4545,8 +4546,7 @@ async function empLogin() {
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
         toast('Welcome, ' + state.empName + '!', 'success');
-        // v-fix (BRO: "Malleswara DSR device lo pending unte, Liza login
-        // ayithe adi sync avutunda?" — answer was no, login wasn't one of
+        // v-fix (BRO: "if Malleswara has a pending DSR queued on a device, does it sync when Liza logs in on that same device?" — answer was no, login wasn't one of
         // the trigger points): a shared device passing between employees
         // is exactly when a leftover pending item from the PREVIOUS
         // employee's session is most likely to sit forgotten — nobody
@@ -5056,7 +5056,7 @@ function showEmpPage(page, opts) {
   if(page==='stock-retail') loadStockDetail('emp','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('emp','Wholesale','today');
   if(page==='stock-report') loadStockReport('emp');
-  // v-fix (BRO's "form data ventane clear cheyaku" request): this used to
+  // v-fix (BRO's "don't clear the form data immediately" request): this used to
   // call resetNewLoyaltyCardForm() unconditionally on EVERY visit to this
   // page — so just tapping away and back wiped out anything already
   // typed. Now it only initializes (sets today's default Card Issued
@@ -5865,16 +5865,14 @@ function updateConnStatus() {
   });
   const syncBtn = document.getElementById('syncNowBtn');
   const syncBtnAdmin = document.getElementById('syncNowBtnAdmin');
-  // v-fix (BRO: "DSR data offline lo save ayindi kani sheet ki raledu,
-  // Sync button ekkada pettaru" — found the Admin topbar never had a
+  // v-fix (BRO: "DSR data was saved offline but never reached the sheet — where is the Sync button?" — found the Admin topbar never had a
   // Sync button at all, only the Employee one did): if a DSR/Loyalty/
   // Golden Aura entry gets queued offline while logged in as Admin,
   // there was literally nowhere on that screen to trigger a manual sync
   // — the queued data was safe (it auto-flushes on reconnect/next page
   // load regardless), but Admin had no visible way to check or force it.
   // Both topbars now show the identical Sync pill.
-  // v-fix (BRO: "naku ALWAYS kanipinchali — data unte synced show avali,
-  // lekapote data emi ledu ani ravali" — after losing a real DSR entry to
+  // v-fix (BRO: "this should ALWAYS be visible — if data exists show it as synced, otherwise show that there's no data" — after losing a real DSR entry to
   // a bug that failed silently): hiding this pill entirely whenever
   // nothing's pending meant there was NO visible confirmation that
   // everything actually made it to the sheet — someone would only ever
@@ -5922,7 +5920,7 @@ window.addEventListener('offline', updateConnStatus);
 
 // ══════════════════════════════════════
 // OFFLINE PENDING ITEMS VIEWER — "More" → "🔄 Sync Offline Data"
-// v-add (BRO: "offline save aithe e data save aindo box lo kanipinchali" —
+// v-add (BRO: "if saved offline, the box should show exactly what data was saved" —
 // up to now the only visible signal was a bare count on the Sync pill,
 // "📤 Sync (3)" — no way to see WHAT those 3 things actually were before
 // syncing. This builds that visibility: a plain-language description of
@@ -6046,7 +6044,7 @@ let __leaveFlushInFlight = false;
 async function flushOfflineQueue() {
   if(!navigator.onLine) return;
   // v-fix (same class of bug as flushDsrOfflineQueue, found while
-  // answering "flush button correct-ga work avutunda?" — this Leave-
+  // answering "does the flush button work correctly?" — this Leave-
   // application queue is triggered by the exact same Sync button /
   // 'online' event / page-load calls as DSR, but had been missed when
   // those got their in-flight guard + claim-before-send fix): without
@@ -6187,7 +6185,7 @@ async function flushDsrOfflineQueue() {
         // back online. idemKey makes this safe even if it turns out the
         // original attempt actually DID reach the server before dropping.
         const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: item.rows, idemKey: item.idemKey }) }, 60000);
-        // v-fix (BRO: "Console lo ఏమీ కనిపించలేదు" — the catch block below
+        // v-fix (BRO: "nothing appeared in the console" — the catch block below
         // and this "not success" branch used to fail completely silently,
         // with no console output at all, making live debugging impossible
         // from DevTools. Every failure path now logs exactly what
@@ -6220,8 +6218,7 @@ async function flushDsrOfflineQueue() {
     saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
     updateConnStatus();
     const synced = q.length - remaining.length;
-    // v-fix (BRO: "vere emp login ai sync click cheste, mundu login aina
-    // emp data sync status kanipistunda?" — a generic "3 offline DSR(s)
+    // v-fix (BRO: "if a different employee logs in and clicks sync, does it show the sync status of the previously-logged-in employee's data?" — a generic "3 offline DSR(s)
     // synced" toast doesn't say WHOSE, so whoever's logged in now sees a
     // confusing confirmation for a submission they never made): name the
     // employee(s) whose leftover data this actually was, so the person
@@ -6355,7 +6352,7 @@ async function flushGoldenAuraOfflineQueue() {
 
 let __leadsFlushInFlight = false;
 async function flushLeadsOfflineQueue() {
-  // v-add (BRO: "submit chesina lead data save avutunda" — following the
+  // v-add (BRO: "does the submitted lead data actually get saved" — following the
   // exact same discovery pattern as DSR/Loyalty/Golden Aura/Leave: lead
   // call-log submissions had NO offline safety net at all. A weak-signal
   // submit just failed with a red "Network error" message and nothing
@@ -6654,7 +6651,7 @@ function renderCalendarFor(who, year, month, events) {
 // ══════════════════════════════════════
 // DIRECT ACTION (MIS/Director only) — mirrors Code.gs Sheets-side tool
 // ══════════════════════════════════════
-// v-fix (BRO: "employee name list dropdown anni chota ala fix chei" —
+// v-fix (BRO: "fix the employee-name dropdown list everywhere the same way" —
 // same offline-caching treatment just added to the DSR product list,
 // applied here to every Employee Name dropdown in the app): populates a
 // dropdown from localStorage INSTANTLY (works even fully offline, using
@@ -7843,9 +7840,7 @@ async function renderEmpProfile() {
   ];
   renderProfileRows_(rows, 'profileEmpDetails');
 
-  // v-add (BRO: "emp details kosam oka option — address, aadhaar, pan
-  // card, leave quota, balance, mobile, DOB, DOJ, anniversary anni
-  // kanipincali" — self data only on the Employee side): a fuller
+  // v-add (BRO: "add an Employee Details option showing address, Aadhaar, PAN card, leave quota, balance, mobile number, DOB, DOJ, and anniversary — all of it" — self data only on the Employee side): a fuller
   // detail call fills in everything the login response doesn't carry.
   try {
     const full = await jsonp({ page: 'getFullEmployeeDetailAPI', empId: state.empId });
@@ -8636,8 +8631,7 @@ function resetNewLoyaltyCardForm() {
 }
 
 // Explicit "Clear Form" — same confirm-if-dirty pattern as the DSR/Golden
-// Aura ones above, per BRO's "Submit or Clear click chestene data clear
-// avali" request.
+// Aura ones above, per BRO's "form data should only clear when Submit or Clear is actually clicked" request.
 function ncClearForm() {
   const v = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
   const hasData = v('ncCustName') || v('ncPhone') || v('ncCardNo') || v('ncAadhaarNo');
@@ -8711,9 +8705,31 @@ function _drawBitmapToCanvas(bitmap, maxDim) {
 async function _processPortraitPhoto(dataUrl) {
   const bitmap = await _loadImageOriented(dataUrl);
   let canvas = _drawBitmapToCanvas(bitmap, 1000);
+  // v-fix (BRO caught it live: "Original and modified look exactly the
+  // same" — the photo used was already close to a 3:4 portrait frame,
+  // e.g. 1200x1600, so the old logic — crop ONLY if the image was
+  // clearly wider than 3:4 — never triggered at all, and nothing
+  // visibly changed). Without true face-detection (a much heavier,
+  // separate library this file doesn't load), there's no reliable way
+  // to know exactly where the face sits in the frame — but a photo
+  // submitted for a passport-style photo slot is reasonably assumed to
+  // already be framed around the subject, so trimming a modest, fixed
+  // margin off all four sides tightens the framing (and, per the other
+  // half of the same bug report, has a real chance of cropping away
+  // stray UI chrome/borders baked into a photo-of-a-screen capture)
+  // EVERY time, rather than only in the one specific "much wider than
+  // tall" case the old logic covered.
+  const marginX = Math.round(canvas.width * 0.08);
+  const marginY = Math.round(canvas.height * 0.06);
+  const trimmed = document.createElement('canvas');
+  trimmed.width = canvas.width - marginX * 2;
+  trimmed.height = canvas.height - marginY * 2;
+  trimmed.getContext('2d').drawImage(canvas, marginX, marginY, trimmed.width, trimmed.height, 0, 0, trimmed.width, trimmed.height);
+  canvas = trimmed;
+
   const targetRatio = 3 / 4;
   const w = canvas.width, h = canvas.height;
-  if (w / h > targetRatio * 1.15) {
+  if (w / h > targetRatio * 1.05) {
     const newW = Math.round(h * targetRatio);
     const cropX = Math.round((w - newW) / 2);
     const cropped = document.createElement('canvas');
@@ -8761,7 +8777,7 @@ function _addressMatchPct(manual, ocr) {
 // Generic Original-vs-Processed preview modal, shared by every photo
 // field that gets auto-processed. `onDone(chosenDataUrl)` fires once
 // the employee picks OK or No — nothing is ever saved without this.
-function _showPhotoConfirmModal(title, originalUrl, processProm, onDone) {
+function _showPhotoConfirmModal(title, originalUrl, processProm, onDone, inputId) {
   const existing = document.getElementById('photoConfirmModal');
   if (existing) existing.remove();
   const div = document.createElement('div');
@@ -8791,14 +8807,32 @@ function _showPhotoConfirmModal(title, originalUrl, processProm, onDone) {
     document.getElementById('pcmOkBtn').addEventListener('click', () => { div.remove(); onDone(processedUrl); });
     document.getElementById('pcmNoBtn').addEventListener('click', () => { div.remove(); onDone(originalUrl); });
   }).catch(err => {
-    const msg = (err.message === 'DETECTION_FAILED' || err.message === 'SCANNER_UNAVAILABLE')
-      ? 'Please retake the Aadhaar photo and make sure all four corners are clearly visible.'
-      : 'Could not auto-process this photo — you can still use the original.';
+    // v-fix (BRO caught it live: corner detection failed, it said
+    // "please retake" but still offered a "Use Original" button that
+    // let the bad/uncorrected photo through anyway — the retake message
+    // meant nothing if there was always a one-tap way around it). Now a
+    // genuine DETECTION_FAILED (jscanify couldn't find a document
+    // boundary at all — almost always a bad angle/lighting/cropped
+    // corners) gives ONLY a Retake button, no bypass. SCANNER_UNAVAILABLE
+    // (the library itself never loaded — e.g. no signal) is a different,
+    // more forgiving case and still allows Original, since that isn't
+    // the employee's fault and shouldn't block them.
+    const isHardFailure = err.message === 'DETECTION_FAILED';
+    const msg = isHardFailure
+      ? 'Could not detect the card\'s corners clearly. Please retake the photo with all four corners of the Aadhaar card visible, flat, and well-lit.'
+      : 'Could not auto-process this photo right now — you can still use the original.';
     document.getElementById('pcmBody').innerHTML = `<div style="color:var(--red);font-size:12.5px;padding:6px 0;">${msg}</div>
       <div class="btn-row" style="margin-top:10px;">
-        <button class="btn-primary" id="pcmFallbackBtn">↩️ Use Original</button>
+        <button class="btn-primary" id="pcmRetakeBtn">🔄 Retake Photo</button>
+        ${isHardFailure ? '' : '<button class="btn-secondary" id="pcmFallbackBtn">↩️ Use Original</button>'}
       </div>`;
-    document.getElementById('pcmFallbackBtn').addEventListener('click', () => { div.remove(); onDone(originalUrl); });
+    document.getElementById('pcmRetakeBtn').addEventListener('click', () => {
+      div.remove();
+      const inp = document.getElementById(inputId);
+      if (inp) { inp.value = ''; inp.click(); }
+    });
+    const fallbackBtn = document.getElementById('pcmFallbackBtn');
+    if (fallbackBtn) fallbackBtn.addEventListener('click', () => { div.remove(); onDone(originalUrl); });
   });
 }
 
@@ -8830,7 +8864,7 @@ function ncPhotoChanged(inputId) {
       // address-match check — see the module comment above for why
       // this is scoped to this one field only.
       if (inputId === 'ncAadhaarBack') _runLoyaltyAddressMatch();
-    });
+    }, inputId);
   };
   reader.readAsDataURL(f);
 }
@@ -8849,6 +8883,13 @@ async function _runLoyaltyAddressMatch() {
     const { data: { text } } = await Tesseract.recognize(img, 'eng');
     const pct = _addressMatchPct(manual, text);
     state.ncAddressMatchPct = pct;
+    // v-fix (BRO: "does this work offline" — a real gap this
+    // surfaced): distinguish a CONFIRMED bad match (status='failed',
+    // this should block submit) from simply being UNABLE to check
+    // right now (status='unavailable', e.g. Tesseract.js itself never
+    // finished loading because there was no signal at the time) — see
+    // the submit-time gate below, which now only blocks on 'failed'.
+    state.ncAddressMatchStatus = pct >= 50 ? 'passed' : 'failed';
     if (pct >= 50) {
       box.innerHTML = `<div style="font-size:11.5px;color:var(--green);margin-top:4px;">✅ Address matches Aadhaar — ${pct}% match</div>`;
     } else {
@@ -8856,7 +8897,16 @@ async function _runLoyaltyAddressMatch() {
     }
   } catch (e) {
     state.ncAddressMatchPct = null;
-    box.innerHTML = `<div style="font-size:11.5px;color:var(--text3);margin-top:4px;">Could not read the Aadhaar back photo clearly — try re-uploading it.</div>`;
+    state.ncAddressMatchStatus = 'unavailable';
+    // v-fix: an honest, specific reason when this is simply an offline/
+    // library-loading issue, not a real verification failure — this is
+    // NOT a reason to block the employee from submitting (their entry
+    // still goes into the same offline queue as everything else in
+    // this portal, and the backend independently re-verifies once it
+    // actually reaches the server — see loyaltySubmitCardAPI_).
+    box.innerHTML = navigator.onLine
+      ? `<div style="font-size:11.5px;color:var(--text3);margin-top:4px;">Could not read the Aadhaar back photo clearly right now — you can still submit; this will be verified when it reaches the server.</div>`
+      : `<div style="font-size:11.5px;color:var(--orange);margin-top:4px;">📴 You're offline, so this can't be checked on your device right now. You can still submit — it will be verified automatically once your entry syncs.</div>`;
   }
 }
 // Address field is often typed/corrected AFTER the Aadhaar-Back photo
@@ -8871,7 +8921,7 @@ function ncPhotoClear(inputId) {
   delete state.confirmedPhotos[inputId];
   const fb = document.getElementById(inputId + '-fb');
   if (fb) fb.innerHTML = '';
-  if (inputId === 'ncAadhaarBack') { const r = document.getElementById('ncAddressMatchResult'); if (r) r.innerHTML = ''; state.ncAddressMatchPct = null; }
+  if (inputId === 'ncAadhaarBack') { const r = document.getElementById('ncAddressMatchResult'); if (r) r.innerHTML = ''; state.ncAddressMatchPct = null; state.ncAddressMatchStatus = null; }
 }
 
 function fileToBase64(inputEl) {
@@ -8931,9 +8981,18 @@ async function submitNewLoyaltyCard() {
   // (see loyaltySubmitCardAPI), this is just the fast, friendly
   // front-end version so the employee doesn't wait for a round-trip to
   // find out.
+  // v-fix (BRO: "does this work offline" — this gate used to
+  // block on ANY non-passing status, including 'unavailable' (couldn't
+  // check at all, e.g. offline) — treating "couldn't verify" the same
+  // as "confirmed wrong address" was the actual bug. Now blocks ONLY on
+  // a genuinely confirmed bad match; 'unavailable' or never-run lets
+  // this through to the existing offline queue exactly like every
+  // other module in this portal, with the backend's own independent
+  // OCR re-check (loyaltySubmitCardAPI_) as the real, final gate once
+  // it actually reaches the server.
   const aadhaarBackFile = document.getElementById('ncAadhaarBack').files[0];
-  if (aadhaarBackFile && (state.ncAddressMatchPct == null || state.ncAddressMatchPct < 50)) {
-    errBox.textContent = 'Address does not sufficiently match the Aadhaar Card yet. Please correct the address above, or remove the Aadhaar Back photo to skip verification.';
+  if (aadhaarBackFile && state.ncAddressMatchStatus === 'failed') {
+    errBox.textContent = 'Address does not sufficiently match the Aadhaar Card (' + (state.ncAddressMatchPct != null ? state.ncAddressMatchPct + '%' : '') + '). Please correct the address above, or remove the Aadhaar Back photo to skip verification.';
     errBox.style.display = 'block';
     return;
   }
@@ -9925,7 +9984,7 @@ function kpiTableHtml(rows) {
   </table></div>`;
 }
 
-// v-fix (BRO's "KPI lo left-right scroll petti, data size penchu"
+// v-fix (BRO's "add a left-right scroll to KPI and increase the data size"
 // request): this used to scale the whole table down with a CSS transform
 // on desktop so every column fit on screen with no scrolling — which is
 // exactly what made the KPI report's text so tiny it was hard to read
@@ -10255,7 +10314,7 @@ function runBoxExport(boxId, title, format) {
       .kd-stats{display:flex;flex-wrap:wrap;gap:8px;} .kd-box{border:1px solid #ddd;border-radius:6px;padding:6px 10px;text-align:center;min-width:70px;}
       .kd-val{display:block;font-weight:800;font-size:14px;} .kd-lbl{display:block;font-size:9px;color:#666;text-transform:uppercase;}
       .kd-pill{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:#eee;} .kd-note{font-size:11px;color:#666;margin-top:4px;}
-      /* v-fix (BRO's "print lo total data oke page lo raavali" request):
+      /* v-fix (BRO's "the total data should fit on a single page when printed" request):
          the KPI report table (and any similarly wide table) is now shown
          on-screen at full readable size with horizontal scroll — but that
          same width would spill across multiple printed pages. This forces
@@ -10278,8 +10337,7 @@ function runBoxExport(boxId, title, format) {
   }
   if (format === 'pdf') {
     toast('⏳ Generating PDF...', 'info');
-    // v-fix (BRO's "10 columns unnai kani view 6 matrame, download
-    // cheste aa 6 matrame vastundi" bug): the previous fix here reset
+    // v-fix (BRO's "there are 10 columns but the view only shows 6, so downloading exports only those visible 6" bug): the previous fix here reset
     // box.scrollLeft and told html2canvas to use box.scrollWidth —
     // but box ITSELF isn't the horizontally-scrolling element anymore
     // (that's a child div — .scroll-x-visible / .kpi-fit-wrap — now
@@ -10775,8 +10833,8 @@ function dsrPhotoViewUrl(photo) {
   if (!photo) return '';
   if (photo.startsWith('data:image')) return photo;
   const m = photo.match(/[?&]id=([\w-]+)/) || photo.match(/\/d\/([\w-]+)/);
-  // v-fix ("URL kanipistundi, photo click chesthene vastundi — direct ga
-  // ravali"): uc?export=view is unreliable as a direct <img src> — Google
+  // v-fix ("the URL shows up, but the photo only loads after clicking
+  // it — it should render directly"): uc?export=view is unreliable as a direct <img src> — Google
   // frequently redirects it to a viewer page instead of raw image bytes,
   // which makes the <img> tag fail to load and fall back to the "click
   // to open" link the user was seeing. googleusercontent.com's /d/ path
@@ -11162,7 +11220,7 @@ function dsrfEmpDisplayName(who) {
 function renderDsrEntryForm(who, force) {
   const box = document.getElementById('dsrEntryFormBox-' + who);
   if (!box) return;
-  // v-fix (BRO's "form data ventane clear cheyaku" request): this used to
+  // v-fix (BRO's "don't clear the form data immediately" request): this used to
   // rebuild the ENTIRE form (Bill Details, Payment Status, every added
   // item) from scratch every single time the employee navigated to this
   // page — including just tapping away to check something else and
@@ -11244,7 +11302,7 @@ function renderDsrEntryForm(who, force) {
   }
 }
 
-// v-fix (BRO: "Product Name dropdown lo data DSR sheet nunchi ravatledu"
+// v-fix (BRO: "the Product Name dropdown's data isn't coming from the DSR sheet"
 // — screenshot showed only "-- Select --" / "Other (type manually)",
 // the real product list never arrived): this fetch had NO timeout (a
 // slow/dropped connection could hang forever) and NO way to retry —
@@ -11253,8 +11311,7 @@ function renderDsrEntryForm(who, force) {
 // entire page (losing anything already typed, since that resets DSR_ST
 // too). Extracted into its own function so both the initial load and
 // the new Retry link below can call the exact same logic.
-// v-fix (BRO: "off line unte DSR enter cheste product item names DSR
-// sheet nundi vastundi kani adi kuda work cheyadam ledu" — root cause):
+// v-fix (BRO: "when offline and entering a DSR, product item names are supposed to come from the DSR sheet but that wasn't working either" — root cause):
 // this fetch genuinely CANNOT succeed while the device is offline —
 // there's no network to fetch anything over, timeout/retry can't change
 // that. Without the product list, the employee is forced into "Other
@@ -11859,7 +11916,7 @@ function loadGoldenAuraList(who) {
     if (empFilterEl && empFilterEl.value) reqParams.empFilter = empFilterEl.value;
     if (startEl && startEl.value) reqParams.startDate = startEl.value;
     if (endEl && endEl.value) reqParams.endDate = endEl.value;
-    // v-fix (BRO: "employee name list dropdown anni chota ala fix chei"):
+    // v-fix (BRO: "fix the employee-name dropdown list everywhere the same way"):
     // this employee list travels bundled inside the main list response
     // below (not its own endpoint), so it can't go through
     // loadEmpListWithCache directly — instead, pre-populate instantly
@@ -12245,8 +12302,9 @@ let __empPendingLeadsAll = [];
 let __empLeadsSearchTerm = '';
 let __empPendingSummary = null; // { assigned, submitted, pending } for today, shown above the list
 
-// v-add (BRO: urgent request — "morning open cheste leads vastundi, tarvata
-// net speed taggithe reload avvakapote ibbandi" — employees open the app
+// v-add (BRO: urgent request — "leads show up on morning app-open, but
+// if the network gets weak later and something forces a reload,
+// there's a problem" — employees open the app
 // once in the morning when signal is usually decent, but if the connection
 // gets weak later and something forces a reload (tab suspend, app
 // backgrounded and resumed, a stray refresh), the leads list used to just
@@ -12560,7 +12618,7 @@ function openFlagNumberPanel() {
   document.body.appendChild(div);
 }
 
-// v-fix (BRO's "button click cheste double entry autundi" audit): this
+// v-fix (BRO's "clicking the button causes a double entry" audit): this
 // had NO protection at all against a fast double-tap — no disabled
 // button, no lock — so two quick taps (common on a slow connection, the
 // person taps again thinking the first tap didn't register) fired the
@@ -12696,7 +12754,7 @@ async function submitLeadCall() {
         renderEmpLeadsSummaryBox();
       }
     } else {
-      // v-fix (BRO's exact question: "submit chesina data save avutunda"):
+      // v-fix (BRO's exact question: "does the submitted data actually get saved"):
       // a non-network failure response (e.g. the CRM Apps Script itself
       // erroring, or a flaky-connection response that came back malformed
       // rather than as a clean timeout) used to just show red text and
@@ -14149,8 +14207,7 @@ function dsrfConfirmSubmit(who, evt) {
       clearInterval(progInt);
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
       btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
-      // v-fix (BRO: "DSR enter chesa, data raledu — offline queue anaru
-      // kani data save avvaledu" — root cause): this only queued offline
+      // v-fix (BRO: "a DSR was entered and the data never arrived — it reported being queued offline but the data was never actually saved" — root cause): this only queued offline
       // for navigator.onLine===false or a genuine timeout (AbortError).
       // But navigator.onLine is notoriously unreliable — it reports TRUE
       // whenever the device is connected to ANY WiFi/mobile network, even
@@ -16389,7 +16446,7 @@ async function confirmAdminModify() {
     } catch (e) {
       toast('⚠️ No confirmation from server — check "All Leaves" before repeating this modification.', 'error');
     }
-    // v-fix (BRO: "submit chesina tarvata auto close avali" — this popup
+    // v-fix (BRO: "it should auto-close after submitting" — this popup
     // used to only close on the res.ok success path, staying open on
     // any error OR on a network exception. A stuck-open modal after the
     // admin already acted on it (and already saw the toast explaining
