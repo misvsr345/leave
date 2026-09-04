@@ -2960,6 +2960,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
 
+    <!-- v-add (BRO: "leave status wise monthly data — absent evaru
+         evaru epudu unnaru, salary deduction kosam") -->
+    <div class="page-section" id="admin-monthly-absent">
+      <div class="section-hdr"><span class="section-title2">📋 Monthly Absent Report</span>
+        <span onclick="loadMonthlyAbsentReport()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
+      </div>
+      <input type="month" id="absentReportMonth" onchange="loadMonthlyAbsentReport()" style="width:100%;margin-bottom:10px;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
+      <div id="adminMonthlyAbsentBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
     <!-- ══════════════ KPI SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
@@ -3400,6 +3410,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
         <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
@@ -7719,6 +7730,52 @@ function renderTrend() {
 // admin can even see/click the button to get here (SM_FEATURE_ELEMENTS
 // 'backendSheets' gating on the sidebar/More button).
 // ══════════════════════════════════════
+// v-add (BRO's Monthly Absent Report — salary deduction identification):
+// defaults to the current running month if no month is picked yet.
+async function loadMonthlyAbsentReport() {
+  const box = document.getElementById('adminMonthlyAbsentBox');
+  const monthInp = document.getElementById('absentReportMonth');
+  if (monthInp && !monthInp.value) {
+    const now = new Date();
+    monthInp.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonp({ page: 'getMonthlyAbsentReportJSON', month: monthInp ? monthInp.value : '' });
+    if (!res || !res.ok) {
+      box.innerHTML = `<div class="empty-state"><p>Could not load. ${(res && res.error) || ''}</p></div>`;
+      return;
+    }
+    if (!res.rows || !res.rows.length) {
+      box.innerHTML = `<div class="empty-state"><p>✅ No absences recorded for ${res.monthLabel || 'this month'}.</p></div>`;
+      return;
+    }
+    let html = `<div class="card" style="text-align:center;padding:14px;margin-bottom:12px;background:var(--red-bg,#fdecea);">
+      <div style="font-size:22px;font-weight:800;color:var(--red,#b3261e);">${res.totalAbsentDays}</div>
+      <div style="font-size:11px;color:var(--text3);">TOTAL ABSENT-DAYS ACROSS ALL EMPLOYEES — ${res.monthLabel}</div>
+    </div>`;
+    html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
+        <th style="padding:6px 8px;">Employee</th>
+        <th style="padding:6px 8px;">Department</th>
+        <th style="padding:6px 8px;">Absent Dates</th>
+        <th style="padding:6px 8px;">Days</th>
+      </tr></thead><tbody>`;
+    res.rows.forEach(r => {
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:6px 8px;font-weight:600;">${r.employee}</td>
+        <td style="padding:6px 8px;">${r.department || '—'}</td>
+        <td style="padding:6px 8px;">${(r.dates || []).join(', ')}</td>
+        <td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--red,#b3261e);">${r.count}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
+  }
+}
+
 function loadBackendSheetsPage() {
   const box = document.getElementById('backendSheetsList');
   const links = [
@@ -8156,6 +8213,7 @@ function showAdminPage(page, opts) {
   if(page==='blocked') loadBlockedDatesPage();
   if(page==='settings') loadSettingsPage();
   if(page==='backend-sheets') loadBackendSheetsPage();
+  if(page==='monthly-absent') loadMonthlyAbsentReport();
   if(page==='profile') { renderAdminProfile(); populateViewEmpDropdown(); }
   if(page==='login-activity') loadLoginActivity('admin');
   if(page==='empwise') loadEmployeeWisePage();
@@ -8768,6 +8826,29 @@ function _drawBitmapToCanvas(bitmap, maxDim) {
   c.getContext('2d').drawImage(bitmap, 0, 0, w, h);
   return c;
 }
+
+// v-add (BRO: Loyalty Card upload getting stuck on full-size raw phone
+// photos — see the long comment at submitNewLoyaltyCard's call site for
+// the full reasoning). Deliberately NOT the same thing as the
+// crop/perspective-correction feature BRO had removed: this changes
+// nothing about the photo's content or framing, has no preview, no
+// comparison screen, and no user choice — it silently resizes to a
+// generous max dimension (documents/small print stay legible) and
+// re-encodes as JPEG at a size a real upload can actually complete
+// with. Safe to call on an empty string (an optional photo that was
+// never provided) or a load failure — falls back to the original
+// value rather than ever blocking submission over this.
+async function _silentCompressForUpload(dataUrl, maxDim) {
+  if (!dataUrl) return dataUrl;
+  try {
+    const bitmap = await _loadImageOriented(dataUrl);
+    const canvas = _drawBitmapToCanvas(bitmap, maxDim || 1600);
+    return canvas.toDataURL('image/jpeg', 0.78);
+  } catch (e) {
+    return dataUrl; // couldn't re-encode for any reason — submit the original rather than fail outright
+  }
+}
+
 async function _processPortraitPhoto(dataUrl) {
   const bitmap = await _loadImageOriented(dataUrl);
   let canvas = _drawBitmapToCanvas(bitmap, 1000);
@@ -9083,18 +9164,35 @@ async function submitNewLoyaltyCard() {
   btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
 
   try {
-    // v-fix: prefer the employee-CONFIRMED (post auto-process, OK/No)
-    // version for Customer Photo and both Aadhaar photos; Signature and
-    // PAN photos were never auto-processed (out of scope, see the
-    // module comment above) so they still come straight from the raw
-    // file input exactly as before this change.
+    // v-fix (BRO: "photo uploading ani undi, potundi" — Loyalty Card's
+    // submit was silently getting stuck. Since auto-cropping/processing
+    // was explicitly removed per BRO's later request, these photos now
+    // come straight from the phone camera at FULL, uncompressed size —
+    // a single modern phone photo is routinely 3-8MB, and this form
+    // sends up to FIVE of them (Signature/Customer/Aadhaar Front/Back/
+    // PAN) in one request; base64-encoding adds another ~33% on top of
+    // that. A 20-40MB request is a very plausible reason Apps Script's
+    // POST endpoint hangs/fails consistently for this form specifically
+    // (DSR, with fewer/smaller photos, doesn't hit this). This
+    // compression pass is NOT the auto-crop/framing feature that was
+    // removed — it changes nothing about WHAT is in the photo or how
+    // it's framed, is completely silent (no preview, no comparison, no
+    // user choice), and only reduces file size to something an upload
+    // can actually complete with — the same kind of transparent
+    // resizing virtually every photo-upload feature anywhere does
+    // before sending.
     const [sigPhoto, panPhoto] = await Promise.all([
-      fileToBase64(document.getElementById('ncSigPhoto')),
-      fileToBase64(document.getElementById('ncPanPhoto'))
+      fileToBase64(document.getElementById('ncSigPhoto')).then(_silentCompressForUpload),
+      fileToBase64(document.getElementById('ncPanPhoto')).then(_silentCompressForUpload)
     ]);
-    const custPhoto    = state.confirmedPhotos['ncCustPhoto']    || await fileToBase64(document.getElementById('ncCustPhoto'));
-    const aadhaarFront = state.confirmedPhotos['ncAadhaarFront'] || await fileToBase64(document.getElementById('ncAadhaarFront'));
-    const aadhaarBack  = state.confirmedPhotos['ncAadhaarBack']  || (aadhaarBackFile ? await fileToBase64(document.getElementById('ncAadhaarBack')) : '');
+    const custPhotoRaw    = state.confirmedPhotos['ncCustPhoto']    || await fileToBase64(document.getElementById('ncCustPhoto'));
+    const aadhaarFrontRaw = state.confirmedPhotos['ncAadhaarFront'] || await fileToBase64(document.getElementById('ncAadhaarFront'));
+    const aadhaarBackRaw  = state.confirmedPhotos['ncAadhaarBack']  || (aadhaarBackFile ? await fileToBase64(document.getElementById('ncAadhaarBack')) : '');
+    const [custPhoto, aadhaarFront, aadhaarBack] = await Promise.all([
+      _silentCompressForUpload(custPhotoRaw),
+      _silentCompressForUpload(aadhaarFrontRaw),
+      aadhaarBackRaw ? _silentCompressForUpload(aadhaarBackRaw) : Promise.resolve('')
+    ]);
 
     const payload = {
       page: 'loyaltySubmitCardAPI',
@@ -11855,9 +11953,17 @@ async function submitGoldenAura(who) {
     // never auto-processed (out of scope, see the module comment near
     // ncPhotoChanged) so they still come straight from the raw file
     // input exactly as before this change.
+    //
+    // v-fix (same root cause as Loyalty Card's stuck-upload bug — see
+    // submitNewLoyaltyCard's comment for the full reasoning): Golden
+    // Aura has SEVEN photo fields, even more than Loyalty Card's five —
+    // silently compressing each one before it ever enters the payload
+    // (no crop, no framing change, no UI) keeps the total request size
+    // something Apps Script can actually receive and process.
     for (const pid of photoIds) {
       const fullId = pid + '-' + who;
-      photos[pid] = state.confirmedPhotos[fullId] || await fileToBase64(g(pid));
+      const raw = state.confirmedPhotos[fullId] || await fileToBase64(g(pid));
+      photos[pid] = await _silentCompressForUpload(raw);
     }
 
     const payload = {
@@ -12630,7 +12736,7 @@ function openLeadCallPanel(lead) {
     <div style="font-size:10.5px;color:var(--text3);margin-top:-8px;margin-bottom:8px;">"Not Connected" covers Not Received and Switched Off — "No Answer" is for when it rang but nobody picked up.</div>
     <div class="form-2col">
       <div class="form-row"><label>Calling Type</label>
-        <select id="leadCallTypeSel"><option>Outbound</option></select>
+        <select id="leadCallTypeSel" onchange="_onCallTypeChange()"><option>Outbound</option><option>Inbound</option></select>
       </div>
       <div class="form-row"><label>Purpose</label>
         <select id="leadPurposeSel">
@@ -12674,19 +12780,51 @@ function openLeadCallPanel(lead) {
 // change via the Start/Stop timer above, never by typing. Unlocked
 // employees (the default, everyone until explicitly locked) see no
 // change from today's behavior at all.
+// v-fix (BRO: locked employees calling on Inbound can't use the live
+// timer at all — the call already happened on their phone before they
+// ever open this form, so there's nothing to time. Track the lock
+// state here so switching Calling Type can react to it without a fresh
+// server round-trip.
+let __leadDurationLockedForMe = false;
+
 async function _applyLeadDurationLock() {
   try {
     const res = await leadsApiGet({ action: 'GET_MY_DURATION_LOCK', email: state.empEmail || '' });
-    const inp = document.getElementById('leadDurationInput');
-    const lbl = document.getElementById('leadDurationLabel');
-    if (!inp || !lbl) return;
-    if (res && res.ok && res.locked) {
-      inp.readOnly = true;
-      inp.style.background = 'var(--bg)';
-      inp.style.cursor = 'not-allowed';
-      lbl.textContent = '🔒 Call Duration (mm:ss) — locked, use the timer above';
-    }
+    __leadDurationLockedForMe = !!(res && res.ok && res.locked);
+    _updateDurationLockUI();
   } catch (e) { /* lock check failing silently just leaves the field editable, same as today */ }
+}
+
+// v-add (BRO: "inbound select cheste edit avali... lock unna kuda time
+// duration option edit avutundi" — an Inbound call means the customer
+// rang the employee directly; there was never a live "Call" timer
+// running inside the portal for it, so the ONLY way that duration can
+// ever be recorded is by typing it in — even for an otherwise-locked
+// employee. Locking still applies normally the moment they switch back
+// to Outbound, where the timer genuinely can time the call.
+function _onCallTypeChange() {
+  _updateDurationLockUI();
+}
+
+function _updateDurationLockUI() {
+  const inp = document.getElementById('leadDurationInput');
+  const lbl = document.getElementById('leadDurationLabel');
+  const typeSel = document.getElementById('leadCallTypeSel');
+  if (!inp || !lbl) return;
+  const isInbound = typeSel && typeSel.value === 'Inbound';
+  if (__leadDurationLockedForMe && !isInbound) {
+    inp.readOnly = true;
+    inp.style.background = 'var(--bg)';
+    inp.style.cursor = 'not-allowed';
+    lbl.textContent = '🔒 Call Duration (mm:ss) — locked, use the timer above';
+  } else {
+    inp.readOnly = false;
+    inp.style.background = '';
+    inp.style.cursor = '';
+    lbl.textContent = isInbound
+      ? 'Call Duration (mm:ss) — Inbound call, please enter manually'
+      : 'Call Duration (mm:ss) — editable';
+  }
 }
 
 // Flag-for-Deletion — a small reason-picker layered on top of the call
@@ -13043,8 +13181,25 @@ async function undoSelectedEmpSubmissions() {
   if (checked.length === 0) { toast('Select at least one call first', 'error'); return; }
   const idxs = checked.map(cb => parseInt(cb.dataset.idx, 10));
   if (!confirm('Undo ' + idxs.length + ' selected submission(s)?\n\nThey will go back to today\'s pending queue.')) return;
+
+  // v-fix (BRO: "button click cheste, page lo respond emi kanipinchadam
+  // ledu" — a toast alone is easy to miss entirely, and gives no sense
+  // that anything is happening while several sequential server calls
+  // run one after another). This now shows a persistent, visible
+  // progress line INSIDE the page itself for the whole operation, not
+  // just a toast that can come and go unnoticed.
+  const btn = document.querySelector('button[onclick="undoSelectedEmpSubmissions()"]');
+  if (btn) { btn.disabled = true; }
+  const box = document.getElementById('empLeadsSubmittedBox') || document.getElementById('adminLeadsSubmittedBox');
+  const progressDiv = document.createElement('div');
+  progressDiv.className = 'card';
+  progressDiv.style.cssText = 'margin-bottom:10px;padding:10px 14px;background:var(--purple-bg,#f3e8ff);color:var(--purple,#6b21a8);font-weight:700;font-size:12.5px;';
+  if (box) box.insertBefore(progressDiv, box.firstChild);
+
   let okCount = 0, failCount = 0;
-  for (const idx of idxs) {
+  for (let n = 0; n < idxs.length; n++) {
+    const idx = idxs[n];
+    if (progressDiv) progressDiv.innerHTML = `<span class="spinner"></span> Undoing ${n + 1} of ${idxs.length}...`;
     const e = __empSubmittedEntries[idx];
     if (!e) continue;
     try {
@@ -13052,7 +13207,10 @@ async function undoSelectedEmpSubmissions() {
       if (res && res.ok) { okCount++; _clearCompletedFlagLocally(e.phone); } else failCount++;
     } catch (e2) { failCount++; }
   }
-  toast('↩️ Restored ' + okCount + (failCount ? ', ' + failCount + ' failed' : ''), failCount ? 'error' : 'success');
+
+  const resultMsg = '↩️ Restored ' + okCount + (failCount ? ', ' + failCount + ' failed' : '');
+  toast(resultMsg, failCount ? 'error' : 'success');
+  if (progressDiv) { progressDiv.style.background = failCount ? 'var(--red-bg,#fdecea)' : 'var(--green-bg,#eaf7ef)'; progressDiv.style.color = failCount ? 'var(--red,#b3261e)' : 'var(--green,#1b7a43)'; progressDiv.innerHTML = resultMsg; }
   loadEmpLeadsSubmitted();
   if (document.getElementById('empLeadsPendingBox')) loadEmpLeadsPending();
   if (document.getElementById('empLeadsSummaryBox')) loadEmpLeadsHome();
@@ -13533,13 +13691,20 @@ async function loadAdminLeadsQuota() {
     res.quotas.forEach(q => {
       const safeId = q.email.replace(/[^a-zA-Z0-9]/g, '');
       const isLocked = !!locks[q.email.toLowerCase()];
-      html += `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:140px;"><div style="font-weight:700;">${q.name}</div><div style="font-size:11px;color:var(--text3);">${q.email}</div></div>
-        <input type="number" min="0" value="${q.quota}" id="quotaInp-${safeId}" style="width:70px;padding:6px;border:1.5px solid var(--border);border-radius:8px;text-align:center;">
-        <button class="btn-secondary" style="padding:8px 12px;" onclick="saveEmpQuota('${q.email}')">💾</button>
-        <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;">
+      // v-fix (BRO: "save button, lock duration ivanni oke line lo
+      // pettu, size tagginchu" — .btn-secondary's own base CSS forces
+      // full-width/block layout, which is why this was stacking onto
+      // separate lines despite the flex-row wrapper here; flex:0 0 auto
+      // + explicit fixed width overrides that so the button actually
+      // stays small and inline instead of stretching. Sizes trimmed
+      // down across the row per the same request.
+      html += `<div class="card" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:8px 10px;flex-wrap:nowrap;overflow-x:auto;">
+        <div style="flex:1 1 auto;min-width:100px;"><div style="font-weight:700;font-size:12.5px;">${q.name}</div><div style="font-size:10px;color:var(--text3);">${q.email}</div></div>
+        <input type="number" min="0" value="${q.quota}" id="quotaInp-${safeId}" style="flex:0 0 auto;width:50px;padding:4px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-size:12px;">
+        <button class="btn-secondary" style="flex:0 0 auto;width:30px;height:30px;padding:0;font-size:12px;border-radius:6px;" onclick="saveEmpQuota('${q.email}')" title="Save Quota">💾</button>
+        <label style="flex:0 0 auto;display:flex;align-items:center;gap:4px;font-size:10.5px;white-space:nowrap;cursor:pointer;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;">
           <input type="checkbox" id="lockChk-${safeId}" ${isLocked ? 'checked' : ''} onchange="saveDurationLock('${q.email}', this.checked)">
-          🔒 Lock Duration
+          🔒 Lock
         </label>
       </div>`;
     });
