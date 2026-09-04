@@ -2314,7 +2314,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
          — employee sees ONLY their own calls, no employee filter here. -->
     <div class="page-section" id="emp-leads-conversions">
       <div class="section-hdr"><span class="section-title2">📈 My Conversion Tracking</span>
-        <span onclick="loadLeadConversions('emp')" title="Refresh" style="cursor:pointer;font-size:15px;padding:2px 4px;">🔄</span>
+        <span onclick="loadLeadConversions('emp')" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
       </div>
       <select id="convStatusFilter-emp" class="uniform-select" style="width:100%;margin-bottom:10px;" onchange="_renderConversionTable('emp')">
         <option value="">All Status</option>
@@ -3352,7 +3352,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- v-add (BRO's Call → Store Visit → Conversion Tracking feature) -->
     <div class="page-section" id="admin-leads-conversions">
       <div class="section-hdr"><span class="section-title2">📈 Conversion Tracking — All Employees</span>
-        <span onclick="loadLeadConversions('admin')" title="Refresh" style="cursor:pointer;font-size:15px;padding:2px 4px;">🔄</span>
+        <span onclick="loadLeadConversions('admin')" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
       </div>
       <select id="convEmpFilter-admin" class="uniform-select" style="width:100%;margin-bottom:8px;" onchange="loadLeadConversions('admin')">
         <option value="">All Employees</option>
@@ -13000,6 +13000,7 @@ async function undoLeadSubmissionByIdx(who, idx) {
     const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, _submittedEntryToUndoPayload(e)));
     if (res && res.ok) {
       toast('↩️ Restored to today\'s queue', 'success');
+      _clearCompletedFlagLocally(e.phone);
       if (who === 'admin') loadAdminLeadsSubmitted(); else loadEmpLeadsSubmitted();
       if (document.getElementById('empLeadsPendingBox')) loadEmpLeadsPending();
       if (document.getElementById('empLeadsSummaryBox')) loadEmpLeadsHome();
@@ -13009,6 +13010,32 @@ async function undoLeadSubmissionByIdx(who, idx) {
   } catch (e2) {
     toast('Network error: ' + e2.message, 'error');
   }
+}
+
+// v-fix (BRO caught it live: after Undo, the lead came back to Pending
+// but still showed as "Done" with no working Call & Submit button):
+// loadEmpLeadsPending()'s own refresh right after Undo can, on a weak
+// connection, silently fall back to the LAST CACHED list (see
+// tryRenderEmpLeadsFromCache — this is real, we've seen it trigger in
+// this exact app) — and that cache was saved BEFORE the undo, so it
+// still marks this phone number "completedJustNow". Undo was correct
+// on the server the whole time; only the UI's own stale-cache fallback
+// was lying about it. Rather than trust a network round-trip to fix
+// the screen, clear this phone's "done" flag directly in the
+// in-memory list (and the cache we'd otherwise fall back to) the
+// instant Undo succeeds — correct immediately, network or not.
+function _clearCompletedFlagLocally(phone) {
+  const normPhone = p => String(p == null ? '' : p).replace(/\D/g, '');
+  const target = normPhone(phone);
+  if (!target) return;
+  if (Array.isArray(__empPendingLeadsAll)) {
+    __empPendingLeadsAll.forEach(l => { if (normPhone(l.phone) === target) l.completedJustNow = false; });
+  }
+  if (window.__empLeadsData && window.__empLeadsData[phone]) window.__empLeadsData[phone].completedJustNow = false;
+  if (typeof renderEmpLeadsPendingTable === 'function' && document.getElementById('empLeadsPendingBox')) {
+    try { renderEmpLeadsPendingTable(); } catch (e) { /* the background refresh below will still catch this up */ }
+  }
+  if (typeof saveEmpLeadsCache === 'function') { try { saveEmpLeadsCache(); } catch (e) {} }
 }
 
 async function undoSelectedEmpSubmissions() {
@@ -13022,7 +13049,7 @@ async function undoSelectedEmpSubmissions() {
     if (!e) continue;
     try {
       const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, _submittedEntryToUndoPayload(e)));
-      if (res && res.ok) okCount++; else failCount++;
+      if (res && res.ok) { okCount++; _clearCompletedFlagLocally(e.phone); } else failCount++;
     } catch (e2) { failCount++; }
   }
   toast('↩️ Restored ' + okCount + (failCount ? ', ' + failCount + ' failed' : ''), failCount ? 'error' : 'success');
@@ -13042,6 +13069,7 @@ async function undoLeadSubmission(btn, payload) {
     const res = await leadsApiPost(Object.assign({ action: 'UNDO_CRM_ENTRY' }, payload));
     if (res && res.ok) {
       toast('↩️ Restored to today\'s queue', 'success');
+      _clearCompletedFlagLocally(payload.phone);
       if (document.getElementById('empLeadsSubmittedBox')) loadEmpLeadsSubmitted();
       if (document.getElementById('empLeadsPendingBox')) loadEmpLeadsPending();
       if (document.getElementById('empLeadsSummaryBox')) loadEmpLeadsHome();
@@ -13623,6 +13651,7 @@ function _renderConversionTable(who) {
     <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
       ${who === 'admin' ? '<th style="padding:6px 8px;">Employee</th>' : ''}
       <th style="padding:6px 8px;">Customer</th>
+      <th style="padding:6px 8px;">Mobile No.</th>
       <th style="padding:6px 8px;">Call Date</th>
       <th style="padding:6px 8px;">Status</th>
       <th style="padding:6px 8px;">Visit Date</th>
@@ -13633,6 +13662,7 @@ function _renderConversionTable(who) {
     html += `<tr style="border-bottom:1px solid var(--border);">
       ${who === 'admin' ? `<td style="padding:6px 8px;font-weight:600;">${r.employee}</td>` : ''}
       <td style="padding:6px 8px;">${r.customerName || '—'}</td>
+      <td style="padding:6px 8px;white-space:nowrap;">${r.mobile || '—'}</td>
       <td style="padding:6px 8px;white-space:nowrap;">${r.callDate}</td>
       <td style="padding:6px 8px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusIcon} ${r.status}</td>
       <td style="padding:6px 8px;white-space:nowrap;">${r.visitDate || '—'}</td>
