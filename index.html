@@ -2316,10 +2316,13 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📈 My Conversion Tracking</span>
         <span onclick="loadLeadConversions('emp')" title="Refresh" style="cursor:pointer;font-size:15px;padding:2px 4px;">🔄</span>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input type="date" id="convFrom-emp" onchange="loadLeadConversions('emp')" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
-        <input type="date" id="convTo-emp" onchange="loadLeadConversions('emp')" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
-      </div>
+      <select id="convStatusFilter-emp" class="uniform-select" style="width:100%;margin-bottom:10px;" onchange="_renderConversionTable('emp')">
+        <option value="">All Status</option>
+        <option value="Success Conversion">✅ Success Conversion</option>
+        <option value="Visited - No Purchase">🚶 Visited - No Purchase</option>
+        <option value="No Conversion Yet">❌ No Conversion Yet</option>
+      </select>
+      <div id="convScope-emp-mount"></div>
       <div id="empConversionsBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -3351,13 +3354,26 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📈 Conversion Tracking — All Employees</span>
         <span onclick="loadLeadConversions('admin')" title="Refresh" style="cursor:pointer;font-size:15px;padding:2px 4px;">🔄</span>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <select id="convEmpFilter-admin" class="uniform-select" style="flex:1;min-width:160px;" onchange="loadLeadConversions('admin')">
-          <option value="">All Employees</option>
-        </select>
-        <input type="date" id="convFrom-admin" onchange="loadLeadConversions('admin')" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;">
-        <input type="date" id="convTo-admin" onchange="loadLeadConversions('admin')" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;">
-      </div>
+      <select id="convEmpFilter-admin" class="uniform-select" style="width:100%;margin-bottom:8px;" onchange="loadLeadConversions('admin')">
+        <option value="">All Employees</option>
+      </select>
+      <!-- v-add (BRO: "status ki filter unte verify cheyadam easy
+           autundi" — client-side filter, no extra server round-trip
+           since GET_LEAD_CONVERSIONS already returns every row's
+           status; this just narrows what the table below shows). -->
+      <select id="convStatusFilter-admin" class="uniform-select" style="width:100%;margin-bottom:10px;" onchange="_renderConversionTable('admin')">
+        <option value="">All Status</option>
+        <option value="Success Conversion">✅ Success Conversion</option>
+        <option value="Visited - No Purchase">🚶 Visited - No Purchase</option>
+        <option value="No Conversion Yet">❌ No Conversion Yet</option>
+      </select>
+      <!-- v-fix (BRO: "running month option kuda add chei" — replaced the
+           plain From/To date pair with the SAME shared Today/Running
+           Month/Custom Date bar used everywhere else in the portal
+           (KPI Till-Date, Walk-in Track, Leads Report, Loyalty), instead
+           of a one-off pair of raw date inputs — one component, same
+           behavior everyone already knows from those other pages. -->
+      <div id="convScope-admin-mount"></div>
       <div id="adminConversionsBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -3820,10 +3836,16 @@ function dateScopeBarHtml(scopeId, opts) {
   // which modes a given page enables (allTime or not).
   const btn = (mode, label, icon) =>
     `<button class="filter-btn${mode === defaultMode ? ' active' : ''}" data-mode="${mode}" onclick="setDateScope('${scopeId}',this,'${mode}')">${icon} ${label}</button>`;
+  // v-add (BRO: "today ikada waste, endukante use ledu" — on Conversion
+  // Tracking specifically, a call made TODAY hasn't had time to produce
+  // a 30-day-window visit yet, so "Today" as a quick filter here is
+  // structurally never useful, unlike on KPI/DSR where it means
+  // something). opts.hideToday lets ONE page opt out without touching
+  // this shared component's behavior anywhere else it's already used.
   return `
     <div class="filter-bar" id="${scopeId}-bar">
       ${opts.allTime ? btn('all', 'All Time', '🏁') : ''}
-      ${btn('today', 'Today', '📍')}
+      ${opts.hideToday ? '' : btn('today', 'Today', '📍')}
       ${btn('month', 'Running Month', '🗓️')}
       ${btn('custom', 'Custom Date', '🔍')}
     </div>
@@ -3854,8 +3876,12 @@ function setDateScope(scopeId, btnEl, mode) {
   // an already-active Custom Date hides the picker and falls back to
   // "Today", the same way it would if you'd tapped Today yourself.
   if (mode === 'custom' && btnEl && btnEl.classList.contains('active')) {
-    const todayBtn = bar ? bar.querySelector('[data-mode="today"]') : null;
-    setDateScope(scopeId, todayBtn, 'today');
+    // v-fix: if this bar has no "Today" button (opts.hideToday), fall
+    // back to "Running Month" instead — querySelector would otherwise
+    // return null and leave the bar with nothing visibly active.
+    const fallbackBtn = bar ? (bar.querySelector('[data-mode="today"]') || bar.querySelector('[data-mode="month"]')) : null;
+    const fallbackMode = fallbackBtn ? fallbackBtn.getAttribute('data-mode') : 'today';
+    setDateScope(scopeId, fallbackBtn, fallbackMode);
     return;
   }
   if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -5105,7 +5131,7 @@ function showEmpPage(page, opts) {
   if(page==='leads-pending') loadEmpLeadsPending();
   if(page==='leads-submitted') loadEmpLeadsSubmitted();
   if(page==='leads-report') initEmpLeadsReportPage();
-  if(page==='leads-conversions') loadLeadConversions('emp');
+  if(page==='leads-conversions') initLeadConversionsPage('emp');
   if(page==='customer-events') loadCustomerEventsPage('emp');
 }
 
@@ -8142,7 +8168,7 @@ function showAdminPage(page, opts) {
   if(page==='leads-report') initAdminLeadsReportPage();
   if(page==='leads-overdue') loadAdminOverdueLeads();
   if(page==='leads-quota') loadAdminLeadsQuota();
-  if(page==='leads-conversions') loadLeadConversions('admin');
+  if(page==='leads-conversions') initLeadConversionsPage('admin');
   if(page==='customer-events') loadCustomerEventsPage('admin');
   if(page==='flagged-numbers') loadFlaggedNumbersPage();
 }
@@ -12239,7 +12265,7 @@ function openStockChecklistForm(who) {
 // JSON (no JSONP callback support), so we use fetch() directly — the
 // same approach CRM.HTML already uses successfully against this URL.
 // ══════════════════════════════════════
-const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwkWTEzOcKVqtOY593ho5SloXlAGKtLf99OoobOegQOg0ckHl1OcpoYGxUK5ttiAoZkWg/exec';
+const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxGPbxuw3LtgXOrafcsC6cuLLZvPCPwkDkfb7whIrX_r8YmG1B5a_yU4XC-bLw6SGre6Q/exec';
 
 // v-fix: leadsApiGet/leadsApiPost previously used a bare fetch() with no
 // timeout at all. If the LEADS Apps Script deployment is unreachable —
@@ -13512,64 +13538,108 @@ async function saveDurationLock(email, locked) {
 // v-add (BRO's Call → Store Visit → Conversion Tracking feature):
 // who = 'emp' (own calls only, name auto-filled from state.empName,
 // no employee selector shown) or 'admin' (defaults to All Employees,
-// with a name filter dropdown + date range, populated from the same
-// GET_QUOTAS employee list already used on the Daily Quota page).
-async function loadLeadConversions(who) {
+// with a name filter dropdown, populated from the same GET_QUOTAS
+// employee list already used on the Daily Quota page).
+//
+// v-fix (BRO: "running month option kuda add chei"): the date range is
+// now driven by the shared Today/Running Month/Custom Date bar
+// (dateScopeBarHtml/registerDateScope — the exact same component KPI
+// Till-Date and Walk-in Track already use) instead of a bare pair of
+// date inputs, so dateFrom/dateTo arrive as explicit arguments rather
+// than being read off the DOM here.
+function initLeadConversionsPage(who) {
+  const scopeId = 'convScope-' + who;
+  if (!__dateScopes[scopeId]) {
+    mountDateScope(scopeId, { defaultMode: 'month', hideToday: true });
+    registerDateScope(scopeId, (mode, start, end) => loadLeadConversions(who, start, end));
+  }
+  if (who === 'admin') _populateConversionEmpFilter();
+  const range = dateScopeRange('month');
+  loadLeadConversions(who, range.start, range.end);
+}
+
+// Small per-side cache so the header 🔄 icon (which has no date
+// arguments of its own) can just re-run whatever range is currently
+// showing, instead of silently resetting to blank dates.
+const __convLastRange = {};
+
+// Caches the last-fetched summary + full row list per side, so the
+// Status filter (below) can re-render instantly from memory instead of
+// re-fetching from the server every time it changes.
+const __convCache = {};
+
+async function loadLeadConversions(who, dateFrom, dateTo) {
+  if (dateFrom !== undefined) __convLastRange[who] = { dateFrom, dateTo };
+  else { const c = __convLastRange[who] || {}; dateFrom = c.dateFrom || ''; dateTo = c.dateTo || ''; }
+
   const box = document.getElementById(who === 'admin' ? 'adminConversionsBox' : 'empConversionsBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
 
   const employeeFilter = who === 'admin'
     ? (document.getElementById('convEmpFilter-admin').value || '')
     : (state.empName || '');
-  const dateFrom = document.getElementById('convFrom-' + who).value || '';
-  const dateTo = document.getElementById('convTo-' + who).value || '';
-
-  if (who === 'admin') _populateConversionEmpFilter(); // fire-and-forget, doesn't block the table below
 
   try {
     const res = await leadsApiGet({ action: 'GET_LEAD_CONVERSIONS', employee: employeeFilter, dateFrom, dateTo });
     if (!res || !res.ok) {
-      box.innerHTML = `<div class="empty-state"><p>Could not load. ${(res && res.error) || ''}</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadLeadConversions('${who}')" title="Retry">🔄</button></div>`;
+      box.innerHTML = `<div class="empty-state"><p>Could not load. ${(res && res.error) || ''}</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadLeadConversions('${who}', '${dateFrom}', '${dateTo}')" title="Retry">🔄</button></div>`;
       return;
     }
-    const s = res.summary || { totalCalls: 0, successConversions: 0, visitedNoPurchase: 0, noConversion: 0, conversionRatePct: 0 };
-    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">
-      <div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:800;">${s.totalCalls}</div><div style="font-size:10.5px;color:var(--text3);">TOTAL CALLS</div></div>
-      <div class="card" style="text-align:center;padding:12px 8px;background:var(--green-bg,#eaf7ef);"><div style="font-size:20px;font-weight:800;color:var(--green,#1b7a43);">${s.successConversions}</div><div style="font-size:10.5px;color:var(--text3);">✅ SUCCESS CONVERSION</div></div>
-      <div class="card" style="text-align:center;padding:12px 8px;background:var(--orange-bg,#fff8e1);"><div style="font-size:20px;font-weight:800;color:var(--orange,#b8860b);">${s.visitedNoPurchase}</div><div style="font-size:10.5px;color:var(--text3);">🚶 VISITED, NO PURCHASE</div></div>
-      <div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:800;">${s.conversionRatePct}%</div><div style="font-size:10.5px;color:var(--text3);">CONVERSION RATE</div></div>
-    </div>`;
-
-    if (!res.rows || !res.rows.length) {
-      html += '<div class="empty-state"><p>No calls found for this filter.</p></div>';
-      box.innerHTML = html;
-      return;
-    }
-
-    html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-      <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
-        ${who === 'admin' ? '<th style="padding:6px 8px;">Employee</th>' : ''}
-        <th style="padding:6px 8px;">Customer</th>
-        <th style="padding:6px 8px;">Call Date</th>
-        <th style="padding:6px 8px;">Status</th>
-        <th style="padding:6px 8px;">Visit Date</th>
-      </tr></thead><tbody>`;
-    res.rows.forEach(r => {
-      const statusColor = r.status === 'Success Conversion' ? 'var(--green,#1b7a43)' : (r.status === 'No Conversion Yet' ? 'var(--text3)' : 'var(--orange,#b8860b)');
-      const statusIcon = r.status === 'Success Conversion' ? '✅' : (r.status === 'No Conversion Yet' ? '❌' : '🚶');
-      html += `<tr style="border-bottom:1px solid var(--border);">
-        ${who === 'admin' ? `<td style="padding:6px 8px;font-weight:600;">${r.employee}</td>` : ''}
-        <td style="padding:6px 8px;">${r.customerName || '—'}</td>
-        <td style="padding:6px 8px;white-space:nowrap;">${r.callDate}</td>
-        <td style="padding:6px 8px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusIcon} ${r.status}</td>
-        <td style="padding:6px 8px;white-space:nowrap;">${r.visitDate || '—'}</td>
-      </tr>`;
-    });
-    html += '</tbody></table></div>';
-    box.innerHTML = html;
+    __convCache[who] = { summary: res.summary, rows: res.rows || [] };
+    _renderConversionTable(who);
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadLeadConversions('${who}')" title="Retry">🔄</button></div>`;
   }
+}
+
+// v-add (BRO: "status ki filter unte verify cheyadam easy autundi"):
+// summary cards always reflect the OVERALL totals for the current
+// employee/date selection, unaffected by this filter — it's the table
+// rows below that narrow down, so verifying "just the Success
+// Conversions" (or just the still-pending ones) doesn't require a
+// fresh server call, only picking a value from this dropdown.
+function _renderConversionTable(who) {
+  const box = document.getElementById(who === 'admin' ? 'adminConversionsBox' : 'empConversionsBox');
+  const cached = __convCache[who];
+  if (!cached) return;
+  const s = cached.summary || { totalCalls: 0, successConversions: 0, visitedNoPurchase: 0, noConversion: 0, conversionRatePct: 0 };
+  const statusFilter = (document.getElementById('convStatusFilter-' + who) || {}).value || '';
+  const rows = statusFilter ? cached.rows.filter(r => r.status === statusFilter) : cached.rows;
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">
+    <div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:800;">${s.totalCalls}</div><div style="font-size:10.5px;color:var(--text3);">TOTAL CALLS</div></div>
+    <div class="card" style="text-align:center;padding:12px 8px;background:var(--green-bg,#eaf7ef);"><div style="font-size:20px;font-weight:800;color:var(--green,#1b7a43);">${s.successConversions}</div><div style="font-size:10.5px;color:var(--text3);">✅ SUCCESS CONVERSION</div></div>
+    <div class="card" style="text-align:center;padding:12px 8px;background:var(--orange-bg,#fff8e1);"><div style="font-size:20px;font-weight:800;color:var(--orange,#b8860b);">${s.visitedNoPurchase}</div><div style="font-size:10.5px;color:var(--text3);">🚶 VISITED, NO PURCHASE</div></div>
+    <div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:800;">${s.conversionRatePct}%</div><div style="font-size:10.5px;color:var(--text3);">CONVERSION RATE</div></div>
+  </div>`;
+
+  if (!rows.length) {
+    html += `<div class="empty-state"><p>${statusFilter ? 'No calls match this status filter.' : 'No calls found for this filter.'}</p></div>`;
+    box.innerHTML = html;
+    return;
+  }
+
+  html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+    <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
+      ${who === 'admin' ? '<th style="padding:6px 8px;">Employee</th>' : ''}
+      <th style="padding:6px 8px;">Customer</th>
+      <th style="padding:6px 8px;">Call Date</th>
+      <th style="padding:6px 8px;">Status</th>
+      <th style="padding:6px 8px;">Visit Date</th>
+    </tr></thead><tbody>`;
+  rows.forEach(r => {
+    const statusColor = r.status === 'Success Conversion' ? 'var(--green,#1b7a43)' : (r.status === 'No Conversion Yet' ? 'var(--text3)' : 'var(--orange,#b8860b)');
+    const statusIcon = r.status === 'Success Conversion' ? '✅' : (r.status === 'No Conversion Yet' ? '❌' : '🚶');
+    html += `<tr style="border-bottom:1px solid var(--border);">
+      ${who === 'admin' ? `<td style="padding:6px 8px;font-weight:600;">${r.employee}</td>` : ''}
+      <td style="padding:6px 8px;">${r.customerName || '—'}</td>
+      <td style="padding:6px 8px;white-space:nowrap;">${r.callDate}</td>
+      <td style="padding:6px 8px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusIcon} ${r.status}</td>
+      <td style="padding:6px 8px;white-space:nowrap;">${r.visitDate || '—'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  box.innerHTML = html;
 }
 
 let __convEmpFilterLoaded = false;
