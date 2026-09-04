@@ -2289,6 +2289,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="showEmpPage('leads-pending')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Leads</div><div class="quick-action-sub">Pending — call now</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">Calls already done</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Report</div><div class="quick-action-sub">My % &amp; status break-up</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('leads-conversions')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My Conversions</div><div class="quick-action-sub">Calls that brought customers to store</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
       </div>
     </div>
@@ -2307,6 +2308,19 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📊 My Leads Report</span></div>
       <div id="leadsReport-emp-mount"></div>
       <div class="card" id="empLeadsReportBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <!-- v-add (BRO's Call → Store Visit → Conversion Tracking feature)
+         — employee sees ONLY their own calls, no employee filter here. -->
+    <div class="page-section" id="emp-leads-conversions">
+      <div class="section-hdr"><span class="section-title2">📈 My Conversion Tracking</span>
+        <button class="btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="loadLeadConversions('emp')">🔄</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="date" id="convFrom-emp" onchange="loadLeadConversions('emp')" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
+        <input type="date" id="convTo-emp" onchange="loadLeadConversions('emp')" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
+      </div>
+      <div id="empConversionsBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="emp-customer-events">
@@ -3267,7 +3281,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" onclick="showAdminPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">All employees — calls done</div></div>
         <div class="quick-action-btn" id="adminQALeadsReport" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee, lock duration</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('leads-conversions')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Conversions</div><div class="quick-action-sub">Which calls brought customers to store</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('flagged-numbers')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Flagged Numbers</div><div class="quick-action-sub">Review &amp; permanently delete</div></div>
       </div>
@@ -3329,6 +3344,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-leads-quota">
       <div class="section-hdr"><span class="section-title2">🎯 Daily Lead Quota — Per Employee</span></div>
       <div id="adminLeadsQuotaBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+
+    <!-- v-add (BRO's Call → Store Visit → Conversion Tracking feature) -->
+    <div class="page-section" id="admin-leads-conversions">
+      <div class="section-hdr"><span class="section-title2">📈 Conversion Tracking — All Employees</span>
+        <button class="btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="loadLeadConversions('admin')">🔄</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <select id="convEmpFilter-admin" class="uniform-select" style="flex:1;min-width:160px;" onchange="loadLeadConversions('admin')">
+          <option value="">All Employees</option>
+        </select>
+        <input type="date" id="convFrom-admin" onchange="loadLeadConversions('admin')" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;">
+        <input type="date" id="convTo-admin" onchange="loadLeadConversions('admin')" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;">
+      </div>
+      <div id="adminConversionsBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="admin-customer-events">
@@ -4894,7 +4924,7 @@ const SECTION_LABEL_MAP = {
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
-  'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads',
+  'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
   profile: 'Emp Details'
 };
 // Each section's own "dashboard" page (its landing page after clicking
@@ -5075,6 +5105,7 @@ function showEmpPage(page, opts) {
   if(page==='leads-pending') loadEmpLeadsPending();
   if(page==='leads-submitted') loadEmpLeadsSubmitted();
   if(page==='leads-report') initEmpLeadsReportPage();
+  if(page==='leads-conversions') loadLeadConversions('emp');
   if(page==='customer-events') loadCustomerEventsPage('emp');
 }
 
@@ -8111,6 +8142,7 @@ function showAdminPage(page, opts) {
   if(page==='leads-report') initAdminLeadsReportPage();
   if(page==='leads-overdue') loadAdminOverdueLeads();
   if(page==='leads-quota') loadAdminLeadsQuota();
+  if(page==='leads-conversions') loadLeadConversions('admin');
   if(page==='customer-events') loadCustomerEventsPage('admin');
   if(page==='flagged-numbers') loadFlaggedNumbersPage();
 }
@@ -12549,7 +12581,7 @@ function openLeadCallPanel(lead) {
       <a class="btn-secondary" style="flex:1;text-align:center;text-decoration:none;" href="tel:${lead.phone}" onclick="if(!__leadCallRunning) startLeadCallTimer();">📲 Call</a>
       <button class="btn-secondary" style="flex:1;" id="leadTimerBtn" onclick="toggleLeadCallTimer()">▶ Start Timer</button>
     </div>
-    <div class="form-row"><label>Call Duration (mm:ss) — editable</label>
+    <div class="form-row"><label id="leadDurationLabel">Call Duration (mm:ss) — editable</label>
       <input type="text" id="leadDurationInput" value="00:00" placeholder="mm:ss">
     </div>
 
@@ -12608,6 +12640,27 @@ function openLeadCallPanel(lead) {
     </div>
   </div>`;
   document.body.appendChild(div);
+  _applyLeadDurationLock();
+}
+
+// v-add (BRO's per-employee Call Duration lock): if MIS has locked this
+// employee, the Duration box becomes read-only — it can then ONLY ever
+// change via the Start/Stop timer above, never by typing. Unlocked
+// employees (the default, everyone until explicitly locked) see no
+// change from today's behavior at all.
+async function _applyLeadDurationLock() {
+  try {
+    const res = await leadsApiGet({ action: 'GET_MY_DURATION_LOCK', email: state.empEmail || '' });
+    const inp = document.getElementById('leadDurationInput');
+    const lbl = document.getElementById('leadDurationLabel');
+    if (!inp || !lbl) return;
+    if (res && res.ok && res.locked) {
+      inp.readOnly = true;
+      inp.style.background = 'var(--bg)';
+      inp.style.cursor = 'not-allowed';
+      lbl.textContent = '🔒 Call Duration (mm:ss) — locked, use the timer above';
+    }
+  } catch (e) { /* lock check failing silently just leaves the field editable, same as today */ }
 }
 
 // Flag-for-Deletion — a small reason-picker layered on top of the call
@@ -13410,23 +13463,131 @@ async function loadAdminLeadsQuota() {
   const box = document.getElementById('adminLeadsQuotaBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
-    const res = await leadsApiGet({ action: 'GET_QUOTAS' });
+    // v-add (BRO's per-employee Duration Lock): fetched alongside quotas
+    // in parallel — one extra call, same page, no separate admin screen
+    // needed for this.
+    const [res, locksRes] = await Promise.all([
+      leadsApiGet({ action: 'GET_QUOTAS' }),
+      leadsApiGet({ action: 'GET_DURATION_LOCKS' }).catch(() => ({ ok: false, locks: {} }))
+    ]);
+    const locks = (locksRes && locksRes.ok) ? locksRes.locks : {};
     if (!res.ok || !res.quotas || !res.quotas.length) {
       box.innerHTML = '<div class="empty-state"><p>No employees found in the crm email sheet.</p></div>';
       return;
     }
     let html = '';
     res.quotas.forEach(q => {
-      html += `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <div style="flex:1;"><div style="font-weight:700;">${q.name}</div><div style="font-size:11px;color:var(--text3);">${q.email}</div></div>
-        <input type="number" min="0" value="${q.quota}" id="quotaInp-${q.email.replace(/[^a-zA-Z0-9]/g, '')}" style="width:70px;padding:6px;border:1.5px solid var(--border);border-radius:8px;text-align:center;">
+      const safeId = q.email.replace(/[^a-zA-Z0-9]/g, '');
+      const isLocked = !!locks[q.email.toLowerCase()];
+      html += `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:140px;"><div style="font-weight:700;">${q.name}</div><div style="font-size:11px;color:var(--text3);">${q.email}</div></div>
+        <input type="number" min="0" value="${q.quota}" id="quotaInp-${safeId}" style="width:70px;padding:6px;border:1.5px solid var(--border);border-radius:8px;text-align:center;">
         <button class="btn-secondary" style="padding:8px 12px;" onclick="saveEmpQuota('${q.email}')">💾</button>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;">
+          <input type="checkbox" id="lockChk-${safeId}" ${isLocked ? 'checked' : ''} onchange="saveDurationLock('${q.email}', this.checked)">
+          🔒 Lock Duration
+        </label>
       </div>`;
     });
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = '<div class="empty-state"><p>Could not load. ' + e.message + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadAdminLeadsQuota()\" title=\"Retry\">🔄</button></div>';
   }
+}
+
+// v-add (BRO's per-employee Call Duration lock — admin toggle):
+// checking this box means that employee's Call Duration field, on
+// their own device, becomes read-only immediately from their next call
+// onward — see _applyLeadDurationLock() on the employee side.
+async function saveDurationLock(email, locked) {
+  try {
+    const res = await leadsApiPost({ action: 'SET_DURATION_LOCK', email: email, locked: locked });
+    if (res && res.ok) toast(locked ? '🔒 Duration locked for this employee' : '🔓 Duration unlocked for this employee', 'success');
+    else toast('❌ ' + ((res && (res.error || res.message)) || 'Update failed'), 'error');
+  } catch (e) {
+    toast('❌ Network error: ' + e.message, 'error');
+  }
+}
+
+// v-add (BRO's Call → Store Visit → Conversion Tracking feature):
+// who = 'emp' (own calls only, name auto-filled from state.empName,
+// no employee selector shown) or 'admin' (defaults to All Employees,
+// with a name filter dropdown + date range, populated from the same
+// GET_QUOTAS employee list already used on the Daily Quota page).
+async function loadLeadConversions(who) {
+  const box = document.getElementById(who === 'admin' ? 'adminConversionsBox' : 'empConversionsBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const employeeFilter = who === 'admin'
+    ? (document.getElementById('convEmpFilter-admin').value || '')
+    : (state.empName || '');
+  const dateFrom = document.getElementById('convFrom-' + who).value || '';
+  const dateTo = document.getElementById('convTo-' + who).value || '';
+
+  if (who === 'admin') _populateConversionEmpFilter(); // fire-and-forget, doesn't block the table below
+
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEAD_CONVERSIONS', employee: employeeFilter, dateFrom, dateTo });
+    if (!res || !res.ok) {
+      box.innerHTML = `<div class="empty-state"><p>Could not load. ${(res && res.error) || ''}</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadLeadConversions('${who}')" title="Retry">🔄</button></div>`;
+      return;
+    }
+    const s = res.summary || { totalCalls: 0, successConversions: 0, visitedNoPurchase: 0, noConversion: 0, conversionRatePct: 0 };
+    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">
+      <div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:800;">${s.totalCalls}</div><div style="font-size:10.5px;color:var(--text3);">TOTAL CALLS</div></div>
+      <div class="card" style="text-align:center;padding:12px 8px;background:var(--green-bg,#eaf7ef);"><div style="font-size:20px;font-weight:800;color:var(--green,#1b7a43);">${s.successConversions}</div><div style="font-size:10.5px;color:var(--text3);">✅ SUCCESS CONVERSION</div></div>
+      <div class="card" style="text-align:center;padding:12px 8px;background:var(--orange-bg,#fff8e1);"><div style="font-size:20px;font-weight:800;color:var(--orange,#b8860b);">${s.visitedNoPurchase}</div><div style="font-size:10.5px;color:var(--text3);">🚶 VISITED, NO PURCHASE</div></div>
+      <div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:800;">${s.conversionRatePct}%</div><div style="font-size:10.5px;color:var(--text3);">CONVERSION RATE</div></div>
+    </div>`;
+
+    if (!res.rows || !res.rows.length) {
+      html += '<div class="empty-state"><p>No calls found for this filter.</p></div>';
+      box.innerHTML = html;
+      return;
+    }
+
+    html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
+        ${who === 'admin' ? '<th style="padding:6px 8px;">Employee</th>' : ''}
+        <th style="padding:6px 8px;">Customer</th>
+        <th style="padding:6px 8px;">Call Date</th>
+        <th style="padding:6px 8px;">Status</th>
+        <th style="padding:6px 8px;">Visit Date</th>
+      </tr></thead><tbody>`;
+    res.rows.forEach(r => {
+      const statusColor = r.status === 'Success Conversion' ? 'var(--green,#1b7a43)' : (r.status === 'No Conversion Yet' ? 'var(--text3)' : 'var(--orange,#b8860b)');
+      const statusIcon = r.status === 'Success Conversion' ? '✅' : (r.status === 'No Conversion Yet' ? '❌' : '🚶');
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        ${who === 'admin' ? `<td style="padding:6px 8px;font-weight:600;">${r.employee}</td>` : ''}
+        <td style="padding:6px 8px;">${r.customerName || '—'}</td>
+        <td style="padding:6px 8px;white-space:nowrap;">${r.callDate}</td>
+        <td style="padding:6px 8px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusIcon} ${r.status}</td>
+        <td style="padding:6px 8px;white-space:nowrap;">${r.visitDate || '—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadLeadConversions('${who}')" title="Retry">🔄</button></div>`;
+  }
+}
+
+let __convEmpFilterLoaded = false;
+async function _populateConversionEmpFilter() {
+  if (__convEmpFilterLoaded) return; // only needs fetching once per session — the list itself rarely changes
+  const sel = document.getElementById('convEmpFilter-admin');
+  if (!sel) return;
+  try {
+    const res = await leadsApiGet({ action: 'GET_QUOTAS' });
+    if (res && res.ok && res.quotas) {
+      const current = sel.value;
+      let html = '<option value="">All Employees</option>';
+      res.quotas.forEach(q => { html += `<option value="${q.name}">${q.name}</option>`; });
+      sel.innerHTML = html;
+      sel.value = current;
+      __convEmpFilterLoaded = true;
+    }
+  } catch (e) { /* filter just stays as "All Employees" if this fails — not a hard error */ }
 }
 
 async function saveEmpQuota(email) {
