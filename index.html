@@ -7746,30 +7746,63 @@ async function loadMonthlyAbsentReport() {
       box.innerHTML = `<div class="empty-state"><p>Could not load. ${(res && res.error) || ''}</p></div>`;
       return;
     }
-    if (!res.rows || !res.rows.length) {
+    if (!res.entries || !res.entries.length) {
       box.innerHTML = `<div class="empty-state"><p>✅ No absences recorded for ${res.monthLabel || 'this month'}.</p></div>`;
       return;
     }
-    let html = `<div class="card" style="text-align:center;padding:14px;margin-bottom:12px;background:var(--red-bg,#fdecea);">
-      <div style="font-size:22px;font-weight:800;color:var(--red,#b3261e);">${res.totalAbsentDays}</div>
-      <div style="font-size:11px;color:var(--text3);">TOTAL ABSENT-DAYS ACROSS ALL EMPLOYEES — ${res.monthLabel}</div>
+    // v-fix (BRO: "multiple absent unte multiple lines ravali, full or
+    // half, weekday, mis entry reason undali, emp wise total days undali,
+    // share option undali" — full rewrite): one row per absence date now
+    // (not grouped into a comma-list), with Weekday/Day-Type/Reason
+    // columns, PLUS a compact employee-wise totals table above it for
+    // the at-a-glance summary — and an Export/Share button (Excel/PDF/
+    // Image/Print) reusing the same box-export system used everywhere
+    // else in this portal, rather than a separate one-off share button.
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div class="card" style="flex:1;text-align:center;padding:12px;background:var(--red-bg,#fdecea);margin:0;margin-right:8px;">
+        <div style="font-size:20px;font-weight:800;color:var(--red,#b3261e);">${res.totalAbsentDays}</div>
+        <div style="font-size:10.5px;color:var(--text3);">TOTAL ABSENT-DAYS — ${res.monthLabel}</div>
+      </div>
+      <button class="btn-secondary" style="flex-shrink:0;" onclick="openBoxExportModal('adminMonthlyAbsentReportContent','Monthly Absent Report - ${res.monthLabel}')">📤 Export / Share</button>
     </div>`;
-    html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+
+    html += '<div id="adminMonthlyAbsentReportContent">';
+
+    html += `<div class="section-hdr" style="margin:4px 0 6px;"><span class="section-title2" style="font-size:12.5px;">Employee-wise Total</span></div>`;
+    html += `<div style="overflow-x:auto;margin-bottom:16px;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
       <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
         <th style="padding:6px 8px;">Employee</th>
         <th style="padding:6px 8px;">Department</th>
-        <th style="padding:6px 8px;">Absent Dates</th>
-        <th style="padding:6px 8px;">Days</th>
+        <th style="padding:6px 8px;">Total Absent Days</th>
       </tr></thead><tbody>`;
-    res.rows.forEach(r => {
+    (res.summary || []).forEach(s => {
       html += `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;font-weight:600;">${r.employee}</td>
-        <td style="padding:6px 8px;">${r.department || '—'}</td>
-        <td style="padding:6px 8px;">${(r.dates || []).join(', ')}</td>
-        <td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--red,#b3261e);">${r.count}</td>
+        <td style="padding:6px 8px;font-weight:600;">${s.employee}</td>
+        <td style="padding:6px 8px;">${s.department || '—'}</td>
+        <td style="padding:6px 8px;font-weight:700;color:var(--red,#b3261e);">${s.count}</td>
       </tr>`;
     });
     html += '</tbody></table></div>';
+
+    html += `<div class="section-hdr" style="margin:4px 0 6px;"><span class="section-title2" style="font-size:12.5px;">Day-wise Detail</span></div>`;
+    html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
+        <th style="padding:6px 8px;">Employee</th>
+        <th style="padding:6px 8px;">Date</th>
+        <th style="padding:6px 8px;">Weekday</th>
+        <th style="padding:6px 8px;">Full/Half</th>
+        <th style="padding:6px 8px;">MIS Entry Reason</th>
+      </tr></thead><tbody>`;
+    res.entries.forEach(r => {
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:6px 8px;font-weight:600;white-space:nowrap;">${r.employee}</td>
+        <td style="padding:6px 8px;white-space:nowrap;">${r.date}</td>
+        <td style="padding:6px 8px;white-space:nowrap;">${r.weekday}</td>
+        <td style="padding:6px 8px;white-space:nowrap;">${r.dayType}</td>
+        <td style="padding:6px 8px;">${r.reason}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div></div>';
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
@@ -10471,6 +10504,7 @@ function openBoxExportModal(boxId, title) {
     <div class="btn-grid-2">
       <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','excel')">📗 Excel</button>
       <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','pdf')">📕 PDF</button>
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="runBoxExport('${boxId}','${escJs(title)}','image')">🖼️ Share as Image</button>
       <button class="btn-primary" onclick="runBoxExport('${boxId}','${escJs(title)}','print')">🖨️ Print</button>
       <button class="btn-secondary" onclick="document.getElementById('reportChoiceModal').remove()">Cancel</button>
     </div>
@@ -10483,6 +10517,44 @@ function runBoxExport(boxId, title, format) {
   if (modal) modal.remove();
   const box = document.getElementById(boxId);
   if (!box) return;
+  // v-add (BRO: "ikada ichina image part matrame image laga share
+  // avali" — share JUST the visible report box, not the whole page):
+  // reuses the exact same capture-then-share/download pattern already
+  // proven for the Loyalty Card image share (shareLoyaltyCard above),
+  // and the same scroller-widening trick the PDF path below already
+  // uses so a horizontally-scrollable table captures in full rather
+  // than getting clipped to whatever fit on screen.
+  if (format === 'image') {
+    const scrollersImg = Array.from(box.querySelectorAll('*')).filter(el => el.scrollWidth > el.clientWidth + 2);
+    scrollersImg.push(box);
+    const savedImg = scrollersImg.map(el => ({ el, overflow: el.style.overflow, width: el.style.width }));
+    scrollersImg.forEach(el => { el.style.overflow = 'visible'; el.style.width = 'max-content'; });
+    const restoreImg = () => savedImg.forEach(s => { s.el.style.overflow = s.overflow; s.el.style.width = s.width; });
+    const prevScrollLeftImg = box.scrollLeft;
+    box.scrollLeft = 0;
+    html2canvas(box, {
+      scale: 2, backgroundColor: '#ffffff',
+      width: box.scrollWidth, height: box.scrollHeight,
+      windowWidth: box.scrollWidth, windowHeight: box.scrollHeight
+    }).then(canvas => {
+      box.scrollLeft = prevScrollLeftImg;
+      restoreImg();
+      const fileName = title.replace(/[^\w\- ]/g, '') + '.png';
+      canvas.toBlob(blob => {
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: title }).catch(() => {});
+        } else {
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          toast('Sharing not supported on this browser — image downloaded instead', 'info');
+        }
+      });
+    }).catch(() => { box.scrollLeft = prevScrollLeftImg; restoreImg(); toast('Image generation failed', 'error'); });
+    return;
+  }
   if (format === 'print') {
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
