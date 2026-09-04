@@ -2314,7 +2314,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
          — employee sees ONLY their own calls, no employee filter here. -->
     <div class="page-section" id="emp-leads-conversions">
       <div class="section-hdr"><span class="section-title2">📈 My Conversion Tracking</span>
-        <button class="btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="loadLeadConversions('emp')">🔄</button>
+        <span onclick="loadLeadConversions('emp')" title="Refresh" style="cursor:pointer;font-size:15px;padding:2px 4px;">🔄</span>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <input type="date" id="convFrom-emp" onchange="loadLeadConversions('emp')" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
@@ -3349,7 +3349,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <!-- v-add (BRO's Call → Store Visit → Conversion Tracking feature) -->
     <div class="page-section" id="admin-leads-conversions">
       <div class="section-hdr"><span class="section-title2">📈 Conversion Tracking — All Employees</span>
-        <button class="btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="loadLeadConversions('admin')">🔄</button>
+        <span onclick="loadLeadConversions('admin')" title="Refresh" style="cursor:pointer;font-size:15px;padding:2px 4px;">🔄</span>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
         <select id="convEmpFilter-admin" class="uniform-select" style="flex:1;min-width:160px;" onchange="loadLeadConversions('admin')">
