@@ -15473,11 +15473,16 @@ function loadLoyaltyCardIssues() {
       });
     }
     if (res.missing.length) {
-      html += `<div class="kd-note" style="font-weight:700;color:var(--orange);margin-top:10px;">❓ Missing Card Numbers (${res.missing.length})</div>`;
+      // v-fix: matches the backend's new gap-in-sequence data shape —
+      // {cardType, rangeStart, rangeEnd, missingNumbers: [...]} per
+      // plan type, instead of the old "blank cell" per-row shape.
+      const totalGaps = res.missing.reduce((sum, m) => sum + m.missingNumbers.length, 0);
+      html += `<div class="kd-note" style="font-weight:700;color:var(--orange);margin-top:10px;">❓ Missing Card Numbers — Gaps in Sequence (${totalGaps})</div>`;
       res.missing.forEach(m => {
         html += `<div class="kd-card kd-danger">
-          <div class="kd-head"><span class="kd-name">Row ${m.row}</span><span class="kd-pill red">No Card No</span></div>
-          <div class="kd-note" style="margin:0;">👤 ${m.employee || '—'} — 🧑 ${m.customer || '—'}</div>
+          <div class="kd-head"><span class="kd-name">${m.cardType}</span><span class="kd-pill red">${m.missingNumbers.length} missing</span></div>
+          <div class="kd-note" style="margin:0;">Range issued: ${m.rangeStart} – ${m.rangeEnd}</div>
+          <div class="kd-note" style="margin:0;font-weight:700;">Never issued: ${m.missingNumbers.join(', ')}</div>
         </div>`;
       });
     }
