@@ -1050,10 +1050,25 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    where 2 or 3 action buttons sit together. Each button shrinks to fit
    its own text on one line (no wrapping) instead of stretching
    full-width and stacking vertically. */
-.btn-row { display: flex; gap: 8px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+/* v-fix (BRO: "Flag Number button chudu" — traced to the actual root
+   cause rather than patching this one button): .btn-primary/.btn-
+   secondary both default to width:100%, meant for a single standalone
+   button. Inside .btn-row's flex layout, THREE such buttons (Submit /
+   Cancel / Flag this Number) each fighting for 100% get forced to
+   share the row and shrink below their own text's natural width —
+   exactly the "Flag this Number" truncation/squish this report was
+   about, and it applies to every .btn-row with 2+ buttons anywhere in
+   this file, not just this one screen. Sized by content instead:
+   auto width, no shrinking below what the text needs, and flex-wrap on
+   the row above lets buttons drop to a new line on a narrow screen
+   rather than ever compressing past readability. */
+.btn-row > .btn-primary, .btn-row > .btn-secondary, .btn-row > .btn-report {
+  width: auto; flex: 0 1 auto; white-space: nowrap; padding-left: 16px; padding-right: 16px;
+}
 .btn-row > button {
-  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-size: 12.5px; padding: 9px 6px;
+  flex: 0 1 auto; min-width: 0; white-space: nowrap;
+  font-size: 12.5px; padding: 9px 12px;
 }
 @media (max-width: 380px) {
   .btn-row { flex-wrap: wrap; }
@@ -2966,7 +2981,24 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📋 Monthly Absent Report</span>
         <span onclick="loadMonthlyAbsentReport()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
       </div>
-      <input type="month" id="absentReportMonth" onchange="loadMonthlyAbsentReport()" style="width:100%;margin-bottom:10px;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
+      <!-- v-fix (BRO: "This Month / Running Month / Customized Month —
+           month based only, no From/To date range"): three buttons
+           instead of a bare month-picker. "This Month" and "Running
+           Month" both resolve to the current calendar month (BRO listed
+           them as two separate options; for a MONTHLY report there is
+           no meaningful difference between them the way "Today" vs
+           "Running Month" differs for a DAILY report elsewhere in this
+           portal — both are kept as separate buttons exactly as
+           specified rather than assuming BRO meant to merge them).
+           "Customized Month" reveals a single <input type="month">
+           picker — a full calendar month (1st to last day), never a
+           date-range. -->
+      <div class="filter-bar" style="margin-bottom:8px;">
+        <button class="filter-btn active" id="absentModeThisMonth" onclick="setAbsentReportMode('this')">📅 This Month</button>
+        <button class="filter-btn" id="absentModeRunningMonth" onclick="setAbsentReportMode('running')">🗓️ Running Month</button>
+        <button class="filter-btn" id="absentModeCustom" onclick="setAbsentReportMode('custom')">🔍 Customized Month</button>
+      </div>
+      <input type="month" id="absentReportMonth" onchange="loadMonthlyAbsentReport()" style="display:none;width:100%;margin-bottom:10px;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
       <div id="adminMonthlyAbsentBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -7732,6 +7764,29 @@ function renderTrend() {
 // ══════════════════════════════════════
 // v-add (BRO's Monthly Absent Report — salary deduction identification):
 // defaults to the current running month if no month is picked yet.
+// v-fix (BRO: "This Month / Running Month / Customized Month — month
+// based only") — mode-toggle for the three filter buttons. 'this' and
+// 'running' both resolve to the current calendar month (see the HTML
+// comment above these buttons for why); 'custom' reveals the month
+// picker so any other month can be chosen, always a full calendar
+// month (1st through last day) — never a date-range.
+function setAbsentReportMode(mode) {
+  ['this', 'running', 'custom'].forEach(m => {
+    const btn = document.getElementById('absentMode' + (m === 'this' ? 'ThisMonth' : m === 'running' ? 'RunningMonth' : 'Custom'));
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  const monthInp = document.getElementById('absentReportMonth');
+  if (mode === 'custom') {
+    monthInp.style.display = '';
+    if (!monthInp.value) { const now = new Date(); monthInp.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'); }
+  } else {
+    monthInp.style.display = 'none';
+    const now = new Date();
+    monthInp.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  }
+  loadMonthlyAbsentReport();
+}
+
 async function loadMonthlyAbsentReport() {
   const box = document.getElementById('adminMonthlyAbsentBox');
   const monthInp = document.getElementById('absentReportMonth');
@@ -7750,56 +7805,34 @@ async function loadMonthlyAbsentReport() {
       box.innerHTML = `<div class="empty-state"><p>✅ No absences recorded for ${res.monthLabel || 'this month'}.</p></div>`;
       return;
     }
-    // v-fix (BRO: "multiple absent unte multiple lines ravali, full or
-    // half, weekday, mis entry reason undali, emp wise total days undali,
-    // share option undali" — full rewrite): one row per absence date now
-    // (not grouped into a comma-list), with Weekday/Day-Type/Reason
-    // columns, PLUS a compact employee-wise totals table above it for
-    // the at-a-glance summary — and an Export/Share button (Excel/PDF/
-    // Image/Print) reusing the same box-export system used everywhere
-    // else in this portal, rather than a separate one-off share button.
-    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="card" style="flex:1;text-align:center;padding:12px;background:var(--red-bg,#fdecea);margin:0;margin-right:8px;">
-        <div style="font-size:20px;font-weight:800;color:var(--red,#b3261e);">${res.totalAbsentDays}</div>
-        <div style="font-size:10.5px;color:var(--text3);">TOTAL ABSENT-DAYS — ${res.monthLabel}</div>
-      </div>
-      <button class="btn-secondary" style="flex-shrink:0;" onclick="openBoxExportModal('adminMonthlyAbsentReportContent','Monthly Absent Report - ${res.monthLabel}')">📤 Export / Share</button>
+    // v-fix (BRO: "remove Employee-wise Total, ONE clean table only,
+    // remove MIS Entry Reason, show ONLY the actual comment" — full
+    // rewrite of the previous two-table layout into exactly one table):
+    // Employee | Department | Date | Weekday | Full/Half Day | Comment.
+    // Export/Share reuses the same box-export system used everywhere
+    // else in this portal rather than a separate one-off share button.
+    let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <button class="btn-secondary" style="width:auto;padding-left:16px;padding-right:16px;" onclick="openBoxExportModal('adminMonthlyAbsentReportContent','Monthly Absent Report - ${res.monthLabel}')">📤 Export / Share</button>
     </div>`;
 
     html += '<div id="adminMonthlyAbsentReportContent">';
-
-    html += `<div class="section-hdr" style="margin:4px 0 6px;"><span class="section-title2" style="font-size:12.5px;">Employee-wise Total</span></div>`;
-    html += `<div style="overflow-x:auto;margin-bottom:16px;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-      <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
-        <th style="padding:6px 8px;">Employee</th>
-        <th style="padding:6px 8px;">Department</th>
-        <th style="padding:6px 8px;">Total Absent Days</th>
-      </tr></thead><tbody>`;
-    (res.summary || []).forEach(s => {
-      html += `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;font-weight:600;">${s.employee}</td>
-        <td style="padding:6px 8px;">${s.department || '—'}</td>
-        <td style="padding:6px 8px;font-weight:700;color:var(--red,#b3261e);">${s.count}</td>
-      </tr>`;
-    });
-    html += '</tbody></table></div>';
-
-    html += `<div class="section-hdr" style="margin:4px 0 6px;"><span class="section-title2" style="font-size:12.5px;">Day-wise Detail</span></div>`;
     html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
       <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
         <th style="padding:6px 8px;">Employee</th>
+        <th style="padding:6px 8px;">Department</th>
         <th style="padding:6px 8px;">Date</th>
         <th style="padding:6px 8px;">Weekday</th>
-        <th style="padding:6px 8px;">Full/Half</th>
-        <th style="padding:6px 8px;">MIS Entry Reason</th>
+        <th style="padding:6px 8px;">Full/Half Day</th>
+        <th style="padding:6px 8px;">Comment</th>
       </tr></thead><tbody>`;
     res.entries.forEach(r => {
       html += `<tr style="border-bottom:1px solid var(--border);">
         <td style="padding:6px 8px;font-weight:600;white-space:nowrap;">${r.employee}</td>
+        <td style="padding:6px 8px;white-space:nowrap;">${r.department || '—'}</td>
         <td style="padding:6px 8px;white-space:nowrap;">${r.date}</td>
         <td style="padding:6px 8px;white-space:nowrap;">${r.weekday}</td>
         <td style="padding:6px 8px;white-space:nowrap;">${r.dayType}</td>
-        <td style="padding:6px 8px;">${r.reason}</td>
+        <td style="padding:6px 8px;">${r.comment}</td>
       </tr>`;
     });
     html += '</tbody></table></div></div>';
@@ -7823,7 +7856,7 @@ function loadBackendSheetsPage() {
   ];
   box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;">` +
     links.map(l =>
-      `<button class="btn-secondary" style="text-align:left;padding:6px 9px;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="window.open('${l.url}', '_blank')" title="${l.label}">📄 ${l.label}</button>`
+      `<button class="btn-secondary" style="text-align:left;padding:6px 9px;font-size:11.5px;white-space:normal;line-height:1.3;" onclick="window.open('${l.url}', '_blank')" title="${l.label}">📄 ${l.label}</button>`
     ).join('') + `</div>`;
 }
 
