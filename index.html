@@ -13462,12 +13462,22 @@ async function loadAdminLeadsReport(startDate, endDate) {
     const rangeLabel = startDate === endDate ? startDate : (startDate + ' \u2192 ' + endDate);
     const rows = res.rows.slice().sort((a, b) => b.completionPct - a.completionPct);
     let html = `<div class="kd-note" style="font-weight:700;">📅 ${rangeLabel}</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
-      '<th style="text-align:left;">Employee</th><th>Assigned</th><th>Submitted</th><th>Pending</th><th>Avoided</th><th>%</th></tr></thead><tbody>';
+      '<th style="text-align:left;">Employee</th><th>Assigned</th><th>Submitted</th><th>Pending</th><th>Avoided</th><th>Flagged</th><th>%</th></tr></thead><tbody>';
     rows.forEach(r => {
       const pctColor = r.completionPct >= 80 ? '#1a7a4f' : r.completionPct >= 40 ? '#c97a10' : '#c0392b';
+      // v-add (BRO: "report lo auto avoid ainidi ani chupinchali, flag
+      // number lu enni aindo kuda chupinchali"): Avoided now breaks down
+      // auto (day-close) vs manual (admin click) in a small subtitle
+      // line under the count, rather than a separate column — keeps the
+      // table from getting too wide on mobile while still showing both
+      // numbers BRO asked for.
+      const avoidedSub = (r.avoidedAuto || r.avoidedManual)
+        ? `<div style="font-size:9.5px;color:var(--text3);font-weight:400;">${r.avoidedAuto || 0} auto · ${r.avoidedManual || 0} manual</div>` : '';
       html += `<tr><td style="text-align:left;font-weight:700;">${r.employee}</td><td style="text-align:center;">${r.assigned}</td>` +
         `<td style="text-align:center;">${r.submitted}</td><td style="text-align:center;">${r.pending}</td>` +
-        `<td style="text-align:center;">${r.avoided}</td><td style="text-align:center;color:${pctColor};font-weight:800;">${r.completionPct}%</td></tr>`;
+        `<td style="text-align:center;">${r.avoided}${avoidedSub}</td>` +
+        `<td style="text-align:center;">${r.flagged || 0}</td>` +
+        `<td style="text-align:center;color:${pctColor};font-weight:800;">${r.completionPct}%</td></tr>`;
     });
     html += '</tbody></table></div>';
     // Status break-up per employee, below the table.
