@@ -10334,7 +10334,7 @@ function loadKpiTarget(who) {
 // employees (who only ever see their own single row) keep the card
 // view (kpiRowCardHtml) since a whole wide table for one row adds
 // nothing.
-function kpiTableHtml(rows) {
+function kpiTableHtml(rows, storeTotal) {
   const fmtScore = v => { const n = Number(v); return isNaN(n) ? v : n.toFixed(2); };
   const head = `<tr>
     <th>Place</th><th>Employee</th><th>Grade</th><th>Performance</th><th>Overall</th><th>Deals</th>
@@ -10361,13 +10361,32 @@ function kpiTableHtml(rows) {
     <td>${r.dsrOnTime}</td><td>${r.dsrLate}</td><td>${r.dsrNoEntry}</td><td>${r.dsrScore}</td>
     <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.lastUpdated}</td>
   </tr>`).join('');
+  // v-add (BRO: "all employee data kalipithe store data, ade kavali
+  // naku" — a genuinely computed combined-store row, not the sheet's own
+  // unrelated "Criteria/Component" analysis block that used to leak into
+  // this same table): only the columns that are meaningfully additive
+  // across people (Deals, Purchases, Loyalty Cards, Golden Aura, DSR
+  // On-Time/Late/No-Entry) are filled in — per-employee ratios like
+  // Grade or an Ach% don't mean anything summed across the whole team,
+  // so those cells are left as "—" rather than showing a misleading
+  // number. Admin-only (storeTotal arrives null for employees, same
+  // privacy boundary the per-row filtering already applies).
+  const storeTotalRow = storeTotal ? `<tr style="background:var(--purple-bg,#f3e8ff);font-weight:800;border-top:2px solid var(--purple);">
+    <td>—</td><td style="text-align:left;">🏪 ${storeTotal.employee}</td><td>—</td><td>—</td>
+    <td>—</td><td>${storeTotal.deals}</td>
+    <td>—</td><td>${storeTotal.purchases}</td><td>—</td><td>—</td><td>—</td><td>—</td>
+    <td>—</td><td>${storeTotal.loyaltyCards}</td><td>—</td><td>—</td>
+    <td>—</td><td>${storeTotal.goldenAura}</td><td>—</td><td>—</td>
+    <td>${storeTotal.dsrOnTime}</td><td>${storeTotal.dsrLate}</td><td>${storeTotal.dsrNoEntry}</td><td>—</td>
+    <td>—</td>
+  </tr>` : '';
   // v-fix: min-width lives in its own class (kpi-report-table-minw) now
   // instead of an inline style, so print CSS can override it with a
   // plain class-selector rule — inline styles otherwise beat everything
   // except !important, which made the printed table impossible to
   // shrink to one page width.
   return `<div class="dh-table-wrap kpi-fit-wrap scroll-x-visible" style="overflow-x:auto;"><table class="dh-mini-table kpi-report-table kpi-report-table-minw">
-    <thead>${head}</thead><tbody>${body}</tbody>
+    <thead>${head}</thead><tbody>${body}${storeTotalRow}</tbody>
   </table></div>`;
 }
 
@@ -10517,7 +10536,7 @@ function loadKpiTillDate(who) {
       </div>`;
     }
     if (who === 'admin' && res.rows.length > 1) {
-      html += kpiTableHtml(res.rows);
+      html += kpiTableHtml(res.rows, res.storeTotal);
     } else {
       res.rows.forEach(r => html += kpiRowCardHtml(r));
     }
@@ -10571,7 +10590,7 @@ function loadKpiMonthly(who) {
       </div>`;
     }
     if (who === 'admin' && res.rows.length > 1) {
-      html += kpiTableHtml(res.rows);
+      html += kpiTableHtml(res.rows, res.storeTotal);
     } else {
       res.rows.forEach(r => html += kpiRowCardHtml(r));
     }
