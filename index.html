@@ -12744,8 +12744,18 @@ function renderEmpLeadsPendingTable() {
     // repeat one. Uses leadTag/lastStatus/lastCalledDate exactly as the
     // backend already tracks them (Pending Leads sheet) — nothing here
     // is guessed or invented.
+    // v-fix (BRO's Avoided-Pool-Priority, Rule 4 — "must NOT make it
+    // appear as if newly issued for the first time"): this only ever
+    // recognized "Retry" leads — a reassigned Avoided lead (leadTag =
+    // "↩️ Reassigned (Previously Avoided)") fell through to the "🆕
+    // Fresh" branch below, exactly the confusion Rule 4 exists to
+    // prevent. Distinct label + color from Retry so the two reasons a
+    // lead is showing up again aren't visually confused with each other.
     const isRetryLead = (l.leadTag || '').indexOf('Retry') > -1;
-    const subLine = isRetryLead
+    const isAvoidedLead = (l.leadTag || '').indexOf('Avoided') > -1;
+    const subLine = isAvoidedLead
+      ? `<span style="color:var(--purple,#6b21a8);">↩️ Last Issued: ${l.lastCalledDate || '-'} · Previous Status: Avoided</span>`
+      : isRetryLead
       ? `<span style="color:var(--orange,#c97a10);">🔁 Last Sent: ${l.lastCalledDate || '-'}${l.lastStatus ? ' · ' + l.lastStatus : ''}</span>`
       : `<span style="color:var(--green);">🆕 Fresh</span>`;
     // Event lead (birthday/anniversary, next 2 days) — red/pink for
