@@ -1769,6 +1769,17 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
           </select>
         </div>
+
+        <!-- v-add (BRO's Multi-Segment Leave feature — "each date its
+             own Full/Half mode", confirmed multi-segment-form option in
+             discussion): the fields above remain segment #1, completely
+             unchanged — every existing onLeaveTypeChange/calcDays/
+             onModeChange/conflict-check keeps working on it exactly as
+             before. Extra segments (for a request spanning, say, one
+             Full Day and one separate Half Day) get added here. -->
+        <div id="applyExtraSegments"></div>
+        <button type="button" class="btn-secondary" style="width:auto;padding:8px 14px;font-size:12.5px;margin-bottom:14px;" onclick="addLeaveSegment()">➕ Add Another Date (different Full/Half Day)</button>
+
         <div class="form-row" id="authorityRow" style="display:none;">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
             <input type="checkbox" id="applyAuthMetCheck" onchange="onAuthMetChange()" style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
@@ -2031,6 +2042,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="empQAKpiTarget" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
         <div class="quick-action-btn" id="empQAKpiTillDate" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="empQAKpiLastMonth" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
+        <div class="quick-action-btn" onclick="showEmpPage('kpi-trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My KPI Trend</div><div class="quick-action-sub">Score over the last few months</div></div>
         <div class="quick-action-btn" id="empQAKpiCompare" onclick="showEmpPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
         <div class="quick-action-btn" id="empQAKpiRules" onclick="showEmpPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
@@ -2054,6 +2066,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final)</span></div>
       <button class="export-icon-btn" id="exportBtn-kpiMonthlyBox-emp" style="display:none;" onclick="openBoxExportModal('kpiMonthlyBox-emp','Last Month KPI')" title="Export">📥</button>
       <div class="card"><div id="kpiMonthlyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <!-- v-add (BRO's KPI Trend Chart feature) -->
+    <div class="page-section" id="emp-kpi-trend">
+      <div class="section-hdr"><span class="section-title2">📈 My KPI Trend</span></div>
+      <div class="card"><div id="kpiTrendBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <div class="page-section" id="emp-walkins">
@@ -2415,6 +2433,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
           <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('today-glance')"><span class="quick-action-icon">🖥️</span><div class="quick-action-label">Today at a Glance</div><div class="quick-action-sub">Leads, DSR, Stock, Absent, Loyalty — today</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -2985,6 +3004,24 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="adminMonthlyAbsentBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
+    <!-- v-add (BRO's Customer 360° View feature) -->
+    <div class="page-section" id="admin-customer-360">
+      <div class="section-hdr"><span class="section-title2">🔍 Customer 360°</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="tel" id="c360MobileInput" placeholder="Enter 10-digit mobile number" maxlength="10" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
+        <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360()">🔍 Search</button>
+      </div>
+      <div id="customer360Box"><div class="empty-state"><p>Enter a customer's mobile number to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
+    </div>
+
+    <!-- v-add (BRO's Admin "Today at a Glance" Command Center feature) -->
+    <div class="page-section" id="admin-today-glance">
+      <div class="section-hdr"><span class="section-title2">🖥️ Today at a Glance</span>
+        <span onclick="loadTodayGlance()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
+      </div>
+      <div id="todayGlanceBox"><div class="loading"><span class="spinner"></span>Loading today's summary...</div></div>
+    </div>
+
     <!-- ══════════════ KPI SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
@@ -2994,6 +3031,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQAKpiTarget" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
         <div class="quick-action-btn" id="adminQAKpiTillDate" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQAKpiLastMonth" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('kpi-trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">KPI Trend</div><div class="quick-action-sub">Employee-wise score over months</div></div>
         <div class="quick-action-btn" id="adminQAKpiCompare" onclick="showAdminPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
         <div class="quick-action-btn" id="adminQAKpiRules" onclick="showAdminPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
@@ -3017,6 +3055,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🏁 Last Month KPI (Final) — All Employees</span></div>
       <button class="export-icon-btn" id="exportBtn-kpiMonthlyBox-admin" style="display:none;" onclick="openBoxExportModal('kpiMonthlyBox-admin','Last Month KPI')" title="Export">📥</button>
       <div class="card"><div id="kpiMonthlyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+    <!-- v-add (BRO's KPI Trend Chart feature) -->
+    <div class="page-section" id="admin-kpi-trend">
+      <div class="section-hdr"><span class="section-title2">📈 KPI Trend — Employee-wise</span></div>
+      <select id="kpiTrendEmpSelect-admin" class="uniform-select" style="width:100%;margin-bottom:10px;" onchange="renderKpiTrendChart('admin')"></select>
+      <div class="card"><div id="kpiTrendBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-compare">
       <div class="section-hdr"><span class="section-title2">📈 Month / Date Comparison — All Employees</span></div>
@@ -3371,6 +3415,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
     <div class="page-section" id="admin-leads-quota">
       <div class="section-hdr"><span class="section-title2">🎯 Daily Lead Quota — Per Employee</span></div>
+      <!-- v-add (BRO: "10 rojula not connecting enni unnayo REPORT ga
+           chupinchali" — informational only, doesn't change the
+           existing 10/employee/day retry cap). -->
+      <div id="retryCountInfoBox" style="margin-bottom:10px;"></div>
       <div id="adminLeadsQuotaBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -3426,6 +3474,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
@@ -5124,6 +5173,7 @@ function showEmpPage(page, opts) {
   if(page==='kpi-tilldate') initKpiTillDatePage('emp');
   if(page==='walkins') initWalkinTrackPage('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
+  if(page==='kpi-trend') loadKpiTrend('emp');
   if(page==='kpi-compare') loadKpiCompare('emp');
   if(page==='dsr') loadDsrHighlights('emp');
   if(page==='dsr-today') loadDsrToday('emp');
@@ -5693,6 +5743,96 @@ function calcDays() {
   }
 }
 
+// ============================================================
+// v-add (BRO's Multi-Segment Leave feature): segment #1 stays the
+// existing applyStartDate/applyEndDate/applyLeaveMode/applyHalfDay
+// fields, completely untouched — these dynamically-added rows are
+// EXTRA segments only, each a self-contained mini date-range + mode
+// picker. __leaveSegCount tracks how many have been added so each gets
+// a unique id (segment 0 is reserved for the original fields, so these
+// start at 1).
+// ============================================================
+let __leaveSegCount = 0;
+
+function addLeaveSegment() {
+  __leaveSegCount++;
+  const idx = __leaveSegCount;
+  const container = document.getElementById('applyExtraSegments');
+  const row = document.createElement('div');
+  row.id = 'leaveSeg-' + idx;
+  row.style.cssText = 'border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:10px;position:relative;background:var(--bg);';
+  row.innerHTML = `
+    <button type="button" onclick="removeLeaveSegment(${idx})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;">✕</button>
+    <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">ADDITIONAL DATE ${idx}</div>
+    <div class="form-2col">
+      <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="applySegStart-${idx}" onchange="calcLeaveSegDays(${idx})"></div>
+      <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="applySegEnd-${idx}" onchange="calcLeaveSegDays(${idx})"></div>
+    </div>
+    <div class="form-row"><label>Leave Mode *</label>
+      <select id="applySegMode-${idx}" onchange="onLeaveSegModeChange(${idx})">
+        <option value="Full Day">Full Day</option>
+        <option value="Half Day">Half Day</option>
+      </select>
+    </div>
+    <div class="form-row" id="applySegHalfRow-${idx}" style="display:none;"><label>Half Day Slot</label>
+      <select id="applySegHalf-${idx}">
+        <option value="First Half (Morning)">First Half (Morning)</option>
+        <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
+      </select>
+    </div>
+    <div id="applySegDaysInfo-${idx}" style="font-size:11.5px;color:var(--text3);"></div>
+  `;
+  container.appendChild(row);
+}
+
+function removeLeaveSegment(idx) {
+  const row = document.getElementById('leaveSeg-' + idx);
+  if (row) row.remove();
+}
+
+function onLeaveSegModeChange(idx) {
+  const mode = document.getElementById('applySegMode-' + idx).value;
+  const halfRow = document.getElementById('applySegHalfRow-' + idx);
+  const sEl = document.getElementById('applySegStart-' + idx), eEl = document.getElementById('applySegEnd-' + idx);
+  halfRow.style.display = mode === 'Half Day' ? '' : 'none';
+  if (mode === 'Half Day' && sEl.value) eEl.value = sEl.value; // same-day rule mirrors segment #1's own existing rule
+  calcLeaveSegDays(idx);
+}
+
+function calcLeaveSegDays(idx) {
+  const s = document.getElementById('applySegStart-' + idx).value, e = document.getElementById('applySegEnd-' + idx).value;
+  const info = document.getElementById('applySegDaysInfo-' + idx);
+  if (!s || !e) { info.textContent = ''; return; }
+  const mode = document.getElementById('applySegMode-' + idx).value;
+  if (mode === 'Half Day' && s !== e) { document.getElementById('applySegEnd-' + idx).value = s; info.textContent = '⚠️ Half Day must be a single date — end date matched to start.'; return; }
+  const days = mode === 'Half Day' ? 0.5 : (Math.round((new Date(e) - new Date(s)) / 86400000) + 1);
+  info.textContent = days + ' day(s)';
+}
+
+// Collects segment #1 (the original, unchanged fields) plus every
+// dynamically-added extra segment still present in the DOM, in the
+// exact {startDate, endDate, leaveMode, halfDay} shape
+// handleMultiSegmentLeaveSubmit expects server-side.
+function collectLeaveSegments() {
+  const segs = [{
+    startDate: document.getElementById('applyStartDate').value,
+    endDate: document.getElementById('applyEndDate').value,
+    leaveMode: document.getElementById('applyLeaveMode').value,
+    halfDay: document.getElementById('applyLeaveMode').value === 'Half Day' ? document.getElementById('applyHalfDay').value : ''
+  }];
+  document.querySelectorAll('#applyExtraSegments > div').forEach(row => {
+    const idx = row.id.replace('leaveSeg-', '');
+    const s = document.getElementById('applySegStart-' + idx), e = document.getElementById('applySegEnd-' + idx);
+    if (!s || !s.value || !e.value) return; // an incomplete extra row is silently skipped rather than blocking submission
+    segs.push({
+      startDate: s.value, endDate: e.value,
+      leaveMode: document.getElementById('applySegMode-' + idx).value,
+      halfDay: document.getElementById('applySegMode-' + idx).value === 'Half Day' ? document.getElementById('applySegHalf-' + idx).value : ''
+    });
+  });
+  return segs;
+}
+
 async function submitLeave() {
   if(!document.getElementById('ackNotices').checked) {
     toast('Please tick "I have read and understood the notices" first', 'error');
@@ -5737,6 +5877,27 @@ async function submitLeave() {
     startDate: sd, endDate: ed, leaveType: lt, leaveMode: lm, halfDay: hd, authorityMet: authMet,
     authorityName: authWho, purpose: purpose, leaveAddress: address
   };
+
+  // v-add (BRO's Multi-Segment Leave feature): segment #1's own
+  // start/end/mode already validated above stays exactly as it was —
+  // this only ADDS extra segments on top when "Add Another Date" was
+  // used, switching the submit target to the new multi-segment endpoint
+  // ONLY when there's actually more than one. A single-segment
+  // application (still the overwhelming majority of submissions) goes
+  // through the untouched original path below, including its existing
+  // offline-queue support.
+  const allSegs = collectLeaveSegments();
+  if (allSegs.length > 1) {
+    for (let i = 1; i < allSegs.length; i++) {
+      const s = allSegs[i];
+      if (!s.startDate || !s.endDate) { toast('Please fill in all added date ranges, or remove the empty one', 'error'); return; }
+      if (s.endDate < s.startDate) { toast('Additional Date ' + i + ': end date cannot be before start date', 'error'); return; }
+    }
+    data.page = 'submitMultiSegmentLeaveAPI';
+    data.segments = JSON.stringify(allSegs);
+    data.isMultiSegment = true;
+  }
+
   window.__leavePendingData = data;
   leaveShowPreview(data);
 }
@@ -5750,14 +5911,23 @@ function leaveShowPreview(d) {
   const div = document.createElement('div');
   div.id = 'leavePreviewModal';
   div.className = 'modal-overlay show';
-  const days = (new Date(d.endDate) - new Date(d.startDate)) / 86400000 + 1;
+  // v-add (BRO's Multi-Segment Leave feature): shows every date range
+  // being submitted together, not just one — d.segments only exists
+  // when "Add Another Date" produced more than one, so a normal
+  // single-segment application's preview is completely unchanged.
+  const segsForPreview = d.isMultiSegment ? JSON.parse(d.segments) : [{ startDate: d.startDate, endDate: d.endDate, leaveMode: d.leaveMode, halfDay: d.halfDay }];
+  const segRows = segsForPreview.map((s, i) => {
+    const days = s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1);
+    return `<div class="dsr-meta-row">📅 ${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${days} day(s)</div>`;
+  }).join('');
+  const totalDays = segsForPreview.reduce((sum, s) => sum + (s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1)), 0);
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('leavePreviewModal').remove()" title="Close">✕</button>
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
-      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${d.leaveType}</span><span class="kd-pill gold">${d.leaveMode}${d.halfDay ? ' — ' + d.halfDay : ''}</span></div>
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${d.leaveType}</span><span class="kd-pill gold">${totalDays} day(s) total${segsForPreview.length > 1 ? ' — ' + segsForPreview.length + ' dates' : ''}</span></div>
       <div class="dsr-receipt-body">
         <div class="dsr-cust-name">${d.name}</div>
-        <div class="dsr-meta-row">📅 ${fmtDMY(d.startDate)} ${d.startDate !== d.endDate ? '→ ' + fmtDMY(d.endDate) : ''} &nbsp;·&nbsp; ${days} day(s)</div>
+        ${segRows}
         <div class="dsr-meta-row" style="border-bottom:none;">📝 <b>${d.purpose}</b>${d.leaveAddress ? '<br>📍 ' + d.leaveAddress : ''}${d.authorityMet === 'Yes' ? '<br>✅ Authority Met: ' + d.authorityName : ''}</div>
       </div>
     </div>
@@ -5886,7 +6056,25 @@ async function confirmSubmitLeave() {
   if (!data) { toast('Nothing to submit — please fill the form again', 'error'); return; }
 
   updateConnStatus();
-  if(!navigator.onLine) { submitLeaveOffline(data); return; }
+  if(!navigator.onLine) {
+    // v-add (BRO's Multi-Segment Leave feature): a multi-segment
+    // submission calls the SAME single-segment backend function
+    // multiple times server-side, in sequence — the existing offline
+    // queue was only ever built to replay ONE stored request, so
+    // queuing a multi-segment one here would silently only ever submit
+    // as segment #1 once back online. Simplest safe answer: require
+    // being online for this specific case, same as several other
+    // multi-step actions elsewhere in this portal already do, rather
+    // than building and testing a whole second offline-replay path for
+    // what should be a rare combination (offline AND multiple dates in
+    // one go).
+    if (data.isMultiSegment) {
+      toast('📴 Multiple dates in one request need an internet connection — please try again once you\'re back online, or submit them one at a time.', 'error');
+      return;
+    }
+    submitLeaveOffline(data);
+    return;
+  }
 
   const submitIdem = makeIdemKey(['submitleave', data.employeeNumber, data.startDate, data.endDate, data.leaveType, data.leaveMode]);
   if (isDuplicateSubmission(submitIdem)) { toast('Already submitting, please wait...', 'info'); return; }
@@ -5947,6 +6135,11 @@ function resetApplyForm() {
   document.getElementById('colleagueOnLeaveBox').style.display = 'none';
   document.getElementById('halfDayRow').style.display = 'none';
   document.getElementById('authorityRow').style.display = 'none';
+  // v-add (BRO's Multi-Segment Leave feature): clear any extra date
+  // rows too, so a fresh application doesn't inherit leftovers from
+  // whatever was just submitted.
+  document.getElementById('applyExtraSegments').innerHTML = '';
+  __leaveSegCount = 0;
 }
 function clearApplyForm() {
   const hasData = document.getElementById('applyLeaveType').value ||
@@ -7798,6 +7991,95 @@ function setAbsentReportMode(mode) {
   loadMonthlyAbsentReport();
 }
 
+// ============================================================
+// v-add (BRO's Customer 360° View feature): searches four SEPARATE
+// backends in parallel — Loyalty Card + Golden Aura (this same portal
+// backend, WEB_APP_URL), Leads (a different Apps Script project,
+// LEADS_WEB_APP_URL), and DSR (a third separate project, DSR_GAS_URL)
+// — then merges everything into one page. Each call is independently
+// wrapped so one backend being slow/down doesn't blank out the other
+// three; a section simply shows its own "could not load" if its own
+// call failed, the rest of the page still renders normally.
+// ============================================================
+// ============================================================
+// v-add (BRO's Admin "Today at a Glance" Command Center feature): four
+// backends called in parallel — portal backend (absent/loyalty/stock-
+// variance, all read directly by todayGlanceAPI), Leads (a separate
+// Apps Script project), and DSR (a third separate project) — same
+// resilient pattern as Customer 360: one backend being slow/down only
+// blanks its own card, not the whole page.
+// ============================================================
+async function loadTodayGlance() {
+  const box = document.getElementById('todayGlanceBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading today\'s summary...</div>';
+
+  const [portalRes, leadsRes, dsrRes] = await Promise.allSettled([
+    jsonp({ page: 'todayGlanceJSON' }),
+    leadsApiGet({ action: 'TODAY_GLANCE_COUNT' }),
+    fetch(DSR_GAS_URL + '?action=todayGlanceCount').then(r => r.json())
+  ]);
+  const okOrNull = r => (r.status === 'fulfilled' && r.value) ? r.value : null;
+  const portal = okOrNull(portalRes), leads = okOrNull(leadsRes), dsr = okOrNull(dsrRes);
+
+  const card = (icon, label, value, sub, failed) => `<div class="card" style="text-align:center;padding:14px 10px;">
+    <div style="font-size:24px;font-weight:800;">${failed ? '—' : value}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;">${icon} ${label}</div>
+    ${sub ? `<div style="font-size:9.5px;color:var(--text3);margin-top:2px;">${sub}</div>` : ''}
+  </div>`;
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px;">`;
+  html += card('📤', 'Leads Dispatched', leads ? leads.dispatchedToday : 0, 'today', !leads);
+  html += card('✅', 'Leads Submitted', leads ? leads.submittedToday : 0, 'today', !leads);
+  html += card('🧾', 'DSR Entries', dsr && dsr.status === 'success' ? dsr.count : 0, 'today', !dsr || dsr.status !== 'success');
+  html += card('⚠️', 'Stock Variance', portal ? portal.stockVarianceToday : 0, 'detected today', !portal);
+  html += card('💳', 'Loyalty Cards', portal ? portal.loyaltyToday : 0, 'issued today', !portal);
+  html += card('🔴', 'Absent Today', portal ? portal.absentToday.length : 0, '', !portal);
+  html += `</div>`;
+
+  if (portal && portal.absentToday && portal.absentToday.length) {
+    html += `<div class="kd-card"><div class="kd-head"><span class="kd-name">🔴 Absent Today</span></div>
+      ${portal.absentToday.map(n => `<div class="kd-note" style="margin:3px 0;">${n}</div>`).join('')}
+    </div>`;
+  }
+  box.innerHTML = html;
+}
+
+async function loadCustomer360() {
+  const raw = document.getElementById('c360MobileInput').value.trim();
+  const mobile = raw.replace(/\D/g, '');
+  const box = document.getElementById('customer360Box');
+  if (mobile.length !== 10) { toast('Enter a valid 10-digit mobile number', 'error'); return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Searching across Loyalty Card, Golden Aura, Leads, and DSR...</div>';
+
+  const [loyalty, goldenAura, leads, dsr] = await Promise.allSettled([
+    jsonp({ page: 'customer360LoyaltyJSON', mobile }),
+    jsonp({ page: 'customer360GoldenAuraJSON', mobile }),
+    leadsApiGet({ action: 'CUSTOMER_360_CALLS', mobile }),
+    fetch(DSR_GAS_URL + '?action=searchByMobile&mobile=' + mobile).then(r => r.json())
+  ]);
+
+  const okOrNull = r => (r.status === 'fulfilled' && r.value) ? r.value : null;
+  const loy = okOrNull(loyalty), ga = okOrNull(goldenAura), lead = okOrNull(leads), ds = okOrNull(dsr);
+
+  const section = (title, icon, items, renderItem, failed) => {
+    if (failed) return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span></div><p style="color:var(--text3);font-size:12px;">Could not load this section right now.</p></div>`;
+    if (!items || !items.length) return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span><span class="kd-pill">0</span></div><p style="color:var(--text3);font-size:12px;">No record found.</p></div>`;
+    return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span><span class="kd-pill gold">${items.length}</span></div>${items.map(renderItem).join('')}</div>`;
+  };
+
+  let html = `<div style="display:grid;gap:10px;">`;
+  html += section('Loyalty Card', '💳', loy ? loy.cards : null, c =>
+    `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${c.custName} — issued ${c.cardDate} by ${c.empName}</div>`, !loy);
+  html += section('Golden Aura', '🏆', ga ? ga.plans : null, p =>
+    `<div class="kd-note" style="margin:4px 0;">#${p.planNo} — ${p.planType} — ₹${p.amount} — ${p.custName} — enrolled ${p.enrollDate} by ${p.empName}</div>`, !ga);
+  html += section('Lead Call History', '📞', lead ? lead.calls : null, c =>
+    `<div class="kd-note" style="margin:4px 0;">${c.date} — ${c.employee} — <b>${c.status}</b>${c.feedback ? ' — ' + c.feedback : ''}</div>`, !lead);
+  html += section('DSR Purchases', '🛍️', ds ? ds.entries : null, en =>
+    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${en.employeeName} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => it.productName || it.silverItemName).filter(Boolean).join(', ') || '—'}</div>`, !ds);
+  html += `</div>`;
+  box.innerHTML = html;
+}
+
 async function loadMonthlyAbsentReport() {
   const box = document.getElementById('adminMonthlyAbsentBox');
   const monthInp = document.getElementById('absentReportMonth');
@@ -8261,6 +8543,7 @@ function showAdminPage(page, opts) {
   if(page==='kpi-target') loadKpiTarget('admin');
   if(page==='kpi-tilldate') initKpiTillDatePage('admin');
   if(page==='kpi-monthly') loadKpiMonthly('admin');
+  if(page==='kpi-trend') loadKpiTrend('admin');
   if(page==='kpi-compare') loadKpiCompare('admin');
   if(page==='dsr') loadDsrHighlights('admin');
   if(page==='dsr-today') loadDsrToday('admin');
@@ -8298,6 +8581,7 @@ function showAdminPage(page, opts) {
   if(page==='notices') loadNoticesForAdmin();
   if(page==='leads') loadAdminLeadsHome();
   if(page==='dashboard-hub') loadAdminDashboardHub();
+  if(page==='today-glance') loadTodayGlance();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
   if(page==='leads-report') initAdminLeadsReportPage();
@@ -10219,6 +10503,75 @@ function kpiEmpParams(who, extra) {
   const p = Object.assign({ role: who === 'admin' ? 'ADMIN' : 'EMP' }, extra || {});
   if (who === 'emp') p.empName = state.empName;
   return p;
+}
+
+// ============================================================
+// v-add (BRO's KPI Trend Chart feature): a small, dependency-free SVG
+// line chart — this portal doesn't load any charting library (only
+// html2canvas for exports), so a hand-rolled chart avoids pulling one
+// in just for this. `points` = [{month, score}, ...] in chronological
+// order. Only has data from whenever _archiveKpiSheetBeforeOverwrite_
+// started running (see its own comment) — an employee with, say, 2
+// months of history will correctly show a short 2-point line, not an
+// error; this is expected and grows one point longer each month.
+// ============================================================
+function kpiTrendSvg(points) {
+  if (!points || points.length < 2) {
+    return `<div class="empty-state"><p>${points && points.length === 1 ? 'Only one month of history so far — check back next month for a trend line.' : 'No KPI history yet.'}</p></div>`;
+  }
+  const W = 640, H = 220, padL = 40, padR = 20, padT = 20, padB = 30;
+  const scores = points.map(p => Number(p.score) || 0);
+  const minS = Math.min(...scores, 0), maxS = Math.max(...scores, 100);
+  const range = (maxS - minS) || 1;
+  const stepX = (W - padL - padR) / (points.length - 1);
+  const xAt = i => padL + i * stepX;
+  const yAt = s => H - padB - ((s - minS) / range) * (H - padT - padB);
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i).toFixed(1)} ${yAt(scores[i]).toFixed(1)}`).join(' ');
+  const dots = points.map((p, i) => `<circle cx="${xAt(i).toFixed(1)}" cy="${yAt(scores[i]).toFixed(1)}" r="4" fill="#6b21a8"></circle>
+    <text x="${xAt(i).toFixed(1)}" y="${(yAt(scores[i]) - 10).toFixed(1)}" font-size="11" font-weight="700" text-anchor="middle" fill="#6b21a8">${scores[i].toFixed(1)}</text>
+    <text x="${xAt(i).toFixed(1)}" y="${H - 8}" font-size="10" text-anchor="middle" fill="#888">${p.month.split(' ')[0].slice(0,3)}</text>`).join('');
+  // 80-point reference line (the "Overall Score must be >= 80" bar every EOM/KPI rule in this portal is built around)
+  const refY = yAt(80).toFixed(1);
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:640px;">
+    <line x1="${padL}" y1="${refY}" x2="${W - padR}" y2="${refY}" stroke="#ccc" stroke-dasharray="4,3"></line>
+    <text x="${W - padR}" y="${Number(refY) - 4}" font-size="9" text-anchor="end" fill="#aaa">80 target</text>
+    <path d="${pathD}" fill="none" stroke="#6b21a8" stroke-width="2.5"></path>
+    ${dots}
+  </svg>`;
+}
+
+async function loadKpiTrend(who) {
+  const box = document.getElementById('kpiTrendBox-' + who);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonpReliable(kpiEmpParams(who, { page: 'kpiTrendJSON' }));
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res.employees || !res.employees.length) { box.innerHTML = '<div class="empty-state"><p>No KPI history yet — this builds up automatically each month from now on.</p></div>'; return; }
+
+    if (who === 'admin') {
+      const sel = document.getElementById('kpiTrendEmpSelect-admin');
+      const current = sel.value;
+      sel.innerHTML = res.employees.map(e => `<option value="${e.employee}">${e.employee}</option>`).join('');
+      if (current && res.employees.some(e => e.employee === current)) sel.value = current;
+      window.__kpiTrendData = res.employees;
+      renderKpiTrendChart('admin');
+    } else {
+      const mine = res.employees[0]; // employee view is already filtered server-side to just them
+      box.innerHTML = `<div style="text-align:center;">${kpiTrendSvg(mine.points)}</div>`;
+    }
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
+  }
+}
+
+function renderKpiTrendChart(who) {
+  if (who !== 'admin') return;
+  const box = document.getElementById('kpiTrendBox-admin');
+  const sel = document.getElementById('kpiTrendEmpSelect-admin');
+  const data = (window.__kpiTrendData || []).find(e => e.employee === sel.value);
+  box.innerHTML = data ? `<div style="text-align:center;">${kpiTrendSvg(data.points)}</div>` : '<div class="empty-state"><p>No data for this employee.</p></div>';
 }
 
 function loadEomBanner(who) {
@@ -14001,6 +14354,17 @@ async function avoidLeadAdmin(phone, employeeName, assignedDate) {
 async function loadAdminLeadsQuota() {
   const box = document.getElementById('adminLeadsQuotaBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  // v-add (BRO's Retry count display — informational, fired
+  // independently so a slow/failed call here never blocks the quota
+  // list itself from loading).
+  leadsApiGet({ action: 'GET_RETRY_COUNT' }).then(r => {
+    const infoBox = document.getElementById('retryCountInfoBox');
+    if (r && r.ok) {
+      infoBox.innerHTML = `<div class="card" style="padding:10px 14px;background:var(--orange-bg,#fff8e1);font-size:12px;">
+        🔁 <b>${r.retryCount}</b> customer(s) currently eligible for retry (Not Connected 10+ days ago) — capped at <b>${r.dailyCapPerEmployee}</b> per employee, per day, when dispatching.
+      </div>`;
+    }
+  }).catch(() => {});
   try {
     // v-add (BRO's per-employee Duration Lock): fetched alongside quotas
     // in parallel — one extra call, same page, no separate admin screen
