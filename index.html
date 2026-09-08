@@ -1750,35 +1750,63 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <option value="Special Permission Leave">Special Permission Leave</option>
           </select>
         </div>
-        <div class="form-2col">
-          <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="applyStartDate" onchange="calcDays()"></div>
-          <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="applyEndDate" onchange="calcDays()"></div>
-        </div>
-        <div id="colleagueOnLeaveBox" style="display:none; padding: 10px 14px; background: var(--blue-bg); border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--blue); font-weight: 600; line-height:1.6;"></div>
+
+        <!-- v-fix (BRO: full redesign, replacing the earlier "Add Another
+             Date" segment approach — confirmed 3 clear categories in
+             discussion): Single Day (one date, Full or Half) / Multiple
+             Day (a continuous Full-Day range) / Mixed Leave (several
+             INDIVIDUAL dates, each its own Full/Half — no start/end
+             range at all for this one, per BRO's explicit "start and
+             end date vaddu" for Mixed). -->
         <div class="form-row">
-          <label>Leave Mode *</label>
-          <select id="applyLeaveMode" onchange="onModeChange()">
-            <option value="Full Day">Full Day</option>
-            <option value="Half Day">Half Day</option>
-          </select>
-        </div>
-        <div class="form-row" id="halfDayRow" style="display:none;">
-          <label>Half Day Slot</label>
-          <select id="applyHalfDay">
-            <option value="First Half (Morning)">First Half (Morning)</option>
-            <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
-          </select>
+          <label>Leave Duration *</label>
+          <div class="filter-bar">
+            <button type="button" class="filter-btn active" id="durTypeSingle" onclick="setLeaveDurationType('single')">📅 Single Day</button>
+            <button type="button" class="filter-btn" id="durTypeMultiple" onclick="setLeaveDurationType('multiple')">🗓️ Multiple Day</button>
+            <button type="button" class="filter-btn" id="durTypeMixed" onclick="setLeaveDurationType('mixed')">🔀 Mixed Leave</button>
+          </div>
         </div>
 
-        <!-- v-add (BRO's Multi-Segment Leave feature — "each date its
-             own Full/Half mode", confirmed multi-segment-form option in
-             discussion): the fields above remain segment #1, completely
-             unchanged — every existing onLeaveTypeChange/calcDays/
-             onModeChange/conflict-check keeps working on it exactly as
-             before. Extra segments (for a request spanning, say, one
-             Full Day and one separate Half Day) get added here. -->
-        <div id="applyExtraSegments"></div>
-        <button type="button" class="btn-secondary" style="width:auto;padding:8px 14px;font-size:12.5px;margin-bottom:14px;" onclick="addLeaveSegment()">➕ Add Another Date (different Full/Half Day)</button>
+        <!-- Single Day: one date + Full/Half. Multiple Day: Start+End,
+             continuous Full Day range. Both reuse the SAME field IDs
+             (applyStartDate/applyEndDate/applyLeaveMode/applyHalfDay)
+             every existing onLeaveTypeChange/calcDays/onModeChange/
+             conflict-check already works on — only which of these two
+             rows is VISIBLE changes with setLeaveDurationType(). -->
+        <div id="singleMultipleDateRows">
+          <div class="form-row" id="singleDateRow"><label>Date *</label><input type="date" lang="en-GB" id="applyStartDate" onchange="onSingleDateChange()"></div>
+          <div class="form-2col" id="multipleDateRow" style="display:none;">
+            <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="applyStartDateMulti" onchange="calcDays()"></div>
+            <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="applyEndDate" onchange="calcDays()"></div>
+          </div>
+          <div id="colleagueOnLeaveBox" style="display:none; padding: 10px 14px; background: var(--blue-bg); border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--blue); font-weight: 600; line-height:1.6;"></div>
+          <div class="form-row" id="singleModeRow">
+            <label>Leave Mode *</label>
+            <select id="applyLeaveMode" onchange="onModeChange()">
+              <option value="Full Day">Full Day</option>
+              <option value="Half Day">Half Day</option>
+            </select>
+          </div>
+          <div class="form-row" id="halfDayRow" style="display:none;">
+            <label>Half Day Slot</label>
+            <select id="applyHalfDay">
+              <option value="First Half (Morning)">First Half (Morning)</option>
+              <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mixed Leave: a plain list of {Date, Full/Half} rows — no
+             start/end range anywhere in this mode. Starts with 2 rows
+             so the very first thing a person sees already looks like
+             "add your dates here", not an empty state needing a click
+             just to begin. -->
+        <div id="mixedDateRows" style="display:none;">
+          <div id="mixedDateList"></div>
+          <div style="text-align:center;margin-bottom:14px;">
+            <span onclick="addMixedDateRow()" style="cursor:pointer;color:var(--purple,#6b21a8);font-weight:700;font-size:13px;">＋ Add Date</span>
+          </div>
+        </div>
 
         <div class="form-row" id="authorityRow" style="display:none;">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
@@ -5716,8 +5744,16 @@ function showColleaguesOnLeave() {
   box.innerHTML = html;
 }
 
+// v-fix (BRO's full redesign — Single Day/Multiple Day/Mixed Leave):
+// this is only ever relevant for Single Day and Multiple Day modes
+// (Mixed Leave has its own per-row day count, always 1 or 0.5, so
+// there's nothing here worth calculating) — reads whichever pair of
+// date fields is actually visible for the current mode, since Single
+// Day's own start date lives in a DIFFERENT field id than Multiple
+// Day's.
 function calcDays() {
-  const s = document.getElementById('applyStartDate').value;
+  const isMultiple = window.__leaveDurationType === 'multiple';
+  const s = document.getElementById(isMultiple ? 'applyStartDateMulti' : 'applyStartDate').value;
   const e = document.getElementById('applyEndDate').value;
   showColleaguesOnLeave();
   if(!s || !e) return;
@@ -5730,7 +5766,7 @@ function calcDays() {
     return;
   }
   const days = Math.floor((ed-sd)/(1000*60*60*24))+1;
-  const mode = document.getElementById('applyLeaveMode').value;
+  const mode = isMultiple ? 'Full Day' : document.getElementById('applyLeaveMode').value;
   box.style.display = 'block';
   if (mode === 'Half Day') {
     if (days > 1) {
@@ -5743,16 +5779,7 @@ function calcDays() {
   }
 }
 
-// ============================================================
-// v-add (BRO's Multi-Segment Leave feature): segment #1 stays the
-// existing applyStartDate/applyEndDate/applyLeaveMode/applyHalfDay
-// fields, completely untouched — these dynamically-added rows are
-// EXTRA segments only, each a self-contained mini date-range + mode
-// picker. __leaveSegCount tracks how many have been added so each gets
-// a unique id (segment 0 is reserved for the original fields, so these
-// start at 1).
-// ============================================================
-let __leaveSegCount = 0;
+let __mixedRowCount = 0;
 
 // v-add (BRO's draft-save feature — Multi-Segment Leave-specific
 // wrapper, closing out the pending item): same reasoning as
@@ -5763,6 +5790,12 @@ let __leaveSegCount = 0;
 // runs. Peeks at the draft's own field keys (every extra segment field
 // ends in "-{idx}", idx being a plain number) to find how many extra
 // rows the draft implies, and adds exactly that many BEFORE restoring.
+// v-fix (BRO: full redesign — Single Day/Multiple Day/Mixed Leave —
+// replaces the earlier "Add Another Date" segment draft-restore):
+// peeks at the saved draft to find how many Mixed-Leave rows it had
+// (mixedDate-{idx} field keys) and pre-creates that many BEFORE the
+// generic restore runs, same reasoning as the DSR multi-entry wrapper —
+// rows only exist in the DOM once addMixedDateRow() has actually run.
 function draftInitLeaveForm() {
   try {
     const raw = localStorage.getItem(DRAFT_STORAGE_PREFIX + 'leaveApply');
@@ -5771,94 +5804,76 @@ function draftInitLeaveForm() {
       if (data.__savedAt && (Date.now() - data.__savedAt) <= DRAFT_MAX_AGE_MS) {
         let maxIdx = 0;
         Object.keys(data.fields || {}).forEach(id => {
-          const m = id.match(/^applySegStart-(\d+)$/);
+          const m = id.match(/^mixedDate-(\d+)$/);
           if (m) maxIdx = Math.max(maxIdx, parseInt(m[1], 10));
         });
-        for (let n = 0; n < maxIdx; n++) addLeaveSegment();
+        if (maxIdx > 0) {
+          setLeaveDurationType('mixed');
+          document.getElementById('mixedDateList').innerHTML = ''; // clear the 2 default empty rows first
+          for (let n = 0; n < maxIdx; n++) addMixedDateRow();
+        }
       }
     }
-  } catch (e) { /* if this peek fails, the plain restore below still runs — worst case only segment #1 comes back */ }
+  } catch (e) { /* if this peek fails, the plain restore below still runs — worst case Mixed rows come back empty */ }
   draftInitForm('leaveApply', '#emp-apply', [], ['ackNotices']);
 }
 
-function addLeaveSegment() {
-  __leaveSegCount++;
-  const idx = __leaveSegCount;
-  const container = document.getElementById('applyExtraSegments');
+// v-fix (BRO: full redesign — Single Day/Multiple Day/Mixed Leave —
+// replacing the earlier "segment #1 + Add Another Date" approach).
+// window.__leaveDurationType tracks which of the 3 is currently active.
+window.__leaveDurationType = 'single';
+
+function setLeaveDurationType(type) {
+  window.__leaveDurationType = type;
+  ['Single', 'Multiple', 'Mixed'].forEach(t => {
+    document.getElementById('durType' + t).classList.toggle('active', t.toLowerCase() === type);
+  });
+  document.getElementById('singleDateRow').style.display = type === 'single' ? '' : 'none';
+  document.getElementById('multipleDateRow').style.display = type === 'multiple' ? 'flex' : 'none';
+  document.getElementById('singleModeRow').style.display = type === 'single' ? '' : 'none';
+  document.getElementById('halfDayRow').style.display = (type === 'single' && document.getElementById('applyLeaveMode').value === 'Half Day') ? '' : 'none';
+  document.getElementById('mixedDateRows').style.display = type === 'mixed' ? '' : 'none';
+  if (type === 'mixed' && !document.querySelectorAll('#mixedDateList > div').length) {
+    addMixedDateRow(); addMixedDateRow(); // starts with 2 — looks ready to fill in immediately, not like an empty state needing a click first
+  }
+}
+
+// Single Day's own End Date is always the same as its Start Date —
+// kept in sync here so the existing calcDays()/conflict-check logic
+// (which reads both) keeps working completely unchanged underneath.
+function onSingleDateChange() {
+  document.getElementById('applyEndDate').value = document.getElementById('applyStartDate').value;
+  calcDays();
+}
+
+function addMixedDateRow() {
+  __mixedRowCount++;
+  const idx = __mixedRowCount;
   const row = document.createElement('div');
-  row.id = 'leaveSeg-' + idx;
-  row.style.cssText = 'border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:10px;position:relative;background:var(--bg);';
+  row.id = 'mixedRow-' + idx;
+  row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;';
   row.innerHTML = `
-    <button type="button" onclick="removeLeaveSegment(${idx})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;">✕</button>
-    <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">ADDITIONAL DATE ${idx}</div>
-    <div class="form-2col">
-      <div class="form-row"><label>Start Date *</label><input type="date" lang="en-GB" id="applySegStart-${idx}" onchange="calcLeaveSegDays(${idx})"></div>
-      <div class="form-row"><label>End Date *</label><input type="date" lang="en-GB" id="applySegEnd-${idx}" onchange="calcLeaveSegDays(${idx})"></div>
-    </div>
-    <div class="form-row"><label>Leave Mode *</label>
-      <select id="applySegMode-${idx}" onchange="onLeaveSegModeChange(${idx})">
+    <div class="form-row" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="mixedDate-${idx}"></div>
+    <div class="form-row" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
+      <select id="mixedMode-${idx}" onchange="onMixedModeChange(${idx})">
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
       </select>
     </div>
-    <div class="form-row" id="applySegHalfRow-${idx}" style="display:none;"><label>Half Day Slot</label>
-      <select id="applySegHalf-${idx}">
-        <option value="First Half (Morning)">First Half (Morning)</option>
-        <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
-      </select>
-    </div>
-    <div id="applySegDaysInfo-${idx}" style="font-size:11.5px;color:var(--text3);"></div>
+    <button type="button" onclick="removeMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
   `;
-  container.appendChild(row);
+  document.getElementById('mixedDateList').appendChild(row);
 }
 
-function removeLeaveSegment(idx) {
-  const row = document.getElementById('leaveSeg-' + idx);
+function removeMixedDateRow(idx) {
+  const row = document.getElementById('mixedRow-' + idx);
   if (row) row.remove();
 }
 
-function onLeaveSegModeChange(idx) {
-  const mode = document.getElementById('applySegMode-' + idx).value;
-  const halfRow = document.getElementById('applySegHalfRow-' + idx);
-  const sEl = document.getElementById('applySegStart-' + idx), eEl = document.getElementById('applySegEnd-' + idx);
-  halfRow.style.display = mode === 'Half Day' ? '' : 'none';
-  if (mode === 'Half Day' && sEl.value) eEl.value = sEl.value; // same-day rule mirrors segment #1's own existing rule
-  calcLeaveSegDays(idx);
-}
-
-function calcLeaveSegDays(idx) {
-  const s = document.getElementById('applySegStart-' + idx).value, e = document.getElementById('applySegEnd-' + idx).value;
-  const info = document.getElementById('applySegDaysInfo-' + idx);
-  if (!s || !e) { info.textContent = ''; return; }
-  const mode = document.getElementById('applySegMode-' + idx).value;
-  if (mode === 'Half Day' && s !== e) { document.getElementById('applySegEnd-' + idx).value = s; info.textContent = '⚠️ Half Day must be a single date — end date matched to start.'; return; }
-  const days = mode === 'Half Day' ? 0.5 : (Math.round((new Date(e) - new Date(s)) / 86400000) + 1);
-  info.textContent = days + ' day(s)';
-}
-
-// Collects segment #1 (the original, unchanged fields) plus every
-// dynamically-added extra segment still present in the DOM, in the
-// exact {startDate, endDate, leaveMode, halfDay} shape
-// handleMultiSegmentLeaveSubmit expects server-side.
-function collectLeaveSegments() {
-  const segs = [{
-    startDate: document.getElementById('applyStartDate').value,
-    endDate: document.getElementById('applyEndDate').value,
-    leaveMode: document.getElementById('applyLeaveMode').value,
-    halfDay: document.getElementById('applyLeaveMode').value === 'Half Day' ? document.getElementById('applyHalfDay').value : ''
-  }];
-  document.querySelectorAll('#applyExtraSegments > div').forEach(row => {
-    const idx = row.id.replace('leaveSeg-', '');
-    const s = document.getElementById('applySegStart-' + idx), e = document.getElementById('applySegEnd-' + idx);
-    if (!s || !s.value || !e.value) return; // an incomplete extra row is silently skipped rather than blocking submission
-    segs.push({
-      startDate: s.value, endDate: e.value,
-      leaveMode: document.getElementById('applySegMode-' + idx).value,
-      halfDay: document.getElementById('applySegMode-' + idx).value === 'Half Day' ? document.getElementById('applySegHalf-' + idx).value : ''
-    });
-  });
-  return segs;
-}
+// Half Day slot per mixed-date row keeps things simple — defaults to
+// First Half without its own separate dropdown per row (BRO's spec was
+// Date + Full/Half only, no extra fields per row).
+function onMixedModeChange(idx) { /* no-op hook kept for future per-row half-day-slot support if ever needed */ }
 
 async function submitLeave() {
   if(!document.getElementById('ackNotices').checked) {
@@ -5867,17 +5882,42 @@ async function submitLeave() {
     return;
   }
   const lt = document.getElementById('applyLeaveType').value;
-  const sd = document.getElementById('applyStartDate').value;
-  const ed = document.getElementById('applyEndDate').value;
-  const lm = document.getElementById('applyLeaveMode').value;
-  const hd = lm==='Half Day' ? document.getElementById('applyHalfDay').value : '';
-  const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
   const purpose = document.getElementById('applyPurpose').value.trim();
   const address = document.getElementById('applyAddress').value.trim();
+  const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
+  const durType = window.__leaveDurationType;
 
-  if(!lt || !sd || !ed || !purpose) { toast('Please fill all required fields', 'error'); return; }
-  if(ed < sd) { toast('End date cannot be before start date', 'error'); return; }
-  if(lm === 'Half Day' && sd !== ed) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
+  if (!lt || !purpose) { toast('Please fill all required fields', 'error'); return; }
+
+  let segments = [];
+  if (durType === 'single') {
+    const sd = document.getElementById('applyStartDate').value;
+    const lm = document.getElementById('applyLeaveMode').value;
+    const hd = lm === 'Half Day' ? document.getElementById('applyHalfDay').value : '';
+    if (!sd) { toast('Please select the date', 'error'); return; }
+    segments = [{ startDate: sd, endDate: sd, leaveMode: lm, halfDay: hd }];
+  } else if (durType === 'multiple') {
+    const sd = document.getElementById('applyStartDateMulti').value;
+    const ed = document.getElementById('applyEndDate').value;
+    if (!sd || !ed) { toast('Please select both start and end dates', 'error'); return; }
+    if (ed < sd) { toast('End date cannot be before start date', 'error'); return; }
+    if (sd === ed) { toast('Multiple Day leave needs at least 2 different dates — use Single Day for one date', 'error'); return; }
+    segments = [{ startDate: sd, endDate: ed, leaveMode: 'Full Day', halfDay: '' }]; // continuous full-day range, per BRO's own definition
+  } else { // mixed
+    const rows = document.querySelectorAll('#mixedDateList > div');
+    if (rows.length < 2) { toast('Mixed Leave needs at least 2 dates — use Single Day for just one', 'error'); return; }
+    const seenDates = {};
+    for (const row of rows) {
+      const idx = row.id.replace('mixedRow-', '');
+      const dEl = document.getElementById('mixedDate-' + idx);
+      const mEl = document.getElementById('mixedMode-' + idx);
+      if (!dEl.value) { toast('Please fill in every date, or remove the empty row', 'error'); return; }
+      if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
+      seenDates[dEl.value] = true;
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
+    }
+    segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }
 
   // Emergency Leave and Special Permission Leave REQUIRE Authority Met to
   // be ticked, plus exactly who was met — submission is blocked entirely
@@ -5898,30 +5938,20 @@ async function submitLeave() {
     authMet = 'Yes';
   }
 
+  const first = segments[0];
   const data = {
     page: 'submitLeaveAPI', employeeNumber: state.empId, name: state.empName, email: state.empEmail,
     department: state.empDept, designation: state.empDesig, counter: state.empCounter,
-    startDate: sd, endDate: ed, leaveType: lt, leaveMode: lm, halfDay: hd, authorityMet: authMet,
-    authorityName: authWho, purpose: purpose, leaveAddress: address
+    startDate: first.startDate, endDate: first.endDate, leaveType: lt, leaveMode: first.leaveMode, halfDay: first.halfDay,
+    authorityMet: authMet, authorityName: authWho, purpose: purpose, leaveAddress: address
   };
 
-  // v-add (BRO's Multi-Segment Leave feature): segment #1's own
-  // start/end/mode already validated above stays exactly as it was —
-  // this only ADDS extra segments on top when "Add Another Date" was
-  // used, switching the submit target to the new multi-segment endpoint
-  // ONLY when there's actually more than one. A single-segment
-  // application (still the overwhelming majority of submissions) goes
-  // through the untouched original path below, including its existing
-  // offline-queue support.
-  const allSegs = collectLeaveSegments();
-  if (allSegs.length > 1) {
-    for (let i = 1; i < allSegs.length; i++) {
-      const s = allSegs[i];
-      if (!s.startDate || !s.endDate) { toast('Please fill in all added date ranges, or remove the empty one', 'error'); return; }
-      if (s.endDate < s.startDate) { toast('Additional Date ' + i + ': end date cannot be before start date', 'error'); return; }
-    }
+  // Mixed Leave (or, in principle, any case with more than one segment)
+  // goes through the multi-segment endpoint — each date becomes its own
+  // row server-side, sharing one Group ID.
+  if (segments.length > 1) {
     data.page = 'submitMultiSegmentLeaveAPI';
-    data.segments = JSON.stringify(allSegs);
+    data.segments = JSON.stringify(segments);
     data.isMultiSegment = true;
   }
 
@@ -6150,6 +6180,7 @@ async function confirmSubmitLeave() {
 function resetApplyForm() {
   document.getElementById('applyLeaveType').value = '';
   document.getElementById('applyStartDate').value = todayYMD();
+  document.getElementById('applyStartDateMulti').value = todayYMD();
   document.getElementById('applyEndDate').value = todayYMD();
   document.getElementById('applyLeaveMode').value = 'Full Day';
   document.getElementById('applyHalfDay').value = 'First Half (Morning)';
@@ -6162,11 +6193,13 @@ function resetApplyForm() {
   document.getElementById('colleagueOnLeaveBox').style.display = 'none';
   document.getElementById('halfDayRow').style.display = 'none';
   document.getElementById('authorityRow').style.display = 'none';
-  // v-add (BRO's Multi-Segment Leave feature): clear any extra date
-  // rows too, so a fresh application doesn't inherit leftovers from
-  // whatever was just submitted.
-  document.getElementById('applyExtraSegments').innerHTML = '';
-  __leaveSegCount = 0;
+  // v-fix (BRO's full redesign — Single Day/Multiple Day/Mixed Leave):
+  // clears Mixed rows and goes back to Single Day, so a fresh
+  // application doesn't inherit leftovers from whatever was just
+  // submitted.
+  document.getElementById('mixedDateList').innerHTML = '';
+  __mixedRowCount = 0;
+  setLeaveDurationType('single');
 }
 function clearApplyForm() {
   const hasData = document.getElementById('applyLeaveType').value ||
