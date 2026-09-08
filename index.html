@@ -5221,7 +5221,7 @@ function showEmpPage(page, opts) {
     // without the employee actually re-confirming it this time defeats
     // the whole point of that checkbox.
     if (!window.__leaveApplyDraftInitialized) {
-      draftInitForm('leaveApply', '#emp-apply', [], ['ackNotices']);
+      draftInitLeaveForm();
       window.__leaveApplyDraftInitialized = true;
     }
   }
@@ -5385,7 +5385,7 @@ function leaveCardHTML(l, showActions=true) {
   return `
     <div class="leave-card" onclick="openLeaveDetailModal('${escJs(idSuffix)}')" style="cursor:pointer;">
       <div class="leave-card-top">
-        <div><div class="leave-card-title">${l.type}</div><div class="leave-card-id">${l.leaveId}</div></div>
+        <div><div class="leave-card-title">${l.type}</div><div class="leave-card-id">${l.leaveId}${l.leaveGroupId ? ` <span class="pill" style="background:var(--purple-bg,#f3e8ff);color:var(--purple,#6b21a8);font-size:9px;padding:2px 6px;">🔗 Multi-Date</span>` : ''}</div></div>
         <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
       </div>
       <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
@@ -5753,6 +5753,33 @@ function calcDays() {
 // start at 1).
 // ============================================================
 let __leaveSegCount = 0;
+
+// v-add (BRO's draft-save feature — Multi-Segment Leave-specific
+// wrapper, closing out the pending item): same reasoning as
+// draftInitDsrForm — "Add Another Date" rows only exist in the DOM
+// once addLeaveSegment() has actually been called, so a saved draft
+// with 2 extra dates would only ever restore its FIRST (original)
+// segment if the form still has just that one row when draftRestore
+// runs. Peeks at the draft's own field keys (every extra segment field
+// ends in "-{idx}", idx being a plain number) to find how many extra
+// rows the draft implies, and adds exactly that many BEFORE restoring.
+function draftInitLeaveForm() {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_PREFIX + 'leaveApply');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.__savedAt && (Date.now() - data.__savedAt) <= DRAFT_MAX_AGE_MS) {
+        let maxIdx = 0;
+        Object.keys(data.fields || {}).forEach(id => {
+          const m = id.match(/^applySegStart-(\d+)$/);
+          if (m) maxIdx = Math.max(maxIdx, parseInt(m[1], 10));
+        });
+        for (let n = 0; n < maxIdx; n++) addLeaveSegment();
+      }
+    }
+  } catch (e) { /* if this peek fails, the plain restore below still runs — worst case only segment #1 comes back */ }
+  draftInitForm('leaveApply', '#emp-apply', [], ['ackNotices']);
+}
 
 function addLeaveSegment() {
   __leaveSegCount++;
@@ -13325,8 +13352,13 @@ function renderEmpLeadsPendingTable() {
     // lead is showing up again aren't visually confused with each other.
     const isRetryLead = (l.leadTag || '').indexOf('Retry') > -1;
     const isAvoidedLead = (l.leadTag || '').indexOf('Avoided') > -1;
+    // v-fix (BRO: "pakkana manual avoid or auto avoid ani ravali" —
+    // this used to show one generic "Previous Status: Avoided" line
+    // regardless of which; l.leadTag now carries "Auto Avoided" or
+    // "Manual Avoided" specifically — shown as-is instead of a fixed
+    // generic label).
     const subLine = isAvoidedLead
-      ? `<span style="color:var(--purple,#6b21a8);">↩️ Last Issued: ${l.lastCalledDate || '-'} · Previous Status: Avoided</span>`
+      ? `<span style="color:var(--purple,#6b21a8);">↩️ Last Dispatch: ${l.lastCalledDate || '-'} · ${(l.leadTag || '').replace('↩️ Reassigned ', '')}</span>`
       : isRetryLead
       ? `<span style="color:var(--orange,#c97a10);">🔁 Last Sent: ${l.lastCalledDate || '-'}${l.lastStatus ? ' · ' + l.lastStatus : ''}</span>`
       : `<span style="color:var(--green);">🆕 Fresh</span>`;
@@ -17496,7 +17528,7 @@ function adminLeaveCardHTML(l) {
     : '';
   return `<div class="leave-card" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)" style="cursor:pointer;">
     <div class="leave-card-top">
-      <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}</div></div>
+      <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}${l.leaveGroupId ? ` <span class="pill" style="background:var(--purple-bg,#f3e8ff);color:var(--purple,#6b21a8);font-size:9px;padding:2px 6px;">🔗 Multi-Date</span>` : ''}</div></div>
       <div style="display:flex;align-items:center;">
         <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
         ${modifiedBadge}
