@@ -1803,6 +1803,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
              just to begin. -->
         <div id="mixedDateRows" style="display:none;">
           <div id="mixedDateList"></div>
+          <div id="mixedColleagueOnLeaveBox" style="display:none; padding: 10px 14px; background: var(--blue-bg); border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--blue); font-weight: 600; line-height:1.6;"></div>
           <div style="text-align:center;margin-bottom:14px;">
             <span onclick="addMixedDateRow()" style="cursor:pointer;color:var(--purple,#6b21a8);font-weight:700;font-size:13px;">＋ Add Date</span>
           </div>
@@ -5716,19 +5717,54 @@ function onAckChange() {
 }
 
 function showColleaguesOnLeave() {
+  // v-fix (BRO caught it live: "except multiday leave remaining edi
+  // select chesina aa date unna emp leave details ravadam ledu"): this
+  // used to always read applyStartDate regardless of mode — correct for
+  // Single Day, but WRONG for Multiple Day (whose actual start date
+  // lives in applyStartDateMulti). Now also expands the full date range
+  // (not just the two endpoints) so every day in between gets checked
+  // too, same as a genuine multi-day request should.
   const box = document.getElementById('colleagueOnLeaveBox');
-  const s = document.getElementById('applyStartDate').value;
+  const isMultiple = window.__leaveDurationType === 'multiple';
+  const s = document.getElementById(isMultiple ? 'applyStartDateMulti' : 'applyStartDate').value;
   const e = document.getElementById('applyEndDate').value;
-  if(!box) return;
-  if(!s || !e || !state.calEvents.length) { box.style.display = 'none'; return; }
+  if (!s || !e) { if (box) box.style.display = 'none'; return; }
+  // Single/Multiple Day are a genuine continuous range — every date
+  // from s to e inclusive needs checking, not just the two endpoints.
+  // v-fix (caught via actual render-testing, not just code review):
+  // normalizeDateStr() expects a STRING (it does s.toString().substring
+  // (0,10), meant for "yyyy-MM-dd..." inputs) — feeding it a raw Date
+  // object instead produces something like "Tue Sep 15" (JS's own
+  // Date.toString() format), which then never matches anything in
+  // state.calEvents. Formatted to yyyy-MM-dd by hand here instead.
+  const dates = [];
+  let cur = new Date(s + 'T00:00:00');
+  const end = new Date(e + 'T00:00:00');
+  while (cur <= end) {
+    dates.push(cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0'));
+    cur.setDate(cur.getDate() + 1);
+  }
+  renderColleaguesOnLeaveBox(box, dates);
+}
 
-  // Group by date so each day in the range shows its own list — a 3-day
-  // request (24th–26th) shows who's on leave the 24th, 25th, and 26th
+// Shared rendering logic — takes an explicit list of dates so Mixed
+// Leave (whose dates aren't necessarily continuous — e.g. 10th and
+// 20th, nothing in between actually being applied for) can check
+// exactly the dates picked instead of a min-to-max range that would
+// incorrectly also check days never selected at all.
+function renderColleaguesOnLeaveBox(box, dateList) {
+  if(!box) return;
+  const wanted = (dateList || []).filter(Boolean);
+  if(!wanted.length || !state.calEvents.length) { box.style.display = 'none'; return; }
+  const wantedSet = new Set(wanted);
+
+  // Group by date so each day shows its own list — a 3-day request
+  // (24th–26th) shows who's on leave the 24th, 25th, and 26th
   // separately, not one merged list.
   const byDate = {};
   state.calEvents.forEach(ev => {
     const d = normalizeDateStr(ev.date);
-    if(d >= s && d <= e && ev.name && ev.status === 'Approved') {
+    if(wantedSet.has(d) && ev.name && ev.status === 'Approved') {
       if(!byDate[d]) byDate[d] = [];
       byDate[d].push(ev.name + ' (' + formatLeaveMode(ev.leaveMode||ev.mode, ev.halfDay) + ')');
     }
@@ -5742,6 +5778,15 @@ function showColleaguesOnLeave() {
     html += `<div style="margin-bottom:3px;">📅 <b>${fmtDMY(d)}</b> — ${byDate[d].join(', ')}</div>`;
   });
   box.innerHTML = html;
+}
+
+// Mixed Leave: checked across EVERY date currently entered, so adding/
+// editing any row re-checks the whole set — one consolidated box
+// rather than per-row clutter.
+function showColleaguesOnLeaveMixed() {
+  const box = document.getElementById('mixedColleagueOnLeaveBox');
+  const dates = Array.from(document.querySelectorAll('#mixedDateList input[type="date"]')).map(el => el.value);
+  renderColleaguesOnLeaveBox(box, dates);
 }
 
 // v-fix (BRO's full redesign — Single Day/Multiple Day/Mixed Leave):
@@ -5833,9 +5878,18 @@ function setLeaveDurationType(type) {
   document.getElementById('singleModeRow').style.display = type === 'single' ? '' : 'none';
   document.getElementById('halfDayRow').style.display = (type === 'single' && document.getElementById('applyLeaveMode').value === 'Half Day') ? '' : 'none';
   document.getElementById('mixedDateRows').style.display = type === 'mixed' ? '' : 'none';
+  // v-fix (found while render-testing the colleague-on-leave fix): each
+  // mode has its OWN colleague box (Single/Multiple share one, Mixed has
+  // its own) — switching modes needs to hide whichever one belongs to
+  // the mode being left, or its last result just sits there looking
+  // like it still applies to the newly-selected mode.
+  if (type === 'mixed') document.getElementById('colleagueOnLeaveBox').style.display = 'none';
+  else document.getElementById('mixedColleagueOnLeaveBox').style.display = 'none';
   if (type === 'mixed' && !document.querySelectorAll('#mixedDateList > div').length) {
     addMixedDateRow(); addMixedDateRow(); // starts with 2 — looks ready to fill in immediately, not like an empty state needing a click first
   }
+  if (type === 'mixed') showColleaguesOnLeaveMixed();
+  else showColleaguesOnLeave();
 }
 
 // Single Day's own End Date is always the same as its Start Date —
@@ -5853,7 +5907,7 @@ function addMixedDateRow() {
   row.id = 'mixedRow-' + idx;
   row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;';
   row.innerHTML = `
-    <div class="form-row" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="mixedDate-${idx}"></div>
+    <div class="form-row" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="mixedDate-${idx}" onchange="showColleaguesOnLeaveMixed()"></div>
     <div class="form-row" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
       <select id="mixedMode-${idx}" onchange="onMixedModeChange(${idx})">
         <option value="Full Day">Full Day</option>
@@ -5868,6 +5922,7 @@ function addMixedDateRow() {
 function removeMixedDateRow(idx) {
   const row = document.getElementById('mixedRow-' + idx);
   if (row) row.remove();
+  showColleaguesOnLeaveMixed(); // a removed date's colleagues shouldn't linger in the box
 }
 
 // Half Day slot per mixed-date row keeps things simple — defaults to
@@ -6198,6 +6253,7 @@ function resetApplyForm() {
   // application doesn't inherit leftovers from whatever was just
   // submitted.
   document.getElementById('mixedDateList').innerHTML = '';
+  document.getElementById('mixedColleagueOnLeaveBox').style.display = 'none';
   __mixedRowCount = 0;
   setLeaveDurationType('single');
 }
