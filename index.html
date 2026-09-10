@@ -2463,6 +2463,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-actions-grid">
           <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('today-glance')"><span class="quick-action-icon">🖥️</span><div class="quick-action-label">Today at a Glance</div><div class="quick-action-sub">Leads, DSR, Stock, Absent, Loyalty — today</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases — info only</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -2724,12 +2725,32 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
         <div class="card">
           <div class="card-title">📅 Dates</div>
-          <div class="form-row">
-            <div class="form-group"><label>Start Date *</label><input type="date" lang="en-GB" id="directStartDate" onchange="refreshDirectConflicts()"></div>
+          <!-- v-add (BRO: "Admin lo direct action lo kuda update chei" —
+               same Single Day/Multiple Day/Mixed Leave selector as the
+               employee Apply Leave form). -->
+          <div class="form-group">
+            <label>Leave Duration *</label>
+            <div class="filter-bar">
+              <button type="button" class="filter-btn active" id="directDurTypeSingle" onclick="setDirectDurationType('single')">📅 Single Day</button>
+              <button type="button" class="filter-btn" id="directDurTypeMultiple" onclick="setDirectDurationType('multiple')">🗓️ Multiple Day</button>
+              <button type="button" class="filter-btn" id="directDurTypeMixed" onclick="setDirectDurationType('mixed')">🔀 Mixed Leave</button>
+            </div>
+          </div>
+          <div id="directSingleDateRow" class="form-row">
+            <div class="form-group"><label>Date *</label><input type="date" lang="en-GB" id="directStartDate" onchange="onDirectSingleDateChange()"></div>
+          </div>
+          <div id="directMultipleDateRow" class="form-row" style="display:none;">
+            <div class="form-group"><label>Start Date *</label><input type="date" lang="en-GB" id="directStartDateMulti" onchange="refreshDirectConflicts()"></div>
             <div class="form-group"><label>End Date *</label><input type="date" lang="en-GB" id="directEndDate" onchange="refreshDirectConflicts()"></div>
           </div>
+          <div id="directMixedDateRows" style="display:none;">
+            <div id="directMixedDateList"></div>
+            <div style="text-align:center;margin-bottom:14px;">
+              <span onclick="addDirectMixedDateRow()" style="cursor:pointer;color:var(--purple,#6b21a8);font-weight:700;font-size:13px;">＋ Add Date</span>
+            </div>
+          </div>
           <div id="directConflicts"></div>
-          <div class="form-row">
+          <div class="form-row" id="directModeRow">
             <div class="form-group">
               <label>Leave Type</label>
               <select id="directLeaveType" class="uniform-select" onchange="onDirectLeaveTypeChange()">
@@ -2737,7 +2758,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
                 <option>Special Permission Leave</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="directModeSelectWrap">
               <label>Leave Mode</label>
               <select id="directLeaveMode" class="uniform-select" onchange="onDirectModeChange()">
                 <option>Full Day</option><option>Half Day</option>
@@ -3049,6 +3070,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <span onclick="loadTodayGlance()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
       </div>
       <div id="todayGlanceBox"><div class="loading"><span class="spinner"></span>Loading today's summary...</div></div>
+    </div>
+
+    <!-- v-add (BRO's "Extra DSR" discrepancy feature) -->
+    <div class="page-section" id="admin-extra-dsr">
+      <div class="section-hdr"><span class="section-title2">⚠️ Extra DSR Check</span></div>
+      <p style="font-size:12px;color:var(--text3);margin:0 0 12px;">Compares each employee's own reported Walk-in purchase count against actual DSR entries for the same date. More DSR entries than reported purchases usually means an old, unbilled sale got entered under today's date by mistake. Informational only — this never affects KPI scoring.</p>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <input type="date" id="extraDsrFrom" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;">
+        <input type="date" id="extraDsrTo" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;">
+        <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadExtraDsrCheck()">🔍 Check</button>
+      </div>
+      <div id="extraDsrBox"><div class="empty-state"><p>Pick a date range and tap Check.</p></div></div>
     </div>
 
     <!-- ══════════════ KPI SECTION (admin) ══════════════ -->
@@ -5598,11 +5631,24 @@ async function refreshModifyConflicts() {
 // review step; MIS needs to see "who else is on leave that date"
 // BEFORE deciding, not after). Same lightweight, employee-safe
 // getLeaveConflictsJSON endpoint as Apply/Modify Leave already use.
+// v-fix (same class of bug caught in showColleaguesOnLeave for the
+// employee Apply Leave form): this always read directStartDate
+// regardless of mode — correct for Single Day, but wrong for Multiple
+// Day (whose actual start date lives in directStartDateMulti).
 async function refreshDirectConflicts() {
   const box = document.getElementById('directConflicts');
   if (!box) return;
-  const s = document.getElementById('directStartDate').value;
-  const e = document.getElementById('directEndDate').value;
+  const durType = window.__directDurationType;
+  let s, e;
+  if (durType === 'mixed') {
+    const dates = Array.from(document.querySelectorAll('#directMixedDateList input[type="date"]')).map(el => el.value).filter(Boolean).sort();
+    if (!dates.length) { box.innerHTML = ''; return; }
+    s = dates[0]; e = dates[dates.length - 1];
+  } else {
+    const isMultiple = durType === 'multiple';
+    s = document.getElementById(isMultiple ? 'directStartDateMulti' : 'directStartDate').value;
+    e = document.getElementById('directEndDate').value;
+  }
   if (!s) { box.innerHTML = ''; return; }
   box.innerHTML = '<div class="loading" style="padding:8px 0;"><span class="spinner"></span>Checking...</div>';
   try {
@@ -7162,6 +7208,56 @@ function onDirectEmpChange() {
     : '';
 }
 
+// v-add (BRO: "Admin lo direct action lo kuda update chei" — same
+// Single/Multiple Day/Mixed Leave selector as the employee Apply Leave
+// form, now for Direct Action too).
+window.__directDurationType = 'single';
+let __directMixedRowCount = 0;
+
+function setDirectDurationType(type) {
+  window.__directDurationType = type;
+  ['Single', 'Multiple', 'Mixed'].forEach(t => {
+    document.getElementById('directDurType' + t).classList.toggle('active', t.toLowerCase() === type);
+  });
+  document.getElementById('directSingleDateRow').style.display = type === 'single' ? 'flex' : 'none';
+  document.getElementById('directMultipleDateRow').style.display = type === 'multiple' ? 'flex' : 'none';
+  document.getElementById('directMixedDateRows').style.display = type === 'mixed' ? '' : 'none';
+  document.getElementById('directModeSelectWrap').style.display = type === 'single' ? '' : 'none';
+  document.getElementById('directHalfDayWrap').style.display = (type === 'single' && document.getElementById('directLeaveMode').value === 'Half Day') ? '' : 'none';
+  if (type === 'mixed' && !document.querySelectorAll('#directMixedDateList > div').length) {
+    addDirectMixedDateRow(); addDirectMixedDateRow();
+  }
+}
+
+function onDirectSingleDateChange() {
+  document.getElementById('directEndDate').value = document.getElementById('directStartDate').value;
+  if (typeof refreshDirectConflicts === 'function') refreshDirectConflicts();
+}
+
+function addDirectMixedDateRow() {
+  __directMixedRowCount++;
+  const idx = __directMixedRowCount;
+  const row = document.createElement('div');
+  row.id = 'directMixedRow-' + idx;
+  row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;';
+  row.innerHTML = `
+    <div class="form-group" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="directMixedDate-${idx}" onchange="refreshDirectConflicts()"></div>
+    <div class="form-group" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
+      <select id="directMixedMode-${idx}">
+        <option value="Full Day">Full Day</option>
+        <option value="Half Day">Half Day</option>
+      </select>
+    </div>
+    <button type="button" onclick="removeDirectMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
+  `;
+  document.getElementById('directMixedDateList').appendChild(row);
+}
+
+function removeDirectMixedDateRow(idx) {
+  const row = document.getElementById('directMixedRow-' + idx);
+  if (row) row.remove();
+}
+
 function onDirectModeChange() {
   const isHalf = document.getElementById('directLeaveMode').value === 'Half Day';
   document.getElementById('directHalfDayWrap').style.display = isHalf ? '' : 'none';
@@ -7198,11 +7294,7 @@ function getDirectAuthWho() {
 
 async function submitDirectAction(outcome, evt) {
   const empId = document.getElementById('directEmpSelect').value;
-  const startDate = document.getElementById('directStartDate').value;
-  const endDate = document.getElementById('directEndDate').value;
   const leaveType = document.getElementById('directLeaveType').value;
-  const leaveMode = document.getElementById('directLeaveMode').value;
-  const halfDay = leaveMode === 'Half Day' ? document.getElementById('directHalfDay').value : '';
   let reason = document.getElementById('directReason').value.trim();
   const purpose = document.getElementById('directPurpose').value.trim();
   const leaveAddress = document.getElementById('directLeaveAddress').value.trim();
@@ -7211,9 +7303,44 @@ async function submitDirectAction(outcome, evt) {
   const authWho = authMet ? getDirectAuthWho() : '';
 
   if (!empId) { toast('Select an employee first', 'error'); return; }
-  if (!startDate || !endDate) { toast('Select start and end dates', 'error'); return; }
-  if (endDate < startDate) { toast('End date cannot be before start date', 'error'); return; }
-  if (leaveMode === 'Half Day' && startDate !== endDate) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
+
+  // v-add (BRO: "Admin lo direct action lo kuda update chei" — same
+  // Single/Multiple Day/Mixed Leave segment-building as the employee
+  // Apply Leave form).
+  const durType = window.__directDurationType;
+  let segments = [];
+  if (durType === 'single') {
+    const sd = document.getElementById('directStartDate').value;
+    const lm = document.getElementById('directLeaveMode').value;
+    const hd = lm === 'Half Day' ? document.getElementById('directHalfDay').value : '';
+    if (!sd) { toast('Select the date', 'error'); return; }
+    segments = [{ startDate: sd, endDate: sd, leaveMode: lm, halfDay: hd }];
+  } else if (durType === 'multiple') {
+    const sd = document.getElementById('directStartDateMulti').value;
+    const ed = document.getElementById('directEndDate').value;
+    if (!sd || !ed) { toast('Select both start and end dates', 'error'); return; }
+    if (ed < sd) { toast('End date cannot be before start date', 'error'); return; }
+    segments = [{ startDate: sd, endDate: ed, leaveMode: 'Full Day', halfDay: '' }];
+  } else { // mixed
+    const rows = document.querySelectorAll('#directMixedDateList > div');
+    if (rows.length < 2) { toast('Mixed Leave needs at least 2 dates', 'error'); return; }
+    const seenDates = {};
+    for (const row of rows) {
+      const idx = row.id.replace('directMixedRow-', '');
+      const dEl = document.getElementById('directMixedDate-' + idx);
+      const mEl = document.getElementById('directMixedMode-' + idx);
+      if (!dEl.value) { toast('Fill in every date, or remove the empty row', 'error'); return; }
+      if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
+      seenDates[dEl.value] = true;
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
+    }
+    segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }
+  const startDate = segments[0].startDate;
+  const endDate = segments[segments.length - 1].endDate;
+  const leaveMode = segments[0].leaveMode;
+  const halfDay = segments[0].halfDay;
+
   if (outcome === 'Rejected' && !reason) {
     reason = prompt('Rejection reason (required):') || '';
     if (!reason.trim()) { toast('Rejection reason is required', 'error'); return; }
@@ -7237,7 +7364,8 @@ async function submitDirectAction(outcome, evt) {
   const emp = directEmpCache.find(e => e.empId === empId);
   const empName = emp ? emp.name : empId;
   const label = outcome === 'Approved' ? 'approve' : outcome === 'Absent' ? 'mark absent' : 'reject';
-  if (!confirm(`${label.toUpperCase()}: ${empName}, ${fmtDMY(startDate)} to ${fmtDMY(endDate)} (${leaveType})?`)) return;
+  const dateDesc = segments.length > 1 ? segments.length + ' dates' : fmtDMY(startDate) + (startDate !== endDate ? ' to ' + fmtDMY(endDate) : '');
+  if (!confirm(`${label.toUpperCase()}: ${empName}, ${dateDesc} (${leaveType})?`)) return;
 
   const idem = makeIdemKey(['direct', outcome, empId, startDate, endDate, leaveType, leaveMode]);
   if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
@@ -7251,11 +7379,16 @@ async function submitDirectAction(outcome, evt) {
   if (clicked) clicked.textContent = '⏳ Processing...';
 
   try {
-    const res = await jsonpWriteOnce({
+    const apiParams = {
       page: 'directActionAPI', role: state.adminRole, adminEmail: state.adminEmail,
       empId, startDate, endDate, leaveType, leaveMode, halfDay, reason, outcome,
       purpose, leaveAddress, authorityMet: authMet, authorityName: authWho
-    }, idem);
+    };
+    if (segments.length > 1) {
+      apiParams.page = 'directActionMultiSegmentAPI';
+      apiParams.segments = JSON.stringify(segments);
+    }
+    const res = await jsonpWriteOnce(apiParams, idem);
     if (res.ok) {
       toast(`✅ ${empName} marked ${outcome}`, 'success');
       document.getElementById('directReason').value = '';
@@ -7266,6 +7399,9 @@ async function submitDirectAction(outcome, evt) {
       document.querySelectorAll('.direct-auth-who-check').forEach(cb => cb.checked = false);
       document.getElementById('directEmpSelect').value = '';
       document.getElementById('directEmpMeta').textContent = '';
+      document.getElementById('directMixedDateList').innerHTML = '';
+      __directMixedRowCount = 0;
+      setDirectDurationType('single');
       loadAdminData();
     } else {
       toast(res.error || 'Action failed', 'error');
@@ -8125,6 +8261,41 @@ function setAbsentReportMode(mode) {
 // resilient pattern as Customer 360: one backend being slow/down only
 // blanks its own card, not the whole page.
 // ============================================================
+// v-add (BRO's "Extra DSR" discrepancy feature): defaults the date
+// range to today on first visit, then loads.
+function initExtraDsrCheck() {
+  const fromEl = document.getElementById('extraDsrFrom'), toEl = document.getElementById('extraDsrTo');
+  if (!fromEl.value) { const t = todayYMD(); fromEl.value = t; toEl.value = t; }
+  loadExtraDsrCheck();
+}
+
+async function loadExtraDsrCheck() {
+  const box = document.getElementById('extraDsrBox');
+  const dateFrom = document.getElementById('extraDsrFrom').value;
+  const dateTo = document.getElementById('extraDsrTo').value;
+  if (!dateFrom || !dateTo) { toast('Pick both dates', 'error'); return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Comparing DSR entries against Walk-in purchases...</div>';
+  try {
+    const res = await jsonp({ page: 'extraDsrDiscrepancyJSON', dateFrom, dateTo });
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    if (!res.flagged || !res.flagged.length) {
+      box.innerHTML = '<div class="empty-state"><p>✅ No discrepancies found for this date range — every DSR entry has a matching Walk-in purchase.</p></div>';
+      return;
+    }
+    let html = `<div style="display:grid;gap:8px;">`;
+    res.flagged.forEach(f => {
+      html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);">
+        <div class="kd-head"><span class="kd-name">${f.employee}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
+        <div class="kd-note">📅 ${fmtDMY(f.date)} — DSR entries: <b>${f.dsrEntries}</b> vs Walk-in purchases reported: <b>${f.walkinPurchased}</b></div>
+      </div>`;
+    });
+    html += `</div>`;
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
+  }
+}
+
 async function loadTodayGlance() {
   const box = document.getElementById('todayGlanceBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading today\'s summary...</div>';
@@ -8698,6 +8869,7 @@ function showAdminPage(page, opts) {
   if(page==='leads') loadAdminLeadsHome();
   if(page==='dashboard-hub') loadAdminDashboardHub();
   if(page==='today-glance') loadTodayGlance();
+  if(page==='extra-dsr') initExtraDsrCheck();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
   if(page==='leads-report') initAdminLeadsReportPage();
