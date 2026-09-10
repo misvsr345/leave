@@ -12123,6 +12123,9 @@ function dsrPhotoViewUrl(photo) {
 function openDsrEditModal(idx, who) {
   const it = window['__dsrTodayItems_' + who][idx];
   if (!it || !it.sheetName || !it.rowNum) { toast('Cannot edit this entry', 'error'); return; }
+  const isDia = it.type === 'Diamond';
+  const isSilver = it.type === 'Silver';
+  const photoKind = isSilver ? 'silver' : isDia ? 'diamond' : 'gold';
   const existing = document.getElementById('dsrEditModal');
   if (existing) existing.remove();
   const div = document.createElement('div');
@@ -12138,6 +12141,18 @@ function openDsrEditModal(idx, who) {
     <div class="form-row"><label>Tunch</label><input type="text" id="dsrEditTunch" value="${it.tunch || ''}"></div>
     <div class="form-row"><label>Weight</label><input type="text" id="dsrEditWeight" value="${it.weight || ''}"></div>
     <div class="form-row"><label>Tag No</label><input type="text" id="dsrEditTagNo" value="${it.tagNo || ''}"></div>
+    <!-- v-add (BRO: "photo edit option ledu" — this edit modal could
+         change every OTHER field but never the photo itself, even when
+         the photo was clearly the wrong one uploaded. Uses the SAME
+         savePhotoForDsr backend action the employee's own photo-
+         resubmit flow already uses — a direct POST to DSR_GAS_URL,
+         not the GET/JSONP dsrUpdateEntryAPI, since a photo's base64
+         data is far too large to safely fit in a URL query string. -->
+    <div class="form-row"><label>Photo</label>
+      ${it.photo ? `<div style="margin-bottom:8px;"><img src="${dsrPhotoViewUrl(it.photo)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${dsrPhotoViewUrl(it.photo)}','_blank')"></div>` : '<div style="font-size:11.5px;color:var(--text3);margin-bottom:8px;">No photo currently on file.</div>'}
+      <input type="file" id="dsrEditPhotoFile" accept="image/*" onchange="dsrEditPhotoSelected(this)">
+      <div id="dsrEditPhotoStatus" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+    </div>
     <div class="btn-row">
       <button class="btn-primary" style="margin-bottom:10px;" onclick="saveDsrEdit(${idx},'${who}')">💾 Save Changes</button>
       <button class="btn-secondary" style="margin-bottom:10px;color:var(--red);border-color:var(--red);" onclick="confirmDeleteDsrEntry(${idx},'${who}')">🗑️ Delete This Entry</button>
@@ -12145,7 +12160,39 @@ function openDsrEditModal(idx, who) {
     </div>
   </div>`;
   document.body.appendChild(div);
+  div.dataset.photoKind = photoKind;
+  div.dataset.rowNum = it.rowNum;
+  div.dataset.dsrNo = it.dsrNo || '';
 }
+
+// Reads the newly-picked photo file into memory (base64) as soon as
+// it's selected, same compression approach used everywhere else in
+// DSR — so Save just sends whatever's already ready, no extra step.
+let __dsrEditNewPhotoBase64 = null;
+function dsrEditPhotoSelected(inp) {
+  const f = inp.files[0];
+  if (!f) return;
+  __dsrEditNewPhotoBase64 = null;
+  const statusEl = document.getElementById('dsrEditPhotoStatus');
+  statusEl.textContent = 'Processing photo...';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const maxDim = DSR_PHOTO_MAX_DIM || 800;
+      if (w > maxDim || h > maxDim) { const scale = maxDim / Math.max(w, h); w = Math.round(w * scale); h = Math.round(h * scale); }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      __dsrEditNewPhotoBase64 = canvas.toDataURL('image/jpeg', DSR_PHOTO_QUALITY || 0.65);
+      statusEl.textContent = '✓ New photo ready — will replace the current one on Save.';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+
 
 function confirmDeleteDsrEntry(idx, who) {
   const it = window['__dsrTodayItems_' + who][idx];
@@ -12205,6 +12252,27 @@ async function saveDsrEdit(idx, who) {
   try {
     const res = await jsonpReliable(payload);
     if (res && res.ok) {
+      // v-add (BRO: "photo edit option ledu"): a new photo, if one was
+      // picked, is sent SEPARATELY via a direct POST to DSR_GAS_URL
+      // (savePhotoForDsr) — the same mechanism the employee's own
+      // photo-resubmit flow already uses, since a photo's base64 data
+      // is far too large to safely fit in dsrUpdateEntryAPI's GET/
+      // JSONP URL. Sent only after the text-field save succeeds, and
+      // its own failure doesn't undo that save — it just means the
+      // photo specifically needs a retry, same as a normal upload
+      // failure would.
+      if (__dsrEditNewPhotoBase64 && modal) {
+        try {
+          const photoRes = await fetch(DSR_GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'savePhoto', rowNum: it.rowNum, kind: modal.dataset.photoKind, photo: __dsrEditNewPhotoBase64, dsrId: modal.dataset.dsrNo })
+          }).then(r => r.json());
+          if (photoRes.status !== 'success') toast('⚠️ Details saved, but the new photo failed to upload — try editing again to retry just the photo.', 'error');
+        } catch (photoErr) {
+          toast('⚠️ Details saved, but the new photo failed to upload (network) — try editing again to retry just the photo.', 'error');
+        }
+      }
+      __dsrEditNewPhotoBase64 = null;
       toast('✅ DSR entry updated', 'success');
       if (modal) modal.remove();
       loadDsrToday('admin', document.getElementById('dsrTodayDate-admin') ? document.getElementById('dsrTodayDate-admin').value : '');
