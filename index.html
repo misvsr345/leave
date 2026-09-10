@@ -8305,6 +8305,8 @@ async function loadExtraDsrCheck() {
 // admin's own job from here is to look at these (customer names, item,
 // time) and spot which one looks wrong (old sale re-entered today,
 // accidental duplicate, etc.) and go correct it directly in the sheet.
+let __extraDsrEntries = []; // populated fresh each time the detail modal opens — Edit/Delete below index into THIS array
+
 async function showExtraDsrDetail(employee, date) {
   const existing = document.getElementById('extraDsrDetailModal');
   if (existing) existing.remove();
@@ -8314,30 +8316,167 @@ async function showExtraDsrDetail(employee, date) {
   div.innerHTML = `<div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="document.getElementById('extraDsrDetailModal').remove()" title="Close">✕</button>
     <div class="modal-title">🧾 ${employee} — ${fmtDMY(date)}</div>
-    <div id="extraDsrDetailBody" style="margin-top:10px;"><div class="loading"><span class="spinner"></span>Loading entries...</div></div>
+    <div id="extraDsrDetailBody" style="margin-top:10px;" data-employee="${escJs(employee)}" data-date="${date}"><div class="loading"><span class="spinner"></span>Loading entries...</div></div>
   </div>`;
   document.body.appendChild(div);
+  await loadExtraDsrDetailBody(employee, date);
+}
 
+// Separated from showExtraDsrDetail so Edit/Delete can call this same
+// refresh after their own action completes, without closing and
+// re-opening the whole modal (a jarring flash for something that
+// should feel instant).
+async function loadExtraDsrDetailBody(employee, date) {
+  const body = document.getElementById('extraDsrDetailBody');
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading entries...</div>';
   try {
     const res = await jsonp({ page: 'dsrEntriesForEmpDateJSON', employee, date });
-    const body = document.getElementById('extraDsrDetailBody');
     if (!res || !res.ok) { body.innerHTML = '<p style="color:var(--red);">Could not load entries.</p>'; return; }
-    if (!res.entries || !res.entries.length) { body.innerHTML = '<p>No entries found for this employee/date.</p>'; return; }
-    let html = `<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">${res.entries.length} DSR entr${res.entries.length === 1 ? 'y' : 'ies'} on this date. Check the timestamps and customer names below — an old sale re-entered under today's date, or a genuine duplicate, is usually easy to spot once you see them side by side.</p>`;
-    res.entries.forEach((en, i) => {
-      const itemsDesc = (en.items || []).map(it => it.itemName).filter(Boolean).join(', ') || '—';
-      html += `<div class="dsr-receipt-card" style="margin-bottom:8px;">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${en.dsrNo}</span><span class="kd-pill gold">${en.paymentStatus || '—'}</span></div>
+    __extraDsrEntries = res.entries || [];
+    if (!__extraDsrEntries.length) { body.innerHTML = '<p>No entries found for this employee/date.</p>'; return; }
+    // v-add (BRO: "duplicate unte duplicate ani kuda chupinchali" —
+    // possibleDuplicate comes from the backend, same customer + same
+    // item name appearing more than once on this date).
+    let html = `<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">${__extraDsrEntries.length} DSR entr${__extraDsrEntries.length === 1 ? 'y' : 'ies'} on this date. Check the timestamps and customer names below — an old sale re-entered under today's date, or a genuine duplicate, is usually easy to spot once you see them side by side.</p>`;
+    __extraDsrEntries.forEach((en, i) => {
+      html += `<div class="dsr-receipt-card" style="margin-bottom:8px;${en.possibleDuplicate ? 'border:1.5px solid var(--red);' : ''}">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${en.dsrNo}</span>
+          <span style="display:flex;gap:6px;align-items:center;">
+            ${en.possibleDuplicate ? '<span class="kd-pill red" style="font-size:9.5px;">⚠️ Possible Duplicate</span>' : ''}
+            <span class="kd-pill gold">${en.paymentStatus || '—'}</span>
+          </span>
+        </div>
         <div class="dsr-receipt-body">
           <div class="dsr-cust-name">${en.customerName || '—'}</div>
           <div class="dsr-meta-row">📱 ${en.mobileNumber || '—'} &nbsp;·&nbsp; 🕐 ${en.timestamp || '—'}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${itemsDesc}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${en.type || '—'} — ${en.itemName || '—'}${en.weight ? ' — ' + en.weight + 'g' : ''}</div>
+        </div>
+        <div class="btn-row" style="padding:0 14px 12px;">
+          <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;" onclick="extraDsrEditEntry(${i})">✏️ Edit</button>
+          <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;color:var(--red);border-color:var(--red);" onclick="extraDsrConfirmDelete(${i})">🗑️ Delete</button>
         </div>
       </div>`;
     });
     body.innerHTML = html;
   } catch (e) {
-    document.getElementById('extraDsrDetailBody').innerHTML = `<p style="color:var(--red);">Could not load. ${e.message}</p>`;
+    body.innerHTML = `<p style="color:var(--red);">Could not load. ${e.message}</p>`;
+  }
+}
+
+// v-add (BRO: "edit and delete option kuda ravali") — a DEDICATED edit/
+// delete flow for this Extra DSR context, reusing the SAME
+// dsrUpdateEntryAPI/dsrDeleteEntryAPI backend actions the existing
+// "Today's DSR" edit already uses, but with its own modal + refresh
+// (re-loads THIS detail view afterward, not the Today's DSR list),
+// so nothing about the existing, working Today's DSR edit flow is
+// touched or risked.
+function extraDsrEditEntry(i) {
+  const en = __extraDsrEntries[i];
+  if (!en) return;
+  const isDia = en.type === 'Diamond';
+  const existing = document.getElementById('extraDsrEditModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'extraDsrEditModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;"><button class="modal-close-x" onclick="document.getElementById('extraDsrEditModal').remove()" title="Close">✕</button>
+    <div class="modal-title">✏️ Edit DSR Entry</div>
+    <div class="form-row"><label>Customer Name</label><input type="text" id="extraDsrEditCust" value="${en.customerName || ''}"></div>
+    <div class="form-row"><label>Mobile</label><input type="text" id="extraDsrEditMobile" value="${en.mobileNumber || ''}"></div>
+    <div class="form-row"><label>Item Name</label><input type="text" id="extraDsrEditItem" value="${en.itemName || ''}"></div>
+    ${isDia ? `
+    <div class="form-row"><label>Cent</label><input type="text" id="extraDsrEditCent" value="${en.diamondCent || ''}"></div>
+    <div class="form-row"><label>Quality</label><input type="text" id="extraDsrEditQuality" value="${en.diamondQuality || ''}"></div>
+    ` : `
+    <div class="form-row"><label>Design</label><input type="text" id="extraDsrEditDesign" value="${en.design || ''}"></div>
+    <div class="form-row"><label>Tunch</label><input type="text" id="extraDsrEditTunch" value="${en.tunch || ''}"></div>
+    `}
+    <div class="form-row"><label>Weight</label><input type="text" id="extraDsrEditWeight" value="${en.weight || ''}"></div>
+    <div class="form-row"><label>Tag No</label><input type="text" id="extraDsrEditTagNo" value="${en.tagNo || ''}"></div>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="extraDsrSaveEdit(${i})">💾 Save Changes</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('extraDsrEditModal').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function extraDsrSaveEdit(i) {
+  const en = __extraDsrEntries[i];
+  if (!en) return;
+  const isDia = en.type === 'Diamond';
+  const modal = document.getElementById('extraDsrEditModal');
+  const payload = {
+    page: 'dsrUpdateEntryAPI', role: 'ADMIN', callerEmail: state.adminEmail,
+    sheetName: en.sheetName, rowNum: en.rowNum,
+    customerName: (document.getElementById('extraDsrEditCust').value || '').toUpperCase(),
+    mobile: document.getElementById('extraDsrEditMobile').value,
+    itemName: document.getElementById('extraDsrEditItem').value,
+    weight: document.getElementById('extraDsrEditWeight').value,
+    tagNo: document.getElementById('extraDsrEditTagNo').value
+  };
+  if (isDia) {
+    payload.diamondCent = document.getElementById('extraDsrEditCent').value;
+    payload.diamondQuality = document.getElementById('extraDsrEditQuality').value;
+  } else {
+    payload.design = document.getElementById('extraDsrEditDesign').value;
+    payload.tunch = document.getElementById('extraDsrEditTunch').value;
+  }
+  try {
+    const res = await jsonpReliable(payload);
+    if (res && res.ok) {
+      toast('💾 DSR entry updated', 'success');
+      if (modal) modal.remove();
+      const bodyEl = document.getElementById('extraDsrDetailBody');
+      await loadExtraDsrDetailBody(bodyEl.dataset.employee, bodyEl.dataset.date);
+      loadExtraDsrCheck(); // refresh the underlying flagged-list counts too
+    } else {
+      toast((res && res.error) || 'Update failed', 'error');
+    }
+  } catch (e) {
+    toast('Network error updating entry', 'error');
+  }
+}
+
+function extraDsrConfirmDelete(i) {
+  const en = __extraDsrEntries[i];
+  if (!en) return;
+  const existing = document.getElementById('extraDsrDeleteConfirm');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'extraDsrDeleteConfirm';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:360px;"><button class="modal-close-x" onclick="document.getElementById('extraDsrDeleteConfirm').remove()" title="Close">✕</button>
+    <div class="modal-title">🗑️ Delete DSR Entry?</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">This permanently removes <b>${en.itemName || 'this item'}</b> for <b>${en.customerName || 'this customer'}</b> (DSR ${en.dsrNo}). This cannot be undone.</p>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;background:linear-gradient(135deg,#c0392b,#e74c3c);" onclick="extraDsrDeleteEntry(${i})">🗑️ Yes, Delete Permanently</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('extraDsrDeleteConfirm').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function extraDsrDeleteEntry(i) {
+  const en = __extraDsrEntries[i];
+  const modal = document.getElementById('extraDsrDeleteConfirm');
+  if (modal) modal.remove();
+  if (!en) return;
+  try {
+    const res = await jsonpReliable({
+      page: 'dsrDeleteEntryAPI', role: 'ADMIN', callerEmail: state.adminEmail,
+      sheetName: en.sheetName, rowNum: en.rowNum
+    });
+    if (res && res.ok) {
+      toast('🗑️ DSR entry deleted', 'success');
+      const bodyEl = document.getElementById('extraDsrDetailBody');
+      await loadExtraDsrDetailBody(bodyEl.dataset.employee, bodyEl.dataset.date);
+      loadExtraDsrCheck();
+    } else {
+      toast((res && res.error) || 'Delete failed', 'error');
+    }
+  } catch (e) {
+    toast('Network error deleting entry', 'error');
   }
 }
 
