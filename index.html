@@ -2406,6 +2406,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="syncNowBtnAdmin" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
+        <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
         <button class="tb-chip" id="adminDashboardFabTop" onclick="showAdminPage('dashboard-hub')" title="Dashboard">📊 Dashboard</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
@@ -8478,6 +8479,127 @@ async function extraDsrDeleteEntry(i) {
   } catch (e) {
     toast('Network error deleting entry', 'error');
   }
+}
+
+// ============================================================
+// v-add (BRO: "chinna emoji ivu search kosam, adi click chesi option
+// names click cheste, aa section and option ki direct velli" — a
+// quick command-palette-style search over every admin page, so
+// finding a specific screen doesn't mean hunting through nested menus
+// every time). ADMIN_SEARCH_INDEX is a flat list built once from
+// every showAdminPage() destination in the app — kept as a plain data
+// array (not scraped from the DOM) so it's fast and has zero risk of
+// picking up something unrelated that happens to say "showAdminPage"
+// in a comment or string elsewhere.
+// ============================================================
+const ADMIN_SEARCH_INDEX = [
+  { icon: '📊', label: 'Dashboard', page: 'dashboard-hub' },
+  { icon: '🖥️', label: 'Today at a Glance', page: 'today-glance' },
+  { icon: '🏖️', label: 'Leave', page: 'dashboard' },
+  { icon: '👥', label: 'Leads', page: 'leads' },
+  { icon: '💳', label: 'Loyalty Card', page: 'loyalty' },
+  { icon: '🥇', label: 'Golden Aura', page: 'golden-aura' },
+  { icon: '🧾', label: 'DSR', page: 'dsr' },
+  { icon: '📊', label: 'KPI', page: 'kpi' },
+  { icon: '📝', label: 'Checklist', page: 'stock' },
+  { icon: '🚶', label: 'Walk-in Track', page: 'walkins' },
+  { icon: '⏳', label: 'Pending (Leave)', page: 'pending' },
+  { icon: '📅', label: 'Calendar (Leave)', page: 'acalendar' },
+  { icon: '💰', label: 'Balance (Leave)', page: 'balance' },
+  { icon: '👤', label: 'Employee Wise (Leave)', page: 'empwise' },
+  { icon: '📆', label: 'Events (Leave)', page: 'events' },
+  { icon: '🎯', label: 'Direct Action (Leave)', page: 'direct' },
+  { icon: '🚫', label: 'Blocked Dates (Leave)', page: 'blocked' },
+  { icon: '🔍', label: 'Search (Loyalty Card)', page: 'loyalty-search' },
+  { icon: '📊', label: 'All Employees (Loyalty)', page: 'loyalty-stats' },
+  { icon: '🗂️', label: 'All Cards (Loyalty)', page: 'loyalty-mycards' },
+  { icon: '🔔', label: 'Upcoming Approvals (Loyalty)', page: 'loyalty-upcoming' },
+  { icon: '💰', label: 'Incentive History (Loyalty)', page: 'loyalty-incenthist' },
+  { icon: '🚨', label: 'Card Issues (Loyalty)', page: 'loyalty-issues' },
+  { icon: '🏆', label: 'Leaderboard (Loyalty)', page: 'loyalty-leaderboard' },
+  { icon: '🎯', label: 'Targets (KPI)', page: 'kpi-target' },
+  { icon: '📅', label: 'Running Month / Till Date (KPI)', page: 'kpi-tilldate' },
+  { icon: '🏁', label: 'Last Month KPI', page: 'kpi-monthly' },
+  { icon: '📈', label: 'KPI Trend', page: 'kpi-trend' },
+  { icon: '📈', label: 'Month Comparison (KPI)', page: 'kpi-compare' },
+  { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
+  { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
+  { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
+  { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
+  { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
+  { icon: '📅', label: 'Till Date DSR', page: 'dsr-tilldate' },
+  { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
+  { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
+  { icon: '⚠️', label: 'Extra DSR Check', page: 'extra-dsr' },
+  { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
+  { icon: '🔍', label: 'All Schemes (Golden Aura)', page: 'golden-aura-list' },
+  { icon: '🏪', label: 'Retail Checklist', page: 'stock-retail' },
+  { icon: '📦', label: 'Wholesale Checklist', page: 'stock-wholesale' },
+  { icon: '📅', label: 'Date-to-Date Report (Checklist)', page: 'stock-report' },
+  { icon: '⚠️', label: 'Variance Log (Checklist)', page: 'stock-variance' },
+  { icon: '📝', label: 'Change Log (Checklist)', page: 'stock-changelog' },
+  { icon: '📋', label: "Today's Assignment (Leads)", page: 'leads-overview' },
+  { icon: '✅', label: 'Submitted Today (Leads)', page: 'leads-submitted' },
+  { icon: '📊', label: 'Report (Leads)', page: 'leads-report' },
+  { icon: '⏰', label: 'Overdue / Avoid (Leads)', page: 'leads-overdue' },
+  { icon: '🎯', label: 'Daily Quota (Leads)', page: 'leads-quota' },
+  { icon: '📈', label: 'Conversions (Leads)', page: 'leads-conversions' },
+  { icon: '🎉', label: 'Customer Events (Leads)', page: 'customer-events' },
+  { icon: '🚫', label: 'Flagged Numbers (Leads)', page: 'flagged-numbers' },
+  { icon: '⚙️', label: 'Settings', page: 'settings' },
+  { icon: '📢', label: 'Notices', page: 'notices' },
+  { icon: '🗄️', label: 'Backend Sheets', page: 'backend-sheets' },
+  { icon: '📋', label: 'Monthly Absent Report', page: 'monthly-absent' },
+  { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
+  { icon: '🪪', label: 'Profile', page: 'profile' },
+  { icon: '🔐', label: 'Login Activity', page: 'login-activity' }
+];
+
+function openAdminQuickSearch() {
+  const existing = document.getElementById('adminSearchModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'adminSearchModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">
+    <button class="modal-close-x" onclick="document.getElementById('adminSearchModal').remove()" title="Close">✕</button>
+    <div class="modal-title">🔍 Quick Search</div>
+    <input type="text" id="adminSearchInput" placeholder="Type a section or option name..." autocomplete="off"
+      style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;margin:10px 0;font-size:14px;"
+      oninput="filterAdminQuickSearch()">
+    <div id="adminSearchResults" style="overflow-y:auto;flex:1;"></div>
+  </div>`;
+  document.body.appendChild(div);
+  renderAdminQuickSearchResults(ADMIN_SEARCH_INDEX);
+  const inp = document.getElementById('adminSearchInput');
+  inp.focus();
+  // Enter jumps straight to the first result — fast path for "type and go".
+  inp.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') {
+      const first = document.querySelector('#adminSearchResults .kd-card');
+      if (first) first.click();
+    }
+  });
+}
+
+function filterAdminQuickSearch() {
+  const q = (document.getElementById('adminSearchInput').value || '').trim().toLowerCase();
+  const matches = q ? ADMIN_SEARCH_INDEX.filter(item => item.label.toLowerCase().includes(q)) : ADMIN_SEARCH_INDEX;
+  renderAdminQuickSearchResults(matches);
+}
+
+function renderAdminQuickSearchResults(items) {
+  const box = document.getElementById('adminSearchResults');
+  if (!items.length) { box.innerHTML = '<div class="empty-state"><p>No matching section found.</p></div>'; return; }
+  box.innerHTML = items.map(item => `<div class="kd-card" style="cursor:pointer;margin-bottom:6px;padding:12px 14px;" onclick="jumpToAdminSearchResult('${item.page}')">
+    <span style="font-size:16px;margin-right:8px;">${item.icon}</span><span style="font-weight:600;font-size:13.5px;">${item.label}</span>
+  </div>`).join('');
+}
+
+function jumpToAdminSearchResult(page) {
+  const modal = document.getElementById('adminSearchModal');
+  if (modal) modal.remove();
+  showAdminPage(page);
 }
 
 async function loadTodayGlance() {
