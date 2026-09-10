@@ -2463,7 +2463,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-actions-grid">
           <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('today-glance')"><span class="quick-action-icon">🖥️</span><div class="quick-action-label">Today at a Glance</div><div class="quick-action-sub">Leads, DSR, Stock, Absent, Loyalty — today</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases — info only</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -3155,6 +3154,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
+        <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-dsr-today">
@@ -8283,16 +8283,61 @@ async function loadExtraDsrCheck() {
       return;
     }
     let html = `<div style="display:grid;gap:8px;">`;
-    res.flagged.forEach(f => {
-      html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);">
+    res.flagged.forEach((f, i) => {
+      // v-add (BRO: "click chesthe e date lo ala jarigindo, aa detail
+      // kuda ravali" — tap any flagged card to see the actual DSR
+      // entries behind it, so a wrong date/duplicate/whatever can
+      // actually be found and fixed, not just known to exist).
+      html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">
         <div class="kd-head"><span class="kd-name">${f.employee}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
         <div class="kd-note">📅 ${fmtDMY(f.date)} — DSR entries: <b>${f.dsrEntries}</b> vs Walk-in purchases reported: <b>${f.walkinPurchased}</b></div>
+        <div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:4px;font-weight:600;">Tap to see the entries →</div>
       </div>`;
     });
     html += `</div>`;
     box.innerHTML = html;
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
+  }
+}
+
+// Modal showing every DSR entry for this employee on this date — the
+// admin's own job from here is to look at these (customer names, item,
+// time) and spot which one looks wrong (old sale re-entered today,
+// accidental duplicate, etc.) and go correct it directly in the sheet.
+async function showExtraDsrDetail(employee, date) {
+  const existing = document.getElementById('extraDsrDetailModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'extraDsrDetailModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="document.getElementById('extraDsrDetailModal').remove()" title="Close">✕</button>
+    <div class="modal-title">🧾 ${employee} — ${fmtDMY(date)}</div>
+    <div id="extraDsrDetailBody" style="margin-top:10px;"><div class="loading"><span class="spinner"></span>Loading entries...</div></div>
+  </div>`;
+  document.body.appendChild(div);
+
+  try {
+    const res = await jsonp({ page: 'dsrEntriesForEmpDateJSON', employee, date });
+    const body = document.getElementById('extraDsrDetailBody');
+    if (!res || !res.ok) { body.innerHTML = '<p style="color:var(--red);">Could not load entries.</p>'; return; }
+    if (!res.entries || !res.entries.length) { body.innerHTML = '<p>No entries found for this employee/date.</p>'; return; }
+    let html = `<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">${res.entries.length} DSR entr${res.entries.length === 1 ? 'y' : 'ies'} on this date. Check the timestamps and customer names below — an old sale re-entered under today's date, or a genuine duplicate, is usually easy to spot once you see them side by side.</p>`;
+    res.entries.forEach((en, i) => {
+      const itemsDesc = (en.items || []).map(it => it.itemName).filter(Boolean).join(', ') || '—';
+      html += `<div class="dsr-receipt-card" style="margin-bottom:8px;">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${en.dsrNo}</span><span class="kd-pill gold">${en.paymentStatus || '—'}</span></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-cust-name">${en.customerName || '—'}</div>
+          <div class="dsr-meta-row">📱 ${en.mobileNumber || '—'} &nbsp;·&nbsp; 🕐 ${en.timestamp || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${itemsDesc}</div>
+        </div>
+      </div>`;
+    });
+    body.innerHTML = html;
+  } catch (e) {
+    document.getElementById('extraDsrDetailBody').innerHTML = `<p style="color:var(--red);">Could not load. ${e.message}</p>`;
   }
 }
 
