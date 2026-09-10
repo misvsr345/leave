@@ -8362,7 +8362,7 @@ async function loadCustomer360() {
   html += section('Lead Call History', '📞', lead ? lead.calls : null, c =>
     `<div class="kd-note" style="margin:4px 0;">${c.date} — ${c.employee} — <b>${c.status}</b>${c.feedback ? ' — ' + c.feedback : ''}</div>`, !lead);
   html += section('DSR Purchases', '🛍️', ds ? ds.entries : null, en =>
-    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${en.employeeName} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => it.productName || it.silverItemName).filter(Boolean).join(', ') || '—'}</div>`, !ds);
+    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${en.employeeName} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => it.productName || it.diamondProductName || it.silverItemName).filter(Boolean).join(', ') || '—'}</div>`, !ds);
   html += `</div>`;
   box.innerHTML = html;
 }
@@ -11871,14 +11871,19 @@ function renderDsrTodayFiltered(who) {
           }
         }
         const editBtn = who === 'admin' ? `<button class="dsr-photo-btn" style="margin-left:6px;" onclick="openDsrEditModal(${myItemIdx},'${who}')">✏️ Edit</button>` : '';
+        // v-fix (BRO: Diamond's own dedicated columns) — itemName/
+        // weight/tagStatus/tagNo/photo are already correctly Diamond-
+        // aware from the backend (see DSR_VSR.DIAMOND_* branching);
+        // only Cent/Quality are genuinely extra fields on top of those.
+        const isDiaRow = it.type === 'Diamond';
         itemsHtml += `<tr>
           <td>${it.type || '—'}</td>
           <td>${it.productFrom || '—'}</td>
           <td>${it.tagStatus || '—'}</td>
           <td>${it.tagNo || '—'}</td>
           <td>${it.itemName || '—'}</td>
-          <td>${it.design || '—'}</td>
-          <td>${it.tunch || '—'}</td>
+          <td>${isDiaRow ? (it.diamondCent || '—') : (it.design || '—')}</td>
+          <td>${isDiaRow ? (it.diamondQuality || '—') : (it.tunch || '—')}</td>
           <td>${it.weight || '—'}</td>
           <td style="white-space:nowrap;">${photoBtn}${editBtn}</td>
         </tr>`;
@@ -11896,7 +11901,7 @@ function renderDsrTodayFiltered(who) {
           <div class="dsr-items-wrap" style="border:1.5px solid var(--border);border-radius:8px;overflow-x:auto;margin-top:8px;">
             <table class="dsr-items-table" style="white-space:nowrap;">
               <thead>
-                <tr><th>Type</th><th>From</th><th>Tag Status</th><th>Tag No</th><th>Product</th><th>Design</th><th>Tunch</th><th>Weight</th><th>Photo</th></tr>
+                <tr><th>Type</th><th>From</th><th>Tag Status</th><th>Tag No</th><th>Product</th><th>Design/Cent</th><th>Tunch/Quality</th><th>Weight</th><th>Photo</th></tr>
               </thead>
               <tbody>${itemsHtml}</tbody>
             </table>
@@ -12067,21 +12072,22 @@ function openDsrDetailModal(key, who) {
   let itemRowsHtml = '';
   g.items.forEach(it => {
     const photoBtn = it.hasPhoto ? `<button class="dsr-photo-btn" onclick="dsrDetailViewPhoto('${(it.photo||'').replace(/'/g,"\\'")}')">📷 View Photo</button>` : '<span class="kd-pill red" style="font-size:9.5px;white-space:nowrap;">⚠️ No Photo</span>';
+    const isDiaItem = it.type === 'Diamond';
     itemRowsHtml += `<tr>
       <td>${it.type || '—'}</td>
       <td>${it.productFrom || '—'}</td>
       <td>${it.tagStatus || '—'}</td>
       <td>${it.tagNo || '—'}</td>
       <td>${it.itemName || '—'}</td>
-      <td>${it.design || '—'}</td>
-      <td>${it.tunch || '—'}</td>
+      <td>${isDiaItem ? (it.diamondCent || '—') : (it.design || '—')}</td>
+      <td>${isDiaItem ? (it.diamondQuality || '—') : (it.tunch || '—')}</td>
       <td>${it.weight || '—'}</td>
       <td style="white-space:nowrap;">${photoBtn}</td>
     </tr>`;
   });
   itemsHtml += `<div class="dsr-items-wrap" style="border:1.5px solid var(--border);border-radius:8px;overflow-x:auto;">
     <table class="dsr-items-table" style="white-space:nowrap;">
-      <thead><tr><th>Type</th><th>From</th><th>Tag Status</th><th>Tag No</th><th>Product</th><th>Design</th><th>Tunch</th><th>Weight</th><th>Photo</th></tr></thead>
+      <thead><tr><th>Type</th><th>From</th><th>Tag Status</th><th>Tag No</th><th>Product</th><th>Design/Cent</th><th>Tunch/Quality</th><th>Weight</th><th>Photo</th></tr></thead>
       <tbody>${itemRowsHtml}</tbody>
     </table>
   </div>`;
@@ -12299,8 +12305,59 @@ var DSR_ST = {
   admin: { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
 };
 
+// v-fix (BRO: "Admin login lo DSR entry form lo employee name ante
+// admin name fix ga vastundi, ala vaddu, admin dantlo emp andari name
+// drop down ravali" — for admin, this used to always return the
+// logged-in admin's OWN name, so every DSR entry admin submitted got
+// recorded under the ADMIN as if they'd made the sale themselves,
+// instead of whichever real employee actually made it). Reads the
+// admin's dropdown selection now — this is the ONE place both the
+// on-screen display and the actual submit payload (dsrfSubmit) pull
+// the employee name from, so fixing it here fixes both at once.
 function dsrfEmpDisplayName(who) {
-  return (who === 'admin' ? state.adminName : state.empName) || '';
+  if (who === 'admin') {
+    const sel = document.getElementById('dsrfEmpSelect-admin');
+    return sel ? sel.value : '';
+  }
+  return state.empName || '';
+}
+
+// Populates the admin employee dropdown — reuses the SAME employee
+// list/cache Direct Action already loads (directEmpListAPI), rather
+// than fetching a second, separate copy of the same data.
+async function dsrfPopulateAdminEmpSelect() {
+  const sel = document.getElementById('dsrfEmpSelect-admin');
+  if (!sel) return;
+  // v-fix (BRO: "emp name drop down once okkasari load ayyaka
+  // automatic ga offline lo save avali" — builds the dropdown from
+  // INSIDE loadEmpListWithCache's renderFn so it fires instantly off
+  // the cached copy first, then again after a network refresh — not
+  // just once after awaiting the full round-trip).
+  const buildOptions = () => {
+    const prevVal = sel.value;
+    let html = '<option value="">-- Select Employee --</option>';
+    directEmpCache.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(emp => {
+      html += `<option value="${escJs(emp.name)}">${emp.name}</option>`;
+    });
+    sel.innerHTML = html;
+    if (prevVal) sel.value = prevVal;
+  };
+  if (directEmpCache.length > 0) {
+    buildOptions();
+  } else {
+    try {
+      await loadEmpListWithCache('directEmpList',
+        () => jsonpReliable({ page: 'directEmpListAPI' }),
+        (employees) => { directEmpCache = employees; buildOptions(); }
+      );
+    } catch (e) { /* dropdown just stays empty if this fails — dsrfSubmit already blocks submission when no employee is identified */ }
+  }
+}
+
+function dsrfOnAdminEmpChange() {
+  // Hook kept for any future per-employee DSR defaults (e.g. their own
+  // product-type history) — currently a no-op beyond dsrfEmpDisplayName
+  // already reading the fresh selection directly whenever it's needed.
 }
 
 // v-add (BRO's draft-save feature — DSR-specific wrapper): DSR's item
@@ -12378,7 +12435,13 @@ function renderDsrEntryForm(who, force) {
         <div class="ch">◉ &nbsp;Employee</div>
         <div class="cb">
           <label>Employee Name</label>
-          <div class="emp-lock"><span class="nm">${dsrfEmpDisplayName(who) || '—'}</span><span class="tag">🔒 From Login</span></div>
+          ${who === 'admin' ? `
+            <select id="dsrfEmpSelect-admin" class="uniform-select" onchange="dsrfOnAdminEmpChange()">
+              <option value="">-- Select Employee --</option>
+            </select>
+          ` : `
+            <div class="emp-lock"><span class="nm">${dsrfEmpDisplayName(who) || '—'}</span><span class="tag">🔒 From Login</span></div>
+          `}
         </div>
       </div>
 
@@ -12412,6 +12475,10 @@ function renderDsrEntryForm(who, force) {
   dsrfAddEntry(who);
 
   draftInitDsrForm(who);
+  // v-add (BRO's Admin DSR employee-dropdown fix): populate right after
+  // the form is built, admin-only — the employee-locked display for a
+  // regular employee login needs no such list.
+  if (who === 'admin') dsrfPopulateAdminEmpSelect();
 
   if (!st.loaded) {
     dsrfLoadProducts(who);
@@ -12509,15 +12576,15 @@ function dsrfClearForm(who) {
 
 function dsrfRefreshProducts(who, eid) {
   const st = DSR_ST[who];
-  const typEl = document.getElementById(`dsrfTyp-${who}-${eid}`);
-  const curType = typEl ? typEl.value : 'Gold';
-  const gList = curType === 'Diamond' ? st.diamond : st.gold;
-  const gOpts = '<option value="">-- Select --</option>' + gList.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const gOpts = '<option value="">-- Select --</option>' + st.gold.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const dOpts = '<option value="">-- Select --</option>' + st.diamond.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const gnEl = document.getElementById(`dsrfPn-${who}-${eid}`);
   const snEl = document.getElementById(`dsrfSn-${who}-${eid}`);
+  const dnEl = document.getElementById(`dsrfDiaPn-${who}-${eid}`);
   if (gnEl) gnEl.innerHTML = gOpts;
   if (snEl) snEl.innerHTML = sOpts;
+  if (dnEl) dnEl.innerHTML = dOpts;
 }
 
 function dsrfPhotoWidget(who, eid, pfx) {
@@ -12598,6 +12665,42 @@ function dsrfAddEntry(who) {
         </div>
       </div>
     </div>
+    <div id="dsrfDiamondP-${who}-${eid}" style="display:none;">
+      <div class="card" style="margin:10px 14px 14px;">
+        <div class="ch">◆ &nbsp;Diamond Item Details</div>
+        <div class="cb">
+          <!-- v-fix (BRO: "diamond select chesaka, tag no, weight, cent,
+               product name, quality ani change chei" — diamonds don't
+               have a gold-style Design or a Tunch purity grade, so this
+               is its own field set entirely rather than reusing Gold's,
+               even though it maps onto the SAME underlying sheet columns
+               (Design→Cent, Tunch→Quality) so no backend schema change
+               is needed at all — just a different label and a plain
+               text input instead of the gold-tunch % dropdown for this
+               specific field, per item type). -->
+          <div class="g2 mb12">
+            <div><label>Tag Status</label>
+              <div class="tgl" id="dsrfDiaTglTag-${who}-${eid}">
+                <button class="on" onclick="dsrfSetDiaTagTgl('${who}',${eid},'Tag',this)">Tag</button>
+                <button onclick="dsrfSetDiaTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
+              </div><input type="hidden" id="dsrfDiaTagSt-${who}-${eid}" value="Tag"></div>
+            <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
+              <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749"></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
+            <div><label>Cent ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaCent-${who}-${eid}" placeholder="e.g. 50 cent"></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Product Name ${req}</label>
+              <select id="dsrfDiaPn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'diamond')"><option value="">-- Select --</option></select>
+              <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
+            <div><label>Quality ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaQuality-${who}-${eid}" placeholder="e.g. VVS1, SI2"></div>
+          </div>
+          <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'dia')}</div>
+        </div>
+      </div>
+    </div>
     <div id="dsrfSilverP-${who}-${eid}" style="display:none;">
       <div class="card" style="margin:10px 14px 14px;">
         <div class="ch">◎ &nbsp;Silver Item Details</div>
@@ -12654,14 +12757,13 @@ function dsrfSetTgl(who, grpId, hidId, val, btn) {
 
 function dsrfSetType(who, eid, val, btn) {
   dsrfSetTgl(who, `dsrfTglTyp-${who}-${eid}`, `dsrfTyp-${who}-${eid}`, val, btn);
-  const silver = val === 'Silver';
-  // Diamond reuses the exact same field set as Gold (Tag Status, Tag No,
-  // Product Name, Design, Tunch, Weight, Photo) — only the product list
-  // and heading label change.
-  document.getElementById(`dsrfGoldP-${who}-${eid}`).style.display = silver ? 'none' : 'block';
-  document.getElementById(`dsrfSilverP-${who}-${eid}`).style.display = silver ? 'block' : 'none';
-  const hd = document.getElementById(`dsrfGoldHd-${who}-${eid}`);
-  if (hd) hd.innerHTML = val === 'Diamond' ? '◆ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details';
+  // v-fix (BRO: Diamond now has its OWN field set — Tag No, Weight,
+  // Cent, Product Name, Quality — instead of reusing Gold's Design/
+  // Tunch fields; each item type shows exactly one of these three
+  // blocks).
+  document.getElementById(`dsrfGoldP-${who}-${eid}`).style.display = val === 'Gold' ? 'block' : 'none';
+  document.getElementById(`dsrfSilverP-${who}-${eid}`).style.display = val === 'Silver' ? 'block' : 'none';
+  document.getElementById(`dsrfDiamondP-${who}-${eid}`).style.display = val === 'Diamond' ? 'block' : 'none';
   dsrfRefreshProducts(who, eid);
 }
 
@@ -12674,9 +12776,18 @@ function dsrfSetTagTgl(who, eid, val, btn) {
   document.getElementById(`dsrfTagNoWrap-${who}-${eid}`).style.display = (val === 'Tag') ? '' : 'none';
 }
 
+function dsrfSetDiaTagTgl(who, eid, val, btn) {
+  document.getElementById(`dsrfDiaTglTag-${who}-${eid}`).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(`dsrfDiaTagSt-${who}-${eid}`).value = val;
+  document.getElementById(`dsrfDiaTagNoWrap-${who}-${eid}`).style.display = (val === 'Tag') ? '' : 'none';
+}
+
 function dsrfToggleOther(who, eid, kind) {
   if (kind === 'gold') {
     document.getElementById(`dsrfPnOther-${who}-${eid}`).style.display = document.getElementById(`dsrfPn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
+  } else if (kind === 'diamond') {
+    document.getElementById(`dsrfDiaPnOther-${who}-${eid}`).style.display = document.getElementById(`dsrfDiaPn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
   } else {
     document.getElementById(`dsrfSnOther-${who}-${eid}`).style.display = document.getElementById(`dsrfSn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
   }
@@ -15471,6 +15582,30 @@ function dsrfSubmit(who) {
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '' });
+    } else if (type === 'Diamond') {
+      // v-fix (BRO: "Diamond kosam Silver laga, vere columns add chei" —
+      // upgraded from the earlier design where Cent/Quality reused
+      // Gold's Design/Tunch columns. Diamond now has its own fully
+      // separate columns on the backend, mirroring exactly how Silver
+      // already has its own dedicated columns instead of sharing Gold's).
+      let dpn = dsrfGv(`dsrfDiaPn-${who}-${eid}`); if (dpn === 'Other') dpn = dsrfGv(`dsrfDiaPnCustom-${who}-${eid}`);
+      const dCent = dsrfGv(`dsrfDiaCent-${who}-${eid}`), dWt = dsrfGv(`dsrfDiaWt-${who}-${eid}`),
+            dQuality = dsrfGv(`dsrfDiaQuality-${who}-${eid}`),
+            dTs = dsrfGv(`dsrfDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`dsrfDiaTagNo-${who}-${eid}`);
+      if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
+      if (!isOrder) {
+        if (!dWt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+        if (!dCent) { ok = false; errMsg = 'Please enter Cent!'; return; }
+        if (!dQuality) { ok = false; errMsg = 'Please enter Quality!'; return; }
+        if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+      }
+      const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
+      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
+        type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
+        silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
+        diamondTagStatus: dTs || '', diamondTagNo: dTn || '', diamondProductName: dpn,
+        diamondCent: dCent || '', diamondQuality: dQuality || '', diamondWeight: dWt || '',
+        diamondPhoto: dPhoto.length > 100 ? dPhoto : '' });
     } else {
       let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrfGv(`dsrfPnCustom-${who}-${eid}`);
       const des = dsrfGv(`dsrfDes-${who}-${eid}`), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
@@ -15504,12 +15639,20 @@ function dsrfShowPreview(who, rows) {
   let itemsHtml = '';
   rows.forEach((r, i) => {
     const isSilver = r.type === 'Silver';
-    const photo = isSilver ? r.silverItemPhoto : r.photo;
+    const isDiamond = r.type === 'Diamond';
+    // v-fix (BRO: Diamond now has its own genuinely separate fields —
+    // reading diamondProductName/diamondCent/diamondQuality/
+    // diamondWeight/diamondPhoto directly instead of the earlier
+    // Design/Tunch-column-reuse approach).
+    const photo = isSilver ? r.silverItemPhoto : isDiamond ? r.diamondPhoto : r.photo;
+    const itemName = isSilver ? r.silverItemName : isDiamond ? r.diamondProductName : r.productName;
+    const itemWeight = isSilver ? r.silverItemWeight : isDiamond ? r.diamondWeight : r.weight;
+    const itemTagNo = isDiamond ? r.diamondTagNo : r.tagNo;
     itemsHtml += `<div class="dsr-item-row" style="align-items:flex-start;">
       <div>
-        <b>${isSilver ? r.silverItemName : r.productName || '—'}</b>
-        <span class="dsr-item-sub">${!isSilver && r.design ? ' · ' + r.design : ''}${!isSilver && r.tunch ? ' · Tunch ' + r.tunch : ''}
-          ${(isSilver ? r.silverItemWeight : r.weight) ? ' · ' + (isSilver ? r.silverItemWeight : r.weight) + 'g' : ''}${!isSilver && r.tagNo ? ' · Tag ' + r.tagNo : ''}</span>
+        <b>${itemName || '—'}</b>
+        <span class="dsr-item-sub">${isDiamond && r.diamondCent ? ' · Cent ' + r.diamondCent : ''}${isDiamond && r.diamondQuality ? ' · Quality ' + r.diamondQuality : ''}${!isSilver && !isDiamond && r.design ? ' · ' + r.design : ''}${!isSilver && !isDiamond && r.tunch ? ' · Tunch ' + r.tunch : ''}
+          ${itemWeight ? ' · ' + itemWeight + 'g' : ''}${!isSilver && itemTagNo ? ' · Tag ' + itemTagNo : ''}</span>
       </div>
       ${photo ? `<img src="${photo}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${photo}','_blank')">` : '<span class="kd-pill red" style="font-size:9.5px;">No Photo</span>'}
     </div>`;
@@ -17593,22 +17736,39 @@ function renderAdminDashboardBody() {
 async function loadEmployeeWisePage() {
   const sel = document.getElementById('empWiseSelect');
   if (sel.options.length <= 1) {
-    // Build the picker from whatever names appear in allLeaves + directEmpCache, deduped
-    const namesMap = {};
-    (state.allLeaves || []).forEach(l => { if (l.empId) namesMap[l.empId] = l.name; });
-    if (directEmpCache.length === 0) {
+    // v-fix (BRO: "emp name drop down once okkasari load ayyaka
+    // automatic ga offline lo save avali" — this used to only check the
+    // in-memory directEmpCache variable, which resets on every page
+    // load, so it always did a fresh network fetch even when a
+    // perfectly good offline copy from a previous visit was sitting
+    // right there in localStorage). buildEmpWiseOptions is called from
+    // INSIDE loadEmpListWithCache's own renderFn so it fires instantly
+    // off the cached copy first (near-zero wait), then again after the
+    // network refresh completes — not just once after awaiting the
+    // full round-trip, which would throw away the whole point of
+    // having a cache.
+    const buildEmpWiseOptions = () => {
+      const namesMap = {};
+      (state.allLeaves || []).forEach(l => { if (l.empId) namesMap[l.empId] = l.name; });
+      directEmpCache.forEach(emp => { namesMap[emp.empId] = emp.name; });
+      const prevVal = sel.value;
+      let html = '<option value="__ALL__">-- All Employees --</option>';
+      Object.keys(namesMap).sort((a,b) => namesMap[a].localeCompare(namesMap[b])).forEach(id => {
+        html += `<option value="${id}">${namesMap[id]} (${id})</option>`;
+      });
+      sel.innerHTML = html;
+      if (prevVal) sel.value = prevVal;
+    };
+    if (directEmpCache.length > 0) {
+      buildEmpWiseOptions();
+    } else {
       try {
-        const res = await jsonpReliable({ page: 'directEmpListAPI' });
-        if (res.ok) directEmpCache = res.employees || [];
-      } catch(e) {}
+        await loadEmpListWithCache('directEmpList',
+          () => jsonpReliable({ page: 'directEmpListAPI' }),
+          (employees) => { directEmpCache = employees; buildEmpWiseOptions(); }
+        );
+      } catch(e) { buildEmpWiseOptions(); /* still show whatever allLeaves alone can provide */ }
     }
-    directEmpCache.forEach(emp => { namesMap[emp.empId] = emp.name; });
-
-    let html = '<option value="__ALL__">-- All Employees --</option>';
-    Object.keys(namesMap).sort((a,b) => namesMap[a].localeCompare(namesMap[b])).forEach(id => {
-      html += `<option value="${id}">${namesMap[id]} (${id})</option>`;
-    });
-    sel.innerHTML = html;
   }
 
   if (empWiseBalanceCache.length === 0) {
