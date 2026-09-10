@@ -1611,6 +1611,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
+        <button class="tb-chip" id="empSearchBtn" onclick="openEmpQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
         <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
@@ -8600,6 +8601,100 @@ function jumpToAdminSearchResult(page) {
   const modal = document.getElementById('adminSearchModal');
   if (modal) modal.remove();
   showAdminPage(page);
+}
+
+// v-add (BRO: "ipudu ichina new option anni both login lo ivu" — same
+// Quick Search for Employee login, own index since employees see
+// different pages/permissions than Admin, not a shared list filtered
+// by role).
+const EMP_SEARCH_INDEX = [
+  { icon: '📊', label: 'Dashboard', page: 'dashboard-hub' },
+  { icon: '🏖️', label: 'Leave', page: 'overview' },
+  { icon: '👥', label: 'Leads', page: 'leads' },
+  { icon: '💳', label: 'Loyalty Card', page: 'loyalty' },
+  { icon: '🥇', label: 'Golden Aura', page: 'golden-aura' },
+  { icon: '🧾', label: 'DSR', page: 'dsr' },
+  { icon: '📊', label: 'KPI', page: 'kpi' },
+  { icon: '📝', label: 'Checklist', page: 'stock' },
+  { icon: '🚶', label: 'Walk-in Track', page: 'walkins' },
+  { icon: '➕', label: 'New Card Entry (Loyalty)', page: 'loyalty-newcard' },
+  { icon: '🔍', label: 'Search (Loyalty Card)', page: 'loyalty-search' },
+  { icon: '📊', label: 'My Incentive (Loyalty)', page: 'loyalty-stats' },
+  { icon: '🪪', label: 'My Cards (Loyalty)', page: 'loyalty-mycards' },
+  { icon: '🏆', label: 'Leaderboard (Loyalty)', page: 'loyalty-leaderboard' },
+  { icon: '🎯', label: 'My Target (KPI)', page: 'kpi-target' },
+  { icon: '📅', label: 'Running Month / Till Date (KPI)', page: 'kpi-tilldate' },
+  { icon: '🏁', label: 'Last Month KPI', page: 'kpi-monthly' },
+  { icon: '📈', label: 'My KPI Trend', page: 'kpi-trend' },
+  { icon: '📈', label: 'Month Comparison (KPI)', page: 'kpi-compare' },
+  { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
+  { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
+  { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
+  { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
+  { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
+  { icon: '📅', label: 'Till Date DSR', page: 'dsr-tilldate' },
+  { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
+  { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
+  { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
+  { icon: '🔍', label: 'My Schemes (Golden Aura)', page: 'golden-aura-list' },
+  { icon: '📋', label: "Today's Leads", page: 'leads-pending' },
+  { icon: '✅', label: 'Submitted Today (Leads)', page: 'leads-submitted' },
+  { icon: '📊', label: 'My Report (Leads)', page: 'leads-report' },
+  { icon: '📈', label: 'My Conversions (Leads)', page: 'leads-conversions' },
+  { icon: '🎉', label: 'Customer Events (Leads)', page: 'customer-events' },
+  { icon: '🪪', label: 'Profile', page: 'profile' },
+  { icon: '✍️', label: 'Apply Leave', page: 'apply' },
+  { icon: '📋', label: 'My Leaves', page: 'myleaves' },
+  { icon: '📅', label: 'Calendar (Leave)', page: 'calendar' },
+  { icon: '🚫', label: 'Blocked Dates (Leave)', page: 'blocked' },
+  { icon: '📈', label: 'My Trends (Leave)', page: 'trend' },
+  { icon: '📆', label: 'Events (Leave)', page: 'events' }
+];
+
+function openEmpQuickSearch() {
+  const existing = document.getElementById('empSearchModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'empSearchModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">
+    <button class="modal-close-x" onclick="document.getElementById('empSearchModal').remove()" title="Close">✕</button>
+    <div class="modal-title">🔍 Quick Search</div>
+    <input type="text" id="empSearchInput" placeholder="Type a section or option name..." autocomplete="off"
+      style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;margin:10px 0;font-size:14px;"
+      oninput="filterEmpQuickSearch()">
+    <div id="empSearchResults" style="overflow-y:auto;flex:1;"></div>
+  </div>`;
+  document.body.appendChild(div);
+  renderEmpQuickSearchResults(EMP_SEARCH_INDEX);
+  const inp = document.getElementById('empSearchInput');
+  inp.focus();
+  inp.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') {
+      const first = document.querySelector('#empSearchResults .kd-card');
+      if (first) first.click();
+    }
+  });
+}
+
+function filterEmpQuickSearch() {
+  const q = (document.getElementById('empSearchInput').value || '').trim().toLowerCase();
+  const matches = q ? EMP_SEARCH_INDEX.filter(item => item.label.toLowerCase().includes(q)) : EMP_SEARCH_INDEX;
+  renderEmpQuickSearchResults(matches);
+}
+
+function renderEmpQuickSearchResults(items) {
+  const box = document.getElementById('empSearchResults');
+  if (!items.length) { box.innerHTML = '<div class="empty-state"><p>No matching section found.</p></div>'; return; }
+  box.innerHTML = items.map(item => `<div class="kd-card" style="cursor:pointer;margin-bottom:6px;padding:12px 14px;" onclick="jumpToEmpSearchResult('${item.page}')">
+    <span style="font-size:16px;margin-right:8px;">${item.icon}</span><span style="font-weight:600;font-size:13.5px;">${item.label}</span>
+  </div>`).join('');
+}
+
+function jumpToEmpSearchResult(page) {
+  const modal = document.getElementById('empSearchModal');
+  if (modal) modal.remove();
+  showEmpPage(page);
 }
 
 async function loadTodayGlance() {
