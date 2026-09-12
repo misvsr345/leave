@@ -12685,14 +12685,22 @@ function loadDsrMissing(who, start, end) {
       return true;
     });
     if (!dedupedRows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR entries!</p></div>'; return; }
+    // v-add (BRO: "e date lo miss aindo aa emp name meeda click cheste
+    // miss aina dsr data ravali" — the per-date detail was already being
+    // computed (missDates below) but the card itself had no click
+    // handler at all, and its own inline chip row can get visually
+    // cramped over a long date range anyway. __dsrMissingRows keeps the
+    // ALREADY-fetched perDate data (no second API call needed) so a tap
+    // can show it in a proper, readable modal.
+    window.__dsrMissingRows = dedupedRows;
     let html = '';
-    dedupedRows.forEach(r => {
+    dedupedRows.forEach((r, idx) => {
       const missDates = Object.keys(r.perDate || {}).filter(d => String(r.perDate[d]).indexOf('M:') === 0);
       const totalPurchases = sanitizeCount(r.totalPurchases);
       const dsrEntered = sanitizeCount(r.dsrEntered);
       const totalMissing = sanitizeCount(r.totalMissing);
       const noMissing = totalMissing === 0;
-      html += `<div class="kd-card ${noMissing ? 'kd-ok' : 'kd-danger'}">
+      html += `<div class="kd-card ${noMissing ? 'kd-ok' : 'kd-danger'}" ${noMissing ? '' : `style="cursor:pointer;" onclick="showDsrMissingDetail(${idx})"`}>
         <div class="kd-head"><span class="kd-name">${r.employee}</span>
           <span class="kd-pill ${noMissing ? 'green' : 'red'}">${noMissing ? '✅ 0 Missing' : '🚫 ' + totalMissing + ' Missing'}</span></div>
         <div class="kd-stats">
@@ -12700,11 +12708,45 @@ function loadDsrMissing(who, start, end) {
           <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${dsrEntered}</span><span class="kd-lbl">DSR Entered</span></div>
         </div>
         ${missDates.length ? '<div class="kd-chiprow">' + missDates.map(d => `<span class="kd-chip">🔴 ${fmtDMY(d)}</span>`).join('') + '</div>' : ''}
+        ${noMissing ? '' : '<div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:6px;font-weight:600;">Tap for exact dates →</div>'}
       </div>`;
     });
     box.innerHTML = html;
     showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrMissing(\'' + who + '\')" title="Retry">🔄</button></div>'; });
+}
+
+// Modal listing EVERY date this employee has a purchase-but-no-DSR
+// shortfall, with the exact purchase-vs-entered numbers per date where
+// the sheet provides them (not just a flat "missing" flag) — this is
+// the actual "which date, how many" answer, not just a count.
+function showDsrMissingDetail(idx) {
+  const r = (window.__dsrMissingRows || [])[idx];
+  if (!r) return;
+  const existing = document.getElementById('dsrMissingDetailModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'dsrMissingDetailModal';
+  div.className = 'modal-overlay show';
+  const missEntries = Object.entries(r.perDate || {}).filter(([d, v]) => String(v).indexOf('M:') === 0);
+  let bodyHtml;
+  if (!missEntries.length) {
+    bodyHtml = '<p style="font-size:13px;color:var(--text2);">No specific missing dates found in this date range — the total-missing count may fall outside the currently selected range. Try widening the date range above.</p>';
+  } else {
+    bodyHtml = missEntries.sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => {
+      const missCount = String(v).replace('M:', '');
+      return `<div class="kd-card" style="border-left:3px solid var(--red);margin-bottom:8px;">
+        <div class="kd-head"><span class="kd-name">📅 ${fmtDMY(d)}</span><span class="kd-pill red">${missCount} missing</span></div>
+      </div>`;
+    }).join('');
+  }
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="document.getElementById('dsrMissingDetailModal').remove()" title="Close">✕</button>
+    <div class="modal-title">🧾 ${r.employee} — Missing Dates</div>
+    <p style="font-size:11.5px;color:var(--text3);margin:8px 0 12px;">${r.totalPurchases} Purchases · ${r.dsrEntered} DSR Entered · ${r.totalMissing} Missing (in the currently selected date range)</p>
+    ${bodyHtml}
+  </div>`;
+  document.body.appendChild(div);
 }
 
 function dsrRangeResultHtml(res) {
