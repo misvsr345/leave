@@ -6248,6 +6248,25 @@ async function confirmSubmitLeave() {
       // the "no confirmation from server" warning to fire even on leaves
       // that actually went through fine.
       const res = await jsonpWriteOnce(data, submitIdem, 45000);
+      // v-fix (BRO: "Multiple dates anniti kuda separate row lo add
+      // cheyali, vadileyakudadu" — the backend now saves every date it
+      // can, even if one fails, and reports back 'Success' (all saved),
+      // 'Partial' (some saved, some didn't) or 'Error' (none saved) —
+      // a multi-date submission needs its own per-date result popup
+      // instead of showLeaveResultPopup, which only knows how to show
+      // ONE leave's single startDate/endDate/leaveId/days.
+      if (data.isMultiSegment) {
+        if (res.status && res.status !== 'Error') {
+          draftClear('leaveApply');
+          resetApplyForm();
+          showEmpPage('myleaves');
+          showMultiSegmentResultPopup(res);
+          loadEmpData();
+        } else {
+          toast(res.reason || 'Submission failed', 'error');
+        }
+        return;
+      }
       if(res.status && res.status !== 'Error') {
         draftClear('leaveApply');
         resetApplyForm();
@@ -6279,6 +6298,46 @@ async function confirmSubmitLeave() {
     }
     });
   }
+
+// v-add (BRO: multi-date submissions now report per-date success/failure
+// instead of all-or-nothing): shows every date that was in the request,
+// each with its own ✅ saved / ❌ failed status and, for failures, the
+// reason — so the employee immediately knows if a date needs to be
+// re-submitted on its own, instead of guessing from a single generic
+// message or having to go check the sheet.
+function showMultiSegmentResultPopup(res) {
+  const segs = res.segments || [];
+  const rows = segs.map(s => {
+    const dateLabel = fmtDMY(s.startDate) + (s.halfDay ? ' (' + s.leaveMode + ' — ' + s.halfDay + ')' : ' — ' + s.leaveMode);
+    if (s.ok) {
+      return `<div class="dsr-meta-row">✅ ${dateLabel} — <b>${s.status}</b>${s.leaveId ? ' · ' + s.leaveId : ''}</div>`;
+    }
+    return `<div class="dsr-meta-row" style="color:var(--red);">❌ ${dateLabel} — failed<br><span style="font-size:11px;">${s.reason || 'Unknown error'}</span></div>`;
+  }).join('');
+
+  const allOk = res.failCount === 0;
+  const headline = allOk
+    ? `✅ All ${res.successCount} date(s) submitted`
+    : `⚠️ ${res.successCount} of ${segs.length} date(s) submitted — ${res.failCount} failed`;
+
+  const existing = document.getElementById('multiSegResultModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'multiSegResultModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-title" style="${allOk ? '' : 'color:var(--orange);'}">${headline}</div>
+    <div class="dsr-receipt-card" style="margin-top:10px;">
+      <div class="dsr-receipt-body">${rows}</div>
+    </div>
+    ${!allOk ? '<p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Failed date(s) were NOT saved — re-apply just those dates separately.</p>' : ''}
+    <div class="btn-row">
+      <button class="btn-primary" onclick="document.getElementById('multiSegResultModal').remove();">OK</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
 
 function resetApplyForm() {
   document.getElementById('applyLeaveType').value = '';
