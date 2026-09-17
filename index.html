@@ -11437,8 +11437,16 @@ function loadKpiTarget(who) {
 // nothing.
 function kpiTableHtml(rows, storeTotal) {
   const fmtScore = v => { const n = Number(v); return isNaN(n) ? v : n.toFixed(2); };
+  // v-fix (BRO: "running month KPI score lo conversion ravadam ledu,
+  // backend sheet lo data undi kani ikkada radu" — real bug found): this
+  // table (the ADMIN multi-employee view) was simply missing the
+  // Conversion% column altogether — not a wrong value, the column never
+  // existed here. kpiRowCardHtml (the single-employee card view) already
+  // had it; this table-based sibling render path just never got it added
+  // when it was introduced, so admins looking at the table never saw it
+  // while an employee looking at their own card view always could.
   const head = `<tr>
-    <th>Place</th><th>Employee</th><th>Grade</th><th>Performance</th><th>Overall</th><th>Deals</th>
+    <th>Place</th><th>Employee</th><th>Grade</th><th>Performance</th><th>Overall</th><th>Deals</th><th>Conversion%</th>
     <th colspan="6" style="background:#1a5fa8;color:#fff;">Purchase + Deals Bonus</th>
     <th colspan="4" style="background:#1a7a4f;color:#fff;">Loyalty Cards</th>
     <th colspan="4" style="background:#c9720d;color:#fff;">Golden Aura</th>
@@ -11446,7 +11454,7 @@ function kpiTableHtml(rows, storeTotal) {
     <th>Last Updated</th>
   </tr>
   <tr style="font-size:10.5px;color:var(--text3);">
-    <th></th><th></th><th></th><th></th><th></th><th></th>
+    <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
     <th>Target</th><th>Purch.</th><th>Ach%</th><th>Score</th><th>Ratio</th><th>Bonus</th>
     <th>Target</th><th>Cards</th><th>Ach%</th><th>Score</th>
     <th>Target</th><th>Golden Aura</th><th>Ach%</th><th>Score</th>
@@ -11455,7 +11463,7 @@ function kpiTableHtml(rows, storeTotal) {
   </tr>`;
   const body = rows.map(r => `<tr>
     <td>${r.place}</td><td style="text-align:left;font-weight:700;">${r.employee}</td><td>${r.grade}</td><td>${r.gradeLabel}</td>
-    <td style="font-weight:800;">${fmtScore(r.overallScore)}</td><td>${r.deals}</td>
+    <td style="font-weight:800;">${fmtScore(r.overallScore)}</td><td>${r.deals}</td><td style="font-weight:700;color:var(--gold-dark,#8a6a2a);">${r.conversionPct}</td>
     <td>${r.purchTarget}</td><td>${r.purchases}</td><td>${r.purchAchPct}</td><td>${r.purchScore}</td><td>${r.dealsRatio}</td><td>${r.dealsBonus}</td>
     <td>${r.loyalTarget}</td><td>${r.loyaltyCards}</td><td>${r.loyaltyAchPct}</td><td>${r.loyaltyScore}</td>
     <td>${r.goldTarget}</td><td>${r.goldenAura}</td><td>${r.goldenAchPct}</td><td>${r.goldenScore}</td>
@@ -11472,14 +11480,25 @@ function kpiTableHtml(rows, storeTotal) {
   // so those cells are left as "—" rather than showing a misleading
   // number. Admin-only (storeTotal arrives null for employees, same
   // privacy boundary the per-row filtering already applies).
+  // v-fix (BRO: "avg enta, conv enta, performance ela undi, total
+  // target entha, entha achieve ayyindi, total dsr entry entha — ila
+  // store data kuda iste bagundu"): the store row now shows real
+  // computed values instead of — wherever a store-wide number is
+  // actually meaningful — Overall Score as the team AVERAGE,
+  // Conversion% / Purch / Loyalty / Golden Ach% as store-wide
+  // achieved-over-target (not an average of each employee's own %,
+  // which would overweight low-volume employees), and the three
+  // Target columns as team totals. Grade/Performance and the
+  // Score sub-columns (Purch/Loyalty/Golden/DSR Score) genuinely
+  // don't have a meaningful store-wide equivalent, so those stay —.
   const storeTotalRow = storeTotal ? `<tr style="background:var(--purple-bg,#f3e8ff);font-weight:800;border-top:2px solid var(--purple);">
     <td>—</td><td style="text-align:left;">🏪 ${storeTotal.employee}</td><td>—</td><td>—</td>
-    <td>—</td><td>${storeTotal.deals}</td>
-    <td>—</td><td>${storeTotal.purchases}</td><td>—</td><td>—</td><td>—</td><td>—</td>
-    <td>—</td><td>${storeTotal.loyaltyCards}</td><td>—</td><td>—</td>
-    <td>—</td><td>${storeTotal.goldenAura}</td><td>—</td><td>—</td>
+    <td>${storeTotal.avgOverallScore}</td><td>${storeTotal.deals}</td><td>${storeTotal.conversionPct}</td>
+    <td>${storeTotal.purchTargetTotal}</td><td>${storeTotal.purchases}</td><td>${storeTotal.purchAchPct}</td><td>—</td><td>—</td><td>—</td>
+    <td>${storeTotal.loyalTargetTotal}</td><td>${storeTotal.loyaltyCards}</td><td>${storeTotal.loyaltyAchPct}</td><td>—</td>
+    <td>${storeTotal.goldTargetTotal}</td><td>${storeTotal.goldenAura}</td><td>${storeTotal.goldenAchPct}</td><td>—</td>
     <td>${storeTotal.dsrOnTime}</td><td>${storeTotal.dsrLate}</td><td>${storeTotal.dsrNoEntry}</td><td>—</td>
-    <td>—</td>
+    <td style="font-size:10px;">🧾 ${storeTotal.totalDsrEntries} total entries</td>
   </tr>` : '';
   // v-fix: min-width lives in its own class (kpi-report-table-minw) now
   // instead of an inline style, so print CSS can override it with a
