@@ -13996,10 +13996,17 @@ function loadStockComplianceTrend(who) {
 // left, Opening value / Closing value side by side. Wholesale only
 // tracks the last three (Sankha/Wholesale/Retail boxes); Retail tracks
 // the full set.
+// v-fix (BRO: "Diamond boxes ane new header add aindi... frontend lo
+// kanipinchadam ledu" — real bug found): this list was the actual
+// reason Diamond never appeared, no matter what the sheet or backend
+// had — this table only ever draws a row for a key that's listed
+// here, and 'diamond' was simply never added when the column was.
+// Placed right after 'silver' per BRO's "silver section tarvata add
+// chei" — matches items.diamond now sent by stockChecklistDataAPI.
 const STOCK_RETAIL_ITEM_LABELS = [
   ['gfDisplay', 'GF Display Trays'], ['gfStockDown', 'GF Stock Down Boxes'], ['heads', 'Heads'],
   ['earRing', 'Ear Ring Stands'], ['ffDisplay', 'FF Display Trays'], ['bangle', 'Bangle Stock Box'],
-  ['ffStockDown', 'FF Stock Down Boxes'], ['silver', 'Silver Boxes'],
+  ['ffStockDown', 'FF Stock Down Boxes'], ['silver', 'Silver Boxes'], ['diamond', 'Diamond Boxes'],
   ['sankha', 'Sankha Box'], ['wholesaleBox', 'Wholesale Box'], ['retailBox', 'Retail Box (Up)']
 ];
 const STOCK_WHOLESALE_ITEM_LABELS = [
