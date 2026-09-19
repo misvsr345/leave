@@ -5909,6 +5909,8 @@ function draftInitLeaveForm() {
     }
   } catch (e) { /* if this peek fails, the plain restore below still runs — worst case Mixed rows come back empty */ }
   draftInitForm('leaveApply', '#emp-apply', [], ['ackNotices']);
+  // restored values don't fire onchange — re-sync each Mixed row's Half Day slot visibility
+  document.querySelectorAll('#mixedDateList > div').forEach(r => onMixedModeChange(r.id.replace('mixedRow-', '')));
 }
 
 // v-fix (BRO: full redesign — Single Day/Multiple Day/Mixed Leave —
@@ -5961,6 +5963,10 @@ function addMixedDateRow() {
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
       </select>
+      <select id="mixedHalf-${idx}" style="display:none;margin-top:6px;">
+        <option value="First Half (Morning)">First Half (Morning)</option>
+        <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
+      </select>
     </div>
     <button type="button" onclick="removeMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
   `;
@@ -5973,10 +5979,18 @@ function removeMixedDateRow(idx) {
   showColleaguesOnLeaveMixed(); // a removed date's colleagues shouldn't linger in the box
 }
 
-// Half Day slot per mixed-date row keeps things simple — defaults to
-// First Half without its own separate dropdown per row (BRO's spec was
-// Date + Full/Half only, no extra fields per row).
-function onMixedModeChange(idx) { /* no-op hook kept for future per-row half-day-slot support if ever needed */ }
+// v-fix (BRO: "Mixed lo Half Day select chesthe First Half / Second Half
+// option ledu, sheet lo Full Day ga vastundi"): every Mixed row now has
+// its OWN Half Day slot dropdown (mixedHalf-{idx}), shown only when that
+// row's mode is Half Day. The backend decides Half vs Full by whether a
+// slot is present (calculateLeaveDays), so sending Half Day with an empty
+// slot was being saved as a 1-day Full Day leave.
+function onMixedModeChange(idx) {
+  const m = document.getElementById('mixedMode-' + idx);
+  const h = document.getElementById('mixedHalf-' + idx);
+  if (!m || !h) return;
+  h.style.display = m.value === 'Half Day' ? '' : 'none';
+}
 
 async function submitLeave() {
   if(!document.getElementById('ackNotices').checked) {
@@ -6014,10 +6028,13 @@ async function submitLeave() {
       const idx = row.id.replace('mixedRow-', '');
       const dEl = document.getElementById('mixedDate-' + idx);
       const mEl = document.getElementById('mixedMode-' + idx);
+      const hEl = document.getElementById('mixedHalf-' + idx);
       if (!dEl.value) { toast('Please fill in every date, or remove the empty row', 'error'); return; }
       if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
       seenDates[dEl.value] = true;
-      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
+      const hd = mEl.value === 'Half Day' ? (hEl ? hEl.value : '') : '';
+      if (mEl.value === 'Half Day' && !hd) { toast('Please select First Half / Second Half for ' + dEl.value, 'error'); return; }
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: hd });
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
@@ -7304,14 +7321,25 @@ function addDirectMixedDateRow() {
   row.innerHTML = `
     <div class="form-group" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="directMixedDate-${idx}" onchange="refreshDirectConflicts()"></div>
     <div class="form-group" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
-      <select id="directMixedMode-${idx}">
+      <select id="directMixedMode-${idx}" onchange="onDirectMixedModeChange(${idx})">
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
+      </select>
+      <select id="directMixedHalf-${idx}" style="display:none;margin-top:6px;">
+        <option value="First Half">First Half</option>
+        <option value="Second Half">Second Half</option>
       </select>
     </div>
     <button type="button" onclick="removeDirectMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
   `;
   document.getElementById('directMixedDateList').appendChild(row);
+}
+
+function onDirectMixedModeChange(idx) {
+  const m = document.getElementById('directMixedMode-' + idx);
+  const h = document.getElementById('directMixedHalf-' + idx);
+  if (!m || !h) return;
+  h.style.display = m.value === 'Half Day' ? '' : 'none';
 }
 
 function removeDirectMixedDateRow(idx) {
@@ -7390,10 +7418,13 @@ async function submitDirectAction(outcome, evt) {
       const idx = row.id.replace('directMixedRow-', '');
       const dEl = document.getElementById('directMixedDate-' + idx);
       const mEl = document.getElementById('directMixedMode-' + idx);
+      const hEl = document.getElementById('directMixedHalf-' + idx);
       if (!dEl.value) { toast('Fill in every date, or remove the empty row', 'error'); return; }
       if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
       seenDates[dEl.value] = true;
-      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
+      const hd = mEl.value === 'Half Day' ? (hEl ? hEl.value : '') : '';
+      if (mEl.value === 'Half Day' && !hd) { toast('Select First Half / Second Half for ' + dEl.value, 'error'); return; }
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: hd });
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
