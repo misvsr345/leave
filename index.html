@@ -2273,6 +2273,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="card-title">📋 Submission Log — Today</div>
         <div id="dsLogBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="empQADailyShopNewEntry" onclick="openDailyShopChecklistForm('emp')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
+      </div>
     </div>
 
     <div class="page-section" id="emp-stock-retail">
@@ -3331,6 +3334,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
         <div id="dsLogBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQADailyShopNewEntry" onclick="openDailyShopChecklistForm('admin')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">Open checklist form</div></div>
+      </div>
     </div>
 
     <div class="page-section" id="admin-walkins">
@@ -3947,6 +3953,7 @@ const LOYALTY_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLoyaltyQueue';
 const GOLDEN_AURA_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineGoldenAuraQueue';
 const LEADS_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLeadsQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
+const DAILY_SHOP_FORM_URL = 'https://forms.gle/SV2RbxC6uKNaNM1j8';
 
 const DEFAULT_NOTICES =
 '<div>💰 <b>Leave Balance</b> — Every employee gets 3 days Casual Leave quota per month. For more, use Sick Leave / Special Permission.</div>' +
@@ -14142,6 +14149,9 @@ const STOCK_WHOLESALE_ITEM_LABELS = [
 // both roles but never defined anywhere — clicking it did nothing.
 function openStockChecklistForm(who) {
   window.open(CHECKLIST_FORM_URL, '_blank');
+}
+function openDailyShopChecklistForm(who) {
+  window.open(DAILY_SHOP_FORM_URL, '_blank');
 }
 
 // ══════════════════════════════════════
