@@ -6165,7 +6165,7 @@ function showLeaveResultPopup(res) {
     ['Type', res.leaveType || '—'],
     ['Dates', dateRange],
     ['Days', res.days != null ? fmtNum(res.days) : '—'],
-    ['Balance', res.balance != null ? fmtNum(res.balance) : '—']
+    [res.balanceMonth ? 'Balance (' + res.balanceMonth + ')' : 'Balance', res.balance != null ? fmtNum(res.balance) : '—']
   ];
   document.getElementById('leaveResultDetails').innerHTML = rows.map(([label, val], i) => {
     const bg = i % 2 === 0 ? '#fdfcff' : '#ffffff';
@@ -6198,7 +6198,7 @@ async function checkLeaveSubmissionResult(data, attemptsLeft) {
   try {
     const [leavesRes, balRes] = await Promise.all([
       jsonp({ page: 'leavesJSON', empId: data.employeeNumber }, 12000),
-      jsonp({ page: 'balanceJSON', empId: data.employeeNumber }, 12000).catch(() => null)
+      jsonp({ page: 'balanceJSON', empId: data.employeeNumber, month: (data.startDate || '').slice(0, 7) }, 12000).catch(() => null)
     ]);
     if (leavesRes && leavesRes.ok) {
       const match = (leavesRes.leaves || []).find(l =>
@@ -6210,7 +6210,8 @@ async function checkLeaveSubmissionResult(data, attemptsLeft) {
         showLeaveResultPopup({
           status: match.status, leaveId: match.leaveId, leaveType: match.type,
           startDate: match.startDate, endDate: match.endDate, days: match.days,
-          reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null
+          reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null,
+          balanceMonth: (balRes && balRes.ok && balRes.isCurrentMonth === false) ? balRes.monthLabel : ''
         });
         loadEmpData();
         return true;
