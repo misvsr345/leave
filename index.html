@@ -1647,6 +1647,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
+    <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="walkins" onclick="showEmpPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('emp')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="empMoreCaret">▾</span></div>
@@ -1678,6 +1679,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Events, theme, password</div></div>
         </div>
@@ -1809,11 +1811,6 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             <span onclick="addMixedDateRow()" style="cursor:pointer;color:var(--purple,#6b21a8);font-weight:700;font-size:13px;">＋ Add Date</span>
           </div>
         </div>
-
-        <!-- v-new (BRO: "date select chesina ventane aa month balance live ga chupinchu"):
-             month-wise balance for whatever date(s) are picked, in any of the 3 modes.
-             Filled by updateLeaveBalancePreview(). -->
-        <div id="leaveBalancePreview" style="display:none; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--text); line-height:1.7;"></div>
 
         <div class="form-row" id="authorityRow" style="display:none;">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
@@ -2263,6 +2260,21 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </div>
     </div>
 
+    <div class="page-section" id="emp-dailyshop">
+      <div class="section-hdr"><span class="section-title2">🕐 Daily Shop Open &amp; Close Checklist</span>
+        <button class="btn-sm btn-view" onclick="loadDailyShopChecklist('emp')">🔄 Refresh</button>
+      </div>
+      <div class="card" id="dsStatusBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">👥 Today's Duty Assigned</div>
+        <div id="dsDutyBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Submission Log — Today</div>
+        <div id="dsLogBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+    </div>
+
     <div class="page-section" id="emp-stock-retail">
       <div class="section-hdr"><span class="section-title2">🏪 Retail Checklist</span></div>
       <div class="card">
@@ -2438,6 +2450,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
+    <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
@@ -2477,6 +2490,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">All options</div></div>
+          <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings, notices, theme, password</div></div>
         </div>
@@ -3295,6 +3309,27 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQAStockReport" onclick="showAdminPage('stock-report')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Date-to-Date Report</div><div class="quick-action-sub">Who did what, when</div></div>
         <div class="quick-action-btn" id="adminQAStockVariance" onclick="showAdminPage('stock-variance')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Variance Log</div><div class="quick-action-sub">Opening vs Closing mismatches</div></div>
         <div class="quick-action-btn" id="adminQAStockChangeLog" onclick="showAdminPage('stock-changelog')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Change Log</div><div class="quick-action-sub">Edited entries, old → new</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-dailyshop">
+      <div class="section-hdr"><span class="section-title2">🕐 Daily Shop Open &amp; Close Checklist</span>
+        <button class="btn-sm btn-view" onclick="loadDailyShopChecklist('admin')">🔄 Refresh</button>
+      </div>
+      <div class="card" id="dsStatusBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div class="card">
+        <div class="card-title">👥 Today's Duty Assigned</div>
+        <div id="dsDutyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>📋 Submission Log</span>
+          <select id="dsRange-admin" onchange="loadDailyShopChecklist('admin')" style="max-width:140px;">
+            <option value="today">Today</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+        <div id="dsLogBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       </div>
     </div>
 
@@ -5254,6 +5289,7 @@ function showEmpPage(page, opts) {
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
   if(page==='stock') loadStockDashboard('emp');
+  if(page==='dailyshop') loadDailyShopChecklist('emp');
   if(page==='stock-retail') loadStockDetail('emp','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('emp','Wholesale','today');
   if(page==='stock-report') loadStockReport('emp');
@@ -5762,7 +5798,6 @@ function getAuthWho() {
 function onModeChange() {
   const m = document.getElementById('applyLeaveMode').value;
   document.getElementById('halfDayRow').style.display = m === 'Half Day' ? 'block' : 'none';
-  scheduleLeaveBalancePreview(); // Full <-> Half changes the days this request uses
 }
 function onAckChange() {
   const checked = document.getElementById('ackNotices').checked;
@@ -5771,7 +5806,6 @@ function onAckChange() {
 }
 
 function showColleaguesOnLeave() {
-  scheduleLeaveBalancePreview(); // also refresh the month-wise balance preview (Single/Multiple)
   // v-fix (BRO caught it live: "except multiday leave remaining edi
   // select chesina aa date unna emp leave details ravadam ledu"): this
   // used to always read applyStartDate regardless of mode — correct for
@@ -5839,7 +5873,6 @@ function renderColleaguesOnLeaveBox(box, dateList) {
 // editing any row re-checks the whole set — one consolidated box
 // rather than per-row clutter.
 function showColleaguesOnLeaveMixed() {
-  scheduleLeaveBalancePreview(); // also refresh the month-wise balance preview (Mixed)
   const box = document.getElementById('mixedColleagueOnLeaveBox');
   const dates = Array.from(document.querySelectorAll('#mixedDateList input[type="date"]')).map(el => el.value);
   renderColleaguesOnLeaveBox(box, dates);
@@ -5917,9 +5950,6 @@ function draftInitLeaveForm() {
     }
   } catch (e) { /* if this peek fails, the plain restore below still runs — worst case Mixed rows come back empty */ }
   draftInitForm('leaveApply', '#emp-apply', [], ['ackNotices']);
-  // restored values don't fire onchange — re-sync each Mixed row's Half Day slot visibility
-  document.querySelectorAll('#mixedDateList > div').forEach(r => onMixedModeChange(r.id.replace('mixedRow-', '')));
-  scheduleLeaveBalancePreview();
 }
 
 // v-fix (BRO: full redesign — Single Day/Multiple Day/Mixed Leave —
@@ -5959,95 +5989,6 @@ function onSingleDateChange() {
   calcDays();
 }
 
-// ══════════════════════════════════════
-// APPLY LEAVE — live month-wise balance preview
-// ══════════════════════════════════════
-// Shows, for every month the picked date(s) fall in: quota, used, current
-// balance and what the balance becomes after THIS request. Running month
-// uses its own quota/balance; any other month is measured against its own
-// (default) quota — never against the running month's balance. Numbers come
-// from balanceJSON?month=yyyy-MM. Going below zero is allowed (it becomes
-// Extra Leave), so this only warns, it never blocks.
-var __lbpTimer = null, __lbpSeq = 0;
-var __lbpCache = {};              // 'yyyy-MM' -> { ts, res }
-var LBP_TTL_MS = 45000;
-
-function leaveRequestDaysByMonth() {
-  const out = {};
-  const add = (ymd, w) => { if (!ymd) return; const k = ymd.slice(0, 7); out[k] = (out[k] || 0) + w; };
-  const t = window.__leaveDurationType;
-  if (t === 'single') {
-    add(document.getElementById('applyStartDate').value,
-        document.getElementById('applyLeaveMode').value === 'Half Day' ? 0.5 : 1);
-  } else if (t === 'multiple') {
-    const s = document.getElementById('applyStartDateMulti').value;
-    const e = document.getElementById('applyEndDate').value;
-    if (s && e && e >= s) {
-      const cur = new Date(s + 'T00:00:00'), end = new Date(e + 'T00:00:00');
-      let guard = 0;
-      while (cur <= end && guard++ < 366) {
-        add(cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0'), 1);
-        cur.setDate(cur.getDate() + 1);
-      }
-    }
-  } else { // mixed
-    document.querySelectorAll('#mixedDateList > div').forEach(row => {
-      const idx = row.id.replace('mixedRow-', '');
-      const d = document.getElementById('mixedDate-' + idx);
-      const m = document.getElementById('mixedMode-' + idx);
-      if (d && d.value) add(d.value, (m && m.value === 'Half Day') ? 0.5 : 1);
-    });
-  }
-  return out;
-}
-
-async function fetchMonthBalanceForPreview(monthKey) {
-  const c = __lbpCache[monthKey];
-  if (c && (Date.now() - c.ts) < LBP_TTL_MS) return c.res;
-  let res = null;
-  try { res = await jsonp({ page: 'balanceJSON', empId: state.empId, month: monthKey }, 12000); } catch (e) { res = null; }
-  if (res && res.ok) { __lbpCache[monthKey] = { ts: Date.now(), res: res }; return res; }
-  return null;
-}
-
-function scheduleLeaveBalancePreview() {
-  clearTimeout(__lbpTimer);
-  __lbpTimer = setTimeout(updateLeaveBalancePreview, 350);
-}
-
-async function updateLeaveBalancePreview() {
-  const box = document.getElementById('leaveBalancePreview');
-  if (!box) return;
-  const seq = ++__lbpSeq;
-  const byMonth = leaveRequestDaysByMonth();
-  const keys = Object.keys(byMonth).sort();
-  if (!keys.length || !state.empId || !navigator.onLine) { box.style.display = 'none'; return; }
-
-  box.style.display = 'block';
-  box.innerHTML = '<div style="font-size:12px;color:var(--text3);">⏳ Checking leave balance…</div>';
-
-  const results = await Promise.all(keys.map(fetchMonthBalanceForPreview));
-  if (seq !== __lbpSeq) return; // the form changed again while this was loading — a newer run owns the box
-
-  let html = '';
-  keys.forEach((k, i) => {
-    const r = results[i];
-    if (!r) return;
-    const req = byMonth[k];
-    const bal = Number(r.balance) || 0;
-    const after = bal - req;
-    const label = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, 1)
-      .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
-    const afterColor = after < 0 ? 'var(--red)' : after <= 1 ? 'var(--orange, #c97a10)' : 'var(--green)';
-    html += `<div style="margin-bottom:4px;">📊 <b>${label}</b> — Quota ${fmtNum(r.quota)} · Used ${fmtNum(r.used)} · Balance <b>${fmtNum(bal)}</b>` +
-      ` → after this request (${fmtNum(req)} day${req === 1 ? '' : 's'}): <b style="color:${afterColor};">${fmtNum(after)}</b>` +
-      (after < 0 ? ` <span style="color:var(--red);font-weight:700;">⚠ ${fmtNum(-after)} day(s) beyond quota (Extra Leave)</span>` : '') +
-      `</div>`;
-  });
-  if (!html) { box.style.display = 'none'; return; }
-  box.innerHTML = html + '<div style="font-size:10.5px;color:var(--text3);margin-top:2px;">Only approved leaves are counted. Other months use the default monthly quota.</div>';
-}
-
 function addMixedDateRow() {
   __mixedRowCount++;
   const idx = __mixedRowCount;
@@ -6061,10 +6002,6 @@ function addMixedDateRow() {
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
       </select>
-      <select id="mixedHalf-${idx}" style="display:none;margin-top:6px;">
-        <option value="First Half (Morning)">First Half (Morning)</option>
-        <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
-      </select>
     </div>
     <button type="button" onclick="removeMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
   `;
@@ -6077,19 +6014,10 @@ function removeMixedDateRow(idx) {
   showColleaguesOnLeaveMixed(); // a removed date's colleagues shouldn't linger in the box
 }
 
-// v-fix (BRO: "Mixed lo Half Day select chesthe First Half / Second Half
-// option ledu, sheet lo Full Day ga vastundi"): every Mixed row now has
-// its OWN Half Day slot dropdown (mixedHalf-{idx}), shown only when that
-// row's mode is Half Day. The backend decides Half vs Full by whether a
-// slot is present (calculateLeaveDays), so sending Half Day with an empty
-// slot was being saved as a 1-day Full Day leave.
-function onMixedModeChange(idx) {
-  const m = document.getElementById('mixedMode-' + idx);
-  const h = document.getElementById('mixedHalf-' + idx);
-  if (!m || !h) return;
-  h.style.display = m.value === 'Half Day' ? '' : 'none';
-  scheduleLeaveBalancePreview(); // Full <-> Half changes the days this request uses
-}
+// Half Day slot per mixed-date row keeps things simple — defaults to
+// First Half without its own separate dropdown per row (BRO's spec was
+// Date + Full/Half only, no extra fields per row).
+function onMixedModeChange(idx) { /* no-op hook kept for future per-row half-day-slot support if ever needed */ }
 
 async function submitLeave() {
   if(!document.getElementById('ackNotices').checked) {
@@ -6127,13 +6055,10 @@ async function submitLeave() {
       const idx = row.id.replace('mixedRow-', '');
       const dEl = document.getElementById('mixedDate-' + idx);
       const mEl = document.getElementById('mixedMode-' + idx);
-      const hEl = document.getElementById('mixedHalf-' + idx);
       if (!dEl.value) { toast('Please fill in every date, or remove the empty row', 'error'); return; }
       if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
       seenDates[dEl.value] = true;
-      const hd = mEl.value === 'Half Day' ? (hEl ? hEl.value : '') : '';
-      if (mEl.value === 'Half Day' && !hd) { toast('Please select First Half / Second Half for ' + dEl.value, 'error'); return; }
-      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: hd });
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
@@ -6264,7 +6189,7 @@ function showLeaveResultPopup(res) {
     ['Type', res.leaveType || '—'],
     ['Dates', dateRange],
     ['Days', res.days != null ? fmtNum(res.days) : '—'],
-    [res.balanceMonth ? 'Balance (' + res.balanceMonth + ')' : 'Balance', res.balance != null ? fmtNum(res.balance) : '—']
+    ['Balance', res.balance != null ? fmtNum(res.balance) : '—']
   ];
   document.getElementById('leaveResultDetails').innerHTML = rows.map(([label, val], i) => {
     const bg = i % 2 === 0 ? '#fdfcff' : '#ffffff';
@@ -6297,7 +6222,7 @@ async function checkLeaveSubmissionResult(data, attemptsLeft) {
   try {
     const [leavesRes, balRes] = await Promise.all([
       jsonp({ page: 'leavesJSON', empId: data.employeeNumber }, 12000),
-      jsonp({ page: 'balanceJSON', empId: data.employeeNumber, month: (data.startDate || '').slice(0, 7) }, 12000).catch(() => null)
+      jsonp({ page: 'balanceJSON', empId: data.employeeNumber }, 12000).catch(() => null)
     ]);
     if (leavesRes && leavesRes.ok) {
       const match = (leavesRes.leaves || []).find(l =>
@@ -6309,8 +6234,7 @@ async function checkLeaveSubmissionResult(data, attemptsLeft) {
         showLeaveResultPopup({
           status: match.status, leaveId: match.leaveId, leaveType: match.type,
           startDate: match.startDate, endDate: match.endDate, days: match.days,
-          reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null,
-          balanceMonth: (balRes && balRes.ok && balRes.isCurrentMonth === false) ? balRes.monthLabel : ''
+          reason: match.reason, balance: (balRes && balRes.ok) ? balRes.balance : null
         });
         loadEmpData();
         return true;
@@ -6457,7 +6381,6 @@ function showMultiSegmentResultPopup(res) {
 
 
 function resetApplyForm() {
-  __lbpCache = {}; // balances just changed (a leave was submitted) — never show a stale month balance
   document.getElementById('applyLeaveType').value = '';
   document.getElementById('applyStartDate').value = todayYMD();
   document.getElementById('applyStartDateMulti').value = todayYMD();
@@ -7422,25 +7345,14 @@ function addDirectMixedDateRow() {
   row.innerHTML = `
     <div class="form-group" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="directMixedDate-${idx}" onchange="refreshDirectConflicts()"></div>
     <div class="form-group" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
-      <select id="directMixedMode-${idx}" onchange="onDirectMixedModeChange(${idx})">
+      <select id="directMixedMode-${idx}">
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
-      </select>
-      <select id="directMixedHalf-${idx}" style="display:none;margin-top:6px;">
-        <option value="First Half">First Half</option>
-        <option value="Second Half">Second Half</option>
       </select>
     </div>
     <button type="button" onclick="removeDirectMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
   `;
   document.getElementById('directMixedDateList').appendChild(row);
-}
-
-function onDirectMixedModeChange(idx) {
-  const m = document.getElementById('directMixedMode-' + idx);
-  const h = document.getElementById('directMixedHalf-' + idx);
-  if (!m || !h) return;
-  h.style.display = m.value === 'Half Day' ? '' : 'none';
 }
 
 function removeDirectMixedDateRow(idx) {
@@ -7519,13 +7431,10 @@ async function submitDirectAction(outcome, evt) {
       const idx = row.id.replace('directMixedRow-', '');
       const dEl = document.getElementById('directMixedDate-' + idx);
       const mEl = document.getElementById('directMixedMode-' + idx);
-      const hEl = document.getElementById('directMixedHalf-' + idx);
       if (!dEl.value) { toast('Fill in every date, or remove the empty row', 'error'); return; }
       if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
       seenDates[dEl.value] = true;
-      const hd = mEl.value === 'Half Day' ? (hEl ? hEl.value : '') : '';
-      if (mEl.value === 'Half Day' && !hd) { toast('Select First Half / Second Half for ' + dEl.value, 'error'); return; }
-      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: hd });
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
@@ -9273,6 +9182,7 @@ const SM_FEATURE_ELEMENTS = {
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
   goldenAura: ['adminQAGoldenAura', 'adminSidebarGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
   stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
+  dailyShop: ['adminQADailyShopModule', 'adminSidebarDailyShop'], dailyShopChecklist: ['adminQADailyShopModule'],
   backendSheets: ['adminQABackendSheets'],
   walkins: ['adminSidebarWalkins', 'adminQAWalkinsGrid']
 };
@@ -9298,6 +9208,7 @@ const FEATURE_SUBKEYS = {
   dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'],
   goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList'],
   stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport'],
+  dailyShop: ['dailyShop'], dailyShopChecklist: ['dailyShopChecklist'],
   backendSheets: ['backend_sheets'],
   walkins: ['walkins']
 };
@@ -9341,6 +9252,7 @@ async function applyAdminRoleRestrictions() {
   const sectionDsrOn = perms.section_dsr !== false;
   const sectionGoldenAuraOn = perms.section_golden_aura !== false;
   const sectionStockOn = perms.section_stock !== false;
+  const sectionDailyShopOn = perms.section_dailyShop !== false;
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
@@ -9348,8 +9260,9 @@ async function applyAdminRoleRestrictions() {
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
     const isStockFeature = key.indexOf('stock') === 0;
+    const isDailyShopFeature = key.indexOf('dailyShop') === 0;
     const isSectionless = key === 'backendSheets' || key === 'walkins'; // cross-cutting utilities, not tied to any one section
-    const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : sectionLeaveOn;
+    const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -9435,6 +9348,7 @@ function showAdminPage(page, opts) {
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
   if(page==='golden-aura-list') loadGoldenAuraList('admin');
   if(page==='stock') loadStockDashboard('admin');
+  if(page==='dailyshop') loadDailyShopChecklist('admin');
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
@@ -12253,7 +12167,8 @@ const EMP_FEATURE_ELEMENTS = {
   goldenAura: ['empQAGoldenAuraModule'],
   gaNew: ['empQAGaNew'], gaList: ['empQAGaList'],
   leads: ['empQALeadsModule'],
-  stock: ['empQAStockChecklist']
+  stock: ['empQAStockChecklist'],
+  dailyShop: ['empQADailyShopModule', 'empSidebarDailyShop'], dailyShopChecklist: ['empQADailyShopModule']
   // stockReport not mapped — already excluded for employees (see
   // EMP_EXCLUDED_PERM_KEYS) and empQAStockReport doesn't exist on the
   // employee side anyway.
@@ -12298,6 +12213,7 @@ function applyEmpGranularRestrictionsFromPerms(perms) {
   const sectionDsrOn = perms.section_dsr !== false;
   const sectionGoldenAuraOn = perms.section_golden_aura !== false;
   const sectionStockOn = perms.section_stock !== false;
+  const sectionDailyShopOn = perms.section_dailyShop !== false;
   Object.keys(EMP_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isKpiFeature = key.indexOf('kpi') === 0;
@@ -12305,7 +12221,8 @@ function applyEmpGranularRestrictionsFromPerms(perms) {
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
     const isStockFeature = key.indexOf('stock') === 0;
-    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : true;
+    const isDailyShopFeature = key.indexOf('dailyShop') === 0;
+    const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : true;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     EMP_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -13955,6 +13872,81 @@ function loadGoldenAuraCounts(who) {
 // response sheet (Retail/Wholesale checklist + Dashboard health stats +
 // duty roster). The Form itself keeps handling submissions.
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// DAILY SHOP OPEN & CLOSE CHECKLIST — separate Apps Script project/
+// spreadsheet from Stock Check List above, same jsonpReliable() +
+// box-id-per-'who' convention. Duty reassignment when someone's on
+// approved leave happens server-side inside DailyShopChecklist.gs
+// itself (reads the same Approved_Leaves sheet as the Leave module) —
+// this only displays whatever it already decided.
+// ══════════════════════════════════════
+function loadDailyShopChecklist(who) {
+  loadDailyShopStatus_(who);
+  loadDailyShopLog_(who);
+}
+
+function loadDailyShopStatus_(who) {
+  const statusBox = document.getElementById('dsStatusBox-' + who);
+  const dutyBox = document.getElementById('dsDutyBox-' + who);
+  if (statusBox) statusBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  if (dutyBox) dutyBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  jsonpReliable({ page: 'dailyShopDashboardJSON' }).then(res => {
+    if (!res || !res.ok) {
+      if (statusBox) statusBox.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDailyShopStatus_(\'' + who + '\')" title="Retry">🔄</button></div>';
+      if (dutyBox) dutyBox.innerHTML = '';
+      return;
+    }
+    if (statusBox) {
+      statusBox.innerHTML = sectionHeaderCardHtml(who, [
+        { val: res.opening.done ? '✅ Done' : '❌ Not Done', lbl: 'Opening Today', color: res.opening.done ? '#80ffb0' : '#ff8080' },
+        { val: res.closing.done ? '✅ Done' : '❌ Not Done', lbl: 'Closing Today', color: res.closing.done ? '#80ffb0' : '#ff8080' },
+        { val: res.last30.openingDays + '/30', lbl: 'Opening (30d)', color: '#80c8ff' },
+        { val: res.last30.closingDays + '/30', lbl: 'Closing (30d)', color: '#ffd080' }
+      ]);
+    }
+    if (dutyBox) {
+      const d = res.duty || {};
+      const row = (label, sec) => sec
+        ? `<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);"><strong>${label}:</strong> ${sec.name} — <span style="color:var(--text3,#888);">${sec.status}</span></div>`
+        : `<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);"><strong>${label}:</strong> —</div>`;
+      dutyBox.innerHTML = row('Opening Duty', d.opening) + row('Closing Duty', d.closing);
+    }
+  }).catch(() => {
+    if (statusBox) statusBox.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>';
+  });
+}
+
+function loadDailyShopLog_(who) {
+  const logBox = document.getElementById('dsLogBox-' + who);
+  if (!logBox) return;
+  logBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const rangeSel = document.getElementById('dsRange-' + who);
+  const range = rangeSel ? rangeSel.value : 'today';
+
+  jsonpReliable({ page: 'dailyShopChecklistDataJSON', range: range }).then(res => {
+    if (!res || !res.ok) {
+      logBox.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load.') + '</p></div>';
+      return;
+    }
+    if (!res.dateRows || res.dateRows.length === 0) {
+      logBox.innerHTML = '<div class="empty-state"><p>No submissions in this period.</p></div>';
+      return;
+    }
+    let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Opening</th><th>Closing</th></tr></thead><tbody>';
+    res.dateRows.forEach(d => {
+      const openCell = d.opening ? `${d.opening.emp} (${d.opening.done}/${d.opening.total})` : '<span style="color:#ff8080;">Not done</span>';
+      const closeCell = d.closing ? `${d.closing.emp} (${d.closing.done}/${d.closing.total})` : '<span style="color:#ff8080;">Not done</span>';
+      html += `<tr><td>${d.dateDisp}</td><td>${openCell}</td><td>${closeCell}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    logBox.innerHTML = html;
+  }).catch(() => {
+    logBox.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>';
+  });
+}
+
 function loadStockDashboard(who) {
   const healthBox = document.getElementById('stockHealthBox-' + who);
   const dutyBox = document.getElementById('stockDutyBox-' + who);
