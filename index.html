@@ -1810,6 +1810,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           </div>
         </div>
 
+        <!-- v-new (BRO: "date select chesina ventane aa month balance live ga chupinchu"):
+             month-wise balance for whatever date(s) are picked, in any of the 3 modes.
+             Filled by updateLeaveBalancePreview(). -->
+        <div id="leaveBalancePreview" style="display:none; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--text); line-height:1.7;"></div>
+
         <div class="form-row" id="authorityRow" style="display:none;">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
             <input type="checkbox" id="applyAuthMetCheck" onchange="onAuthMetChange()" style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
@@ -5757,6 +5762,7 @@ function getAuthWho() {
 function onModeChange() {
   const m = document.getElementById('applyLeaveMode').value;
   document.getElementById('halfDayRow').style.display = m === 'Half Day' ? 'block' : 'none';
+  scheduleLeaveBalancePreview(); // Full <-> Half changes the days this request uses
 }
 function onAckChange() {
   const checked = document.getElementById('ackNotices').checked;
@@ -5765,6 +5771,7 @@ function onAckChange() {
 }
 
 function showColleaguesOnLeave() {
+  scheduleLeaveBalancePreview(); // also refresh the month-wise balance preview (Single/Multiple)
   // v-fix (BRO caught it live: "except multiday leave remaining edi
   // select chesina aa date unna emp leave details ravadam ledu"): this
   // used to always read applyStartDate regardless of mode — correct for
@@ -5832,6 +5839,7 @@ function renderColleaguesOnLeaveBox(box, dateList) {
 // editing any row re-checks the whole set — one consolidated box
 // rather than per-row clutter.
 function showColleaguesOnLeaveMixed() {
+  scheduleLeaveBalancePreview(); // also refresh the month-wise balance preview (Mixed)
   const box = document.getElementById('mixedColleagueOnLeaveBox');
   const dates = Array.from(document.querySelectorAll('#mixedDateList input[type="date"]')).map(el => el.value);
   renderColleaguesOnLeaveBox(box, dates);
@@ -5911,6 +5919,7 @@ function draftInitLeaveForm() {
   draftInitForm('leaveApply', '#emp-apply', [], ['ackNotices']);
   // restored values don't fire onchange — re-sync each Mixed row's Half Day slot visibility
   document.querySelectorAll('#mixedDateList > div').forEach(r => onMixedModeChange(r.id.replace('mixedRow-', '')));
+  scheduleLeaveBalancePreview();
 }
 
 // v-fix (BRO: full redesign — Single Day/Multiple Day/Mixed Leave —
@@ -5948,6 +5957,95 @@ function setLeaveDurationType(type) {
 function onSingleDateChange() {
   document.getElementById('applyEndDate').value = document.getElementById('applyStartDate').value;
   calcDays();
+}
+
+// ══════════════════════════════════════
+// APPLY LEAVE — live month-wise balance preview
+// ══════════════════════════════════════
+// Shows, for every month the picked date(s) fall in: quota, used, current
+// balance and what the balance becomes after THIS request. Running month
+// uses its own quota/balance; any other month is measured against its own
+// (default) quota — never against the running month's balance. Numbers come
+// from balanceJSON?month=yyyy-MM. Going below zero is allowed (it becomes
+// Extra Leave), so this only warns, it never blocks.
+var __lbpTimer = null, __lbpSeq = 0;
+var __lbpCache = {};              // 'yyyy-MM' -> { ts, res }
+var LBP_TTL_MS = 45000;
+
+function leaveRequestDaysByMonth() {
+  const out = {};
+  const add = (ymd, w) => { if (!ymd) return; const k = ymd.slice(0, 7); out[k] = (out[k] || 0) + w; };
+  const t = window.__leaveDurationType;
+  if (t === 'single') {
+    add(document.getElementById('applyStartDate').value,
+        document.getElementById('applyLeaveMode').value === 'Half Day' ? 0.5 : 1);
+  } else if (t === 'multiple') {
+    const s = document.getElementById('applyStartDateMulti').value;
+    const e = document.getElementById('applyEndDate').value;
+    if (s && e && e >= s) {
+      const cur = new Date(s + 'T00:00:00'), end = new Date(e + 'T00:00:00');
+      let guard = 0;
+      while (cur <= end && guard++ < 366) {
+        add(cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0'), 1);
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+  } else { // mixed
+    document.querySelectorAll('#mixedDateList > div').forEach(row => {
+      const idx = row.id.replace('mixedRow-', '');
+      const d = document.getElementById('mixedDate-' + idx);
+      const m = document.getElementById('mixedMode-' + idx);
+      if (d && d.value) add(d.value, (m && m.value === 'Half Day') ? 0.5 : 1);
+    });
+  }
+  return out;
+}
+
+async function fetchMonthBalanceForPreview(monthKey) {
+  const c = __lbpCache[monthKey];
+  if (c && (Date.now() - c.ts) < LBP_TTL_MS) return c.res;
+  let res = null;
+  try { res = await jsonp({ page: 'balanceJSON', empId: state.empId, month: monthKey }, 12000); } catch (e) { res = null; }
+  if (res && res.ok) { __lbpCache[monthKey] = { ts: Date.now(), res: res }; return res; }
+  return null;
+}
+
+function scheduleLeaveBalancePreview() {
+  clearTimeout(__lbpTimer);
+  __lbpTimer = setTimeout(updateLeaveBalancePreview, 350);
+}
+
+async function updateLeaveBalancePreview() {
+  const box = document.getElementById('leaveBalancePreview');
+  if (!box) return;
+  const seq = ++__lbpSeq;
+  const byMonth = leaveRequestDaysByMonth();
+  const keys = Object.keys(byMonth).sort();
+  if (!keys.length || !state.empId || !navigator.onLine) { box.style.display = 'none'; return; }
+
+  box.style.display = 'block';
+  box.innerHTML = '<div style="font-size:12px;color:var(--text3);">⏳ Checking leave balance…</div>';
+
+  const results = await Promise.all(keys.map(fetchMonthBalanceForPreview));
+  if (seq !== __lbpSeq) return; // the form changed again while this was loading — a newer run owns the box
+
+  let html = '';
+  keys.forEach((k, i) => {
+    const r = results[i];
+    if (!r) return;
+    const req = byMonth[k];
+    const bal = Number(r.balance) || 0;
+    const after = bal - req;
+    const label = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, 1)
+      .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+    const afterColor = after < 0 ? 'var(--red)' : after <= 1 ? 'var(--orange, #c97a10)' : 'var(--green)';
+    html += `<div style="margin-bottom:4px;">📊 <b>${label}</b> — Quota ${fmtNum(r.quota)} · Used ${fmtNum(r.used)} · Balance <b>${fmtNum(bal)}</b>` +
+      ` → after this request (${fmtNum(req)} day${req === 1 ? '' : 's'}): <b style="color:${afterColor};">${fmtNum(after)}</b>` +
+      (after < 0 ? ` <span style="color:var(--red);font-weight:700;">⚠ ${fmtNum(-after)} day(s) beyond quota (Extra Leave)</span>` : '') +
+      `</div>`;
+  });
+  if (!html) { box.style.display = 'none'; return; }
+  box.innerHTML = html + '<div style="font-size:10.5px;color:var(--text3);margin-top:2px;">Only approved leaves are counted. Other months use the default monthly quota.</div>';
 }
 
 function addMixedDateRow() {
@@ -5990,6 +6088,7 @@ function onMixedModeChange(idx) {
   const h = document.getElementById('mixedHalf-' + idx);
   if (!m || !h) return;
   h.style.display = m.value === 'Half Day' ? '' : 'none';
+  scheduleLeaveBalancePreview(); // Full <-> Half changes the days this request uses
 }
 
 async function submitLeave() {
@@ -6358,6 +6457,7 @@ function showMultiSegmentResultPopup(res) {
 
 
 function resetApplyForm() {
+  __lbpCache = {}; // balances just changed (a leave was submitted) — never show a stale month balance
   document.getElementById('applyLeaveType').value = '';
   document.getElementById('applyStartDate').value = todayYMD();
   document.getElementById('applyStartDateMulti').value = todayYMD();
