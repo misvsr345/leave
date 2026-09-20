@@ -2218,8 +2218,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card">
         <div class="form-row"><label>Tag No</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="dsrTagSearchInput-emp" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('emp')" style="flex:1;">
-            <button class="btn-primary" onclick="dsrTagSearch('emp')">Search</button>
+            <input type="text" id="dsrTagSearchInput-emp" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('emp')" style="flex:1 1 auto;min-width:0;width:auto;">
+            <button class="btn-primary" onclick="dsrTagSearch('emp')" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:12px 26px;">Search</button>
           </div>
         </div>
       </div>
@@ -3269,8 +3269,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card">
         <div class="form-row"><label>Tag No</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="dsrTagSearchInput-admin" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('admin')" style="flex:1;">
-            <button class="btn-primary" onclick="dsrTagSearch('admin')">Search</button>
+            <input type="text" id="dsrTagSearchInput-admin" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('admin')" style="flex:1 1 auto;min-width:0;width:auto;">
+            <button class="btn-primary" onclick="dsrTagSearch('admin')" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:12px 26px;">Search</button>
           </div>
         </div>
       </div>
@@ -13373,7 +13373,7 @@ function dsrfAddEntry(who) {
           </div>
           <div class="g2 mb12">
             <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
-            <div><label>Cent ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaCent-${who}-${eid}" placeholder="e.g. 50 cent"></div>
+            <div><label>Cent</label><input type="text" id="dsrfDiaCent-${who}-${eid}" placeholder="e.g. 50 cent"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Product Name ${req}</label>
@@ -16440,7 +16440,6 @@ function dsrfSubmit(who) {
       if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
         if (!dWt) { ok = false; errMsg = 'Please enter Weight!'; return; }
-        if (!dCent) { ok = false; errMsg = 'Please enter Cent!'; return; }
         if (!dQuality) { ok = false; errMsg = 'Please enter Quality!'; return; }
         if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
