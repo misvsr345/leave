@@ -2142,6 +2142,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="empQADsrTillDate" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="empQADsrDateRange" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
         <div class="quick-action-btn" id="empQADsrAdvOrder" onclick="showEmpPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — update &amp; close</div></div>
+        <div class="quick-action-btn" id="empQADsrTagSearch" onclick="showEmpPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag No Search</div><div class="quick-action-sub">Find an item by Tag No</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-dsr-today">
@@ -2210,6 +2211,19 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed</span></div>
       <div class="card"><div id="aoeListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
       <div id="aoeEditBox-emp"></div>
+    </div>
+
+    <div class="page-section" id="emp-dsr-tagsearch">
+      <div class="section-hdr"><span class="section-title2">🔍 Tag No Search</span></div>
+      <div class="card">
+        <div class="form-row"><label>Tag No</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="dsrTagSearchInput-emp" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('emp')" style="flex:1;">
+            <button class="btn-primary" onclick="dsrTagSearch('emp')">Search</button>
+          </div>
+        </div>
+      </div>
+      <div id="dsrTagSearchBox-emp"></div>
     </div>
 
     <!-- ══════════════ GOLDEN AURA SECTION (employee) ══════════════ -->
@@ -3178,6 +3192,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
+        <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag No Search</div><div class="quick-action-sub">Find an item by Tag No</div></div>
         <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
       </div>
     </div>
@@ -3247,6 +3262,19 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed — All Employees</span></div>
       <div class="card"><div id="aoeListBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
       <div id="aoeEditBox-admin"></div>
+    </div>
+
+    <div class="page-section" id="admin-dsr-tagsearch">
+      <div class="section-hdr"><span class="section-title2">🔍 Tag No Search</span></div>
+      <div class="card">
+        <div class="form-row"><label>Tag No</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="dsrTagSearchInput-admin" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('admin')" style="flex:1;">
+            <button class="btn-primary" onclick="dsrTagSearch('admin')">Search</button>
+          </div>
+        </div>
+      </div>
+      <div id="dsrTagSearchBox-admin"></div>
     </div>
 
     <!-- ══════════════ GOLDEN AURA SECTION (admin) ══════════════ -->
@@ -12946,8 +12974,8 @@ function loadDsrDateRange(who) {
 // ══════════════════════════════════════
 var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbw19KcGbJEee6EK4YnznC0xa9inkJl-GOPhywR8xzyzIPY0-SqBHFSEktS_z4tdLZKA/exec";
 var DSR_ST = {
-  emp:   { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} },
-  admin: { gold: [], silver: [], diamond: [], tunchs: ['750','916','999'], eSeq: 0, loaded: false, photos: {} }
+  emp:   { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
+  admin: { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null }
 };
 
 // v-fix (BRO: "Admin login lo DSR entry form lo employee name ante
@@ -13168,6 +13196,7 @@ function dsrfLoadProducts(who) {
     if (cached) {
       const parsed = JSON.parse(cached);
       st.gold = parsed.gold || []; st.silver = parsed.silver || []; st.diamond = parsed.diamond || [];
+      st.diamondClarity = parsed.diamondClarity || []; st.diamondColor = parsed.diamondColor || [];
       st.loaded = true;
       document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
         dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, ''));
@@ -13187,7 +13216,8 @@ function dsrfLoadProducts(who) {
     .then(data => {
       if (data.products) {
         st.gold = data.products.gold || []; st.silver = data.products.silver || []; st.diamond = data.products.diamond || [];
-        try { localStorage.setItem(DSR_PRODUCTS_CACHE_KEY, JSON.stringify({ gold: st.gold, silver: st.silver, diamond: st.diamond, savedAt: Date.now() })); } catch (e) {}
+        st.diamondClarity = data.products.diamondClarity || []; st.diamondColor = data.products.diamondColor || [];
+        try { localStorage.setItem(DSR_PRODUCTS_CACHE_KEY, JSON.stringify({ gold: st.gold, silver: st.silver, diamond: st.diamond, diamondClarity: st.diamondClarity, diamondColor: st.diamondColor, savedAt: Date.now() })); } catch (e) {}
       }
       st.loaded = true;
       document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
@@ -13224,12 +13254,18 @@ function dsrfRefreshProducts(who, eid) {
   const gOpts = '<option value="">-- Select --</option>' + st.gold.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const sOpts = '<option value="">-- Select --</option>' + st.silver.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
   const dOpts = '<option value="">-- Select --</option>' + st.diamond.map(p => `<option>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+  const clarityOpts = '<option value="">-- Select --</option>' + (st.diamondClarity || []).map(p => `<option>${p}</option>`).join('');
+  const colorOpts = '<option value="">-- Select --</option>' + (st.diamondColor || []).map(p => `<option>${p}</option>`).join('');
   const gnEl = document.getElementById(`dsrfPn-${who}-${eid}`);
   const snEl = document.getElementById(`dsrfSn-${who}-${eid}`);
   const dnEl = document.getElementById(`dsrfDiaPn-${who}-${eid}`);
+  const clarityEl = document.getElementById(`dsrfDiaClarity-${who}-${eid}`);
+  const colorEl = document.getElementById(`dsrfDiaColor-${who}-${eid}`);
   if (gnEl) gnEl.innerHTML = gOpts;
   if (snEl) snEl.innerHTML = sOpts;
   if (dnEl) dnEl.innerHTML = dOpts;
+  if (clarityEl) clarityEl.innerHTML = clarityOpts;
+  if (colorEl) colorEl.innerHTML = colorOpts;
 }
 
 function dsrfPhotoWidget(who, eid, pfx) {
@@ -13307,6 +13343,9 @@ function dsrfAddEntry(who) {
             <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37"></div>
             <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'g')}</div>
           </div>
+          <div class="g2 mb12" style="margin-top:12px;">
+            <div><label>Bill No</label><input type="text" id="dsrfGoldBillNo-${who}-${eid}" placeholder="e.g. INV-1042"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -13342,6 +13381,22 @@ function dsrfAddEntry(who) {
               <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
             <div><label>Quality ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaQuality-${who}-${eid}" placeholder="e.g. VVS1, SI2"></div>
           </div>
+          <div class="g2 mb12">
+            <div><label>Gross Wt (gm)</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
+            <div><label>Net Wt (gm)</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Gold Tunch</label><select id="dsrfDiaGoldTunch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
+            <div><label>Carat</label><input type="text" id="dsrfDiaCarat-${who}-${eid}" placeholder="e.g. 0.50ct"></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Clarity</label><select id="dsrfDiaClarity-${who}-${eid}"><option value="">-- Select --</option></select></div>
+            <div><label>Color</label><select id="dsrfDiaColor-${who}-${eid}"><option value="">-- Select --</option></select></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Certificate No</label><input type="text" id="dsrfDiaCertNo-${who}-${eid}" placeholder="e.g. GIA-1234567"></div>
+            <div><label>Bill No</label><input type="text" id="dsrfDiaBillNo-${who}-${eid}" placeholder="e.g. INV-1042"></div>
+          </div>
           <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'dia')}</div>
         </div>
       </div>
@@ -13355,6 +13410,10 @@ function dsrfAddEntry(who) {
               <select id="dsrfSn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'silver')"><option value="">-- Select --</option></select>
               <div id="dsrfSnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfSnCustom-${who}-${eid}" placeholder="Enter silver item name"></div></div>
             <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="dsrfSw-${who}-${eid}" placeholder="e.g. 12.50"></div>
+          </div>
+          <div class="g2 mb12">
+            <div><label>Quality</label><input type="text" id="dsrfSilverQuality-${who}-${eid}" placeholder="e.g. 925 Sterling"></div>
+            <div><label>Bill No</label><input type="text" id="dsrfSilverBillNo-${who}-${eid}" placeholder="e.g. INV-1042"></div>
           </div>
           <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 's')}</div>
         </div>
@@ -14332,9 +14391,40 @@ function tryRenderEmpLeadsFromCache(box, errMsg) {
   banner.innerHTML = '<span>📴 Showing leads saved at ' + when + ' — connection is weak, this may not include the very latest updates.</span><button class="btn-secondary" style="flex-shrink:0;padding:4px 10px;font-size:11px;" onclick="loadEmpLeadsPending()">🔄 Retry</button>';
   box.prepend(banner);
 }
+// v-fix (BRO: "first time open cheskoina cache la save avali, tarvata
+// every open ki sudden reload kanapadaddu — click chesindi anni
+// slow avthundi"): this used to ALWAYS show a spinner and block on 3
+// network calls every single time the Leads page was opened/revisited,
+// even within the same day/session — genuinely refetching the whole
+// list from scratch each time, which is exactly the visible "reload"
+// BRO was seeing (a single lead's own Submit already only patched
+// itself locally, per submitLeadCall() below — this was about PAGE
+// NAVIGATION, not Submit). Now: if today's cache already exists,
+// render it INSTANTLY (no spinner, no visible reload) and refresh from
+// the server silently in the background — the list only ever "jumps"
+// on the very first load of the day, exactly like BRO asked.
+let __empLeadsBgFetchInFlight = false;
+
 async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(empLeadsCacheKey())); } catch (e) {}
+  const haveCache = !!(cached && cached.leadsAll);
+
+  if (haveCache) {
+    __empPendingLeadsAll = cached.leadsAll;
+    __empPendingSummary = cached.summary;
+    window.__empLeadsData = {};
+    __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
+    renderEmpLeadsPendingTable();
+  } else {
+    box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  }
+
+  // Refresh from the server — visibly (spinner already showing) on a
+  // true first load, silently (no UI disruption) on every later visit.
+  if (__empLeadsBgFetchInFlight) return; // a refresh is already running — don't stack another
+  __empLeadsBgFetchInFlight = true;
   try {
     const [res, reportRes, submittedRes] = await Promise.all([
       leadsApiGet({ action: 'GET_LEADS', empId: state.empId, name: state.empName, email: state.empEmail, date: todayISO() }),
@@ -14342,10 +14432,11 @@ async function loadEmpLeadsPending() {
       leadsApiGet({ action: 'GET_DAILY_REPORT', employee: state.empName, role: 'employee', date: todayISO() }).catch(() => null)
     ]);
     if (res.error) {
-      // A real backend error response (not a network failure) — still try
-      // the cache rather than giving up, since the underlying cause could
-      // be the same flaky connection corrupting the request.
-      tryRenderEmpLeadsFromCache(box, 'Backend error: ' + res.error);
+      // A real backend error response (not a network failure) — if we
+      // already have nothing on screen, fall back to cache/empty-state;
+      // if the cache is already showing, just leave it as-is rather
+      // than replacing a working view with an error.
+      if (!haveCache) tryRenderEmpLeadsFromCache(box, 'Backend error: ' + res.error);
       return;
     }
     // v-fix (a submitted lead used to disappear from the list right
@@ -14388,7 +14479,11 @@ async function loadEmpLeadsPending() {
     renderEmpLeadsPendingTable();
     saveEmpLeadsCache();
   } catch (e) {
-    tryRenderEmpLeadsFromCache(box, e.message);
+    if (!haveCache) tryRenderEmpLeadsFromCache(box, e.message);
+    // else: cache is already on screen — a failed silent background
+    // refresh just leaves it as-is instead of replacing a working view.
+  } finally {
+    __empLeadsBgFetchInFlight = false;
   }
 }
 
@@ -16321,9 +16416,11 @@ function dsrfSubmit(who) {
       if (!sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
       if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
       const sPhoto = dsrfGv(`dsrfPh-s-${who}-${eid}`);
+      const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`), sBillNo = dsrfGv(`dsrfSilverBillNo-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
-        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '' });
+        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '',
+        silverQuality: sQuality || '', billNo: sBillNo || '' });
     } else if (type === 'Diamond') {
       // v-fix (BRO: "Diamond kosam Silver laga, vere columns add chei" —
       // upgraded from the earlier design where Cent/Quality reused
@@ -16334,6 +16431,12 @@ function dsrfSubmit(who) {
       const dCent = dsrfGv(`dsrfDiaCent-${who}-${eid}`), dWt = dsrfGv(`dsrfDiaWt-${who}-${eid}`),
             dQuality = dsrfGv(`dsrfDiaQuality-${who}-${eid}`),
             dTs = dsrfGv(`dsrfDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`dsrfDiaTagNo-${who}-${eid}`);
+      // v-add (BRO: Diamond needs Gross Wt/Net Wt/Gold Tunch/Carat/
+      // Clarity/Color/Certificate No, plus the shared Bill No field).
+      const dGrossWt = dsrfGv(`dsrfDiaGrossWt-${who}-${eid}`), dNetWt = dsrfGv(`dsrfDiaNetWt-${who}-${eid}`),
+            dGoldTunch = dsrfGv(`dsrfDiaGoldTunch-${who}-${eid}`), dCarat = dsrfGv(`dsrfDiaCarat-${who}-${eid}`),
+            dClarity = dsrfGv(`dsrfDiaClarity-${who}-${eid}`), dColor = dsrfGv(`dsrfDiaColor-${who}-${eid}`),
+            dCertNo = dsrfGv(`dsrfDiaCertNo-${who}-${eid}`), dBillNo = dsrfGv(`dsrfDiaBillNo-${who}-${eid}`);
       if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
         if (!dWt) { ok = false; errMsg = 'Please enter Weight!'; return; }
@@ -16347,7 +16450,10 @@ function dsrfSubmit(who) {
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
         diamondTagStatus: dTs || '', diamondTagNo: dTn || '', diamondProductName: dpn,
         diamondCent: dCent || '', diamondQuality: dQuality || '', diamondWeight: dWt || '',
-        diamondPhoto: dPhoto.length > 100 ? dPhoto : '' });
+        diamondPhoto: dPhoto.length > 100 ? dPhoto : '',
+        diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
+        diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
+        diamondCertNo: dCertNo || '', billNo: dBillNo || '' });
     } else {
       let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrfGv(`dsrfPnCustom-${who}-${eid}`);
       const des = dsrfGv(`dsrfDes-${who}-${eid}`), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
@@ -16360,17 +16466,194 @@ function dsrfSubmit(who) {
         if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
+      const gBillNo = dsrfGv(`dsrfGoldBillNo-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: ts || '', tagNo: tn || '', productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
-        photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '' });
+        photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: gBillNo || '' });
     }
   });
 
   if (!ok) { toast(errMsg, 'error'); return; }
   if (!rows.length) { toast('No data to submit!', 'error'); return; }
 
+  // v-add (BRO's Return/Replace feature): a customer returned an
+  // already-sold item and is taking a different one — the form is
+  // pre-filled (see dsrOpenReturnReplace) and only ONE replacement item
+  // is supported per return.
+  if (DSR_ST[who].returnMode) {
+    if (rows.length > 1) { toast('Return/Replace only supports ONE replacement item — please remove the extra item entries.', 'error'); return; }
+    dsrfShowReturnReplacePreview(who, rows[0]);
+    return;
+  }
+
   window['__dsrPendingRows_' + who] = rows;
   dsrfShowPreview(who, rows);
+}
+
+// ══════════════════════════════════════
+// RETURN / REPLACE — BRO's feature: a customer returns an already-sold
+// item and takes a different one instead. Old row is logged to Returns
+// Log (audit trail) + deleted server-side; new row is added under the
+// SAME DSR No + Bill Date, with today recorded separately as Return
+// Date. See returnReplaceDsr() in dsr.txt for the actual logic.
+// ══════════════════════════════════════
+function dsrOpenReturnReplace(who, idx) {
+  const r = (window['__dsrTagResults_' + who] || [])[idx];
+  if (!r) return;
+  if (!confirm(`Return/Replace this ${r.type} item (Tag No ${r.tagNo}) for ${r.customerName}?\n\nThe old item will be logged (audit trail) and removed. You will then enter the NEW item's details below, keeping the same customer, bill date and DSR No.`)) return;
+
+  DSR_ST[who].returnMode = {
+    oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, oldDsrId: r.dsrId,
+    oldCustomerName: r.customerName, oldMobile: r.mobileNumber, oldAddress: r.address, oldBillDate: r.billDate
+  };
+
+  const navFn = who === 'admin' ? showAdminPage : showEmpPage;
+  navFn('dsr-newentry');
+
+  // Pre-fill + lock the Bill Details — these must exactly match the
+  // original transaction for the DSR No/Bill Date continuity to hold.
+  setTimeout(() => {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) { el.value = val; el.readOnly = true; el.style.background = 'var(--card-alt,#f0f0f0)'; } };
+    set(`dsrfBillDate-${who}`, r.billDate);
+    set(`dsrfCust-${who}`, r.customerName);
+    set(`dsrfMobile-${who}`, r.mobileNumber);
+    set(`dsrfAddr-${who}`, r.address);
+
+    let banner = document.getElementById(`dsrfReturnBanner-${who}`);
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = `dsrfReturnBanner-${who}`;
+      banner.style.cssText = 'background:#fff3cd;border:1.5px solid #e6b800;border-radius:8px;padding:10px 14px;margin:0 14px 12px;';
+      const form = document.getElementById(`dsrEntryFormBox-${who}`);
+      if (form) form.prepend(banner);
+    }
+    banner.innerHTML = `🔄 <strong>Return/Replace Mode</strong> — Tag No ${r.tagNo} (DSR ${r.dsrId}) will be logged &amp; removed once you submit the new item below. <button class="btn-sm" onclick="dsrCancelReturnReplace('${who}')" style="margin-left:8px;">✕ Cancel</button>`;
+  }, 150);
+}
+
+function dsrCancelReturnReplace(who) {
+  DSR_ST[who].returnMode = null;
+  const banner = document.getElementById(`dsrfReturnBanner-${who}`);
+  if (banner) banner.remove();
+  ['dsrfBillDate', 'dsrfCust', 'dsrfMobile', 'dsrfAddr'].forEach(base => {
+    const el = document.getElementById(`${base}-${who}`);
+    if (el) { el.readOnly = false; el.style.background = ''; }
+  });
+}
+
+function dsrfShowReturnReplacePreview(who, newItem) {
+  const rm = DSR_ST[who].returnMode;
+  if (!confirm(`Confirm Return/Replace?\n\nOld Tag No item will be logged to Returns Log and removed.\nNew item (${newItem.type}) will be added under the SAME DSR No (${rm.oldDsrId}) and Bill Date (${rm.oldBillDate}).\n\nProceed?`)) return;
+  dsrfDoReturnReplaceSubmit(who, newItem);
+}
+
+function dsrfDoReturnReplaceSubmit(who, newItem) {
+  const rm = DSR_ST[who].returnMode;
+  const processedBy = who === 'admin' ? (state.adminName || 'Admin') : (state.empName || 'Employee');
+  const btn = document.getElementById('dsrfSubmitBtn-' + who);
+  const msg = document.getElementById('dsrfStatusMsg-' + who);
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Processing Return/Replace...'; }
+  if (msg) msg.textContent = '';
+
+  _fetchWithTimeout(DSR_GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'returnReplace', oldRowNum: rm.oldRowNum, oldSourceSheet: rm.oldSourceSheet, processedBy, newItem })
+  }, 90000)
+    .then(r => r.json())
+    .then(result => {
+      if (btn) { btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★'; }
+      if (result.status === 'success') {
+        if (msg) { msg.style.color = 'var(--green)'; msg.innerHTML = `✅ Return/Replace complete! DSR ID: <b>${result.dsrId}</b>`; }
+        toast('Return/Replace saved!', 'success');
+        dsrCancelReturnReplace(who);
+        document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
+        DSR_ST[who].eSeq = 0;
+        dsrfAddEntry(who);
+        document.getElementById('dsrfCust-' + who).value = '';
+        document.getElementById('dsrfMobile-' + who).value = '';
+        document.getElementById('dsrfAddr-' + who).value = '';
+        document.getElementById('dsrfBillDate-' + who).value = toYMD(new Date());
+      } else {
+        if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + (result.message || 'Failed to process Return/Replace.'); }
+        toast('Return/Replace failed — please retry.', 'error');
+      }
+    })
+    .catch(err => {
+      if (btn) { btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★'; }
+      if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Network error: ' + err.message + ' — please retry (Return/Replace has no offline queue yet, unlike normal DSR entry).'; }
+      toast('Network error — please retry', 'error');
+    });
+}
+
+// ══════════════════════════════════════
+// TAG NO SEARCH — find every Gold/Diamond item matching a Tag No
+// (Silver has no Tag No yet), shown as a rich table with photo (Admin
+// only, matching the existing photo-visibility rule elsewhere in DSR).
+// ══════════════════════════════════════
+function dsrTagSearch(who) {
+  const input = document.getElementById('dsrTagSearchInput-' + who);
+  const box = document.getElementById('dsrTagSearchBox-' + who);
+  const tagNo = (input.value || '').trim();
+  if (!tagNo) { toast('Enter a Tag No to search', 'error'); return; }
+
+  box.innerHTML = '<div class="card"><div class="loading"><span class="spinner"></span>Searching...</div></div>';
+  const role = who === 'admin' ? 'ADMIN' : 'EMPLOYEE';
+
+  _fetchWithTimeout(DSR_GAS_URL + '?action=searchByTagNo&tagNo=' + encodeURIComponent(tagNo) + '&role=' + role, {}, 20000)
+    .then(r => r.json())
+    .then(data => {
+      if (data.status !== 'success') {
+        box.innerHTML = '<div class="card"><div class="empty-state"><p>' + (data.message || 'Search failed.') + '</p></div></div>';
+        return;
+      }
+      const results = data.results || [];
+      if (!results.length) {
+        box.innerHTML = '<div class="card"><div class="empty-state"><p>No item found with Tag No "' + tagNo + '".</p></div></div>';
+        return;
+      }
+      window['__dsrTagResults_' + who] = results;
+      box.innerHTML = results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
+    })
+    .catch(err => {
+      box.innerHTML = '<div class="card"><div class="empty-state"><p>Search failed: ' + err.message + '</p></div></div>';
+    });
+}
+
+function dsrTagResultCardHtml(r, idx, who) {
+  const isDia = r.type === 'Diamond';
+  const photoHtml = r.photoUrl
+    ? `<img src="${r.photoUrl}" style="width:100%;max-width:220px;border-radius:8px;margin-bottom:10px;display:block;" onerror="this.style.display='none';">`
+    : '';
+  const rows = [
+    ['DSR No', r.dsrId], ['Bill Date', r.billDate], ['Employee', r.employeeName],
+    ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
+    ['Type', r.type], ['Tag No', r.tagNo], ['Product Name', r.productName],
+    isDia ? ['Cent', r.diamondCent] : ['Design', r.design],
+    isDia ? ['Quality', r.diamondQuality] : ['Tunch', r.tunch],
+    ['Weight', r.weight],
+    isDia ? ['Gross Wt', r.diamondGrossWt] : null,
+    isDia ? ['Net Wt', r.diamondNetWt] : null,
+    isDia ? ['Gold Tunch', r.diamondGoldTunch] : null,
+    isDia ? ['Carat', r.diamondCarat] : null,
+    isDia ? ['Clarity', r.diamondClarity] : null,
+    isDia ? ['Color', r.diamondColor] : null,
+    isDia ? ['Certificate No', r.diamondCertNo] : null,
+    ['Bill No', r.billNo], ['Payment Status', r.paymentStatus],
+    r.returnDate ? ['Return Date', r.returnDate] : null,
+    ['Source', r.sourceSheet]
+  ].filter(Boolean);
+
+  const tableRows = rows.map(([label, val]) =>
+    `<tr><td style="padding:6px 10px;color:var(--text3,#888);font-weight:600;white-space:nowrap;">${label}</td><td style="padding:6px 10px;">${val || '—'}</td></tr>`
+  ).join('');
+
+  return `<div class="card" style="margin-bottom:12px;">
+    ${photoHtml}
+    <div class="kd-table-wrap"><table class="kd-table"><tbody>${tableRows}</tbody></table></div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Return / Replace</button>
+    </div>
+  </div>`;
 }
 
 // Review screen — shows every item with its photo before the DSR is
@@ -16817,7 +17100,7 @@ function openAdvanceOrderEdit(who, dsrId) {
       };
       if (!DSR_ST[who].loaded) {
         fetch(DSR_GAS_URL + '?action=getData').then(r => r.json()).then(data => {
-          if (data.products) { DSR_ST[who].gold = data.products.gold || []; DSR_ST[who].silver = data.products.silver || []; DSR_ST[who].diamond = data.products.diamond || []; }
+          if (data.products) { DSR_ST[who].gold = data.products.gold || []; DSR_ST[who].silver = data.products.silver || []; DSR_ST[who].diamond = data.products.diamond || []; DSR_ST[who].diamondClarity = data.products.diamondClarity || []; DSR_ST[who].diamondColor = data.products.diamondColor || []; }
           DSR_ST[who].loaded = true;
           renderItems();
         }).catch(renderItems);
