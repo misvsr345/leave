@@ -16598,7 +16598,7 @@ function dsrTagSearch(who) {
   box.innerHTML = '<div class="card"><div class="loading"><span class="spinner"></span>Searching...</div></div>';
   const role = who === 'admin' ? 'ADMIN' : 'EMPLOYEE';
 
-  _fetchWithTimeout(DSR_GAS_URL + '?action=searchByTagNo&tagNo=' + encodeURIComponent(tagNo) + '&role=' + role, {}, 20000)
+  _fetchWithTimeout(DSR_GAS_URL + '?action=searchByTagNo&tagNo=' + encodeURIComponent(tagNo) + '&role=' + role, {}, 60000)
     .then(r => r.json())
     .then(data => {
       if (data.status !== 'success') {
@@ -16614,7 +16614,10 @@ function dsrTagSearch(who) {
       box.innerHTML = results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
     })
     .catch(err => {
-      box.innerHTML = '<div class="card"><div class="empty-state"><p>Search failed: ' + err.message + '</p></div></div>';
+      const msg = (err && err.name === 'AbortError')
+        ? 'Server slow ga undi (timeout). Konchem sepu aagi malli Search cheyandi.'
+        : 'Search failed: ' + (err && err.message ? err.message : err);
+      box.innerHTML = '<div class="card"><div class="empty-state"><p>' + msg + '</p></div></div>';
     });
 }
 
