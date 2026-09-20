@@ -13914,10 +13914,22 @@ function loadDailyShopStatus_(who) {
     }
     if (dutyBox) {
       const d = res.duty || {};
-      const row = (label, sec) => sec
-        ? `<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);"><strong>${label}:</strong> ${sec.name} — <span style="color:var(--text3,#888);">${sec.status}</span></div>`
-        : `<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);"><strong>${label}:</strong> —</div>`;
-      dutyBox.innerHTML = row('Opening Duty', d.opening) + row('Closing Duty', d.closing);
+      const pillFor = (status) => {
+        if (!status) return 'pill-absent';
+        if (status.indexOf('Completed') > -1) return 'pill-approved';
+        if (status.indexOf('Not done by') > -1) return 'pill-rejected';
+        if (status.indexOf('No employee') > -1) return 'pill-absent';
+        return 'pill-pending'; // "Assigned — Please Submit"
+      };
+      const dutyRow = (icon, label, sec) => {
+        const name = sec ? sec.name : '—';
+        const status = sec ? sec.status : 'No employee configured on DUTY sheet';
+        return `<tr><td>${icon} ${label}</td><td><strong>${name}</strong></td><td><span class="pill ${pillFor(status)}">${status}</span></td></tr>`;
+      };
+      dutyBox.innerHTML = `<div class="kd-table-wrap"><table class="kd-table">
+        <thead><tr><th>Slot</th><th>Assigned Employee</th><th>Status</th></tr></thead>
+        <tbody>${dutyRow('🌅', 'Opening Duty', d.opening)}${dutyRow('🌙', 'Closing Duty', d.closing)}</tbody>
+      </table></div>`;
     }
   }).catch(() => {
     if (statusBox) statusBox.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>';
@@ -13943,7 +13955,7 @@ function loadDailyShopLog_(who) {
     }
     let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Opening</th><th>Closing</th></tr></thead><tbody>';
     res.dateRows.forEach(d => {
-      const openCell = d.opening ? `${d.opening.emp} (${d.opening.done}/${d.opening.total})` : '<span style="color:#ff8080;">Not done</span>';
+      const openCell = d.opening ? `${d.opening.emp} (${d.opening.done}/${d.opening.total})` + (d.opening.openedBy ? `<br><span style="font-size:10px;color:var(--text3,#888);">Shop opened by: ${d.opening.openedBy}</span>` : '') : '<span style="color:#ff8080;">Not done</span>';
       const closeCell = d.closing ? `${d.closing.emp} (${d.closing.done}/${d.closing.total})` : '<span style="color:#ff8080;">Not done</span>';
       html += `<tr><td>${d.dateDisp}</td><td>${openCell}</td><td>${closeCell}</td></tr>`;
     });
