@@ -16762,6 +16762,15 @@ function dsrSearchSetMode(who, mode) {
 
 function dsrSearchRun(who) {
   if (!DSR_SEARCH_MODE[who]) { toast('Choose Tag No Wise or DSR ID Wise first', 'error'); return; }
+  // A DSR ID always looks like 32-20260901-001 (empNo-yyyymmdd-seq). If that is typed while
+  // "Tag No Wise" is selected, switch to DSR ID Wise automatically instead of a confusing "not found".
+  const typed = ((document.getElementById('dsrSearchInput-' + who) || {}).value || '').trim();
+  if (DSR_SEARCH_MODE[who] === 'tag' && /^[A-Za-z0-9]+-\d{8}-\d+$/.test(typed)) {
+    const keep = typed;
+    dsrSearchSetMode(who, 'dsr');
+    document.getElementById('dsrSearchInput-' + who).value = keep;
+    toast('That looks like a DSR ID — searching DSR ID Wise', 'info');
+  }
   if (DSR_SEARCH_MODE[who] === 'dsr') dsrIdSearch(who); else dsrTagSearch(who);
 }
 
