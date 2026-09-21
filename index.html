@@ -2150,7 +2150,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="empQADsrTillDate" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="empQADsrDateRange" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
         <div class="quick-action-btn" id="empQADsrAdvOrder" onclick="showEmpPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — update &amp; close</div></div>
-        <div class="quick-action-btn" id="empQADsrTagSearch" onclick="showEmpPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag No Search</div><div class="quick-action-sub">Find an item by Tag No</div></div>
+        <div class="quick-action-btn" id="empQADsrTagSearch" onclick="showEmpPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-dsr-today">
@@ -2222,12 +2222,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
     <div class="page-section" id="emp-dsr-tagsearch">
-      <div class="section-hdr"><span class="section-title2">🔍 Tag No Search</span></div>
+      <div class="section-hdr"><span class="section-title2">🔍 Search</span></div>
       <div class="card">
-        <div class="form-row"><label>Tag No</label>
+        <div class="form-row"><label>Search By</label>
+          <div class="filter-bar">
+            <button type="button" class="filter-btn" id="dsrSearchModeTag-emp" onclick="dsrSearchSetMode('emp','tag')">🏷️ Tag No Wise</button>
+            <button type="button" class="filter-btn" id="dsrSearchModeDsr-emp" onclick="dsrSearchSetMode('emp','dsr')">🧾 DSR ID Wise</button>
+          </div>
+        </div>
+        <div class="form-row" id="dsrSearchInputRow-emp" style="display:none;"><label id="dsrSearchLabel-emp">Tag No</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="dsrTagSearchInput-emp" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('emp')" style="flex:1 1 auto;min-width:0;width:auto;">
-            <button class="btn-primary" onclick="dsrTagSearch('emp')" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:12px 26px;">Search</button>
+            <input type="text" id="dsrSearchInput-emp" placeholder="e.g. C498" autocomplete="off" onkeydown="if(event.key==='Enter')dsrSearchRun('emp')" style="flex:1 1 auto;min-width:0;width:auto;">
+            <button class="btn-primary" onclick="dsrSearchRun('emp')" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:12px 26px;">Search</button>
           </div>
         </div>
       </div>
@@ -3200,7 +3206,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
-        <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag No Search</div><div class="quick-action-sub">Find an item by Tag No</div></div>
+        <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
         <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
       </div>
     </div>
@@ -3273,12 +3279,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     </div>
 
     <div class="page-section" id="admin-dsr-tagsearch">
-      <div class="section-hdr"><span class="section-title2">🔍 Tag No Search</span></div>
+      <div class="section-hdr"><span class="section-title2">🔍 Search</span></div>
       <div class="card">
-        <div class="form-row"><label>Tag No</label>
+        <div class="form-row"><label>Search By</label>
+          <div class="filter-bar">
+            <button type="button" class="filter-btn" id="dsrSearchModeTag-admin" onclick="dsrSearchSetMode('admin','tag')">🏷️ Tag No Wise</button>
+            <button type="button" class="filter-btn" id="dsrSearchModeDsr-admin" onclick="dsrSearchSetMode('admin','dsr')">🧾 DSR ID Wise</button>
+          </div>
+        </div>
+        <div class="form-row" id="dsrSearchInputRow-admin" style="display:none;"><label id="dsrSearchLabel-admin">Tag No</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="dsrTagSearchInput-admin" placeholder="e.g. C498" onkeydown="if(event.key==='Enter')dsrTagSearch('admin')" style="flex:1 1 auto;min-width:0;width:auto;">
-            <button class="btn-primary" onclick="dsrTagSearch('admin')" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:12px 26px;">Search</button>
+            <input type="text" id="dsrSearchInput-admin" placeholder="e.g. C498" autocomplete="off" onkeydown="if(event.key==='Enter')dsrSearchRun('admin')" style="flex:1 1 auto;min-width:0;width:auto;">
+            <button class="btn-primary" onclick="dsrSearchRun('admin')" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:12px 26px;">Search</button>
           </div>
         </div>
       </div>
@@ -6037,16 +6049,23 @@ function addMixedDateRow() {
   const idx = __mixedRowCount;
   const row = document.createElement('div');
   row.id = 'mixedRow-' + idx;
-  row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;';
+  row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px;';
   row.innerHTML = `
-    <div class="form-row" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="mixedDate-${idx}" onchange="showColleaguesOnLeaveMixed()"></div>
-    <div class="form-row" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
+    <div class="form-row" style="flex:1 1 40%;min-width:120px;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="mixedDate-${idx}" onchange="showColleaguesOnLeaveMixed()"></div>
+    <div class="form-row" style="flex:1 1 40%;min-width:120px;margin-bottom:0;"><label>Leave Type *</label>
       <select id="mixedMode-${idx}" onchange="onMixedModeChange(${idx})">
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
       </select>
     </div>
     <button type="button" onclick="removeMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
+    <div class="form-row" id="mixedHalfWrap-${idx}" style="display:none;flex:1 1 100%;margin-bottom:0;">
+      <label>Half Day Slot *</label>
+      <select id="mixedHalf-${idx}">
+        <option value="First Half (Morning)">First Half (Morning)</option>
+        <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
+      </select>
+    </div>
   `;
   document.getElementById('mixedDateList').appendChild(row);
 }
@@ -6057,10 +6076,17 @@ function removeMixedDateRow(idx) {
   showColleaguesOnLeaveMixed(); // a removed date's colleagues shouldn't linger in the box
 }
 
-// Half Day slot per mixed-date row keeps things simple — defaults to
-// First Half without its own separate dropdown per row (BRO's spec was
-// Date + Full/Half only, no extra fields per row).
-function onMixedModeChange(idx) { /* no-op hook kept for future per-row half-day-slot support if ever needed */ }
+// v-restore (BRO: "mixed day lo half day select cheste first or second
+// half option vachedi, ippudu ravadam ledu"): each Mixed Leave row that
+// is set to Half Day shows its own First Half / Second Half slot picker
+// again. Without a slot the backend saved the row as "Half Day" with an
+// EMPTY half-day column, and every downstream calculation (balance,
+// counter-clash, penalties) then treated it as a FULL day.
+function onMixedModeChange(idx) {
+  const m = document.getElementById('mixedMode-' + idx);
+  const w = document.getElementById('mixedHalfWrap-' + idx);
+  if (m && w) w.style.display = m.value === 'Half Day' ? '' : 'none';
+}
 
 async function submitLeave() {
   if(!document.getElementById('ackNotices').checked) {
@@ -6098,10 +6124,13 @@ async function submitLeave() {
       const idx = row.id.replace('mixedRow-', '');
       const dEl = document.getElementById('mixedDate-' + idx);
       const mEl = document.getElementById('mixedMode-' + idx);
+      const hEl = document.getElementById('mixedHalf-' + idx);
       if (!dEl.value) { toast('Please fill in every date, or remove the empty row', 'error'); return; }
       if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
       seenDates[dEl.value] = true;
-      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
+      const rowHalf = (mEl.value === 'Half Day' && hEl) ? hEl.value : '';
+      if (mEl.value === 'Half Day' && !rowHalf) { toast('Please select First Half or Second Half for ' + dEl.value, 'error'); return; }
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: rowHalf });
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
@@ -7384,16 +7413,23 @@ function addDirectMixedDateRow() {
   const idx = __directMixedRowCount;
   const row = document.createElement('div');
   row.id = 'directMixedRow-' + idx;
-  row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;';
+  row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px;';
   row.innerHTML = `
-    <div class="form-group" style="flex:1;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="directMixedDate-${idx}" onchange="refreshDirectConflicts()"></div>
-    <div class="form-group" style="flex:1;margin-bottom:0;"><label>Leave Type *</label>
-      <select id="directMixedMode-${idx}">
+    <div class="form-group" style="flex:1 1 40%;min-width:120px;margin-bottom:0;"><label>Date *</label><input type="date" lang="en-GB" id="directMixedDate-${idx}" onchange="refreshDirectConflicts()"></div>
+    <div class="form-group" style="flex:1 1 40%;min-width:120px;margin-bottom:0;"><label>Leave Type *</label>
+      <select id="directMixedMode-${idx}" onchange="onDirectMixedModeChange(${idx})">
         <option value="Full Day">Full Day</option>
         <option value="Half Day">Half Day</option>
       </select>
     </div>
     <button type="button" onclick="removeDirectMixedDateRow(${idx})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;margin-bottom:8px;">✕</button>
+    <div class="form-group" id="directMixedHalfWrap-${idx}" style="display:none;flex:1 1 100%;margin-bottom:0;">
+      <label>Half Day Session *</label>
+      <select id="directMixedHalf-${idx}">
+        <option value="First Half">First Half</option>
+        <option value="Second Half">Second Half</option>
+      </select>
+    </div>
   `;
   document.getElementById('directMixedDateList').appendChild(row);
 }
@@ -7401,6 +7437,12 @@ function addDirectMixedDateRow() {
 function removeDirectMixedDateRow(idx) {
   const row = document.getElementById('directMixedRow-' + idx);
   if (row) row.remove();
+}
+
+function onDirectMixedModeChange(idx) {
+  const m = document.getElementById('directMixedMode-' + idx);
+  const w = document.getElementById('directMixedHalfWrap-' + idx);
+  if (m && w) w.style.display = m.value === 'Half Day' ? '' : 'none';
 }
 
 function onDirectModeChange() {
@@ -7474,10 +7516,13 @@ async function submitDirectAction(outcome, evt) {
       const idx = row.id.replace('directMixedRow-', '');
       const dEl = document.getElementById('directMixedDate-' + idx);
       const mEl = document.getElementById('directMixedMode-' + idx);
+      const hEl = document.getElementById('directMixedHalf-' + idx);
       if (!dEl.value) { toast('Fill in every date, or remove the empty row', 'error'); return; }
       if (seenDates[dEl.value]) { toast('The same date (' + dEl.value + ') is entered more than once', 'error'); return; }
       seenDates[dEl.value] = true;
-      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: '' });
+      const rowHalf = (mEl.value === 'Half Day' && hEl) ? hEl.value : '';
+      if (mEl.value === 'Half Day' && !rowHalf) { toast('Select First Half or Second Half for ' + dEl.value, 'error'); return; }
+      segments.push({ startDate: dEl.value, endDate: dEl.value, leaveMode: mEl.value, halfDay: rowHalf });
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
@@ -7512,7 +7557,7 @@ async function submitDirectAction(outcome, evt) {
   const dateDesc = segments.length > 1 ? segments.length + ' dates' : fmtDMY(startDate) + (startDate !== endDate ? ' to ' + fmtDMY(endDate) : '');
   if (!confirm(`${label.toUpperCase()}: ${empName}, ${dateDesc} (${leaveType})?`)) return;
 
-  const idem = makeIdemKey(['direct', outcome, empId, startDate, endDate, leaveType, leaveMode]);
+  const idem = makeIdemKey(['direct', outcome, empId, startDate, endDate, leaveType, leaveMode, segments.length > 1 ? segments.map(s => s.startDate + ':' + s.leaveMode + ':' + (s.halfDay || '')).join(',') : '']);
   if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
 
   setLock(lockKey, true);
@@ -8674,6 +8719,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📅', label: 'Till Date DSR', page: 'dsr-tilldate' },
   { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
+  { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
   { icon: '⚠️', label: 'Extra DSR Check', page: 'extra-dsr' },
   { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
   { icon: '🔍', label: 'All Schemes (Golden Aura)', page: 'golden-aura-list' },
@@ -8778,6 +8824,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '📅', label: 'Till Date DSR', page: 'dsr-tilldate' },
   { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
+  { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
   { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
   { icon: '🔍', label: 'My Schemes (Golden Aura)', page: 'golden-aura-list' },
   { icon: '📋', label: "Today's Leads", page: 'leads-pending' },
@@ -13109,10 +13156,16 @@ function renderDsrEntryForm(who, force) {
             </div>
             <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
           </div>
+          <!-- Return/Replace only: date the customer actually returned the item
+               (Bill Date stays locked to the original sale). Hidden in a normal DSR entry. -->
+          <div class="g2" id="dsrfReturnDateWrap-${who}" style="display:none;margin-top:14px;">
+            <div><label>Return Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfReturnDate-${who}"></div>
+            <div></div>
+          </div>
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="dsrfEmpCard-${who}">
         <div class="ch">◉ &nbsp;Employee</div>
         <div class="cb">
           <label>Employee Name</label>
@@ -13379,15 +13432,13 @@ function dsrfAddEntry(who) {
             <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
               <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749"></div>
           </div>
-          <div class="g2 mb12">
-            <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
-            <div><label>Cent</label><input type="text" id="dsrfDiaCent-${who}-${eid}" placeholder="e.g. 50 cent"></div>
-          </div>
+          <!-- v-fix (BRO: "dsr new entry form lo cent and quality remove chei"):
+               Cent and Quality are no longer asked for Diamond items. -->
           <div class="g2 mb12">
             <div><label>Product Name ${req}</label>
               <select id="dsrfDiaPn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'diamond')"><option value="">-- Select --</option></select>
               <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
-            <div><label>Quality ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaQuality-${who}-${eid}" placeholder="e.g. VVS1, SI2"></div>
+            <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Gross Wt (gm)</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
@@ -16403,9 +16454,21 @@ function dsrfSubmit(who) {
   const cust = (dsrfGv('dsrfCust-' + who) || '').toUpperCase();
   const addr = (dsrfGv('dsrfAddr-' + who) || '').toUpperCase();
 
-  if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
-  if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
-  if (!/^\d{10}$/.test(mob)) { toast('Mobile must be 10 digits!', 'error'); return; }
+  // Return/Replace: Bill Date / Customer / Mobile / Address / Employee all come from the ORIGINAL
+  // sale (locked in the form and re-read server-side from the old row), so only the Return Date
+  // needs validating here.
+  const inReturn = !!DSR_ST[who].returnMode;
+  if (inReturn) {
+    const rdVal = dsrfGv('dsrfReturnDate-' + who);
+    if (!rdVal) { toast('Please select the Return Date', 'error'); return; }
+    if (rdVal > toYMD(new Date())) { toast('Return Date cannot be in the future', 'error'); return; }
+    const bdVal = DSR_ST[who].returnMode.billDate;
+    if (bdVal && rdVal < bdVal) { toast('Return Date cannot be before the Bill Date (' + fmtDMY(bdVal) + ')', 'error'); return; }
+  } else {
+    if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
+    if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
+    if (!/^\d{10}$/.test(mob)) { toast('Mobile must be 10 digits!', 'error'); return; }
+  }
 
   const entries = document.querySelectorAll(`#dsrfEntriesList-${who} .entry`);
   if (!entries.length) { toast('Please add at least one item!', 'error'); return; }
@@ -16436,8 +16499,7 @@ function dsrfSubmit(who) {
       // separate columns on the backend, mirroring exactly how Silver
       // already has its own dedicated columns instead of sharing Gold's).
       let dpn = dsrfGv(`dsrfDiaPn-${who}-${eid}`); if (dpn === 'Other') dpn = dsrfGv(`dsrfDiaPnCustom-${who}-${eid}`);
-      const dCent = dsrfGv(`dsrfDiaCent-${who}-${eid}`), dWt = dsrfGv(`dsrfDiaWt-${who}-${eid}`),
-            dQuality = dsrfGv(`dsrfDiaQuality-${who}-${eid}`),
+      const dWt = dsrfGv(`dsrfDiaWt-${who}-${eid}`),
             dTs = dsrfGv(`dsrfDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`dsrfDiaTagNo-${who}-${eid}`);
       // v-add (BRO: Diamond needs Gross Wt/Net Wt/Gold Tunch/Carat/
       // Clarity/Color/Certificate No, plus the shared Bill No field).
@@ -16448,7 +16510,6 @@ function dsrfSubmit(who) {
       if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
         if (!dWt) { ok = false; errMsg = 'Please enter Weight!'; return; }
-        if (!dQuality) { ok = false; errMsg = 'Please enter Quality!'; return; }
         if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
@@ -16456,7 +16517,7 @@ function dsrfSubmit(who) {
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
         diamondTagStatus: dTs || '', diamondTagNo: dTn || '', diamondProductName: dpn,
-        diamondCent: dCent || '', diamondQuality: dQuality || '', diamondWeight: dWt || '',
+        diamondCent: '', diamondQuality: '', diamondWeight: dWt || '',
         diamondPhoto: dPhoto.length > 100 ? dPhoto : '',
         diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
         diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
@@ -16501,31 +16562,89 @@ function dsrfSubmit(who) {
 // RETURN / REPLACE — BRO's feature: a customer returns an already-sold
 // item and takes a different one instead. Old row is logged to Returns
 // Log (audit trail) + deleted server-side; new row is added under the
-// SAME DSR No + Bill Date, with today recorded separately as Return
-// Date. See returnReplaceDsr() in dsr.txt for the actual logic.
+// SAME DSR No + Bill Date, with the Return Date recorded separately
+// (picked in the form, defaults to today). See returnReplaceDsr() in
+// dsr.txt for the actual logic.
+//
+// v-fix (BRO): Bill Date + Customer Name now actually pre-fill (the
+// server used to hand back a raw JS-Date string that a date input
+// silently rejects, and a blank customer name for rows that lacked one),
+// both stay LOCKED, and a Return Date picker was added.
 // ══════════════════════════════════════
+function dsrYmdOrEmpty(s) {
+  if (!s) return '';
+  const raw = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.substring(0, 10);
+  const m = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? '' : toYMD(d);
+}
+
 function dsrOpenReturnReplace(who, idx) {
   const r = (window['__dsrTagResults_' + who] || [])[idx];
   if (!r) return;
-  if (!confirm(`Return/Replace this ${r.type} item (Tag No ${r.tagNo}) for ${r.customerName}?\n\nThe old item will be logged (audit trail) and removed. You will then enter the NEW item's details below, keeping the same customer, bill date and DSR No.`)) return;
+  const isAdm = who === 'admin';
+  const pf = r.prefill || {};
+  const itemLbl = isAdm
+    ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' — ' + r.productName : ''))
+    : (r.productName || 'this item');
+  const custLbl = r.customerName || pf.customerName || 'the customer';
+
+  // An unfinished normal DSR in the form would get mixed up with the return, so the form is
+  // rebuilt fresh — but never silently throw away something the person typed.
+  let hasUnfinished = false;
+  const formBox = document.getElementById('dsrEntryFormBox-' + who);
+  if (formBox && formBox.dataset.dsrfRendered === '1' && !DSR_ST[who].returnMode) {
+    hasUnfinished = !!(dsrfGv('dsrfCust-' + who) || dsrfGv('dsrfMobile-' + who) || dsrfGv('dsrfAddr-' + who) ||
+      document.querySelectorAll(`#dsrfEntriesList-${who} .entry`).length > 1);
+  }
+  if (!confirm(`Return/Replace ${itemLbl} for ${custLbl}?\n\nThe old item will be logged (audit trail) and removed. You will then enter the NEW item's details below, keeping the same customer, bill date and DSR No.` +
+      (hasUnfinished ? '\n\n⚠ The unfinished New DSR form will be cleared.' : ''))) return;
 
   DSR_ST[who].returnMode = {
-    oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, oldDsrId: r.dsrId,
-    oldCustomerName: r.customerName, oldMobile: r.mobileNumber, oldAddress: r.address, oldBillDate: r.billDate
+    oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '',
+    itemName: r.productName || '', tagNo: isAdm ? (r.tagNo || '') : '', dsrId: isAdm ? (r.dsrId || '') : '',
+    billDate: dsrYmdOrEmpty(pf.billDate || r.billDate)
   };
+  const rm = DSR_ST[who].returnMode;
 
-  const navFn = who === 'admin' ? showAdminPage : showEmpPage;
+  const navFn = isAdm ? showAdminPage : showEmpPage;
   navFn('dsr-newentry');
 
-  // Pre-fill + lock the Bill Details — these must exactly match the
-  // original transaction for the DSR No/Bill Date continuity to hold.
   setTimeout(() => {
-    const set = (id, val) => { const el = document.getElementById(id); if (el) { el.value = val; el.readOnly = true; el.style.background = 'var(--card-alt,#f0f0f0)'; } };
-    set(`dsrfBillDate-${who}`, r.billDate);
-    set(`dsrfCust-${who}`, r.customerName);
-    set(`dsrfMobile-${who}`, r.mobileNumber);
-    set(`dsrfAddr-${who}`, r.address);
+    draftClear('dsr-' + who);
+    renderDsrEntryForm(who, true);   // fresh form, then pre-fill + lock
 
+    const lockField = (id, val) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = val || '';
+      el.readOnly = true; el.tabIndex = -1;
+      el.style.background = 'var(--card-alt,#f0f0f0)'; el.style.cursor = 'not-allowed';
+      if (el.type === 'date') el.style.pointerEvents = 'none';   // also blocks the date-picker popup
+    };
+    lockField(`dsrfBillDate-${who}`, rm.billDate);
+    lockField(`dsrfCust-${who}`, r.customerName || pf.customerName);
+    lockField(`dsrfMobile-${who}`, pf.mobileNumber);
+    lockField(`dsrfAddr-${who}`, pf.address);
+
+    // Return Date picker (defaults to today; can't be in the future or before the bill date)
+    const rdWrap = document.getElementById(`dsrfReturnDateWrap-${who}`);
+    const rdEl = document.getElementById(`dsrfReturnDate-${who}`);
+    if (rdWrap && rdEl) {
+      const today = toYMD(new Date());
+      rdWrap.style.display = '';
+      rdEl.max = today;
+      if (rm.billDate) rdEl.min = rm.billDate;
+      rdEl.value = today;
+    }
+
+    // Employee comes from the original sale, so the picker isn't needed in return mode.
+    const empCard = document.getElementById(`dsrfEmpCard-${who}`);
+    if (empCard) empCard.style.display = 'none';
+
+    // Banner: says what is being returned + lets the person back out.
     let banner = document.getElementById(`dsrfReturnBanner-${who}`);
     if (!banner) {
       banner = document.createElement('div');
@@ -16534,8 +16653,15 @@ function dsrOpenReturnReplace(who, idx) {
       const form = document.getElementById(`dsrEntryFormBox-${who}`);
       if (form) form.prepend(banner);
     }
-    banner.innerHTML = `🔄 <strong>Return/Replace Mode</strong> — Tag No ${r.tagNo} (DSR ${r.dsrId}) will be logged &amp; removed once you submit the new item below. <button class="btn-sm" onclick="dsrCancelReturnReplace('${who}')" style="margin-left:8px;">✕ Cancel</button>`;
-  }, 150);
+    const what = [
+      rm.itemName ? '<b>' + escHtml(rm.itemName) + '</b>' : 'the selected item',
+      rm.tagNo ? 'Tag No ' + escHtml(rm.tagNo) : '',
+      rm.dsrId ? 'DSR ' + escHtml(rm.dsrId) : ''
+    ].filter(Boolean).join(' · ');
+    banner.innerHTML = `<div style="font-weight:800;">🔄 Return / Replace Mode</div>
+      <div style="font-size:12.5px;margin:4px 0 8px;line-height:1.5;">Returning: ${what}<br>The old item is logged &amp; removed only when you submit the new item below. Bill Date &amp; Customer Name are locked to the original sale.</div>
+      <button class="btn-sm" onclick="dsrCancelReturnReplace('${who}')">✕ Cancel Return</button>`;
+  }, 60);
 }
 
 function dsrCancelReturnReplace(who) {
@@ -16544,17 +16670,29 @@ function dsrCancelReturnReplace(who) {
   if (banner) banner.remove();
   ['dsrfBillDate', 'dsrfCust', 'dsrfMobile', 'dsrfAddr'].forEach(base => {
     const el = document.getElementById(`${base}-${who}`);
-    if (el) { el.readOnly = false; el.style.background = ''; }
+    if (!el) return;
+    el.readOnly = false; el.removeAttribute('tabindex');
+    el.style.background = ''; el.style.cursor = ''; el.style.pointerEvents = '';
+    el.value = base === 'dsrfBillDate' ? toYMD(new Date()) : '';   // back to a clean normal entry form
   });
+  const rdWrap = document.getElementById(`dsrfReturnDateWrap-${who}`);
+  if (rdWrap) rdWrap.style.display = 'none';
+  const rdEl = document.getElementById(`dsrfReturnDate-${who}`);
+  if (rdEl) { rdEl.value = ''; rdEl.removeAttribute('min'); rdEl.removeAttribute('max'); }
+  const empCard = document.getElementById(`dsrfEmpCard-${who}`);
+  if (empCard) empCard.style.display = '';
+  draftClear('dsr-' + who);
 }
 
 function dsrfShowReturnReplacePreview(who, newItem) {
   const rm = DSR_ST[who].returnMode;
-  if (!confirm(`Confirm Return/Replace?\n\nOld Tag No item will be logged to Returns Log and removed.\nNew item (${newItem.type}) will be added under the SAME DSR No (${rm.oldDsrId}) and Bill Date (${rm.oldBillDate}).\n\nProceed?`)) return;
-  dsrfDoReturnReplaceSubmit(who, newItem);
+  const rd = dsrfGv('dsrfReturnDate-' + who);
+  const oldLbl = (rm.itemName || 'the old item') + (rm.tagNo ? ' (Tag No ' + rm.tagNo + ')' : '');
+  if (!confirm(`Confirm Return/Replace?\n\nOld item — ${oldLbl} — will be logged to Returns Log and removed.\nNew item (${newItem.type}) will be added under the SAME DSR No${rm.dsrId ? ' (' + rm.dsrId + ')' : ''} and the SAME Bill Date.\nReturn Date: ${fmtDMY(rd)}\n\nProceed?`)) return;
+  dsrfDoReturnReplaceSubmit(who, newItem, rd);
 }
 
-function dsrfDoReturnReplaceSubmit(who, newItem) {
+function dsrfDoReturnReplaceSubmit(who, newItem, returnDate) {
   const rm = DSR_ST[who].returnMode;
   const processedBy = who === 'admin' ? (state.adminName || 'Admin') : (state.empName || 'Employee');
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
@@ -16564,25 +16702,28 @@ function dsrfDoReturnReplaceSubmit(who, newItem) {
 
   _fetchWithTimeout(DSR_GAS_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'returnReplace', oldRowNum: rm.oldRowNum, oldSourceSheet: rm.oldSourceSheet, processedBy, newItem })
+    body: JSON.stringify({ action: 'returnReplace', oldRowNum: rm.oldRowNum, oldSourceSheet: rm.oldSourceSheet, rowKey: rm.rowKey, returnDate, processedBy, newItem })
   }, 90000)
     .then(r => r.json())
     .then(result => {
       if (btn) { btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★'; }
       if (result.status === 'success') {
-        if (msg) { msg.style.color = 'var(--green)'; msg.innerHTML = `✅ Return/Replace complete! DSR ID: <b>${result.dsrId}</b>`; }
-        toast('Return/Replace saved!', 'success');
+        const shownDsr = who === 'admin' ? result.dsrId : '';
         dsrCancelReturnReplace(who);
-        document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
-        DSR_ST[who].eSeq = 0;
-        dsrfAddEntry(who);
-        document.getElementById('dsrfCust-' + who).value = '';
-        document.getElementById('dsrfMobile-' + who).value = '';
-        document.getElementById('dsrfAddr-' + who).value = '';
-        document.getElementById('dsrfBillDate-' + who).value = toYMD(new Date());
+        renderDsrEntryForm(who, true);   // clean form for the next entry
+
+        // Row numbers in the old search results are now stale (a row was deleted) — drop them so a
+        // second Return/Replace can never act on the wrong row. Search again to see fresh data.
+        window['__dsrTagResults_' + who] = [];
+        const sBox = document.getElementById('dsrTagSearchBox-' + who);
+        if (sBox) sBox.innerHTML = '<div class="card"><div class="empty-state"><p>Return/Replace done — search again to see the updated record.</p></div></div>';
+
+        const msg2 = document.getElementById('dsrfStatusMsg-' + who);
+        if (msg2) { msg2.style.color = 'var(--green)'; msg2.innerHTML = '✅ Return/Replace complete!' + (shownDsr ? ' DSR ID: <b>' + escHtml(shownDsr) + '</b>' : ''); }
+        toast('Return/Replace saved!', 'success');
       } else {
         if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + (result.message || 'Failed to process Return/Replace.'); }
-        toast('Return/Replace failed — please retry.', 'error');
+        toast('Return/Replace failed — please check the message.', 'error');
       }
     })
     .catch(err => {
@@ -16593,90 +16734,185 @@ function dsrfDoReturnReplaceSubmit(who, newItem) {
 }
 
 // ══════════════════════════════════════
-// TAG NO SEARCH — find every Gold/Diamond item matching a Tag No
-// (Silver has no Tag No yet), shown as a rich table with photo (Admin
-// only, matching the existing photo-visibility rule elsewhere in DSR).
+// DSR SEARCH — one "Search" entry with two modes: Tag No wise / DSR ID wise.
+// (DSR ID wise exists because some items have no Tag No at all.)
+//   Admin    → full details + photo behind a "View" button.
+//   Employee → server sends ONLY Customer Name + Item Name in clear; every
+//              other field arrives as "Restricted" (masked server-side, not
+//              just hidden in the UI) and no photo URL is ever sent.
 // ══════════════════════════════════════
-function dsrTagSearch(who) {
-  const input = document.getElementById('dsrTagSearchInput-' + who);
-  const box = document.getElementById('dsrTagSearchBox-' + who);
-  const tagNo = (input.value || '').trim();
-  if (!tagNo) { toast('Enter a Tag No to search', 'error'); return; }
+const DSR_SEARCH_MODE = { emp: '', admin: '' };
 
+function dsrSearchSetMode(who, mode) {
+  DSR_SEARCH_MODE[who] = mode;
+  const bTag = document.getElementById('dsrSearchModeTag-' + who);
+  const bDsr = document.getElementById('dsrSearchModeDsr-' + who);
+  if (bTag) bTag.classList.toggle('active', mode === 'tag');
+  if (bDsr) bDsr.classList.toggle('active', mode === 'dsr');
+  const row = document.getElementById('dsrSearchInputRow-' + who);
+  const lbl = document.getElementById('dsrSearchLabel-' + who);
+  const inp = document.getElementById('dsrSearchInput-' + who);
+  const box = document.getElementById('dsrTagSearchBox-' + who);
+  if (row) row.style.display = '';
+  if (lbl) lbl.textContent = mode === 'dsr' ? 'DSR ID' : 'Tag No';
+  if (inp) { inp.placeholder = mode === 'dsr' ? 'e.g. 20-20260909-001' : 'e.g. C498'; inp.value = ''; inp.focus(); }
+  if (box) box.innerHTML = '';
+  window['__dsrTagResults_' + who] = [];
+}
+
+function dsrSearchRun(who) {
+  if (!DSR_SEARCH_MODE[who]) { toast('Choose Tag No Wise or DSR ID Wise first', 'error'); return; }
+  if (DSR_SEARCH_MODE[who] === 'dsr') dsrIdSearch(who); else dsrTagSearch(who);
+}
+
+function dsrTagSearch(who) {
+  const value = (document.getElementById('dsrSearchInput-' + who).value || '').trim();
+  if (!value) { toast('Enter a Tag No to search', 'error'); return; }
+  dsrSearchFetch(who, 'searchByTagNo', 'tagNo', value, 'No item found with Tag No "' + value + '".', false);
+}
+
+function dsrIdSearch(who) {
+  const value = (document.getElementById('dsrSearchInput-' + who).value || '').trim();
+  if (!value) { toast('Enter a DSR ID to search', 'error'); return; }
+  dsrSearchFetch(who, 'searchByDsrId', 'dsrId', value, 'No item found under DSR ID "' + value + '".', true);
+}
+
+function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount) {
+  const box = document.getElementById('dsrTagSearchBox-' + who);
   box.innerHTML = '<div class="card"><div class="loading"><span class="spinner"></span>Searching...</div></div>';
   const role = who === 'admin' ? 'ADMIN' : 'EMPLOYEE';
 
-  _fetchWithTimeout(DSR_GAS_URL + '?action=searchByTagNo&tagNo=' + encodeURIComponent(tagNo) + '&role=' + role, {}, 60000)
+  _fetchWithTimeout(DSR_GAS_URL + '?action=' + action + '&' + paramName + '=' + encodeURIComponent(value) + '&role=' + role, {}, 60000)
     .then(r => r.json())
     .then(data => {
       if (data.status !== 'success') {
-        box.innerHTML = '<div class="card"><div class="empty-state"><p>' + (data.message || 'Search failed.') + '</p></div></div>';
+        box.innerHTML = '<div class="card"><div class="empty-state"><p>' + escHtml(data.message || 'Search failed.') + '</p></div></div>';
         return;
       }
       const results = data.results || [];
       if (!results.length) {
-        box.innerHTML = '<div class="card"><div class="empty-state"><p>No item found with Tag No "' + tagNo + '".</p></div></div>';
+        box.innerHTML = '<div class="card"><div class="empty-state"><p>' + escHtml(emptyMsg) + '</p></div></div>';
         return;
       }
       window['__dsrTagResults_' + who] = results;
-      box.innerHTML = results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
+      const countNote = showCount ? '<div class="kd-note" style="margin:0 2px 8px;">' + results.length + ' item(s) found — Return / Replace works on one item at a time.</div>' : '';
+      box.innerHTML = countNote + results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
     })
     .catch(err => {
       const msg = (err && err.name === 'AbortError')
         ? 'Server slow ga undi (timeout). Konchem sepu aagi malli Search cheyandi.'
         : 'Search failed: ' + (err && err.message ? err.message : err);
-      box.innerHTML = '<div class="card"><div class="empty-state"><p>' + msg + '</p></div></div>';
+      box.innerHTML = '<div class="card"><div class="empty-state"><p>' + escHtml(msg) + '</p></div></div>';
     });
 }
 
+function dsrSearchCellHtml(v) {
+  const s = (v === undefined || v === null || v === '') ? '—' : String(v);
+  return s === 'Restricted' ? '<span class="loy-restricted-val">🔒 Restricted</span>' : escHtml(s);
+}
+
 function dsrTagResultCardHtml(r, idx, who) {
-  const isDia = r.type === 'Diamond';
-  const rows = [
-    ['DSR No', r.dsrId], ['Bill Date', r.billDate], ['Employee', r.employeeName],
-    ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
-    ['Type', r.type], ['Tag No', r.tagNo], ['Product Name', r.productName],
-    isDia ? ['Cent', r.diamondCent] : ['Design', r.design],
-    isDia ? ['Quality', r.diamondQuality] : ['Tunch', r.tunch],
-    ['Weight', r.weight],
-    isDia ? ['Gross Wt', r.diamondGrossWt] : null,
-    isDia ? ['Net Wt', r.diamondNetWt] : null,
-    isDia ? ['Gold Tunch', r.diamondGoldTunch] : null,
-    isDia ? ['Carat', r.diamondCarat] : null,
-    isDia ? ['Clarity', r.diamondClarity] : null,
-    isDia ? ['Color', r.diamondColor] : null,
-    isDia ? ['Certificate No', r.diamondCertNo] : null,
-    ['Bill No', r.billNo], ['Payment Status', r.paymentStatus],
-    r.returnDate ? ['Return Date', r.returnDate] : null,
-    ['Source', r.sourceSheet]
-  ].filter(Boolean);
+  const isAdm = who === 'admin';
+  const R = 'Restricted';
+  const dt = v => (v && v !== R) ? fmtDMY(v) : v;
+  let rows;
+  if (isAdm) {
+    const isDia = r.type === 'Diamond', isSil = r.type === 'Silver', isGold = !isDia && !isSil;
+    rows = [
+      ['DSR No', r.dsrId], ['Bill Date', dt(r.billDate)], ['Employee', r.employeeName],
+      ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
+      ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', r.productName],
+      isGold ? ['Design', r.design] : null,
+      isGold ? ['Tunch', r.tunch] : null,
+      (isDia && r.diamondCent) ? ['Cent', r.diamondCent] : null,          // old records only — no longer asked in the form
+      (isDia && r.diamondQuality) ? ['Quality', r.diamondQuality] : null, // old records only
+      ['Weight', r.weight],
+      isDia ? ['Gross Wt', r.diamondGrossWt] : null,
+      isDia ? ['Net Wt', r.diamondNetWt] : null,
+      isDia ? ['Gold Tunch', r.diamondGoldTunch] : null,
+      isDia ? ['Carat', r.diamondCarat] : null,
+      isDia ? ['Clarity', r.diamondClarity] : null,
+      isDia ? ['Color', r.diamondColor] : null,
+      isDia ? ['Certificate No', r.diamondCertNo] : null,
+      isSil ? ['Silver Quality', r.silverQuality] : null,
+      ['Bill No', r.billNo], ['Payment Status', r.paymentStatus],
+      r.returnDate ? ['Return Date', dt(r.returnDate)] : null,
+      ['Source', r.sourceSheet]
+    ].filter(Boolean);
+  } else {
+    // Employee: same labels, but everything except Customer + Item Name is masked.
+    rows = [
+      ['DSR No', r.dsrId], ['Bill Date', r.billDate], ['Employee', r.employeeName],
+      ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
+      ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', r.productName],
+      ['Weight', r.weight], ['Bill No', r.billNo], ['Payment Status', r.paymentStatus],
+      ['Return Date', r.returnDate]
+    ];
+  }
 
   let tableRows = rows.map(([label, val]) =>
-    `<tr><td class="lbl">${label}</td><td class="val">${val || '—'}</td></tr>`
+    `<tr><td class="lbl">${label}</td><td class="val">${dsrSearchCellHtml(val)}</td></tr>`
   ).join('');
 
-  // Photo row (Admin only — the server never sends the photo URL to Employee).
-  if (who === 'admin') {
-    let photoCell = '<span style="color:var(--text3,#888);">No Photo</span>';
-    if (r.photoUrl) {
-      const viewUrl = dsrPhotoViewUrl(r.photoUrl);
-      const m = String(r.photoUrl).match(/[?&]id=([\w-]+)/) || String(r.photoUrl).match(/\/d\/([\w-]+)/);
-      const altUrl = m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800` : viewUrl;
-      photoCell = `<img class="tag-photo" src="${viewUrl}" alt="Photo"
-        onclick="dsrDetailViewPhoto(dsrPhotoViewUrl(window['__dsrTagResults_${who}'][${idx}].photoUrl))"
-        onerror="if(!this.dataset.t){this.dataset.t=1;this.src='${altUrl}';}else{var a=document.createElement('a');a.href='${viewUrl}';a.target='_blank';a.textContent='📷 Open photo';this.replaceWith(a);}">`;
-    }
-    tableRows = `<tr><td class="lbl">Photo</td><td class="val">${photoCell}</td></tr>` + tableRows;
-  }
+  // Photo — never shown inline. Admin gets a "View" button; Employee gets no access at all.
+  const photoCell = isAdm
+    ? (r.photoUrl
+        ? `<button type="button" class="btn-sm" onclick="dsrSearchViewPhoto('${who}',${idx})">👁 View</button>`
+        : '<span style="color:var(--text3,#888);">No Photo</span>')
+    : '<span class="loy-restricted-val">🔒 Restricted</span>';
+  tableRows = `<tr><td class="lbl">Photo</td><td class="val">${photoCell}</td></tr>` + tableRows;
+
+  const headTxt = isAdm
+    ? ((r.tagNo || r.productName || ('DSR ' + (r.dsrId || ''))) + (r.type ? ' · ' + r.type : ''))
+    : (r.productName || 'Item');
 
   return `<div class="card" style="margin-bottom:12px;">
     <div class="tag-grid-wrap"><table class="tag-grid">
-      <thead><tr><th colspan="2">🏷️ ${r.tagNo || ''} · ${r.type || ''}</th></tr></thead>
+      <thead><tr><th colspan="2">🏷️ ${escHtml(headTxt)}</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table></div>
     <div class="btn-row" style="margin-top:10px;justify-content:center;">
       <button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Return / Replace</button>
     </div>
   </div>`;
+}
+
+// Opens the item photo in an in-page viewer (Admin only — the server never sends a photo URL to Employee).
+function dsrSearchViewPhoto(who, idx) {
+  if (who !== 'admin') return;
+  const r = (window['__dsrTagResults_' + who] || [])[idx];
+  if (!r || !r.photoUrl) { toast('No photo available for this item', 'info'); return; }
+  const url = dsrPhotoViewUrl(r.photoUrl);
+  const m = String(r.photoUrl).match(/[?&]id=([\w-]+)/) || String(r.photoUrl).match(/\/d\/([\w-]+)/);
+  const altUrl = m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200` : url;
+
+  const old = document.getElementById('dsrSearchPhotoModal');
+  if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'dsrSearchPhotoModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:460px;max-height:90vh;overflow-y:auto;text-align:center;">
+    <button class="modal-close-x" onclick="document.getElementById('dsrSearchPhotoModal').remove()" title="Close">✕</button>
+    <div class="modal-title">📷 ${escHtml(r.tagNo || r.productName || 'Photo')}</div>
+    <div id="dsrSearchPhotoHolder" style="margin-top:10px;"><span class="spinner"></span></div>
+  </div>`;
+  document.body.appendChild(div);
+  div.addEventListener('click', e => { if (e.target === div) div.remove(); });
+
+  const holder = document.getElementById('dsrSearchPhotoHolder');
+  const img = new Image();
+  img.style.cssText = 'width:100%;border-radius:10px;border:1.5px solid var(--gold);';
+  img.alt = 'Photo';
+  let triedAlt = false;
+  img.onload = () => { holder.innerHTML = ''; holder.appendChild(img); };
+  img.onerror = () => {
+    if (!triedAlt && altUrl !== url) { triedAlt = true; img.src = altUrl; return; }
+    holder.innerHTML = '';
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '📷 Could not preview — tap to open photo';
+    holder.appendChild(a);
+  };
+  img.src = url;
 }
 
 // Review screen — shows every item with its photo before the DSR is
