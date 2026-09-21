@@ -2801,6 +2801,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
             </div>
           </div>
           <div id="directConflicts"></div>
+          <div id="directDaysInfo" style="display:none; padding: 10px 14px; background: var(--orange-bg); border-radius: 8px; margin-bottom: 14px; font-size: 13px; color: var(--orange); font-weight: 600;"></div>
           <div class="form-row" id="directModeRow">
             <div class="form-group">
               <label>Leave Type</label>
@@ -5733,7 +5734,37 @@ async function refreshModifyConflicts() {
 // employee Apply Leave form): this always read directStartDate
 // regardless of mode — correct for Single Day, but wrong for Multiple
 // Day (whose actual start date lives in directStartDateMulti).
+// Same "N day(s) leave applied" line the employee Apply Leave form shows.
+function updateDirectDaysInfo() {
+  const box = document.getElementById('directDaysInfo');
+  if (!box) return;
+  const type = window.__directDurationType || 'single';
+  const hide = () => { box.style.display = 'none'; };
+  let txt = '';
+  if (type === 'single') {
+    if (!document.getElementById('directStartDate').value) return hide();
+    txt = '📅 ' + (document.getElementById('directLeaveMode').value === 'Half Day' ? '0.5' : '1') + ' day(s) leave';
+  } else if (type === 'multiple') {
+    const s = document.getElementById('directStartDateMulti').value, e = document.getElementById('directEndDate').value;
+    if (!s || !e) return hide();
+    if (e < s) txt = '⚠️ End date must be on or after the start date';
+    else txt = '📅 ' + (Math.round((new Date(e) - new Date(s)) / 86400000) + 1) + ' day(s) leave';
+  } else {
+    let total = 0, n = 0;
+    document.querySelectorAll('#directMixedDateList > div').forEach(row => {
+      const idx = row.id.replace('directMixedRow-', '');
+      const d = document.getElementById('directMixedDate-' + idx), m = document.getElementById('directMixedMode-' + idx);
+      if (d && d.value) { n++; total += (m && m.value === 'Half Day') ? 0.5 : 1; }
+    });
+    if (!n) return hide();
+    txt = '📅 ' + total + ' day(s) across ' + n + ' date(s) — each date is saved as its own leave';
+  }
+  box.style.display = 'block';
+  box.textContent = txt;
+}
+
 async function refreshDirectConflicts() {
+  updateDirectDaysInfo();
   const box = document.getElementById('directConflicts');
   if (!box) return;
   const durType = window.__directDurationType;
@@ -6533,7 +6564,7 @@ function showMultiSegmentResultPopup(res) {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-body">${rows}</div>
     </div>
-    ${!allOk ? '<p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Failed date(s) were NOT saved — re-apply just those dates separately.</p>' : ''}
+    ${!allOk ? '<p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Failed date(s) were not confirmed as saved — check the leave list first, then re-apply only those dates if they are not there.</p>' : ''}
     <div class="btn-row">
       <button class="btn-primary" onclick="document.getElementById('multiSegResultModal').remove();">OK</button>
     </div>
@@ -7491,6 +7522,7 @@ function setDirectDurationType(type) {
   if (type === 'mixed' && !document.querySelectorAll('#directMixedDateList > div').length) {
     addDirectMixedDateRow(); addDirectMixedDateRow();
   }
+  updateDirectDaysInfo();
 }
 
 function onDirectSingleDateChange() {
@@ -7527,17 +7559,20 @@ function addDirectMixedDateRow() {
 function removeDirectMixedDateRow(idx) {
   const row = document.getElementById('directMixedRow-' + idx);
   if (row) row.remove();
+  refreshDirectConflicts();   // a removed date's colleagues + day count shouldn't linger
 }
 
 function onDirectMixedModeChange(idx) {
   const m = document.getElementById('directMixedMode-' + idx);
   const w = document.getElementById('directMixedHalfWrap-' + idx);
   if (m && w) w.style.display = m.value === 'Half Day' ? '' : 'none';
+  updateDirectDaysInfo();
 }
 
 function onDirectModeChange() {
   const isHalf = document.getElementById('directLeaveMode').value === 'Half Day';
   document.getElementById('directHalfDayWrap').style.display = isHalf ? '' : 'none';
+  updateDirectDaysInfo();
 }
 
 // Same behavior as the Apply Leave form's onLeaveTypeChange — Emergency
@@ -7569,6 +7604,14 @@ function getDirectAuthWho() {
   return el ? el.dataset.who : '';
 }
 
+// v-fix (BRO: "leave application lo ela undo, anni features direct action lo undali"): Direct Action now behaves like the
+// employee Apply Leave form —
+//   • same Single / Multiple Day / Mixed Leave rules (Multiple Day needs 2 different dates, Mixed needs 2+ dates, each
+//     Mixed date has its own Full/Half + First/Second-half slot),
+//   • the same "N day(s)" line and "others on leave" box,
+//   • a "Review Before Submitting" screen listing every date with its days,
+//   • EVERY date is its own separate submission (own sheet row, own Leave ID, own mail) sent one after another, and the
+//     result screen shows each date's outcome — one failing date never stops or hides the others.
 async function submitDirectAction(outcome, evt) {
   const empId = document.getElementById('directEmpSelect').value;
   const leaveType = document.getElementById('directLeaveType').value;
@@ -7580,10 +7623,8 @@ async function submitDirectAction(outcome, evt) {
   const authWho = authMet ? getDirectAuthWho() : '';
 
   if (!empId) { toast('Select an employee first', 'error'); return; }
+  if (isDualDirect && authMet && !authWho) { toast('Select who was met (MIS Executive / Store Manager / Director)', 'error'); return; }
 
-  // v-add (BRO: "Admin lo direct action lo kuda update chei" — same
-  // Single/Multiple Day/Mixed Leave segment-building as the employee
-  // Apply Leave form).
   const durType = window.__directDurationType;
   let segments = [];
   if (durType === 'single') {
@@ -7597,10 +7638,11 @@ async function submitDirectAction(outcome, evt) {
     const ed = document.getElementById('directEndDate').value;
     if (!sd || !ed) { toast('Select both start and end dates', 'error'); return; }
     if (ed < sd) { toast('End date cannot be before start date', 'error'); return; }
+    if (sd === ed) { toast('Multiple Day leave needs at least 2 different dates — use Single Day for one date', 'error'); return; }
     segments = [{ startDate: sd, endDate: ed, leaveMode: 'Full Day', halfDay: '' }];
   } else { // mixed
     const rows = document.querySelectorAll('#directMixedDateList > div');
-    if (rows.length < 2) { toast('Mixed Leave needs at least 2 dates', 'error'); return; }
+    if (rows.length < 2) { toast('Mixed Leave needs at least 2 dates — use Single Day for just one', 'error'); return; }
     const seenDates = {};
     for (const row of rows) {
       const idx = row.id.replace('directMixedRow-', '');
@@ -7616,87 +7658,137 @@ async function submitDirectAction(outcome, evt) {
     }
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
-  const startDate = segments[0].startDate;
-  const endDate = segments[segments.length - 1].endDate;
-  const leaveMode = segments[0].leaveMode;
-  const halfDay = segments[0].halfDay;
 
   if (outcome === 'Rejected' && !reason) {
     reason = prompt('Rejection reason (required):') || '';
     if (!reason.trim()) { toast('Rejection reason is required', 'error'); return; }
+    reason = reason.trim();
   }
-
-  // THE ACTUAL BUG FIX (root cause): the OLD code used jsonpReliable(),
-  // which silently retries a write up to 2 extra times if the server is
-  // slow to respond (25s → 30s → 35s). A slow response does NOT mean the
-  // write failed — Apps Script may have already saved the row — so each
-  // retry created ANOTHER real, separate "Direct Approved" entry. That's
-  // exactly why 3 rows (LV5-260730-0165/0166/0167) appeared ~9s apart from
-  // ONE click. The click-lock below was already correct and never the
-  // problem; the network retry was. Fixed by:
-  //   1) jsonpWriteOnce() — exactly ONE network attempt, no auto-retry.
-  //   2) An idempotency key sent to the server so even a genuine manual
-  //      re-click after a timeout can be recognized & de-duplicated.
-  //   3) isDuplicateSubmission() as a same-session safety net.
-  const lockKey = 'direct_' + empId + '_' + startDate + '_' + endDate;
-  if (isLocked(lockKey)) { toast('Already processing, please wait...', 'info'); return; }
 
   const emp = directEmpCache.find(e => e.empId === empId);
   const empName = emp ? emp.name : empId;
-  const label = outcome === 'Approved' ? 'approve' : outcome === 'Absent' ? 'mark absent' : 'reject';
-  const dateDesc = segments.length > 1 ? segments.length + ' dates' : fmtDMY(startDate) + (startDate !== endDate ? ' to ' + fmtDMY(endDate) : '');
-  if (!confirm(`${label.toUpperCase()}: ${empName}, ${dateDesc} (${leaveType})?`)) return;
+  window.__directPending = { outcome, empId, empName, leaveType, reason, purpose, leaveAddress, authMet, authWho, segments };
+  directShowPreview();
+}
 
-  const idem = makeIdemKey(['direct', outcome, empId, startDate, endDate, leaveType, leaveMode, segments.length > 1 ? segments.map(s => s.startDate + ':' + s.leaveMode + ':' + (s.halfDay || '')).join(',') : '']);
-  if (isDuplicateSubmission(idem)) { toast('Already processing, please wait...', 'info'); return; }
+function directShowPreview() {
+  const c = window.__directPending;
+  if (!c) return;
+  const segDays = s => s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1);
+  const segRows = c.segments.map(s =>
+    `<div class="dsr-meta-row">📅 ${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${segDays(s)} day(s)</div>`
+  ).join('');
+  const totalDays = c.segments.reduce((sum, s) => sum + segDays(s), 0);
+  const outLbl = c.outcome === 'Approved' ? '✅ Approve' : c.outcome === 'Absent' ? '🚫 Mark Absent' : '❌ Reject';
 
+  const existing = document.getElementById('directPreviewModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'directPreviewModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('directPreviewModal').remove()" title="Close">✕</button>
+    <div class="modal-title">✅ Review Before Submitting</div>
+    <div class="dsr-receipt-card" style="margin-top:10px;">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${escHtml(c.leaveType)}</span><span class="kd-pill gold">${totalDays} day(s) total${c.segments.length > 1 ? ' — ' + c.segments.length + ' separate leaves' : ''}</span></div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${escHtml(c.empName)}</div>
+        <div class="dsr-meta-row"><b>${outLbl}</b></div>
+        ${segRows}
+        <div class="dsr-meta-row" style="border-bottom:none;">${c.purpose ? '📝 <b>' + escHtml(c.purpose) + '</b>' : ''}${c.leaveAddress ? '<br>📍 ' + escHtml(c.leaveAddress) : ''}${c.reason ? '<br>🗒️ ' + escHtml(c.reason) : ''}${c.authMet === 'Yes' ? '<br>✅ Authority Met: ' + escHtml(c.authWho) : ''}</div>
+      </div>
+    </div>
+    ${c.segments.length > 1 ? '<p style="font-size:11.5px;color:var(--text3);margin:10px 0 0;">Each date is saved as its own separate leave — own row, own Leave ID and own mail.</p>' : ''}
+    <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="confirmDirectAction()">✅ Confirm &amp; Submit</button>
+      <button class="btn-secondary" onclick="document.getElementById('directPreviewModal').remove()">✏️ Edit</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function confirmDirectAction() {
+  const c = window.__directPending;
+  const modal = document.getElementById('directPreviewModal');
+  if (modal) modal.remove();
+  if (!c) { toast('Nothing to submit — please fill the form again', 'error'); return; }
+
+  const { outcome, empId, empName, leaveType, reason, purpose, leaveAddress, authMet, authWho, segments } = c;
+  const lockKey = 'direct_' + empId + '_' + segments[0].startDate + '_' + segments[segments.length - 1].endDate;
+  if (isLocked(lockKey)) { toast('Already processing, please wait...', 'info'); return; }
   setLock(lockKey, true);
+
   // Lock all three outcome buttons together so a double-click can't submit twice
   const btns = document.querySelectorAll('#admin-direct .btn-approve, #admin-direct .btn-absent, #admin-direct .btn-reject');
   btns.forEach(b => { b.disabled = true; b.style.pointerEvents = 'none'; });
-  const clicked = evt && evt.target;
+  const btnId = outcome === 'Approved' ? 'directApproveBtn' : outcome === 'Absent' ? 'directAbsentBtn' : 'directRejectBtn';
+  const clicked = document.getElementById(btnId);
   const originalText = clicked ? clicked.textContent : '';
-  if (clicked) clicked.textContent = '⏳ Processing...';
+
+  const d = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  const groupId = segments.length > 1 ? 'LG-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds()) : '';
+  const results = [];
 
   try {
-    const apiParams = {
-      page: 'directActionAPI', role: state.adminRole, adminEmail: state.adminEmail,
-      empId, startDate, endDate, leaveType, leaveMode, halfDay, reason, outcome,
-      purpose, leaveAddress, authorityMet: authMet, authorityName: authWho
-    };
-    if (segments.length > 1) {
-      apiParams.page = 'directActionMultiSegmentAPI';
-      apiParams.segments = JSON.stringify(segments);
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      if (clicked) clicked.textContent = segments.length > 1 ? '⏳ ' + (i + 1) + ' of ' + segments.length + '...' : '⏳ Processing...';
+
+      const entry = { ok: false, startDate: seg.startDate, endDate: seg.endDate, leaveMode: seg.leaveMode, halfDay: seg.halfDay || '', status: outcome, leaveId: '', days: null, reason: '' };
+      const idem = makeIdemKey(['direct', outcome, empId, seg.startDate, seg.endDate, leaveType, seg.leaveMode, seg.halfDay || '']);
+      if (isDuplicateSubmission(idem)) {
+        entry.reason = 'This date was already processed a moment ago — check All Leaves.';
+        results.push(entry);
+        continue;
+      }
+      // jsonpWriteOnce = exactly ONE attempt, never a silent retry (a retry after a slow response is what once created
+      // duplicate rows). A timeout therefore reads "no confirmation" and the admin verifies in All Leaves.
+      try {
+        const res = await jsonpWriteOnce({
+          page: 'directActionAPI', role: state.adminRole, adminEmail: state.adminEmail,
+          empId, startDate: seg.startDate, endDate: seg.endDate, leaveType, leaveMode: seg.leaveMode, halfDay: seg.halfDay || '',
+          reason, outcome, purpose, leaveAddress, authorityMet: authMet, authorityName: authWho, groupId
+        }, idem, 60000);
+        if (res && res.ok) { entry.ok = true; entry.leaveId = res.leaveId || ''; entry.days = res.days; }
+        else entry.reason = (res && res.error) || 'Action failed';
+      } catch (e) {
+        entry.reason = 'No confirmation from server — check "All Leaves" before repeating this date. It may already be saved.';
+      }
+      if (!entry.ok) __sentIdemKeys.delete(idem);
+      results.push(entry);
     }
-    const res = await jsonpWriteOnce(apiParams, idem);
-    if (res.ok) {
-      toast(`✅ ${empName} marked ${outcome}`, 'success');
-      document.getElementById('directReason').value = '';
-      document.getElementById('directPurpose').value = '';
-      document.getElementById('directLeaveAddress').value = '';
-      document.getElementById('directAuthMetCheck').checked = false;
-      document.getElementById('directAuthWhoRow').style.display = 'none';
-      document.querySelectorAll('.direct-auth-who-check').forEach(cb => cb.checked = false);
-      document.getElementById('directEmpSelect').value = '';
-      document.getElementById('directEmpMeta').textContent = '';
-      document.getElementById('directMixedDateList').innerHTML = '';
-      __directMixedRowCount = 0;
-      setDirectDurationType('single');
-      loadAdminData();
-    } else {
-      toast(res.error || 'Action failed', 'error');
+
+    const successCount = results.filter(r => r.ok).length;
+    const failCount = results.length - successCount;
+
+    if (successCount === 0) {
+      toast(results[0].reason || 'Action failed', 'error');
+      if (/No confirmation/.test(results[0].reason || '')) loadAdminData();
+      return;
     }
-  } catch(e) {
-    // No auto-retry anymore — this could mean the request never reached the
-    // server, OR it succeeded server-side but the response was slow coming
-    // back. Refresh and tell the admin to verify before repeating, instead
-    // of silently resubmitting (which is what caused duplicate rows before).
-    toast('⚠️ No confirmation from server — check "All Leaves" before repeating this action. Do NOT click again if it already appears there.', 'error');
+
+    if (segments.length === 1) toast(`✅ ${empName} marked ${outcome}`, 'success');
+    else showMultiSegmentResultPopup({ status: failCount ? 'Partial' : 'Success', groupId, segments: results, successCount, failCount });
+
+    // reset the form for the next entry
+    document.getElementById('directReason').value = '';
+    document.getElementById('directPurpose').value = '';
+    document.getElementById('directLeaveAddress').value = '';
+    document.getElementById('directAuthMetCheck').checked = false;
+    document.getElementById('directAuthWhoRow').style.display = 'none';
+    document.querySelectorAll('.direct-auth-who-check').forEach(cb => cb.checked = false);
+    document.getElementById('directEmpSelect').value = '';
+    document.getElementById('directEmpMeta').textContent = '';
+    document.getElementById('directMixedDateList').innerHTML = '';
+    __directMixedRowCount = 0;
+    setDirectDurationType('single');
     loadAdminData();
   } finally {
     btns.forEach(b => { b.disabled = false; b.style.pointerEvents = ''; });
     if (clicked) clicked.textContent = originalText;
     setLock(lockKey, false);
+    window.__directPending = null;
   }
 }
 
