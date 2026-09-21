@@ -6360,6 +6360,13 @@ async function confirmSubmitLeave() {
       // response comes back. 30s was cutting it close and is what caused
       // the "no confirmation from server" warning to fire even on leaves
       // that actually went through fine.
+      // v-fix (BRO: "mix day leaves lo modata date matrame sheet lo vastundi — anni dates separate ga sheet lo
+      // add avali, every leave ki separate mail, leave submit kuda separate ga"): a Mixed Leave used to be ONE
+      // long server call that processed every date (row + emails + checks) back-to-back inside a single request —
+      // with several dates that outran the 45s wait, so only the first date was ever confirmed. Each date is now
+      // its OWN independent submission (own request, own row, own Leave ID, own mails), sent one after another.
+      if (data.isMultiSegment) { await submitLeaveSegmentsSeparately(data, submitIdem); return; }
+
       const res = await jsonpWriteOnce(data, submitIdem, 45000);
       // v-fix (BRO: "Multiple dates anniti kuda separate row lo add
       // cheyali, vadileyakudadu" — the backend now saves every date it
@@ -6411,6 +6418,89 @@ async function confirmSubmitLeave() {
     }
     });
   }
+
+// Sends every date of a Mixed Leave as its OWN normal single-leave submission (submitLeaveAPI), sequentially.
+// Each one gets its own sheet row, Leave ID, employee/MIS mails, and its own result line. A failure on one date
+// never stops the others. Rows share one Group ID only so My Leaves can badge them as "submitted together".
+async function submitLeaveSegmentsSeparately(data, submitIdem) {
+  const segs = JSON.parse(data.segments || '[]');
+  const btn = document.getElementById('applySubmitBtn');
+  const d = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  const groupId = 'LG-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds());
+  const results = [];
+
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    if (btn) btn.innerHTML = '⏳ Submitting ' + (i + 1) + ' of ' + segs.length + '...';
+
+    const segData = Object.assign({}, data, {
+      page: 'submitLeaveAPI', startDate: seg.startDate, endDate: seg.endDate,
+      leaveMode: seg.leaveMode, halfDay: seg.halfDay || '', groupId: groupId
+    });
+    delete segData.segments; delete segData.isMultiSegment;
+
+    const entry = { ok: false, startDate: seg.startDate, endDate: seg.endDate, leaveMode: seg.leaveMode, halfDay: seg.halfDay || '', status: 'Error', leaveId: '', days: null, reason: '' };
+    const segIdem = makeIdemKey(['submitleave', data.employeeNumber, seg.startDate, seg.endDate, data.leaveType, seg.leaveMode, seg.halfDay || '']);
+
+    if (isDuplicateSubmission(segIdem)) {
+      entry.reason = 'This date was already submitted a moment ago — check My Leaves.';
+      results.push(entry);
+      continue;
+    }
+    try {
+      const res = await jsonpWriteOnce(segData, segIdem, 60000);
+      if (res && res.status && res.status !== 'Error') {
+        entry.ok = true; entry.status = res.status; entry.leaveId = res.leaveId || ''; entry.days = res.days;
+      } else {
+        entry.reason = (res && res.reason) || 'Submission failed';
+      }
+    } catch (e) {
+      // Timed out / connection dropped: the server may well have saved it — look before calling it failed.
+      const found = navigator.onLine ? await findSubmittedLeaveQuiet(segData) : null;
+      if (found) {
+        entry.ok = true; entry.status = found.status; entry.leaveId = found.leaveId || ''; entry.days = found.days;
+      } else {
+        entry.reason = navigator.onLine
+          ? 'No confirmation from the server — check My Leaves before submitting this date again.'
+          : 'Connection lost before this date could be sent.';
+      }
+    }
+    if (!entry.ok) __sentIdemKeys.delete(segIdem);   // a failed date may be re-tried straight away
+    results.push(entry);
+  }
+
+  const successCount = results.filter(r => r.ok).length;
+  const failCount = results.length - successCount;
+  if (failCount > 0) __sentIdemKeys.delete(submitIdem);
+
+  if (successCount === 0) {
+    toast(results[0] && results[0].reason ? results[0].reason : 'Submission failed', 'error');
+    return;
+  }
+  draftClear('leaveApply');
+  resetApplyForm();
+  showEmpPage('myleaves');
+  showMultiSegmentResultPopup({ status: failCount ? 'Partial' : 'Success', groupId, segments: results, successCount, failCount });
+  loadEmpData();
+}
+
+// Quietly checks My Leaves for one date (no popup) — used when a request timed out. Up to ~4 tries, 5s apart.
+async function findSubmittedLeaveQuiet(segData, attemptsLeft) {
+  if (attemptsLeft === undefined) attemptsLeft = 4;
+  try {
+    const leavesRes = await jsonp({ page: 'leavesJSON', empId: segData.employeeNumber }, 12000);
+    if (leavesRes && leavesRes.ok) {
+      const match = (leavesRes.leaves || []).find(l => l.startDate === segData.startDate && l.endDate === segData.endDate && l.type === segData.leaveType);
+      if (match) return { status: match.status, leaveId: match.leaveId, days: match.days };
+    }
+  } catch (e) { /* retry below */ }
+  if (attemptsLeft > 1) {
+    await new Promise(r => setTimeout(r, 5000));
+    return findSubmittedLeaveQuiet(segData, attemptsLeft - 1);
+  }
+  return null;
+}
 
 // v-add (BRO: multi-date submissions now report per-date success/failure
 // instead of all-or-nothing): shows every date that was in the request,
