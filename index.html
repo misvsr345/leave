@@ -8574,14 +8574,10 @@ function extraDsrEditEntry(i) {
     <div class="form-row"><label>Customer Name</label><input type="text" id="extraDsrEditCust" value="${en.customerName || ''}"></div>
     <div class="form-row"><label>Mobile</label><input type="text" id="extraDsrEditMobile" value="${en.mobileNumber || ''}"></div>
     <div class="form-row"><label>Item Name</label><input type="text" id="extraDsrEditItem" value="${en.itemName || ''}"></div>
-    ${isDia ? `
-    <div class="form-row"><label>Cent</label><input type="text" id="extraDsrEditCent" value="${en.diamondCent || ''}"></div>
-    <div class="form-row"><label>Quality</label><input type="text" id="extraDsrEditQuality" value="${en.diamondQuality || ''}"></div>
-    ` : `
+    ${isDia ? '' : `
     <div class="form-row"><label>Design</label><input type="text" id="extraDsrEditDesign" value="${en.design || ''}"></div>
     <div class="form-row"><label>Tunch</label><input type="text" id="extraDsrEditTunch" value="${en.tunch || ''}"></div>
-    `}
-    <div class="form-row"><label>Weight</label><input type="text" id="extraDsrEditWeight" value="${en.weight || ''}"></div>
+    <div class="form-row"><label>Weight</label><input type="text" id="extraDsrEditWeight" value="${en.weight || ''}"></div>`}
     <div class="form-row"><label>Tag No</label><input type="text" id="extraDsrEditTagNo" value="${en.tagNo || ''}"></div>
     <div class="btn-row">
       <button class="btn-primary" style="margin-bottom:10px;" onclick="extraDsrSaveEdit(${i})">💾 Save Changes</button>
@@ -8602,13 +8598,10 @@ async function extraDsrSaveEdit(i) {
     customerName: (document.getElementById('extraDsrEditCust').value || '').toUpperCase(),
     mobile: document.getElementById('extraDsrEditMobile').value,
     itemName: document.getElementById('extraDsrEditItem').value,
-    weight: document.getElementById('extraDsrEditWeight').value,
     tagNo: document.getElementById('extraDsrEditTagNo').value
   };
-  if (isDia) {
-    payload.diamondCent = document.getElementById('extraDsrEditCent').value;
-    payload.diamondQuality = document.getElementById('extraDsrEditQuality').value;
-  } else {
+  if (!isDia) {
+    payload.weight = document.getElementById('extraDsrEditWeight').value;
     payload.design = document.getElementById('extraDsrEditDesign').value;
     payload.tunch = document.getElementById('extraDsrEditTunch').value;
   }
@@ -12571,9 +12564,10 @@ function openDsrEditModal(idx, who) {
     <div class="form-row"><label>Mobile</label><input type="text" id="dsrEditMobile" value="${it.mobile || ''}"></div>
     <div class="form-row"><label>Address</label><input type="text" id="dsrEditAddr" value="${it.address || ''}"></div>
     <div class="form-row"><label>Item Name</label><input type="text" id="dsrEditItem" value="${it.itemName || ''}"></div>
+    ${isDia ? '' : `
     <div class="form-row"><label>Design</label><input type="text" id="dsrEditDesign" value="${it.design || ''}"></div>
     <div class="form-row"><label>Tunch</label><input type="text" id="dsrEditTunch" value="${it.tunch || ''}"></div>
-    <div class="form-row"><label>Weight</label><input type="text" id="dsrEditWeight" value="${it.weight || ''}"></div>
+    <div class="form-row"><label>Weight</label><input type="text" id="dsrEditWeight" value="${it.weight || ''}"></div>`}
     <div class="form-row"><label>Tag No</label><input type="text" id="dsrEditTagNo" value="${it.tagNo || ''}"></div>
     <!-- v-add (BRO: "photo edit option ledu" — this edit modal could
          change every OTHER field but never the photo itself, even when
@@ -12678,11 +12672,13 @@ async function saveDsrEdit(idx, who) {
     mobile: document.getElementById('dsrEditMobile').value,
     address: (document.getElementById('dsrEditAddr').value || '').toUpperCase(),
     itemName: document.getElementById('dsrEditItem').value,
-    design: document.getElementById('dsrEditDesign').value,
-    tunch: document.getElementById('dsrEditTunch').value,
-    weight: document.getElementById('dsrEditWeight').value,
     tagNo: document.getElementById('dsrEditTagNo').value
   };
+  // Diamond items have no Design / Tunch / Weight here — only send what the form actually shows.
+  ['Design', 'Tunch', 'Weight'].forEach(f => {
+    const el = document.getElementById('dsrEdit' + f);
+    if (el) payload[f.toLowerCase()] = el.value;
+  });
   try {
     const res = await jsonpReliable(payload);
     if (res && res.ok) {
@@ -13432,17 +13428,16 @@ function dsrfAddEntry(who) {
             <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
               <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749"></div>
           </div>
-          <!-- v-fix (BRO: "dsr new entry form lo cent and quality remove chei"):
-               Cent and Quality are no longer asked for Diamond items. -->
-          <div class="g2 mb12">
-            <div><label>Product Name ${req}</label>
-              <select id="dsrfDiaPn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'diamond')"><option value="">-- Select --</option></select>
-              <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
-            <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
+          <!-- v-fix (BRO: Cent, Quality and the single "Weight" field are no longer asked for
+               Diamond items — Gross Wt + Net Wt are the weights now, and both are required). -->
+          <div class="mb12">
+            <label>Product Name ${req}</label>
+            <select id="dsrfDiaPn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'diamond')"><option value="">-- Select --</option></select>
+            <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div>
           </div>
           <div class="g2 mb12">
-            <div><label>Gross Wt (gm)</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
-            <div><label>Net Wt (gm)</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
+            <div><label>Gross Wt (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
+            <div><label>Net Wt (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Gold Tunch</label><select id="dsrfDiaGoldTunch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
@@ -16499,8 +16494,7 @@ function dsrfSubmit(who) {
       // separate columns on the backend, mirroring exactly how Silver
       // already has its own dedicated columns instead of sharing Gold's).
       let dpn = dsrfGv(`dsrfDiaPn-${who}-${eid}`); if (dpn === 'Other') dpn = dsrfGv(`dsrfDiaPnCustom-${who}-${eid}`);
-      const dWt = dsrfGv(`dsrfDiaWt-${who}-${eid}`),
-            dTs = dsrfGv(`dsrfDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`dsrfDiaTagNo-${who}-${eid}`);
+      const dTs = dsrfGv(`dsrfDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`dsrfDiaTagNo-${who}-${eid}`);
       // v-add (BRO: Diamond needs Gross Wt/Net Wt/Gold Tunch/Carat/
       // Clarity/Color/Certificate No, plus the shared Bill No field).
       const dGrossWt = dsrfGv(`dsrfDiaGrossWt-${who}-${eid}`), dNetWt = dsrfGv(`dsrfDiaNetWt-${who}-${eid}`),
@@ -16509,7 +16503,9 @@ function dsrfSubmit(who) {
             dCertNo = dsrfGv(`dsrfDiaCertNo-${who}-${eid}`), dBillNo = dsrfGv(`dsrfDiaBillNo-${who}-${eid}`);
       if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
-        if (!dWt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+        if (!dGrossWt) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
+        if (!dNetWt) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
+        if (parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
         if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
@@ -16517,7 +16513,7 @@ function dsrfSubmit(who) {
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
         diamondTagStatus: dTs || '', diamondTagNo: dTn || '', diamondProductName: dpn,
-        diamondCent: '', diamondQuality: '', diamondWeight: dWt || '',
+        diamondCent: '', diamondQuality: '', diamondWeight: '',
         diamondPhoto: dPhoto.length > 100 ? dPhoto : '',
         diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
         diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
@@ -16835,7 +16831,7 @@ function dsrTagResultCardHtml(r, idx, who) {
       isGold ? ['Tunch', r.tunch] : null,
       (isDia && r.diamondCent) ? ['Cent', r.diamondCent] : null,          // old records only — no longer asked in the form
       (isDia && r.diamondQuality) ? ['Quality', r.diamondQuality] : null, // old records only
-      ['Weight', r.weight],
+      (!isDia || r.weight) ? ['Weight', r.weight] : null,          // Diamond: old records only — Gross/Net are the weights now
       isDia ? ['Gross Wt', r.diamondGrossWt] : null,
       isDia ? ['Net Wt', r.diamondNetWt] : null,
       isDia ? ['Gold Tunch', r.diamondGoldTunch] : null,
@@ -16939,13 +16935,13 @@ function dsrfShowPreview(who, rows) {
     // Design/Tunch-column-reuse approach).
     const photo = isSilver ? r.silverItemPhoto : isDiamond ? r.diamondPhoto : r.photo;
     const itemName = isSilver ? r.silverItemName : isDiamond ? r.diamondProductName : r.productName;
-    const itemWeight = isSilver ? r.silverItemWeight : isDiamond ? r.diamondWeight : r.weight;
+    const itemWeight = isSilver ? r.silverItemWeight : isDiamond ? '' : r.weight;
     const itemTagNo = isDiamond ? r.diamondTagNo : r.tagNo;
     itemsHtml += `<div class="dsr-item-row" style="align-items:flex-start;">
       <div>
         <b>${itemName || '—'}</b>
         <span class="dsr-item-sub">${isDiamond && r.diamondCent ? ' · Cent ' + r.diamondCent : ''}${isDiamond && r.diamondQuality ? ' · Quality ' + r.diamondQuality : ''}${!isSilver && !isDiamond && r.design ? ' · ' + r.design : ''}${!isSilver && !isDiamond && r.tunch ? ' · Tunch ' + r.tunch : ''}
-          ${itemWeight ? ' · ' + itemWeight + 'g' : ''}${!isSilver && itemTagNo ? ' · Tag ' + itemTagNo : ''}</span>
+          ${itemWeight ? ' · ' + itemWeight + 'g' : ''}${isDiamond && r.diamondGrossWt ? ' · Gross ' + r.diamondGrossWt + 'g' : ''}${isDiamond && r.diamondNetWt ? ' · Net ' + r.diamondNetWt + 'g' : ''}${!isSilver && itemTagNo ? ' · Tag ' + itemTagNo : ''}</span>
       </div>
       ${photo ? `<img src="${photo}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${photo}','_blank')">` : '<span class="kd-pill red" style="font-size:9.5px;">No Photo</span>'}
     </div>`;
@@ -17141,9 +17137,7 @@ function renderAdvanceOrderListRows(who) {
 
 function aoeRefreshProducts(who, eid) {
   const st = DSR_ST[who];
-  const typEl = document.getElementById(`aoeTyp-${who}-${eid}`);
-  const curType = typEl ? typEl.value : 'Gold';
-  const gList = curType === 'Diamond' ? st.diamond : st.gold;
+  const gList = st.gold;   // Diamond has its own block + product list now (see aoeItemBlockHtml)
   const gPreVal = document.getElementById(`aoePnPre-${who}-${eid}`).value;
   const sPreVal = document.getElementById(`aoeSnPre-${who}-${eid}`).value;
   const gOpts = '<option value="">-- Select --</option>' + gList.map(p => `<option${p === gPreVal ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
@@ -17174,16 +17168,44 @@ function aoeRefreshProducts(who, eid) {
       if (otherWrapS) otherWrapS.style.display = 'block';
     }
   }
+
+  // Diamond block: product / clarity / colour dropdowns, pre-selecting what the DSR already has.
+  const dnEl = document.getElementById(`aoeDiaPn-${who}-${eid}`);
+  if (dnEl) {
+    const dPre = document.getElementById(`aoeDiaPnPre-${who}-${eid}`).value;
+    const dList = st.diamond || [];
+    dnEl.innerHTML = '<option value="">-- Select --</option>' + dList.map(p => `<option${p === dPre ? ' selected' : ''}>${p}</option>`).join('') + '<option value="Other">Other (type manually)</option>';
+    if (dPre && dList.indexOf(dPre) === -1) {
+      dnEl.value = 'Other';
+      const dCustom = document.getElementById(`aoeDiaPnCustom-${who}-${eid}`);
+      const dOther = document.getElementById(`aoeDiaPnOther-${who}-${eid}`);
+      if (dCustom) dCustom.value = dPre;
+      if (dOther) dOther.style.display = 'block';
+    }
+    const fill = (id, list, pre) => {
+      const el = document.getElementById(id); if (!el) return;
+      const arr = (list || []).slice();
+      if (pre && arr.indexOf(pre) === -1) arr.push(pre);   // keep a saved value even if it left the catalogue
+      el.innerHTML = '<option value="">-- Select --</option>' + arr.map(p => `<option${p === pre ? ' selected' : ''}>${p}</option>`).join('');
+    };
+    fill(`aoeDiaClarity-${who}-${eid}`, st.diamondClarity, document.getElementById(`aoeDiaClarityPre-${who}-${eid}`).value);
+    fill(`aoeDiaColor-${who}-${eid}`, st.diamondColor, document.getElementById(`aoeDiaColorPre-${who}-${eid}`).value);
+  }
 }
 
 function aoeSetType(who, eid, val, btn) {
   dsrfSetTgl(who, `aoeTglTyp-${who}-${eid}`, `aoeTyp-${who}-${eid}`, val, btn);
-  const silver = val === 'Silver';
-  document.getElementById(`aoeGoldP-${who}-${eid}`).style.display = silver ? 'none' : 'block';
-  document.getElementById(`aoeSilverP-${who}-${eid}`).style.display = silver ? 'block' : 'none';
-  const hd = document.getElementById(`aoeGoldHd-${who}-${eid}`);
-  if (hd) hd.innerHTML = val === 'Diamond' ? '◆ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details';
+  document.getElementById(`aoeGoldP-${who}-${eid}`).style.display = val === 'Gold' ? 'block' : 'none';
+  document.getElementById(`aoeSilverP-${who}-${eid}`).style.display = val === 'Silver' ? 'block' : 'none';
+  document.getElementById(`aoeDiaP-${who}-${eid}`).style.display = val === 'Diamond' ? 'block' : 'none';
   aoeRefreshProducts(who, eid);
+}
+
+function aoeSetDiaTagTgl(who, eid, val, btn) {
+  document.getElementById(`aoeDiaTglTag-${who}-${eid}`).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(`aoeDiaTagSt-${who}-${eid}`).value = val;
+  document.getElementById(`aoeDiaTagNoWrap-${who}-${eid}`).style.display = (val === 'Tag') ? '' : 'none';
 }
 
 function aoeSetTagTgl(who, eid, val, btn) {
@@ -17196,6 +17218,8 @@ function aoeSetTagTgl(who, eid, val, btn) {
 function aoeToggleOther(who, eid, kind) {
   if (kind === 'gold') {
     document.getElementById(`aoePnOther-${who}-${eid}`).style.display = document.getElementById(`aoePn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
+  } else if (kind === 'diamond') {
+    document.getElementById(`aoeDiaPnOther-${who}-${eid}`).style.display = document.getElementById(`aoeDiaPn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
   } else {
     document.getElementById(`aoeSnOther-${who}-${eid}`).style.display = document.getElementById(`aoeSn-${who}-${eid}`).value === 'Other' ? 'block' : 'none';
   }
@@ -17230,9 +17254,9 @@ function aoeItemBlockHtml(who, eid, num, it) {
             </div><input type="hidden" id="aoePf-${who}-${eid}" value="${it.productFrom || 'Retail'}"></div>
         </div></div>
       </div>
-      <div id="aoeGoldP-${who}-${eid}" style="${isSilver ? 'display:none;' : ''}">
+      <div id="aoeGoldP-${who}-${eid}" style="${(isSilver || isDiamond) ? 'display:none;' : ''}">
         <div class="card" style="margin:10px 14px 14px;">
-          <div class="ch" id="aoeGoldHd-${who}-${eid}">${isDiamond ? '◆ &nbsp;Diamond Item Details' : '◈ &nbsp;Gold Item Details'}</div>
+          <div class="ch" id="aoeGoldHd-${who}-${eid}">◈ &nbsp;Gold Item Details</div>
           <div class="cb">
             <div class="g2 mb12">
               <div><label>Tag Status</label>
@@ -17255,6 +17279,45 @@ function aoeItemBlockHtml(who, eid, num, it) {
               <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="aoeWt-${who}-${eid}" value="${it.weight || ''}" placeholder="e.g. 21.37"></div>
               <div><label>Photo</label>${dsrfPhotoWidget(who, 'aoe' + eid, 'g')}${it.photo ? `<div style="font-size:11px;color:var(--dmuted);margin-top:4px;">Current: <a href="${it.photo}" target="_blank">view</a> (leave blank to keep)</div>` : ''}</div>
             </div>
+          </div>
+        </div>
+      </div>
+      <div id="aoeDiaP-${who}-${eid}" style="${isDiamond ? '' : 'display:none;'}">
+        <div class="card" style="margin:10px 14px 14px;">
+          <div class="ch">◆ &nbsp;Diamond Item Details</div>
+          <div class="cb">
+            <div class="g2 mb12">
+              <div><label>Tag Status</label>
+                <div class="tgl" id="aoeDiaTglTag-${who}-${eid}">
+                  <button class="${it.diamondTagStatus!=='No Tag'?'on':''}" onclick="aoeSetDiaTagTgl('${who}','${eid}','Tag',this)">Tag</button>
+                  <button class="${it.diamondTagStatus==='No Tag'?'on':''}" onclick="aoeSetDiaTagTgl('${who}','${eid}','No Tag',this)">Non Tag</button>
+                </div><input type="hidden" id="aoeDiaTagSt-${who}-${eid}" value="${it.diamondTagStatus || 'Tag'}"></div>
+              <div id="aoeDiaTagNoWrap-${who}-${eid}" style="${it.diamondTagStatus==='No Tag'?'display:none;':''}"><label>Tag No <span class="req">★</span></label>
+                <input type="text" id="aoeDiaTagNo-${who}-${eid}" value="${it.diamondTagNo || ''}" placeholder="e.g. C498, R749"></div>
+            </div>
+            <div class="mb12">
+              <label>Product Name <span class="req">★</span></label>
+              <select id="aoeDiaPn-${who}-${eid}" onchange="aoeToggleOther('${who}','${eid}','diamond')"><option value="">-- Select --</option></select>
+              <input type="hidden" id="aoeDiaPnPre-${who}-${eid}" value="${it.diamondProductName || ''}">
+              <div id="aoeDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="aoeDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div>
+            </div>
+            <div class="g2 mb12">
+              <div><label>Gross Wt (gm) <span class="req">★</span></label><input type="text" id="aoeDiaGrossWt-${who}-${eid}" value="${it.diamondGrossWt || ''}" placeholder="e.g. 6.10"></div>
+              <div><label>Net Wt (gm) <span class="req">★</span></label><input type="text" id="aoeDiaNetWt-${who}-${eid}" value="${it.diamondNetWt || ''}" placeholder="e.g. 5.20"></div>
+            </div>
+            <div class="g2 mb12">
+              <div><label>Gold Tunch</label><select id="aoeDiaGoldTunch-${who}-${eid}"><option value="">-- Select --</option>${st.tunchs.map(x => `<option${x === it.diamondGoldTunch ? ' selected' : ''}>${x}</option>`).join('')}${it.diamondGoldTunch && st.tunchs.indexOf(it.diamondGoldTunch) === -1 ? `<option selected>${it.diamondGoldTunch}</option>` : ''}</select></div>
+              <div><label>Carat</label><input type="text" id="aoeDiaCarat-${who}-${eid}" value="${it.diamondCarat || ''}" placeholder="e.g. 0.50ct"></div>
+            </div>
+            <div class="g2 mb12">
+              <div><label>Clarity</label><select id="aoeDiaClarity-${who}-${eid}"><option value="">-- Select --</option></select><input type="hidden" id="aoeDiaClarityPre-${who}-${eid}" value="${it.diamondClarity || ''}"></div>
+              <div><label>Color</label><select id="aoeDiaColor-${who}-${eid}"><option value="">-- Select --</option></select><input type="hidden" id="aoeDiaColorPre-${who}-${eid}" value="${it.diamondColor || ''}"></div>
+            </div>
+            <div class="g2 mb12">
+              <div><label>Certificate No</label><input type="text" id="aoeDiaCertNo-${who}-${eid}" value="${it.diamondCertNo || ''}" placeholder="e.g. GIA-1234567"></div>
+              <div><label>Bill No</label><input type="text" id="aoeDiaBillNo-${who}-${eid}" value="${it.billNo || ''}" placeholder="e.g. INV-1042"></div>
+            </div>
+            <div><label>Photo</label>${dsrfPhotoWidget(who, 'aoe' + eid, 'dia')}${it.diamondPhoto ? `<div style="font-size:11px;color:var(--dmuted);margin-top:4px;">Current: <a href="${it.diamondPhoto}" target="_blank">view</a> (leave blank to keep)</div>` : ''}</div>
           </div>
         </div>
       </div>
@@ -17414,6 +17477,32 @@ function submitAdvanceOrderUpdate(who) {
         silverItemName: sn, silverItemWeight: sw,
         silverItemPhoto: sPhotoNew.length > 100 ? sPhotoNew : ''
       });
+    } else if (type === 'Diamond') {
+      let dpn = dsrfGv(`aoeDiaPn-${who}-${eid}`); if (dpn === 'Other' || !dpn) dpn = dsrfGv(`aoeDiaPnCustom-${who}-${eid}`) || dsrfGv(`aoeDiaPnPre-${who}-${eid}`);
+      const dTs = dsrfGv(`aoeDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`aoeDiaTagNo-${who}-${eid}`),
+            dGross = dsrfGv(`aoeDiaGrossWt-${who}-${eid}`), dNet = dsrfGv(`aoeDiaNetWt-${who}-${eid}`),
+            dGoldTunch = dsrfGv(`aoeDiaGoldTunch-${who}-${eid}`), dCarat = dsrfGv(`aoeDiaCarat-${who}-${eid}`),
+            dClarity = dsrfGv(`aoeDiaClarity-${who}-${eid}`), dColor = dsrfGv(`aoeDiaColor-${who}-${eid}`),
+            dCert = dsrfGv(`aoeDiaCertNo-${who}-${eid}`), dBill = dsrfGv(`aoeDiaBillNo-${who}-${eid}`);
+      if (!dpn) { ok = false; errMsg = 'Please select/enter Diamond Product Name!'; return; }
+      if (newStatus !== 'Order Placed') {
+        if (!dGross) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
+        if (!dNet) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
+        if (parseFloat(dNet) > parseFloat(dGross)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
+        if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+      }
+      const dPhotoNew = dsrfGv(`dsrfPh-dia-${who}-aoe${eid}`);
+      // Cent / Quality / old single Weight are deliberately NOT sent (left undefined) so the server keeps
+      // whatever an older record already has in those sheet columns.
+      rows.push({
+        type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
+        silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
+        diamondTagStatus: dTs || '', diamondTagNo: dTn || '', diamondProductName: dpn,
+        diamondGrossWt: dGross || '', diamondNetWt: dNet || '', diamondGoldTunch: dGoldTunch || '',
+        diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '', diamondCertNo: dCert || '',
+        billNo: dBill || '',
+        diamondPhoto: dPhotoNew.length > 100 ? dPhotoNew : ''
+      });
     } else {
       let pn = dsrfGv(`aoePn-${who}-${eid}`); if (pn === 'Other' || !pn) pn = dsrfGv(`aoePnCustom-${who}-${eid}`) || dsrfGv(`aoePnPre-${who}-${eid}`);
       const des = dsrfGv(`aoeDes-${who}-${eid}`), tch = dsrfGv(`aoeTch-${who}-${eid}`), wt = dsrfGv(`aoeWt-${who}-${eid}`),
@@ -17439,6 +17528,7 @@ function submitAdvanceOrderUpdate(who) {
     if (rows[i]) {
       if (!rows[i].photo && orig.photo) rows[i].photo = orig.photo;
       if (!rows[i].silverItemPhoto && orig.silverItemPhoto) rows[i].silverItemPhoto = orig.silverItemPhoto;
+      if (rows[i].type === 'Diamond' && !rows[i].diamondPhoto && orig.diamondPhoto) rows[i].diamondPhoto = orig.diamondPhoto;
     }
   });
 
