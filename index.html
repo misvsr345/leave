@@ -13834,6 +13834,9 @@ function dsrfRemovePhoto(fid, hidId, tidId, pidId, szId, warnId, rmId) {
 }
 
 function dsrfGv(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+// Product Name is a real name, so a custom-typed one ("Other") is normalized the same way the Stock
+// backend normalizes its own product list — "gold chain" / "GOLD CHAIN" both become "Gold Chain".
+function dsrTitleCase(s) { return String(s||'').trim().replace(/\s+/g,' ').toLowerCase().replace(/(^|[\s/-])([a-z])/g,(m,sep,c)=>sep+c.toUpperCase()); }
 
 // ══════════════════════════════════════════════════════════════════════
 // STOCK LEVEL (BRO) — talks to the separate Stock Level backend (other Google account).
@@ -13861,7 +13864,7 @@ function dsrfTagTyping(who, eid, kind) {
   const ids = dsrfTagIds(who, eid, kind);
   const inp = document.getElementById(ids.inp); if (!inp) return;
   inp.__lk = (inp.__lk || 0) + 1;                       // cancels any lookup still running for older text
-  if (stockTagHasSep(inp.value)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Space, - leda / vaddu — BOM2154 la enter cheyandi'); }
+  if (stockTagHasSep(inp.value)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); }
   else { inp.classList.remove('err-inp'); dsrfTagMsg(ids.msg, 'info', ''); }
 }
 function dsrfClickToggle(groupId, label) {
@@ -13935,7 +13938,7 @@ async function dsrfTagLookup(who, eid, kind) {
   const inp = document.getElementById(ids.inp); if (!inp) return;
   const raw = inp.value.trim();
   if (!raw) { dsrfTagMsg(ids.msg, 'info', ''); return; }
-  if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Space, - leda / vaddu — BOM2154 la enter cheyandi'); return; }
+  if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); return; }
   inp.classList.remove('err-inp');
   inp.value = raw.toUpperCase();
   if (!stockIsConfigured()) { dsrfTagMsg(ids.msg, 'info', ''); return; }
@@ -13946,11 +13949,11 @@ async function dsrfTagLookup(who, eid, kind) {
   try {
     res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
   } catch (e) {
-    if (inp.__lk === my) dsrfTagMsg(ids.msg, 'info', 'Stock check avvaledu (internet?) — manual ga enter cheyandi.');
+    if (inp.__lk === my) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
     return;
   }
   if (inp.__lk !== my) return;
-  if (!res || !res.ok) { dsrfTagMsg(ids.msg, 'info', 'Stock check avvaledu — manual ga enter cheyandi.'); return; }
+  if (!res || !res.ok) { dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
   if (res.status === 'instock') {
     const it = res.item || {};
     const beforePf = dsrfGv(`dsrfPf-${who}-${eid}`);
@@ -13959,14 +13962,14 @@ async function dsrfTagLookup(who, eid, kind) {
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
-    let txt = '✅ Stock lo undi — ' + (it.productFrom === 'Main' ? 'Main (Hub)' : (it.counter || 'Retail')) + '. Details fill ayyayi (edit cheyochu).';
-    if (beforePf && it.productFrom && beforePf !== it.productFrom) txt += ' Product From ni ' + it.productFrom + ' ki marchanu.';
+    let txt = '✅ Found in stock — ' + (it.productFrom === 'Main' ? 'Main (Hub)' : (it.counter || 'Retail')) + '. Details filled in (you can edit them).';
+    if (beforePf && it.productFrom && beforePf !== it.productFrom) txt += ' Changed Product From to ' + it.productFrom + '.';
     dsrfTagMsg(nowIds.msg, 'ok', txt);
   } else if (res.status === 'sold') {
     const sd = res.sold || {};
-    dsrfTagMsg(ids.msg, 'err', '⚠ Already sold — DSR ' + (sd.dsrId || '') + (sd.soldDate ? ' (' + fmtDMY(sd.soldDate) + ')' : '') + '. Customer return ayithe mundu Return/Replace cheyandi.');
+    dsrfTagMsg(ids.msg, 'err', '⚠ Already sold — DSR ' + (sd.dsrId || '') + (sd.soldDate ? ' (' + fmtDMY(sd.soldDate) + ')' : '') + '. If the customer is returning it, use Return/Replace first.');
   } else {
-    dsrfTagMsg(ids.msg, 'warn', '⚠ Ee tag stock lo ledu — manual ga enter cheyandi.');
+    dsrfTagMsg(ids.msg, 'warn', '⚠ This tag is not in stock — enter manually.');
   }
 }
 
@@ -17126,7 +17129,7 @@ function dsrfSubmit(who) {
       // Gold's Design/Tunch columns. Diamond now has its own fully
       // separate columns on the backend, mirroring exactly how Silver
       // already has its own dedicated columns instead of sharing Gold's).
-      let dpn = dsrfGv(`dsrfDiaPn-${who}-${eid}`); if (dpn === 'Other') dpn = dsrfGv(`dsrfDiaPnCustom-${who}-${eid}`);
+      let dpn = dsrfGv(`dsrfDiaPn-${who}-${eid}`); if (dpn === 'Other') dpn = dsrTitleCase(dsrfGv(`dsrfDiaPnCustom-${who}-${eid}`));
       const dTs = dsrfGv(`dsrfDiaTagSt-${who}-${eid}`), dTn = dsrfGv(`dsrfDiaTagNo-${who}-${eid}`);
       // v-add (BRO: Diamond needs Gross Wt/Net Wt/Gold Tunch/Carat/
       // Clarity/Color/Certificate No, plus the shared Bill No field).
@@ -17141,7 +17144,7 @@ function dsrfSubmit(who) {
         if (parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
         if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
-      if (dTs === 'Tag' && dTn && stockTagHasSep(dTn)) { ok = false; errMsg = 'Tag No lo space, - leda / vaddu. BOM2154 la enter cheyandi.'; return; }
+      if (dTs === 'Tag' && dTn && stockTagHasSep(dTn)) { ok = false; errMsg = 'Tag No: no spaces, - or / allowed. Enter like BOM2154.'; return; }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
@@ -17153,8 +17156,8 @@ function dsrfSubmit(who) {
         diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
         diamondCertNo: dCertNo || '', billNo: dBillNo || '' });
     } else {
-      let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrfGv(`dsrfPnCustom-${who}-${eid}`);
-      const des = dsrfGv(`dsrfDes-${who}-${eid}`), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
+      let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrTitleCase(dsrfGv(`dsrfPnCustom-${who}-${eid}`));
+      const des = dsrTitleCase(dsrfGv(`dsrfDes-${who}-${eid}`)), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
             ts = dsrfGv(`dsrfTagSt-${who}-${eid}`), tn = dsrfGv(`dsrfTagNo-${who}-${eid}`);
       if (!pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
@@ -17163,7 +17166,7 @@ function dsrfSubmit(who) {
         if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
         if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
-      if (ts === 'Tag' && tn && stockTagHasSep(tn)) { ok = false; errMsg = 'Tag No lo space, - leda / vaddu. BOM2154 la enter cheyandi.'; return; }
+      if (ts === 'Tag' && tn && stockTagHasSep(tn)) { ok = false; errMsg = 'Tag No: no spaces, - or / allowed. Enter like BOM2154.'; return; }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
       const gBillNo = dsrfGv(`dsrfGoldBillNo-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
@@ -17440,7 +17443,7 @@ function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount) {
     })
     .catch(err => {
       const msg = (err && err.name === 'AbortError')
-        ? 'Server slow ga undi (timeout). Konchem sepu aagi malli Search cheyandi.'
+        ? 'Server is slow (timeout). Please wait a moment and Search again.'
         : 'Search failed: ' + (err && err.message ? err.message : err);
       box.innerHTML = '<div class="card"><div class="empty-state"><p>' + escHtml(msg) + '</p></div></div>';
     });
