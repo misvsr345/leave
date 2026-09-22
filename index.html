@@ -2483,6 +2483,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
+    <div class="vsr-sidebar-item" data-page="stocklevel" id="adminSidebarStockLevel" onclick="showAdminPage('stocklevel')"><span class="vsr-sidebar-icon">📦</span>Stock Level</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
@@ -2523,6 +2524,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">All options</div></div>
           <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
+          <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings, notices, theme, password</div></div>
         </div>
       </div>
@@ -3296,6 +3298,39 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         </div>
       </div>
       <div id="dsrTagSearchBox-admin"></div>
+    </div>
+
+    <!-- ══════════════ STOCK LEVEL SECTION (admin only) ══════════════ -->
+    <div class="page-section" id="admin-stocklevel">
+      <style>
+        .sl-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+        .sl-stat{background:var(--purple-bg,#F5EEFB);border:1.5px solid var(--gold);border-radius:12px;padding:10px 12px;}
+        .sl-stat.sold{background:#fdf6e3;}
+        .sl-sl{font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--dmuted,#7D6E8C);text-transform:uppercase;}
+        .sl-sv{font-size:20px;font-weight:800;color:var(--purple);margin-top:2px;}
+        .sl-ss{font-size:11px;color:var(--dmuted,#7D6E8C);margin-top:2px;}
+        .sl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
+        .sl-card{background:#fff;border:1.5px solid var(--border,#E2D9EE);border-radius:12px;padding:12px 14px;cursor:pointer;}
+        .sl-card:hover{border-color:var(--purple-mid,#7B2FBE);}
+        .sl-ct{font-weight:800;color:var(--purple);font-size:14px;margin-bottom:4px;}
+        .sl-big{font-size:17px;font-weight:800;margin-bottom:6px;}
+        .sl-big small{font-size:11px;font-weight:600;color:var(--dmuted,#7D6E8C);}
+        .sl-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0;border-top:1px dashed var(--border,#E2D9EE);}
+        .sl-row span{color:var(--dmuted,#7D6E8C);}
+        @media (max-width:520px){ .sl-top{grid-template-columns:1fr;} }
+      </style>
+      <div class="section-hdr"><span class="section-title2">📦 Stock Level</span></div>
+      <div class="card">
+        <div class="filter-bar">
+          <button type="button" class="filter-btn active" id="slTab-overview" onclick="slShowTab('overview')">📊 Overview</button>
+          <button type="button" class="filter-btn" id="slTab-counter" onclick="slShowTab('counter')">🏷️ Counter-wise</button>
+          <button type="button" class="filter-btn" id="slTab-sales" onclick="slShowTab('sales')">🧾 Daily Sales</button>
+          <button type="button" class="filter-btn" id="slTab-tag" onclick="slShowTab('tag')">🔍 Tag Status</button>
+          <button type="button" class="filter-btn" id="slTab-manage" onclick="slShowTab('manage')">✏️ Manage</button>
+        </div>
+      </div>
+      <button class="export-icon-btn" id="exportBtn-slBox" style="display:none;" onclick="openBoxExportModal('slBox','Stock Level')" title="Export">📥</button>
+      <div class="card"><div id="slBox"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <!-- ══════════════ GOLDEN AURA SECTION (admin) ══════════════ -->
@@ -5186,6 +5221,7 @@ const SECTION_LABEL_MAP = {
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
+  stocklevel: 'Stock Level',
   profile: 'Emp Details'
 };
 // Each section's own "dashboard" page (its landing page after clicking
@@ -5198,6 +5234,7 @@ const SECTION_DASHBOARD_PAGE = {
   DSR:              { emp: 'dsr',      admin: 'dsr' },
   'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' },
   'Stock Check List': { emp: 'stock', admin: 'stock' },
+  'Stock Level':    { emp: 'stocklevel', admin: 'stocklevel' },
   Leads:            { emp: 'leads',   admin: 'leads' }
 };
 function getSectionDashboardPage(who, page) {
@@ -8858,6 +8895,7 @@ async function extraDsrDeleteEntry(i) {
 // ============================================================
 const ADMIN_SEARCH_INDEX = [
   { icon: '📊', label: 'Dashboard', page: 'dashboard-hub' },
+  { icon: '📦', label: 'Stock Level', page: 'stocklevel' },
   { icon: '🖥️', label: 'Today at a Glance', page: 'today-glance' },
   { icon: '🏖️', label: 'Leave', page: 'dashboard' },
   { icon: '👥', label: 'Leads', page: 'leads' },
@@ -9609,6 +9647,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='dsr-advorder') loadAdvanceOrderList('admin');
+  if(page==='stocklevel') loadStockLevel();
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
   if(page==='golden-aura-list') loadGoldenAuraList('admin');
@@ -13569,7 +13608,9 @@ function dsrfAddEntry(who) {
                 <button onclick="dsrfSetTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
               </div><input type="hidden" id="dsrfTagSt-${who}-${eid}" value="Tag"></div>
             <div id="dsrfTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
-              <input type="text" id="dsrfTagNo-${who}-${eid}" placeholder="e.g. C498, R749"></div>
+              <input type="text" id="dsrfTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
+                oninput="dsrfTagTyping('${who}',${eid},'g')" onchange="dsrfTagLookup('${who}',${eid},'g')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+              <div id="dsrfTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
           </div>
           <div class="g2 mb12">
             <div><label>Product Name ${req}</label>
@@ -13608,7 +13649,9 @@ function dsrfAddEntry(who) {
                 <button onclick="dsrfSetDiaTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
               </div><input type="hidden" id="dsrfDiaTagSt-${who}-${eid}" value="Tag"></div>
             <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
-              <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749"></div>
+              <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
+                oninput="dsrfTagTyping('${who}',${eid},'d')" onchange="dsrfTagLookup('${who}',${eid},'d')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+              <div id="dsrfDiaTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
           </div>
           <!-- v-fix (BRO: Cent, Quality and the single "Weight" field are no longer asked for
                Diamond items — Gross Wt + Net Wt are the weights now, and both are required). -->
@@ -13791,6 +13834,415 @@ function dsrfRemovePhoto(fid, hidId, tidId, pidId, szId, warnId, rmId) {
 }
 
 function dsrfGv(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+
+// ══════════════════════════════════════════════════════════════════════
+// STOCK LEVEL (BRO) — talks to the separate Stock Level backend (other Google account).
+//   1) DSR form: Tag No ➜ auto-fill from stock, duplicate/sold warnings, tag-format block
+//   2) Admin "Stock Level" page: counter cards, counter-wise products, daily sales, tag status, edit/delete
+// While STOCK_GAS_URL still says PASTE..., all of this stays silent and the DSR form works exactly as before.
+// ══════════════════════════════════════════════════════════════════════
+var STOCK_GAS_URL = "PASTE_STOCK_WEB_APP_URL_HERE";
+var STOCK_KEY = "CHANGE_THIS_SECRET";
+
+function stockIsConfigured() { return !!STOCK_GAS_URL && STOCK_GAS_URL.indexOf('PASTE') === -1; }
+function stockNormTag(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function stockTagHasSep(s) { return /[^A-Za-z0-9]/.test(String(s == null ? '' : s).trim()); }
+
+// ---------- DSR form: tag typing / lookup / auto-fill ----------
+function dsrfTagMsg(id, cls, txt) {
+  const el = document.getElementById(id); if (!el) return;
+  const col = { ok: '#1E7A4B', warn: '#B26A00', err: '#C0392B', info: '#7D6E8C' }[cls] || 'inherit';
+  el.style.color = col; el.textContent = txt || '';
+}
+function dsrfTagIds(who, eid, kind) {
+  const d = kind === 'd';
+  return { inp: (d ? 'dsrfDiaTagNo-' : 'dsrfTagNo-') + who + '-' + eid, msg: (d ? 'dsrfDiaTagMsg-' : 'dsrfTagMsg-') + who + '-' + eid };
+}
+function dsrfTagTyping(who, eid, kind) {
+  const ids = dsrfTagIds(who, eid, kind);
+  const inp = document.getElementById(ids.inp); if (!inp) return;
+  inp.__lk = (inp.__lk || 0) + 1;                       // cancels any lookup still running for older text
+  if (stockTagHasSep(inp.value)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Space, - leda / vaddu — BOM2154 la enter cheyandi'); }
+  else { inp.classList.remove('err-inp'); dsrfTagMsg(ids.msg, 'info', ''); }
+}
+function dsrfClickToggle(groupId, label) {
+  const g = document.getElementById(groupId); if (!g) return;
+  const b = Array.from(g.querySelectorAll('button')).find(x => x.textContent.trim() === label);
+  if (b) b.click();
+}
+function dsrfSetV(id, v) {
+  const e = document.getElementById(id);
+  if (e && v !== undefined && v !== null && String(v) !== '') { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }
+}
+function dsrfSetSelectLoose(id, v) {
+  const e = document.getElementById(id); if (!e || v === undefined || v === null || String(v) === '') return;
+  v = String(v);
+  if (!Array.from(e.options).some(o => o.value === v)) { const o = document.createElement('option'); o.value = v; o.textContent = v; e.appendChild(o); }
+  e.value = v;
+}
+function dsrfSetProductSel(who, eid, kind, name) {
+  if (!name) return;
+  const selId = kind === 'diamond' ? `dsrfDiaPn-${who}-${eid}` : `dsrfPn-${who}-${eid}`;
+  const customId = kind === 'diamond' ? `dsrfDiaPnCustom-${who}-${eid}` : `dsrfPnCustom-${who}-${eid}`;
+  const sel = document.getElementById(selId); if (!sel) return;
+  const has = Array.from(sel.options).some(o => o.value === name);
+  if (has) sel.value = name;
+  else { sel.value = 'Other'; const c = document.getElementById(customId); if (c) c.value = name; }
+  dsrfToggleOther(who, eid, kind);
+}
+function dsrfSetPhotoData(who, eid, pfx, dataUrl) {
+  if (!dataUrl || dataUrl.length < 100) return;
+  const hid = document.getElementById(`dsrfPh-${pfx}-${who}-${eid}`);
+  if (!hid || (hid.value && hid.value.length > 100)) return;   // never overwrite a photo the person already picked
+  hid.value = dataUrl;
+  const t = document.getElementById(`dsrfPt-${pfx}-${who}-${eid}`); if (t) { t.textContent = 'Photo from stock'; t.className = 'phn'; }
+  const sz = document.getElementById(`dsrfPs-${pfx}-${who}-${eid}`); if (sz) sz.textContent = Math.round(dataUrl.length * 0.75 / 1024) + ' KB';
+  const w = document.getElementById(`dsrfPw-${pfx}-${who}-${eid}`); if (w) { w.textContent = '✓ Photo taken from stock (you can replace it)'; w.className = 'photo-ok show'; }
+  const pv = document.getElementById(`dsrfPp-${pfx}-${who}-${eid}`); if (pv) { pv.src = dataUrl; pv.classList.add('show'); }
+  const rm = document.getElementById(`dsrfPr-${pfx}-${who}-${eid}`); if (rm) rm.style.display = 'inline-block';
+}
+
+// Fills the Gold / Diamond block of one DSR item from a stock record. Every field stays editable.
+// (Stock "Bill No" is the purchase bill, so it is deliberately NOT copied into the DSR sale Bill No.)
+function dsrfApplyStockItem(who, eid, it, tagN) {
+  const isDia = it.type === 'Diamond';
+  if (dsrfGv(`dsrfTyp-${who}-${eid}`) !== (isDia ? 'Diamond' : 'Gold')) dsrfClickToggle(`dsrfTglTyp-${who}-${eid}`, isDia ? 'Diamond' : 'Gold');
+  if (it.productFrom && dsrfGv(`dsrfPf-${who}-${eid}`) !== it.productFrom) dsrfClickToggle(`dsrfTglPf-${who}-${eid}`, it.productFrom);
+  if (isDia) {
+    if (dsrfGv(`dsrfDiaTagSt-${who}-${eid}`) !== 'Tag') dsrfClickToggle(`dsrfDiaTglTag-${who}-${eid}`, 'Tag');
+    dsrfSetV(`dsrfDiaTagNo-${who}-${eid}`, tagN);
+    dsrfSetProductSel(who, eid, 'diamond', it.productName);
+    dsrfSetV(`dsrfDiaGrossWt-${who}-${eid}`, it.gross);
+    dsrfSetV(`dsrfDiaNetWt-${who}-${eid}`, it.net || it.weight);
+    dsrfSetSelectLoose(`dsrfDiaGoldTunch-${who}-${eid}`, it.tunch);
+    dsrfSetV(`dsrfDiaCarat-${who}-${eid}`, it.carat);
+    dsrfSetSelectLoose(`dsrfDiaClarity-${who}-${eid}`, it.clarity);
+    dsrfSetSelectLoose(`dsrfDiaColor-${who}-${eid}`, it.color);
+    dsrfSetV(`dsrfDiaCertNo-${who}-${eid}`, it.certNo);
+    dsrfSetPhotoData(who, eid, 'dia', it.photoData);
+  } else {
+    if (dsrfGv(`dsrfTagSt-${who}-${eid}`) !== 'Tag') dsrfClickToggle(`dsrfTglTag-${who}-${eid}`, 'Tag');
+    dsrfSetV(`dsrfTagNo-${who}-${eid}`, tagN);
+    dsrfSetProductSel(who, eid, 'gold', it.productName);
+    dsrfSetV(`dsrfDes-${who}-${eid}`, it.design);
+    dsrfSetSelectLoose(`dsrfTch-${who}-${eid}`, it.tunch);
+    dsrfSetV(`dsrfWt-${who}-${eid}`, it.weight);
+    dsrfSetPhotoData(who, eid, 'g', it.photoData);
+  }
+}
+
+async function dsrfTagLookup(who, eid, kind) {
+  const ids = dsrfTagIds(who, eid, kind);
+  const inp = document.getElementById(ids.inp); if (!inp) return;
+  const raw = inp.value.trim();
+  if (!raw) { dsrfTagMsg(ids.msg, 'info', ''); return; }
+  if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Space, - leda / vaddu — BOM2154 la enter cheyandi'); return; }
+  inp.classList.remove('err-inp');
+  inp.value = raw.toUpperCase();
+  if (!stockIsConfigured()) { dsrfTagMsg(ids.msg, 'info', ''); return; }
+  const tagN = stockNormTag(raw);
+  const my = inp.__lk = (inp.__lk || 0) + 1;
+  dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
+  let res;
+  try {
+    res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
+  } catch (e) {
+    if (inp.__lk === my) dsrfTagMsg(ids.msg, 'info', 'Stock check avvaledu (internet?) — manual ga enter cheyandi.');
+    return;
+  }
+  if (inp.__lk !== my) return;
+  if (!res || !res.ok) { dsrfTagMsg(ids.msg, 'info', 'Stock check avvaledu — manual ga enter cheyandi.'); return; }
+  if (res.status === 'instock') {
+    const it = res.item || {};
+    const beforePf = dsrfGv(`dsrfPf-${who}-${eid}`);
+    dsrfApplyStockItem(who, eid, it, tagN);
+    // the message belongs to whichever block (Gold / Diamond) is showing now
+    const kNow = it.type === 'Diamond' ? 'd' : 'g';
+    const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
+    dsrfTagMsg(otherIds.msg, 'info', '');
+    let txt = '✅ Stock lo undi — ' + (it.productFrom === 'Main' ? 'Main (Hub)' : (it.counter || 'Retail')) + '. Details fill ayyayi (edit cheyochu).';
+    if (beforePf && it.productFrom && beforePf !== it.productFrom) txt += ' Product From ni ' + it.productFrom + ' ki marchanu.';
+    dsrfTagMsg(nowIds.msg, 'ok', txt);
+  } else if (res.status === 'sold') {
+    const sd = res.sold || {};
+    dsrfTagMsg(ids.msg, 'err', '⚠ Already sold — DSR ' + (sd.dsrId || '') + (sd.soldDate ? ' (' + fmtDMY(sd.soldDate) + ')' : '') + '. Customer return ayithe mundu Return/Replace cheyandi.');
+  } else {
+    dsrfTagMsg(ids.msg, 'warn', '⚠ Ee tag stock lo ledu — manual ga enter cheyandi.');
+  }
+}
+
+// ---------- Admin: Stock Level page ----------
+var SL = { tab: 'overview', counters: [], mainHub: 'Main Hub', sel: '', rows: [] };
+
+function slApi(params) {
+  const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
+  return _fetchWithTimeout(STOCK_GAS_URL + '?' + qs, {}, 45000).then(r => r.json());
+}
+function slPost(payload) {
+  payload.key = STOCK_KEY; payload.by = state.adminName || 'Admin';
+  return _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }, 60000).then(r => r.json());
+}
+function slFmtWt(n) { const v = parseFloat(n); return isNaN(v) ? '0' : (Math.round(v * 1000) / 1000).toFixed(3).replace(/\.?0+$/, ''); }
+function slBox() { return document.getElementById('slBox'); }
+function slLoading(b) { b.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; }
+function slError(b, res) {
+  b.innerHTML = '<div class="empty-state"><p>' + escHtml((res && res.error) || 'Could not load Stock Level data.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="slShowTab(SL.tab)" title="Retry">🔄</button></div>';
+}
+
+function loadStockLevel() {
+  if (!stockIsConfigured()) {
+    slBox().innerHTML = '<div class="empty-state"><p>Stock Level is not connected yet. Paste the Stock Web App URL in STOCK_GAS_URL (portal code) first.</p></div>';
+    return;
+  }
+  slShowTab(SL.tab || 'overview');
+}
+
+async function slEnsureMeta() {
+  if (SL.counters.length) return;
+  const m = await slApi({ action: 'meta' });
+  if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; }
+}
+
+function slShowTab(tab) {
+  SL.tab = tab;
+  ['overview', 'counter', 'sales', 'tag', 'manage'].forEach(t => {
+    const b = document.getElementById('slTab-' + t); if (b) b.classList.toggle('active', t === tab);
+  });
+  const box = slBox(); hideExportBtn('slBox');
+  if (!stockIsConfigured()) { loadStockLevel(); return; }
+  if (tab === 'overview') slRenderOverview(box);
+  else if (tab === 'counter') slRenderCounter(box);
+  else if (tab === 'sales') slRenderSales(box);
+  else if (tab === 'tag') slRenderTag(box);
+  else if (tab === 'manage') slRenderManage(box);
+}
+
+async function slRenderOverview(box) {
+  slLoading(box);
+  try {
+    const res = await slApi({ action: 'summary' });
+    if (!res || !res.ok) { slError(box, res); return; }
+    const hub = res.counters.find(c => c.counter === 'Main Hub');
+    const retail = res.counters.filter(c => c.counter !== 'Main Hub');
+    let rp = 0, rw = 0, rg = 0, rd = 0;
+    retail.forEach(c => { rp += c.total.pcs; rw += c.total.wt; rg += c.gold.pcs; rd += c.diamond.pcs; });
+    const card = c => `<div class="sl-card" onclick="slOpenCounter('${escJs(c.counter)}')">
+        <div class="sl-ct">${escHtml(c.counter)}</div>
+        <div class="sl-big">${c.total.pcs} <small>pcs</small> &nbsp;·&nbsp; ${slFmtWt(c.total.wt)} <small>gm</small></div>
+        <div class="sl-row"><span>Gold</span><b>${c.gold.pcs} pcs · ${slFmtWt(c.gold.wt)} gm</b></div>
+        <div class="sl-row"><span>Diamond</span><b>${c.diamond.pcs} pcs · ${slFmtWt(c.diamond.wt)} gm</b></div>
+        ${c.nonTag.pcs ? `<div class="sl-row"><span>Non Tag (incl.)</span><b>${c.nonTag.pcs} pcs · ${slFmtWt(c.nonTag.wt)} gm</b></div>` : ''}
+      </div>`;
+    box.innerHTML = `
+      <div class="sl-top">
+        <div class="sl-stat"><div class="sl-sl">Retail counters</div><div class="sl-sv">${rp} pcs</div><div class="sl-ss">${slFmtWt(rw)} gm · Gold ${rg} · Diamond ${rd}</div></div>
+        <div class="sl-stat"><div class="sl-sl">Main (Hub)</div><div class="sl-sv">${hub ? hub.total.pcs : 0} pcs</div><div class="sl-ss">${hub ? slFmtWt(hub.total.wt) : 0} gm</div></div>
+        <div class="sl-stat sold"><div class="sl-sl">Sold today</div><div class="sl-sv">${res.today.pcs} pcs</div><div class="sl-ss">${slFmtWt(res.today.wt)} gm</div></div>
+      </div>
+      <div class="sl-grid">${retail.map(card).join('')}${hub ? card(hub) : ''}</div>
+      <div class="kd-note" style="margin-top:8px;">Tap a counter to see product-wise quantity and weight. Weight = Gold weight / Diamond net weight.</div>`;
+  } catch (e) { slError(box, null); }
+}
+
+function slOpenCounter(name) { SL.sel = name; slShowTab('counter'); }
+
+async function slRenderCounter(box) {
+  slLoading(box);
+  try {
+    await slEnsureMeta();
+    const names = SL.counters.concat([SL.mainHub]);
+    if (!SL.sel || names.indexOf(SL.sel) === -1) SL.sel = names[0] || '';
+    const head = `<div class="form-row"><label>Counter</label>
+      <select class="uniform-select" id="slCounterSel" onchange="SL.sel=this.value;slLoadCounterDetail()">${names.map(n => `<option ${n === SL.sel ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+      <div id="slCounterBody"></div>`;
+    box.innerHTML = head;
+    slLoadCounterDetail();
+  } catch (e) { slError(box, null); }
+}
+async function slLoadCounterDetail() {
+  const body = document.getElementById('slCounterBody'); if (!body) return;
+  slLoading(body); hideExportBtn('slBox');
+  try {
+    const res = await slApi({ action: 'counterDetail', counter: SL.sel });
+    if (!res || !res.ok) { slError(body, res); return; }
+    if (!res.rows.length) { body.innerHTML = '<div class="empty-state"><p>No stock in this counter.</p></div>'; return; }
+    let tp = 0, tw = 0;
+    res.rows.forEach(r => { tp += r.pcs; tw += r.wt; });
+    body.innerHTML = `<div class="kd-note">${res.rows.length} product(s) · ${tp} pcs · ${slFmtWt(tw)} gm</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th><th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
+      res.rows.map(r => `<tr><td><b>${escHtml(r.product)}</b></td><td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
+      `<tr><td><b>Total</b></td><td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
+    showExportBtn('slBox');
+  } catch (e) { slError(body, null); }
+}
+
+function slRenderSales(box) {
+  const today = toYMD(new Date());
+  box.innerHTML = `<div class="form-2col">
+      <div class="form-row"><label>From</label><input type="date" lang="en-GB" id="slSalesStart" value="${today}"></div>
+      <div class="form-row"><label>To</label><input type="date" lang="en-GB" id="slSalesEnd" value="${today}"></div>
+    </div>
+    <button class="btn-primary" style="width:100%;" onclick="slLoadSales()">🔍 Show Sales</button>
+    <div id="slSalesBody" style="margin-top:12px;"></div>`;
+  slLoadSales();
+}
+async function slLoadSales() {
+  const body = document.getElementById('slSalesBody'); if (!body) return;
+  const s = document.getElementById('slSalesStart').value, e = document.getElementById('slSalesEnd').value;
+  if (!s || !e) { toast('Select both dates', 'error'); return; }
+  slLoading(body); hideExportBtn('slBox');
+  try {
+    const res = await slApi({ action: 'dailySales', start: s, end: e });
+    if (!res || !res.ok) { slError(body, res); return; }
+    const rowHtml = r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${escHtml(r.payStatus)}</td></tr>`;
+    let html = `<div class="kd-note"><b>${res.pcs}</b> pcs sold · <b>${slFmtWt(res.wt)}</b> gm (${fmtDMY(s)}${s !== e ? ' – ' + fmtDMY(e) : ''})</div>`;
+    if (!res.rows.length) html += '<div class="empty-state"><p>No sales in this period.</p></div>';
+    else html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Status</th></tr></thead><tbody>${res.rows.map(rowHtml).join('')}</tbody></table></div>`;
+    if (res.returned && res.returned.length) {
+      html += `<div class="kd-note" style="margin-top:14px;">↩ Returned later (${res.returned.length})</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Sold</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Returned On</th></tr></thead><tbody>${res.returned.map(r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${fmtDMY(r.returnedOn)}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    body.innerHTML = html;
+    if (res.rows.length) showExportBtn('slBox');
+  } catch (err) { slError(body, null); }
+}
+
+function slRenderTag(box) {
+  box.innerHTML = `<div class="form-row"><label>Tag No</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="slTagInput" placeholder="e.g. BOM2154" autocomplete="off" style="flex:1 1 auto;min-width:0;width:auto;text-transform:uppercase;" onkeydown="if(event.key==='Enter')slTagSearch()">
+        <button class="btn-primary" onclick="slTagSearch()" style="width:auto;flex:0 0 auto;padding:12px 26px;">Search</button>
+      </div></div><div id="slTagBody"></div>`;
+}
+async function slTagSearch() {
+  const body = document.getElementById('slTagBody');
+  const raw = (document.getElementById('slTagInput').value || '').trim();
+  if (!raw) { toast('Enter a Tag No', 'error'); return; }
+  slLoading(body);
+  try {
+    const res = await slApi({ action: 'lookup', withPhoto: 1, tag: stockNormTag(raw) });
+    if (!res || !res.ok) { slError(body, res); return; }
+    if (res.status === 'notfound') { body.innerHTML = `<div class="empty-state"><p>Tag <b>${escHtml(stockNormTag(raw))}</b> — not found in stock or sold list.</p></div>`; return; }
+    const it = res.item || {};
+    const sold = res.status === 'sold';
+    const rows = [['Type', it.type], ['Product', it.productName], ['Design', it.design], ['Tunch', it.tunch], ['Weight (gm)', it.weight],
+      ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''], ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
+      ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length],
+      ['Product From', it.productFrom], ['Counter', it.counter], ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', it.enteredBy]]
+      .filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
+    body.innerHTML = `<div class="kd-card" style="padding:14px;">
+      <div style="margin-bottom:10px;">${sold
+        ? `<span class="kd-pill red">SOLD</span> &nbsp;DSR <b>${escHtml(res.sold.dsrId)}</b> · ${fmtDMY(res.sold.soldDate)} · ${escHtml(res.sold.soldBy)} · ${escHtml(res.sold.payStatus)}`
+        : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b>`}</div>
+      ${it.photoData ? `<img src="${it.photoData}" style="max-width:100%;max-height:220px;border-radius:10px;margin-bottom:10px;">` : ''}
+      <table class="kd-table"><tbody>${rows.map(r => `<tr><td style="color:var(--dmuted);">${escHtml(r[0])}</td><td><b>${escHtml(r[1])}</b></td></tr>`).join('')}</tbody></table></div>`;
+  } catch (e) { slError(body, null); }
+}
+
+async function slRenderManage(box) {
+  slLoading(box);
+  try {
+    await slEnsureMeta();
+    const names = SL.counters.concat([SL.mainHub]);
+    box.innerHTML = `<div class="form-2col">
+        <div class="form-row"><label>Counter</label><select class="uniform-select" id="slMgCounter"><option value="">All</option>${names.map(n => `<option>${escHtml(n)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Tag / Product</label><input type="text" id="slMgQ" placeholder="e.g. BOM2154 or Chain" autocomplete="off" onkeydown="if(event.key==='Enter')slLoadManage()"></div>
+      </div>
+      <button class="btn-primary" style="width:100%;" onclick="slLoadManage()">🔍 Show Stock</button>
+      <div id="slMgBody" style="margin-top:12px;"></div>`;
+    slLoadManage();
+  } catch (e) { slError(box, null); }
+}
+async function slLoadManage() {
+  const body = document.getElementById('slMgBody'); if (!body) return;
+  slLoading(body);
+  try {
+    const res = await slApi({ action: 'listStock', counter: document.getElementById('slMgCounter').value, q: document.getElementById('slMgQ').value.trim(), limit: 200 });
+    if (!res || !res.ok) { slError(body, res); return; }
+    SL.rows = res.rows || [];
+    if (!SL.rows.length) { body.innerHTML = '<div class="empty-state"><p>No stock found.</p></div>'; return; }
+    body.innerHTML = `<div class="kd-note">Showing ${SL.rows.length} of ${res.total} (newest first)</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt</th><th>Qty</th><th>Entry</th><th>Action</th></tr></thead><tbody>` +
+      SL.rows.map((r, i) => `<tr><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.entryType)}<br><small>${fmtDMY(r.entryDate)}</small></td>
+        <td style="white-space:nowrap;"><button class="btn-sm" onclick="slEditRow(${i})">✏️</button> ${r.tagStatus === 'Non Tag' ? `<button class="btn-sm" onclick="slSellRow(${i})" title="Mark sold">💰</button> ` : ''}<button class="btn-sm" onclick="slDeleteRow(${i})" style="color:var(--red);">🗑️</button></td></tr>`).join('') +
+      '</tbody></table></div>';
+  } catch (e) { slError(body, null); }
+}
+
+function slOpenModal(inner) {
+  const old = document.getElementById('slModal'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'slModal'; d.className = 'modal-overlay show';
+  d.innerHTML = `<div class="modal-box" style="max-width:460px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('slModal').remove()" title="Close">✕</button>${inner}</div>`;
+  document.body.appendChild(d);
+}
+function slField(id, label, val, type) {
+  return `<div class="form-row"><label>${label}</label><input type="${type || 'text'}" id="slF-${id}" value="${escHtml(val == null ? '' : val)}"></div>`;
+}
+function slEditRow(i) {
+  const r = SL.rows[i]; if (!r) return;
+  const dia = r.type === 'Diamond', tag = r.tagStatus !== 'Non Tag';
+  const names = SL.counters;
+  let f = `<div class="modal-title">✏️ Edit ${escHtml(r.stockId)} — ${escHtml(r.type)}</div>
+    <div class="form-2col">
+      <div class="form-row"><label>Product From</label><select id="slF-productFrom" class="uniform-select" onchange="document.getElementById('slF-counter').disabled=this.value==='Main'">
+        <option ${r.productFrom === 'Retail' ? 'selected' : ''}>Retail</option><option ${r.productFrom === 'Main' ? 'selected' : ''}>Main</option></select></div>
+      <div class="form-row"><label>Counter</label><select id="slF-counter" class="uniform-select" ${r.productFrom === 'Main' ? 'disabled' : ''}>${names.map(n => `<option ${n === r.counter ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+    </div>`;
+  if (tag) f += slField('tagNo', 'Tag No', r.tagNo);
+  f += slField('productName', 'Product Name', r.productName);
+  if (!dia) f += slField('design', 'Design', r.design);
+  f += `<div class="form-2col">${slField('bangleSize', 'Bangle Size', r.bangleSize)}${slField('ringSize', 'Ring Size', r.ringSize)}</div>${slField('length', 'Length', r.length)}`;
+  f += slField('tunch', dia ? 'Gold Tunch' : 'Tunch', r.tunch);
+  if (dia) f += `<div class="form-2col">${slField('gross', 'Gross Wt (gm)', r.gross)}${slField('net', 'Net Wt (gm)', r.net)}</div>${slField('carat', 'Carat', r.carat)}<div class="form-2col">${slField('clarity', 'Clarity', r.clarity)}${slField('color', 'Color', r.color)}</div>${slField('certNo', 'Certificate No', r.certNo)}`;
+  else f += slField('weight', 'Weight (gm)', r.weight);
+  if (!tag) f += slField('qty', 'Quantity', r.qty, 'number');
+  f += slField('billNo', 'Bill No', r.billNo);
+  f += `<button class="btn-primary" style="width:100%;margin-top:6px;" onclick="slSaveEdit(${i})">Save changes</button>`;
+  slOpenModal(f);
+}
+async function slSaveEdit(i) {
+  const r = SL.rows[i]; if (!r) return;
+  const dia = r.type === 'Diamond', tag = r.tagStatus !== 'Non Tag';
+  const g = id => { const e = document.getElementById('slF-' + id); return e ? e.value.trim() : undefined; };
+  const fields = { productFrom: g('productFrom'), productName: g('productName'), bangleSize: g('bangleSize'), ringSize: g('ringSize'), length: g('length'), tunch: g('tunch'), billNo: g('billNo') };
+  if (fields.productFrom === 'Retail') fields.counter = g('counter');
+  if (tag) { fields.tagNo = g('tagNo'); if (!fields.tagNo) { toast('Tag No is required', 'error'); return; } if (stockTagHasSep(fields.tagNo)) { toast('Tag No: space, - or / not allowed', 'error'); return; } }
+  if (!fields.productName) { toast('Product Name is required', 'error'); return; }
+  if (dia) { fields.gross = g('gross'); fields.net = g('net'); fields.weight = fields.net; fields.carat = g('carat'); fields.clarity = g('clarity'); fields.color = g('color'); fields.certNo = g('certNo');
+    if (!(parseFloat(fields.gross) > 0) || !(parseFloat(fields.net) > 0) || parseFloat(fields.net) > parseFloat(fields.gross)) { toast('Check Gross / Net weight', 'error'); return; } }
+  else { fields.design = g('design'); fields.weight = g('weight'); if (!(parseFloat(fields.weight) > 0)) { toast('Weight is required', 'error'); return; } }
+  if (!tag) { fields.qty = g('qty'); if (!(parseInt(fields.qty, 10) >= 1)) { toast('Quantity must be 1 or more', 'error'); return; } }
+  try {
+    const res = await slPost({ action: 'adminUpdate', stockId: r.stockId, fields: fields });
+    if (res && res.ok) { toast('Stock entry updated', 'success'); document.getElementById('slModal').remove(); slLoadManage(); }
+    else toast((res && res.error) || 'Update failed', 'error');
+  } catch (e) { toast('Network error — not saved', 'error'); }
+}
+async function slDeleteRow(i) {
+  const r = SL.rows[i]; if (!r) return;
+  if (!confirm('Delete this stock entry?\n\n' + (r.tagNo || 'Non Tag') + ' — ' + r.productName + ' (' + r.stockId + ')\n\nThis cannot be undone (it is written to the Audit Log sheet).')) return;
+  try {
+    const res = await slPost({ action: 'adminDelete', stockId: r.stockId });
+    if (res && res.ok) { toast('Deleted', 'success'); slLoadManage(); } else toast((res && res.error) || 'Delete failed', 'error');
+  } catch (e) { toast('Network error — not deleted', 'error'); }
+}
+function slSellRow(i) {
+  const r = SL.rows[i]; if (!r) return;
+  slOpenModal(`<div class="modal-title">💰 Mark sold — ${escHtml(r.productName)}</div>
+    <div class="kd-note">In stock: ${r.qty} pcs · ${slFmtWt(r.weight)} gm (Non Tag item, so it is marked sold manually)</div>
+    ${slField('sellQty', 'Quantity sold', r.qty, 'number')}${slField('sellWt', 'Weight sold (gm)', r.weight)}${slField('sellDate', 'Sold date', toYMD(new Date()), 'date')}${slField('sellNote', 'Bill / note (optional)', '')}
+    <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="slSaveSell(${i})">Mark sold</button>`);
+}
+async function slSaveSell(i) {
+  const r = SL.rows[i]; if (!r) return;
+  const g = id => document.getElementById('slF-' + id).value.trim();
+  try {
+    const res = await slPost({ action: 'adminSellNonTag', stockId: r.stockId, qty: g('sellQty'), weight: g('sellWt'), soldDate: g('sellDate'), note: g('sellNote') });
+    if (res && res.ok) { toast('Marked sold', 'success'); document.getElementById('slModal').remove(); slLoadManage(); }
+    else toast((res && res.error) || 'Failed', 'error');
+  } catch (e) { toast('Network error — not saved', 'error'); }
+}
+
 
 // ══════════════════════════════════════
 // GOLDEN AURA — new scheme entry form + list/search (mirrors Loyalty
@@ -16690,11 +17142,12 @@ function dsrfSubmit(who) {
         if (parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
         if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
+      if (dTs === 'Tag' && dTn && stockTagHasSep(dTn)) { ok = false; errMsg = 'Tag No lo space, - leda / vaddu. BOM2154 la enter cheyandi.'; return; }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
-        diamondTagStatus: dTs || '', diamondTagNo: dTn || '', diamondProductName: dpn,
+        diamondTagStatus: dTs || '', diamondTagNo: (dTn || '').toUpperCase(), diamondProductName: dpn,
         diamondCent: '', diamondQuality: '', diamondWeight: '',
         diamondPhoto: dPhoto.length > 100 ? dPhoto : '',
         diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
@@ -16711,10 +17164,11 @@ function dsrfSubmit(who) {
         if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
         if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
+      if (ts === 'Tag' && tn && stockTagHasSep(tn)) { ok = false; errMsg = 'Tag No lo space, - leda / vaddu. BOM2154 la enter cheyandi.'; return; }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
       const gBillNo = dsrfGv(`dsrfGoldBillNo-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
-        type, productFrom: pf, tagStatus: ts || '', tagNo: tn || '', productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
+        type, productFrom: pf, tagStatus: ts || '', tagNo: (tn || '').toUpperCase(), productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
         photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: gBillNo || '' });
     }
   });
