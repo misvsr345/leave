@@ -6934,6 +6934,7 @@ function submitDsrOffline(rows, idemKey, who, reason) {
   const custEl = document.getElementById('dsrfCust-' + who); if (custEl) custEl.value = '';
   const mobEl = document.getElementById('dsrfMobile-' + who); if (mobEl) mobEl.value = '';
   const addrEl = document.getElementById('dsrfAddr-' + who); if (addrEl) addrEl.value = '';
+  const billNoEl = document.getElementById('dsrfBillNo-' + who); if (billNoEl) billNoEl.value = '';
   const dateEl = document.getElementById('dsrfBillDate-' + who); if (dateEl) dateEl.value = toYMD(new Date());
 }
 
@@ -13373,6 +13374,14 @@ function renderDsrEntryForm(who, force) {
             </div>
             <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
           </div>
+          <div class="g2" style="margin-top:14px;">
+            <div><label>Bill No <span class="req">★</span></label>
+              <input type="text" id="dsrfBillNo-${who}" placeholder="e.g. R1042, E205, B2B1042" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
+                oninput="dsrfBillNoTyping('${who}')">
+              <div style="font-size:11.5px;margin-top:5px;line-height:1.4;" id="dsrfBillNoMsg-${who}"></div>
+            </div>
+            <div></div>
+          </div>
           <!-- Return/Replace only: date the customer actually returned the item
                (Bill Date stays locked to the original sale). Hidden in a normal DSR entry. -->
           <div class="g2" id="dsrfReturnDateWrap-${who}" style="display:none;margin-top:14px;">
@@ -13623,9 +13632,6 @@ function dsrfAddEntry(who) {
             <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37"></div>
             <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'g')}</div>
           </div>
-          <div class="g2 mb12" style="margin-top:12px;">
-            <div><label>Bill No</label><input type="text" id="dsrfGoldBillNo-${who}-${eid}" placeholder="e.g. INV-1042"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -13674,7 +13680,7 @@ function dsrfAddEntry(who) {
           </div>
           <div class="g2 mb12">
             <div><label>Certificate No</label><input type="text" id="dsrfDiaCertNo-${who}-${eid}" placeholder="e.g. GIA-1234567"></div>
-            <div><label>Bill No</label><input type="text" id="dsrfDiaBillNo-${who}-${eid}" placeholder="e.g. INV-1042"></div>
+            <div></div>
           </div>
           <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'dia')}</div>
         </div>
@@ -13692,7 +13698,7 @@ function dsrfAddEntry(who) {
           </div>
           <div class="g2 mb12">
             <div><label>Quality</label><input type="text" id="dsrfSilverQuality-${who}-${eid}" placeholder="e.g. 925 Sterling"></div>
-            <div><label>Bill No</label><input type="text" id="dsrfSilverBillNo-${who}-${eid}" placeholder="e.g. INV-1042"></div>
+            <div></div>
           </div>
           <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 's')}</div>
         </div>
@@ -13729,6 +13735,7 @@ function dsrfChkMob(who, inp) {
   const v = inp.value.replace(/\D/g, ''); inp.value = v;
   const e = document.getElementById('dsrfMobErr-' + who);
   if (v.length > 0 && v.length < 10) { inp.classList.add('err-inp'); e.textContent = '⚠ WRONG — ' + v.length + '/10 digits'; e.classList.add('show'); }
+  else if (v.length === 10 && !/^[6-9]/.test(v)) { inp.classList.add('err-inp'); e.textContent = '⚠ WRONG — must start with 6, 7, 8 or 9'; e.classList.add('show'); }
   else { inp.classList.remove('err-inp'); e.classList.remove('show'); }
 }
 
@@ -13849,6 +13856,9 @@ var STOCK_GAS_URL = "https://script.google.com/macros/s/AKfycbyZR0GpuTCgy2ErrFO4
 function stockIsConfigured() { return !!STOCK_GAS_URL && STOCK_GAS_URL.indexOf('PASTE') === -1; }
 function stockNormTag(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 function stockTagHasSep(s) { return /[^A-Za-z0-9]/.test(String(s == null ? '' : s).trim()); }
+// A real Tag No is letters + numbers together (e.g. BOM2154, RJ12) — never pure digits, never pure
+// letters, and never a separator (space, -, /).
+function dsrTagValid(s) { return /^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+$/.test(String(s == null ? '' : s).trim()); }
 
 // ---------- DSR form: tag typing / lookup / auto-fill ----------
 function dsrfTagMsg(id, cls, txt) {
@@ -13860,11 +13870,30 @@ function dsrfTagIds(who, eid, kind) {
   const d = kind === 'd';
   return { inp: (d ? 'dsrfDiaTagNo-' : 'dsrfTagNo-') + who + '-' + eid, msg: (d ? 'dsrfDiaTagMsg-' : 'dsrfTagMsg-') + who + '-' + eid };
 }
+// Bill No: R / E / B2B followed by digits, no spaces — e.g. R1042, E205, B2B1042.
+function dsrBillNoValid(s) { return /^(R|E|B2B)\d+$/.test(String(s == null ? '' : s).trim()); }
+function dsrfBillNoTyping(who) {
+  const inp = document.getElementById('dsrfBillNo-' + who); if (!inp) return;
+  const msgEl = document.getElementById('dsrfBillNoMsg-' + who);
+  const raw = inp.value.toUpperCase(); inp.value = raw;
+  const val = raw.trim();
+  if (!val) { inp.classList.remove('err-inp'); if (msgEl) { msgEl.style.color = ''; msgEl.textContent = ''; } return; }
+  if (/\s/.test(val) || !dsrBillNoValid(val)) {
+    inp.classList.add('err-inp');
+    if (msgEl) { msgEl.style.color = '#C0392B'; msgEl.textContent = '⚠ Must start with R, E or B2B then a number, no spaces — e.g. R1042, E205, B2B1042'; }
+  } else {
+    inp.classList.remove('err-inp');
+    if (msgEl) { msgEl.style.color = ''; msgEl.textContent = ''; }
+  }
+}
 function dsrfTagTyping(who, eid, kind) {
   const ids = dsrfTagIds(who, eid, kind);
   const inp = document.getElementById(ids.inp); if (!inp) return;
   inp.__lk = (inp.__lk || 0) + 1;                       // cancels any lookup still running for older text
-  if (stockTagHasSep(inp.value)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); }
+  const raw = inp.value.trim();
+  if (!raw) { inp.classList.remove('err-inp'); dsrfTagMsg(ids.msg, 'info', ''); }
+  else if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); }
+  else if (!dsrTagValid(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Tag No needs both letters and numbers — e.g. BOM2154'); }
   else { inp.classList.remove('err-inp'); dsrfTagMsg(ids.msg, 'info', ''); }
 }
 function dsrfClickToggle(groupId, label) {
@@ -13939,6 +13968,7 @@ async function dsrfTagLookup(who, eid, kind) {
   const raw = inp.value.trim();
   if (!raw) { dsrfTagMsg(ids.msg, 'info', ''); return; }
   if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); return; }
+  if (!dsrTagValid(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Tag No needs both letters and numbers — e.g. BOM2154'); return; }
   inp.classList.remove('err-inp');
   inp.value = raw.toUpperCase();
   if (!stockIsConfigured()) { dsrfTagMsg(ids.msg, 'info', ''); return; }
@@ -14208,7 +14238,7 @@ async function slSaveEdit(i) {
   const g = id => { const e = document.getElementById('slF-' + id); return e ? e.value.trim() : undefined; };
   const fields = { productFrom: g('productFrom'), productName: g('productName'), bangleSize: g('bangleSize'), ringSize: g('ringSize'), length: g('length'), tunch: g('tunch'), billNo: g('billNo') };
   if (fields.productFrom === 'Retail') fields.counter = g('counter');
-  if (tag) { fields.tagNo = g('tagNo'); if (!fields.tagNo) { toast('Tag No is required', 'error'); return; } if (stockTagHasSep(fields.tagNo)) { toast('Tag No: space, - or / not allowed', 'error'); return; } }
+  if (tag) { fields.tagNo = g('tagNo'); if (!fields.tagNo) { toast('Tag No is required', 'error'); return; } if (stockTagHasSep(fields.tagNo)) { toast('Tag No: space, - or / not allowed', 'error'); return; } if (!dsrTagValid(fields.tagNo)) { toast('Tag No needs both letters and numbers', 'error'); return; } }
   if (!fields.productName) { toast('Product Name is required', 'error'); return; }
   if (dia) { fields.gross = g('gross'); fields.net = g('net'); fields.weight = fields.net; fields.carat = g('carat'); fields.clarity = g('clarity'); fields.color = g('color'); fields.certNo = g('certNo');
     if (!(parseFloat(fields.gross) > 0) || !(parseFloat(fields.net) > 0) || parseFloat(fields.net) > parseFloat(fields.gross)) { toast('Check Gross / Net weight', 'error'); return; } }
@@ -17084,6 +17114,7 @@ function dsrfSubmit(who) {
   // uppercase, not because a stylesheet is hiding the real casing.
   const cust = (dsrfGv('dsrfCust-' + who) || '').toUpperCase();
   const addr = (dsrfGv('dsrfAddr-' + who) || '').toUpperCase();
+  const billNo = (dsrfGv('dsrfBillNo-' + who) || '').toUpperCase();
 
   // Return/Replace: Bill Date / Customer / Mobile / Address / Employee all come from the ORIGINAL
   // sale (locked in the form and re-read server-side from the old row), so only the Return Date
@@ -17098,7 +17129,9 @@ function dsrfSubmit(who) {
   } else {
     if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
     if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
-    if (!/^\d{10}$/.test(mob)) { toast('Mobile must be 10 digits!', 'error'); return; }
+    if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
+    if (!billNo) { toast('Please enter Bill No!', 'error'); return; }
+    if (!dsrBillNoValid(billNo)) { toast('Bill No must start with R, E or B2B followed by a number, no spaces — e.g. R1042, E205, B2B1042', 'error'); return; }
   }
 
   const entries = document.querySelectorAll(`#dsrfEntriesList-${who} .entry`);
@@ -17118,11 +17151,11 @@ function dsrfSubmit(who) {
       if (!sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
       if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
       const sPhoto = dsrfGv(`dsrfPh-s-${who}-${eid}`);
-      const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`), sBillNo = dsrfGv(`dsrfSilverBillNo-${who}-${eid}`);
+      const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '',
-        silverQuality: sQuality || '', billNo: sBillNo || '' });
+        silverQuality: sQuality || '', billNo: billNo || '' });
     } else if (type === 'Diamond') {
       // v-fix (BRO: "Diamond kosam Silver laga, vere columns add chei" —
       // upgraded from the earlier design where Cent/Quality reused
@@ -17136,7 +17169,7 @@ function dsrfSubmit(who) {
       const dGrossWt = dsrfGv(`dsrfDiaGrossWt-${who}-${eid}`), dNetWt = dsrfGv(`dsrfDiaNetWt-${who}-${eid}`),
             dGoldTunch = dsrfGv(`dsrfDiaGoldTunch-${who}-${eid}`), dCarat = dsrfGv(`dsrfDiaCarat-${who}-${eid}`),
             dClarity = dsrfGv(`dsrfDiaClarity-${who}-${eid}`), dColor = dsrfGv(`dsrfDiaColor-${who}-${eid}`),
-            dCertNo = dsrfGv(`dsrfDiaCertNo-${who}-${eid}`), dBillNo = dsrfGv(`dsrfDiaBillNo-${who}-${eid}`);
+            dCertNo = dsrfGv(`dsrfDiaCertNo-${who}-${eid}`);
       if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
         if (!dGrossWt) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
@@ -17144,7 +17177,7 @@ function dsrfSubmit(who) {
         if (parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
         if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
-      if (dTs === 'Tag' && dTn && stockTagHasSep(dTn)) { ok = false; errMsg = 'Tag No: no spaces, - or / allowed. Enter like BOM2154.'; return; }
+      if (dTs === 'Tag' && dTn && !dsrTagValid(dTn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
@@ -17154,7 +17187,7 @@ function dsrfSubmit(who) {
         diamondPhoto: dPhoto.length > 100 ? dPhoto : '',
         diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
         diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
-        diamondCertNo: dCertNo || '', billNo: dBillNo || '' });
+        diamondCertNo: dCertNo || '', billNo: billNo || '' });
     } else {
       let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrTitleCase(dsrfGv(`dsrfPnCustom-${who}-${eid}`));
       const des = dsrTitleCase(dsrfGv(`dsrfDes-${who}-${eid}`)), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
@@ -17166,12 +17199,11 @@ function dsrfSubmit(who) {
         if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
         if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
-      if (ts === 'Tag' && tn && stockTagHasSep(tn)) { ok = false; errMsg = 'Tag No: no spaces, - or / allowed. Enter like BOM2154.'; return; }
+      if (ts === 'Tag' && tn && !dsrTagValid(tn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
-      const gBillNo = dsrfGv(`dsrfGoldBillNo-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
         type, productFrom: pf, tagStatus: ts || '', tagNo: (tn || '').toUpperCase(), productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
-        photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: gBillNo || '' });
+        photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: billNo || '' });
     }
   });
 
@@ -17682,6 +17714,7 @@ function dsrfConfirmSubmit(who, evt) {
         document.getElementById('dsrfCust-' + who).value = '';
         document.getElementById('dsrfMobile-' + who).value = '';
         document.getElementById('dsrfAddr-' + who).value = '';
+        document.getElementById('dsrfBillNo-' + who).value = '';
         document.getElementById('dsrfBillDate-' + who).value = toYMD(new Date());
         dsrfSetPayStatus(who, 'Purchased', document.getElementById('dsrfBtnPurchased-' + who));
       } else {
@@ -18093,7 +18126,7 @@ function submitAdvanceOrderUpdate(who) {
   const addr = (dsrfGv(`aoeAddr-${who}`) || '').toUpperCase();
   const date = dsrfGv(`aoeBillDate-${who}`);
   if (!cust || !mob || !addr || !date) { toast('Please fill Bill Date, Customer, Mobile and Address!', 'error'); return; }
-  if (!/^\d{10}$/.test(mob)) { toast('Mobile must be 10 digits!', 'error'); return; }
+  if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
 
   const entries = document.querySelectorAll(`#aoeItemsList-${who} .entry`);
   if (!entries.length) { toast('At least one item is required!', 'error'); return; }
