@@ -13842,7 +13842,6 @@ function dsrfGv(id) { const e = document.getElementById(id); return e ? e.value.
 // While STOCK_GAS_URL still says PASTE..., all of this stays silent and the DSR form works exactly as before.
 // ══════════════════════════════════════════════════════════════════════
 var STOCK_GAS_URL = "https://script.google.com/macros/s/AKfycbyZR0GpuTCgy2ErrFO4DOyBaN2USByivHUxN1QOeR67mkRM0l_pcmnodBt41KF29Wi0/exec";
-var STOCK_KEY = "CHANGE_THIS_SECRET";
 
 function stockIsConfigured() { return !!STOCK_GAS_URL && STOCK_GAS_URL.indexOf('PASTE') === -1; }
 function stockNormTag(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
@@ -13979,7 +13978,7 @@ function slApi(params) {
   return _fetchWithTimeout(STOCK_GAS_URL + '?' + qs, {}, 45000).then(r => r.json());
 }
 function slPost(payload) {
-  payload.key = STOCK_KEY; payload.by = state.adminName || 'Admin';
+  payload.by = state.adminName || 'Admin';
   return _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }, 60000).then(r => r.json());
 }
 function slFmtWt(n) { const v = parseFloat(n); return isNaN(v) ? '0' : (Math.round(v * 1000) / 1000).toFixed(3).replace(/\.?0+$/, ''); }
