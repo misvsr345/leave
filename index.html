@@ -14518,6 +14518,7 @@ function seFormHtml(scope) {
     .se-wrap .se-banner.ok{background:#E7F5EE;color:#1E7A4B;border:1px solid #BFE3D0}
     .se-wrap .se-banner.err{background:#FFF1EF;color:#C0392B;border:1px solid #F3C9C4}
     .se-wrap .se-banner.info{background:#fff;color:var(--purple,#4A0E8F);border:1.5px solid #D4AF37}
+    .se-wrap .se-ph2col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .se-wrap .se-ph{display:flex;align-items:center;gap:8px;border:1.5px dashed #D4AF37;border-radius:10px;background:var(--purple-bg,#F5EEFB);color:#6B5A80;padding:12px 14px;cursor:pointer;font-size:12.5px;font-weight:600;position:relative}
     .se-wrap .se-ph input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
     .se-wrap .se-phprev{max-width:100%;max-height:130px;border-radius:8px;margin-top:8px;display:none}
@@ -14628,7 +14629,11 @@ function seItemHtml(n) {
         </div>
         <div>
           <label>Photo</label>
-          <div class="se-ph"><span>📷</span><span data-role="phTxt">Upload Photo</span><input type="file" accept="image/*" capture="environment" data-role="file"></div>
+          <div class="se-ph2col">
+            <div class="se-ph"><span>📷</span><span>Take Photo</span><input type="file" accept="image/*" capture="environment" data-role="fileCam"></div>
+            <div class="se-ph"><span>🖼️</span><span>Gallery</span><input type="file" accept="image/*" data-role="fileGal"></div>
+          </div>
+          <div class="se-msg info" data-role="phTxt"></div>
           <img class="se-phprev" data-role="prev" alt="">
         </div>
       </div>
@@ -14686,7 +14691,8 @@ function seWireItem(scope, b) {
   });
   tag.addEventListener('change', () => seCheckTag(scope, b));
   tag.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); tag.blur(); } });
-  seR(b,'file').addEventListener('change', ev => seLoadPhoto(b, ev.target));
+  seR(b,'fileCam').addEventListener('change', ev => seLoadPhoto(b, ev.target));
+  seR(b,'fileGal').addEventListener('change', ev => seLoadPhoto(b, ev.target));
 }
 function seSetTagMsg(b, cls, txt) { const m = seR(b,'tagMsg'); m.className = 'se-msg ' + cls; m.textContent = txt; }
 
