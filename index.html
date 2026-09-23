@@ -4053,6 +4053,7 @@ const DSR_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineDsrQueue';
 const LOYALTY_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLoyaltyQueue';
 const GOLDEN_AURA_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineGoldenAuraQueue';
 const LEADS_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLeadsQueue';
+const STOCK_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineStockQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
 const DAILY_SHOP_FORM_URL = 'https://forms.gle/SV2RbxC6uKNaNM1j8';
 
@@ -6695,7 +6696,7 @@ function updateConnStatus() {
   // so "did my data actually save?" never has to be a guess again:
   //   pending > 0 → gold "📤 Sync (N)" — tap to upload now
   //   pending = 0 → green "✅ Synced"  — confirms nothing is waiting
-  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).length;
+  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).length + getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY).length;
   ['empMoreSyncLabel', 'adminMoreSyncLabel', 'empSidebarSyncLabel', 'adminSidebarSyncLabel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = pendingCount > 0 ? pendingCount + ' item(s) pending' : 'All synced';
@@ -6720,14 +6721,14 @@ function updateConnStatus() {
     }
   });
 }
+var __syncProgress = null; // {done, total} while the Sync modal's progress ring is active, else null
 async function flushAllOfflineQueues() {
-  await Promise.all([
-    flushOfflineQueue(),
-    flushDsrOfflineQueue(),
-    flushLoyaltyOfflineQueue(),
-    flushGoldenAuraOfflineQueue(),
-    flushLeadsOfflineQueue()
-  ]);
+  const fns = [flushOfflineQueue, flushDsrOfflineQueue, flushStockOfflineQueue, flushLoyaltyOfflineQueue, flushGoldenAuraOfflineQueue, flushLeadsOfflineQueue];
+  if (__syncProgress) { __syncProgress.total = fns.length; __syncProgress.done = 0; seUpdateSyncRing(); }
+  for (const fn of fns) {
+    await fn();
+    if (__syncProgress) { __syncProgress.done++; seUpdateSyncRing(); }
+  }
 }
 window.addEventListener('online', () => { updateConnStatus(); flushAllOfflineQueues(); });
 window.addEventListener('offline', updateConnStatus);
@@ -6760,6 +6761,13 @@ function getOfflinePendingSummary() {
             ' — Bill: ' + (first.billDate || '?') + ' — ' + rows.length + ' item(s)'
     });
   });
+  getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY).forEach(it => {
+    const h = it.header || {};
+    items.push({
+      type: '📦 Stock Entry', savedAt: it.savedAt,
+      desc: (h.entryType || 'Stock') + ' — ' + (h.productFrom==='Main' ? 'Main Hub' : (h.counter || '?')) + ' — ' + (h.enteredBy || '')
+    });
+  });
   getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).forEach(it => {
     const p = it.payload || {};
     items.push({
@@ -6785,19 +6793,59 @@ function getOfflinePendingSummary() {
   return items;
 }
 
-function renderSyncOfflineModalBody() {
+// Groups the flat pending list into one section per module (Leave / DSR / Stock Entry / Loyalty Card /
+// Golden Aura / Leads) — each rendered as its own table, instead of one mixed list, so it's obvious at a
+// glance what kind of data is waiting and how much of each.
+function getOfflinePendingGrouped() {
   const items = getOfflinePendingSummary();
-  const listHtml = items.length
-    ? items.map(it => {
-        const when = it.savedAt ? new Date(it.savedAt).toLocaleString() : '—';
-        return '<div style="padding:10px 12px;border:1px solid var(--border,#e5d9c0);border-radius:8px;margin-bottom:8px;background:var(--card-bg,#fffaf3);">' +
-          '<div style="font-weight:700;font-size:12.5px;">' + it.type + '</div>' +
-          '<div style="font-size:12px;color:var(--text2,#5b4a2e);margin-top:2px;">' + it.desc + '</div>' +
-          '<div style="font-size:10.5px;color:var(--text3,#9a8a6a);margin-top:4px;">Saved on this device: ' + when + '</div>' +
-        '</div>';
-      }).join('')
-    : '<div class="empty-state" style="padding:20px;text-align:center;color:var(--text3,#9a8a6a);">✅ Nothing pending — everything entered on this device has been sent.</div>';
-  return '<div id="syncOfflineList">' + listHtml + '</div>';
+  const order = ['🏖️ Leave Application', '📝 DSR Entry', '📦 Stock Entry', '💳 Loyalty Card', '✨ Golden Aura', '📞 Lead Call Log'];
+  const names = { '🏖️ Leave Application':'Leave', '📝 DSR Entry':'DSR', '📦 Stock Entry':'Stock Entry',
+    '💳 Loyalty Card':'Loyalty Card', '✨ Golden Aura':'Golden Aura', '📞 Lead Call Log':'Leads' };
+  return order.map(type => ({ type, section: names[type], rows: items.filter(it => it.type === type) }))
+    .filter(g => g.rows.length > 0);
+}
+
+function renderSyncOfflineModalBody() {
+  const groups = getOfflinePendingGrouped();
+  if (!groups.length) {
+    return '<div id="syncOfflineList"><div class="empty-state" style="padding:20px;text-align:center;color:var(--text3,#9a8a6a);">✅ Nothing pending — everything entered on this device has been sent.</div></div>';
+  }
+  const html = groups.map(g => {
+    const rows = g.rows.map(it => {
+      const when = it.savedAt ? new Date(it.savedAt).toLocaleString() : '—';
+      return '<tr><td style="padding:8px 10px;font-size:12.5px;">' + escHtml(it.desc) + '</td>' +
+        '<td style="padding:8px 10px;font-size:11px;color:var(--text3,#9a8a6a);white-space:nowrap;">' + when + '</td></tr>';
+    }).join('');
+    return '<div style="margin-bottom:14px;">' +
+      '<div style="font-weight:800;font-size:13px;margin-bottom:6px;">' + g.type + ' <span style="font-weight:600;color:var(--text3,#9a8a6a);">(' + g.rows.length + ')</span></div>' +
+      '<table style="width:100%;border-collapse:collapse;border:1px solid var(--border,#e5d9c0);border-radius:8px;overflow:hidden;">' +
+      '<thead><tr style="background:var(--card-bg,#fffaf3);"><th style="text-align:left;padding:7px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--text3,#9a8a6a);">Details</th>' +
+      '<th style="text-align:left;padding:7px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--text3,#9a8a6a);">Saved On</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>';
+  }).join('');
+  return '<div id="syncOfflineList">' + html + '</div>';
+}
+
+// Circular fill-progress indicator (SVG ring) — shows what % of the sync steps (one per module queue)
+// have been attempted so far, so a long sync isn't just a spinner with no sense of how much is left.
+function seSyncRingHtml() {
+  const c = 2 * Math.PI * 26;
+  return '<svg width="64" height="64" viewBox="0 0 64 64" style="display:block;margin:0 auto 10px;">' +
+    '<circle cx="32" cy="32" r="26" fill="none" stroke="var(--border,#e5d9c0)" stroke-width="6"></circle>' +
+    '<circle id="syncProgressRing" cx="32" cy="32" r="26" fill="none" stroke="var(--purple,#4A0E8F)" stroke-width="6" ' +
+    'stroke-linecap="round" stroke-dasharray="' + c.toFixed(2) + '" stroke-dashoffset="' + c.toFixed(2) + '" ' +
+    'transform="rotate(-90 32 32)" style="transition:stroke-dashoffset .25s ease;"></circle>' +
+    '<text id="syncProgressText" x="32" y="37" text-anchor="middle" font-size="13" font-weight="800" fill="var(--purple,#4A0E8F)">0%</text>' +
+    '</svg>';
+}
+function seUpdateSyncRing() {
+  if (!__syncProgress) return;
+  const pct = __syncProgress.total ? Math.min(100, Math.round((__syncProgress.done / __syncProgress.total) * 100)) : 100;
+  const c = 2 * Math.PI * 26;
+  const ring = document.getElementById('syncProgressRing');
+  if (ring) ring.style.strokeDashoffset = (c - (pct / 100) * c).toFixed(2);
+  const txt = document.getElementById('syncProgressText');
+  if (txt) txt.textContent = pct + '%';
 }
 
 function openSyncOfflineModal() {
@@ -6809,12 +6857,13 @@ function openSyncOfflineModal() {
   modal.className = 'modal-overlay';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
   modal.innerHTML =
-    '<div style="background:var(--bg,#fff);border-radius:14px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto;padding:20px;">' +
+    '<div style="background:var(--bg,#fff);border-radius:14px;max-width:460px;width:100%;max-height:82vh;overflow-y:auto;padding:20px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
         '<div style="font-weight:800;font-size:16px;">🔄 Offline Data</div>' +
         '<div onclick="document.getElementById(\'syncOfflineModal\').remove()" style="cursor:pointer;font-size:20px;color:var(--text3,#9a8a6a);">×</div>' +
       '</div>' +
       '<div style="font-size:11.5px;color:var(--text3,#9a8a6a);margin-bottom:12px;">Status: ' + (online ? '🟢 Online' : '🔴 Offline — connect to sync') + '</div>' +
+      '<div id="syncRingWrap" style="display:none;">' + seSyncRingHtml() + '</div>' +
       renderSyncOfflineModalBody() +
       '<button class="btn btn-primary" id="syncOfflineNowBtn" style="width:100%;margin-top:12px;" onclick="syncOfflineModalSyncNow()">📤 Sync Now</button>' +
     '</div>';
@@ -6824,9 +6873,15 @@ function openSyncOfflineModal() {
 async function syncOfflineModalSyncNow() {
   const btn = document.getElementById('syncOfflineNowBtn');
   if (!navigator.onLine) { toast('Still offline — connect to the internet first', 'error'); return; }
+  const ringWrap = document.getElementById('syncRingWrap');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing...'; }
+  if (ringWrap) ringWrap.style.display = 'block';
+  __syncProgress = { done: 0, total: 6 };
+  seUpdateSyncRing();
   const before = getOfflinePendingSummary().length;
   await flushAllOfflineQueues();
+  __syncProgress = null;
+  if (ringWrap) ringWrap.style.display = 'none';
   const after = getOfflinePendingSummary().length;
   const synced = before - after;
   const list = document.getElementById('syncOfflineList');
@@ -7111,6 +7166,59 @@ async function flushLoyaltyOfflineQueue() {
     } catch (e2) {}
   } finally {
     __loyaltyFlushInFlight = false;
+  }
+}
+
+// Stock Entry (from the embedded Stock Entry page) — same offline-queue treatment as DSR/Loyalty above,
+// its own queue key since it POSTs to the Stock backend (a different Google account/URL) with its own
+// idemKey-based duplicate-safety already built into the payload.
+function submitStockOffline(scope, payload, header) {
+  const q = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
+  q.push({ payload, header, savedAt: Date.now() });
+  const saved = saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, q);
+  updateConnStatus();
+  if (!saved) {
+    seShowBanner(scope, 'err', 'Could not save offline — this device\'s storage is full. Please connect to the internet and tap Save again now, or Sync older offline items first.');
+    return false;
+  }
+  const st = SE_STATE[scope];
+  st.submitToken = Math.random().toString(36).slice(2,8);
+  SE(scope,'items').innerHTML=''; seAddItem(scope);
+  seShowBanner(scope, 'info', '📴 No network — saved on this device (' + header.entryType + ', ' + (header.productFrom==='Main'?'Main Hub':header.counter) + '). It will sync automatically once online, or use Sync Offline Data.');
+  return true;
+}
+let __stockPortalFlushInFlight = false;
+async function flushStockOfflineQueue() {
+  if (!navigator.onLine) return;
+  if (__stockPortalFlushInFlight) return;
+  __stockPortalFlushInFlight = true;
+  let q = [];
+  try {
+    q = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
+    if (!q.length) { updateConnStatus(); return; }
+    saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, []); // claim before sending — see flushDsrOfflineQueue's comment for the full race-condition explanation
+    const remaining = [];
+    for (const item of q) {
+      try {
+        const resp = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(item.payload) }, 60000);
+        const result = await resp.json();
+        if (!(result && result.ok)) remaining.push(item);
+      } catch (e) {
+        remaining.push(item);
+      }
+    }
+    const stillQueued = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
+    saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
+    updateConnStatus();
+    const synced = q.length - remaining.length;
+    if (synced > 0) toast('✅ ' + synced + ' offline Stock Entry(s) synced successfully', 'success');
+  } catch (outerErr) {
+    try {
+      const stillQueued = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
+      saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __stockPortalFlushInFlight = false;
   }
 }
 
@@ -14766,6 +14874,11 @@ async function seSave(scope) {
   const btn = SE(scope,'saveBtn'); btn.disabled = true; btn.textContent = 'Saving…';
   const base = Object.assign({ action:'saveStock', rows: c.rows.map(x=>x.row), confirmReturn: c.confirmReturn }, c.header);
   const payload = Object.assign({ idemKey: 'k' + st.submitToken + seHashStr(JSON.stringify(base)) }, base);
+  if (!navigator.onLine) {
+    submitStockOffline(scope, payload, c.header);
+    btn.disabled = false; btn.textContent = '★  Save Stock  ★';
+    return;
+  }
   try {
     const res = await _fetchWithTimeout(STOCK_GAS_URL, { method:'POST', body: JSON.stringify(payload) }, 90000).then(r=>r.json());
     if (res.ok) {
@@ -14780,15 +14893,35 @@ async function seSave(scope) {
       seShowBanner(scope,'err', res.error || 'Save failed. Nothing was saved.');
     }
   } catch (e) {
-    seShowBanner(scope,'err','No response from server. Check internet, then tap Save again (it will not create duplicates).');
+    // Real network failure — safe to queue: idemKey means even if the original request secretly DID
+    // reach the server, replaying it later can't create a duplicate.
+    submitStockOffline(scope, payload, c.header);
   } finally {
     btn.disabled = false; btn.textContent = '★  Save Stock  ★';
   }
 }
 
+var SE_LS_LISTS = 'vsrPortalStockLists_v1', SE_LS_META = 'vsrPortalStockMeta_v1';
 async function seLoadData(scope) {
   const st = SE_STATE[scope];
   const banner = SE(scope,'loadBanner');
+  let hadCache = false;
+  try {
+    const c = JSON.parse(localStorage.getItem(SE_LS_LISTS)||'null');
+    if (c) {
+      st.gold=c.gold||[]; st.diamond=c.diamond||[]; st.length=c.length||[]; st.bangleSize=c.bangleSize||[]; st.ringSize=c.ringSize||[];
+      st.diamondClarity=c.diamondClarity||[]; st.diamondColor=c.diamondColor||[]; st.goldFlags=c.goldFlags||{}; st.diaFlags=c.diaFlags||{};
+      st.counterDesigns=c.counterDesigns||{};
+      hadCache = true;
+    }
+    const m = JSON.parse(localStorage.getItem(SE_LS_META)||'null');
+    if (m) { st.counters = m.counters||[]; st.mainHub = m.mainHub||'Main Hub'; }
+  } catch (e) {}
+  if (hadCache) {
+    SE(scope,'items').querySelectorAll('.se-item').forEach(b => seRefreshItemLists(scope, b));
+    const cSel = SE(scope,'counter'); cSel.innerHTML = '<option value="">-- Select Counter --</option>' + st.counters.map(c=>`<option>${escHtml(c)}</option>`).join('');
+  }
+  SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
   try {
     const [d, m] = await Promise.all([
       _fetchWithTimeout(DSR_GAS_URL+'?action=getData', {}, 25000).then(r=>r.json()),
@@ -14799,18 +14932,22 @@ async function seLoadData(scope) {
     st.length = p.length||[]; st.bangleSize = p.bangleSize||[]; st.ringSize = p.ringSize||[];
     st.diamondClarity = p.diamondClarity||[]; st.diamondColor = p.diamondColor||[];
     st.goldFlags = p.goldFlags||{}; st.diaFlags = p.diaFlags||{}; st.counterDesigns = p.counterDesigns||{};
-    SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
+    try { localStorage.setItem(SE_LS_LISTS, JSON.stringify({gold:st.gold, diamond:st.diamond, length:st.length, bangleSize:st.bangleSize,
+      ringSize:st.ringSize, diamondClarity:st.diamondClarity, diamondColor:st.diamondColor, goldFlags:st.goldFlags, diaFlags:st.diaFlags,
+      counterDesigns:st.counterDesigns})); } catch (e) {}
     if (m && m.ok) {
       st.counters = m.counters||[]; st.mainHub = m.mainHub||'Main Hub';
       const cSel = SE(scope,'counter'); const prevC = cSel.value;
       cSel.innerHTML = '<option value="">-- Select Counter --</option>' + st.counters.map(c=>`<option>${escHtml(c)}</option>`).join('');
       if (prevC) cSel.value = prevC;
+      try { localStorage.setItem(SE_LS_META, JSON.stringify({counters:st.counters, mainHub:st.mainHub})); } catch (e) {}
     }
     SE(scope,'items').querySelectorAll('.se-item').forEach(b => seRefreshItemLists(scope, b));
     banner.classList.remove('show');
     if (!stockIsConfigured()) seShowBanner(scope,'err','Stock Level is not connected yet — contact admin.');
   } catch (e) {
-    banner.className = 'se-banner err show'; banner.textContent = 'Could not load employees / product list. Check internet and reopen this page.';
+    if (hadCache) { banner.textContent = 'Offline — using saved lists from last time.'; setTimeout(()=>banner.classList.remove('show'),3000); }
+    else { banner.className = 'se-banner err show'; banner.textContent = 'Could not load employees / product list. Check internet and reopen this page.'; }
   }
 }
 
