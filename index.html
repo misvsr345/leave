@@ -14331,6 +14331,7 @@ var SE_TUNCHS = ['750','916','999','585','375'];
 
 function seId(scope, name) { return 'se-' + scope + '-' + name; }
 function SE(scope, name) { return document.getElementById(seId(scope, name)); }
+function seCurrentEmpName(scope) { return scope === 'admin' ? (state.adminName || '') : (state.empName || ''); }
 function seOptList(arr, other) {
   return '<option value="">-- Select --</option>' + (arr||[]).map(x => `<option>${escHtml(x)}</option>`).join('') +
     (other ? '<option value="__other">Other (type manually)</option>' : '');
@@ -14362,6 +14363,7 @@ function mountStockEntryForm(scope) {
   });
   SE(scope,'counter').addEventListener('change', () => seRefreshAllDesigns(scope));
   SE(scope,'date').value = toYMD(new Date());
+  SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
   SE(scope,'addItem').addEventListener('click', () => { const d = seAddItem(scope); d.scrollIntoView({block:'center', behavior:'smooth'}); });
   SE(scope,'saveBtn').addEventListener('click', () => seSave(scope));
   seAddItem(scope);
@@ -14415,8 +14417,8 @@ function seFormHtml(scope) {
       <div class="se-ch">Entry Details</div>
       <div class="se-cb">
         <div class="se-mb">
-          <label>Employee Name <span class="req">★</span></label>
-          <select id="${seId(scope,'emp')}"><option value="">-- Select Employee --</option></select>
+          <label>Employee Name</label>
+          <div style="padding:11px 14px;background:var(--purple-bg,#F5EEFB);border:1.5px solid var(--gold,#B8860B);border-radius:10px;font-weight:700;color:var(--purple,#4A0E8F);font-size:15px;" id="${seId(scope,'empDisplay')}">👤 —</div>
         </div>
         <div class="se-g2 se-mb">
           <div><label>Date <span class="req">★</span></label><input type="date" id="${seId(scope,'date')}"></div>
@@ -14689,11 +14691,11 @@ function seShowBanner(scope, cls, txt) {
 function seCollect(scope) {
   const errs = [], rows = [], confirmReturn = [];
   const header = {
-    enteredBy: SE(scope,'emp').value, entryDate: SE(scope,'date').value, entryType: seTogVal(SE(scope,'tglType')),
+    enteredBy: seCurrentEmpName(scope), entryDate: SE(scope,'date').value, entryType: seTogVal(SE(scope,'tglType')),
     productFrom: seTogVal(SE(scope,'tglFrom')), counter: SE(scope,'counter').value
   };
   let hErr = '';
-  if (!header.enteredBy) hErr = 'Select Employee Name.';
+  if (!header.enteredBy) hErr = 'Employee not identified — please log in again.';
   else if (!header.entryDate) hErr = 'Select Date.';
   else if (!header.entryType) hErr = 'Select Stock Entry Type.';
   else if (header.productFrom==='Retail' && !header.counter) hErr = 'Select Counter Name.';
@@ -14797,9 +14799,7 @@ async function seLoadData(scope) {
     st.length = p.length||[]; st.bangleSize = p.bangleSize||[]; st.ringSize = p.ringSize||[];
     st.diamondClarity = p.diamondClarity||[]; st.diamondColor = p.diamondColor||[];
     st.goldFlags = p.goldFlags||{}; st.diaFlags = p.diaFlags||{}; st.counterDesigns = p.counterDesigns||{};
-    const empSel = SE(scope,'emp'); const prevEmp = empSel.value;
-    empSel.innerHTML = '<option value="">-- Select Employee --</option>' + (d.employees||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(e=>`<option>${escHtml(e.name)}</option>`).join('');
-    if (prevEmp) empSel.value = prevEmp;
+    SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
     if (m && m.ok) {
       st.counters = m.counters||[]; st.mainHub = m.mainHub||'Main Hub';
       const cSel = SE(scope,'counter'); const prevC = cSel.value;
