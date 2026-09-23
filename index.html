@@ -14501,6 +14501,9 @@ function seFormHtml(scope) {
     .se-wrap .se-item{background:#fff;border:1.5px solid var(--gold,#B8860B);border-radius:14px;margin:14px 0;overflow:hidden}
     .se-wrap .se-item.se-err{border-color:#C0392B}
     .se-wrap .se-item-hd{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--purple-bg,#F5EEFB);border-bottom:1px solid var(--purple,#4A0E8F);color:var(--purple,#4A0E8F);font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+    .se-wrap .se-subbox{border:1.5px solid var(--gold-soft,#D4AF37);border-radius:12px;margin-bottom:14px;overflow:hidden;background:#FCFAFF}
+    .se-wrap .se-subbox-hd{background:var(--purple-bg,#F5EEFB);color:var(--purple,#4A0E8F);font-weight:700;font-size:11px;letter-spacing:.6px;text-transform:uppercase;padding:8px 14px;border-bottom:1px solid var(--gold-soft,#D4AF37)}
+    .se-wrap .se-subbox-body{padding:14px}
     .se-wrap .se-rm{background:none;border:0;color:#C0392B;font:inherit;font-weight:700;font-size:12px;cursor:pointer}
     .se-wrap .se-itemerr{background:#FFF1EF;color:#C0392B;font-size:12.5px;font-weight:600;padding:9px 16px;border-bottom:1px solid #F3C9C4}
     .se-wrap .se-msg{font-size:12px;margin-top:6px;line-height:1.45}
@@ -14595,27 +14598,33 @@ function seItemHtml(n) {
           <div data-role="lengthWrap" class="se-hide"><label>Length <span class="req">★</span></label>
             <select data-role="length"></select><input type="text" data-role="lengthCustom" class="se-hide" placeholder="Type length" style="margin-top:8px"></div>
         </div>
-        <div data-role="goldBox">
-          <div class="se-g3 se-mb">
-            <div><label>Design <span class="req">★</span></label><select data-role="design"></select><input type="text" data-role="designCustom" class="se-hide" placeholder="Enter design name" style="margin-top:8px"></div>
-            <div><label>Tunch <span class="req">★</span></label><select data-role="tunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
-            <div><label data-role="wtLbl">Weight (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="weight" placeholder="e.g. 21.37"></div>
+        <div class="se-subbox" data-role="goldBox">
+          <div class="se-subbox-hd">Gold Details</div>
+          <div class="se-subbox-body">
+            <div class="se-g3 se-mb">
+              <div><label>Design <span class="req">★</span></label><select data-role="design"></select><input type="text" data-role="designCustom" class="se-hide" placeholder="Enter design name" style="margin-top:8px"></div>
+              <div><label>Tunch <span class="req">★</span></label><select data-role="tunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
+              <div><label data-role="wtLbl">Weight (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="weight" placeholder="e.g. 21.37"></div>
+            </div>
           </div>
         </div>
-        <div class="se-hide" data-role="diaBox">
-          <div class="se-g2 se-mb">
-            <div><label>Gross Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="gross" placeholder="e.g. 6.10"></div>
-            <div><label>Net Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="net" placeholder="e.g. 5.20"></div>
+        <div class="se-hide se-subbox" data-role="diaBox">
+          <div class="se-subbox-hd">Diamond Details</div>
+          <div class="se-subbox-body">
+            <div class="se-g2 se-mb" data-role="diaGrossNetWrap">
+              <div><label>Gross Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="gross" placeholder="e.g. 6.10"></div>
+              <div><label>Net Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="net" placeholder="e.g. 5.20"></div>
+            </div>
+            <div class="se-g2 se-mb">
+              <div data-role="diaGoldTunchWrap"><label>Gold Tunch</label><select data-role="diaTunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
+              <div><label>Carat</label><input type="text" data-role="carat" placeholder="e.g. 0.50ct"></div>
+            </div>
+            <div class="se-g2 se-mb">
+              <div><label>Clarity</label><select data-role="clarity"></select></div>
+              <div><label>Color</label><select data-role="color"></select></div>
+            </div>
+            <div class="se-mb"><label>Certificate No</label><input type="text" data-role="certNo" placeholder="e.g. GIA-1234567"></div>
           </div>
-          <div class="se-g2 se-mb">
-            <div data-role="diaGoldTunchWrap"><label>Gold Tunch</label><select data-role="diaTunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
-            <div><label>Carat</label><input type="text" data-role="carat" placeholder="e.g. 0.50ct"></div>
-          </div>
-          <div class="se-g2 se-mb">
-            <div><label>Clarity</label><select data-role="clarity"></select></div>
-            <div><label>Color</label><select data-role="color"></select></div>
-          </div>
-          <div class="se-mb"><label>Certificate No</label><input type="text" data-role="certNo" placeholder="e.g. GIA-1234567"></div>
         </div>
         <div>
           <label>Photo</label>
@@ -14748,14 +14757,21 @@ function seApplyDiamondCounterLock(scope, b) {
     if (btn) btn.click();   // reuses the existing type-toggle handler (shows diaBox, refreshes lists/sizes)
   }
   if (locked) {
-    // Merge: keep Design/Tunch/Weight (goldBox) visible alongside the Diamond-only fields, and hide
-    // diaBox's own "Gold Tunch" so there isn't a second, duplicate Tunch field on screen.
+    // Merge: Gross/Net Wt visually move into the "Gold Details" box (they describe the metal, same as
+    // Design/Tunch/Weight), diaBox's own "Gold Tunch" hides so there's no duplicate Tunch field. Only
+    // moved, never duplicated — the same input keeps whatever the person already typed.
     seR(b,'goldBox').classList.remove('se-hide');
     seR(b,'diaGoldTunchWrap').classList.add('se-hide');
+    const goldBody = seR(b,'goldBox').querySelector('.se-subbox-body');
+    const grossNetWrap = seR(b,'diaGrossNetWrap');
+    if (grossNetWrap.parentElement !== goldBody) goldBody.appendChild(grossNetWrap);
   } else {
     const t = seTogVal(seR(b,'type'));
     seR(b,'goldBox').classList.toggle('se-hide', t!=='Gold');
     seR(b,'diaGoldTunchWrap').classList.remove('se-hide');
+    const diaBody = seR(b,'diaBox').querySelector('.se-subbox-body');
+    const grossNetWrap = seR(b,'diaGrossNetWrap');
+    if (grossNetWrap.parentElement !== diaBody) diaBody.insertBefore(grossNetWrap, diaBody.firstChild);
   }
 }
 function seApplyDiamondCounterLockAll(scope) {
