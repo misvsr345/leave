@@ -14468,8 +14468,9 @@ function mountStockEntryForm(scope) {
   seBindToggle(SE(scope,'tglFrom'), v => {
     SE(scope,'counterWrap').classList.toggle('se-hide', v==='Main');
     seRefreshAllDesigns(scope);
+    seApplyDiamondCounterLockAll(scope);
   });
-  SE(scope,'counter').addEventListener('change', () => seRefreshAllDesigns(scope));
+  SE(scope,'counter').addEventListener('change', () => { seRefreshAllDesigns(scope); seApplyDiamondCounterLockAll(scope); });
   SE(scope,'date').value = toYMD(new Date());
   SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
   SE(scope,'addItem').addEventListener('click', () => { const d = seAddItem(scope); d.scrollIntoView({block:'center', behavior:'smooth'}); });
@@ -14565,11 +14566,12 @@ function seItemHtml(n) {
       <div class="se-itemerr se-hide" data-role="itemerr"></div>
       <div class="se-cb">
         <div class="se-g2 se-mb">
-          <div><label>Type <span class="req">★</span></label>
+          <div data-role="typeWrap"><label>Type <span class="req">★</span></label>
             <div class="se-tgl" data-role="type"><button type="button" data-v="Gold" class="on">Gold</button><button type="button" data-v="Diamond">Diamond</button></div></div>
           <div><label>Tag Status</label>
             <div class="se-tgl" data-role="tagst"><button type="button" data-v="Tag" class="on">Tag</button><button type="button" data-v="Non Tag">Non Tag</button></div></div>
         </div>
+        <div class="se-mb se-hide" data-role="diaCounterNote"><div class="se-msg info">💎 Diamond Counter selected — Diamond item only.</div></div>
         <div class="se-mb" data-role="tagWrap">
           <label>Tag No <span class="req">★</span></label>
           <input type="text" data-role="tagNo" placeholder="e.g. BOM2154" autocomplete="off" style="text-transform:uppercase">
@@ -14606,7 +14608,7 @@ function seItemHtml(n) {
             <div><label>Net Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="net" placeholder="e.g. 5.20"></div>
           </div>
           <div class="se-g2 se-mb">
-            <div><label>Gold Tunch</label><select data-role="diaTunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
+            <div data-role="diaGoldTunchWrap"><label>Gold Tunch</label><select data-role="diaTunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
             <div><label>Carat</label><input type="text" data-role="carat" placeholder="e.g. 0.50ct"></div>
           </div>
           <div class="se-g2 se-mb">
@@ -14633,6 +14635,7 @@ function seAddItem(scope) {
   SE(scope,'items').appendChild(div);
   seWireItem(scope, div);
   seRefreshItemLists(scope, div);
+  seApplyDiamondCounterLock(scope, div);
   seRenumber(scope);
   return div;
 }
@@ -14729,6 +14732,34 @@ function seRefreshItemDesign(scope, b) {
 }
 function seRefreshAllDesigns(scope) {
   SE(scope,'items').querySelectorAll('.se-item').forEach(b => seRefreshItemDesign(scope, b));
+}
+// Diamond Counter is diamond-only stock, so once it's selected the Type toggle is hidden and every item
+// (existing and new) is locked to Diamond — no separate click needed. Any other counter (or Main) leaves
+// Type exactly as it was, freely switchable.
+function seIsDiamondCounterSelected(scope) {
+  return seTogVal(SE(scope,'tglFrom'))==='Retail' && SE(scope,'counter').value==='Diamond Counter';
+}
+function seApplyDiamondCounterLock(scope, b) {
+  const locked = seIsDiamondCounterSelected(scope);
+  seR(b,'typeWrap').classList.toggle('se-hide', locked);
+  seR(b,'diaCounterNote').classList.toggle('se-hide', !locked);
+  if (locked && seTogVal(seR(b,'type'))!=='Diamond') {
+    const btn = seR(b,'type').querySelector('button[data-v="Diamond"]');
+    if (btn) btn.click();   // reuses the existing type-toggle handler (shows diaBox, refreshes lists/sizes)
+  }
+  if (locked) {
+    // Merge: keep Design/Tunch/Weight (goldBox) visible alongside the Diamond-only fields, and hide
+    // diaBox's own "Gold Tunch" so there isn't a second, duplicate Tunch field on screen.
+    seR(b,'goldBox').classList.remove('se-hide');
+    seR(b,'diaGoldTunchWrap').classList.add('se-hide');
+  } else {
+    const t = seTogVal(seR(b,'type'));
+    seR(b,'goldBox').classList.toggle('se-hide', t!=='Gold');
+    seR(b,'diaGoldTunchWrap').classList.remove('se-hide');
+  }
+}
+function seApplyDiamondCounterLockAll(scope) {
+  SE(scope,'items').querySelectorAll('.se-item').forEach(b => seApplyDiamondCounterLock(scope, b));
 }
 function sePickVal(b, k) {
   const s = seK(b,k); if (!s) return '';
@@ -14846,8 +14877,18 @@ function seCollect(scope) {
       if (!row.tunch) return e('Select Tunch.');
       if (!(parseFloat(row.weight)>0)) return e('Enter Weight.');
     } else {
-      row.gross = seK(b,'gross').value.trim(); row.net = seK(b,'net').value.trim(); row.tunch = seK(b,'diaTunch').value;
+      const merged = seIsDiamondCounterSelected(scope);
+      row.gross = seK(b,'gross').value.trim(); row.net = seK(b,'net').value.trim();
       row.carat = seK(b,'carat').value.trim(); row.clarity = seK(b,'clarity').value; row.color = seK(b,'color').value; row.certNo = seK(b,'certNo').value.trim();
+      if (merged) {
+        // Diamond Counter merge: Design/Tunch/Weight come from goldBox instead of the (hidden) diaTunch field.
+        row.design = dsrTitleCase(sePickVal(b,'design')); row.tunch = seK(b,'tunch').value; row.weight = seK(b,'weight').value.trim();
+        if (!row.design) return e('Select / enter Design.');
+        if (!row.tunch) return e('Select Tunch.');
+        if (!(parseFloat(row.weight)>0)) return e('Enter Weight.');
+      } else {
+        row.tunch = seK(b,'diaTunch').value;
+      }
       if (!(parseFloat(row.gross)>0)) return e('Enter Gross Wt.');
       if (!(parseFloat(row.net)>0)) return e('Enter Net Wt.');
       if (parseFloat(row.net)>parseFloat(row.gross)) return e('Net Wt cannot be more than Gross Wt.');
