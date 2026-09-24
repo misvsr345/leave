@@ -2491,8 +2491,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
-    <div class="vsr-sidebar-item" data-page="stocklevel" id="adminSidebarStockLevel" onclick="showAdminPage('stocklevel')"><span class="vsr-sidebar-icon">📦</span>Stock Level</div>
-    <div class="vsr-sidebar-item" data-page="stockentry" id="adminSidebarStockEntry" onclick="showAdminPage('stockentry')"><span class="vsr-sidebar-icon">➕</span>Stock Entry</div>
+    <div class="vsr-sidebar-item" data-page="stock-group" onclick="toggleSidebarGroup('admin','Stock')"><span class="vsr-sidebar-icon">📦</span>Stock <span class="vsr-sidebar-caret" id="adminStockCaret">▾</span></div>
+    <div class="vsr-sidebar-submenu" id="adminSidebarStockSubmenu" style="display:none;">
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('stocklevel')">📦 Stock Level</div>
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('stockentry')">➕ Stock Entry</div>
+    </div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
@@ -5384,6 +5387,16 @@ function goHomeSmart(who) {
 function toggleSidebarMore(role) {
   const submenu = document.getElementById(role + 'SidebarMoreSubmenu');
   const caret = document.getElementById(role + 'MoreCaret');
+  if (!submenu) return;
+  const isOpen = submenu.style.display !== 'none';
+  submenu.style.display = isOpen ? 'none' : 'block';
+  if (caret) caret.classList.toggle('open', !isOpen);
+}
+// Generic version of the same expand/collapse pattern above, for any other grouped sidebar section
+// (id="<role>Sidebar<Group>Submenu" / id="<role><Group>Caret").
+function toggleSidebarGroup(role, group) {
+  const submenu = document.getElementById(role + 'Sidebar' + group + 'Submenu');
+  const caret = document.getElementById(role + group + 'Caret');
   if (!submenu) return;
   const isOpen = submenu.style.display !== 'none';
   submenu.style.display = isOpen ? 'none' : 'block';
