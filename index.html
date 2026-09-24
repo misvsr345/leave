@@ -14834,7 +14834,7 @@ function seWireItem(scope, b) {
   seBindToggle(seR(b,'tagst'), v => {
     seR(b,'tagWrap').classList.toggle('se-hide', v!=='Tag');
     seR(b,'qtyWrap').classList.toggle('se-hide', v==='Tag');
-    seR(b,'wtLbl').innerHTML = (v==='Tag' ? 'Weight (gm)' : 'Total weight (gm)') + ' <span class="req">★</span>';
+    seUpdateWeightLabel(scope, b);
     if (v!=='Tag') { seSetTagMsg(b,'info',''); seR(b,'retWrap').classList.add('se-hide'); }
   });
   b.querySelector('[data-role="rm"]').addEventListener('click', () => { b.remove(); seRenumber(scope); });
@@ -14918,6 +14918,13 @@ function seRefreshAllDesigns(scope) {
 function seIsDiamondCounterSelected(scope) {
   return seTogVal(SE(scope,'tglFrom'))==='Retail' && SE(scope,'counter').value==='Diamond Counter';
 }
+// Diamond Counter merge: Gross/Net Wt already cover the weight (blank Weight falls back to Net Wt on the
+// server), so it isn't required there — no star, and not validated as mandatory.
+function seUpdateWeightLabel(scope, b) {
+  const tagVal = seTogVal(seR(b,'tagst'));
+  const base = tagVal==='Tag' ? 'Weight (gm)' : 'Total weight (gm)';
+  seR(b,'wtLbl').innerHTML = base + (seIsDiamondCounterSelected(scope) ? '' : ' <span class="req">★</span>');
+}
 function seApplyDiamondCounterLock(scope, b) {
   const locked = seIsDiamondCounterSelected(scope);
   seR(b,'typeWrap').classList.toggle('se-hide', locked);
@@ -14943,6 +14950,7 @@ function seApplyDiamondCounterLock(scope, b) {
     const grossNetWrap = seR(b,'diaGrossNetWrap');
     if (grossNetWrap.parentElement !== diaBody) diaBody.insertBefore(grossNetWrap, diaBody.firstChild);
   }
+  seUpdateWeightLabel(scope, b);
 }
 function seApplyDiamondCounterLockAll(scope) {
   SE(scope,'items').querySelectorAll('.se-item').forEach(b => seApplyDiamondCounterLock(scope, b));
@@ -15067,11 +15075,11 @@ function seCollect(scope) {
       row.gross = seK(b,'gross').value.trim(); row.net = seK(b,'net').value.trim();
       row.carat = seK(b,'carat').value.trim(); row.clarity = seK(b,'clarity').value; row.color = seK(b,'color').value; row.certNo = seK(b,'certNo').value.trim();
       if (merged) {
-        // Diamond Counter merge: Design/Tunch/Weight come from goldBox instead of the (hidden) diaTunch field.
+        // Diamond Counter merge: Design/Tunch come from goldBox; Weight is optional here (Gross/Net Wt
+        // already cover it — blank Weight falls back to Net Wt on the server).
         row.design = dsrTitleCase(sePickVal(b,'design')); row.tunch = seK(b,'tunch').value; row.weight = seK(b,'weight').value.trim();
         if (!row.design) return e('Select / enter Design.');
         if (!row.tunch) return e('Select Tunch.');
-        if (!(parseFloat(row.weight)>0)) return e('Enter Weight.');
       } else {
         row.tunch = seK(b,'diaTunch').value;
       }
