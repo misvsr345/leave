@@ -4069,6 +4069,10 @@ const DEFAULT_NOTICES =
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
+// Sections marked here have already auto-loaded once this session, so re-visiting them (e.g. leaving to
+// approve a Leave request, then coming back) does NOT wipe whatever filter/selection/data was showing —
+// only that section's own explicit refresh/filter buttons trigger a fresh fetch after the first load.
+let SEC_LOADED = {};
 let state = {
   empId: '', empName: '', empDept: '', empCounter: '', empEmail: '', empDesig: '',
   empBalance: 0, empQuota: 3, empUsed: 0, empExtraLeave: 0, empLeaves: [],
@@ -5399,7 +5403,7 @@ function showEmpPage(page, opts) {
   if(page==='dsr') loadDsrHighlights('emp');
   if(page==='dsr-today') loadDsrToday('emp');
   if(page==='dsr-status') loadDsrStatus('emp');
-  if(page==='dsr-missing') loadDsrMissing('emp');
+  if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-emp']){ SEC_LOADED['dsr-missing-emp']=true; loadDsrMissing('emp'); } }
   if(page==='dsr-tilldate') loadDsrTillDate('emp');
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
   if(page==='dsr-advorder') loadAdvanceOrderList('emp');
@@ -9807,7 +9811,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr') loadDsrHighlights('admin');
   if(page==='dsr-today') loadDsrToday('admin');
   if(page==='dsr-status') loadDsrStatus('admin');
-  if(page==='dsr-missing') loadDsrMissing('admin');
+  if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-admin']){ SEC_LOADED['dsr-missing-admin']=true; loadDsrMissing('admin'); } }
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='dsr-advorder') loadAdvanceOrderList('admin');
