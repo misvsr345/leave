@@ -3310,7 +3310,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div id="dsrTagSearchBox-admin"></div>
     </div>
 
-    <!-- ══════════════ STOCK LEVEL SECTION (admin only) ══════════════ -->
+    <!-- ══════════════ STOCK LEVEL SECTION (admin only) — hub with 8 separate pages, same
+         pattern as every other multi-page admin section (e.g. DSR) ══════════════ -->
     <div class="page-section" id="admin-stocklevel">
       <style>
         .sl-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
@@ -3332,20 +3333,64 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">📦 Stock Level</span></div>
       <div class="card">
         <div class="quick-actions-grid">
-          <div class="quick-action-btn sl-qa" id="slTab-overview" onclick="slShowTab('overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
-          <div class="quick-action-btn sl-qa" onclick="showAdminPage('stockentry')" style="background:var(--purple,#4A0E8F);"><span class="quick-action-icon" style="filter:brightness(2);">➕</span><div class="quick-action-label" style="color:#fff;">New Entry</div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-counter" onclick="slShowTab('counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-sales" onclick="slShowTab('sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-tag" onclick="slShowTab('tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-manage" onclick="slShowTab('manage')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Manage</div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-today" onclick="slShowTab('today')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Today's Entries</div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-failed" onclick="slShowTab('failed')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Failed Items <span id="slFailedBadge" style="display:none;"></span></div></div>
-          <div class="quick-action-btn sl-qa" id="slTab-print" onclick="slShowTab('print')"><span class="quick-action-icon">🖨️</span><div class="quick-action-label">Print / Report</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-manage')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Manage</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-today')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Today's Entries</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-failed')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Failed Items <span id="slFailedBadge" style="display:none;"></span></div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-print')"><span class="quick-action-icon">🖨️</span><div class="quick-action-label">Print / Report</div></div>
         </div>
       </div>
-      <style>.sl-qa.active{border-color:var(--purple,#4A0E8F);background:#F5EEFB;box-shadow:0 0 0 2px var(--purple,#4A0E8F) inset;}</style>
-      <button class="export-icon-btn" id="exportBtn-slBox" style="display:none;" onclick="openBoxExportModal('slBox','Stock Level')" title="Export">📥</button>
-      <div class="card"><div id="slBox"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-overview">
+      <div class="section-hdr"><span class="section-title2">📊 Overview</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-overview" style="display:none;" onclick="openBoxExportModal('slBox-overview','Overview')" title="Export">📥</button>
+      <div class="card"><div id="slBox-overview"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-counter">
+      <div class="section-hdr"><span class="section-title2">🏷️ Counter-wise</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-counter" style="display:none;" onclick="openBoxExportModal('slBox-counter','Counter-wise')" title="Export">📥</button>
+      <div class="card"><div id="slBox-counter"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-sales">
+      <div class="section-hdr"><span class="section-title2">🧾 Daily Sales</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-sales" style="display:none;" onclick="openBoxExportModal('slBox-sales','Daily Sales')" title="Export">📥</button>
+      <div class="card"><div id="slBox-sales"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-tag">
+      <div class="section-hdr"><span class="section-title2">🔍 Tag Status</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-tag" style="display:none;" onclick="openBoxExportModal('slBox-tag','Tag Status')" title="Export">📥</button>
+      <div class="card"><div id="slBox-tag"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-manage">
+      <div class="section-hdr"><span class="section-title2">✏️ Manage</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-manage" style="display:none;" onclick="openBoxExportModal('slBox-manage','Manage')" title="Export">📥</button>
+      <div class="card"><div id="slBox-manage"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-today">
+      <div class="section-hdr"><span class="section-title2">📅 Today's Entries</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-today" style="display:none;" onclick="openBoxExportModal('slBox-today','Today's Entries')" title="Export">📥</button>
+      <div class="card"><div id="slBox-today"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-failed">
+      <div class="section-hdr"><span class="section-title2">⚠️ Failed Items</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-failed" style="display:none;" onclick="openBoxExportModal('slBox-failed','Failed Items')" title="Export">📥</button>
+      <div class="card"><div id="slBox-failed"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-print">
+      <div class="section-hdr"><span class="section-title2">🖨️ Print / Report</span></div>
+      <button class="export-icon-btn" id="exportBtn-slBox-print" style="display:none;" onclick="openBoxExportModal('slBox-print','Print / Report')" title="Export">📥</button>
+      <div class="card"><div id="slBox-print"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <!-- ══════════════ STOCK ENTRY (admin) ══════════════ -->
@@ -5248,6 +5293,14 @@ const SECTION_LABEL_MAP = {
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
   stocklevel: 'Stock Level',
+  'stocklevel-overview': 'Stock Level',
+  'stocklevel-counter': 'Stock Level',
+  'stocklevel-sales': 'Stock Level',
+  'stocklevel-tag': 'Stock Level',
+  'stocklevel-manage': 'Stock Level',
+  'stocklevel-today': 'Stock Level',
+  'stocklevel-failed': 'Stock Level',
+  'stocklevel-print': 'Stock Level',
   stockentry: 'Stock Entry',
   profile: 'Emp Details'
 };
@@ -9815,7 +9868,15 @@ function showAdminPage(page, opts) {
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='dsr-advorder') loadAdvanceOrderList('admin');
-  if(page==='stocklevel') loadStockLevel();
+  if(page==='stocklevel') slRefreshFailedBadge();
+  if(page==='stocklevel-overview') slPageEnter('overview', slRenderOverview);
+  if(page==='stocklevel-counter') slPageEnter('counter', slRenderCounter);
+  if(page==='stocklevel-sales') slPageEnter('sales', slRenderSales);
+  if(page==='stocklevel-tag') slPageEnter('tag', slRenderTag);
+  if(page==='stocklevel-manage') slPageEnter('manage', slRenderManage);
+  if(page==='stocklevel-today') slPageEnter('today', slRenderToday);
+  if(page==='stocklevel-failed') slPageEnter('failed', slRenderFailed);
+  if(page==='stocklevel-print') slPageEnter('print', slRenderPrintOptions);
   if(page==='stockentry') mountStockEntryForm('admin');
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
@@ -14184,20 +14245,33 @@ function slPost(payload) {
   return _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }, 60000).then(r => r.json());
 }
 function slFmtWt(n) { const v = parseFloat(n); return isNaN(v) ? '0' : (Math.round(v * 1000) / 1000).toFixed(3).replace(/\.?0+$/, ''); }
-function slBox() { return document.getElementById('slBox'); }
+function slBox() {
+  const active = document.querySelector('#adminApp .page-section.active [id^="slBox-"]');
+  return active || document.getElementById('slBox-overview');
+}
+// Each Stock Level sub-page (Overview/Counter-wise/... ) is its own real page-section now — same pattern
+// as every other multi-page admin section — instead of the old tab-swap-in-one-page approach. This is the
+// single entry point every one of them goes through: not connected -> same message everywhere; connected
+// -> render straight into THAT page's own box.
+function slPageEnter(name, renderFn) {
+  const box = document.getElementById('slBox-' + name);
+  if (!box) return;
+  if (!stockIsConfigured()) { box.innerHTML = '<div class="empty-state"><p>Stock Level is not connected yet. Paste the Stock Web App URL in STOCK_GAS_URL (portal code) first.</p></div>'; return; }
+  hideExportBtn('slBox-' + name);
+  renderFn(box);
+}
+function slRetryCurrentPage() {
+  const box = slBox();
+  const name = box && box.id.replace('slBox-', '');
+  const fns = { overview: slRenderOverview, counter: slRenderCounter, sales: slRenderSales, tag: slRenderTag,
+    manage: slRenderManage, today: slRenderToday, failed: slRenderFailed, print: slRenderPrintOptions };
+  if (name && fns[name]) slPageEnter(name, fns[name]);
+}
 function slLoading(b) { b.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; }
 function slError(b, res) {
-  b.innerHTML = '<div class="empty-state"><p>' + escHtml((res && res.error) || 'Could not load Stock Level data.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="slShowTab(SL.tab)" title="Retry">🔄</button></div>';
+  b.innerHTML = '<div class="empty-state"><p>' + escHtml((res && res.error) || 'Could not load Stock Level data.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="slRetryCurrentPage()" title="Retry">🔄</button></div>';
 }
 
-function loadStockLevel() {
-  if (!stockIsConfigured()) {
-    slBox().innerHTML = '<div class="empty-state"><p>Stock Level is not connected yet. Paste the Stock Web App URL in STOCK_GAS_URL (portal code) first.</p></div>';
-    return;
-  }
-  slShowTab(SL.tab || 'overview');
-  slRefreshFailedBadge();
-}
 async function slRefreshFailedBadge() {
   const badge = document.getElementById('slFailedBadge');
   if (!badge || !stockIsConfigured()) return;
@@ -14214,22 +14288,6 @@ async function slEnsureMeta() {
   if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; }
 }
 
-function slShowTab(tab) {
-  SL.tab = tab;
-  ['overview', 'counter', 'sales', 'tag', 'manage', 'today', 'failed', 'print'].forEach(t => {
-    const b = document.getElementById('slTab-' + t); if (b) b.classList.toggle('active', t === tab);
-  });
-  const box = slBox(); hideExportBtn('slBox');
-  if (!stockIsConfigured()) { loadStockLevel(); return; }
-  if (tab === 'overview') slRenderOverview(box);
-  else if (tab === 'counter') slRenderCounter(box);
-  else if (tab === 'sales') slRenderSales(box);
-  else if (tab === 'tag') slRenderTag(box);
-  else if (tab === 'manage') slRenderManage(box);
-  else if (tab === 'today') slRenderToday(box);
-  else if (tab === 'failed') slRenderFailed(box);
-  else if (tab === 'print') slRenderPrintOptions(box);
-}
 async function slRenderToday(box) {
   slLoading(box);
   try {
@@ -14387,7 +14445,7 @@ async function slRenderOverview(box) {
   } catch (e) { slError(box, null); }
 }
 
-function slOpenCounter(name) { SL.sel = name; slShowTab('counter'); }
+function slOpenCounter(name) { SL.sel = name; showAdminPage('stocklevel-counter'); }
 
 async function slRenderCounter(box) {
   slLoading(box);
@@ -14404,7 +14462,7 @@ async function slRenderCounter(box) {
 }
 async function slLoadCounterDetail() {
   const body = document.getElementById('slCounterBody'); if (!body) return;
-  slLoading(body); hideExportBtn('slBox');
+  slLoading(body); hideExportBtn(slBox().id);
   try {
     const res = await slApi({ action: 'counterDetail', counter: SL.sel });
     if (!res || !res.ok) { slError(body, res); return; }
@@ -14415,7 +14473,7 @@ async function slLoadCounterDetail() {
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th><th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
       res.rows.map(r => `<tr><td><b>${escHtml(r.product)}</b></td><td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
       `<tr><td><b>Total</b></td><td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
-    showExportBtn('slBox');
+    showExportBtn(slBox().id);
   } catch (e) { slError(body, null); }
 }
 
@@ -14433,7 +14491,7 @@ async function slLoadSales() {
   const body = document.getElementById('slSalesBody'); if (!body) return;
   const s = document.getElementById('slSalesStart').value, e = document.getElementById('slSalesEnd').value;
   if (!s || !e) { toast('Select both dates', 'error'); return; }
-  slLoading(body); hideExportBtn('slBox');
+  slLoading(body); hideExportBtn(slBox().id);
   try {
     const res = await slApi({ action: 'dailySales', start: s, end: e });
     if (!res || !res.ok) { slError(body, res); return; }
@@ -14446,7 +14504,7 @@ async function slLoadSales() {
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Sold</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Returned On</th></tr></thead><tbody>${res.returned.map(r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${fmtDMY(r.returnedOn)}</td></tr>`).join('')}</tbody></table></div>`;
     }
     body.innerHTML = html;
-    if (res.rows.length) showExportBtn('slBox');
+    if (res.rows.length) showExportBtn(slBox().id);
   } catch (err) { slError(body, null); }
 }
 
