@@ -3331,15 +3331,19 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       </style>
       <div class="section-hdr"><span class="section-title2">📦 Stock Level</span></div>
       <div class="card">
-        <div class="filter-bar">
-          <button type="button" class="filter-btn active" id="slTab-overview" onclick="slShowTab('overview')">📊 Overview</button>
-          <button type="button" class="filter-btn" id="slTab-counter" onclick="slShowTab('counter')">🏷️ Counter-wise</button>
-          <button type="button" class="filter-btn" id="slTab-sales" onclick="slShowTab('sales')">🧾 Daily Sales</button>
-          <button type="button" class="filter-btn" id="slTab-tag" onclick="slShowTab('tag')">🔍 Tag Status</button>
-          <button type="button" class="filter-btn" id="slTab-manage" onclick="slShowTab('manage')">✏️ Manage</button>
-          <button type="button" class="filter-btn" id="slTab-today" onclick="slShowTab('today')">📅 Today's Entries</button>
+        <div class="quick-actions-grid">
+          <div class="quick-action-btn sl-qa" id="slTab-overview" onclick="slShowTab('overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
+          <div class="quick-action-btn sl-qa" onclick="showAdminPage('stockentry')" style="background:var(--purple,#4A0E8F);"><span class="quick-action-icon" style="filter:brightness(2);">➕</span><div class="quick-action-label" style="color:#fff;">New Entry</div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-counter" onclick="slShowTab('counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-sales" onclick="slShowTab('sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-tag" onclick="slShowTab('tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-manage" onclick="slShowTab('manage')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Manage</div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-today" onclick="slShowTab('today')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Today's Entries</div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-failed" onclick="slShowTab('failed')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Failed Items <span id="slFailedBadge" style="display:none;"></span></div></div>
+          <div class="quick-action-btn sl-qa" id="slTab-print" onclick="slShowTab('print')"><span class="quick-action-icon">🖨️</span><div class="quick-action-label">Print / Report</div></div>
         </div>
       </div>
+      <style>.sl-qa.active{border-color:var(--purple,#4A0E8F);background:#F5EEFB;box-shadow:0 0 0 2px var(--purple,#4A0E8F) inset;}</style>
       <button class="export-icon-btn" id="exportBtn-slBox" style="display:none;" onclick="openBoxExportModal('slBox','Stock Level')" title="Export">📥</button>
       <div class="card"><div id="slBox"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
@@ -6984,7 +6988,10 @@ function saveQueueGeneric(key, q) {
 
 function submitDsrOffline(rows, idemKey, who, reason) {
   const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
-  q.push({ rows, idemKey, savedAt: Date.now() });
+  // Wholesale/B2B sale (Bill No starts with "B2B") never becomes a DSR entry — same queue, just tagged so
+  // the sync-back call routes to the Wholesale Sales sheet instead of the normal DSR save.
+  const isWholesale = rows.length && String(rows[0].billNo || '').indexOf('B2B') === 0;
+  q.push({ rows, idemKey, savedAt: Date.now(), action: isWholesale ? 'saveWholesale' : undefined });
   const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('dsrfStatusMsg-' + who);
@@ -7056,7 +7063,7 @@ async function flushDsrOfflineQueue() {
         // 60s — same photo-heavy write as a live submit, just replayed once
         // back online. idemKey makes this safe even if it turns out the
         // original attempt actually DID reach the server before dropping.
-        const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows: item.rows, idemKey: item.idemKey }) }, 60000);
+        const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: item.action, rows: item.rows, idemKey: item.idemKey }) }, 60000);
         // v-fix (BRO: "nothing appeared in the console" — the catch block below
         // and this "not success" branch used to fail completely silently,
         // with no console output at all, making live debugging impossible
@@ -7188,6 +7195,21 @@ function submitStockOffline(scope, payload, header) {
   return true;
 }
 let __stockPortalFlushInFlight = false;
+// Sends one (or each, for a multi-item submission) duplicate-rejected row to the Stock backend's Failed
+// Entries log, best-effort — a failure here just means it stays invisible to admins, never blocks anything.
+async function stockLogFailedFromItem_(item, reason) {
+  const h = item.header || (item.payload || {}) || {};
+  const rows = (item.payload && item.payload.rows) || [];
+  const toLog = rows.length ? rows : [{}];
+  for (const r of toLog) {
+    try {
+      await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify({
+        action: 'logFailedEntry', tagNo: r.tagNo || '', productName: r.productName || '', type: r.type || '',
+        employeeName: h.enteredBy || '', entryDate: h.entryDate || '', reason: reason
+      }) }, 20000);
+    } catch (e) {}
+  }
+}
 async function flushStockOfflineQueue() {
   if (!navigator.onLine) return;
   if (__stockPortalFlushInFlight) return;
@@ -7198,11 +7220,21 @@ async function flushStockOfflineQueue() {
     if (!q.length) { updateConnStatus(); return; }
     saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, []); // claim before sending — see flushDsrOfflineQueue's comment for the full race-condition explanation
     const remaining = [];
+    let failedPermanently = 0;
     for (const item of q) {
       try {
         const resp = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(item.payload) }, 60000);
         const result = await resp.json();
-        if (!(result && result.ok)) remaining.push(item);
+        if (result && result.ok) {
+          // synced
+        } else if (result && /^Duplicate/.test(String(result.error || ''))) {
+          // A duplicate/already-sold rejection will never succeed by retrying — log it for any admin to
+          // see and clear, instead of silently retrying it forever with no visible reason why it's stuck.
+          await stockLogFailedFromItem_(item, result.error);
+          failedPermanently++;
+        } else {
+          remaining.push(item);
+        }
       } catch (e) {
         remaining.push(item);
       }
@@ -7210,8 +7242,9 @@ async function flushStockOfflineQueue() {
     const stillQueued = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
     saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, remaining.concat(stillQueued));
     updateConnStatus();
-    const synced = q.length - remaining.length;
+    const synced = q.length - remaining.length - failedPermanently;
     if (synced > 0) toast('✅ ' + synced + ' offline Stock Entry(s) synced successfully', 'success');
+    if (failedPermanently > 0) toast('⚠️ ' + failedPermanently + ' offline Stock Entry(s) could not be saved (duplicate tag) — an admin has been notified in Stock Level > Failed Items', 'error');
   } catch (outerErr) {
     try {
       const stillQueued = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
@@ -13510,6 +13543,7 @@ function renderDsrEntryForm(who, force) {
               <input type="text" id="dsrfBillNo-${who}" placeholder="e.g. R1042, E205, B2B1042" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
                 oninput="dsrfBillNoTyping('${who}')">
               <div style="font-size:11.5px;margin-top:5px;line-height:1.4;" id="dsrfBillNoMsg-${who}"></div>
+              <div style="font-size:11px;margin-top:3px;color:var(--dmuted,#7D6E8C);">💡 B2B prefix = Wholesale sale — won't count as a DSR (Stock still updates)</div>
             </div>
             <div></div>
           </div>
@@ -14158,6 +14192,16 @@ function loadStockLevel() {
     return;
   }
   slShowTab(SL.tab || 'overview');
+  slRefreshFailedBadge();
+}
+async function slRefreshFailedBadge() {
+  const badge = document.getElementById('slFailedBadge');
+  if (!badge || !stockIsConfigured()) return;
+  try {
+    const res = await slApi({ action: 'failedEntries' });
+    if (res && res.ok && res.rows.length) { badge.textContent = '(' + res.rows.length + ')'; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+  } catch (e) {}
 }
 
 async function slEnsureMeta() {
@@ -14168,7 +14212,7 @@ async function slEnsureMeta() {
 
 function slShowTab(tab) {
   SL.tab = tab;
-  ['overview', 'counter', 'sales', 'tag', 'manage', 'today'].forEach(t => {
+  ['overview', 'counter', 'sales', 'tag', 'manage', 'today', 'failed', 'print'].forEach(t => {
     const b = document.getElementById('slTab-' + t); if (b) b.classList.toggle('active', t === tab);
   });
   const box = slBox(); hideExportBtn('slBox');
@@ -14179,6 +14223,8 @@ function slShowTab(tab) {
   else if (tab === 'tag') slRenderTag(box);
   else if (tab === 'manage') slRenderManage(box);
   else if (tab === 'today') slRenderToday(box);
+  else if (tab === 'failed') slRenderFailed(box);
+  else if (tab === 'print') slRenderPrintOptions(box);
 }
 async function slRenderToday(box) {
   slLoading(box);
@@ -14198,6 +14244,116 @@ async function slRenderToday(box) {
     });
     box.innerHTML = html;
   } catch (e) { slError(box, null); }
+}
+
+// Duplicate/sold rejections that happened while an employee was offline — logged automatically by the
+// device once it comes back online, so admin sees exactly who typed which tag and why it couldn't save.
+async function slRenderFailed(box) {
+  slLoading(box);
+  try {
+    const res = await slApi({ action: 'failedEntries' });
+    if (!res || !res.ok) { slError(box, res); return; }
+    slRefreshFailedBadge();
+    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No failed entries — everything synced cleanly.</p></div>'; return; }
+    SL.failedRows = res.rows;
+    box.innerHTML = `<div class="kd-note">${res.rows.length} item(s) could not be saved automatically — usually a duplicate or already-sold tag typed while offline.</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag</th><th>Product</th><th>Type</th><th>Employee</th><th>Entry Date</th><th>Reason</th><th>Logged</th><th></th></tr></thead><tbody>` +
+      res.rows.map((r,i) => `<tr><td><b>${escHtml(r.tagNo||'—')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.employeeName)}</td><td>${fmtDMY(r.entryDate)}</td><td style="color:var(--red);">${escHtml(r.reason)}</td><td><small>${escHtml(r.loggedAt)}</small></td><td><button class="btn-sm" onclick="slResolveFailed(${i})" title="Mark resolved">✓</button></td></tr>`).join('') +
+      '</tbody></table></div>';
+  } catch (e) { slError(box, null); }
+}
+async function slResolveFailed(i) {
+  const r = SL.failedRows && SL.failedRows[i]; if (!r) return;
+  try {
+    const res = await slPost({ action: 'resolveFailedEntry', row: r.row });
+    if (res && res.ok) { toast('Marked resolved', 'success'); slRenderFailed(slBox()); }
+    else toast((res && res.error) || 'Failed', 'error');
+  } catch (e) { toast('Network error', 'error'); }
+}
+
+// Print / Report filters — box-buttons (not a thin tab row) so each choice is easy to tap on mobile.
+// Stored on SL (a module-level object that's never reset on tab switches), so leaving this tab and coming
+// back later keeps whatever was picked.
+if (!SL.printFilters) SL.printFilters = { entryType: '', counter: '', dateMode: 'all', dateFrom: '', dateTo: '' };
+
+function slBoxBtn(label, active, onclick) {
+  return `<button type="button" onclick="${onclick}" style="padding:10px 16px;border-radius:10px;border:1.5px solid ${active ? 'var(--purple,#4A0E8F)' : 'var(--border,#E2D9EE)'};background:${active ? 'var(--purple,#4A0E8F)' : '#fff'};color:${active ? '#fff' : 'var(--ink,#2A1A3D)'};font-weight:700;font-size:12.5px;cursor:pointer;margin:0 6px 8px 0;">${label}</button>`;
+}
+
+async function slRenderPrintOptions(box) {
+  await slEnsureMeta();
+  const f = SL.printFilters;
+  const counterOpts = ['', ...SL.counters, SL.mainHub];
+  box.innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:800;font-size:12.5px;margin-bottom:8px;">Entry Type</div>
+      <div>${['', 'Opening Stock', 'Receiving Stock'].map(v => slBoxBtn(v || 'All', f.entryType === v, `slSetPrintFilter('entryType','${v}')`)).join('')}</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:800;font-size:12.5px;margin-bottom:8px;">Counter</div>
+      <div>${counterOpts.map(v => slBoxBtn(v || 'All Counters', f.counter === v, `slSetPrintFilter('counter','${escJs(v)}')`)).join('')}</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:800;font-size:12.5px;margin-bottom:8px;">Date</div>
+      <div>${slBoxBtn('All Time', f.dateMode === 'all', "slSetPrintDateMode('all')")}${slBoxBtn('Today', f.dateMode === 'today', "slSetPrintDateMode('today')")}${slBoxBtn('Custom Range', f.dateMode === 'custom', "slSetPrintDateMode('custom')")}</div>
+      <div id="slPrintCustomDates" style="${f.dateMode === 'custom' ? '' : 'display:none;'}margin-top:8px;" class="form-2col">
+        <div class="form-row"><label>From</label><input type="date" lang="en-GB" id="slPrintFrom" value="${f.dateFrom}" onchange="SL.printFilters.dateFrom=this.value"></div>
+        <div class="form-row"><label>To</label><input type="date" lang="en-GB" id="slPrintTo" value="${f.dateTo}" onchange="SL.printFilters.dateTo=this.value"></div>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;" onclick="slPrintReport()">🖨️ Generate &amp; Print</button>`;
+}
+function slSetPrintFilter(key, val) { SL.printFilters[key] = val; slRenderPrintOptions(slBox()); }
+function slSetPrintDateMode(mode) {
+  SL.printFilters.dateMode = mode;
+  if (mode === 'today') { const t = toYMD(new Date()); SL.printFilters.dateFrom = t; SL.printFilters.dateTo = t; }
+  else if (mode === 'all') { SL.printFilters.dateFrom = ''; SL.printFilters.dateTo = ''; }
+  slRenderPrintOptions(slBox());
+}
+
+// Printable Stock Report — everything currently IN STOCK (never sold items), grouped counter-wise, with
+// Tag No / Product Name / Design / Weight — for the physical count-and-verify walk-through.
+async function slPrintReport() {
+  if (!stockIsConfigured()) { toast('Stock Level is not connected yet', 'error'); return; }
+  toast('Preparing print report…', 'info');
+  const f = SL.printFilters || {};
+  let res;
+  try { res = await slApi({ action: 'printReport', entryType: f.entryType || '', counter: f.counter || '', dateFrom: f.dateFrom || '', dateTo: f.dateTo || '' }); }
+  catch (e) { toast('Could not load stock for printing', 'error'); return; }
+  if (!res || !res.ok) { toast((res && res.error) || 'Could not load stock for printing', 'error'); return; }
+  let totalPcs = 0, totalWt = 0;
+  res.counters.forEach(c => { totalPcs += c.pcs; totalWt += c.wt; });
+  const sectionsHtml = res.counters.map(c => `
+    <div class="sec">
+      <div class="sec-hd">${escHtml(c.counter)} — ${c.pcs} pcs, ${slFmtWt(c.wt)} gm</div>
+      <table>
+        <thead><tr><th>Tag No</th><th>Product Name</th><th>Design</th><th>Type</th><th>Weight (gm)</th></tr></thead>
+        <tbody>${c.rows.map(r => `<tr><td>${escHtml(r.tagNo || 'Non Tag')}</td><td>${escHtml(r.productName)}</td><td>${escHtml(r.design || '—')}</td><td>${escHtml(r.type)}</td><td class="num">${slFmtWt(r.weight)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`).join('');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Stock Report — ${escHtml(res.date)}</title>
+    <style>
+      @page { size: portrait; margin: 14mm 10mm; }
+      body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:0;padding:0 4mm;}
+      h1{font-size:17px;margin:0 0 2px;} .sub{font-size:11px;color:#555;margin:0 0 14px;}
+      .totals{font-size:12px;font-weight:bold;margin-bottom:14px;padding:6px 10px;background:#F5EEFB;border:1px solid #B8860B;border-radius:6px;}
+      .sec{margin-bottom:16px;break-inside:avoid;}
+      .sec-hd{font-size:13px;font-weight:bold;background:#4A0E8F;color:#fff;padding:5px 8px;border-radius:4px 4px 0 0;}
+      table{width:100%;border-collapse:collapse;font-size:11px;}
+      th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;}
+      th{background:#F5EEFB;}
+      td.num{text-align:right;}
+      @media print{ .sec{page-break-inside:avoid;} }
+    </style></head><body>
+    <h1>VSR GOLD — Stock Report</h1>
+    <div class="sub">Printed: ${escHtml(new Date().toLocaleString())} · In-stock items only (sold items excluded)</div>
+    <div class="totals">Total: ${totalPcs} pcs across ${res.counters.length} counter(s) · ${slFmtWt(totalWt)} gm</div>
+    ${sectionsHtml || '<p>No stock found.</p>'}
+    <script>window.onload = function(){ window.print(); };<\/script>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Please allow pop-ups to print', 'error'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 async function slRenderOverview(box) {
@@ -14308,17 +14464,21 @@ async function slTagSearch() {
     if (res.status === 'notfound') { body.innerHTML = `<div class="empty-state"><p>Tag <b>${escHtml(stockNormTag(raw))}</b> — not found in stock or sold list.</p></div>`; return; }
     const it = res.item || {};
     const sold = res.status === 'sold';
-    const rows = [['Type', it.type], ['Product', it.productName], ['Design', it.design], ['Tunch', it.tunch], ['Weight (gm)', it.weight],
-      ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''], ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
-      ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length],
-      ['Product From', it.productFrom], ['Counter', it.counter], ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', it.enteredBy]]
-      .filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
-    body.innerHTML = `<div class="kd-card" style="padding:14px;">
-      <div style="margin-bottom:10px;">${sold
-        ? `<span class="kd-pill red">SOLD</span> &nbsp;DSR <b>${escHtml(res.sold.dsrId)}</b> · ${fmtDMY(res.sold.soldDate)} · ${escHtml(res.sold.soldBy)} · ${escHtml(res.sold.payStatus)}`
-        : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b>`}</div>
-      ${it.photoData ? `<img src="${it.photoData}" style="max-width:100%;max-height:220px;border-radius:10px;margin-bottom:10px;">` : ''}
-      <table class="kd-table"><tbody>${rows.map(r => `<tr><td style="color:var(--dmuted);">${escHtml(r[0])}</td><td><b>${escHtml(r[1])}</b></td></tr>`).join('')}</tbody></table></div>`;
+    const statusText = sold
+      ? `<span class="kd-pill red">SOLD</span> &nbsp;DSR <b>${escHtml(res.sold.dsrId)}</b> · ${fmtDMY(res.sold.soldDate)} · ${escHtml(res.sold.soldBy)} · ${escHtml(res.sold.payStatus)}`
+      : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b>`;
+    let html = slStockLookupCardHtml(it, statusText);
+    // Sold via a real DSR (not a Wholesale "WS..." sale, which has no DSR record to look up) — pull the
+    // full sale record too, so the whole journey (Stock entry → sold) shows in one place.
+    if (sold && res.sold.dsrId && res.sold.dsrId.indexOf('WS') !== 0) {
+      try {
+        const dsrRes = await _fetchWithTimeout(DSR_GAS_URL + '?action=searchByDsrId&dsrId=' + encodeURIComponent(res.sold.dsrId) + '&role=ADMIN', {}, 30000).then(r => r.json());
+        if (dsrRes && dsrRes.status === 'success' && dsrRes.results && dsrRes.results.length) {
+          html += '<div class="kd-note" style="margin:14px 0 8px;">🧾 DSR sale record</div>' + dsrRes.results.map((r, i) => dsrTagResultCardHtml(r, i, 'admin')).join('');
+        }
+      } catch (e) {}
+    }
+    body.innerHTML = html;
   } catch (e) { slError(body, null); }
 }
 
@@ -18182,35 +18342,64 @@ function dsrSearchRun(who) {
 function dsrTagSearch(who) {
   const value = (document.getElementById('dsrSearchInput-' + who).value || '').trim();
   if (!value) { toast('Enter a Tag No to search', 'error'); return; }
-  dsrSearchFetch(who, 'searchByTagNo', 'tagNo', value, 'No item found with Tag No "' + value + '".', false);
+  dsrSearchFetch(who, 'searchByTagNo', 'tagNo', value, 'No item found with Tag No "' + value + '".', false, true);
 }
 
 function dsrIdSearch(who) {
   const value = (document.getElementById('dsrSearchInput-' + who).value || '').trim();
   if (!value) { toast('Enter a DSR ID to search', 'error'); return; }
-  dsrSearchFetch(who, 'searchByDsrId', 'dsrId', value, 'No item found under DSR ID "' + value + '".', true);
+  dsrSearchFetch(who, 'searchByDsrId', 'dsrId', value, 'No item found under DSR ID "' + value + '".', true, false);
 }
 
-function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount) {
+// Same full picture (Stock entry origin + DSR sale, if any) whether searched from here or from Stock
+// Level's Tag Status tab — reused by both, so a tag search never shows a different answer depending on
+// which section it was searched from.
+function slStockLookupCardHtml(it, statusText) {
+  const rows = [['Type', it.type], ['Product', it.productName], ['Design', it.design], ['Tunch', it.tunch], ['Weight (gm)', it.weight],
+    ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''], ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
+    ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length],
+    ['Product From', it.productFrom], ['Counter', it.counter], ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', it.enteredBy]]
+    .filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
+  return `<div class="kd-card" style="padding:14px;margin-bottom:10px;">
+    <div style="margin-bottom:10px;">${statusText}</div>
+    ${it.photoData ? `<img src="${it.photoData}" style="max-width:100%;max-height:220px;border-radius:10px;margin-bottom:10px;">` : ''}
+    <table class="kd-table"><tbody>${rows.map(r => `<tr><td style="color:var(--dmuted);">${escHtml(r[0])}</td><td><b>${escHtml(r[1])}</b></td></tr>`).join('')}</tbody></table></div>`;
+}
+async function dsrStockLookupPanel(tag) {
+  if (!stockIsConfigured()) return '';
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(stockNormTag(tag)), {}, 20000).then(r => r.json());
+    if (!res || !res.ok || res.status === 'notfound') return '';
+    const it = res.item || {};
+    const statusText = res.status === 'sold'
+      ? `<span class="kd-pill red">SOLD</span> &nbsp;This tag's Stock entry (before it was sold via DSR ${escHtml(res.sold.dsrId || '')})`
+      : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b> — not yet sold`;
+    return slStockLookupCardHtml(it, statusText);
+  } catch (e) { return ''; }
+}
+
+function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount, includeStock) {
   const box = document.getElementById('dsrTagSearchBox-' + who);
   box.innerHTML = '<div class="card"><div class="loading"><span class="spinner"></span>Searching...</div></div>';
   const role = who === 'admin' ? 'ADMIN' : 'EMPLOYEE';
 
-  _fetchWithTimeout(DSR_GAS_URL + '?action=' + action + '&' + paramName + '=' + encodeURIComponent(value) + '&role=' + role, {}, 60000)
-    .then(r => r.json())
-    .then(data => {
+  const dsrPromise = _fetchWithTimeout(DSR_GAS_URL + '?action=' + action + '&' + paramName + '=' + encodeURIComponent(value) + '&role=' + role, {}, 60000).then(r => r.json());
+  const stockPromise = includeStock ? dsrStockLookupPanel(value) : Promise.resolve('');
+
+  Promise.all([dsrPromise, stockPromise])
+    .then(([data, stockHtml]) => {
       if (data.status !== 'success') {
-        box.innerHTML = '<div class="card"><div class="empty-state"><p>' + escHtml(data.message || 'Search failed.') + '</p></div></div>';
+        box.innerHTML = stockHtml || ('<div class="card"><div class="empty-state"><p>' + escHtml(data.message || 'Search failed.') + '</p></div></div>');
         return;
       }
       const results = data.results || [];
       if (!results.length) {
-        box.innerHTML = '<div class="card"><div class="empty-state"><p>' + escHtml(emptyMsg) + '</p></div></div>';
+        box.innerHTML = stockHtml || ('<div class="card"><div class="empty-state"><p>' + escHtml(emptyMsg) + '</p></div></div>');
         return;
       }
       window['__dsrTagResults_' + who] = results;
       const countNote = showCount ? '<div class="kd-note" style="margin:0 2px 8px;">' + results.length + ' item(s) found — Return / Replace works on one item at a time.</div>' : '';
-      box.innerHTML = countNote + results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
+      box.innerHTML = stockHtml + countNote + results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
     })
     .catch(err => {
       const msg = (err && err.name === 'AbortError')
@@ -18390,6 +18579,9 @@ function dsrfConfirmSubmit(who, evt) {
   // actual new DSR — built from the data itself, not a timestamp.
   const r0 = rows[0];
   const idemKey = makeIdemKey(['dsrsubmit', r0.employeeName, r0.billDate, r0.customerName, r0.mobileNumber, rows.length]);
+  // Wholesale/B2B sale — Bill No starts with "B2B" — never becomes a DSR entry (goes to the Wholesale
+  // Sales sheet instead), even though the tags still leave Stock exactly like a normal sale.
+  const isWholesale = String(r0.billNo || '').indexOf('B2B') === 0;
 
   // DUPLICATE-SUBMIT FIX: this used to build idemKey but never actually
   // check it, so a double-tap on Confirm & Submit could send the exact
@@ -18435,7 +18627,7 @@ function dsrfConfirmSubmit(who, evt) {
   // hang indefinitely with the "Saving..." spinner stuck forever and
   // nothing ever saved anywhere. 90s (longer than Leave's 45s) because a
   // multi-item DSR can carry several full-size photos in one payload.
-  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ rows, idemKey }) }, 90000)
+  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isWholesale ? 'saveWholesale' : undefined, rows, idemKey }) }, 90000)
     .then(r => r.json())
     .then(result => {
       clearInterval(progInt);
@@ -18444,8 +18636,10 @@ function dsrfConfirmSubmit(who, evt) {
       btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
       if (result.status === 'success') {
         msg.style.color = 'var(--green)';
-        msg.innerHTML = `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
-        toast('DSR entry saved!', 'success');
+        msg.innerHTML = isWholesale
+          ? `✅ Saved! Wholesale Sale ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
+          : `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
+        toast(isWholesale ? 'Wholesale sale saved!' : 'DSR entry saved!', 'success');
         draftClear('dsr-' + who);
         DSR_ST[who].eSeq = 0;
         document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
