@@ -14373,7 +14373,7 @@ async function slRenderOverview(box) {
         <div class="sl-ct">${escHtml(c.counter)}</div>
         <div class="sl-big">${c.total.pcs} <small>pcs</small> &nbsp;·&nbsp; ${slFmtWt(c.total.wt)} <small>gm</small></div>
         <div class="sl-row"><span>Gold</span><b>${c.gold.pcs} pcs · ${slFmtWt(c.gold.wt)} gm</b></div>
-        <div class="sl-row"><span>Diamond</span><b>${c.diamond.pcs} pcs · ${slFmtWt(c.diamond.wt)} gm</b></div>
+        ${c.counter === 'Diamond Counter' ? `<div class="sl-row"><span>Diamond</span><b>${c.diamond.pcs} pcs · ${slFmtWt(c.diamond.wt)} gm</b></div>` : ''}
         ${c.nonTag.pcs ? `<div class="sl-row"><span>Non Tag (incl.)</span><b>${c.nonTag.pcs} pcs · ${slFmtWt(c.nonTag.wt)} gm</b></div>` : ''}
       </div>`;
     box.innerHTML = `
