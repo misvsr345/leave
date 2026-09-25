@@ -15176,8 +15176,12 @@ async function seSave(scope) {
   const btn = SE(scope,'saveBtn'); btn.disabled = true; btn.textContent = 'Saving…';
   const base = Object.assign({ action:'saveStock', rows: c.rows.map(x=>x.row), confirmReturn: c.confirmReturn }, c.header);
   const payload = Object.assign({ idemKey: 'k' + st.submitToken + seHashStr(JSON.stringify(base)) }, base);
+  // v-fix (BRO: "online lo matrame cheste better" — only from the portal). No offline queue here anymore:
+  // a queued "saved" that turns out not to have actually reached the sheet is worse than a clear failure
+  // the person can see and act on immediately. If there's no connection (or the request fails mid-way),
+  // say so plainly — nothing is saved until the server confirms it.
   if (!navigator.onLine) {
-    submitStockOffline(scope, payload, c.header);
+    seShowBanner(scope,'err','📴 No internet connection');
     btn.disabled = false; btn.textContent = '★  Save Stock  ★';
     return;
   }
@@ -15195,9 +15199,10 @@ async function seSave(scope) {
       seShowBanner(scope,'err', res.error || 'Save failed. Nothing was saved.');
     }
   } catch (e) {
-    // Real network failure — safe to queue: idemKey means even if the original request secretly DID
-    // reach the server, replaying it later can't create a duplicate.
-    submitStockOffline(scope, payload, c.header);
+    // Real network failure mid-request (timeout, connection dropped) — same as above: tell the person
+    // plainly that nothing was saved, rather than silently queuing something that might already have
+    // reached the server, or might never reach it, with no clear way for them to tell which.
+    seShowBanner(scope,'err','📴 No internet connection');
   } finally {
     btn.disabled = false; btn.textContent = '★  Save Stock  ★';
   }
