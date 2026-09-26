@@ -18529,16 +18529,27 @@ function slStockLookupCardHtml(it, statusText) {
 // card instead of rendering a separate stock card (see dsrMergedTagCardHtml below). Returns null if
 // Stock isn't configured, the tag isn't found there, or the lookup fails for any reason.
 async function dsrStockLookupData(tag) {
-  if (!stockIsConfigured()) return null;
+  // v-fix (BRO: "SAN314 sold sheet lo undi kani search lo 'No item found' vastundi" — a tag genuinely
+  // present and Sold in the Stock backend was still showing "No item found" in the DSR > Search (Tag No
+  // Wise) result. The DSR-side search (searchByTagNo) legitimately returns 0 rows for an Outlet-Issue-sold
+  // tag (Outlet Issue is BY DESIGN never written to the DSR Main file/Archive), so the ONLY way that tag's
+  // "SOLD" status can still show up is via THIS Stock lookup — so if this call silently swallows a network
+  // error / bad response the same way as "genuinely not found", the whole search wrongly says "No item
+  // found" even though Stock knows the tag is Sold. Now every non-success outcome returns a reason string
+  // (never a bare null) so dsrSearchFetch can tell "really not found anywhere" apart from "the Stock check
+  // itself failed" and show/log something a lot more useful than a flat "No item found".
+  if (!stockIsConfigured()) return { it: null, reason: 'not-configured' };
   try {
     const res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(stockNormTag(tag)), {}, 20000).then(r => r.json());
-    if (!res || !res.ok || res.status === 'notfound') return null;
+    if (!res) return { it: null, reason: 'empty-response' };
+    if (!res.ok) return { it: null, reason: 'error: ' + (res.error || 'unknown') };
+    if (res.status === 'notfound') return { it: null, reason: 'notfound' };
     const it = res.item || {};
     const statusText = res.status === 'sold'
       ? `<span class="kd-pill red">SOLD</span> &nbsp;This tag's Stock entry (before it was sold via DSR ${escHtml(res.sold.dsrId || '')})`
       : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b> — not yet sold`;
     return { it, statusText };
-  } catch (e) { return null; }
+  } catch (e) { return { it: null, reason: 'exception: ' + (e && e.message ? e.message : e) }; }
 }
 
 // One merged card for "Stock entry + (if sold) its DSR sale" — used by both DSR > Search (Tag No Wise)
@@ -18618,16 +18629,27 @@ function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount, incl
 
   Promise.all([dsrPromise, stockPromise])
     .then(([data, stockData]) => {
-      // Tag No Wise only: if Stock has this tag but there's no DSR sale (item never sold, or not
-      // found under this search), still show its Stock card alone via the same merged renderer.
-      const stockOnlyCard = stockData ? dsrMergedTagCardHtml(stockData.it, stockData.statusText, null, 0, who) : '';
+      // Tag No Wise only: if Stock has this tag but there's no DSR sale (item never sold, an Outlet
+      // Issue sale which never becomes a DSR record, or just not found under this search), still show
+      // its Stock card alone via the same merged renderer.
+      const stockFound = !!(stockData && stockData.it);
+      const stockOnlyCard = stockFound ? dsrMergedTagCardHtml(stockData.it, stockData.statusText, null, 0, who) : '';
+      // v-fix (BRO: "SAN314 not found" even though it's Sold in the Stock backend): if the Stock check
+      // itself failed (network/timeout/error) rather than genuinely finding nothing, say so instead of
+      // the flat "No item found" — that message otherwise makes a real Stock-lookup failure look like
+      // proof the tag doesn't exist. Logged to console too, so DevTools shows exactly why.
+      const stockFailed = includeStock && stockData && !stockFound && stockData.reason && stockData.reason !== 'notfound';
+      if (stockFailed) console.warn('[Stock lookup] tag "' + value + '": ' + stockData.reason);
+      const notFoundMsg = stockFailed
+        ? (emptyMsg + ' (Stock check failed: ' + stockData.reason + ' — please Search again)')
+        : emptyMsg;
       if (data.status !== 'success') {
         box.innerHTML = stockOnlyCard || ('<div class="card"><div class="empty-state"><p>' + escHtml(data.message || 'Search failed.') + '</p></div></div>');
         return;
       }
       const results = data.results || [];
       if (!results.length) {
-        box.innerHTML = stockOnlyCard || ('<div class="card"><div class="empty-state"><p>' + escHtml(emptyMsg) + '</p></div></div>');
+        box.innerHTML = stockOnlyCard || ('<div class="card"><div class="empty-state"><p>' + escHtml(notFoundMsg) + '</p></div></div>');
         return;
       }
       window['__dsrTagResults_' + who] = results;
