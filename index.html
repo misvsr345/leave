@@ -18522,17 +18522,87 @@ function slStockLookupCardHtml(it, statusText) {
     ${it.photoData ? `<img src="${it.photoData}" style="max-width:100%;max-height:220px;border-radius:10px;margin-bottom:10px;">` : ''}
     <table class="kd-table"><tbody>${rows.map(r => `<tr><td style="color:var(--dmuted);">${escHtml(r[0])}</td><td><b>${escHtml(r[1])}</b></td></tr>`).join('')}</tbody></table></div>`;
 }
-async function dsrStockLookupPanel(tag) {
-  if (!stockIsConfigured()) return '';
+// Raw stock-lookup data (no HTML) — used by dsrSearchFetch to MERGE with a DSR sale row into one
+// card instead of rendering a separate stock card (see dsrMergedTagCardHtml below). Returns null if
+// Stock isn't configured, the tag isn't found there, or the lookup fails for any reason.
+async function dsrStockLookupData(tag) {
+  if (!stockIsConfigured()) return null;
   try {
     const res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(stockNormTag(tag)), {}, 20000).then(r => r.json());
-    if (!res || !res.ok || res.status === 'notfound') return '';
+    if (!res || !res.ok || res.status === 'notfound') return null;
     const it = res.item || {};
     const statusText = res.status === 'sold'
       ? `<span class="kd-pill red">SOLD</span> &nbsp;This tag's Stock entry (before it was sold via DSR ${escHtml(res.sold.dsrId || '')})`
       : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b> — not yet sold`;
-    return slStockLookupCardHtml(it, statusText);
-  } catch (e) { return ''; }
+    return { it, statusText };
+  } catch (e) { return null; }
+}
+
+// One merged card for "Stock entry + (if sold) its DSR sale" — used by both DSR > Search (Tag No Wise)
+// and Stock Level > Tag Status, so a tag search never shows the same Type/Product/Design/Tunch/Weight/
+// Tag No twice (once from the Stock record, once again from the DSR sale row). Item-spec fields are
+// read ONCE, from the Stock record (never masked for either role). The DSR sale block below only adds
+// what Stock genuinely doesn't have: DSR No, Bill Date, Sold By, Customer, Mobile, Address, Bill No,
+// Payment Status, Return Date — "Sold By" (not "Employee") on purpose, since whoever entered the tag
+// into Stock and whoever later sold it can be two different people; merging those into one label would
+// silently lose that distinction, not just remove a duplicate.
+function dsrMergedTagCardHtml(it, statusText, saleRow, idx, who) {
+  it = it || {};
+  const isAdm = who === 'admin';
+  const R = 'Restricted';
+  const dt = v => (v && v !== R) ? fmtDMY(v) : v;
+  let tableRows = '';
+
+  // Photo: the DSR sale's own photo (taken at sale time) if there is a sale; otherwise the Stock
+  // entry's photo. Never both — that would be the same duplicate-field problem for a picture instead
+  // of a text field.
+  let photoCell;
+  if (saleRow) {
+    photoCell = isAdm
+      ? (saleRow.photoUrl ? `<button type="button" class="btn-sm" onclick="dsrSearchViewPhoto('${who}',${idx})">👁 View</button>` : '<span style="color:var(--text3,#888);">No Photo</span>')
+      : '<span class="loy-restricted-val">🔒 Restricted</span>';
+  } else {
+    photoCell = it.photoData ? `<img src="${it.photoData}" style="max-width:140px;max-height:140px;border-radius:8px;">` : '<span style="color:var(--text3,#888);">No Photo</span>';
+  }
+  tableRows += `<tr><td class="lbl">Photo</td><td class="val">${photoCell}</td></tr>`;
+
+  const specRows = [
+    ['Type', it.type], ['Tag No', it.tagNo], ['Product', it.productName], ['Design', it.design], ['Tunch', it.tunch],
+    ['Weight (gm)', it.weight], ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''],
+    ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
+    ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length]
+  ].filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
+  tableRows += specRows.map(r => `<tr><td class="lbl">${escHtml(r[0])}</td><td class="val">${escHtml(r[1])}</td></tr>`).join('');
+
+  const stockOnlyRows = [
+    ['Product From', it.productFrom], ['Counter', it.counter],
+    ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', it.enteredBy]
+  ].filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
+  tableRows += stockOnlyRows.map(r => `<tr><td class="lbl">${escHtml(r[0])}</td><td class="val">${escHtml(r[1])}</td></tr>`).join('');
+
+  if (saleRow) {
+    const saleRows = [
+      ['DSR No', saleRow.dsrId], ['Bill Date', dt(saleRow.billDate)], ['Sold By', saleRow.employeeName],
+      ['Customer', saleRow.customerName], ['Mobile', saleRow.mobileNumber], ['Address', saleRow.address],
+      ['Bill No', saleRow.billNo], ['Payment Status', saleRow.paymentStatus],
+      saleRow.returnDate ? ['Return Date', dt(saleRow.returnDate)] : null
+    ].filter(Boolean);
+    tableRows += saleRows.map(r => `<tr><td class="lbl">${escHtml(r[0])}</td><td class="val">${dsrSearchCellHtml(r[1])}</td></tr>`).join('');
+  }
+
+  const headTxt = (it.tagNo || it.productName || (saleRow && saleRow.productName) || 'Item') + (it.type ? ' · ' + it.type : '');
+  const returnBtn = saleRow
+    ? `<div class="btn-row" style="margin-top:10px;justify-content:center;"><button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Return / Replace</button></div>`
+    : '';
+
+  return `<div class="card" style="margin-bottom:12px;">
+    <div style="margin-bottom:8px;">${statusText}</div>
+    <div class="tag-grid-wrap"><table class="tag-grid">
+      <thead><tr><th colspan="2">🏷️ ${escHtml(headTxt)}</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table></div>
+    ${returnBtn}
+  </div>`;
 }
 
 function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount, includeStock) {
@@ -18600,14 +18670,16 @@ function dsrTagResultCardHtml(r, idx, who) {
       ['Source', r.sourceSheet]
     ].filter(Boolean);
   } else {
-    // Employee: same labels, but everything except Customer + Item Name is masked.
+    // Employee: same labels as admin, but Mobile + Address stay masked (server sends "Restricted" for
+    // those two only — see dsrMaskEntry_). Return Date only shows up as a row at all when the item was
+    // genuinely returned (server sends it blank otherwise, never "Restricted").
     rows = [
-      ['DSR No', r.dsrId], ['Bill Date', r.billDate], ['Employee', r.employeeName],
+      ['DSR No', r.dsrId], ['Bill Date', dt(r.billDate)], ['Employee', r.employeeName],
       ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
       ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', r.productName],
       ['Weight', r.weight], ['Bill No', r.billNo], ['Payment Status', r.paymentStatus],
-      ['Return Date', r.returnDate]
-    ];
+      r.returnDate ? ['Return Date', dt(r.returnDate)] : null
+    ].filter(Boolean);
   }
 
   let tableRows = rows.map(([label, val]) =>
