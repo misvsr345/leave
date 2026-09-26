@@ -1653,6 +1653,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="loyalty" id="empSidebarLoyalty" onclick="showEmpPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
     <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
     <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
+    <div class="vsr-sidebar-item" data-page="outletissue" onclick="showEmpPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
@@ -2146,6 +2147,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="dsrHighlights-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="empQADsrNewEntry" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
+        <div class="quick-action-btn" id="empQAOutletIssue" onclick="showEmpPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
         <div class="quick-action-btn" id="empQADsrToday" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
         <div class="quick-action-btn" id="empQADsrStatus" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -2216,6 +2218,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="emp-dsr-newentry">
       <div class="section-hdr"><span class="section-title2">➕ New DSR Entry</span></div>
       <div id="dsrEntryFormBox-emp"></div>
+    </div>
+    <div class="page-section" id="emp-outletissue">
+      <div class="section-hdr"><span class="section-title2">🏢 Outlet Issue</span></div>
+      <div id="dsrEntryFormBox-emp-oi"></div>
     </div>
     <div class="page-section" id="emp-dsr-advorder">
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed</span></div>
@@ -2487,6 +2493,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="loyalty" id="adminSidebarLoyalty" onclick="showAdminPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
     <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
     <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
+    <div class="vsr-sidebar-item" data-page="outletissue" id="adminSidebarOutletIssue" onclick="showAdminPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
@@ -3211,6 +3218,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="card" id="dsrHighlights-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
+        <div class="quick-action-btn" id="adminQAOutletIssue" onclick="showAdminPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -3282,6 +3290,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="page-section" id="admin-dsr-newentry">
       <div class="section-hdr"><span class="section-title2">➕ New DSR Entry</span></div>
       <div id="dsrEntryFormBox-admin"></div>
+    </div>
+    <div class="page-section" id="admin-outletissue">
+      <div class="section-hdr"><span class="section-title2">🏢 Outlet Issue</span></div>
+      <div id="dsrEntryFormBox-admin-oi"></div>
     </div>
     <div class="page-section" id="admin-dsr-advorder">
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed — All Employees</span></div>
@@ -5468,6 +5480,7 @@ function showEmpPage(page, opts) {
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-emp']){ SEC_LOADED['dsr-missing-emp']=true; loadDsrMissing('emp'); } }
   if(page==='dsr-tilldate') loadDsrTillDate('emp');
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
+  if(page==='outletissue') renderDsrEntryForm('emp-oi');
   if(page==='dsr-advorder') loadAdvanceOrderList('emp');
   if(page==='stockentry') mountStockEntryForm('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
@@ -7054,10 +7067,10 @@ function saveQueueGeneric(key, q) {
 
 function submitDsrOffline(rows, idemKey, who, reason) {
   const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
-  // Wholesale/B2B sale (Bill No starts with "B2B") never becomes a DSR entry — same queue, just tagged so
-  // the sync-back call routes to the Wholesale Sales sheet instead of the normal DSR save.
-  const isWholesale = rows.length && String(rows[0].billNo || '').indexOf('B2B') === 0;
-  q.push({ rows, idemKey, savedAt: Date.now(), action: isWholesale ? 'saveWholesale' : undefined });
+  // Outlet Issue queues the same way DSR does, just tagged so the sync-back
+  // call (flushDsrOfflineQueue) routes to saveOutletIssue instead of a
+  // normal DSR save.
+  q.push({ rows, idemKey, savedAt: Date.now(), action: dsrfIsOutlet(who) ? 'saveOutletIssue' : undefined });
   const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('dsrfStatusMsg-' + who);
@@ -9155,6 +9168,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📈', label: 'Month Comparison (KPI)', page: 'kpi-compare' },
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
+  { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -9261,6 +9275,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '📈', label: 'Month Comparison (KPI)', page: 'kpi-compare' },
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
+  { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -9876,6 +9891,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-admin']){ SEC_LOADED['dsr-missing-admin']=true; loadDsrMissing('admin'); } }
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
+  if(page==='outletissue') renderDsrEntryForm('admin-oi');
   if(page==='dsr-advorder') loadAdvanceOrderList('admin');
   if(page==='stocklevel') slRefreshFailedBadge();
   if(page==='stocklevel-overview') slPageEnter('overview', slRenderOverview);
@@ -13486,7 +13502,11 @@ function loadDsrDateRange(who) {
 var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbw19KcGbJEee6EK4YnznC0xa9inkJl-GOPhywR8xzyzIPY0-SqBHFSEktS_z4tdLZKA/exec";
 var DSR_ST = {
   emp:   { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
-  admin: { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null }
+  admin: { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
+  // Outlet Issue — same form engine, own state slots so it never shares
+  // in-progress item entries with the real DSR form.
+  'emp-oi':   { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
+  'admin-oi': { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null }
 };
 
 // v-fix (BRO: "Admin login lo DSR entry form lo employee name ante
@@ -13499,18 +13519,30 @@ var DSR_ST = {
 // on-screen display and the actual submit payload (dsrfSubmit) pull
 // the employee name from, so fixing it here fixes both at once.
 function dsrfEmpDisplayName(who) {
-  if (who === 'admin') {
-    const sel = document.getElementById('dsrfEmpSelect-admin');
+  if (dsrfIsAdmin(who)) {
+    const sel = document.getElementById('dsrfEmpSelect-' + who);
     return sel ? sel.value : '';
   }
   return state.empName || '';
 }
 
+// "admin-oi" / "emp-oi" are the Outlet Issue scopes — same form engine as
+// DSR (same item entry, same submit flow), just a different, minimal
+// header (Date / Shop Name / Address / Contact Name) and a different
+// backend destination (saveOutletIssue instead of a DSR save). These two
+// helpers are the ONLY place that distinction is made; everything else
+// keyed by "who" (DSR_ST[who], element ids, product loading, drafts)
+// already works for any scope string without change.
+function dsrfIsAdmin(who) { return who === 'admin' || who === 'admin-oi'; }
+function dsrfIsOutlet(who) { return who === 'admin-oi' || who === 'emp-oi'; }
+function dsrfSubmitLabel(who) { return dsrfIsOutlet(who) ? '★ &nbsp; Save Outlet Issue &nbsp; ★' : '★ &nbsp; Submit DSR &nbsp; ★'; }
+
 // Populates the admin employee dropdown — reuses the SAME employee
 // list/cache Direct Action already loads (directEmpListAPI), rather
 // than fetching a second, separate copy of the same data.
-async function dsrfPopulateAdminEmpSelect() {
-  const sel = document.getElementById('dsrfEmpSelect-admin');
+async function dsrfPopulateAdminEmpSelect(who) {
+  who = who || 'admin';
+  const sel = document.getElementById('dsrfEmpSelect-' + who);
   if (!sel) return;
   // v-fix (BRO: "emp name drop down once okkasari load ayyaka
   // automatic ga offline lo save avali" — builds the dropdown from
@@ -13590,14 +13622,28 @@ function renderDsrEntryForm(who, force) {
   if (box.dataset.dsrfRendered === '1' && !force) return;
   box.dataset.dsrfRendered = '1';
   const st = DSR_ST[who];
-  box.innerHTML = `
-    <div class="dsrf-scope">
-      <div class="init-banner" id="dsrfInitBanner-${who}" style="display:flex;align-items:center;gap:10px;background:var(--dpurpleP);border:1.5px solid var(--dborder);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--dpurple);font-weight:600;">
-        <span style="display:inline-block;animation:dsrfspin 1s linear infinite;">⏳</span>
-        <span>Loading products from Google Sheet...</span>
+  const isOutlet = dsrfIsOutlet(who);
+  // Outlet Issue's header is deliberately minimal (Date / Shop Name /
+  // Address / Contact Name-optional) — no Bill No, no 10-digit mobile
+  // check. It reuses the SAME field ids as DSR's Bill Details (dsrfCust,
+  // dsrfMobile, dsrfAddr, dsrfBillDate) so every downstream function
+  // (dsrfSubmit, dsrfClearForm, draft save/restore) needs no change:
+  // dsrfCust holds Shop Name and dsrfMobile holds Contact Name here.
+  const headerHtml = isOutlet ? `
+      <div class="card">
+        <div class="ch">🏢 &nbsp;Outlet Issue Details</div>
+        <div class="cb">
+          <div class="g2 mb14">
+            <div><label>Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
+            <div><label>Shop Name <span class="req">★</span></label><input type="text" id="dsrfCust-${who}" placeholder="Shop / party name"></div>
+          </div>
+          <div class="g2">
+            <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
+            <div><label>Contact Name</label><input type="text" id="dsrfMobile-${who}" placeholder="Optional"></div>
+          </div>
+        </div>
       </div>
-      <style>@keyframes dsrfspin{to{transform:rotate(360deg);}}</style>
-
+  ` : `
       <div class="card">
         <div class="ch">✎ &nbsp;Bill Details</div>
         <div class="cb">
@@ -13613,11 +13659,10 @@ function renderDsrEntryForm(who, force) {
             <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
           </div>
           <div class="g2" style="margin-top:14px;">
-            <div><label>Bill No <span class="req">★</span></label>
-              <input type="text" id="dsrfBillNo-${who}" placeholder="e.g. R1042, E205, B2B1042" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
+            <div><label id="dsrfBillNoLbl-${who}">Bill No <span class="req">★</span></label>
+              <input type="text" id="dsrfBillNo-${who}" placeholder="e.g. R1042, E205" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
                 oninput="dsrfBillNoTyping('${who}')">
               <div style="font-size:11.5px;margin-top:5px;line-height:1.4;" id="dsrfBillNoMsg-${who}"></div>
-              <div style="font-size:11px;margin-top:3px;color:var(--dmuted,#7D6E8C);">💡 B2B prefix = Wholesale sale — won't count as a DSR (Stock still updates)</div>
             </div>
             <div></div>
           </div>
@@ -13629,13 +13674,23 @@ function renderDsrEntryForm(who, force) {
           </div>
         </div>
       </div>
+  `;
+  box.innerHTML = `
+    <div class="dsrf-scope">
+      <div class="init-banner" id="dsrfInitBanner-${who}" style="display:flex;align-items:center;gap:10px;background:var(--dpurpleP);border:1.5px solid var(--dborder);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--dpurple);font-weight:600;">
+        <span style="display:inline-block;animation:dsrfspin 1s linear infinite;">⏳</span>
+        <span>Loading products from Google Sheet...</span>
+      </div>
+      <style>@keyframes dsrfspin{to{transform:rotate(360deg);}}</style>
+
+      ${headerHtml}
 
       <div class="card" id="dsrfEmpCard-${who}">
         <div class="ch">◉ &nbsp;Employee</div>
         <div class="cb">
           <label>Employee Name</label>
-          ${who === 'admin' ? `
-            <select id="dsrfEmpSelect-admin" class="uniform-select" onchange="dsrfOnAdminEmpChange()">
+          ${dsrfIsAdmin(who) ? `
+            <select id="dsrfEmpSelect-${who}" class="uniform-select" onchange="dsrfOnAdminEmpChange()">
               <option value="">-- Select Employee --</option>
             </select>
           ` : `
@@ -13664,7 +13719,7 @@ function renderDsrEntryForm(who, force) {
         <p style="font-size:11px;color:var(--dmuted);margin-top:8px;">Please wait, do not close this page</p>
       </div>
 
-      <button class="sbtn" id="dsrfSubmitBtn-${who}" onclick="dsrfSubmit('${who}')" style="margin-top:6px;">★ &nbsp; Submit DSR &nbsp; ★</button>
+      <button class="sbtn" id="dsrfSubmitBtn-${who}" onclick="dsrfSubmit('${who}')" style="margin-top:6px;">${dsrfSubmitLabel(who)}</button>
       <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="dsrfClearForm('${who}')">🗑️ Clear Form</button>
       <div id="dsrfStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
     </div>
@@ -13677,7 +13732,7 @@ function renderDsrEntryForm(who, force) {
   // v-add (BRO's Admin DSR employee-dropdown fix): populate right after
   // the form is built, admin-only — the employee-locked display for a
   // regular employee login needs no such list.
-  if (who === 'admin') dsrfPopulateAdminEmpSelect();
+  if (dsrfIsAdmin(who)) dsrfPopulateAdminEmpSelect(who);
 
   if (!st.loaded) {
     dsrfLoadProducts(who);
@@ -14109,8 +14164,8 @@ function dsrfTagIds(who, eid, kind) {
   const d = kind === 'd';
   return { inp: (d ? 'dsrfDiaTagNo-' : 'dsrfTagNo-') + who + '-' + eid, msg: (d ? 'dsrfDiaTagMsg-' : 'dsrfTagMsg-') + who + '-' + eid };
 }
-// Bill No: R / E / B2B followed by digits, no spaces — e.g. R1042, E205, B2B1042.
-function dsrBillNoValid(s) { return /^(R|E|B2B)\d+$/.test(String(s == null ? '' : s).trim()); }
+// Bill No: R or E followed by digits, no spaces — e.g. R1042, E205.
+function dsrBillNoValid(s) { return /^(R|E)\d+$/.test(String(s == null ? '' : s).trim()); }
 function dsrfBillNoTyping(who) {
   const inp = document.getElementById('dsrfBillNo-' + who); if (!inp) return;
   const msgEl = document.getElementById('dsrfBillNoMsg-' + who);
@@ -14119,7 +14174,7 @@ function dsrfBillNoTyping(who) {
   if (!val) { inp.classList.remove('err-inp'); if (msgEl) { msgEl.style.color = ''; msgEl.textContent = ''; } return; }
   if (/\s/.test(val) || !dsrBillNoValid(val)) {
     inp.classList.add('err-inp');
-    if (msgEl) { msgEl.style.color = '#C0392B'; msgEl.textContent = '⚠ Must start with R, E or B2B then a number, no spaces — e.g. R1042, E205, B2B1042'; }
+    if (msgEl) { msgEl.style.color = '#C0392B'; msgEl.textContent = '⚠ Must start with R or E then a number, no spaces — e.g. R1042, E205'; }
   } else {
     inp.classList.remove('err-inp');
     if (msgEl) { msgEl.style.color = ''; msgEl.textContent = ''; }
@@ -18111,10 +18166,16 @@ function dsrfSubmit(who) {
     if (bdVal && rdVal < bdVal) { toast('Return Date cannot be before the Bill Date (' + fmtDMY(bdVal) + ')', 'error'); return; }
   } else {
     if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
-    if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
-    if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
-    if (!billNo) { toast('Please enter Bill No!', 'error'); return; }
-    if (!dsrBillNoValid(billNo)) { toast('Bill No must start with R, E or B2B followed by a number, no spaces — e.g. R1042, E205, B2B1042', 'error'); return; }
+    if (dsrfIsOutlet(who)) {
+      // Outlet Issue's minimal header — Contact Name (held in "mob" here) is
+      // explicitly optional, no Bill No, no mobile-number format check.
+      if (!date || !cust || !addr) { toast('Please fill Date, Shop Name and Address!', 'error'); return; }
+    } else {
+      if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
+      if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
+      if (!billNo) { toast('Please enter Bill No!', 'error'); return; }
+      if (!dsrBillNoValid(billNo)) { toast('Bill No must start with R or E followed by a number, no spaces — e.g. R1042, E205', 'error'); return; }
+    }
   }
 
   const entries = document.querySelectorAll(`#dsrfEntriesList-${who} .entry`);
@@ -18355,7 +18416,7 @@ function dsrfDoReturnReplaceSubmit(who, newItem, returnDate) {
   }, 90000)
     .then(r => r.json())
     .then(result => {
-      if (btn) { btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who); }
       if (result.status === 'success') {
         const shownDsr = who === 'admin' ? result.dsrId : '';
         dsrCancelReturnReplace(who);
@@ -18376,7 +18437,7 @@ function dsrfDoReturnReplaceSubmit(who, newItem, returnDate) {
       }
     })
     .catch(err => {
-      if (btn) { btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who); }
       if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Network error: ' + err.message + ' — please retry (Return/Replace has no offline queue yet, unlike normal DSR entry).'; }
       toast('Network error — please retry', 'error');
     });
@@ -18629,6 +18690,7 @@ function dsrfShowPreview(who, rows) {
     </div>`;
   });
 
+  const isOutlet = dsrfIsOutlet(who);
   const existing = document.getElementById('dsrPreviewModal');
   if (existing) existing.remove();
   const div = document.createElement('div');
@@ -18637,11 +18699,11 @@ function dsrfShowPreview(who, rows) {
   div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('dsrPreviewModal').remove()" title="Close">✕</button>
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
-      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 New DSR</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
       <div class="dsr-receipt-body">
         <div class="dsr-cust-name">${r0.customerName}</div>
         <div class="dsr-cust-addr"><b>📍 ${r0.address}</b></div>
-        <div class="dsr-meta-row">👤 ${r0.employeeName} &nbsp;·&nbsp; 📱 ${r0.mobileNumber} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(r0.billDate)}</div>
+        <div class="dsr-meta-row">👤 ${r0.employeeName}${r0.mobileNumber ? (isOutlet ? ' &nbsp;·&nbsp; 👤 Contact: ' + r0.mobileNumber : ' &nbsp;·&nbsp; 📱 ' + r0.mobileNumber) : ''} &nbsp;·&nbsp; 📅 ${isOutlet ? 'Date' : 'Bill'}: ${fmtDMY(r0.billDate)}</div>
         <div class="dsr-items-wrap">${itemsHtml}</div>
       </div>
     </div>
@@ -18663,9 +18725,6 @@ function dsrfConfirmSubmit(who, evt) {
   // actual new DSR — built from the data itself, not a timestamp.
   const r0 = rows[0];
   const idemKey = makeIdemKey(['dsrsubmit', r0.employeeName, r0.billDate, r0.customerName, r0.mobileNumber, rows.length]);
-  // Wholesale/B2B sale — Bill No starts with "B2B" — never becomes a DSR entry (goes to the Wholesale
-  // Sales sheet instead), even though the tags still leave Stock exactly like a normal sale.
-  const isWholesale = String(r0.billNo || '').indexOf('B2B') === 0;
 
   // DUPLICATE-SUBMIT FIX: this used to build idemKey but never actually
   // check it, so a double-tap on Confirm & Submit could send the exact
@@ -18682,7 +18741,7 @@ function dsrfConfirmSubmit(who, evt) {
   if (!navigator.onLine) {
     const modalOff = document.getElementById('dsrPreviewModal');
     if (modalOff) modalOff.remove();
-    submitDsrOffline(rows, idemKey, who);
+    submitDsrOffline(rows, idemKey, who, undefined);
     return;
   }
 
@@ -18707,23 +18766,27 @@ function dsrfConfirmSubmit(who, evt) {
     }
   }, 800);
 
+  // Outlet Issue posts to its own backend action (saveOutletIssue) so it
+  // never becomes a DSR entry — same rows shape, different destination.
+  const isOutlet = dsrfIsOutlet(who);
+
   // v-fix: bare fetch() with NO timeout — on a bad connection this could
   // hang indefinitely with the "Saving..." spinner stuck forever and
   // nothing ever saved anywhere. 90s (longer than Leave's 45s) because a
   // multi-item DSR can carry several full-size photos in one payload.
-  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isWholesale ? 'saveWholesale' : undefined, rows, idemKey }) }, 90000)
+  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isOutlet ? 'saveOutletIssue' : undefined, rows, idemKey }) }, 90000)
     .then(r => r.json())
     .then(result => {
       clearInterval(progInt);
       bar.style.width = '100%'; pmsg.textContent = '✅ Done!';
       setTimeout(() => document.getElementById('dsrfProgress-' + who).classList.remove('show'), 1000);
-      btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
+      btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who);
       if (result.status === 'success') {
         msg.style.color = 'var(--green)';
-        msg.innerHTML = isWholesale
-          ? `✅ Saved! Wholesale Sale ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
+        msg.innerHTML = isOutlet
+          ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
           : `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
-        toast(isWholesale ? 'Wholesale sale saved!' : 'DSR entry saved!', 'success');
+        toast(isOutlet ? 'Outlet Issue saved!' : 'DSR entry saved!', 'success');
         draftClear('dsr-' + who);
         DSR_ST[who].eSeq = 0;
         document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
@@ -18761,7 +18824,7 @@ function dsrfConfirmSubmit(who, evt) {
     .catch(err => {
       clearInterval(progInt);
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
-      btn.disabled = false; btn.innerHTML = '★ &nbsp; Submit DSR &nbsp; ★';
+      btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who);
       // v-fix (BRO: "a DSR was entered and the data never arrived — it reported being queued offline but the data was never actually saved" — root cause): this only queued offline
       // for navigator.onLine===false or a genuine timeout (AbortError).
       // But navigator.onLine is notoriously unreliable — it reports TRUE
@@ -18775,7 +18838,7 @@ function dsrfConfirmSubmit(who, evt) {
       // always safe: idemKey means a genuine duplicate (if the original
       // request actually DID reach the server before failing) is caught
       // and ignored server-side rather than saved twice.
-      submitDsrOffline(rows, idemKey, who);
+      submitDsrOffline(rows, idemKey, who, undefined);
     });
 }
 
