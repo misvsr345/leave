@@ -14748,10 +14748,14 @@ function slOpenPhotoViewer(idx) {
   div.className = 'modal-overlay show';
   div.innerHTML = `<div class="modal-box" style="max-width:520px;max-height:92vh;overflow:hidden;padding:0;position:relative;background:#111;">
       <button class="modal-close-x" onclick="document.getElementById('slPhotoModal').remove()" title="Close" style="z-index:5;">✕</button>
-      <div id="slPhStage" style="position:relative;width:100%;min-height:280px;display:flex;align-items:center;justify-content:center;touch-action:pan-y;">
+      <div id="slPhStage" style="position:relative;width:100%;min-height:280px;display:flex;align-items:center;justify-content:center;touch-action:none;overflow:hidden;">
         <button class="btn-sm" onclick="slPhotoNav(-1)" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:4;">◀</button>
-        <img id="slPhStageImg" src="" style="max-width:100%;max-height:78vh;display:block;cursor:zoom-in;" onclick="slTogglePhotoInfo()">
+        <img id="slPhStageImg" src="" style="max-width:100%;max-height:78vh;display:block;cursor:zoom-in;user-select:none;-webkit-user-drag:none;">
         <button class="btn-sm" onclick="slPhotoNav(1)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:4;">▶</button>
+        <div style="position:absolute;bottom:6px;right:8px;z-index:4;display:flex;gap:6px;">
+          <button class="btn-sm" onclick="slPhotoZoomBy(-0.6)" title="Zoom out">−</button>
+          <button class="btn-sm" onclick="slPhotoZoomBy(0.6)" title="Zoom in">+</button>
+        </div>
       </div>
       <div id="slPhCounterLbl" style="text-align:center;color:#ddd;font-size:11.5px;padding:6px 0;background:#111;"></div>
       <div id="slPhInfoBox" style="display:none;background:#fff;border-top:2px solid var(--gold);padding:10px 14px;max-height:32vh;overflow-y:auto;"></div>
@@ -14759,16 +14763,8 @@ function slOpenPhotoViewer(idx) {
   document.body.appendChild(div);
   div.addEventListener('click', e => { if (e.target === div) div.remove(); });
 
-  let tx = null;
-  const stage = document.getElementById('slPhStage');
-  stage.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
-  stage.addEventListener('touchend', e => {
-    if (tx == null) return;
-    const dx = e.changedTouches[0].clientX - tx; tx = null;
-    if (Math.abs(dx) > 40) slPhotoNav(dx > 0 ? -1 : 1);
-  }, { passive: true });
   document.addEventListener('keydown', slPhotoKeyNav);
-
+  slSetupPhotoZoomPan();
   slRenderPhotoStage();
 }
 function slPhotoKeyNav(e) {
@@ -14776,13 +14772,105 @@ function slPhotoKeyNav(e) {
   if (e.key === 'ArrowLeft') slPhotoNav(-1);
   else if (e.key === 'ArrowRight') slPhotoNav(1);
   else if (e.key === 'Escape') { document.getElementById('slPhotoModal').remove(); }
+  else if (e.key === '+' || e.key === '=') slPhotoZoomBy(0.6);
+  else if (e.key === '-') slPhotoZoomBy(-0.6);
 }
 function slPhotoNav(dir) {
   const n = SLPHOTO.items.length; if (!n) return;
   SLPHOTO.openIdx = (SLPHOTO.openIdx + dir + n) % n;
   SLPHOTO.infoOpen = false; // sliding to a new photo always starts image-only, per spec
+  if (window.__slPhotoResetZoom) window.__slPhotoResetZoom(); // new photo always starts at 1x, not still zoomed from the last one
   slRenderPhotoStage();
 }
+
+// ---- Zoom / pan (BRO: "photo zoom in out kuda chei") -------------------------------------------
+// Mouse wheel / +− buttons / keyboard +− on desktop; pinch (2-finger) + double-tap on touch. A single
+// tap/click still toggles the small detail box (per the earlier spec) — a tap is told apart from a
+// double-tap with a short timer so double-tap-to-zoom doesn't also flip the info box twice.
+// Swipe-to-next-photo only fires at 1x zoom; once zoomed in, one-finger drag pans the image instead.
+function slSetupPhotoZoomPan() {
+  const stage = document.getElementById('slPhStage');
+  const img = document.getElementById('slPhStageImg');
+  if (!stage || !img) return;
+  let scale = 1, tx = 0, ty = 0;
+  let pinchStartDist = 0, pinchStartScale = 1;
+  let dragging = false, dragStartX = 0, dragStartY = 0, dragOrigTx = 0, dragOrigTy = 0;
+  let swipeStartX = null;
+  let tapTimer = null, lastTapAt = 0;
+
+  const clampScale = s => Math.max(1, Math.min(4, s));
+  const apply = () => { img.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; img.style.cursor = scale > 1.01 ? 'grab' : 'zoom-in'; };
+  const resetZoom = () => { scale = 1; tx = 0; ty = 0; apply(); };
+  window.__slPhotoResetZoom = resetZoom;
+  window.__slPhotoZoomBy = (delta) => { scale = clampScale(scale + delta); if (scale <= 1.01) { tx = 0; ty = 0; } apply(); };
+
+  const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+  stage.addEventListener('wheel', e => {
+    e.preventDefault();
+    scale = clampScale(scale + (e.deltaY < 0 ? 0.4 : -0.4));
+    if (scale <= 1.01) { tx = 0; ty = 0; }
+    apply();
+  }, { passive: false });
+
+  stage.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      pinchStartDist = dist(e.touches[0], e.touches[1]); pinchStartScale = scale; swipeStartX = null;
+    } else if (e.touches.length === 1) {
+      swipeStartX = e.touches[0].clientX;
+      if (scale > 1.01) { dragging = true; dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY; dragOrigTx = tx; dragOrigTy = ty; }
+    }
+  }, { passive: true });
+
+  stage.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && pinchStartDist) {
+      e.preventDefault();
+      scale = clampScale(pinchStartScale * (dist(e.touches[0], e.touches[1]) / pinchStartDist));
+      if (scale <= 1.01) { tx = 0; ty = 0; }
+      apply();
+    } else if (dragging && e.touches.length === 1) {
+      e.preventDefault();
+      tx = dragOrigTx + (e.touches[0].clientX - dragStartX);
+      ty = dragOrigTy + (e.touches[0].clientY - dragStartY);
+      apply();
+    }
+  }, { passive: false });
+
+  stage.addEventListener('touchend', e => {
+    if (e.touches.length === 0) {
+      pinchStartDist = 0;
+      const wasDragging = dragging; dragging = false;
+      if (!wasDragging && scale <= 1.01 && swipeStartX != null && e.changedTouches.length) {
+        const dx = e.changedTouches[0].clientX - swipeStartX;
+        if (Math.abs(dx) > 40) { slPhotoNav(dx > 0 ? -1 : 1); swipeStartX = null; return; }
+      }
+      swipeStartX = null;
+      if (!wasDragging) {
+        // Tap vs double-tap: a lone tap toggles the info box; a second tap inside 300ms zooms instead.
+        const now = Date.now();
+        if (now - lastTapAt < 300) {
+          if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+          scale = scale > 1.01 ? 1 : 2.5; if (scale <= 1.01) { tx = 0; ty = 0; } apply();
+          lastTapAt = 0;
+        } else {
+          lastTapAt = now;
+          tapTimer = setTimeout(() => { slTogglePhotoInfo(); tapTimer = null; }, 300);
+        }
+      }
+    }
+  }, { passive: true });
+
+  // Desktop: single click toggles info, double-click zooms (same tap/double-tap distinction as touch).
+  img.addEventListener('click', () => {
+    if (tapTimer) return; // a dblclick is about to fire; don't also toggle info
+    tapTimer = setTimeout(() => { slTogglePhotoInfo(); tapTimer = null; }, 260);
+  });
+  img.addEventListener('dblclick', () => {
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+    scale = scale > 1.01 ? 1 : 2.5; if (scale <= 1.01) { tx = 0; ty = 0; } apply();
+  });
+}
+function slPhotoZoomBy(delta) { if (window.__slPhotoZoomBy) window.__slPhotoZoomBy(delta); }
 function slTogglePhotoInfo() {
   SLPHOTO.infoOpen = !SLPHOTO.infoOpen;
   const box = document.getElementById('slPhInfoBox');
