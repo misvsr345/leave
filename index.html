@@ -3348,6 +3348,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-photos')"><span class="quick-action-icon">📷</span><div class="quick-action-label">Photos</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-manage')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Manage</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-today')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Today's Entries</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-failed')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Failed Items <span id="slFailedBadge" style="display:none;"></span></div></div>
@@ -3378,6 +3379,11 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="section-hdr"><span class="section-title2">🔍 Tag Status</span></div>
       <button class="export-icon-btn" id="exportBtn-slBox-tag" style="display:none;" onclick="openBoxExportModal('slBox-tag','Tag Status')" title="Export">📥</button>
       <div class="card"><div id="slBox-tag"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-stocklevel-photos">
+      <div class="section-hdr"><span class="section-title2">📷 Photos</span></div>
+      <div class="card"><div id="slBox-photos"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <div class="page-section" id="admin-stocklevel-manage">
@@ -5308,6 +5314,7 @@ const SECTION_LABEL_MAP = {
   'stocklevel-counter': 'Stock Level',
   'stocklevel-sales': 'Stock Level',
   'stocklevel-tag': 'Stock Level',
+  'stocklevel-photos': 'Stock Level',
   'stocklevel-manage': 'Stock Level',
   'stocklevel-today': 'Stock Level',
   'stocklevel-failed': 'Stock Level',
@@ -9898,6 +9905,7 @@ function showAdminPage(page, opts) {
   if(page==='stocklevel-counter') slPageEnter('counter', slRenderCounter);
   if(page==='stocklevel-sales') slPageEnter('sales', slRenderSales);
   if(page==='stocklevel-tag') slPageEnter('tag', slRenderTag);
+  if(page==='stocklevel-photos') slPageEnter('photos', slRenderPhotos);
   if(page==='stocklevel-manage') slPageEnter('manage', slRenderManage);
   if(page==='stocklevel-today') slPageEnter('today', slRenderToday);
   if(page==='stocklevel-failed') slPageEnter('failed', slRenderFailed);
@@ -14336,7 +14344,7 @@ function slRetryCurrentPage() {
   const box = slBox();
   const name = box && box.id.replace('slBox-', '');
   const fns = { overview: slRenderOverview, counter: slRenderCounter, sales: slRenderSales, tag: slRenderTag,
-    manage: slRenderManage, today: slRenderToday, failed: slRenderFailed, print: slRenderPrintOptions };
+    photos: slRenderPhotos, manage: slRenderManage, today: slRenderToday, failed: slRenderFailed, print: slRenderPrintOptions };
   if (name && fns[name]) slPageEnter(name, fns[name]);
 }
 function slLoading(b) { b.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; }
@@ -14621,6 +14629,172 @@ async function slTagSearch() {
     window['__dsrTagResults_admin'] = saleRow ? [saleRow] : [];
     body.innerHTML = dsrMergedTagCardHtml(it, statusText, saleRow, 0, 'admin');
   } catch (e) { slError(body, null); }
+}
+
+// ============================================================
+// PHOTOS — BRO: "Drive photos, Stock sheet URLs — oka Photos app la open cheyagalama, click chesthe
+// image, slide chesthe next photo, aa photo meeda click chesthe related Sheet data chinna box la
+// kanipinchali." A visual catalog over the same Stock/Sold data everything else here already uses —
+// no new data, just a gallery + lightbox view of it. Admin only (Photo has always been admin-only,
+// same as everywhere else in this file — Employee never gets a photo URL from the server at all).
+// ============================================================
+const SLPHOTO = { items: [], total: 0, offset: 0, limit: 60, openIdx: -1, infoOpen: false };
+
+function slRenderPhotos(box) {
+  SLPHOTO.items = []; SLPHOTO.offset = 0; SLPHOTO.total = 0;
+  box.innerHTML = `<div class="form-2col">
+      <div class="form-row"><label>Show</label>
+        <select class="uniform-select" id="slPhStatus" onchange="slLoadPhotos(true)">
+          <option value="instock">In Stock only</option>
+          <option value="sold">Sold only</option>
+          <option value="all">All (In Stock + Sold)</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Counter</label><select class="uniform-select" id="slPhCounter" onchange="slLoadPhotos(true)"><option value="">All</option></select></div>
+    </div>
+    <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
+    <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
+    <div id="slPhGrid" class="sl-photo-grid" style="margin-top:12px;"></div>
+    <div id="slPhMoreWrap" style="text-align:center;margin-top:10px;"></div>
+    <style>
+      .sl-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;}
+      .sl-photo-tile{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1.5px solid var(--border,#E2D9EE);cursor:pointer;background:#f4f1f8;}
+      .sl-photo-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+      .sl-photo-tile .sl-ph-pill{position:absolute;top:4px;left:4px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;color:#fff;letter-spacing:.3px;}
+      .sl-photo-tile .sl-ph-tag{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#fff;font-size:10.5px;font-weight:700;padding:10px 6px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    </style>`;
+  (async () => { try { await slEnsureMeta(); const sel = document.getElementById('slPhCounter'); if (sel) sel.innerHTML = '<option value="">All</option>' + SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`).join(''); } catch (e) {} })();
+  slLoadPhotos(true);
+}
+
+async function slLoadPhotos(reset) {
+  const grid = document.getElementById('slPhGrid'); if (!grid) return;
+  if (reset) { SLPHOTO.items = []; SLPHOTO.offset = 0; grid.innerHTML = ''; }
+  const moreWrap = document.getElementById('slPhMoreWrap');
+  if (moreWrap) moreWrap.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res = await slApi({
+      action: 'photoGallery', status: document.getElementById('slPhStatus').value,
+      counter: document.getElementById('slPhCounter').value, q: document.getElementById('slPhQ').value.trim(),
+      limit: SLPHOTO.limit, offset: SLPHOTO.offset
+    });
+    if (!res || !res.ok) { grid.innerHTML = ''; slError(grid, res); if (moreWrap) moreWrap.innerHTML = ''; return; }
+    SLPHOTO.total = res.total || 0;
+    const rows = res.rows || [];
+    const startIdx = SLPHOTO.items.length;
+    SLPHOTO.items = SLPHOTO.items.concat(rows);
+    SLPHOTO.offset += rows.length;
+    if (!SLPHOTO.items.length) { grid.innerHTML = '<div class="empty-state"><p>No photos found for this filter.</p></div>'; if (moreWrap) moreWrap.innerHTML = ''; return; }
+    grid.innerHTML += rows.map((r, i) => slPhotoTileHtml(r, startIdx + i)).join('');
+    moreWrap.innerHTML = (SLPHOTO.offset < SLPHOTO.total)
+      ? `<button class="btn-secondary" onclick="slLoadPhotos(false)">Load more (${SLPHOTO.items.length} of ${SLPHOTO.total})</button>`
+      : `<div class="kd-note">${SLPHOTO.items.length} of ${SLPHOTO.total} shown</div>`;
+  } catch (e) { if (moreWrap) moreWrap.innerHTML = ''; if (!SLPHOTO.items.length) slError(grid, null); }
+}
+
+function slPhotoTileHtml(r, idx) {
+  const src = slPhotoThumbUrl(r.photo, 300);
+  const pill = r.status === 'sold' ? '<span class="sl-ph-pill" style="background:var(--red,#C0392B);">SOLD</span>' : '<span class="sl-ph-pill" style="background:var(--green,#2E8B57);">STOCK</span>';
+  const label = r.tagNo || r.productName || 'Item';
+  return `<div class="sl-photo-tile" onclick="slOpenPhotoViewer(${idx})">
+      <img src="${src}" loading="lazy" alt="${escHtml(label)}" onerror="this.closest('.sl-photo-tile').style.display='none';">
+      ${pill}
+      <div class="sl-ph-tag">${escHtml(label)}</div>
+    </div>`;
+}
+
+// lh3.googleusercontent.com/d/{id}=w{size} — same reliable direct-image format used everywhere else
+// in this file (dsrPhotoViewUrl); the "=w300" suffix asks Google's own CDN for an already-resized
+// thumbnail instead of downloading the full photo just to shrink it in the grid.
+function slPhotoThumbUrl(photo, size) {
+  if (!photo) return '';
+  const m = String(photo).match(/[?&]id=([\w-]+)/) || String(photo).match(/\/d\/([\w-]+)/);
+  return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w${size || 800}` : photo;
+}
+
+// ---- Lightbox: click a thumbnail -> big photo, swipe/arrow keys -> next/prev, click the photo
+// itself -> toggle a small detail box with that item's Sheet data. ----
+function slOpenPhotoViewer(idx) {
+  SLPHOTO.openIdx = idx; SLPHOTO.infoOpen = false;
+  const old = document.getElementById('slPhotoModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'slPhotoModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:520px;max-height:92vh;overflow:hidden;padding:0;position:relative;background:#111;">
+      <button class="modal-close-x" onclick="document.getElementById('slPhotoModal').remove()" title="Close" style="z-index:5;">✕</button>
+      <div id="slPhStage" style="position:relative;width:100%;min-height:280px;display:flex;align-items:center;justify-content:center;touch-action:pan-y;">
+        <button class="btn-sm" onclick="slPhotoNav(-1)" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:4;">◀</button>
+        <img id="slPhStageImg" src="" style="max-width:100%;max-height:78vh;display:block;cursor:zoom-in;" onclick="slTogglePhotoInfo()">
+        <button class="btn-sm" onclick="slPhotoNav(1)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:4;">▶</button>
+      </div>
+      <div id="slPhCounterLbl" style="text-align:center;color:#ddd;font-size:11.5px;padding:6px 0;background:#111;"></div>
+      <div id="slPhInfoBox" style="display:none;background:#fff;border-top:2px solid var(--gold);padding:10px 14px;max-height:32vh;overflow-y:auto;"></div>
+    </div>`;
+  document.body.appendChild(div);
+  div.addEventListener('click', e => { if (e.target === div) div.remove(); });
+
+  let tx = null;
+  const stage = document.getElementById('slPhStage');
+  stage.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (tx == null) return;
+    const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 40) slPhotoNav(dx > 0 ? -1 : 1);
+  }, { passive: true });
+  document.addEventListener('keydown', slPhotoKeyNav);
+
+  slRenderPhotoStage();
+}
+function slPhotoKeyNav(e) {
+  if (!document.getElementById('slPhotoModal')) { document.removeEventListener('keydown', slPhotoKeyNav); return; }
+  if (e.key === 'ArrowLeft') slPhotoNav(-1);
+  else if (e.key === 'ArrowRight') slPhotoNav(1);
+  else if (e.key === 'Escape') { document.getElementById('slPhotoModal').remove(); }
+}
+function slPhotoNav(dir) {
+  const n = SLPHOTO.items.length; if (!n) return;
+  SLPHOTO.openIdx = (SLPHOTO.openIdx + dir + n) % n;
+  SLPHOTO.infoOpen = false; // sliding to a new photo always starts image-only, per spec
+  slRenderPhotoStage();
+}
+function slTogglePhotoInfo() {
+  SLPHOTO.infoOpen = !SLPHOTO.infoOpen;
+  const box = document.getElementById('slPhInfoBox');
+  if (!box) return;
+  if (SLPHOTO.infoOpen) { box.innerHTML = slPhotoInfoHtml(SLPHOTO.items[SLPHOTO.openIdx]); box.style.display = 'block'; }
+  else box.style.display = 'none';
+}
+function slRenderPhotoStage() {
+  const r = SLPHOTO.items[SLPHOTO.openIdx]; if (!r) return;
+  const img = document.getElementById('slPhStageImg');
+  const lbl = document.getElementById('slPhCounterLbl');
+  const box = document.getElementById('slPhInfoBox');
+  const full = slPhotoThumbUrl(r.photo, 1400);
+  const alt = dsrPhotoViewUrl(r.photo);
+  img.onerror = () => { if (img.src !== alt) img.src = alt; };
+  img.src = full;
+  lbl.textContent = (r.tagNo || r.productName || 'Item') + '  ·  ' + (SLPHOTO.openIdx + 1) + ' / ' + SLPHOTO.items.length + (r.status === 'sold' ? '  ·  SOLD' : '  ·  IN STOCK');
+  if (box) { box.style.display = 'none'; }
+}
+function slPhotoInfoHtml(r) {
+  if (!r) return '';
+  const isDia = r.type === 'Diamond';
+  const rows = [
+    ['Type', r.type], ['Tag No', r.tagNo || '—'], ['Product', r.productName],
+    !isDia ? ['Design', r.design] : null, !isDia ? ['Tunch', r.tunch] : null,
+    !isDia ? ['Weight (gm)', r.weight] : null,
+    isDia ? ['Gross Wt', r.gross] : null, isDia ? ['Net Wt', r.net] : null,
+    isDia ? ['Carat', r.carat] : null, isDia ? ['Clarity', r.clarity] : null, isDia ? ['Color', r.color] : null,
+    ['Product From', r.productFrom === 'Main' ? 'Main (Hub)' : r.productFrom], ['Counter', r.counter],
+    ['Entry', (r.entryType || '') + ' · ' + fmtDMY(r.entryDate)], ['Entered By', r.enteredBy],
+    r.status === 'sold' ? ['DSR / Outlet ID', r.dsrId] : null,
+    r.status === 'sold' ? ['Sold Date', fmtDMY(r.soldDate)] : null,
+    r.status === 'sold' ? ['Sold By', r.soldBy] : null,
+    r.status === 'sold' ? ['Payment Status', r.payStatus] : null
+  ].filter(Boolean);
+  return `<div class="tag-grid-wrap"><table class="tag-grid"><tbody>` +
+    rows.map(([l, v]) => `<tr><td class="lbl">${escHtml(l)}</td><td class="val">${escHtml(v == null || v === '' ? '—' : v)}</td></tr>`).join('') +
+    `</tbody></table></div>`;
 }
 
 async function slRenderManage(box) {
