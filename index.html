@@ -14451,7 +14451,7 @@ async function slPrintReport() {
   res.counters.forEach(c => { totalPcs += c.pcs; totalWt += c.wt; });
   const sectionsHtml = res.counters.map(c => `
     <div class="sec">
-      <div class="sec-hd">${escHtml(c.counter)} — ${c.pcs} pcs, ${slFmtWt(c.wt)} gm</div>
+      <div class="sec-hd">${escHtml(c.counter)} — ${c.pcs} pcs</div>
       <table>
         <thead><tr><th>Tag No</th><th>Product Name</th><th>Design</th><th>Type</th><th>Weight (gm)</th></tr></thead>
         <tbody>${c.rows.map(r => `<tr><td>${escHtml(r.tagNo || 'Non Tag')}</td><td>${escHtml(r.productName)}</td><td>${escHtml(r.design || '—')}</td><td>${escHtml(r.type)}</td><td class="num">${slFmtWt(r.weight)}</td></tr>`).join('')}</tbody>
@@ -14477,7 +14477,7 @@ async function slPrintReport() {
     </style></head><body>
     <h1>VSR GOLD — Stock Report</h1>
     <div class="sub">Printed: ${escHtml(new Date().toLocaleString())} · In-stock items only (sold items excluded)</div>
-    <div class="totals">Total: ${totalPcs} pcs across ${res.counters.length} counter(s) · ${slFmtWt(totalWt)} gm</div>
+    <div class="totals">Total: ${totalPcs} pcs across ${res.counters.length} counter(s)</div>
     ${sectionsHtml || '<p>No stock found.</p>'}
     <script>window.onload = function(){ window.print(); };<\/script>
     </body></html>`;
