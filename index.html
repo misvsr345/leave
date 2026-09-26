@@ -13699,6 +13699,13 @@ function renderDsrEntryForm(who, force) {
         </div>
       </div>
 
+      ${isOutlet ? `
+      <!-- Outlet Issue: no Payment Status concept (it's a stock issue to another shop, not a
+           customer sale) — kept only as a fixed hidden "Purchased" so item validation (isOrder
+           check in dsrfSubmit) behaves exactly like a normal completed DSR sale: every item's
+           Design/Tunch/Weight etc. stay required. -->
+      <input type="hidden" id="dsrfPayStatus-${who}" value="Purchased">
+      ` : `
       <div class="pay-status-section">
         <div class="pay-status-title">💰 &nbsp;Payment Status <span class="req">★</span></div>
         <div class="pay-tgl" id="dsrfPayTgl-${who}">
@@ -13709,6 +13716,7 @@ function renderDsrEntryForm(who, force) {
         <input type="hidden" id="dsrfPayStatus-${who}" value="Purchased">
         <div style="margin-top:8px;font-size:11px;color:var(--dmuted);" id="dsrfPayNote-${who}">Customer has paid in full.</div>
       </div>
+      `}
 
       <div id="dsrfEntriesList-${who}"></div>
       <button class="add-entry-btn" onclick="dsrfAddEntry('${who}')">＋ &nbsp; Add Another Item</button>
@@ -18798,9 +18806,14 @@ function dsrfConfirmSubmit(who, evt) {
         document.getElementById('dsrfCust-' + who).value = '';
         document.getElementById('dsrfMobile-' + who).value = '';
         document.getElementById('dsrfAddr-' + who).value = '';
-        document.getElementById('dsrfBillNo-' + who).value = '';
+        // Bill No and the Payment Status toggle don't exist on the Outlet Issue form
+        // (no Bill No field, and Payment Status is a fixed hidden "Purchased" there —
+        // see renderDsrEntryForm) — guard both so a missing element there doesn't throw
+        // and skip the rest of this reset.
+        const billNoEl2 = document.getElementById('dsrfBillNo-' + who); if (billNoEl2) billNoEl2.value = '';
         document.getElementById('dsrfBillDate-' + who).value = toYMD(new Date());
-        dsrfSetPayStatus(who, 'Purchased', document.getElementById('dsrfBtnPurchased-' + who));
+        const payBtn = document.getElementById('dsrfBtnPurchased-' + who);
+        if (payBtn) dsrfSetPayStatus(who, 'Purchased', payBtn);
       } else {
         msg.style.color = 'var(--red)';
         msg.textContent = '❌ ' + (result.message || 'Failed to save') + ' — saved offline instead, will retry automatically.';
