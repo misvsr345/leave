@@ -14644,13 +14644,17 @@ function slRenderPhotos(box) {
   SLPHOTO.items = []; SLPHOTO.offset = 0; SLPHOTO.total = 0;
   box.innerHTML = `<div class="form-2col">
       <div class="form-row"><label>Show</label>
-        <select class="uniform-select" id="slPhStatus" onchange="slLoadPhotos(true)">
+        <select class="uniform-select" id="slPhStatus" onchange="slPhotoFiltersChanged()">
           <option value="instock">In Stock only</option>
           <option value="sold">Sold only</option>
           <option value="all">All (In Stock + Sold)</option>
         </select>
       </div>
-      <div class="form-row"><label>Counter</label><select class="uniform-select" id="slPhCounter" onchange="slLoadPhotos(true)"><option value="">All</option></select></div>
+      <div class="form-row"><label>Counter</label><select class="uniform-select" id="slPhCounter" onchange="slPhotoFiltersChanged()"><option value="">All</option></select></div>
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>Product</label><select class="uniform-select" id="slPhProduct" onchange="slLoadPhotos(true)"><option value="">All</option></select></div>
+      <div class="form-row"><label>Design</label><select class="uniform-select" id="slPhDesign" onchange="slLoadPhotos(true)"><option value="">All</option></select></div>
     </div>
     <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
     <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
@@ -14664,7 +14668,28 @@ function slRenderPhotos(box) {
       .sl-photo-tile .sl-ph-tag{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#fff;font-size:10.5px;font-weight:700;padding:10px 6px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     </style>`;
   (async () => { try { await slEnsureMeta(); const sel = document.getElementById('slPhCounter'); if (sel) sel.innerHTML = '<option value="">All</option>' + SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`).join(''); } catch (e) {} })();
+  slLoadPhotoFilterOptions();
   slLoadPhotos(true);
+}
+
+// Counter and Status change WHICH photos are in scope, so the Product/Design dropdowns are re-fetched
+// too (e.g. a design that only exists in "Sold" shouldn't still be offered after switching to "In Stock
+// only") — Product/Design themselves don't need this, since picking one never changes what the OTHER
+// dropdown should list here.
+function slPhotoFiltersChanged() {
+  slLoadPhotoFilterOptions();
+  slLoadPhotos(true);
+}
+async function slLoadPhotoFilterOptions() {
+  const prodSel = document.getElementById('slPhProduct'), desSel = document.getElementById('slPhDesign');
+  if (!prodSel || !desSel) return;
+  const keepProd = prodSel.value, keepDes = desSel.value;
+  try {
+    const res = await slApi({ action: 'photoFilters', status: document.getElementById('slPhStatus').value, counter: document.getElementById('slPhCounter').value });
+    if (!res || !res.ok) return;
+    prodSel.innerHTML = '<option value="">All</option>' + (res.products || []).map(n => `<option${n === keepProd ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+    desSel.innerHTML = '<option value="">All</option>' + (res.designs || []).map(n => `<option${n === keepDes ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+  } catch (e) {}
 }
 
 async function slLoadPhotos(reset) {
@@ -14676,6 +14701,7 @@ async function slLoadPhotos(reset) {
     const res = await slApi({
       action: 'photoGallery', status: document.getElementById('slPhStatus').value,
       counter: document.getElementById('slPhCounter').value, q: document.getElementById('slPhQ').value.trim(),
+      product: document.getElementById('slPhProduct').value, design: document.getElementById('slPhDesign').value,
       limit: SLPHOTO.limit, offset: SLPHOTO.offset
     });
     if (!res || !res.ok) { grid.innerHTML = ''; slError(grid, res); if (moreWrap) moreWrap.innerHTML = ''; return; }
