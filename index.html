@@ -14605,18 +14605,21 @@ async function slTagSearch() {
     const statusText = sold
       ? `<span class="kd-pill red">SOLD</span> &nbsp;DSR <b>${escHtml(res.sold.dsrId)}</b> · ${fmtDMY(res.sold.soldDate)} · ${escHtml(res.sold.soldBy)} · ${escHtml(res.sold.payStatus)}`
       : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b>`;
-    let html = slStockLookupCardHtml(it, statusText);
+    let saleRow = null;
     // Sold via a real DSR (not a Wholesale "WS..." sale, which has no DSR record to look up) — pull the
-    // full sale record too, so the whole journey (Stock entry → sold) shows in one place.
+    // matching sale row so the whole journey (Stock entry → sold) renders as ONE merged card instead of
+    // two cards that repeat the same Type/Product/Design/Weight/Tag No.
     if (sold && res.sold.dsrId && res.sold.dsrId.indexOf('WS') !== 0) {
       try {
         const dsrRes = await _fetchWithTimeout(DSR_GAS_URL + '?action=searchByDsrId&dsrId=' + encodeURIComponent(res.sold.dsrId) + '&role=ADMIN', {}, 30000).then(r => r.json());
         if (dsrRes && dsrRes.status === 'success' && dsrRes.results && dsrRes.results.length) {
-          html += '<div class="kd-note" style="margin:14px 0 8px;">🧾 DSR sale record</div>' + dsrRes.results.map((r, i) => dsrTagResultCardHtml(r, i, 'admin')).join('');
+          const needle = stockNormTag(raw);
+          saleRow = dsrRes.results.find(r => stockNormTag(r.tagNo || '') === needle) || dsrRes.results[0];
         }
       } catch (e) {}
     }
-    body.innerHTML = html;
+    window['__dsrTagResults_admin'] = saleRow ? [saleRow] : [];
+    body.innerHTML = dsrMergedTagCardHtml(it, statusText, saleRow, 0, 'admin');
   } catch (e) { slError(body, null); }
 }
 
@@ -18611,22 +18614,31 @@ function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount, incl
   const role = who === 'admin' ? 'ADMIN' : 'EMPLOYEE';
 
   const dsrPromise = _fetchWithTimeout(DSR_GAS_URL + '?action=' + action + '&' + paramName + '=' + encodeURIComponent(value) + '&role=' + role, {}, 60000).then(r => r.json());
-  const stockPromise = includeStock ? dsrStockLookupPanel(value) : Promise.resolve('');
+  const stockPromise = includeStock ? dsrStockLookupData(value) : Promise.resolve(null);
 
   Promise.all([dsrPromise, stockPromise])
-    .then(([data, stockHtml]) => {
+    .then(([data, stockData]) => {
+      // Tag No Wise only: if Stock has this tag but there's no DSR sale (item never sold, or not
+      // found under this search), still show its Stock card alone via the same merged renderer.
+      const stockOnlyCard = stockData ? dsrMergedTagCardHtml(stockData.it, stockData.statusText, null, 0, who) : '';
       if (data.status !== 'success') {
-        box.innerHTML = stockHtml || ('<div class="card"><div class="empty-state"><p>' + escHtml(data.message || 'Search failed.') + '</p></div></div>');
+        box.innerHTML = stockOnlyCard || ('<div class="card"><div class="empty-state"><p>' + escHtml(data.message || 'Search failed.') + '</p></div></div>');
         return;
       }
       const results = data.results || [];
       if (!results.length) {
-        box.innerHTML = stockHtml || ('<div class="card"><div class="empty-state"><p>' + escHtml(emptyMsg) + '</p></div></div>');
+        box.innerHTML = stockOnlyCard || ('<div class="card"><div class="empty-state"><p>' + escHtml(emptyMsg) + '</p></div></div>');
         return;
       }
       window['__dsrTagResults_' + who] = results;
       const countNote = showCount ? '<div class="kd-note" style="margin:0 2px 8px;">' + results.length + ' item(s) found — Return / Replace works on one item at a time.</div>' : '';
-      box.innerHTML = stockHtml + countNote + results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
+      // Tag No Wise (includeStock=true): merge each matching DSR sale row with the ONE Stock record
+      // for this tag, so Type/Product/Design/Tunch/Weight/Tag No show once, not twice.
+      // DSR ID Wise (includeStock=false): no single tag to merge against — full standalone cards.
+      const cardsHtml = includeStock
+        ? results.map((r, i) => dsrMergedTagCardHtml(stockData ? stockData.it : null, stockData ? stockData.statusText : '', r, i, who)).join('')
+        : results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
+      box.innerHTML = countNote + cardsHtml;
     })
     .catch(err => {
       const msg = (err && err.name === 'AbortError')
