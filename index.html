@@ -1476,6 +1476,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .tag-grid thead th{background:#2a2a3d;color:#f5d67a;font-weight:800;font-size:13px;letter-spacing:.3px;}
 .tag-grid td.lbl{background:var(--purple-bg);color:var(--purple);font-weight:700;width:38%;}
 .tag-grid td.val{word-break:break-word;font-weight:500;}
+/* BRO: "TAG NO AND LENTH KODDIGA HILITE AVALI. BANGLE SIZE, RING SIZE KUDA BOLD AVALI" */
+.tag-grid tr.hl td{background:var(--gold-bg,#fff6df);}
+.tag-grid tr.hl td.lbl{font-weight:800;}
+.tag-grid tr.hl td.val{font-weight:800;color:var(--purple);}
 .tag-grid img.tag-photo{width:100%;max-width:220px;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;display:block;margin:0 auto;}
 .kd-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2);}
 .kd-table{width:100%;border-collapse:collapse;font-size:12px;}
@@ -14661,8 +14665,8 @@ function slRenderPhotos(box) {
       <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
     </div>
     <div class="form-2col" id="slPhWtRangeBox" style="display:none;">
-      <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slPhWtFrom" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
-      <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slPhWtTo" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
+      <div class="form-row"><label>From Wt</label><input type="number" class="uniform-select" id="slPhWtFrom" min="0" max="100" step="any" placeholder="0" oninput="slLoadPhotos(true)"></div>
+      <div class="form-row"><label>To Wt</label><input type="number" class="uniform-select" id="slPhWtTo" min="0" max="100" step="any" placeholder="100" oninput="slLoadPhotos(true)"></div>
     </div>
     <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
     <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
@@ -14678,7 +14682,6 @@ function slRenderPhotos(box) {
       @media (min-width:1100px){ #slPhotoModal .modal-box{max-width:960px !important;} }
     </style>`;
   (async () => { try { await slEnsureMeta(); const sel = document.getElementById('slPhCounter'); if (sel) sel.innerHTML = '<option value="">All</option>' + SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`).join(''); } catch (e) {} })();
-  slPopulateWtRangeOptions(); // fixed 0–100 list, doesn't need any data loaded first
   slLoadPhotoProductOptions();
   slLoadPhotoDimFilters('');
   slLoadPhotos(true);
@@ -14717,22 +14720,8 @@ async function slLoadPhotoProductOptions() {
   } catch (e) {}
 }
 // Weight Range (BRO: "portal kuda same update chei" — mirrors stock-photos.html's Weight Range tick
-// box). BRO later: "WEIGHT DROP DOWN LO 0 TO 100 NUMBERS RAVALI... DESIMAL VADDU, DIRECT ROUND NUMBERS 0
-// TO 100 VARAKU IVU" — a fixed 0–100 range of plain whole numbers (no decimals) in BOTH From and To, not
-// just whatever weights happen to exist in the data — an item's actual (decimal) weight still matches
-// fine against these whole-number bounds.
-const SL_WT_RANGE_OPTIONS_HTML = (() => {
-  let html = '<option value="">Any</option>';
-  for (let i = 0; i <= 100; i++) html += `<option>${i}</option>`;
-  return html;
-})();
-function slPopulateWtRangeOptions() {
-  const fromSel = document.getElementById('slPhWtFrom'), toSel = document.getElementById('slPhWtTo');
-  if (!fromSel || !toSel) return;
-  const keepFrom = fromSel.value, keepTo = toSel.value;
-  fromSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML; toSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML;
-  fromSel.value = keepFrom; toSel.value = keepTo;
-}
+// box). BRO later: "LEDU ANTE DROP DOWN REMOVE CHEI. MANUAL ENTER CHESTANU" — so From/To are plain
+// number inputs the person types into directly, no dropdown at all.
 function slToggleWtRange() {
   const on = document.getElementById('slPhWtRangeOn').checked;
   document.getElementById('slPhWtRangeBox').style.display = on ? 'grid' : 'none';
@@ -14982,20 +14971,32 @@ function slRenderPhotoStage() {
 function slPhotoInfoHtml(r) {
   if (!r) return '';
   const isDia = r.type === 'Diamond';
+  // BRO: "denikaite lenth undo adi select chesinapudu matrame lenth box ravali. ring size or bangle
+  // size kuda same" — only whichever ONE of Length / Bangle Size / Ring Size actually applies to this
+  // item's product shows up, same as the filter dropdowns already do.
+  const kind = slPhotoKind(r.productName);
+  let sizeRow = null;
+  if (kind === 'chain' && r.length) sizeRow = ['Length', r.length, true];
+  else if (kind === 'bangle' && r.bangleSize) sizeRow = ['Bangle Size', r.bangleSize, true];
+  else if (kind === 'ring' && r.ringSize) sizeRow = ['Ring Size', r.ringSize, true];
+  // BRO: "TYPE VADDULE, PRODUCT FROM KUDA NO NEED" — dropped both; "TAG NO AND LENTH KODDIGA HILITE
+  // AVALI, BANGLE SIZE RING SIZE KUDA BOLD AVALI" — Tag No and whichever size field applies get the
+  // highlighted/bold treatment (the 3rd item in each row below).
   const rows = [
-    ['Type', r.type], ['Tag No', r.tagNo || '—'], ['Product', r.productName],
+    ['Tag No', r.tagNo || '—', true], ['Product', r.productName],
     !isDia ? ['Design', r.design] : null, !isDia ? ['Tunch', r.tunch] : null,
     !isDia ? ['Weight (gm)', r.weight] : null,
     isDia ? ['Gross Wt', r.gross] : null, isDia ? ['Net Wt', r.net] : null,
     isDia ? ['Carat', r.carat] : null, isDia ? ['Clarity', r.clarity] : null, isDia ? ['Color', r.color] : null,
-    ['Product From', r.productFrom === 'Main' ? 'Main (Hub)' : r.productFrom], ['Counter', r.counter],
+    sizeRow,
+    ['Counter', r.counter],
     r.status === 'sold' ? ['DSR / Outlet ID', r.dsrId] : null,
     r.status === 'sold' ? ['Sold Date', fmtDMY(r.soldDate)] : null,
     r.status === 'sold' ? ['Sold By', r.soldBy] : null,
     r.status === 'sold' ? ['Payment Status', r.payStatus] : null
   ].filter(Boolean);
   return `<div class="tag-grid-wrap"><table class="tag-grid"><tbody>` +
-    rows.map(([l, v]) => `<tr><td class="lbl">${escHtml(l)}</td><td class="val">${escHtml(v == null || v === '' ? '—' : v)}</td></tr>`).join('') +
+    rows.map(([l, v, hl]) => `<tr${hl ? ' class="hl"' : ''}><td class="lbl">${escHtml(l)}</td><td class="val">${escHtml(v == null || v === '' ? '—' : v)}</td></tr>`).join('') +
     `</tbody></table></div>`;
 }
 
