@@ -14717,13 +14717,13 @@ async function slLoadPhotoProductOptions() {
   } catch (e) {}
 }
 // Weight Range (BRO: "portal kuda same update chei" — mirrors stock-photos.html's Weight Range tick
-// box). BRO later: "WEIGHT DROP DOWN LO 0 TO 100 NUMBERS RAVALI. RENDITLO NU RAVALI. FROM AND TO BOTH
-// DROP DOWN LO RAVALI" — a fixed 0–100 range (0.1 steps, so decimals are there too) in BOTH From and To,
-// not just whatever weights happen to exist in the data — filters "2.5 to 15.8" work even with no item
-// at exactly those weights.
+// box). BRO later: "WEIGHT DROP DOWN LO 0 TO 100 NUMBERS RAVALI... DESIMAL VADDU, DIRECT ROUND NUMBERS 0
+// TO 100 VARAKU IVU" — a fixed 0–100 range of plain whole numbers (no decimals) in BOTH From and To, not
+// just whatever weights happen to exist in the data — an item's actual (decimal) weight still matches
+// fine against these whole-number bounds.
 const SL_WT_RANGE_OPTIONS_HTML = (() => {
   let html = '<option value="">Any</option>';
-  for (let i = 0; i <= 1000; i++) html += `<option>${(i / 10).toFixed(1)}</option>`;
+  for (let i = 0; i <= 100; i++) html += `<option>${i}</option>`;
   return html;
 })();
 function slPopulateWtRangeOptions() {
