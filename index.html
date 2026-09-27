@@ -1686,16 +1686,16 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="profile" onclick="showEmpPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
     <div class="vsr-sidebar-item" data-page="dashboard-hub" onclick="showEmpPage('dashboard-hub')"><span class="vsr-sidebar-icon">📊</span>Dashboard</div>
     <div class="vsr-sidebar-item" data-page="overview" id="empSidebarLeave" onclick="showEmpPage('overview')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
-    <div class="vsr-sidebar-item" data-page="leads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
+    <div class="vsr-sidebar-item" data-page="leads" id="empSidebarLeads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
     <div class="vsr-sidebar-item" data-page="loyalty" id="empSidebarLoyalty" onclick="showEmpPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
     <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
     <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
-    <div class="vsr-sidebar-item" data-page="outletissue" onclick="showEmpPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
+    <div class="vsr-sidebar-item" data-page="outletissue" id="empSidebarOutletIssue" onclick="showEmpPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="stockentry" id="empSidebarStockEntry" onclick="showEmpPage('stockentry')"><span class="vsr-sidebar-icon">📦</span>Stock Entry</div>
-    <div class="vsr-sidebar-item" data-page="walkins" onclick="showEmpPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
+    <div class="vsr-sidebar-item" data-page="walkins" id="empSidebarWalkins" onclick="showEmpPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('emp')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="empMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="empSidebarMoreSubmenu" style="display:none;">
@@ -1728,7 +1728,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
           <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Entry</div><div class="quick-action-sub">Add counter stock</div></div>
-          <div class="quick-action-btn" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
+          <div class="quick-action-btn" id="empQAWalkinsModule" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Events, theme, password</div></div>
         </div>
       </div>
@@ -2526,7 +2526,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-item" data-page="profile" onclick="showAdminPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
     <div class="vsr-sidebar-item" data-page="dashboard-hub" onclick="showAdminPage('dashboard-hub')"><span class="vsr-sidebar-icon">📊</span>Dashboard</div>
     <div class="vsr-sidebar-item" data-page="dashboard" onclick="showAdminPage('dashboard')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
-    <div class="vsr-sidebar-item" data-page="leads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
+    <div class="vsr-sidebar-item" data-page="leads" id="adminSidebarLeads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
     <div class="vsr-sidebar-item" data-page="loyalty" id="adminSidebarLoyalty" onclick="showAdminPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
     <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
     <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
@@ -2604,7 +2604,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="quick-actions-section" style="margin-bottom:14px;">
         <div class="quick-actions-title">⚡ Quick Actions</div>
         <div class="quick-actions-grid" id="adminQuickActionsGrid">
-          <div class="quick-action-btn" onclick="showAdminPage('pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending</div><div class="quick-action-sub">Awaiting approval</div></div>
+          <div class="quick-action-btn" id="adminQAPending" onclick="showAdminPage('pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending</div><div class="quick-action-sub">Awaiting approval</div></div>
           <div class="quick-action-btn" id="adminQACalendar" onclick="showAdminPage('acalendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Team schedule + 7-day availability</div></div>
           <div class="quick-action-btn" id="adminQABalance" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
           <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile / all leaves</div></div>
@@ -9776,7 +9776,14 @@ const SM_FEATURE_ELEMENTS = {
   stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
   dailyShop: ['adminQADailyShopModule', 'adminSidebarDailyShop'], dailyShopChecklist: ['adminQADailyShopModule'],
   backendSheets: ['adminQABackendSheets'],
-  walkins: ['adminSidebarWalkins', 'adminQAWalkinsGrid']
+  walkins: ['adminSidebarWalkins', 'adminQAWalkinsGrid'],
+  // v-add (BRO: "Access Setting lo lenivi update chei" — audit found these
+  // had real buttons already but were never in this map at all, so a
+  // restricted admin ALWAYS saw them regardless of what MIS configured):
+  pending: ['adminQAPending'],
+  leads: ['adminQALeads', 'adminSidebarLeads'],
+  outletIssue: ['adminQAOutletIssue', 'adminSidebarOutletIssue'],
+  stockLevel: ['adminQAStockLevel', 'adminSidebarStockLevel']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -9802,7 +9809,9 @@ const FEATURE_SUBKEYS = {
   stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport'],
   dailyShop: ['dailyShop'], dailyShopChecklist: ['dailyShopChecklist'],
   backendSheets: ['backend_sheets'],
-  walkins: ['walkins']
+  walkins: ['walkins'],
+  leads: ['leads'], leadsReport: ['leadsReport'],
+  outletIssue: ['outletIssue'], stockLevel: ['stockLevel']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -9845,16 +9854,23 @@ async function applyAdminRoleRestrictions() {
   const sectionGoldenAuraOn = perms.section_golden_aura !== false;
   const sectionStockOn = perms.section_stock !== false;
   const sectionDailyShopOn = perms.section_dailyShop !== false;
+  const sectionLeadsOn = perms.section_leads !== false;
   Object.keys(SM_FEATURE_ELEMENTS).forEach(key => {
     const subKeys = FEATURE_SUBKEYS[key] || [key];
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isKpiFeature = key.indexOf('kpi') === 0;
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
-    const isStockFeature = key.indexOf('stock') === 0;
+    // v-fix: 'stockLevel' (admin's separate inventory module) starts with
+    // "stock" too but has NOTHING to do with the "Stock Check List"
+    // section master below — it must not get swept up by isStockFeature.
+    const isStockFeature = key.indexOf('stock') === 0 && key !== 'stockLevel';
     const isDailyShopFeature = key.indexOf('dailyShop') === 0;
-    const isSectionless = key === 'backendSheets' || key === 'walkins'; // cross-cutting utilities, not tied to any one section
-    const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : sectionLeaveOn;
+    const isLeadsFeature = key === 'leads' || key === 'leadsReport';
+    // Cross-cutting utilities with no section master of their own —
+    // controlled purely by their own individual sub-permission.
+    const isSectionless = key === 'backendSheets' || key === 'walkins' || key === 'outletIssue' || key === 'stockLevel';
+    const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : isLeadsFeature ? sectionLeadsOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
       const el = document.getElementById(id);
@@ -12770,9 +12786,9 @@ const EMP_FEATURE_ELEMENTS = {
   // EMP_EXCLUDED_PERM_KEYS.
   goldenAura: ['empQAGoldenAuraModule'],
   gaNew: ['empQAGaNew'], gaList: ['empQAGaList'],
-  leads: ['empQALeadsModule'],
+  leads: ['empQALeadsModule', 'empSidebarLeads'],
   stock: ['empQAStockChecklist'],
-  dailyShop: ['empQADailyShopModule', 'empSidebarDailyShop'], dailyShopChecklist: ['empQADailyShopModule']
+  dailyShop: ['empQADailyShopModule', 'empSidebarDailyShop'], dailyShopChecklist: ['empQADailyShopModule'],
   // stockReport not mapped — already excluded for employees (see
   // EMP_EXCLUDED_PERM_KEYS) and empQAStockReport doesn't exist on the
   // employee side anyway.
@@ -12780,6 +12796,11 @@ const EMP_FEATURE_ELEMENTS = {
   // employee side has one combined "New Entry" button
   // (empQAStockNewEntry) covering both, not two separate entry
   // points, so there's no way to independently control just one.
+  // v-add (BRO: "Access Setting lo lenivi update chei" — these had real
+  // employee buttons already but no permission ever gated them):
+  outletIssue: ['empQAOutletIssue', 'empSidebarOutletIssue'],
+  stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
+  walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins']
 };
 
 // Fetches this specific employee's granular sub-option permissions and
@@ -12824,7 +12845,10 @@ function applyEmpGranularRestrictionsFromPerms(perms) {
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
-    const isStockFeature = key.indexOf('stock') === 0;
+    // v-fix: 'stockEntry' (employee's own counter-stock-entry module) is
+    // NOT part of the "Stock Check List" section — must not get swept up
+    // by this prefix match (same fix as the admin side's 'stockLevel').
+    const isStockFeature = key.indexOf('stock') === 0 && key !== 'stockEntry';
     const isDailyShopFeature = key.indexOf('dailyShop') === 0;
     const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : true;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
