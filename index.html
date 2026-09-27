@@ -14678,6 +14678,7 @@ function slRenderPhotos(box) {
       @media (min-width:1100px){ #slPhotoModal .modal-box{max-width:960px !important;} }
     </style>`;
   (async () => { try { await slEnsureMeta(); const sel = document.getElementById('slPhCounter'); if (sel) sel.innerHTML = '<option value="">All</option>' + SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`).join(''); } catch (e) {} })();
+  slPopulateWtRangeOptions(); // fixed 0–100 list, doesn't need any data loaded first
   slLoadPhotoProductOptions();
   slLoadPhotoDimFilters('');
   slLoadPhotos(true);
@@ -14716,17 +14717,20 @@ async function slLoadPhotoProductOptions() {
   } catch (e) {}
 }
 // Weight Range (BRO: "portal kuda same update chei" — mirrors stock-photos.html's Weight Range tick
-// box: independent of the exact-match Weight dropdown that only shows for Chain, works for any product).
-// Populated from slLoadPhotoDimFilters's response (below), same Status/Counter/Product-scoped weight
-// list as everything else in the cascade — BRO: "filters select cheska, venta daniki related ga next
-// option lo data ravali" (the range list must follow whatever's selected above it, not show every
-// weight in the whole catalog every time).
-function slPopulateWtRangeOptions(weights) {
+// box). BRO later: "WEIGHT DROP DOWN LO 0 TO 100 NUMBERS RAVALI. RENDITLO NU RAVALI. FROM AND TO BOTH
+// DROP DOWN LO RAVALI" — a fixed 0–100 range (0.1 steps, so decimals are there too) in BOTH From and To,
+// not just whatever weights happen to exist in the data — filters "2.5 to 15.8" work even with no item
+// at exactly those weights.
+const SL_WT_RANGE_OPTIONS_HTML = (() => {
+  let html = '<option value="">Any</option>';
+  for (let i = 0; i <= 1000; i++) html += `<option>${(i / 10).toFixed(1)}</option>`;
+  return html;
+})();
+function slPopulateWtRangeOptions() {
   const fromSel = document.getElementById('slPhWtFrom'), toSel = document.getElementById('slPhWtTo');
   if (!fromSel || !toSel) return;
   const keepFrom = fromSel.value, keepTo = toSel.value;
-  const opts = '<option value="">Any</option>' + (weights || []).map(w => `<option>${escHtml(w)}</option>`).join('');
-  fromSel.innerHTML = opts; toSel.innerHTML = opts;
+  fromSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML; toSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML;
   fromSel.value = keepFrom; toSel.value = keepTo;
 }
 function slToggleWtRange() {
@@ -14740,7 +14744,6 @@ async function slLoadPhotoDimFilters(product) {
     res = await slApi({ action: 'photoFilters', status: document.getElementById('slPhStatus').value, counter: document.getElementById('slPhCounter').value, product: product || '' });
   } catch (e) {}
   slRenderPhotoDimFilters((res && res.ok) ? res : {}, product);
-  slPopulateWtRangeOptions((res && res.ok) ? (res.weights || []) : []);
 }
 function slRenderPhotoDimFilters(opts, product) {
   const wrap = document.getElementById('slPhDimFilters'); if (!wrap) return;
