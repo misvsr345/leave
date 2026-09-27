@@ -14644,18 +14644,18 @@ function slRenderPhotos(box) {
   SLPHOTO.items = []; SLPHOTO.offset = 0; SLPHOTO.total = 0;
   box.innerHTML = `<div class="form-2col">
       <div class="form-row"><label>Show</label>
-        <select class="uniform-select" id="slPhStatus" onchange="slPhotoFiltersChanged()">
+        <select class="uniform-select" id="slPhStatus" onchange="slPhotoFiltersChanged('status')">
           <option value="instock">In Stock only</option>
           <option value="sold">Sold only</option>
-          <option value="all">All (In Stock + Sold)</option>
+          <option value="all" selected>All (In Stock + Sold)</option>
         </select>
       </div>
-      <div class="form-row"><label>Counter</label><select class="uniform-select" id="slPhCounter" onchange="slPhotoFiltersChanged()"><option value="">All</option></select></div>
+      <div class="form-row"><label>Counter</label><select class="uniform-select" id="slPhCounter" onchange="slPhotoFiltersChanged('counter')"><option value="">All</option></select></div>
     </div>
     <div class="form-2col">
-      <div class="form-row"><label>Product</label><select class="uniform-select" id="slPhProduct" onchange="slLoadPhotos(true)"><option value="">All</option></select></div>
-      <div class="form-row"><label>Design</label><select class="uniform-select" id="slPhDesign" onchange="slLoadPhotos(true)"><option value="">All</option></select></div>
+      <div class="form-row"><label>Product</label><select class="uniform-select" id="slPhProduct" onchange="slPhotoFiltersChanged('product')"><option value="">All</option></select></div>
     </div>
+    <div class="form-2col" id="slPhDimFilters"><!-- Design + product-specific size filters (Chain: Wt/Length, Bangle/Sankha: Bangle Size, Finger Ring: Ring Size) fill in here once a Product is picked --></div>
     <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
     <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
     <div id="slPhGrid" class="sl-photo-grid" style="margin-top:12px;"></div>
@@ -14666,30 +14666,65 @@ function slRenderPhotos(box) {
       .sl-photo-tile img{width:100%;height:100%;object-fit:cover;display:block;}
       .sl-photo-tile .sl-ph-pill{position:absolute;top:4px;left:4px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;color:#fff;letter-spacing:.3px;}
       .sl-photo-tile .sl-ph-tag{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#fff;font-size:10.5px;font-weight:700;padding:10px 6px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      @media (min-width:768px){ #slPhotoModal .modal-box{max-width:820px !important;max-height:92vh !important;} }
+      @media (min-width:1100px){ #slPhotoModal .modal-box{max-width:960px !important;} }
     </style>`;
   (async () => { try { await slEnsureMeta(); const sel = document.getElementById('slPhCounter'); if (sel) sel.innerHTML = '<option value="">All</option>' + SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`).join(''); } catch (e) {} })();
-  slLoadPhotoFilterOptions();
+  slLoadPhotoProductOptions();
+  slLoadPhotoDimFilters('');
   slLoadPhotos(true);
 }
 
-// Counter and Status change WHICH photos are in scope, so the Product/Design dropdowns are re-fetched
-// too (e.g. a design that only exists in "Sold" shouldn't still be offered after switching to "In Stock
-// only") — Product/Design themselves don't need this, since picking one never changes what the OTHER
-// dropdown should list here.
-function slPhotoFiltersChanged() {
-  slLoadPhotoFilterOptions();
+// ---- Cascading filters (BRO: "counter select cheste aa counter lo unnavi matrame Product list lo
+// ravali; Chain select cheste Weight/Length, Bangle/Sankha select cheste Bangle Size, Finger Ring
+// select cheste Finger Size adagali") ----
+// Status/Counter change -> reload the Product list (scoped to them) and clear whatever's below it.
+// Product change -> reload just the Design + size filter(s) that apply to THAT product.
+function slPhotoKind(productName) {
+  const p = String(productName || '').toLowerCase();
+  if (p.indexOf('chain') !== -1) return 'chain';
+  if (p.indexOf('bangle') !== -1 || p.indexOf('sankha') !== -1) return 'bangle';
+  if (p.indexOf('ring') !== -1 && p.indexOf('ear') === -1) return 'ring'; // "Finger Ring", not "Ear Ring"
+  return '';
+}
+async function slPhotoFiltersChanged(which) {
+  if (which === 'status' || which === 'counter') {
+    await slLoadPhotoProductOptions();
+    const prodSel = document.getElementById('slPhProduct'); if (prodSel) prodSel.value = '';
+    await slLoadPhotoDimFilters('');
+  } else if (which === 'product') {
+    await slLoadPhotoDimFilters(document.getElementById('slPhProduct').value);
+  }
   slLoadPhotos(true);
 }
-async function slLoadPhotoFilterOptions() {
-  const prodSel = document.getElementById('slPhProduct'), desSel = document.getElementById('slPhDesign');
-  if (!prodSel || !desSel) return;
-  const keepProd = prodSel.value, keepDes = desSel.value;
+async function slLoadPhotoProductOptions() {
+  const sel = document.getElementById('slPhProduct'); if (!sel) return;
+  const keep = sel.value;
   try {
     const res = await slApi({ action: 'photoFilters', status: document.getElementById('slPhStatus').value, counter: document.getElementById('slPhCounter').value });
-    if (!res || !res.ok) return;
-    prodSel.innerHTML = '<option value="">All</option>' + (res.products || []).map(n => `<option${n === keepProd ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
-    desSel.innerHTML = '<option value="">All</option>' + (res.designs || []).map(n => `<option${n === keepDes ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+    if (res && res.ok) sel.innerHTML = '<option value="">All</option>' + (res.products || []).map(n => `<option${n === keep ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
   } catch (e) {}
+}
+async function slLoadPhotoDimFilters(product) {
+  let res = null;
+  try {
+    res = await slApi({ action: 'photoFilters', status: document.getElementById('slPhStatus').value, counter: document.getElementById('slPhCounter').value, product: product || '' });
+  } catch (e) {}
+  slRenderPhotoDimFilters((res && res.ok) ? res : {}, product);
+}
+function slRenderPhotoDimFilters(opts, product) {
+  const wrap = document.getElementById('slPhDimFilters'); if (!wrap) return;
+  const kind = slPhotoKind(product);
+  let html = `<div class="form-row"><label>Design</label><select class="uniform-select" id="slPhDesign" onchange="slLoadPhotos(true)"><option value="">All</option>${(opts.designs || []).map(d => `<option>${escHtml(d)}</option>`).join('')}</select></div>`;
+  if (kind === 'chain') {
+    html += `<div class="form-row"><label>Weight (gm)</label><select class="uniform-select" id="slPhWeight" onchange="slLoadPhotos(true)"><option value="">All</option>${(opts.weights || []).map(w => `<option>${escHtml(w)}</option>`).join('')}</select></div>`;
+    html += `<div class="form-row"><label>Length</label><select class="uniform-select" id="slPhLength" onchange="slLoadPhotos(true)"><option value="">All</option>${(opts.lengths || []).map(l => `<option>${escHtml(l)}</option>`).join('')}</select></div>`;
+  } else if (kind === 'bangle') {
+    html += `<div class="form-row"><label>Bangle Size</label><select class="uniform-select" id="slPhBangleSize" onchange="slLoadPhotos(true)"><option value="">All</option>${(opts.bangleSizes || []).map(b => `<option>${escHtml(b)}</option>`).join('')}</select></div>`;
+  } else if (kind === 'ring') {
+    html += `<div class="form-row"><label>Finger Size</label><select class="uniform-select" id="slPhRingSize" onchange="slLoadPhotos(true)"><option value="">All</option>${(opts.ringSizes || []).map(r => `<option>${escHtml(r)}</option>`).join('')}</select></div>`;
+  }
+  wrap.innerHTML = html;
 }
 
 async function slLoadPhotos(reset) {
@@ -14698,10 +14733,12 @@ async function slLoadPhotos(reset) {
   const moreWrap = document.getElementById('slPhMoreWrap');
   if (moreWrap) moreWrap.innerHTML = '<span class="spinner"></span>';
   try {
+    const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
     const res = await slApi({
       action: 'photoGallery', status: document.getElementById('slPhStatus').value,
       counter: document.getElementById('slPhCounter').value, q: document.getElementById('slPhQ').value.trim(),
-      product: document.getElementById('slPhProduct').value, design: document.getElementById('slPhDesign').value,
+      product: val('slPhProduct'), design: val('slPhDesign'),
+      weight: val('slPhWeight'), length: val('slPhLength'), bangleSize: val('slPhBangleSize'), ringSize: val('slPhRingSize'),
       limit: SLPHOTO.limit, offset: SLPHOTO.offset
     });
     if (!res || !res.ok) { grid.innerHTML = ''; slError(grid, res); if (moreWrap) moreWrap.innerHTML = ''; return; }
@@ -14753,6 +14790,7 @@ function slOpenPhotoViewer(idx) {
         <img id="slPhStageImg" src="" style="max-width:100%;max-height:78vh;display:block;cursor:zoom-in;user-select:none;-webkit-user-drag:none;">
         <button class="btn-sm" onclick="slPhotoNav(1)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:4;">▶</button>
         <div style="position:absolute;bottom:6px;right:8px;z-index:4;display:flex;gap:6px;">
+          <button class="btn-sm" onclick="slSharePhoto()" title="Share">📤</button>
           <button class="btn-sm" onclick="slPhotoZoomBy(-0.6)" title="Zoom out">−</button>
           <button class="btn-sm" onclick="slPhotoZoomBy(0.6)" title="Zoom in">+</button>
         </div>
@@ -14871,6 +14909,22 @@ function slSetupPhotoZoomPan() {
   });
 }
 function slPhotoZoomBy(delta) { if (window.__slPhotoZoomBy) window.__slPhotoZoomBy(delta); }
+
+// ---- Share (BRO: "need unnavi share option kuda ravali") — shares the item's real Drive link (not
+// the resized thumbnail URL) so whoever receives it can open the actual full photo. Native share sheet
+// where available; falls back to copying the link, then to opening it in a new tab. ----
+async function slSharePhoto() {
+  const r = SLPHOTO.items[SLPHOTO.openIdx]; if (!r || !r.photo) return;
+  const title = (r.tagNo || r.productName || 'Photo') + ' — VSR GOLD';
+  const url = r.photo;
+  if (navigator.share) {
+    try { await navigator.share({ title, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try { await navigator.clipboard.writeText(url); toast('Photo link copied — paste it anywhere to share', 'success'); return; } catch (e) {}
+  }
+  window.open(url, '_blank');
+}
 function slTogglePhotoInfo() {
   SLPHOTO.infoOpen = !SLPHOTO.infoOpen;
   const box = document.getElementById('slPhInfoBox');
