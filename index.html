@@ -1012,6 +1012,19 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    bigger form fields elsewhere and isn't as compact). */
 .filter-row-2col { display: flex; gap: 8px; }
 .filter-row-2col .form-row { flex: 1; margin-bottom: 0; }
+
+/* v-fix (BRO: "Bangle Size, Ring Size, Length — anni oke line lo ivu... CUT AVAKUDADU. lopala unna
+   text cut avutunda ante, dani kinda line lo pettu, cut avakapote oke line lone ivu" — never truncate a
+   dropdown's own text; each one keeps its natural width, and flex-wrap moves whichever one doesn't fit
+   down to its own next line instead of clipping it or forcing it into an undersized box): */
+.filter-row-3col { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+.filter-row-3col .form-row { flex: 0 1 auto; min-width: 0; margin-bottom: 0; }
+.filter-row-3col .form-row label { font-size: 10.5px; }
+.filter-row-3col .form-row select.uniform-select {
+  width: auto; max-width: 100%; min-width: 90px;
+  font-size: 13px; padding: 10px 30px 10px 10px; font-weight: 700;
+  white-space: nowrap;
+}
 .filter-row-2col .form-row label { font-size: 11px; }
 .filter-row-2col input, .filter-row-2col select { padding: 8px 10px; font-size: 13px; }
 @media (max-width: 380px) {
@@ -14567,7 +14580,7 @@ async function slRenderCounter(box) {
         <input type="checkbox" id="slCounterByDesign" onchange="slLoadCounterDetail()" style="width:18px;height:18px;margin:0;">
         <label style="margin:0;text-transform:none;">Design-wise breakdown</label>
       </div>
-      <div class="form-2col" id="slCounterDimFilters"><!-- Bangle Size / Ring Size / Length filters (same rule as Photos) fill in here --></div>
+      <div class="filter-row-3col" id="slCounterDimFilters"><!-- Bangle Size / Ring Size / Length filters (same rule as Photos), all on one line --></div>
       <div class="form-row" style="display:flex;align-items:center;gap:8px;">
         <input type="checkbox" id="slCounterWtRangeOn" onchange="slToggleCounterWtRange()" style="width:18px;height:18px;margin:0;">
         <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
