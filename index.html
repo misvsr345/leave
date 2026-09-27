@@ -14562,25 +14562,77 @@ async function slRenderCounter(box) {
     const names = SL.counters.concat([SL.mainHub]);
     if (!SL.sel || names.indexOf(SL.sel) === -1) SL.sel = names[0] || '';
     const head = `<div class="form-row"><label>Counter</label>
-      <select class="uniform-select" id="slCounterSel" onchange="SL.sel=this.value;slLoadCounterDetail()">${names.map(n => `<option ${n === SL.sel ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+      <select class="uniform-select" id="slCounterSel" onchange="SL.sel=this.value;slCounterFiltersChanged()">${names.map(n => `<option ${n === SL.sel ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+      <div class="form-row" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="slCounterByDesign" onchange="slLoadCounterDetail()" style="width:18px;height:18px;margin:0;">
+        <label style="margin:0;text-transform:none;">Design-wise breakdown</label>
+      </div>
+      <div class="form-2col" id="slCounterDimFilters"><!-- Bangle Size / Ring Size / Length filters (same rule as Photos) fill in here --></div>
+      <div class="form-row" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="slCounterWtRangeOn" onchange="slToggleCounterWtRange()" style="width:18px;height:18px;margin:0;">
+        <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
+      </div>
+      <div class="form-2col" id="slCounterWtRangeBox" style="display:none;">
+        <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slCounterWtFrom" onchange="slLoadCounterDetail()"><option value="">Any</option></select></div>
+        <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slCounterWtTo" onchange="slLoadCounterDetail()"><option value="">Any</option></select></div>
+      </div>
       <div id="slCounterBody"></div>`;
     box.innerHTML = head;
+    slPopulateCounterWtRangeOptions();
+    await slLoadCounterDimOptions();
     slLoadCounterDetail();
   } catch (e) { slError(box, null); }
+}
+// Counter changes -> reload the Bangle Size/Ring Size/Length options scoped to that counter (same
+// cascade rule as Photos: options only ever offer values that exist), then reload the table.
+async function slCounterFiltersChanged() {
+  await slLoadCounterDimOptions();
+  slLoadCounterDetail();
+}
+async function slLoadCounterDimOptions() {
+  const wrap = document.getElementById('slCounterDimFilters'); if (!wrap) return;
+  let res = null;
+  try { res = await slApi({ action: 'counterDimOptions', counter: SL.sel }); } catch (e) {}
+  const opts = (res && res.ok) ? res : {};
+  wrap.innerHTML = `
+    <div class="form-row"><label>Bangle Size</label><select class="uniform-select" id="slCounterBangleSize" onchange="slLoadCounterDetail()"><option value="">All</option>${(opts.bangleSizes || []).map(b => `<option>${escHtml(b)}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Ring Size</label><select class="uniform-select" id="slCounterRingSize" onchange="slLoadCounterDetail()"><option value="">All</option>${(opts.ringSizes || []).map(r => `<option>${escHtml(r)}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Length</label><select class="uniform-select" id="slCounterLength" onchange="slLoadCounterDetail()"><option value="">All</option>${(opts.lengths || []).map(l => `<option>${escHtml(l)}</option>`).join('')}</select></div>`;
+}
+// Weight Range for the Counter-wise report — same fixed 0–100 dropdown as the Photos gallery.
+function slPopulateCounterWtRangeOptions() {
+  const fromSel = document.getElementById('slCounterWtFrom'), toSel = document.getElementById('slCounterWtTo');
+  if (!fromSel || !toSel) return;
+  fromSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML; toSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML;
+}
+function slToggleCounterWtRange() {
+  const on = document.getElementById('slCounterWtRangeOn').checked;
+  document.getElementById('slCounterWtRangeBox').style.display = on ? 'grid' : 'none';
+  slLoadCounterDetail();
 }
 async function slLoadCounterDetail() {
   const body = document.getElementById('slCounterBody'); if (!body) return;
   slLoading(body); hideExportBtn(slBox().id);
   try {
-    const res = await slApi({ action: 'counterDetail', counter: SL.sel });
+    const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const byDesignEl = document.getElementById('slCounterByDesign');
+    const byDesign = byDesignEl && byDesignEl.checked ? '1' : '0';
+    const wtOnEl = document.getElementById('slCounterWtRangeOn');
+    const wtOn = wtOnEl && wtOnEl.checked;
+    const res = await slApi({
+      action: 'counterDetail', counter: SL.sel, byDesign: byDesign,
+      bangleSize: val('slCounterBangleSize'), ringSize: val('slCounterRingSize'), length: val('slCounterLength'),
+      wtFrom: wtOn ? val('slCounterWtFrom') : '', wtTo: wtOn ? val('slCounterWtTo') : ''
+    });
     if (!res || !res.ok) { slError(body, res); return; }
-    if (!res.rows.length) { body.innerHTML = '<div class="empty-state"><p>No stock in this counter.</p></div>'; return; }
+    if (!res.rows.length) { body.innerHTML = '<div class="empty-state"><p>No stock matches these filters.</p></div>'; return; }
     let tp = 0, tw = 0;
     res.rows.forEach(r => { tp += r.pcs; tw += r.wt; });
-    body.innerHTML = `<div class="kd-note">${res.rows.length} product(s) · ${tp} pcs · ${slFmtWt(tw)} gm</div>
-      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th><th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
-      res.rows.map(r => `<tr><td><b>${escHtml(r.product)}</b></td><td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
-      `<tr><td><b>Total</b></td><td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
+    const showDesign = !!res.byDesign;
+    body.innerHTML = `<div class="kd-note">${res.rows.length} ${showDesign ? 'design(s)' : 'product(s)'} · ${tp} pcs · ${slFmtWt(tw)} gm</div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${showDesign ? '<th>Design</th>' : ''}<th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
+      res.rows.map(r => `<tr><td><b>${escHtml(r.product)}</b></td>${showDesign ? `<td>${escHtml(r.design || '—')}</td>` : ''}<td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
+      `<tr><td><b>Total</b></td>${showDesign ? '<td></td>' : ''}<td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
     showExportBtn(slBox().id);
   } catch (e) { slError(body, null); }
 }
@@ -14685,8 +14737,8 @@ function slRenderPhotos(box) {
       <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
     </div>
     <div class="form-2col" id="slPhWtRangeBox" style="display:none;">
-      <div class="form-row"><label>From Wt</label><input type="number" class="uniform-select" id="slPhWtFrom" min="0" max="100" step="any" placeholder="0" oninput="slLoadPhotos(true)"></div>
-      <div class="form-row"><label>To Wt</label><input type="number" class="uniform-select" id="slPhWtTo" min="0" max="100" step="any" placeholder="100" oninput="slLoadPhotos(true)"></div>
+      <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slPhWtFrom" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
+      <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slPhWtTo" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
     </div>
     <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
     <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
@@ -14702,6 +14754,7 @@ function slRenderPhotos(box) {
       @media (min-width:1100px){ #slPhotoModal .modal-box{max-width:960px !important;} }
     </style>`;
   (async () => { try { await slEnsureMeta(); const sel = document.getElementById('slPhCounter'); if (sel) sel.innerHTML = '<option value="">All</option>' + SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`).join(''); } catch (e) {} })();
+  slPopulateWtRangeOptions(); // fixed 0–100 list, doesn't need any data loaded first
   slLoadPhotoProductOptions();
   slLoadPhotoDimFilters('');
   slLoadPhotos(true);
@@ -14740,8 +14793,20 @@ async function slLoadPhotoProductOptions() {
   } catch (e) {}
 }
 // Weight Range (BRO: "portal kuda same update chei" — mirrors stock-photos.html's Weight Range tick
-// box). BRO later: "LEDU ANTE DROP DOWN REMOVE CHEI. MANUAL ENTER CHESTANU" — so From/To are plain
-// number inputs the person types into directly, no dropdown at all.
+// box). Final: "WT DROP DOWN IVU. 0 TO 100 IVU" — a fixed 0–100 dropdown (whole numbers) in BOTH From
+// and To; filtering still just checks From <= item weight <= To.
+const SL_WT_RANGE_OPTIONS_HTML = (() => {
+  let html = '<option value="">Any</option>';
+  for (let i = 0; i <= 100; i++) html += `<option>${i}</option>`;
+  return html;
+})();
+function slPopulateWtRangeOptions() {
+  const fromSel = document.getElementById('slPhWtFrom'), toSel = document.getElementById('slPhWtTo');
+  if (!fromSel || !toSel) return;
+  const keepFrom = fromSel.value, keepTo = toSel.value;
+  fromSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML; toSel.innerHTML = SL_WT_RANGE_OPTIONS_HTML;
+  fromSel.value = keepFrom; toSel.value = keepTo;
+}
 function slToggleWtRange() {
   const on = document.getElementById('slPhWtRangeOn').checked;
   document.getElementById('slPhWtRangeBox').style.display = on ? 'grid' : 'none';
@@ -15010,10 +15075,7 @@ function slPhotoInfoHtml(r) {
     isDia ? ['Carat', r.carat] : null, isDia ? ['Clarity', r.clarity] : null, isDia ? ['Color', r.color] : null,
     sizeRow,
     ['Counter', r.counter],
-    r.status === 'sold' ? ['DSR / Outlet ID', r.dsrId] : null,
-    r.status === 'sold' ? ['Sold Date', fmtDMY(r.soldDate)] : null,
-    r.status === 'sold' ? ['Sold By', r.soldBy] : null,
-    r.status === 'sold' ? ['Payment Status', r.payStatus] : null
+    r.status === 'sold' ? ['Sold Date', fmtDMY(r.soldDate)] : null
   ].filter(Boolean);
   return `<div class="tag-grid-wrap"><table class="tag-grid"><tbody>` +
     rows.map(([l, v, hl]) => `<tr${hl ? ' class="hl"' : ''}><td class="lbl">${escHtml(l)}</td><td class="val">${escHtml(v == null || v === '' ? '—' : v)}</td></tr>`).join('') +
