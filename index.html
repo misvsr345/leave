@@ -14656,6 +14656,14 @@ function slRenderPhotos(box) {
       <div class="form-row"><label>Product</label><select class="uniform-select" id="slPhProduct" onchange="slPhotoFiltersChanged('product')"><option value="">All</option></select></div>
     </div>
     <div class="form-2col" id="slPhDimFilters"><!-- Design + product-specific size filters (Chain: Wt/Length, Bangle/Sankha: Bangle Size, Finger Ring: Ring Size) fill in here once a Product is picked --></div>
+    <div class="form-row" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="slPhWtRangeOn" onchange="slToggleWtRange()" style="width:18px;height:18px;margin:0;">
+      <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
+    </div>
+    <div class="form-2col" id="slPhWtRangeBox" style="display:none;">
+      <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slPhWtFrom" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
+      <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slPhWtTo" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
+    </div>
     <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
     <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
     <div id="slPhGrid" class="sl-photo-grid" style="margin-top:12px;"></div>
@@ -14702,8 +14710,26 @@ async function slLoadPhotoProductOptions() {
   const keep = sel.value;
   try {
     const res = await slApi({ action: 'photoFilters', status: document.getElementById('slPhStatus').value, counter: document.getElementById('slPhCounter').value });
-    if (res && res.ok) sel.innerHTML = '<option value="">All</option>' + (res.products || []).map(n => `<option${n === keep ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+    if (res && res.ok) {
+      sel.innerHTML = '<option value="">All</option>' + (res.products || []).map(n => `<option${n === keep ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+      slPopulateWtRangeOptions(res.allWeights || []);
+    }
   } catch (e) {}
+}
+// Weight Range (BRO: "portal kuda same update chei" — mirrors stock-photos.html's Weight Range tick
+// box: independent of the exact-match Weight dropdown that only shows for Chain, works for any product).
+function slPopulateWtRangeOptions(weights) {
+  const fromSel = document.getElementById('slPhWtFrom'), toSel = document.getElementById('slPhWtTo');
+  if (!fromSel || !toSel) return;
+  const keepFrom = fromSel.value, keepTo = toSel.value;
+  const opts = '<option value="">Any</option>' + (weights || []).map(w => `<option>${escHtml(w)}</option>`).join('');
+  fromSel.innerHTML = opts; toSel.innerHTML = opts;
+  fromSel.value = keepFrom; toSel.value = keepTo;
+}
+function slToggleWtRange() {
+  const on = document.getElementById('slPhWtRangeOn').checked;
+  document.getElementById('slPhWtRangeBox').style.display = on ? 'grid' : 'none';
+  slLoadPhotos(true);
 }
 async function slLoadPhotoDimFilters(product) {
   let res = null;
@@ -14739,6 +14765,8 @@ async function slLoadPhotos(reset) {
       counter: document.getElementById('slPhCounter').value, q: document.getElementById('slPhQ').value.trim(),
       product: val('slPhProduct'), design: val('slPhDesign'),
       weight: val('slPhWeight'), length: val('slPhLength'), bangleSize: val('slPhBangleSize'), ringSize: val('slPhRingSize'),
+      wtFrom: document.getElementById('slPhWtRangeOn').checked ? val('slPhWtFrom') : '',
+      wtTo: document.getElementById('slPhWtRangeOn').checked ? val('slPhWtTo') : '',
       limit: SLPHOTO.limit, offset: SLPHOTO.offset
     });
     if (!res || !res.ok) { grid.innerHTML = ''; slError(grid, res); if (moreWrap) moreWrap.innerHTML = ''; return; }
@@ -14954,7 +14982,6 @@ function slPhotoInfoHtml(r) {
     isDia ? ['Gross Wt', r.gross] : null, isDia ? ['Net Wt', r.net] : null,
     isDia ? ['Carat', r.carat] : null, isDia ? ['Clarity', r.clarity] : null, isDia ? ['Color', r.color] : null,
     ['Product From', r.productFrom === 'Main' ? 'Main (Hub)' : r.productFrom], ['Counter', r.counter],
-    ['Entry', (r.entryType || '') + ' · ' + fmtDMY(r.entryDate)], ['Entered By', r.enteredBy],
     r.status === 'sold' ? ['DSR / Outlet ID', r.dsrId] : null,
     r.status === 'sold' ? ['Sold Date', fmtDMY(r.soldDate)] : null,
     r.status === 'sold' ? ['Sold By', r.soldBy] : null,
