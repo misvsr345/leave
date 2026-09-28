@@ -20956,12 +20956,15 @@ function downloadCSV(filename, rows) {
 function exportAllLeavesCSV() {
   const { leaves } = getFilteredAdminLeaves();
   if (leaves.length === 0) { toast('Nothing to export — no leaves match the current filters', 'error'); return; }
-  const rows = [['Date','Employee','Emp ID','Department','Leave Type','Mode','Status','Days','Leave ID','Purpose','Submitted']];
+  // BRO: "last ki sub staff ani separate ga oka colom ravali" — Sub Staff column at the very end, same
+  // Department==="Sub Staff" convention as the on-screen leave card tag, blank for everyone else.
+  const rows = [['Date','Employee','Emp ID','Department','Leave Type','Mode','Status','Days','Leave ID','Purpose','Submitted','Sub Staff']];
   leaves.forEach(l => {
     rows.push([
       fmtDMY(l.displayDate || l.startDate), l.name, l.empId, l.department || '',
       l.type, formatLeaveMode(l.mode, l.halfDay), statusLabel(l.status),
-      l.days, l.leaveId, l.purpose || '', fmtDMY(l.timestamp)
+      l.days, l.leaveId, l.purpose || '', fmtDMY(l.timestamp),
+      (l.department || '').trim().toLowerCase() === 'sub staff' ? 'Sub Staff' : ''
     ]);
   });
   downloadCSV('VSR_GOLD_All_Leaves_' + todayYMD() + '.csv', rows);
@@ -21943,6 +21946,14 @@ function adminLeaveCardHTML(l) {
   const modifiedBadge = (l.processed === 'Modified (Admin)' || l.processed === 'Modified')
     ? `<span class="pill" style="background:var(--blue-bg);color:var(--blue);margin-left:6px;">✏️ Modified</span>`
     : '';
+  // BRO: "anni leave lo unna emp list lo last ki sub staff ani separate ga oka colom ravali. sub staff
+  // leave lo untene ravali" — Sub Staff employees are identified by Department === "Sub Staff" (set on
+  // their Leave_Balance row, same convention as the earlier Counter discussion), so this tag shows only
+  // on their leave cards, right at the end of the card content, before the action buttons.
+  const isSubStaffLeave = (l.department || '').trim().toLowerCase() === 'sub staff';
+  const subStaffTag = isSubStaffLeave
+    ? `<div style="margin-top:6px;"><span class="pill" style="background:#fff3cd;color:#8a5a00;border:1px solid #e0b34d;">🧑‍🔧 Sub Staff</span></div>`
+    : '';
   return `<div class="leave-card" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)" style="cursor:pointer;">
     <div class="leave-card-top">
       <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}${l.leaveGroupId ? ` <span class="pill" style="background:var(--purple-bg,#f3e8ff);color:var(--purple,#6b21a8);font-size:9px;padding:2px 6px;">🔗 Multi-Date</span>` : ''}</div></div>
@@ -21956,6 +21967,7 @@ function adminLeaveCardHTML(l) {
     ${l.authorityName && isPending ? `<div style="background:#fff8e1;border:1.5px solid var(--gold);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:12px;"><b style="color:#92400e;">🔑 Authority: </b><b style="color:var(--text);">${l.authorityName}</b></div>` : ''}
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
     ${rejectionBlock}
+    ${subStaffTag}
     <div class="leave-card-actions" onclick="event.stopPropagation();">${actions}</div>
   </div>`;
 }
