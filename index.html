@@ -15,8 +15,20 @@
 <script>
 (function(){
   try {
-    if (localStorage.getItem('vsrViewMode') === 'desktop') {
+    var vm = localStorage.getItem('vsrViewMode');
+    if (vm === 'desktop') {
       document.getElementById('vsrViewportMeta').setAttribute('content', 'width=1280, initial-scale=1');
+    } else if (vm === 'mobile') {
+      // v-fix (BRO: "DESKTOP LO MOBILE VIEW BUTTON CLICK CEHTE, MOBILE KI MARADAM LEDU" — clicking
+      // Mobile View on an actual wide desktop browser did nothing): the viewport-meta trick above only
+      // ever WIDENS the page (helps a real phone render the desktop layout) — there is no meta-tag trick
+      // that can narrow a real desktop browser window, so forcing mobile needs a real CSS/JS override,
+      // not just a viewport change. vm==='mobile' here means the toggle was EXPLICITLY clicked (default/
+      // never-touched state is null, not 'mobile' — see getViewMode()), so this never changes the
+      // untouched-default experience for anyone who hasn't used the toggle. This class is read by the
+      // "html.vsr-force-mobile" CSS block (search that class near the two desktop @media blocks) and by
+      // the two page-routing checks that used to trust window.innerWidth alone.
+      document.documentElement.classList.add('vsr-force-mobile');
     }
   } catch(e) {}
 })();
@@ -896,6 +908,32 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
      (sidebar | content), not just the frozen strip on its own. */
   #admin-dashboard-hub .dh-scroll-body, #emp-dashboard-hub .dh-scroll-body { margin-left: 184px; }
 }
+
+/* v-fix (BRO: "DESKTOP LO MOBILE VIEW BUTTON CLICK CEHTE, MOBILE KI MARADAM LEDU"): the two
+   @media(min-width:1024px) blocks above key off the REAL browser window width, which is always wide on
+   an actual desktop — so nothing could ever switch them off there, even after explicitly choosing
+   "📱 Mobile". html.vsr-force-mobile is added by applyViewMode()/the head script ONLY when the toggle
+   was explicitly clicked to Mobile (see isForcedMobileView()), and every rule below just restates that
+   same selector's plain (non-desktop-media) value from earlier in this stylesheet, with !important so it
+   wins over the desktop media query even though the real window is still ≥1024px wide. Nothing here
+   changes the default/untouched experience (that class is never added unless the toggle was used). */
+html.vsr-force-mobile .vsr-sidebar { display: none !important; }
+html.vsr-force-mobile #adminApp .footer-nav, html.vsr-force-mobile #empApp .footer-nav { display: flex !important; }
+html.vsr-force-mobile #adminApp .page-content, html.vsr-force-mobile #empApp .page-content,
+html.vsr-force-mobile #adminApp .page-content.page-content-wide, html.vsr-force-mobile #empApp .page-content.page-content-wide {
+  margin: 0 auto !important; max-width: 800px !important; padding-left: 14px !important;
+}
+html.vsr-force-mobile .page-section > .btn-primary, html.vsr-force-mobile .page-section > .btn-secondary, html.vsr-force-mobile .page-section > .btn-report {
+  max-width: none !important; margin-left: 0 !important; margin-right: 0 !important;
+}
+html.vsr-force-mobile #admin-dashboard-hub .dh-kpi-grid, html.vsr-force-mobile #emp-dashboard-hub .dh-kpi-grid {
+  grid-template-columns: 1fr 1fr !important; gap: 10px !important;
+}
+html.vsr-force-mobile #admin-dashboard-hub .dh-panels-grid, html.vsr-force-mobile #emp-dashboard-hub .dh-panels-grid {
+  display: block !important; margin-top: 24px !important;
+}
+html.vsr-force-mobile .dh-quick-row { display: grid !important; grid-template-columns: repeat(4,1fr) !important; gap: 8px !important; }
+html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobile #emp-dashboard-hub .dh-scroll-body { margin-left: 0 !important; }
 
 /* Stats Grid */
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -4904,6 +4942,15 @@ restoreTheme();
 function getViewMode() {
   try { return localStorage.getItem('vsrViewMode') === 'desktop' ? 'desktop' : 'mobile'; } catch(e) { return 'mobile'; }
 }
+// v-fix (BRO: "DESKTOP LO MOBILE VIEW BUTTON CLICK CEHTE, MOBILE KI MARADAM LEDU"): getViewMode() above
+// treats "never touched the toggle" the same as "explicitly chose Mobile" (both return 'mobile') — fine
+// for the chip's label, but wrong for deciding whether to FORCE mobile layout on a real desktop window,
+// since that would also force it on every first-time desktop visitor who never touched the toggle at
+// all. This checks the RAW stored value instead — true only once the toggle has actually been clicked
+// to 'mobile' — so the untouched/default experience (auto, by real screen width) never changes.
+function isForcedMobileView() {
+  try { return localStorage.getItem('vsrViewMode') === 'mobile'; } catch(e) { return false; }
+}
 function applyViewMode(mode) {
   const meta = document.getElementById('vsrViewportMeta');
   if (meta) {
@@ -4911,6 +4958,7 @@ function applyViewMode(mode) {
       ? 'width=1280, initial-scale=1'
       : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
   }
+  try { document.documentElement.classList.toggle('vsr-force-mobile', isForcedMobileView()); } catch(e) {}
   // Short label for the top-bar chip (both emp + admin use the same class).
   document.querySelectorAll('.vsr-viewmode-chip').forEach(btn => {
     btn.textContent = mode === 'desktop' ? '📱 Mobile' : '🖥️ Desktop';
@@ -5557,7 +5605,9 @@ function showEmpPage(page, opts) {
   // Section/modulepicker page is hidden on desktop (see CSS) — redirect
   // to the Dashboard instead so desktop never lands on an empty screen
   // (e.g. right after login, which normally opens modulepicker first).
-  if (page === 'modulepicker' && window.innerWidth >= 1024) page = 'dashboard-hub';
+  // v-fix (BRO: mobile-view toggle bug): window.innerWidth alone can never go below 1024 on a real
+  // desktop browser, so an explicit "Mobile View" choice must override this even on a wide window.
+  if (page === 'modulepicker' && window.innerWidth >= 1024 && !isForcedMobileView()) page = 'dashboard-hub';
   const prevPage = state._currentPage_emp;
   if (!opts.isBack && prevPage && prevPage !== page) {
     state._pageHistory_emp = state._pageHistory_emp || [];
@@ -10009,7 +10059,9 @@ function showAdminPage(page, opts) {
   opts = opts || {};
   // Section/modulepicker page is hidden on desktop (see CSS) — redirect
   // to the Dashboard instead so desktop never lands on an empty screen.
-  if (page === 'modulepicker' && window.innerWidth >= 1024) page = 'dashboard-hub';
+  // v-fix (BRO: mobile-view toggle bug): same override as the employee side — an explicit "Mobile View"
+  // choice must win even though window.innerWidth stays ≥1024 on a real desktop browser.
+  if (page === 'modulepicker' && window.innerWidth >= 1024 && !isForcedMobileView()) page = 'dashboard-hub';
   const prevPage = state._currentPage_admin;
   if (!opts.isBack && prevPage && prevPage !== page) {
     state._pageHistory_admin = state._pageHistory_admin || [];
