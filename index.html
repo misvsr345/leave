@@ -919,6 +919,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    changes the default/untouched experience (that class is never added unless the toggle was used). */
 html.vsr-force-mobile .vsr-sidebar { display: none !important; }
 html.vsr-force-mobile #adminApp .footer-nav, html.vsr-force-mobile #empApp .footer-nav { display: flex !important; }
+/* .page-section.active's own display:block, and .tb-chip's own display:flex, restated here since the
+   desktop block above forces all of these to display:none !important unconditionally. */
+html.vsr-force-mobile #admin-modulepicker.active, html.vsr-force-mobile #emp-modulepicker.active { display: block !important; }
+html.vsr-force-mobile #adminSectionsFab, html.vsr-force-mobile #empSectionsFab,
+html.vsr-force-mobile #adminSectionBackFab, html.vsr-force-mobile #empSectionBackFab,
+html.vsr-force-mobile #adminDashboardFabTop, html.vsr-force-mobile #empDashboardFabTop { display: flex !important; }
 html.vsr-force-mobile #adminApp .page-content, html.vsr-force-mobile #empApp .page-content,
 html.vsr-force-mobile #adminApp .page-content.page-content-wide, html.vsr-force-mobile #empApp .page-content.page-content-wide {
   margin: 0 auto !important; max-width: 800px !important; padding-left: 14px !important;
