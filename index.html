@@ -14910,6 +14910,16 @@ function slRenderSales(box) {
     <div id="slSalesBody" style="margin-top:12px;"></div>`;
   slLoadSales();
 }
+// BRO: "sale data lo photo kuda view avali. tag no pai click cheste photo view avali" — clicking the Tag
+// No in Daily Sales now opens the item's photo (reuses dsrPhotoViewUrl, same reliable Drive-CDN format
+// used everywhere else in this file). "outlet issue kuda kanipinchali" — Outlet Issue rows (dsrId is
+// "OI"+6 digits, from nextOutletIssueId_() in DSRBackend.gs) now get a visible Type badge instead of
+// blending in with normal Sale rows.
+let SL_SALES_ROWS_RENDERED = [];
+function slViewSalePhoto(idx) {
+  const r = SL_SALES_ROWS_RENDERED[idx]; if (!r || !r.photo) return;
+  dsrDetailViewPhoto(dsrPhotoViewUrl(r.photo));
+}
 async function slLoadSales() {
   const body = document.getElementById('slSalesBody'); if (!body) return;
   const s = document.getElementById('slSalesStart').value, e = document.getElementById('slSalesEnd').value;
@@ -14918,10 +14928,17 @@ async function slLoadSales() {
   try {
     const res = await slApi({ action: 'dailySales', start: s, end: e });
     if (!res || !res.ok) { slError(body, res); return; }
-    const rowHtml = r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${escHtml(r.payStatus)}</td></tr>`;
+    SL_SALES_ROWS_RENDERED = res.rows || [];
+    const typeBadge = r => /^OI\d{6}$/.test(String(r.dsrId || ''))
+      ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:#fff3cd;color:#8a5a00;border:1px solid #e0b34d;white-space:nowrap;">Outlet Issue</span>`
+      : `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:#e6f4ea;color:#146c2e;border:1px solid #8fcea8;white-space:nowrap;">Sale</span>`;
+    const tagCell = (r, idx) => r.photo
+      ? `<a href="javascript:void(0)" onclick="slViewSalePhoto(${idx})" style="color:var(--purple-mid,var(--purple));text-decoration:underline;font-weight:700;cursor:pointer;">${escHtml(r.tagNo || 'Non Tag')}</a>`
+      : `<b>${escHtml(r.tagNo || 'Non Tag')}</b>`;
+    const rowHtml = (r, idx) => `<tr><td>${fmtDMY(r.soldDate)}</td><td>${tagCell(r, idx)}</td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${typeBadge(r)}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${escHtml(r.payStatus)}</td></tr>`;
     let html = `<div class="kd-note"><b>${res.pcs}</b> pcs sold · <b>${slFmtWt(res.wt)}</b> gm (${fmtDMY(s)}${s !== e ? ' – ' + fmtDMY(e) : ''})</div>`;
     if (!res.rows.length) html += '<div class="empty-state"><p>No sales in this period.</p></div>';
-    else html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Status</th></tr></thead><tbody>${res.rows.map(rowHtml).join('')}</tbody></table></div>`;
+    else html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>Sale Type</th><th>DSR ID</th><th>Employee</th><th>Status</th></tr></thead><tbody>${res.rows.map((r, idx) => rowHtml(r, idx)).join('')}</tbody></table></div>`;
     if (res.returned && res.returned.length) {
       html += `<div class="kd-note" style="margin-top:14px;">↩ Returned later (${res.returned.length})</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Sold</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Returned On</th></tr></thead><tbody>${res.returned.map(r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${fmtDMY(r.returnedOn)}</td></tr>`).join('')}</tbody></table></div>`;
