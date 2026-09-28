@@ -14662,20 +14662,34 @@ async function slRenderCounter(box) {
     if (!SL.sel || names.indexOf(SL.sel) === -1) SL.sel = names[0] || '';
     const head = `<div class="form-row"><label>Counter</label>
       <select class="uniform-select" id="slCounterSel" onchange="SL.sel=this.value;slCounterFiltersChanged()">${names.map(n => `<option ${n === SL.sel ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
-      <div class="form-row" style="display:flex;align-items:center;gap:8px;">
+      <div class="form-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <input type="checkbox" id="slCounterByDesign" onchange="slLoadCounterDetail()" style="width:18px;height:18px;margin:0;">
         <label style="margin:0;text-transform:none;">Design-wise breakdown</label>
+        <!-- v-add (BRO: "stock phto file lo chesina all fetures ni portal lo kuda add chei" — the
+             Opening/Closing Ledger built for the public stock-photos.html page, ported here into the
+             admin Counter-wise report). -->
+        <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-left:auto;" onclick="slOpenCounterLedger()">📒 Opening / Closing Ledger</button>
       </div>
-      <div class="filter-row-3col" id="slCounterDimFilters"><!-- Bangle Size / Ring Size / Length filters (same rule as Photos), all on one line --></div>
-      <div class="form-row" style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" id="slCounterWtRangeOn" onchange="slToggleCounterWtRange()" style="width:18px;height:18px;margin:0;">
-        <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
+      <div id="slCounterBreakdownView">
+        <div class="filter-row-3col" id="slCounterDimFilters"><!-- Bangle Size / Ring Size / Length filters (same rule as Photos), all on one line --></div>
+        <div class="form-row" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="slCounterWtRangeOn" onchange="slToggleCounterWtRange()" style="width:18px;height:18px;margin:0;">
+          <label style="margin:0;text-transform:none;">Weight Range (gm)</label>
+        </div>
+        <div class="form-2col" id="slCounterWtRangeBox" style="display:none;">
+          <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slCounterWtFrom" onchange="slLoadCounterDetail()"><option value="">Any</option></select></div>
+          <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slCounterWtTo" onchange="slLoadCounterDetail()"><option value="">Any</option></select></div>
+        </div>
+        <div id="slCounterBody"></div>
       </div>
-      <div class="form-2col" id="slCounterWtRangeBox" style="display:none;">
-        <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slCounterWtFrom" onchange="slLoadCounterDetail()"><option value="">Any</option></select></div>
-        <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slCounterWtTo" onchange="slLoadCounterDetail()"><option value="">Any</option></select></div>
-      </div>
-      <div id="slCounterBody"></div>`;
+      <div id="slCounterLedgerView" style="display:none;">
+        <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-bottom:10px;" onclick="slCloseCounterLedger()">← Back to Breakdown</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="font-weight:800;color:var(--purple);" id="slLedgerTitle"></div>
+          <input type="date" lang="en-GB" id="slLedgerDate" onchange="slLoadLedger()">
+        </div>
+        <div id="slLedgerBody"></div>
+      </div>`;
     box.innerHTML = head;
     slPopulateCounterWtRangeOptions();
     await slLoadCounterDimOptions();
@@ -14734,6 +14748,135 @@ async function slLoadCounterDetail() {
       `<tr><td><b>Total</b></td>${showDesign ? '<td></td>' : ''}<td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
     showExportBtn(slBox().id);
   } catch (e) { slError(body, null); }
+}
+
+// ============================================================
+// v-add (BRO's Opening/Closing Ledger — ported from stock-photos.html into the admin Counter-wise
+// report; same formula, same Tag-No-based counter attribution via the DSR "ledgerData" action, same
+// STOCK_GAS_URL/DSR_GAS_URL this portal already talks to elsewhere — no separate copy of either
+// backend call).
+//   Closing(D) = OpeningBaseline + Receiving(<=D) - Sale(<=D) - OutletIssue(<=D) - Return/Repair(<=D)
+//   Opening(D) = Closing(D-1)
+// Return/Repair/Transfer isn't tracked anywhere yet, so it's 0 until that feature exists (same as the
+// public page). Sold/Outlet Issue columns shown are that single day's rows only.
+// ============================================================
+let SL_LEDGER_STOCK = null, SL_LEDGER_SOLD = null; // fetched once per session, cached
+const SL_LEDGER_CACHE = {}; // { [uptoDate]: {sales, outletIssues} }
+function slLedgerRowCounter_(r) { return String(r.counter || '').trim() || SL.mainHub; }
+function slLedgerRowQty_(r) { return parseFloat(r.qty) || 1; }
+async function slFetchLedgerSnapshots_() {
+  if (SL_LEDGER_STOCK && SL_LEDGER_SOLD) return;
+  const [stockRes, soldRes] = await Promise.all([
+    slApi({ action: 'listStock', counter: '', q: '', limit: 100000 }),
+    slApi({ action: 'dailySales', start: '2000-01-01', end: toYMD(new Date()) })
+  ]);
+  SL_LEDGER_STOCK = (stockRes && stockRes.ok) ? (stockRes.rows || []) : [];
+  SL_LEDGER_SOLD = (soldRes && soldRes.ok) ? (soldRes.rows || []) : [];
+}
+// Sale/Outlet-Issue rows carry no Counter of their own — resolved via Tag No against the same
+// Stock/Sold data (BRO: "tag no stock level file lo undi. aa tag no batti search chesi ivu").
+function slBuildLedgerTagIndex_() {
+  const idx = {};
+  (SL_LEDGER_SOLD || []).forEach(r => { if (r.tagNo) idx[stockNormTag(r.tagNo)] = { counter: slLedgerRowCounter_(r), productName: r.productName, design: r.design || '' }; });
+  (SL_LEDGER_STOCK || []).forEach(r => { if (r.tagNo) idx[stockNormTag(r.tagNo)] = { counter: slLedgerRowCounter_(r), productName: r.productName, design: r.design || '' }; });
+  return idx;
+}
+function slLedgerPrevDate_(d) {
+  const dt = new Date(d + 'T00:00:00');
+  dt.setDate(dt.getDate() - 1);
+  const p = n => String(n).padStart(2, '0');
+  return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate());
+}
+async function slFetchLedgerUpto_(uptoDate) {
+  if (SL_LEDGER_CACHE[uptoDate]) return SL_LEDGER_CACHE[uptoDate];
+  const res = await _fetchWithTimeout(DSR_GAS_URL + '?action=ledgerData&uptoDate=' + encodeURIComponent(uptoDate), {}, 30000).then(r => r.json());
+  if (!res || !res.ok) throw new Error((res && res.message) || 'Could not load DSR data.');
+  const data = { sales: res.sales || [], outletIssues: res.outletIssues || [] };
+  SL_LEDGER_CACHE[uptoDate] = data;
+  return data;
+}
+function slOpenCounterLedger() {
+  document.getElementById('slCounterBreakdownView').style.display = 'none';
+  document.getElementById('slCounterLedgerView').style.display = '';
+  document.getElementById('slLedgerTitle').textContent = SL.sel + ' — Opening / Closing Ledger';
+  const dateInput = document.getElementById('slLedgerDate');
+  if (!dateInput.value) dateInput.value = toYMD(new Date());
+  slLoadLedger();
+}
+function slCloseCounterLedger() {
+  document.getElementById('slCounterLedgerView').style.display = 'none';
+  document.getElementById('slCounterBreakdownView').style.display = '';
+}
+async function slLoadLedger() {
+  const body = document.getElementById('slLedgerBody'); if (!body) return;
+  const counter = SL.sel;
+  const byDesign = document.getElementById('slCounterByDesign').checked;
+  const dateVal = document.getElementById('slLedgerDate').value || toYMD(new Date());
+  slLoading(body);
+  try {
+    await slFetchLedgerSnapshots_();
+    const ledgerData = await slFetchLedgerUpto_(dateVal);
+    // the person may have picked a different date, or left this view, while the fetch was in flight
+    if (document.getElementById('slCounterLedgerView').style.display === 'none') return;
+    if (document.getElementById('slLedgerDate').value !== dateVal) return;
+
+    const prevDate = slLedgerPrevDate_(dateVal);
+    const tagIdx = slBuildLedgerTagIndex_();
+    const entryRows = (SL_LEDGER_STOCK || []).concat(SL_LEDGER_SOLD || []).filter(r => slLedgerRowCounter_(r) === counter);
+    const groupKey_ = (p, d) => byDesign ? (p + '|' + String(d || '').trim()) : p;
+
+    const groups = {};
+    entryRows.forEach(r => {
+      const key = groupKey_(r.productName, r.design);
+      if (!groups[key]) groups[key] = { product: r.productName, design: byDesign ? String(r.design || '').trim() : '' };
+    });
+    function baseline(key) {
+      return entryRows.filter(r => r.entryType === 'Opening Stock' && groupKey_(r.productName, r.design) === key)
+        .reduce((s, r) => s + slLedgerRowQty_(r), 0);
+    }
+    // "Return" here is Stock Level's own entryType (an item physically coming back into this
+    // counter's stock) — a separate concept from the DSR-side return/repair kept at 0 above — and
+    // counts as an inbound addition just like Receiving Stock.
+    function receivingUpto(key, upto) {
+      return entryRows.filter(r => (r.entryType === 'Receiving Stock' || r.entryType === 'Return') && r.entryDate && r.entryDate <= upto && groupKey_(r.productName, r.design) === key)
+        .reduce((s, r) => s + slLedgerRowQty_(r), 0);
+    }
+    function resolveKey_(row) {
+      const hit = tagIdx[stockNormTag(row.tagNo)];
+      if (!hit || hit.counter !== counter) return null; // not in Stock Level, or a different counter — skip
+      return groupKey_(hit.productName, hit.design);
+    }
+    function sumMatching(list, key, pred) {
+      let n = 0;
+      list.forEach(row => { if (pred(row) && resolveKey_(row) === key) n++; });
+      return n;
+    }
+    const saleUpto = (key, upto) => sumMatching(ledgerData.sales, key, s => s.date <= upto);
+    const saleOn = (key, d) => sumMatching(ledgerData.sales, key, s => s.date === d);
+    const outletUpto = (key, upto) => sumMatching(ledgerData.outletIssues, key, o => o.date <= upto);
+    const outletOn = (key, d) => sumMatching(ledgerData.outletIssues, key, o => o.date === d);
+
+    const list = Object.keys(groups).map(key => {
+      const base = baseline(key);
+      const closingToday = base + receivingUpto(key, dateVal) - saleUpto(key, dateVal) - outletUpto(key, dateVal);
+      const closingPrev = base + receivingUpto(key, prevDate) - saleUpto(key, prevDate) - outletUpto(key, prevDate);
+      return {
+        product: groups[key].product, design: groups[key].design,
+        opening: closingPrev, closing: closingToday,
+        sold: saleOn(key, dateVal), ret: 0, outlet: outletOn(key, dateVal)
+      };
+    }).sort((a, b) => a.product.localeCompare(b.product, undefined, { numeric: true, sensitivity: 'base' }) || a.design.localeCompare(b.design, undefined, { numeric: true, sensitivity: 'base' }));
+
+    if (!list.length) { body.innerHTML = '<div class="empty-state"><p>No ledger data for this counter yet.</p></div>'; return; }
+    let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Closing</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th></tr></thead><tbody>`;
+    list.forEach(r => {
+      html += `<tr><td><b>${escHtml(r.product)}</b></td>${byDesign ? `<td>${escHtml(r.design || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${r.ret}</td><td style="text-align:center;">${r.outlet}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<div class="empty-state"><p>${escHtml(e.message || 'Could not load ledger — check the connection.')}</p></div>`;
+  }
 }
 
 function slRenderSales(box) {
