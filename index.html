@@ -5029,6 +5029,17 @@ function setLock(key, val) { state.actionLock[key] = val; }
 // ══════════════════════════════════════
 // SESSION PERSISTENCE — stay logged in across reloads until Logout
 // ══════════════════════════════════════
+// v-fix (BRO: "refresh button" / a real browser-or-PWA refresh was always
+// dumping the user back on the main landing page — restoreSession() used to
+// unconditionally call showEmpPage('modulepicker')/showAdminPage('modulepicker')
+// on every reload, no matter which page was actually open. These two helpers
+// remember the last page shown so a reload can return to it instead.
+function saveLastPage(who, page) {
+  try { localStorage.setItem(who === 'admin' ? 'vsrLastPage_admin' : 'vsrLastPage_emp', page); } catch(e) {}
+}
+function getLastPage(who) {
+  try { return localStorage.getItem(who === 'admin' ? 'vsrLastPage_admin' : 'vsrLastPage_emp') || null; } catch(e) { return null; }
+}
 function saveSession() {
   const payload = {
     kind: state.__loginKind || '',
@@ -5040,6 +5051,10 @@ function saveSession() {
 }
 function clearSession() {
   try { localStorage.removeItem(SESSION_KEY); } catch(e) {}
+  // v-fix: also drop the remembered last-open page on logout, so the next
+  // person to log in on this device lands on the normal home page instead
+  // of resuming wherever the previous person had navigated to.
+  try { localStorage.removeItem('vsrLastPage_emp'); localStorage.removeItem('vsrLastPage_admin'); } catch(e) {}
 }
 function restoreSession() {
   let saved = null;
@@ -5056,7 +5071,10 @@ function restoreSession() {
     document.getElementById('empApp').classList.add('active');
     document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
     document.getElementById('empModulePickerMeta').textContent = [saved.empId, saved.empDesig, saved.empDept, saved.empCounter].filter(Boolean).join(' · ');
-    showEmpPage('modulepicker');
+    // v-fix: resume whichever page was open before the refresh, instead of
+    // always landing back on the modulepicker/dashboard home page.
+    { const lastPageEmp = getLastPage('emp');
+      showEmpPage((lastPageEmp && document.getElementById('emp-' + lastPageEmp)) ? lastPageEmp : 'modulepicker'); }
     loadEmpData();
     checkEmpLoyaltyAccess();
     applyEmpGranularRestrictions();
@@ -5072,7 +5090,10 @@ function restoreSession() {
     document.getElementById('adminApp').classList.add('active');
     document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
     document.getElementById('adminModulePickerMeta').textContent = [saved.adminRole, saved.adminDesig].filter(Boolean).join(' · ');
-    showAdminPage('modulepicker');
+    // v-fix: resume whichever page was open before the refresh, instead of
+    // always landing back on the modulepicker/dashboard home page.
+    { const lastPageAdmin = getLastPage('admin');
+      showAdminPage((lastPageAdmin && document.getElementById('admin-' + lastPageAdmin)) ? lastPageAdmin : 'modulepicker'); }
     applyAdminRoleRestrictions();
     loadAdminData();
     return true;
@@ -5621,6 +5642,7 @@ function showEmpPage(page, opts) {
     if (state._pageHistory_emp.length > 40) state._pageHistory_emp.shift();
   }
   state._currentPage_emp = page;
+  saveLastPage('emp', page);
   // v-fix (KPI table not fitting screen — box sat inside the 900px-capped
   // content column with empty space beside it): this used to only widen
   // the container on the 'kpi' HUB page, but the actual wide table (via
@@ -10075,6 +10097,7 @@ function showAdminPage(page, opts) {
     if (state._pageHistory_admin.length > 40) state._pageHistory_admin.shift();
   }
   state._currentPage_admin = page;
+  saveLastPage('admin', page);
   // Wide-data pages (whose report table is much wider than the normal
   // 900px content column) opt the shared .page-content wrapper out of
   // that cap — see the CSS comment above .page-content-wide for why.
