@@ -14447,7 +14447,10 @@ function slPost(payload) {
   payload.by = state.adminName || 'Admin';
   return _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }, 60000).then(r => r.json());
 }
-function slFmtWt(n) { const v = parseFloat(n); return isNaN(v) ? '0' : (Math.round(v * 1000) / 1000).toFixed(3).replace(/\.?0+$/, ''); }
+// BRO: "all weight data ni decimall chupinchu. for example 4grm, 4.000 ani chupinchu" — always 3
+// decimal places now, no trailing-zero stripping (this one shared function feeds every weight shown
+// anywhere in Stock Level, so fixing it here fixes all of them at once).
+function slFmtWt(n) { const v = parseFloat(n); return isNaN(v) ? '0.000' : v.toFixed(3); }
 function slBox() {
   const active = document.querySelector('#adminApp .page-section.active [id^="slBox-"]');
   return active || document.getElementById('slBox-overview');
