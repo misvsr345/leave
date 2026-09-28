@@ -7786,10 +7786,16 @@ function renderCalendarFor(who, year, month, events) {
     return;
   }
 
-  let evHTML = listHeaderHTML;
-  dayEvents.forEach(ev => {
+  // BRO: "CALANDER LO EVENT ISTUNNARU, KANI DANTLO KAPI ISTUNNARU. SO DANIKI SEPARATE GA HEADING PETTU
+  // IVU. FULL DAY LEAVES AND HALF LEAVES AND EVENTS ANI HEADING IVU" — the day's list used to mix
+  // Full Day leaves, Half Day leaves, and events (birthdays/anniversaries) into one flat list with no
+  // grouping. Now split into three labeled sections, each shown only when it has something in it.
+  const sectionHeadingHTML = (label, count) => `<div style="font-size:11px;font-weight:800;color:var(--purple-dark);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px;padding-bottom:4px;border-bottom:1.5px solid var(--purple-bg);">${label} (${count})</div>`;
+  const fullDayEvents = dayEvents.filter(ev => (ev.leaveMode || ev.mode || 'Full Day') !== 'Half Day');
+  const halfDayEvents = dayEvents.filter(ev => (ev.leaveMode || ev.mode || 'Full Day') === 'Half Day');
+  const leaveItemHTML = ev => {
     const c = ev.status==='Absent' ? 'var(--red)' : 'var(--green)';
-    evHTML += `<div class="cal-event-item">
+    return `<div class="cal-event-item">
       <div class="cal-event-dot" style="background:${c}"></div>
       <div style="flex:1">
         <div style="font-weight:600;font-size:12px;">${ev.name}</div>
@@ -7797,16 +7803,29 @@ function renderCalendarFor(who, year, month, events) {
       </div>
       <span class="pill ${pillClass(ev.status)}">${statusLabel(ev.status)}</span>
     </div>`;
-  });
-  dayBdays.forEach(b => {
-    evHTML += `<div class="cal-event-item">
-      <div class="cal-event-dot" style="background:#ec4899"></div>
-      <div style="flex:1">
-        <div style="font-weight:600;font-size:12px;">${b.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${b.type}${b.dept ? ' · ' + b.dept : ''}</div>
-      </div>
-    </div>`;
-  });
+  };
+
+  let evHTML = listHeaderHTML;
+  if (fullDayEvents.length) {
+    evHTML += sectionHeadingHTML('🗓️ Full Day Leaves', fullDayEvents.length);
+    fullDayEvents.forEach(ev => { evHTML += leaveItemHTML(ev); });
+  }
+  if (halfDayEvents.length) {
+    evHTML += sectionHeadingHTML('🕐 Half Day Leaves', halfDayEvents.length);
+    halfDayEvents.forEach(ev => { evHTML += leaveItemHTML(ev); });
+  }
+  if (dayBdays.length) {
+    evHTML += sectionHeadingHTML('🎉 Events', dayBdays.length);
+    dayBdays.forEach(b => {
+      evHTML += `<div class="cal-event-item">
+        <div class="cal-event-dot" style="background:#ec4899"></div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:12px;">${b.name}</div>
+          <div style="font-size:11px;color:var(--text3)">${b.type}${b.dept ? ' · ' + b.dept : ''}</div>
+        </div>
+      </div>`;
+    });
+  }
   document.getElementById(eventsId).innerHTML = evHTML;
 }
 
