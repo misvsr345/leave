@@ -328,18 +328,16 @@ body {
    the Settings person-pickers) used to fall back to the ugly native
    browser dropdown; this fixes that everywhere at once. */
 select {
-  width: 100%; padding: 13px 46px 13px 16px; border: 1.5px solid var(--gold); border-radius: var(--r2);
+  width: 100%; padding: 13px 38px 13px 16px; border: 1.5px solid var(--gold); border-radius: var(--r2);
   font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text);
-  background: linear-gradient(180deg, var(--card) 0%, var(--purple-bg) 130%);
+  background-color: var(--card);
   outline: none; transition: all 0.2s cubic-bezier(.4,0,.2,1); cursor: pointer;
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
   box-shadow: 0 2px 6px rgba(26,15,46,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
-  background-image:
-    linear-gradient(135deg, var(--gold), var(--purple-mid) 55%, var(--purple)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat, no-repeat;
-  background-position: right 5px center, right 12px center;
-  background-size: 30px 30px, 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 13px 13px;
   border-radius: var(--r2);
 }
 select:hover {
@@ -355,13 +353,11 @@ select:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 10px; background: var(--card); color: var(--text); }
 .form-group select {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  cursor: pointer; padding-right: 46px; font-weight: 700;
-  background-image:
-    linear-gradient(135deg, var(--purple-mid), var(--purple)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat, no-repeat;
-  background-position: right 6px center, right 12px center;
-  background-size: 26px 26px, 14px 14px;
+  cursor: pointer; padding-right: 36px; font-weight: 700;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 13px 13px;
 }
 .form-group select:hover { border-color: var(--purple-mid); transform: translateY(-1px); }
 .form-group textarea { resize: vertical; min-height: 70px; font-family: 'DM Sans', sans-serif; }
@@ -972,13 +968,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .form-row select {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  cursor: pointer; padding-right: 44px; font-weight: 600;
-  background-image:
-    linear-gradient(135deg, var(--purple-mid), var(--purple)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat, no-repeat;
-  background-position: right 6px center, right 12px center;
-  background-size: 24px 24px, 13px 13px;
+  cursor: pointer; padding-right: 34px; font-weight: 600;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
 }
 .form-row select:hover { border-color: var(--purple-mid); transform: translateY(-1px); }
 /* v-fix (UI audit — "No plain black/default controls"): several
@@ -996,13 +990,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text); background: var(--bg);
   outline: none; transition: all 0.2s;
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  cursor: pointer; padding-right: 44px; font-weight: 600;
-  background-image:
-    linear-gradient(135deg, var(--purple-mid), var(--purple)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat, no-repeat;
-  background-position: right 6px center, right 12px center;
-  background-size: 24px 24px, 13px 13px;
+  cursor: pointer; padding-right: 34px; font-weight: 600;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
 }
 .uniform-select:focus { border-color: var(--purple-mid); background-color: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
 .uniform-select:hover { border-color: var(--purple-mid); transform: translateY(-1px); }
@@ -1427,9 +1419,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsrf-scope input[type="text"],.dsrf-scope input[type="date"],.dsrf-scope input[type="tel"],.dsrf-scope select{width:100%;padding:9px 13px;border:1.5px solid var(--dborder);border-radius:8px;font-size:13.5px;color:var(--dink);background:var(--ds2);-webkit-appearance:none;appearance:none;}
 .dsrf-scope input::placeholder{color:var(--dmuted);font-size:12.5px;}
 .dsrf-scope input:focus,.dsrf-scope select:focus{outline:none;border-color:var(--dpurpleL);background:#FDFAFF;box-shadow:0 0 0 3px rgba(123,47,190,.10);}
-.dsrf-scope select{cursor:pointer;font-weight:700;appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-right:40px;
-  background-image:linear-gradient(135deg,var(--dpurpleL),var(--dpurple)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat:no-repeat,no-repeat;background-position:right 4px center,right 10px center;background-size:24px 24px,12px 12px;}
+.dsrf-scope select{cursor:pointer;font-weight:700;appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-right:30px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:11px 11px;}
 .dsrf-scope input.err-inp{border-color:var(--ddanger)!important;background:#fff5f5!important;}
 .dsrf-scope .mob-err{display:none;color:var(--ddanger);font-size:11px;font-weight:700;margin-top:4px;}
 .dsrf-scope .mob-err.show{display:block;}
@@ -1601,6 +1593,32 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   border-color: var(--purple);
   box-shadow: 0 0 0 3px var(--purple-bg);
 }
+
+/* v-fix (BRO: "all date pickers inka koni unnai richga ledu, avi kuda rich ga marchu" — every
+   <input type="date"> in the portal now gets the same gold/purple-accented look the Multiple Day
+   row above already had, not just that one spot. Same specificity as .form-row/.form-group/
+   .uniform-input's own input rules, so being declared after them here is what makes this win for
+   every date field, wherever it sits. */
+input[type="date"] {
+  border: 1.5px solid var(--gold) !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+  background: linear-gradient(180deg, #fff, var(--purple-bg)) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.07) !important;
+  cursor: pointer;
+  transition: box-shadow .15s, border-color .15s;
+}
+input[type="date"]:focus {
+  outline: none !important;
+  border-color: var(--purple) !important;
+  box-shadow: 0 0 0 3px var(--purple-bg) !important;
+  background: #fff !important;
+}
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .75; }
+input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 </style>
 </head>
 <body>
