@@ -2,7 +2,25 @@
 <html lang="en-GB">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" id="vsrViewportMeta">
+<!-- v-add (BRO: manual Mobile View / Desktop View switch, per-device,
+     saved in localStorage — must apply BEFORE first paint so there's no
+     flash of the wrong layout on reload/reopen. Runs synchronously right
+     after the viewport meta tag itself; the meta element already exists
+     in the DOM by the time this executes since the parser processes tags
+     in source order. Desktop mode simply widens the viewport so the
+     ALREADY-EXISTING @media(min-width:1024px) desktop CSS (sidebar, wide
+     cards, hidden footer-nav) kicks in on a phone screen too — no
+     existing CSS rule is touched or duplicated. -->
+<script>
+(function(){
+  try {
+    if (localStorage.getItem('vsrViewMode') === 'desktop') {
+      document.getElementById('vsrViewportMeta').setAttribute('content', 'width=1280, initial-scale=1');
+    }
+  } catch(e) {}
+})();
+</script>
 <title>VSR GOLD — HR Management Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1658,6 +1676,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
         <button class="tb-chip" id="empSearchBtn" onclick="openEmpQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
         <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
+        <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
         <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
@@ -1701,6 +1720,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     <div class="vsr-sidebar-submenu" id="empSidebarMoreSubmenu" style="display:none;">
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('emp')">🔑 Change Password</div>
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
+      <div class="vsr-sidebar-subitem vsr-viewmode-menuitem" onclick="toggleViewMode()">🖥️ Switch to Desktop View</div>
       <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="empSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
     </div>
   </nav>
@@ -2509,6 +2529,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
         <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
         <button class="tb-chip" id="adminDashboardFabTop" onclick="showAdminPage('dashboard-hub')" title="Dashboard">📊 Dashboard</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
+        <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
         <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
@@ -2544,6 +2565,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
+      <div class="vsr-sidebar-subitem vsr-viewmode-menuitem" onclick="toggleViewMode()">🖥️ Switch to Desktop View</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('login-activity')">🔐 Login Activity</div>
       <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="adminSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
     </div>
@@ -4852,6 +4874,47 @@ function restoreTheme() {
   setTheme(saved);
 }
 restoreTheme();
+
+// v-add (BRO: manual Mobile View / Desktop View switch — "manam manual
+// set cheselaga kavali", no auto-mode, one tap toggle available to
+// Employee AND Admin, both in the top bar next to the Section button and
+// in the More menu). Per-device via localStorage key 'vsrViewMode'
+// ('desktop' | anything else = mobile, default). The actual layout switch
+// itself is just the viewport-meta trick handled in <head> before first
+// paint (see vsrViewportMeta script) — this only (a) keeps that meta in
+// sync if changed mid-session and (b) updates the toggle buttons' labels.
+// Purely client-side: no backend/API/Sheet call, no permission key, no
+// existing DOM id reused — cannot affect anything else in the portal.
+function getViewMode() {
+  try { return localStorage.getItem('vsrViewMode') === 'desktop' ? 'desktop' : 'mobile'; } catch(e) { return 'mobile'; }
+}
+function applyViewMode(mode) {
+  const meta = document.getElementById('vsrViewportMeta');
+  if (meta) {
+    meta.setAttribute('content', mode === 'desktop'
+      ? 'width=1280, initial-scale=1'
+      : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+  }
+  // Short label for the top-bar chip (both emp + admin use the same class).
+  document.querySelectorAll('.vsr-viewmode-chip').forEach(btn => {
+    btn.textContent = mode === 'desktop' ? '📱 Mobile' : '🖥️ Desktop';
+    btn.title = mode === 'desktop' ? 'Switch to Mobile View' : 'Switch to Desktop View';
+  });
+  // Fuller label for the More-menu item.
+  document.querySelectorAll('.vsr-viewmode-menuitem').forEach(btn => {
+    btn.textContent = mode === 'desktop' ? '📱 Switch to Mobile View' : '🖥️ Switch to Desktop View';
+  });
+}
+function setViewMode(mode) {
+  try { localStorage.setItem('vsrViewMode', mode); } catch(e) {}
+  // A full reload is the most reliable way to get every mobile browser
+  // (iOS Safari especially) to re-layout cleanly against the new viewport
+  // width — session stays logged in (saveSession/restoreSession already
+  // persists login across reloads), so nothing is lost.
+  location.reload();
+}
+function toggleViewMode() { setViewMode(getViewMode() === 'desktop' ? 'mobile' : 'desktop'); }
+applyViewMode(getViewMode());
 
 function openThemePickerModal() {
   const grid = document.getElementById('themePickerGrid');
