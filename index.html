@@ -14639,12 +14639,16 @@ async function dsrfTagLookup(who, eid, kind) {
   const tagN = stockNormTag(raw);
   const my = inp.__lk = (inp.__lk || 0) + 1;
 
+  // v-fix (BRO: "ela find chesina only found in stock or not found in stock ani matrame ravali.
+  // leda sold already aipoi unte not in stock already sold ani ravali" — cut every result message
+  // down to exactly one of these three, dropping the counter name / DSR ID / "you can edit" notes
+  // that used to pad it out, whether the answer came from the live server or the offline cache).
   const applyFromCache = (cached) => {
     dsrfApplyStockItem(who, eid, { type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter }, tagN);
     const kNow = cached.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
-    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock (offline, last synced list) — ' + (cached.counter || 'Retail') + '. Basic details filled in (you can edit/complete them).');
+    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
   };
 
   // v-fix (BRO: "tag no enter chesina ventane checking stock ani vastundi, immediate ga rada,
@@ -14675,22 +14679,18 @@ async function dsrfTagLookup(who, eid, kind) {
   if (!res || !res.ok) { if (!cachedNow) dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
   if (res.status === 'instock') {
     const it = res.item || {};
-    const beforePf = dsrfGv(`dsrfPf-${who}-${eid}`);
     dsrfApplyStockItem(who, eid, it, tagN);
     stockTagCacheAdd(tagN, { counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type });
     // the message belongs to whichever block (Gold / Diamond) is showing now
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
-    let txt = '✅ Found in stock — ' + (it.productFrom === 'Main' ? 'Main (Hub)' : (it.counter || 'Retail')) + '. Details filled in (you can edit them).';
-    if (beforePf && it.productFrom && beforePf !== it.productFrom) txt += ' Changed Product From to ' + it.productFrom + '.';
-    dsrfTagMsg(nowIds.msg, 'ok', txt);
+    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
   } else if (res.status === 'sold') {
-    const sd = res.sold || {};
-    dsrfTagMsg(ids.msg, 'err', '⚠ Already sold — DSR ' + (sd.dsrId || '') + (sd.soldDate ? ' (' + fmtDMY(sd.soldDate) + ')' : '') + '. If the customer is returning it, use Return/Replace first.');
+    dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
     stockTagCacheRemove(tagN);
   } else {
-    dsrfTagMsg(ids.msg, 'warn', '⚠ This tag is not in stock — enter manually.');
+    dsrfTagMsg(ids.msg, 'warn', '❌ Not found in stock');
     stockTagCacheRemove(tagN);
   }
 }
