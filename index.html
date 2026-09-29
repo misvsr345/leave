@@ -14481,43 +14481,94 @@ function dsrTagValid(s) { return /^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+$/.test(
 // the last full server sync happened to see.
 // ============================================================
 const STOCK_TAG_CACHE_KEY = 'vsrStockTagCache_v1';
+// v-add (BRO: "stock tag data and sold tag data all cache lo save avali. sync cheste, all data sync
+// avali" — a SOLD tag needs its own cache too, not just dropped from the in-stock one, so an offline
+// lookup can instantly say "already sold" instead of a plain "not found"; and the Sync button/refresh
+// pulls both lists together in one go).
+const SOLD_TAG_CACHE_KEY = 'vsrSoldTagCache_v1';
 let STOCK_TAG_CACHE = {};   // { NORMALIZEDTAG: { counter, productName, design, type } } — currently IN STOCK only
+let SOLD_TAG_CACHE = {};    // { NORMALIZEDTAG: { dsrId, soldDate, counter, productName, design, type } } — SOLD only
 function stockTagCacheLoadLocal() {
   try { STOCK_TAG_CACHE = JSON.parse(localStorage.getItem(STOCK_TAG_CACHE_KEY) || '{}') || {}; }
   catch (e) { STOCK_TAG_CACHE = {}; }
+  try { SOLD_TAG_CACHE = JSON.parse(localStorage.getItem(SOLD_TAG_CACHE_KEY) || '{}') || {}; }
+  catch (e) { SOLD_TAG_CACHE = {}; }
 }
 function stockTagCacheSaveLocal() {
   try { localStorage.setItem(STOCK_TAG_CACHE_KEY, JSON.stringify(STOCK_TAG_CACHE)); } catch (e) {}
 }
-// Pulls every currently-in-stock Tag No from the Stock Level backend, all counters — same "listStock"
-// action the Stock Photos viewer already uses for its own full offline snapshot.
+function soldTagCacheSaveLocal() {
+  try { localStorage.setItem(SOLD_TAG_CACHE_KEY, JSON.stringify(SOLD_TAG_CACHE)); } catch (e) {}
+}
+// Pulls every currently-in-stock Tag No (via "listStock") AND every Sold Tag No, all time (via
+// "dailySales", same full-history pull the Stock Photos viewer already uses for its own Sold Data
+// tab) from the Stock Level backend, in one go.
 async function stockTagCacheRefresh() {
   if (!stockIsConfigured() || !navigator.onLine) return false;
-  try {
-    const res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=listStock&counter=&q=&limit=100000', {}, 30000).then(r => r.json());
-    if (!res || !res.ok) return false;
+  // v-fix (BRO: "sold data cache lo save ainapudu, enduku checking tag ani chala sepu find
+  // chestundi" — traced to two things slowing this refresh down enough that the cache often wasn't
+  // ready yet by the time a tag got typed: (1) the Stock fetch and the Sold fetch ran ONE AFTER THE
+  // OTHER, not together, doubling the wait; (2) the Sold fetch pulled the ENTIRE sold history since
+  // "2000-01-01" every single time — on a shop with years of Sold rows that's a genuinely slow
+  // request over mobile data. Fixed both: the two fetches now run in parallel, and the Sold cache
+  // only pulls the last 180 days (plenty for catching an accidental re-entry of something sold
+  // recently) — a tag sold longer ago than that still gets caught, just via the live check instead of
+  // instantly from cache, same as before this cache existed at all.
+  const SOLD_CACHE_WINDOW_DAYS = 180;
+  const start = new Date(); start.setDate(start.getDate() - SOLD_CACHE_WINDOW_DAYS);
+  const [stockResult, soldResult] = await Promise.allSettled([
+    _fetchWithTimeout(STOCK_GAS_URL + '?action=listStock&counter=&q=&limit=100000', {}, 30000).then(r => r.json()),
+    _fetchWithTimeout(STOCK_GAS_URL + '?action=dailySales&start=' + toYMD(start) + '&end=' + toYMD(new Date()), {}, 30000).then(r => r.json())
+  ]);
+  let okAny = false;
+  if (stockResult.status === 'fulfilled' && stockResult.value && stockResult.value.ok) {
     const map = {};
-    (res.rows || []).forEach(r => {
+    (stockResult.value.rows || []).forEach(r => {
       const tagN = stockNormTag(r.tagNo);
       if (tagN) map[tagN] = { counter: r.counter || '', productName: r.productName || '', design: r.design || '', type: r.type || '' };
     });
     STOCK_TAG_CACHE = map;
     stockTagCacheSaveLocal();
-    return true;
-  } catch (e) { return false; }
+    okAny = true;
+  }
+  if (soldResult.status === 'fulfilled' && soldResult.value && soldResult.value.ok) {
+    const map = {};
+    (soldResult.value.rows || []).forEach(r => {
+      const tagN = stockNormTag(r.tagNo);
+      if (tagN) map[tagN] = { dsrId: r.dsrId || '', soldDate: r.soldDate || '', counter: r.counter || '', productName: r.productName || '', design: r.design || '', type: r.type || '' };
+    });
+    SOLD_TAG_CACHE = map;
+    soldTagCacheSaveLocal();
+    okAny = true;
+  }
+  return okAny;
 }
 function stockTagCacheGet(tagNo) { const t = stockNormTag(tagNo); return t ? (STOCK_TAG_CACHE[t] || null) : null; }
-function stockTagCacheAdd(tagNo, info) { const t = stockNormTag(tagNo); if (!t) return; STOCK_TAG_CACHE[t] = info || {}; stockTagCacheSaveLocal(); }
+function stockTagCacheAdd(tagNo, info) {
+  const t = stockNormTag(tagNo); if (!t) return;
+  STOCK_TAG_CACHE[t] = info || {}; stockTagCacheSaveLocal();
+  if (SOLD_TAG_CACHE[t]) { delete SOLD_TAG_CACHE[t]; soldTagCacheSaveLocal(); }   // e.g. a Return brings it back into stock
+}
 function stockTagCacheRemove(tagNo) { const t = stockNormTag(tagNo); if (t && STOCK_TAG_CACHE[t]) { delete STOCK_TAG_CACHE[t]; stockTagCacheSaveLocal(); } }
+function soldTagCacheGet(tagNo) { const t = stockNormTag(tagNo); return t ? (SOLD_TAG_CACHE[t] || null) : null; }
+// A tag moving from in-stock to Sold: drop it from the Stock cache and record it in the Sold cache in
+// one step, so both stay consistent with each other on this device.
+function stockTagCacheMarkSold(tagNo, info) {
+  const t = stockNormTag(tagNo); if (!t) return;
+  if (STOCK_TAG_CACHE[t]) { delete STOCK_TAG_CACHE[t]; stockTagCacheSaveLocal(); }
+  SOLD_TAG_CACHE[t] = info || {}; soldTagCacheSaveLocal();
+}
 // Called right after a DSR/Outlet Issue save succeeds — same Gold/Diamond-with-real-tag filter as the
-// backend's own stockItemsFromRows_, so the cache only ever drops a tag the backend would actually
-// have moved to Sold (Silver / No-Tag items were never in this cache to begin with).
-function stockTagCacheRemoveFromRows(rows) {
+// backend's own stockItemsFromRows_, so the cache only ever moves a tag the backend would actually
+// have moved to Sold (Silver / No-Tag items were never in the Stock cache to begin with).
+function stockTagCacheRemoveFromRows(rows, dsrId) {
+  const soldDate = toYMD(new Date());
   (rows || []).forEach(d => {
     const status = String(d.paymentStatus || 'Purchased'); // Outlet Issue rows carry no Payment Status — always treated as Purchased, same as the backend
     if (status !== 'Purchased' && status !== 'Advance') return;
-    if (d.type === 'Gold' && String(d.tagStatus || '') !== 'No Tag' && String(d.tagNo || '').trim()) stockTagCacheRemove(d.tagNo);
-    else if (d.type === 'Diamond' && String(d.diamondTagStatus || '') !== 'No Tag' && String(d.diamondTagNo || '').trim()) stockTagCacheRemove(d.diamondTagNo);
+    const info = { dsrId: dsrId || '', soldDate: soldDate, type: d.type || '' };
+    if (d.type === 'Gold' && String(d.tagStatus || '') !== 'No Tag' && String(d.tagNo || '').trim()) stockTagCacheMarkSold(d.tagNo, Object.assign({}, info, { productName: d.productName || '' }));
+    else if (d.type === 'Diamond' && String(d.diamondTagStatus || '') !== 'No Tag' && String(d.diamondTagNo || '').trim()) stockTagCacheMarkSold(d.diamondTagNo, Object.assign({}, info, { productName: d.diamondProductName || '' }));
   });
 }
 stockTagCacheLoadLocal();                                    // works offline from first paint
@@ -14660,23 +14711,25 @@ async function dsrfTagLookup(who, eid, kind) {
   // (whenever there's internet) to confirm/refresh against the server, and only touches the message
   // again if the answer actually needs correcting (e.g. the cache was stale).
   const cachedNow = stockTagCacheGet(tagN);
+  const cachedSold = !cachedNow ? soldTagCacheGet(tagN) : null;   // BRO: sold tags cache too, for an instant offline "already sold" answer
   if (cachedNow) applyFromCache(cachedNow);
+  else if (cachedSold) dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
 
   if (!navigator.onLine) {
-    if (!cachedNow) dsrfTagMsg(ids.msg, 'info', 'Offline — not in the last synced stock list. It will be checked again on save.');
+    if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Offline — not in the last synced stock list. It will be checked again on save.');
     return;
   }
 
-  if (!cachedNow) dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
+  if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
   let res;
   try {
     res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
   } catch (e) {
-    if (inp.__lk === my && !cachedNow) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
+    if (inp.__lk === my && !cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
     return;
   }
   if (inp.__lk !== my) return;
-  if (!res || !res.ok) { if (!cachedNow) dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
+  if (!res || !res.ok) { if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
   if (res.status === 'instock') {
     const it = res.item || {};
     dsrfApplyStockItem(who, eid, it, tagN);
@@ -14688,7 +14741,8 @@ async function dsrfTagLookup(who, eid, kind) {
     dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
   } else if (res.status === 'sold') {
     dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
-    stockTagCacheRemove(tagN);
+    const sd = res.sold || {};
+    stockTagCacheMarkSold(tagN, { dsrId: sd.dsrId || '', soldDate: sd.soldDate || '' });
   } else {
     dsrfTagMsg(ids.msg, 'warn', '❌ Not found in stock');
     stockTagCacheRemove(tagN);
@@ -16096,14 +16150,19 @@ async function seCheckTag(scope, b) {
   // Cache FIRST). This is what actually catches a tag added moments ago on THIS device — even fully
   // offline, even before the live network check below would ever get a chance to run.
   const cached = stockTagCacheGet(tagN);
+  const cachedSold = !cached ? soldTagCacheGet(tagN) : null;   // BRO: sold tags cache too — instant offline "Sold" + Return option
   if (cached) {
     seSetTagMsg(b,'err','Duplicate: already in stock' + (cached.counter ? ' ('+cached.counter+')' : '') + '.');
     inp.classList.add('se-bad'); b._tagState='dup';
     if (!navigator.onLine) return;   // offline — this cached answer is final for now
+  } else if (cachedSold) {
+    seSetTagMsg(b,'warn','Sold in DSR ' + (cachedSold.dsrId||'') + (cachedSold.soldDate ? ' on ' + cachedSold.soldDate : '') + '.');
+    seR(b,'retWrap').classList.remove('se-hide'); b._tagState='sold';
+    if (!navigator.onLine) return;   // offline — this cached answer is final for now
   }
 
   const my = b._lk = (b._lk||0)+1;
-  if (!cached) seSetTagMsg(b,'info','Checking stock…');
+  if (!cached && !cachedSold) seSetTagMsg(b,'info','Checking stock…');
   try {
     const r = await _fetchWithTimeout(STOCK_GAS_URL+'?action=lookup&tag='+encodeURIComponent(tagN), {}, 20000).then(x=>x.json());
     if (my !== b._lk) return;
@@ -16114,13 +16173,13 @@ async function seCheckTag(scope, b) {
     } else if (r.status==='sold') {
       seSetTagMsg(b,'warn','Sold in DSR ' + (r.sold.dsrId||'') + (r.sold.soldDate ? ' on ' + r.sold.soldDate : '') + '.');
       seR(b,'retWrap').classList.remove('se-hide'); b._tagState='sold';
-      stockTagCacheRemove(tagN);   // confirmed not in stock any more — drop any stale cache entry
+      stockTagCacheMarkSold(tagN, { dsrId: r.sold.dsrId||'', soldDate: r.sold.soldDate||'' });
     } else {
       seSetTagMsg(b,'ok','New tag — OK.');
       stockTagCacheRemove(tagN);   // confirmed genuinely free — drop any stale cache entry
     }
   } catch (e) {
-    if (my === b._lk && !cached) seSetTagMsg(b,'info','Could not check stock right now. It will be checked again on save.');
+    if (my === b._lk && !cached && !cachedSold) seSetTagMsg(b,'info','Could not check stock right now. It will be checked again on save.');
   }
 }
 function seLoadPhoto(b, inp) {
@@ -19910,7 +19969,7 @@ function dsrfConfirmSubmit(who, evt) {
         // tag leaves Stock, so drop it from the local Stock Tag Cache right now too, on this device,
         // instead of waiting for the next full cache refresh — same reasoning as adding a tag the
         // instant Stock Entry saves it above).
-        stockTagCacheRemoveFromRows(rows);
+        stockTagCacheRemoveFromRows(rows, result.dsrId);
         msg.style.color = 'var(--green)';
         msg.innerHTML = isOutlet
           ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
