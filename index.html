@@ -4846,6 +4846,56 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.tb-more-wrap')) closeAllMoreMenus();
 });
 
+// v-add (BRO: "portal sync button ela reload cheyali" — the topbar 🔄 should resync every offline
+// reference cache this portal uses, not just Leave/Dashboard data): the Stock Tag Cache (Stock
+// Entry's duplicate check + DSR/Outlet Issue's tag lookup, both offline-capable — see the Stock Tag
+// Cache block above), the DSR entry form's own Gold/Silver/Diamond product-name list, and Stock
+// Entry's own product/counter/size lists. Silently best-effort — never blocks or fails the button if
+// Stock isn't configured, the device is offline, or a particular page was never opened this session
+// (nothing to refresh on screen in that case, the cache itself still gets updated for next time).
+async function refreshOfflineReferenceCaches() {
+  if (!navigator.onLine) return;
+  const jobs = [stockTagCacheRefresh().catch(() => {})];
+
+  jobs.push(_fetchWithTimeout(DSR_GAS_URL + '?action=getData', {}, 20000).then(r => r.json()).then(data => {
+    if (!data || !data.products) return;
+    const p = data.products;
+    try { localStorage.setItem(DSR_PRODUCTS_CACHE_KEY, JSON.stringify({ gold: p.gold||[], silver: p.silver||[], diamond: p.diamond||[], diamondClarity: p.diamondClarity||[], diamondColor: p.diamondColor||[], savedAt: Date.now() })); } catch (e) {}
+    // If a DSR/Outlet Issue entry form is already open this session, refresh its live dropdowns too.
+    ['emp', 'admin'].forEach(who => {
+      const st = DSR_ST[who];
+      if (!st || !st.loaded) return;
+      st.gold = p.gold||[]; st.silver = p.silver||[]; st.diamond = p.diamond||[];
+      st.diamondClarity = p.diamondClarity||[]; st.diamondColor = p.diamondColor||[];
+      document.querySelectorAll(`#dsrEntryFormBox-${who} .entry`).forEach(block => {
+        try { dsrfRefreshProducts(who, block.id.replace(`dsrf-entry-${who}-`, '')); } catch (e) {}
+      });
+    });
+  }).catch(() => {}));
+
+  if (stockIsConfigured()) {
+    jobs.push(_fetchWithTimeout(STOCK_GAS_URL + '?action=meta', {}, 20000).then(r => r.json()).then(m => {
+      if (!m || !m.ok) return;
+      // Stock Entry's product/design/size lists come from the same DSR getData call above, so only
+      // the Stock-side bit (counters/mainHub) needs its own fetch here.
+      ['emp', 'admin'].forEach(scope => {
+        const st = SE_STATE[scope];
+        if (!st) return;                                    // Stock Entry never opened this session — nothing on screen to refresh
+        st.counters = m.counters || []; st.mainHub = m.mainHub || 'Main Hub';
+        try { localStorage.setItem(SE_LS_META, JSON.stringify({ counters: st.counters, mainHub: st.mainHub })); } catch (e) {}
+        const cSel = SE(scope, 'counter');
+        if (cSel) {
+          const prevC = cSel.value;
+          cSel.innerHTML = '<option value="">-- Select Counter --</option>' + st.counters.map(c => `<option>${escHtml(c)}</option>`).join('');
+          if (prevC) cSel.value = prevC;
+        }
+      });
+    }).catch(() => {}));
+  }
+
+  await Promise.all(jobs);
+}
+
 // Manual refresh — called from the visible topbar 🔄 button (moved out of
 // the More menu per your request). Spins the icon while loading.
 async function manualRefresh(who) {
@@ -4854,6 +4904,7 @@ async function manualRefresh(who) {
   try {
     if (who === 'emp') await loadEmpData();
     else await loadAdminData();
+    refreshOfflineReferenceCaches();   // fire-and-forget alongside the toast below — never delays it
     toast('Refreshed', 'success');
   } catch(e) {
     toast('Refresh failed — check connection', 'error');
@@ -14588,37 +14639,40 @@ async function dsrfTagLookup(who, eid, kind) {
   const tagN = stockNormTag(raw);
   const my = inp.__lk = (inp.__lk || 0) + 1;
 
-  // v-fix (BRO: "dsr enter cheyadam lo kuda [offline cache] process update chei" — same offline
-  // fallback as Stock Entry's seCheckTag below): with no internet, skip the live call entirely and
-  // answer instantly from the local Stock Tag Cache instead of just failing with "enter manually".
-  const applyFromCache = (cached, extraNote) => {
+  const applyFromCache = (cached) => {
     dsrfApplyStockItem(who, eid, { type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter }, tagN);
     const kNow = cached.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
-    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock (offline, last synced list) — ' + (cached.counter || 'Retail') + '. Basic details filled in (you can edit/complete them).' + (extraNote || ''));
+    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock (offline, last synced list) — ' + (cached.counter || 'Retail') + '. Basic details filled in (you can edit/complete them).');
   };
+
+  // v-fix (BRO: "tag no enter chesina ventane checking stock ani vastundi, immediate ga rada,
+  // konchem time tisukuntundi" — the live server round-trip can take a couple of seconds, and until
+  // now the field just sat on "Checking stock..." for all of it, even when this exact tag was
+  // already sitting in the local Stock Tag Cache from moments ago. Now the cache is checked FIRST,
+  // synchronously, whether online or offline — if it's there, the fields fill in and the message
+  // shows INSTANTLY, with zero wait. The live call below still runs right after in the background
+  // (whenever there's internet) to confirm/refresh against the server, and only touches the message
+  // again if the answer actually needs correcting (e.g. the cache was stale).
+  const cachedNow = stockTagCacheGet(tagN);
+  if (cachedNow) applyFromCache(cachedNow);
+
   if (!navigator.onLine) {
-    const cached = stockTagCacheGet(tagN);
-    if (cached) applyFromCache(cached);
-    else dsrfTagMsg(ids.msg, 'info', 'Offline — not in the last synced stock list. It will be checked again on save.');
+    if (!cachedNow) dsrfTagMsg(ids.msg, 'info', 'Offline — not in the last synced stock list. It will be checked again on save.');
     return;
   }
 
-  dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
+  if (!cachedNow) dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
   let res;
   try {
     res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
   } catch (e) {
-    if (inp.__lk === my) {
-      const cached = stockTagCacheGet(tagN);           // live call failed mid-flight — same cache fallback
-      if (cached) applyFromCache(cached);
-      else dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
-    }
+    if (inp.__lk === my && !cachedNow) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
     return;
   }
   if (inp.__lk !== my) return;
-  if (!res || !res.ok) { dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
+  if (!res || !res.ok) { if (!cachedNow) dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
   if (res.status === 'instock') {
     const it = res.item || {};
     const beforePf = dsrfGv(`dsrfPf-${who}-${eid}`);
