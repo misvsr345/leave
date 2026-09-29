@@ -7286,6 +7286,10 @@ function submitDsrOffline(rows, idemKey, who, reason) {
     if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; }
     return;
   }
+  // v-fix: same as the online success path — drop these tags from the local Stock Tag Cache right
+  // now, optimistically, so this device already treats them as sold/out-of-stock even before the
+  // queued entry actually reaches the server.
+  stockTagCacheRemoveFromRows(rows);
   toast(label + ' — DSR saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
   if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = label + ' — saved offline on this device — will auto-sync automatically. Do not re-enter this DSR.'; }
   draftClear('dsr-' + who);
@@ -14411,6 +14415,64 @@ function stockTagHasSep(s) { return /[^A-Za-z0-9]/.test(String(s == null ? '' : 
 // letters, and never a separator (space, -, /).
 function dsrTagValid(s) { return /^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+$/.test(String(s == null ? '' : s).trim()); }
 
+// ============================================================
+// STOCK TAG CACHE (BRO: "stock entry form lo already enter aina stock, sync dwara offline lo ki
+// automatic ga cache lo update avali. every new data enter aina ventane cache loki sync avali...
+// ila cheyakapote new tag badulu existing tag enter chesthe existing stock ani chupinchakapovachu.
+// ee process ni dsr enter cheyadam lo kuda update chei. stock level lo unna stock tag nos anni cache
+// lo update chei" — a local, offline-capable snapshot of every Tag No CURRENTLY IN STOCK (same set
+// StockBackend's own lookup_ checks), used by both Stock Entry's duplicate check (seCheckTag) and
+// DSR/Outlet Issue's tag lookup (dsrfTagLookup) so a tag typed with no internet is still checked
+// against the last known list instead of just failing silently. Refreshed from the server on load and
+// whenever the device comes back online, AND updated INSTANTLY the moment this device itself saves a
+// new stock item (added) or sells/outlet-issues one (removed) — so the very next tag typed, even in
+// the same offline session, already reflects this device's own just-made change, not just whatever
+// the last full server sync happened to see.
+// ============================================================
+const STOCK_TAG_CACHE_KEY = 'vsrStockTagCache_v1';
+let STOCK_TAG_CACHE = {};   // { NORMALIZEDTAG: { counter, productName, design, type } } — currently IN STOCK only
+function stockTagCacheLoadLocal() {
+  try { STOCK_TAG_CACHE = JSON.parse(localStorage.getItem(STOCK_TAG_CACHE_KEY) || '{}') || {}; }
+  catch (e) { STOCK_TAG_CACHE = {}; }
+}
+function stockTagCacheSaveLocal() {
+  try { localStorage.setItem(STOCK_TAG_CACHE_KEY, JSON.stringify(STOCK_TAG_CACHE)); } catch (e) {}
+}
+// Pulls every currently-in-stock Tag No from the Stock Level backend, all counters — same "listStock"
+// action the Stock Photos viewer already uses for its own full offline snapshot.
+async function stockTagCacheRefresh() {
+  if (!stockIsConfigured() || !navigator.onLine) return false;
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=listStock&counter=&q=&limit=100000', {}, 30000).then(r => r.json());
+    if (!res || !res.ok) return false;
+    const map = {};
+    (res.rows || []).forEach(r => {
+      const tagN = stockNormTag(r.tagNo);
+      if (tagN) map[tagN] = { counter: r.counter || '', productName: r.productName || '', design: r.design || '', type: r.type || '' };
+    });
+    STOCK_TAG_CACHE = map;
+    stockTagCacheSaveLocal();
+    return true;
+  } catch (e) { return false; }
+}
+function stockTagCacheGet(tagNo) { const t = stockNormTag(tagNo); return t ? (STOCK_TAG_CACHE[t] || null) : null; }
+function stockTagCacheAdd(tagNo, info) { const t = stockNormTag(tagNo); if (!t) return; STOCK_TAG_CACHE[t] = info || {}; stockTagCacheSaveLocal(); }
+function stockTagCacheRemove(tagNo) { const t = stockNormTag(tagNo); if (t && STOCK_TAG_CACHE[t]) { delete STOCK_TAG_CACHE[t]; stockTagCacheSaveLocal(); } }
+// Called right after a DSR/Outlet Issue save succeeds — same Gold/Diamond-with-real-tag filter as the
+// backend's own stockItemsFromRows_, so the cache only ever drops a tag the backend would actually
+// have moved to Sold (Silver / No-Tag items were never in this cache to begin with).
+function stockTagCacheRemoveFromRows(rows) {
+  (rows || []).forEach(d => {
+    const status = String(d.paymentStatus || 'Purchased'); // Outlet Issue rows carry no Payment Status — always treated as Purchased, same as the backend
+    if (status !== 'Purchased' && status !== 'Advance') return;
+    if (d.type === 'Gold' && String(d.tagStatus || '') !== 'No Tag' && String(d.tagNo || '').trim()) stockTagCacheRemove(d.tagNo);
+    else if (d.type === 'Diamond' && String(d.diamondTagStatus || '') !== 'No Tag' && String(d.diamondTagNo || '').trim()) stockTagCacheRemove(d.diamondTagNo);
+  });
+}
+stockTagCacheLoadLocal();                                    // works offline from first paint
+if (navigator.onLine) stockTagCacheRefresh();                // then catch up with the server
+window.addEventListener('online', stockTagCacheRefresh);
+
 // ---------- DSR form: tag typing / lookup / auto-fill ----------
 function dsrfTagMsg(id, cls, txt) {
   const el = document.getElementById(id); if (!el) return;
@@ -14525,12 +14587,34 @@ async function dsrfTagLookup(who, eid, kind) {
   if (!stockIsConfigured()) { dsrfTagMsg(ids.msg, 'info', ''); return; }
   const tagN = stockNormTag(raw);
   const my = inp.__lk = (inp.__lk || 0) + 1;
+
+  // v-fix (BRO: "dsr enter cheyadam lo kuda [offline cache] process update chei" — same offline
+  // fallback as Stock Entry's seCheckTag below): with no internet, skip the live call entirely and
+  // answer instantly from the local Stock Tag Cache instead of just failing with "enter manually".
+  const applyFromCache = (cached, extraNote) => {
+    dsrfApplyStockItem(who, eid, { type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter }, tagN);
+    const kNow = cached.type === 'Diamond' ? 'd' : 'g';
+    const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
+    dsrfTagMsg(otherIds.msg, 'info', '');
+    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock (offline, last synced list) — ' + (cached.counter || 'Retail') + '. Basic details filled in (you can edit/complete them).' + (extraNote || ''));
+  };
+  if (!navigator.onLine) {
+    const cached = stockTagCacheGet(tagN);
+    if (cached) applyFromCache(cached);
+    else dsrfTagMsg(ids.msg, 'info', 'Offline — not in the last synced stock list. It will be checked again on save.');
+    return;
+  }
+
   dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
   let res;
   try {
     res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
   } catch (e) {
-    if (inp.__lk === my) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
+    if (inp.__lk === my) {
+      const cached = stockTagCacheGet(tagN);           // live call failed mid-flight — same cache fallback
+      if (cached) applyFromCache(cached);
+      else dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
+    }
     return;
   }
   if (inp.__lk !== my) return;
@@ -14539,6 +14623,7 @@ async function dsrfTagLookup(who, eid, kind) {
     const it = res.item || {};
     const beforePf = dsrfGv(`dsrfPf-${who}-${eid}`);
     dsrfApplyStockItem(who, eid, it, tagN);
+    stockTagCacheAdd(tagN, { counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type });
     // the message belongs to whichever block (Gold / Diamond) is showing now
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
@@ -14549,8 +14634,10 @@ async function dsrfTagLookup(who, eid, kind) {
   } else if (res.status === 'sold') {
     const sd = res.sold || {};
     dsrfTagMsg(ids.msg, 'err', '⚠ Already sold — DSR ' + (sd.dsrId || '') + (sd.soldDate ? ' (' + fmtDMY(sd.soldDate) + ')' : '') + '. If the customer is returning it, use Return/Replace first.');
+    stockTagCacheRemove(tagN);
   } else {
     dsrfTagMsg(ids.msg, 'warn', '⚠ This tag is not in stock — enter manually.');
+    stockTagCacheRemove(tagN);
   }
 }
 
@@ -15948,22 +16035,38 @@ async function seCheckTag(scope, b) {
   const tagN = stockNormTag(raw);
   if (seTagUsedElsewhere(scope, b, tagN)) { seSetTagMsg(b,'err','Duplicate: this tag is already entered in another item below/above.'); inp.classList.add('se-bad'); b._tagState='dup'; return; }
   if (!stockIsConfigured()) { seSetTagMsg(b,'info',''); return; }
+
+  // v-fix (BRO: "stock entry form lo already enter aina stock, offline lo ki cache lo automatic ga
+  // update avali... ila cheyakapote new tag badulu existing tag enter chesthe existing stock ani
+  // chupinchakapovachu" — an instant, offline-capable duplicate check against the local Stock Tag
+  // Cache FIRST). This is what actually catches a tag added moments ago on THIS device — even fully
+  // offline, even before the live network check below would ever get a chance to run.
+  const cached = stockTagCacheGet(tagN);
+  if (cached) {
+    seSetTagMsg(b,'err','Duplicate: already in stock' + (cached.counter ? ' ('+cached.counter+')' : '') + '.');
+    inp.classList.add('se-bad'); b._tagState='dup';
+    if (!navigator.onLine) return;   // offline — this cached answer is final for now
+  }
+
   const my = b._lk = (b._lk||0)+1;
-  seSetTagMsg(b,'info','Checking stock…');
+  if (!cached) seSetTagMsg(b,'info','Checking stock…');
   try {
     const r = await _fetchWithTimeout(STOCK_GAS_URL+'?action=lookup&tag='+encodeURIComponent(tagN), {}, 20000).then(x=>x.json());
     if (my !== b._lk) return;
     if (r.status==='instock') {
       seSetTagMsg(b,'err','Duplicate: already in stock' + (r.item && r.item.counter ? ' ('+r.item.counter+')' : '') + '.');
       inp.classList.add('se-bad'); b._tagState='dup';
+      stockTagCacheAdd(tagN, { counter: r.item && r.item.counter, productName: r.item && r.item.productName, design: r.item && r.item.design, type: r.item && r.item.type });
     } else if (r.status==='sold') {
       seSetTagMsg(b,'warn','Sold in DSR ' + (r.sold.dsrId||'') + (r.sold.soldDate ? ' on ' + r.sold.soldDate : '') + '.');
       seR(b,'retWrap').classList.remove('se-hide'); b._tagState='sold';
+      stockTagCacheRemove(tagN);   // confirmed not in stock any more — drop any stale cache entry
     } else {
       seSetTagMsg(b,'ok','New tag — OK.');
+      stockTagCacheRemove(tagN);   // confirmed genuinely free — drop any stale cache entry
     }
   } catch (e) {
-    if (my === b._lk) seSetTagMsg(b,'info','Could not check stock right now. It will be checked again on save.');
+    if (my === b._lk && !cached) seSetTagMsg(b,'info','Could not check stock right now. It will be checked again on save.');
   }
 }
 function seLoadPhoto(b, inp) {
@@ -16097,6 +16200,16 @@ async function seSave(scope) {
   try {
     const res = await _fetchWithTimeout(STOCK_GAS_URL, { method:'POST', body: JSON.stringify(payload) }, 90000).then(r=>r.json());
     if (res.ok) {
+      // v-fix (BRO: "every new data enter aina ventane cache loki sync avali" — reflect this
+      // device's own just-saved Tag stock immediately into the local Stock Tag Cache, so the very
+      // next tag typed (here or in DSR/Outlet Issue) is instantly recognized as "already in stock"
+      // without waiting for a fresh server round-trip — see the Stock Tag Cache block above).
+      const counterForCache = c.header.productFrom==='Main' ? (st.mainHub || 'Main Hub') : c.header.counter;
+      c.rows.forEach(x => {
+        if (x.row.tagStatus==='Tag' && x.row.tagNo) {
+          stockTagCacheAdd(x.row.tagNo, { counter: counterForCache, productName: x.row.productName, design: x.row.design||'', type: x.row.type });
+        }
+      });
       st.submitToken = Math.random().toString(36).slice(2,8);
       SE(scope,'items').innerHTML=''; seAddItem(scope);
       seShowBanner(scope,'ok', 'Saved ' + res.saved + (res.saved===1?' item':' items') + ' to ' + (c.header.productFrom==='Main' ? 'Main Hub' : c.header.counter) + '.');
@@ -19739,6 +19852,11 @@ function dsrfConfirmSubmit(who, evt) {
       setTimeout(() => document.getElementById('dsrfProgress-' + who).classList.remove('show'), 1000);
       btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who);
       if (result.status === 'success') {
+        // v-fix (BRO: "ee process ni dsr enter cheyadam lo kuda update chei" — a sold/outlet-issued
+        // tag leaves Stock, so drop it from the local Stock Tag Cache right now too, on this device,
+        // instead of waiting for the next full cache refresh — same reasoning as adding a tag the
+        // instant Stock Entry saves it above).
+        stockTagCacheRemoveFromRows(rows);
         msg.style.color = 'var(--green)';
         msg.innerHTML = isOutlet
           ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
