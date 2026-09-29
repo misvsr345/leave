@@ -20095,6 +20095,20 @@ function openAdvanceOrderEdit(who, dsrId) {
     .then(r => r.json())
     .then(head => {
       if (!head || head.status !== 'success') { editBox.innerHTML = `<div class="empty-state"><p>${(head && head.message) || 'Could not load this DSR.'}</p></div>`; return; }
+      // v-fix (BRO: "customer name ravada ledu" — opening an Advance/Order DSR to modify/close it out showed
+      // a blank Customer Name, blocking Save Update with "Please fill Bill Date, Customer, Mobile and
+      // Address!" even though the pending list right above it shows the name fine): the pending list
+      // (loadAdvanceOrderList) reads customer/mobile/address/billDate from the Advance/Order mirror sheet,
+      // while this edit screen reads them fresh from the Main/Archive sheet — for a DSR whose Main/Archive
+      // row has that cell blank, the mirror sheet still has it, so fall back to the value already shown in
+      // the pending list (AOE_ST) rather than leaving the field empty.
+      const listRow = (AOE_ST[who].rows || []).find(r => String(r.dsrId).toUpperCase() === String(dsrId).toUpperCase());
+      if (listRow) {
+        if (!head.customerName && listRow.customerName) head.customerName = listRow.customerName;
+        if (!head.mobileNumber && listRow.mobile) head.mobileNumber = listRow.mobile;
+        if (!head.address && listRow.address) head.address = listRow.address;
+        if (!head.billDate && listRow.billDate) head.billDate = listRow.billDate;
+      }
       window['__aoeHead_' + who] = head;
 
       editBox.innerHTML = `
