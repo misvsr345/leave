@@ -34,7 +34,7 @@
 })();
 </script>
 <title>VSR GOLD — HR Management Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- v-add (BRO: Loyalty Card + Golden Aura photo auto-processing —
      free/open-source only, no paid API):
@@ -255,7 +255,7 @@ html[data-theme="sapphire"] {
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Spectral', serif;
   background: linear-gradient(160deg, #f5f0fa 0%, #ede8f5 100%);
   color: var(--text);
   min-height: 100vh;
@@ -292,7 +292,7 @@ body {
   margin: 0 auto 10px;
 }
 .login-logo h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Spectral', serif;
   font-size: 30px; font-weight: 800; letter-spacing: 2.5px;
   background: linear-gradient(135deg, var(--purple-dark), var(--purple) 55%, var(--pink));
   -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -307,7 +307,7 @@ body {
 }
 .login-tab-btn {
   flex: 1; padding: 10px; border: none; border-radius: 8px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  font-family: 'Spectral', serif; font-size: 13px; font-weight: 600;
   cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text3);
 }
 .login-tab-btn.active { background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink)); color: #fff; box-shadow: 0 2px 10px rgba(107,33,168,0.3); }
@@ -329,7 +329,7 @@ body {
 
 .form-group input, .form-group select, .form-group textarea {
   width: 100%; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: var(--r2);
-  font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); background: var(--bg);
+  font-family: 'Spectral', serif; font-size: 15px; color: var(--text); background: var(--bg);
   outline: none; transition: all 0.2s;
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
@@ -341,7 +341,7 @@ body {
    browser dropdown; this fixes that everywhere at once. */
 select {
   width: 100%; padding: 13px 38px 13px 16px; border: 1.5px solid var(--gold); border-radius: var(--r2);
-  font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text);
+  font-family: 'Spectral', serif; font-size: 14.5px; font-weight: 700; color: var(--text);
   background-color: var(--card);
   outline: none; transition: all 0.2s cubic-bezier(.4,0,.2,1); cursor: pointer;
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
@@ -362,7 +362,7 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(212,168,67,0.22), 0 5px 16px rgba(107,33,168,0.14);
 }
 select:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 10px; background: var(--card); color: var(--text); }
+select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px; background: var(--card); color: var(--text); }
 .form-group select {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
   cursor: pointer; padding-right: 36px; font-weight: 700;
@@ -372,11 +372,11 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
   background-size: 13px 13px;
 }
 .form-group select:hover { border-color: var(--purple-mid); transform: translateY(-1px); }
-.form-group textarea { resize: vertical; min-height: 70px; font-family: 'DM Sans', sans-serif; }
+.form-group textarea { resize: vertical; min-height: 70px; font-family: 'Spectral', serif; }
 
 .btn-primary {
   width: 100%; padding: 14px; background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink)); color: #fff;
-  border: 2px solid var(--gold); border-radius: var(--r2); font-family: 'DM Sans', sans-serif;
+  border: 2px solid var(--gold); border-radius: var(--r2); font-family: 'Spectral', serif;
   font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
   box-shadow: 0 4px 15px rgba(107,33,168,0.4);
 }
@@ -386,7 +386,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .btn-report {
   width: 100%; padding: 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;
   background: linear-gradient(135deg, #0D47A1, #1565C0, #1976D2); color: #fff;
-  border: 2px solid var(--gold); border-radius: var(--r2); font-family: 'DM Sans', sans-serif;
+  border: 2px solid var(--gold); border-radius: var(--r2); font-family: 'Spectral', serif;
   font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.4px;
   box-shadow: 0 4px 15px rgba(13,71,161,0.35);
 }
@@ -395,7 +395,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .btn-report:active { transform: scale(0.98); }
 .btn-secondary {
   width: 100%; padding: 13px; background: var(--card); color: var(--purple);
-  border: 2px solid var(--purple-mid); border-radius: var(--r2); font-family: 'DM Sans', sans-serif;
+  border: 2px solid var(--purple-mid); border-radius: var(--r2); font-family: 'Spectral', serif;
   font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
   box-shadow: 0 2px 8px rgba(107,33,168,0.1);
 }
@@ -464,7 +464,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
 .bday-poster-logo::before { font-size: 56px; }
 
 .topbar-logo {
-  font-family: 'Playfair Display', serif; font-size: 23px; font-weight: 900;
+  font-family: 'Spectral', serif; font-size: 23px; font-weight: 900;
   background: linear-gradient(135deg, #FFF0C4, #F5D77E 40%, #D4A84A 75%, #B8860B);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   letter-spacing: 1.8px; flex-shrink: 0;
@@ -486,7 +486,7 @@ select option { font-family: 'DM Sans', sans-serif; font-weight: 600; padding: 1
   flex-shrink: 0; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1);
   color: #fff; cursor: default; gap: 5px;
 }
-button.tb-chip { cursor: pointer; transition: background 0.2s; font-family: 'DM Sans', sans-serif; }
+button.tb-chip { cursor: pointer; transition: background 0.2s; font-family: 'Spectral', serif; }
 button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .tb-chip.tb-badge { background: rgba(212,168,67,0.22); color: var(--gold2); border-color: var(--gold); }
 .tb-chip.tb-conn { gap: 6px; }
@@ -560,7 +560,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 
 .nav-btn {
   flex-shrink: 0; height: 32px; padding: 0 13px; border: 1.5px solid #ddd0ee; border-radius: 9px;
-  background: #fff; color: var(--purple); font-family: 'DM Sans', sans-serif; font-size: 12.5px;
+  background: #fff; color: var(--purple); font-family: 'Spectral', serif; font-size: 12.5px;
   font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center;
   gap: 5px; white-space: nowrap;
 }
@@ -596,7 +596,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
     overflow-y: auto; z-index: 85;
   }
   .vsr-sidebar-brand {
-    font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 800;
+    font-family: 'Spectral', serif; font-size: 19px; font-weight: 800;
     color: var(--gold, #d4af37); letter-spacing: 1.5px;
     padding: 4px 12px 18px; display: flex; align-items: center; gap: 8px;
     border-bottom: 1px solid rgba(212,175,55,0.25); margin-bottom: 10px;
@@ -707,7 +707,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(107,33,168,0.08);
 }
 .card-title {
-  font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--purple);
+  font-family: 'Spectral', serif; font-size: 15px; font-weight: 700; color: var(--purple);
   margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
 
@@ -735,7 +735,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .dh-kpi-view-btn:active { opacity: 0.6; }
 .dh-kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
-.dh-kpi-val { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: var(--text); margin-top: 3px; }
+.dh-kpi-val { font-family: 'Spectral', serif; font-size: 18px; font-weight: 800; color: var(--text); margin-top: 3px; }
 .dh-kpi-sub { font-size: 10.5px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
 .dh-panel {
   background: var(--card); border-radius: var(--r); padding: 14px; margin-bottom: 10px;
@@ -754,7 +754,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-gauge-box { flex: 1; text-align: center; }
 .dh-gauge-wrap { position: relative; height: 90px; display: flex; align-items: center; justify-content: center; }
 .dh-gauge-label { position: absolute; text-align: center; }
-.dh-gauge-label .num { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 800; color: var(--text); }
+.dh-gauge-label .num { font-family: 'Spectral', serif; font-size: 17px; font-weight: 800; color: var(--text); }
 .dh-gauge-label .sub { font-size: 8.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; }
 .dh-alert-card { border-radius: var(--r); overflow: hidden; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(220,38,38,0.25); }
 .dh-alert-inner { background: linear-gradient(135deg,#dc2626,#991b1b); padding: 12px 16px; }
@@ -789,7 +789,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-panels-grid { display: block; margin-top: 24px; }
 .dh-stat-grid6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .dh-stat-box2 { background: var(--bg2, #f8f5ff); border-radius: 10px; padding: 9px 6px; text-align: center; }
-.dh-stat-box2 .v { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 800; }
+.dh-stat-box2 .v { font-family: 'Spectral', serif; font-size: 17px; font-weight: 800; }
 .dh-stat-box2 .l { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .3px; margin-top: 2px; }
 .dh-subhead { font-size: 11px; font-weight: 800; color: var(--text2); margin: 12px 0 6px; display: flex; align-items: center; gap: 5px; }
 .dh-mini-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 0; border-top: 1px solid var(--border); }
@@ -947,7 +947,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
   background: linear-gradient(135deg, #faf5ff, #fff); border: 1.5px solid var(--gold); border-radius: var(--r2);
   padding: 12px 8px; text-align: center; box-shadow: 0 2px 8px rgba(107,33,168,0.1);
 }
-.stat-val { font-size: 22px; font-weight: 800; font-family: 'Playfair Display', serif; line-height: 1; margin-bottom: 4px; }
+.stat-val { font-size: 22px; font-weight: 800; font-family: 'Spectral', serif; line-height: 1; margin-bottom: 4px; }
 .stat-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); }
 
 /* Progress Bar */
@@ -981,7 +981,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 
 /* Action Buttons — uniform sizing */
 .btn-sm {
-  height: 32px; padding: 0 13px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px;
+  height: 32px; padding: 0 13px; border-radius: 8px; font-family: 'Spectral', serif; font-size: 12px;
   font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all 0.2s;
   display: inline-flex; align-items: center; gap: 5px;
 }
@@ -1004,7 +1004,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .form-row label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
 .form-row select, .form-row input, .form-row textarea {
   width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
-  font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text); background: var(--bg);
+  font-family: 'Spectral', serif; font-size: 16px; color: var(--text); background: var(--bg);
   outline: none; transition: all 0.2s;
 }
 .form-row select:focus, .form-row input:focus, .form-row textarea:focus {
@@ -1031,7 +1031,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
    divs where wrapping wasn't practical). */
 .uniform-select {
   width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
-  font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text); background: var(--bg);
+  font-family: 'Spectral', serif; font-size: 16px; color: var(--text); background: var(--bg);
   outline: none; transition: all 0.2s;
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
   cursor: pointer; padding-right: 34px; font-weight: 600;
@@ -1047,7 +1047,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
    boxes) and were otherwise falling back to native browser styling. */
 .uniform-input {
   width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
-  font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text); background: var(--bg);
+  font-family: 'Spectral', serif; font-size: 16px; color: var(--text); background: var(--bg);
   outline: none; transition: all 0.2s;
 }
 .uniform-input:focus { border-color: var(--purple-mid); background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
@@ -1169,7 +1169,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; max-width: 375px; margin-left: auto; margin-right: auto; }
 .cal-nav-btn { padding: 5px 11px; border: 1px solid var(--border); border-radius: 7px; background: #fff; cursor: pointer; font-size: 11.5px; font-weight: 600; color: var(--text2); transition: all 0.2s; }
 .cal-nav-btn:hover { border-color: var(--gold); color: var(--purple); background: #faf5ff; }
-.cal-title { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; }
+.cal-title { font-family: 'Spectral', serif; font-size: 13px; font-weight: 700; }
 .cal-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); max-width: 375px; margin-left: auto; margin-right: auto; }
 .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text3); }
 .cal-legend-dot { width: 9px; height: 9px; border-radius: 50%; }
@@ -1215,11 +1215,11 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
   transition: background 0.15s, color 0.15s; z-index: 5;
 }
 .modal-close-x:hover { background: #fde2e2; color: #c0392b; }
-.modal-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.modal-title { font-family: 'Spectral', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
 .modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 15px; }
 .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px; }
-.btn-modal-cancel { height: 36px; padding: 0 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
-.btn-modal-confirm { height: 36px; padding: 0 16px; border: none; border-radius: 8px; background: var(--red); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-modal-cancel { height: 36px; padding: 0 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text2); font-family: 'Spectral', serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-modal-confirm { height: 36px; padding: 0 16px; border: none; border-radius: 8px; background: var(--red); color: #fff; font-family: 'Spectral', serif; font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-modal-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
@@ -1228,7 +1228,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .info-row .val { font-weight: 700; color: var(--text); text-align: right; }
 
 .section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; flex-wrap: wrap; gap: 8px; }
-.section-title2 { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--purple); }
+.section-title2 { font-family: 'Spectral', serif; font-size: 17px; font-weight: 700; color: var(--purple); }
 
 /* v-fix (BRO's "make "Running Month / All Leaves" fit on 1 line instead of 2"
    request — surveyed EVERY .filter-bar in the file, 9 total, listed below):
@@ -1289,7 +1289,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 
 /* Home header */
 .home-header { background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink)); border-radius: 16px; padding: 18px; margin-bottom: 14px; border: 2px solid var(--gold); box-shadow: 0 4px 20px rgba(107,33,168,0.3); color: #fff; }
-.home-header-title { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 800; color: var(--gold2); letter-spacing: 1.5px; margin-bottom: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+.home-header-title { font-family: 'Spectral', serif; font-size: 14px; font-weight: 800; color: var(--gold2); letter-spacing: 1.5px; margin-bottom: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 .home-header-name { font-size: 20px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }
 .home-header-sub { font-size: 12px; font-weight: 700; color: #fff; opacity: 0.95; margin-top: 4px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 .home-balance-row { display: flex; gap: 9px; margin-top: 13px; }
@@ -1346,9 +1346,9 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 }
 .bday-poster-emoji { font-size: 32px; margin-bottom: 6px; animation: bday-blink 1.2s ease-in-out infinite; }
 .bday-poster-logo.vsr-logo-mark { width: 70px; height: 70px; margin: 0 auto 8px; }
-.bday-poster-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: var(--gold2); letter-spacing: 2px; margin-bottom: 14px; }
+.bday-poster-title { font-family: 'Spectral', serif; font-size: 20px; font-weight: 800; color: var(--gold2); letter-spacing: 2px; margin-bottom: 14px; }
 .bday-poster-wish { font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.9); }
-.bday-poster-name { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 800; color: #fff; margin: 4px 0 14px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.bday-poster-name { font-family: 'Spectral', serif; font-size: 30px; font-weight: 800; color: #fff; margin: 4px 0 14px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .bday-poster-msg { font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 18px; padding: 0 6px; }
 .bday-poster-regards { font-size: 13px; color: var(--gold2); line-height: 1.7; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 14px; }
 .bday-marquee-track {
@@ -1444,7 +1444,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsrf-scope { --dgold:#B8860B; --dgold2:#D4AF37; --dpurple:#4A0E8F; --dpurpleL:#7B2FBE; --dpurpleP:#F5F0FF;
   --dink:#1A1410; --dinkL:#5B4A6E; --dmuted:#9E8A7A; --dborder:#E2D9F3; --ds2:#FDFCFF;
   --ddanger:#C0392B; --dsuccess:#1E7A4B; --dorange:#E67E22; --dorangeBg:#FFF3E0;
-  --dgreen:#1A6B3C; --dgreenBg:#E8F5EE; --dsh:rgba(74,14,143,0.09); font-family:'DM Sans',sans-serif; }
+  --dgreen:#1A6B3C; --dgreenBg:#E8F5EE; --dsh:rgba(74,14,143,0.09); font-family:'Spectral',serif; }
 .dsrf-scope .card{background:#fff;border:1.5px solid var(--dgold);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 10px var(--dsh);}
 .dsrf-scope .ch{background:linear-gradient(90deg,var(--dpurpleP),#FAF5FF);padding:10px 18px;font-size:13px;font-weight:700;color:var(--dpurple);border-bottom:1px solid var(--dgold);display:flex;align-items:center;gap:8px;letter-spacing:1px;text-transform:uppercase;}
 .dsrf-scope .cb{padding:16px 18px;}
@@ -1568,7 +1568,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsr-receipt-hd{background:linear-gradient(135deg,var(--purple-dark),var(--purple));padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
 .dsr-receipt-id{color:#fff;font-weight:800;font-size:13px;}
 .dsr-receipt-body{padding:12px 14px;background:#fffdf7;}
-.dsr-cust-name{font-size:16px;font-weight:800;color:var(--purple);font-family:'DM Sans',sans-serif;}
+.dsr-cust-name{font-size:16px;font-weight:800;color:var(--purple);font-family:'Spectral',serif;}
 .dsr-cust-addr{font-size:12.5px;color:var(--text);margin-top:2px;text-transform:uppercase;}
 .dsr-meta-row{font-size:11px;color:var(--text3);margin-top:6px;padding-bottom:8px;border-bottom:1px dashed var(--border);}
 .dsr-items-wrap{margin-top:8px;overflow-x:auto;}
@@ -2129,7 +2129,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div style="display:flex;gap:8px;">
           <input type="text" id="loyEmpSearchBox" placeholder="Search by customer name, mobile, or card no..." autocomplete="off"
             onkeydown="if(event.key==='Enter') runLoyaltySearch('emp')"
-            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
+            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:14px;background:var(--bg);outline:none;">
           <button onclick="runLoyaltySearch('emp')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
         </div>
       </div>
@@ -2184,7 +2184,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="card">
         <div style="text-align:center;padding:10px 0 20px;">
           <div class="bday-poster-logo vsr-logo-mark" style="margin:0 auto 10px;"></div>
-          <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:var(--purple);" id="profileEmpName">—</div>
+          <div style="font-family:'Spectral',serif;font-size:20px;font-weight:800;color:var(--purple);" id="profileEmpName">—</div>
           <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="profileEmpMeta">—</div>
         </div>
         <div id="profileEmpDetails"></div>
@@ -2817,7 +2817,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         </div>
         <div class="form-row"><label>Search — customer name or card no (optional)</label>
           <input type="text" id="loyMyCardsSearch" placeholder="Search..." autocomplete="off"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);outline:none;">
+            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:13px;background:var(--bg);outline:none;">
         </div>
         <button class="btn-modal-confirm" style="width:100%;background:var(--purple);" onclick="loadLoyaltyAllCardsAdmin()">🔄 Load Cards</button>
       </div>
@@ -2853,7 +2853,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div style="display:flex;gap:8px;">
           <input type="text" id="loyAdminSearchBox" placeholder="Search by customer name, mobile, or card no..." autocomplete="off"
             onkeydown="if(event.key==='Enter') runLoyaltySearch('admin')"
-            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);outline:none;">
+            style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:14px;background:var(--bg);outline:none;">
           <button onclick="runLoyaltySearch('admin')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
         </div>
       </div>
@@ -3206,7 +3206,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="card" style="overflow:hidden;padding:0;">
         <div style="background:linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink));padding:28px 20px;text-align:center;box-shadow:inset 0 -2px 0 var(--gold);">
           <div id="adminProfileAvatar" style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;font-weight:800;color:#fff;">A</div>
-          <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:#fff;" id="adminProfileName">—</div>
+          <div style="font-family:'Spectral',serif;font-size:20px;font-weight:800;color:#fff;" id="adminProfileName">—</div>
           <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;" id="adminProfileMeta">—</div>
         </div>
         <div style="padding:16px 18px;" id="adminProfileDetails"></div>
@@ -4466,6 +4466,22 @@ function escHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// v-add (BRO: "all data proper case lo matrame kani pinchali... VSR GOLD ekkada unna capital undali" —
+// display-only Title Case for names/products/addresses/remarks/counters, wherever staff may have typed
+// ALL CAPS or all-lowercase. NEVER apply this to Tag No, IDs, dates, numbers, emails, or URLs — those
+// stay exactly as stored. "VSR GOLD" itself always stays full-caps even after title-casing.
+function properCase(s) {
+  if (s == null || s === '') return s;
+  const t = String(s).toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  return t.replace(/\bVsr\s+Gold\b/gi, 'VSR GOLD');
+}
+// v-add (BRO: "need unna dagara contact symbol ravali" — a 📞 prefix wherever a phone/mobile/contact
+// number is DISPLAYED to the user; never added to the stored value itself).
+function fmtPhone(p) {
+  const v = String(p == null ? '' : p).trim();
+  return v ? '📞 ' + v : v;
 }
 
 // Splits a leave spanning multiple days into one entry per date. Adds
