@@ -16545,7 +16545,17 @@ async function seSave(scope) {
       const counterForCache = c.header.productFrom==='Main' ? (st.mainHub || 'Main Hub') : c.header.counter;
       c.rows.forEach(x => {
         if (x.row.tagStatus==='Tag' && x.row.tagNo) {
-          stockTagCacheAdd(x.row.tagNo, { counter: counterForCache, productName: x.row.productName, design: x.row.design||'', type: x.row.type });
+          // v-fix (BRO: "auto fill ayyelaga chei with photo tho patu, aa data local cache lo save
+          // aina data nundi vastundi") — this form already has every field (and the photo the person
+          // just took, x.row.photo) sitting in memory right now, so cache all of it, not just
+          // Product/Design/Counter/Type — the very next Outlet Issue/DSR entry for this tag then
+          // auto-fills completely from cache, with zero wait, even fully offline.
+          stockTagCacheAdd(x.row.tagNo, {
+            counter: counterForCache, productName: x.row.productName, design: x.row.design||'', type: x.row.type,
+            tunch: x.row.tunch||'', weight: x.row.weight||'', gross: x.row.gross||'', net: x.row.net||'',
+            carat: x.row.carat||'', clarity: x.row.clarity||'', color: x.row.color||'', certNo: x.row.certNo||'',
+            photoData: x.row.photo||''
+          });
         }
       });
       st.submitToken = Math.random().toString(36).slice(2,8);
@@ -19493,6 +19503,13 @@ function dsrfSubmit(who) {
   const isOrder = payStatus === 'Order Placed';
 
   const isRDR = dsrfIsRDR(who);
+  // v-fix (BRO: "outlet issue lo tag no enter cheste photo kuda auto fill avali, confirm
+  // cheyadaniki matrame — save ayinappudu sheet lo photo vaddu" — the photo already fills in and
+  // shows on screen (dsrfApplyStockItem/dsrfSetPhotoData, same as DSR) purely so the person can look
+  // at the item and confirm it's the right one before saving. The Outlet Issue sheet has no Photo
+  // column at all, so the backend never writes it either way — this just also drops it from the
+  // outgoing save payload itself for Outlet Issue, so no photo data leaves the device on Save.
+  const isOutletForm = dsrfIsOutlet(who);
   entries.forEach(block => {
     if (!ok) return;
     const eid = block.id.replace(`dsrf-entry-${who}-`, '');
@@ -19510,7 +19527,7 @@ function dsrfSubmit(who) {
       const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
-        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '',
+        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: (!isOutletForm && sPhoto.length > 100) ? sPhoto : '',
         silverQuality: sQuality || '', billNo: billNo || '' });
     } else if (type === 'Diamond') {
       // v-fix (BRO: "Diamond kosam Silver laga, vere columns add chei" —
@@ -19540,7 +19557,7 @@ function dsrfSubmit(who) {
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
         diamondTagStatus: dTs || '', diamondTagNo: (dTn || '').toUpperCase(), diamondProductName: dpn,
         diamondCent: '', diamondQuality: '', diamondWeight: '',
-        diamondPhoto: dPhoto.length > 100 ? dPhoto : '',
+        diamondPhoto: (!isOutletForm && dPhoto.length > 100) ? dPhoto : '',
         diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
         diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
         diamondCertNo: dCertNo || '', billNo: billNo || '' });
@@ -19559,7 +19576,7 @@ function dsrfSubmit(who) {
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: ts || '', tagNo: (tn || '').toUpperCase(), productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
-        photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: billNo || '' });
+        photo: (!isOutletForm && gPhoto.length > 100) ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: billNo || '' });
     }
   });
 
