@@ -14924,12 +14924,12 @@ async function dsrfTagLookup(who, eid, kind) {
   if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
   let res;
   try {
-    // v-fix (BRO: "photo load chala late avutundi, dsr form lo kuda, so fast ga load avali" — this
-    // lookup no longer asks for the photo (withPhoto dropped), so it comes back fast and every other
-    // field (Product/Design/Tunch/Weight/...) fills in immediately. The photo — a live Google Drive
-    // read, which can take a few seconds especially for an older/larger stock photo — is fetched
-    // separately right below, AFTER the fields are already on screen, so it never holds them up.
-    res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
+    // v-fix (BRO: "intakumundu vachedi, dsr form lo photo ipudu ravadam ledu" — the earlier two-step
+    // version (fields fast, photo fetched separately afterward) wasn't reliably showing the photo, so
+    // this goes back to the single proven request: withPhoto=1 always, fields AND photo applied
+    // together from the one response. Slightly slower than the two-step version when the photo is
+    // large, but it reliably shows every time, which matters more.
+    res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
   } catch (e) {
     if (inp.__lk === my && !cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
     return;
@@ -14940,37 +14940,20 @@ async function dsrfTagLookup(who, eid, kind) {
     const it = res.item || {};
     dsrfApplyStockItem(who, eid, it, tagN);
     // v-fix (BRO: "auto fill ayyelaga chei with photo tho patu, aa data local cache lo save aina data
-    // nundi vastundi" — cache every field dsrfApplyStockItem can fill; the photo itself is added to
-    // this same cache entry a little later, once the separate photo fetch below finishes (or kept as
-    // whatever was already cached for this tag, so a photo already known isn't lost here).
-    const cacheFields = {
+    // nundi vastundi" — cache the FULL item (every field dsrfApplyStockItem can fill, plus the photo
+    // this withPhoto=1 lookup already fetched) so the NEXT time this tag is typed — even fully
+    // offline — every field including the photo fills in instantly from cache.
+    stockTagCacheAdd(tagN, {
       counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type,
       tunch: it.tunch || '', weight: it.weight || '', gross: it.gross || '', net: it.net || '',
-      carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || ''
-    };
-    stockTagCacheAdd(tagN, Object.assign({}, cacheFields, { photoData: (cachedNow && cachedNow.photoData) || '' }));
+      carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || '',
+      photoData: it.photoData || ''
+    });
     // the message belongs to whichever block (Gold / Diamond) is showing now
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
     dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
-
-    // Photo fetch — separate, non-blocking. Skipped entirely if a photo is already showing (from
-    // cache, or one the person already picked/took) since dsrfSetPhotoData never overwrites that.
-    const pfxNow = kNow === 'd' ? 'dia' : 'g';
-    const hidNow = document.getElementById(`dsrfPh-${pfxNow}-${who}-${eid}`);
-    if (!hidNow || !(hidNow.value && hidNow.value.length > 100)) {
-      const wNow = document.getElementById(`dsrfPw-${pfxNow}-${who}-${eid}`);
-      if (wNow) { wNow.textContent = '⏳ Loading photo…'; wNow.className = 'photo-ok show'; }
-      _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json()).then(pres => {
-        if (inp.__lk !== my) return;   // a different tag was typed meanwhile — drop this stale answer
-        const pit = (pres && pres.ok && pres.item) || {};
-        if (pit.photoData) {
-          dsrfSetPhotoData(who, eid, pfxNow, pit.photoData);
-          stockTagCacheAdd(tagN, Object.assign({}, cacheFields, { photoData: pit.photoData }));
-        } else if (wNow) { wNow.textContent = ''; wNow.className = ''; }
-      }).catch(() => { if (wNow) { wNow.textContent = ''; wNow.className = ''; } });
-    }
   } else if (res.status === 'sold') {
     dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
     const sd = res.sold || {};
