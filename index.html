@@ -1770,6 +1770,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
     <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
     <div class="vsr-sidebar-item" data-page="outletissue" id="empSidebarOutletIssue" onclick="showEmpPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
+    <div class="vsr-sidebar-item" data-page="rdr" id="empSidebarRdr" onclick="showEmpPage('rdr')"><span class="vsr-sidebar-icon">↩️</span>Return / Damage / Repair</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
@@ -2265,6 +2266,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="empQADsrNewEntry" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="empQAOutletIssue" onclick="showEmpPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
+        <div class="quick-action-btn" id="empQARdr" onclick="showEmpPage('rdr')"><span class="quick-action-icon">↩️</span><div class="quick-action-label">Return / Damage / Repair</div><div class="quick-action-sub">Tag leaving stock</div></div>
         <div class="quick-action-btn" id="empQADsrToday" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
         <div class="quick-action-btn" id="empQADsrStatus" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -2339,6 +2341,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-outletissue">
       <div class="section-hdr"><span class="section-title2">🏢 Outlet Issue</span></div>
       <div id="dsrEntryFormBox-emp-oi"></div>
+    </div>
+    <div class="page-section" id="emp-rdr">
+      <div class="section-hdr"><span class="section-title2">↩️ Return / Damage / Repair</span></div>
+      <div class="filter-bar" style="margin-bottom:14px;">
+        <button type="button" class="filter-btn active" id="rdrTabNew-emp" onclick="rdrSwitchTab('emp','new')">➕ New Entry</button>
+        <button type="button" class="filter-btn" id="rdrTabPending-emp" onclick="rdrSwitchTab('emp','pending')">⏳ Pending (Received Back)</button>
+      </div>
+      <div id="rdrNewBox-emp"><div id="dsrEntryFormBox-emp-rdr"></div></div>
+      <div id="rdrPendingBox-emp" style="display:none;"></div>
     </div>
     <div class="page-section" id="emp-dsr-advorder">
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed</span></div>
@@ -2612,6 +2623,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
     <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
     <div class="vsr-sidebar-item" data-page="outletissue" id="adminSidebarOutletIssue" onclick="showAdminPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
+    <div class="vsr-sidebar-item" data-page="rdr" id="adminSidebarRdr" onclick="showAdminPage('rdr')"><span class="vsr-sidebar-icon">↩️</span>Return / Damage / Repair</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
@@ -3338,6 +3350,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="adminQAOutletIssue" onclick="showAdminPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
+        <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">↩️</span><div class="quick-action-label">Return / Damage / Repair</div><div class="quick-action-sub">Tag leaving stock</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -3413,6 +3426,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-outletissue">
       <div class="section-hdr"><span class="section-title2">🏢 Outlet Issue</span></div>
       <div id="dsrEntryFormBox-admin-oi"></div>
+    </div>
+    <div class="page-section" id="admin-rdr">
+      <div class="section-hdr"><span class="section-title2">↩️ Return / Damage / Repair</span></div>
+      <div class="filter-bar" style="margin-bottom:14px;">
+        <button type="button" class="filter-btn active" id="rdrTabNew-admin" onclick="rdrSwitchTab('admin','new')">➕ New Entry</button>
+        <button type="button" class="filter-btn" id="rdrTabPending-admin" onclick="rdrSwitchTab('admin','pending')">⏳ Pending (Received Back)</button>
+      </div>
+      <div id="rdrNewBox-admin"><div id="dsrEntryFormBox-admin-rdr"></div></div>
+      <div id="rdrPendingBox-admin" style="display:none;"></div>
     </div>
     <div class="page-section" id="admin-dsr-advorder">
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed — All Employees</span></div>
@@ -5733,6 +5755,7 @@ function showEmpPage(page, opts) {
   if(page==='dsr-tilldate') loadDsrTillDate('emp');
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
   if(page==='outletissue') renderDsrEntryForm('emp-oi');
+  if(page==='rdr') { renderDsrEntryForm('emp-rdr'); rdrSwitchTab('emp', RDR_TAB.emp || 'new'); }
   if(page==='dsr-advorder') loadAdvanceOrderList('emp');
   if(page==='stockentry') mountStockEntryForm('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
@@ -7319,10 +7342,9 @@ function saveQueueGeneric(key, q) {
 
 function submitDsrOffline(rows, idemKey, who, reason) {
   const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
-  // Outlet Issue queues the same way DSR does, just tagged so the sync-back
-  // call (flushDsrOfflineQueue) routes to saveOutletIssue instead of a
-  // normal DSR save.
-  q.push({ rows, idemKey, savedAt: Date.now(), action: dsrfIsOutlet(who) ? 'saveOutletIssue' : undefined });
+  // Outlet Issue / Return-Damage-Repair queue the same way DSR does, just tagged so the sync-back
+  // call (flushDsrOfflineQueue) routes to their own backend action instead of a normal DSR save.
+  q.push({ rows, idemKey, savedAt: Date.now(), action: dsrfIsOutlet(who) ? 'saveOutletIssue' : dsrfIsRDR(who) ? 'saveReturnDamageRepair' : undefined });
   const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('dsrfStatusMsg-' + who);
@@ -7339,8 +7361,9 @@ function submitDsrOffline(rows, idemKey, who, reason) {
   }
   // v-fix: same as the online success path — drop these tags from the local Stock Tag Cache right
   // now, optimistically, so this device already treats them as sold/out-of-stock even before the
-  // queued entry actually reaches the server.
-  stockTagCacheRemoveFromRows(rows);
+  // queued entry actually reaches the server. Return/Damage/Repair isn't a sale (see
+  // stockTagCacheRemoveFromRdrRows above), so it must not land in the Sold cache either.
+  if (dsrfIsRDR(who)) stockTagCacheRemoveFromRdrRows(rows); else stockTagCacheRemoveFromRows(rows);
   toast(label + ' — DSR saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
   if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = label + ' — saved offline on this device — will auto-sync automatically. Do not re-enter this DSR.'; }
   draftClear('dsr-' + who);
@@ -9444,6 +9467,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
+  { icon: '↩️', label: 'Return / Damage / Repair', page: 'rdr' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -9551,6 +9575,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
+  { icon: '↩️', label: 'Return / Damage / Repair', page: 'rdr' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -10015,6 +10040,7 @@ const SM_FEATURE_ELEMENTS = {
   pending: ['adminQAPending'],
   leads: ['adminQALeads', 'adminSidebarLeads'],
   outletIssue: ['adminQAOutletIssue', 'adminSidebarOutletIssue'],
+  rdr: ['adminQARdr', 'adminSidebarRdr'],
   stockLevel: ['adminQAStockLevel', 'adminSidebarStockLevel']
 };
 
@@ -10043,7 +10069,7 @@ const FEATURE_SUBKEYS = {
   backendSheets: ['backend_sheets'],
   walkins: ['walkins'],
   leads: ['leads'], leadsReport: ['leadsReport'],
-  outletIssue: ['outletIssue'], stockLevel: ['stockLevel']
+  outletIssue: ['outletIssue'], rdr: ['rdr'], stockLevel: ['stockLevel']
 };
 
 async function applyAdminRoleRestrictions() {
@@ -10101,7 +10127,7 @@ async function applyAdminRoleRestrictions() {
     const isLeadsFeature = key === 'leads' || key === 'leadsReport';
     // Cross-cutting utilities with no section master of their own —
     // controlled purely by their own individual sub-permission.
-    const isSectionless = key === 'backendSheets' || key === 'walkins' || key === 'outletIssue' || key === 'stockLevel';
+    const isSectionless = key === 'backendSheets' || key === 'walkins' || key === 'outletIssue' || key === 'rdr' || key === 'stockLevel';
     const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : isLeadsFeature ? sectionLeadsOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
@@ -10187,6 +10213,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr-tilldate') loadDsrTillDate('admin');
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='outletissue') renderDsrEntryForm('admin-oi');
+  if(page==='rdr') { renderDsrEntryForm('admin-rdr'); rdrSwitchTab('admin', RDR_TAB.admin || 'new'); }
   if(page==='dsr-advorder') loadAdvanceOrderList('admin');
   if(page==='stocklevel') slRefreshFailedBadge();
   if(page==='stocklevel-overview') slPageEnter('overview', slRenderOverview);
@@ -13034,6 +13061,7 @@ const EMP_FEATURE_ELEMENTS = {
   // v-add (BRO: "Access Setting lo lenivi update chei" — these had real
   // employee buttons already but no permission ever gated them):
   outletIssue: ['empQAOutletIssue', 'empSidebarOutletIssue'],
+  rdr: ['empQARdr', 'empSidebarRdr'],
   stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
   walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins']
 };
@@ -13810,7 +13838,10 @@ var DSR_ST = {
   // Outlet Issue — same form engine, own state slots so it never shares
   // in-progress item entries with the real DSR form.
   'emp-oi':   { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
-  'admin-oi': { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null }
+  'admin-oi': { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
+  // Return / Damage / Repair — same form engine again, own state slots. See dsrfIsRDR().
+  'emp-rdr':   { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null },
+  'admin-rdr': { gold: [], silver: [], diamond: [], diamondClarity: [], diamondColor: [], tunchs: ['750','916','999','585','375'], eSeq: 0, loaded: false, photos: {}, returnMode: null }
 };
 
 // v-fix (BRO: "Admin login lo DSR entry form lo employee name ante
@@ -13837,9 +13868,12 @@ function dsrfEmpDisplayName(who) {
 // helpers are the ONLY place that distinction is made; everything else
 // keyed by "who" (DSR_ST[who], element ids, product loading, drafts)
 // already works for any scope string without change.
-function dsrfIsAdmin(who) { return who === 'admin' || who === 'admin-oi'; }
+function dsrfIsAdmin(who) { return who === 'admin' || who === 'admin-oi' || who === 'admin-rdr'; }
 function dsrfIsOutlet(who) { return who === 'admin-oi' || who === 'emp-oi'; }
-function dsrfSubmitLabel(who) { return dsrfIsOutlet(who) ? '★ &nbsp; Save Outlet Issue &nbsp; ★' : '★ &nbsp; Submit DSR &nbsp; ★'; }
+// "admin-rdr" / "emp-rdr" — BRO's Return/Damage/Repair feature. Same reasoning as Outlet Issue
+// above: same form engine, own minimal header (Date / Remarks), own backend action.
+function dsrfIsRDR(who) { return who === 'admin-rdr' || who === 'emp-rdr'; }
+function dsrfSubmitLabel(who) { return dsrfIsOutlet(who) ? '★ &nbsp; Save Outlet Issue &nbsp; ★' : dsrfIsRDR(who) ? '★ &nbsp; Save Return / Damage / Repair &nbsp; ★' : '★ &nbsp; Submit DSR &nbsp; ★'; }
 
 // Populates the admin employee dropdown — reuses the SAME employee
 // list/cache Direct Action already loads (directEmpListAPI), rather
@@ -13927,6 +13961,7 @@ function renderDsrEntryForm(who, force) {
   box.dataset.dsrfRendered = '1';
   const st = DSR_ST[who];
   const isOutlet = dsrfIsOutlet(who);
+  const isRDR = dsrfIsRDR(who);
   // Outlet Issue's header is deliberately minimal (Date / Shop Name /
   // Address / Contact Name-optional) — no Bill No, no 10-digit mobile
   // check. It reuses the SAME field ids as DSR's Bill Details (dsrfCust,
@@ -13944,6 +13979,20 @@ function renderDsrEntryForm(who, force) {
           <div class="g2">
             <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
             <div><label>Contact Name</label><input type="text" id="dsrfMobile-${who}" placeholder="Optional"></div>
+          </div>
+        </div>
+      </div>
+  ` : isRDR ? `
+      <!-- v-add (BRO's Return/Damage/Repair feature) — minimal header, just Date + Remarks. Reason
+           itself is picked PER ITEM below (a submission can mix Return/Damage/Repair items), not
+           here. Reuses dsrfBillDate/dsrfCust exactly like Outlet Issue does above (dsrfCust holds
+           Remarks here) so dsrfSubmit/draft-save/etc. need no structural change. -->
+      <div class="card">
+        <div class="ch">↩️ &nbsp;Return / Damage / Repair Details</div>
+        <div class="cb">
+          <div class="g2">
+            <div><label>Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
+            <div><label>Remarks</label><input type="text" id="dsrfCust-${who}" placeholder="Optional note"></div>
           </div>
         </div>
       </div>
@@ -14003,10 +14052,10 @@ function renderDsrEntryForm(who, force) {
         </div>
       </div>
 
-      ${isOutlet ? `
-      <!-- Outlet Issue: no Payment Status concept (it's a stock issue to another shop, not a
-           customer sale) — kept only as a fixed hidden "Purchased" so item validation (isOrder
-           check in dsrfSubmit) behaves exactly like a normal completed DSR sale: every item's
+      ${(isOutlet || isRDR) ? `
+      <!-- Outlet Issue / Return-Damage-Repair: no Payment Status concept (neither is a customer
+           sale) — kept only as a fixed hidden "Purchased" so item validation (isOrder check in
+           dsrfSubmit) behaves exactly like a normal completed DSR sale: every item's
            Design/Tunch/Weight etc. stay required. -->
       <input type="hidden" id="dsrfPayStatus-${who}" value="Purchased">
       ` : `
@@ -14191,11 +14240,27 @@ function dsrfAddEntry(who) {
   div.id = `dsrf-entry-${who}-${eid}`;
 
   const req = isOrder ? '' : '<span class="req">★</span>';
+  const isRDR = dsrfIsRDR(who);
   div.innerHTML = `
     <div class="entry-hd">
       <span class="entry-title">◈ &nbsp;Item Entry ${num}</span>
       ${num > 1 ? `<button class="rm-entry" onclick="dsrfRmEntry('${who}',${eid})">✕ Remove</button>` : '<span></span>'}
     </div>
+    ${isRDR ? `
+    <!-- v-add (BRO's Return/Damage/Repair feature) — Reason is per item, since one submission can
+         mix Return/Damage/Repair items. -->
+    <div class="card" style="margin:14px 14px 0;">
+      <div class="ch">↩️ &nbsp;Reason</div>
+      <div class="cb"><label>Reason <span class="req">★</span></label>
+        <select id="dsrfRdrReason-${who}-${eid}" class="uniform-select">
+          <option value="">-- Select --</option>
+          <option value="Return">Return</option>
+          <option value="Damage">Damage</option>
+          <option value="Repair">Repair</option>
+        </select>
+      </div>
+    </div>
+    ` : ''}
     <div class="card" style="margin:14px 14px 0;">
       <div class="ch">⬡ &nbsp;Type &amp; Source</div>
       <div class="cb"><div class="g2">
@@ -14571,9 +14636,92 @@ function stockTagCacheRemoveFromRows(rows, dsrId) {
     else if (d.type === 'Diamond' && String(d.diamondTagStatus || '') !== 'No Tag' && String(d.diamondTagNo || '').trim()) stockTagCacheMarkSold(d.diamondTagNo, Object.assign({}, info, { productName: d.diamondProductName || '' }));
   });
 }
+// v-add (BRO's Return/Damage/Repair feature) — a tag leaving Stock for Return/Damage/Repair leaves
+// the live Stock sheet exactly like a sale does, but it is NOT a sale (see StockBackend's
+// moveToSold_/syncRDR_), so it must NOT be added to SOLD_TAG_CACHE (that would wrongly make the DSR
+// tag-lookup report it as "already sold"). Just drop it from the in-stock cache — a later re-sync
+// (or the Received Back flow, for Damage/Repair) is what would re-add it.
+function stockTagCacheRemoveFromRdrRows(rows) {
+  (rows || []).forEach(d => {
+    if (d.type === 'Gold' && String(d.tagStatus || '') !== 'No Tag' && String(d.tagNo || '').trim()) stockTagCacheRemove(d.tagNo);
+    else if (d.type === 'Diamond' && String(d.diamondTagStatus || '') !== 'No Tag' && String(d.diamondTagNo || '').trim()) stockTagCacheRemove(d.diamondTagNo);
+  });
+}
 stockTagCacheLoadLocal();                                    // works offline from first paint
 if (navigator.onLine) stockTagCacheRefresh();                // then catch up with the server
 window.addEventListener('online', stockTagCacheRefresh);
+
+// ══════════════════════════════════════
+// RETURN / DAMAGE / REPAIR — Pending list + "Received Back" (BRO's feature). Tags sent for
+// Damage/Repair sit here until the item physically comes back to the shop; Return is permanent and
+// never shows here (see StockBackend's findRdrPending_ / rdrReceiveBack_). Talks to StockBackend
+// directly (same STOCK_GAS_URL every other Stock Level/Stock Entry screen already uses) via the
+// existing slApi/slPost GET/POST helpers.
+// ══════════════════════════════════════
+var RDR_TAB = { emp: 'new', admin: 'new' };
+function rdrSwitchTab(who, tab) {
+  RDR_TAB[who] = tab;
+  const newBtn = document.getElementById('rdrTabNew-' + who), pendBtn = document.getElementById('rdrTabPending-' + who);
+  const newBox = document.getElementById('rdrNewBox-' + who), pendBox = document.getElementById('rdrPendingBox-' + who);
+  if (!newBtn || !pendBtn || !newBox || !pendBox) return;
+  newBtn.classList.toggle('active', tab === 'new');
+  pendBtn.classList.toggle('active', tab === 'pending');
+  newBox.style.display = tab === 'new' ? '' : 'none';
+  pendBox.style.display = tab === 'pending' ? '' : 'none';
+  if (tab === 'pending') rdrLoadPending(who);
+}
+async function rdrLoadPending(who) {
+  const box = document.getElementById('rdrPendingBox-' + who);
+  if (!box) return;
+  if (!stockIsConfigured()) { box.innerHTML = '<div class="empty-state"><p>Stock Level is not configured.</p></div>'; return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await slApi({ action: 'rdrPending' });
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not load.');
+    const rows = res.rows || [];
+    if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>No items pending Damage/Repair right now.</p></div>'; return; }
+    let html = '<div class="card"><div class="form-row"><label>Search Tag No</label><input type="text" id="rdrPendingSearch-' + who + '" placeholder="Type a Tag No..." oninput="rdrFilterPending(\'' + who + '\')"></div></div><div id="rdrPendingList-' + who + '"></div>';
+    box.innerHTML = html;
+    box.dataset.rows = JSON.stringify(rows);
+    rdrRenderPendingList(who, rows);
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="rdrLoadPending('${who}')" title="Retry">🔄</button></div>`;
+  }
+}
+function rdrFilterPending(who) {
+  const box = document.getElementById('rdrPendingBox-' + who);
+  if (!box || !box.dataset.rows) return;
+  const q = stockNormTag(document.getElementById('rdrPendingSearch-' + who).value || '');
+  const rows = JSON.parse(box.dataset.rows).filter(r => !q || stockNormTag(r.tagNo).indexOf(q) > -1);
+  rdrRenderPendingList(who, rows);
+}
+function rdrRenderPendingList(who, rows) {
+  const list = document.getElementById('rdrPendingList-' + who);
+  if (!list) return;
+  if (!rows.length) { list.innerHTML = '<div class="empty-state"><p>No matching items.</p></div>'; return; }
+  list.innerHTML = rows.map(r => `
+    <div class="dsr-receipt-card" style="margin-bottom:8px;">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🏷️ ${escHtml(r.tagNo || '—')}</span><span class="kd-pill ${r.status === 'Damage' ? 'red' : 'gold'}">${escHtml(r.status || '')}</span></div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${escHtml(r.productName || '')}${r.design ? ' — ' + escHtml(r.design) : ''}</div>
+        <div class="dsr-meta-row">🏬 ${escHtml(r.counter || 'Main Hub')} &nbsp;·&nbsp; 📅 Sent: ${fmtDMY(r.soldDate || '')}</div>
+      </div>
+      <button class="btn-primary" style="margin:10px 14px 12px;width:calc(100% - 28px);" onclick="rdrReceiveBack('${who}','${escJs(r.tagNo)}')">✅ Received Back — Add to Stock</button>
+    </div>`).join('');
+}
+async function rdrReceiveBack(who, tagNo) {
+  if (!confirm(`Mark Tag ${tagNo} as Received Back and add it back to Stock?`)) return;
+  try {
+    const by = dsrfIsAdmin(who) ? (state.adminName || 'Admin') : (state.empName || 'Employee');
+    const res = await slPost({ action: 'rdrReceiveBack', tagNo, by });
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not mark as received', 'error'); return; }
+    // Back in Stock now — add it back to the local Stock Tag Cache immediately, same reasoning as
+    // every other place this cache is kept in sync with a just-made change.
+    stockTagCacheAdd(tagNo, {});
+    toast('Tag ' + tagNo + ' received back into Stock!', 'success');
+    rdrLoadPending(who);
+  } catch (e) { toast('Connection error. Try again.', 'error'); }
+}
 
 // ---------- DSR form: tag typing / lookup / auto-fill ----------
 function dsrfTagMsg(id, cls, txt) {
@@ -15078,6 +15226,7 @@ async function slLoadCounterDetail() {
 // ============================================================
 let SL_LEDGER_STOCK = null, SL_LEDGER_SOLD = null; // fetched once per session, cached
 const SL_LEDGER_CACHE = {}; // { [uptoDate]: {sales, outletIssues} }
+const SL_LEDGER_RDR_ROWS = {}; // { [date]: rdr[] } — v-add (Return/Damage/Repair) — for slShowRdrDetail's popup
 function slLedgerRowCounter_(r) { return String(r.counter || '').trim() || SL.mainHub; }
 function slLedgerRowQty_(r) { return parseFloat(r.qty) || 1; }
 async function slFetchLedgerSnapshots_() {
@@ -15107,7 +15256,7 @@ async function slFetchLedgerUpto_(uptoDate) {
   if (SL_LEDGER_CACHE[uptoDate]) return SL_LEDGER_CACHE[uptoDate];
   const res = await _fetchWithTimeout(DSR_GAS_URL + '?action=ledgerData&uptoDate=' + encodeURIComponent(uptoDate), {}, 30000).then(r => r.json());
   if (!res || !res.ok) throw new Error((res && res.message) || 'Could not load DSR data.');
-  const data = { sales: res.sales || [], outletIssues: res.outletIssues || [] };
+  const data = { sales: res.sales || [], outletIssues: res.outletIssues || [], rdr: res.rdr || [] };
   SL_LEDGER_CACHE[uptoDate] = data;
   return data;
 }
@@ -15151,10 +15300,12 @@ async function slLoadLedger() {
         .reduce((s, r) => s + slLedgerRowQty_(r), 0);
     }
     // "Return" here is Stock Level's own entryType (an item physically coming back into this
-    // counter's stock) — a separate concept from the DSR-side return/repair kept at 0 above — and
-    // counts as an inbound addition just like Receiving Stock.
+    // counter's stock) — counts as an inbound addition just like Receiving Stock. v-add (BRO's
+    // Return/Damage/Repair feature): "Damage Receive" is the entryType used when a Damage/Repair
+    // item is marked Received Back (see StockBackend's rdrReceiveBack_) — also inbound, kept as its
+    // own entryType so it's never confused with a normal Stock Entry "Receiving Stock" row.
     function receivingUpto(key, upto) {
-      return entryRows.filter(r => (r.entryType === 'Receiving Stock' || r.entryType === 'Return') && r.entryDate && r.entryDate <= upto && groupKey_(r.productName, r.design) === key)
+      return entryRows.filter(r => (r.entryType === 'Receiving Stock' || r.entryType === 'Return' || r.entryType === 'Damage Receive') && r.entryDate && r.entryDate <= upto && groupKey_(r.productName, r.design) === key)
         .reduce((s, r) => s + slLedgerRowQty_(r), 0);
     }
     function resolveKey_(row) {
@@ -15171,28 +15322,54 @@ async function slLoadLedger() {
     const saleOn = (key, d) => sumMatching(ledgerData.sales, key, s => s.date === d);
     const outletUpto = (key, upto) => sumMatching(ledgerData.outletIssues, key, o => o.date <= upto);
     const outletOn = (key, d) => sumMatching(ledgerData.outletIssues, key, o => o.date === d);
+    // v-add (BRO's Return/Damage/Repair feature) — the Ledger's "Return" column, combining all 3
+    // reasons into one number for that day, clickable for a per-item detail breakdown.
+    const rdrUpto = (key, upto) => sumMatching(ledgerData.rdr, key, o => o.date <= upto);
+    const rdrRowsOn = (key, d) => (ledgerData.rdr || []).filter(o => o.date === d && resolveKey_(o) === key);
+    const rdrOn = (key, d) => rdrRowsOn(key, d).length;
+    SL_LEDGER_RDR_ROWS[dateVal] = ledgerData.rdr || [];
 
     const list = Object.keys(groups).map(key => {
       const base = baseline(key);
-      const closingToday = base + receivingUpto(key, dateVal) - saleUpto(key, dateVal) - outletUpto(key, dateVal);
-      const closingPrev = base + receivingUpto(key, prevDate) - saleUpto(key, prevDate) - outletUpto(key, prevDate);
+      const closingToday = base + receivingUpto(key, dateVal) - saleUpto(key, dateVal) - outletUpto(key, dateVal) - rdrUpto(key, dateVal);
+      const closingPrev = base + receivingUpto(key, prevDate) - saleUpto(key, prevDate) - outletUpto(key, prevDate) - rdrUpto(key, prevDate);
       return {
-        product: groups[key].product, design: groups[key].design,
+        product: groups[key].product, design: groups[key].design, key: key,
         opening: closingPrev, closing: closingToday,
-        sold: saleOn(key, dateVal), ret: 0, outlet: outletOn(key, dateVal)
+        sold: saleOn(key, dateVal), ret: rdrOn(key, dateVal), outlet: outletOn(key, dateVal)
       };
     }).sort((a, b) => a.product.localeCompare(b.product, undefined, { numeric: true, sensitivity: 'base' }) || a.design.localeCompare(b.design, undefined, { numeric: true, sensitivity: 'base' }));
 
     if (!list.length) { body.innerHTML = '<div class="empty-state"><p>No ledger data for this counter yet.</p></div>'; return; }
     let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Closing</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th></tr></thead><tbody>`;
     list.forEach(r => {
-      html += `<tr><td><b>${escHtml(r.product)}</b></td>${byDesign ? `<td>${escHtml(r.design || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${r.ret}</td><td style="text-align:center;">${r.outlet}</td></tr>`;
+      const retCell = r.ret > 0 ? `<a href="#" onclick="slShowRdrDetail('${escJs(r.key)}','${dateVal}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--red);font-weight:800;text-decoration:underline;">${r.ret}</a>` : r.ret;
+      html += `<tr><td><b>${escHtml(r.product)}</b></td>${byDesign ? `<td>${escHtml(r.design || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td></tr>`;
     });
     html += '</tbody></table></div>';
     body.innerHTML = html;
   } catch (e) {
     body.innerHTML = `<div class="empty-state"><p>${escHtml(e.message || 'Could not load ledger — check the connection.')}</p></div>`;
   }
+}
+// v-add (BRO's Return/Damage/Repair feature) — clicking the Ledger's Return count opens this detail
+// popup listing the individual Tag No / Reason / Employee behind that day's combined number.
+function slShowRdrDetail(key, date, productLabel, byDesign) {
+  const rows = (SL_LEDGER_RDR_ROWS[date] || []).filter(o => {
+    const rowKey = byDesign ? (o.productName + '|' + String(o.design || '').trim()) : o.productName;
+    return rowKey === key;
+  });
+  let inner = `<div class="modal-title">↩️ Return / Damage / Repair — ${escHtml(productLabel)}</div>
+    <div class="kd-note">${fmtDMY(date)} · ${rows.length} item${rows.length === 1 ? '' : 's'}</div>`;
+  if (!rows.length) {
+    inner += '<div class="empty-state"><p>No detail found.</p></div>';
+  } else {
+    inner += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Reason</th><th>Employee</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.reason || '—')}</td><td>${escHtml(r.employee || '—')}</td></tr>`).join('') +
+      '</tbody></table></div>';
+  }
+  inner += `<button class="btn-modal-cancel" style="width:100%;margin-top:14px;" onclick="document.getElementById('slModal').remove()">Close</button>`;
+  slOpenModal(inner);
 }
 
 function slRenderSales(box) {
@@ -19250,6 +19427,9 @@ function dsrfSubmit(who) {
       // Outlet Issue's minimal header — Contact Name (held in "mob" here) is
       // explicitly optional, no Bill No, no mobile-number format check.
       if (!date || !cust || !addr) { toast('Please fill Date, Shop Name and Address!', 'error'); return; }
+    } else if (dsrfIsRDR(who)) {
+      // Return/Damage/Repair's minimal header — Remarks (held in "cust" here) is optional.
+      if (!date) { toast('Please select the Date!', 'error'); return; }
     } else {
       if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
       if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
@@ -19264,10 +19444,14 @@ function dsrfSubmit(who) {
   const rows = []; let ok = true, errMsg = '';
   const isOrder = payStatus === 'Order Placed';
 
+  const isRDR = dsrfIsRDR(who);
   entries.forEach(block => {
     if (!ok) return;
     const eid = block.id.replace(`dsrf-entry-${who}-`, '');
     const type = dsrfGv(`dsrfTyp-${who}-${eid}`), pf = dsrfGv(`dsrfPf-${who}-${eid}`);
+    // v-add (BRO's Return/Damage/Repair feature) — Reason is per item.
+    const rdrReason = isRDR ? dsrfGv(`dsrfRdrReason-${who}-${eid}`) : '';
+    if (isRDR && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Return/Damage/Repair) for every item!'; return; }
 
     if (type === 'Silver') {
       let sn = dsrfGv(`dsrfSn-${who}-${eid}`); if (sn === 'Other') sn = dsrfGv(`dsrfSnCustom-${who}-${eid}`);
@@ -19276,7 +19460,7 @@ function dsrfSubmit(who) {
       if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
       const sPhoto = dsrfGv(`dsrfPh-s-${who}-${eid}`);
       const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`);
-      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
+      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: sn, silverItemWeight: sw, silverItemPhoto: sPhoto.length > 100 ? sPhoto : '',
         silverQuality: sQuality || '', billNo: billNo || '' });
@@ -19303,7 +19487,7 @@ function dsrfSubmit(who) {
       }
       if (dTs === 'Tag' && dTn && !dsrTagValid(dTn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
-      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
+      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
         diamondTagStatus: dTs || '', diamondTagNo: (dTn || '').toUpperCase(), diamondProductName: dpn,
@@ -19325,7 +19509,7 @@ function dsrfSubmit(who) {
       }
       if (ts === 'Tag' && tn && !dsrTagValid(tn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
-      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus,
+      rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: ts || '', tagNo: (tn || '').toUpperCase(), productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
         photo: gPhoto.length > 100 ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: billNo || '' });
     }
@@ -19874,6 +20058,7 @@ function dsrfShowPreview(who, rows) {
   });
 
   const isOutlet = dsrfIsOutlet(who);
+  const isRDR = dsrfIsRDR(who);
   const existing = document.getElementById('dsrPreviewModal');
   if (existing) existing.remove();
   const div = document.createElement('div');
@@ -19882,11 +20067,13 @@ function dsrfShowPreview(who, rows) {
   div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('dsrPreviewModal').remove()" title="Close">✕</button>
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
-      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isRDR ? '↩️ New Return / Damage / Repair' : isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
       <div class="dsr-receipt-body">
+        ${isRDR ? (r0.remarks ? `<div class="dsr-cust-addr"><b>📝 ${r0.remarks}</b></div>` : '') : `
         <div class="dsr-cust-name">${r0.customerName}</div>
-        <div class="dsr-cust-addr"><b>📍 ${r0.address}</b></div>
-        <div class="dsr-meta-row">👤 ${r0.employeeName}${r0.mobileNumber ? (isOutlet ? ' &nbsp;·&nbsp; 👤 Contact: ' + r0.mobileNumber : ' &nbsp;·&nbsp; 📱 ' + r0.mobileNumber) : ''} &nbsp;·&nbsp; 📅 ${isOutlet ? 'Date' : 'Bill'}: ${fmtDMY(r0.billDate)}</div>
+        <div class="dsr-cust-addr"><b>📍 ${r0.address}</b></div>`}
+        <div class="dsr-meta-row">👤 ${r0.employeeName}${r0.mobileNumber ? (isOutlet ? ' &nbsp;·&nbsp; 👤 Contact: ' + r0.mobileNumber : ' &nbsp;·&nbsp; 📱 ' + r0.mobileNumber) : ''} &nbsp;·&nbsp; 📅 ${(isOutlet || isRDR) ? 'Date' : 'Bill'}: ${fmtDMY(r0.billDate)}</div>
+        ${isRDR ? `<div class="dsr-meta-row">${rows.map(r => r.reason).filter((v,i,a)=>a.indexOf(v)===i).join(' / ')}</div>` : ''}
         <div class="dsr-items-wrap">${itemsHtml}</div>
       </div>
     </div>
@@ -19949,15 +20136,16 @@ function dsrfConfirmSubmit(who, evt) {
     }
   }, 800);
 
-  // Outlet Issue posts to its own backend action (saveOutletIssue) so it
-  // never becomes a DSR entry — same rows shape, different destination.
+  // Outlet Issue / Return-Damage-Repair each post to their own backend action (never becoming a
+  // DSR entry) — same rows shape, different destination.
   const isOutlet = dsrfIsOutlet(who);
+  const isRDR = dsrfIsRDR(who);
 
   // v-fix: bare fetch() with NO timeout — on a bad connection this could
   // hang indefinitely with the "Saving..." spinner stuck forever and
   // nothing ever saved anywhere. 90s (longer than Leave's 45s) because a
   // multi-item DSR can carry several full-size photos in one payload.
-  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isOutlet ? 'saveOutletIssue' : undefined, rows, idemKey }) }, 90000)
+  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isOutlet ? 'saveOutletIssue' : isRDR ? 'saveReturnDamageRepair' : undefined, rows, idemKey }) }, 90000)
     .then(r => r.json())
     .then(result => {
       clearInterval(progInt);
@@ -19969,21 +20157,25 @@ function dsrfConfirmSubmit(who, evt) {
         // tag leaves Stock, so drop it from the local Stock Tag Cache right now too, on this device,
         // instead of waiting for the next full cache refresh — same reasoning as adding a tag the
         // instant Stock Entry saves it above).
-        stockTagCacheRemoveFromRows(rows, result.dsrId);
+        if (isRDR) stockTagCacheRemoveFromRdrRows(rows); else stockTagCacheRemoveFromRows(rows, result.dsrId);
         msg.style.color = 'var(--green)';
-        msg.innerHTML = isOutlet
+        msg.innerHTML = isRDR
+          ? `✅ Saved! ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
+          : isOutlet
           ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
           : `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
-        toast(isOutlet ? 'Outlet Issue saved!' : 'DSR entry saved!', 'success');
+        toast(isRDR ? 'Return/Damage/Repair saved!' : isOutlet ? 'Outlet Issue saved!' : 'DSR entry saved!', 'success');
         draftClear('dsr-' + who);
         DSR_ST[who].eSeq = 0;
         document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
         dsrfAddEntry(who);
         document.getElementById('dsrfCust-' + who).value = '';
-        document.getElementById('dsrfMobile-' + who).value = '';
-        document.getElementById('dsrfAddr-' + who).value = '';
-        // Bill No and the Payment Status toggle don't exist on the Outlet Issue form
-        // (no Bill No field, and Payment Status is a fixed hidden "Purchased" there —
+        // Mobile Number / Address don't exist on the Return/Damage/Repair form (its header is just
+        // Date + Remarks — see renderDsrEntryForm) — guarded the same way Bill No is guarded below.
+        const mobEl2 = document.getElementById('dsrfMobile-' + who); if (mobEl2) mobEl2.value = '';
+        const addrEl2 = document.getElementById('dsrfAddr-' + who); if (addrEl2) addrEl2.value = '';
+        // Bill No and the Payment Status toggle don't exist on the Outlet Issue / Return-Damage-
+        // Repair forms (no Bill No field, and Payment Status is a fixed hidden "Purchased" there —
         // see renderDsrEntryForm) — guard both so a missing element there doesn't throw
         // and skip the rest of this reset.
         const billNoEl2 = document.getElementById('dsrfBillNo-' + who); if (billNoEl2) billNoEl2.value = '';
