@@ -1490,13 +1490,16 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsrf-scope .ss-status.purchased{background:#E8F5E9;color:var(--dsuccess);border:1.5px solid var(--dsuccess);}
 .dsrf-scope .ss-status.order{background:var(--dgreenBg);color:var(--dgreen);border:1.5px solid var(--dgreen);}
 .dsrf-scope .phwrap{position:relative;}
-.dsrf-scope .phlbl{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border:1.5px dashed var(--dgold2);border-radius:8px;background:var(--dpurpleP);cursor:pointer;min-height:42px;}
+.dsrf-scope .phlbl{display:flex;align-items:center;gap:6px;width:auto;max-width:180px;padding:5px 10px;border:1.5px dashed var(--dgold2);border-radius:7px;background:var(--dpurpleP);cursor:pointer;min-height:30px;}
 .dsrf-scope .phlbl:hover{background:#EDE8FF;border-color:var(--dpurple);}
-.dsrf-scope .phi{font-size:17px;flex-shrink:0;}
-.dsrf-scope .pht{font-size:11.5px;color:var(--dinkL);}
-.dsrf-scope .phn{font-size:11px;color:var(--dsuccess);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dsrf-scope .phi{font-size:14px;flex-shrink:0;}
+.dsrf-scope .pht{font-size:10.5px;color:var(--dinkL);}
+.dsrf-scope .phn{font-size:10px;color:var(--dsuccess);font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .dsrf-scope input[type="file"]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
-.dsrf-scope .phprev{margin-top:6px;width:100%;max-height:120px;object-fit:contain;border-radius:6px;border:1.5px solid var(--dgold);display:none;}
+/* v-fix (BRO: "page lo chala pedda thumbnail vastundi... passport size ki koddiga means 125% size
+   pettu" — was width:100% (stretched the full form width with the small photo floating inside all
+   that empty space); now a small fixed passport-photo-shaped box (~100x125px) instead. */
+.dsrf-scope .phprev{margin-top:6px;width:100px;height:125px;object-fit:cover;border-radius:6px;border:1.5px solid var(--dgold);display:none;}
 .dsrf-scope .phprev.show{display:block;}
 .dsrf-scope .ph-size{font-size:10px;color:var(--dmuted);margin-top:3px;}
 .dsrf-scope .submit-progress{display:none;background:var(--dpurpleP);border:1.5px solid var(--dpurpleL);border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:center;}
