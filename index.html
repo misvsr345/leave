@@ -4486,6 +4486,18 @@ function fmtPhone(p) {
   const v = String(p == null ? '' : p).trim();
   return v ? '📞 ' + v : v;
 }
+// v-fix (BRO: "size rakunda, ila vastundi emiti" — a Bangle/Ring Size (or Length) cell that Google
+// Sheets auto-converted into a date (e.g. typing "5/1" got read as 1-May) comes back from the backend
+// as a full ISO date-time string ("2026-05-01T18:30:00.000Z") instead of the size that was meant —
+// showing that raw string is more confusing than showing nothing, so it's blanked wherever displayed.
+// The real fix on the Stock sheet itself: set the Bangle Size/Ring Size/Length columns to Plain Text
+// format (Format → Number → Plain Text) so this stops happening for new entries, and manually retype
+// the size for any tag already affected.
+function fmtSize(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return '';
+  return /^\d{4}-\d{2}-\d{2}T/.test(s) ? '' : s;
+}
 
 // Splits a leave spanning multiple days into one entry per date. Adds
 // displayDate / dayIndex / dayTotal while keeping every other original
