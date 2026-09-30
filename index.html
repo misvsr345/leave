@@ -15897,9 +15897,9 @@ function slPhotoInfoHtml(r) {
   // item's product shows up, same as the filter dropdowns already do.
   const kind = slPhotoKind(r.productName);
   let sizeRow = null;
-  if (kind === 'chain' && r.length) sizeRow = ['Length', r.length, true];
-  else if (kind === 'bangle' && r.bangleSize) sizeRow = ['Bangle Size', r.bangleSize, true];
-  else if (kind === 'ring' && r.ringSize) sizeRow = ['Ring Size', r.ringSize, true];
+  if (kind === 'chain' && fmtSize(r.length)) sizeRow = ['Length', fmtSize(r.length), true];
+  else if (kind === 'bangle' && fmtSize(r.bangleSize)) sizeRow = ['Bangle Size', fmtSize(r.bangleSize), true];
+  else if (kind === 'ring' && fmtSize(r.ringSize)) sizeRow = ['Ring Size', fmtSize(r.ringSize), true];
   // BRO: "TYPE VADDULE, PRODUCT FROM KUDA NO NEED" — dropped both; "TAG NO AND LENTH KODDIGA HILITE
   // AVALI, BANGLE SIZE RING SIZE KUDA BOLD AVALI" — Tag No and whichever size field applies get the
   // highlighted/bold treatment (the 3rd item in each row below).
@@ -19867,7 +19867,7 @@ function dsrIdSearch(who) {
 function slStockLookupCardHtml(it, statusText) {
   const rows = [['Type', it.type], ['Product', properCase(it.productName)], ['Design', properCase(it.design)], ['Tunch', it.tunch], ['Weight (gm)', it.weight],
     ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''], ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
-    ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length],
+    ['Certificate No', it.certNo], ['Bangle Size', fmtSize(it.bangleSize)], ['Ring Size', fmtSize(it.ringSize)], ['Length', fmtSize(it.length)],
     ['Product From', it.productFrom], ['Counter', it.counter], ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', properCase(it.enteredBy)]]
     .filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
   return `<div class="kd-card" style="padding:14px;margin-bottom:10px;">
@@ -19934,7 +19934,7 @@ function dsrMergedTagCardHtml(it, statusText, saleRow, idx, who) {
     ['Type', it.type], ['Tag No', it.tagNo], ['Product', properCase(it.productName)], ['Design', properCase(it.design)], ['Tunch', it.tunch],
     ['Weight (gm)', it.weight], ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''],
     ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
-    ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length]
+    ['Certificate No', it.certNo], ['Bangle Size', fmtSize(it.bangleSize)], ['Ring Size', fmtSize(it.ringSize)], ['Length', fmtSize(it.length)]
   ].filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
   tableRows += specRows.map(r => `<tr><td class="lbl">${escHtml(r[0])}</td><td class="val">${escHtml(r[1])}</td></tr>`).join('');
 
