@@ -9256,7 +9256,7 @@ async function loadExtraDsrCheck() {
       // entries behind it, so a wrong date/duplicate/whatever can
       // actually be found and fixed, not just known to exist).
       html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">
-        <div class="kd-head"><span class="kd-name">${f.employee}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
+        <div class="kd-head"><span class="kd-name">${properCase(f.employee)}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
         <div class="kd-note">📅 ${fmtDMY(f.date)} — DSR entries: <b>${f.dsrEntries}</b> vs Walk-in purchases reported: <b>${f.walkinPurchased}</b></div>
         <div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:4px;font-weight:600;">Tap to see the entries →</div>
       </div>`;
@@ -9775,7 +9775,7 @@ async function loadMonthlyAbsentReport() {
       </tr></thead><tbody>`;
     res.entries.forEach(r => {
       html += `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;font-weight:600;white-space:nowrap;">${r.employee}</td>
+        <td style="padding:6px 8px;font-weight:600;white-space:nowrap;">${properCase(r.employee)}</td>
         <td style="padding:6px 8px;white-space:nowrap;">${r.department || '—'}</td>
         <td style="padding:6px 8px;white-space:nowrap;">${r.date}</td>
         <td style="padding:6px 8px;white-space:nowrap;">${r.weekday}</td>
@@ -11416,9 +11416,9 @@ function loyaltyShowPreview(p) {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">💳 ${p.cardType}</span><span class="kd-pill gold">${p.cardNo}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${p.custName}</div>
-        <div class="dsr-cust-addr"><b>📍 ${p.address}</b></div>
-        <div class="dsr-meta-row">📱 ${p.phone} &nbsp;·&nbsp; 💼 ${p.occupation}${p.orgName ? ' — ' + p.orgName : ''} &nbsp;·&nbsp; 📅 Issued: ${fmtDMY(p.cardIssuedDate)}</div>
+        <div class="dsr-cust-name">${properCase(p.custName)}</div>
+        <div class="dsr-cust-addr"><b>📍 ${properCase(p.address)}</b></div>
+        <div class="dsr-meta-row">📱 ${p.phone} &nbsp;·&nbsp; 💼 ${properCase(p.occupation)}${p.orgName ? ' — ' + properCase(p.orgName) : ''} &nbsp;·&nbsp; 📅 Issued: ${fmtDMY(p.cardIssuedDate)}</div>
         <div class="dsr-meta-row" style="border-bottom:none;">🆔 Aadhaar: ${p.aadhaarNo}${p.panNo ? ' &nbsp;·&nbsp; PAN: ' + p.panNo : ''}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
           ${photoRow('Signature', p.sigPhoto)}${photoRow('Customer', p.custPhoto)}${photoRow('Aadhaar Front', p.aadhaarFront)}${photoRow('Aadhaar Back', p.aadhaarBack)}${photoRow('PAN', p.panPhoto)}
@@ -11593,15 +11593,15 @@ function renderLoyaltyResults(res, resultsEl) {
     }
 
     return `<div class="loy-result">
-      <div class="loy-result-hdr"><span>${r.custName}</span><span class="loy-badge">#${r.cardNo}</span></div>
+      <div class="loy-result-hdr"><span>${properCase(r.custName)}</span><span class="loy-badge">#${r.cardNo}</span></div>
       <div class="loy-result-body">
         ${photoHtml}
         <table class="loy-detail">
-          <tr><td>Customer Name</td><td class="loy-hl-val">${r.custName}</td></tr>
-          <tr><td>Employee</td><td>${r.empName}</td></tr>
-          <tr><td>Occupation</td><td>${r.occupation}</td></tr>
-          <tr><td>Organization</td><td>${r.orgName}</td></tr>
-          <tr><td>Address</td><td>${r.address}</td></tr>
+          <tr><td>Customer Name</td><td class="loy-hl-val">${properCase(r.custName)}</td></tr>
+          <tr><td>Employee</td><td>${properCase(r.empName)}</td></tr>
+          <tr><td>Occupation</td><td>${properCase(r.occupation)}</td></tr>
+          <tr><td>Organization</td><td>${properCase(r.orgName)}</td></tr>
+          <tr><td>Address</td><td>${properCase(r.address)}</td></tr>
           <tr><td>Mobile Number</td><td>${r.phone}</td></tr>
           <tr><td>Aadhaar No</td><td class="${r.aadhaarNo==='Restricted'?'loy-restricted-val':''}">${r.aadhaarNo}</td></tr>
           <tr><td>PAN No</td><td class="${r.panNo==='Restricted'?'loy-restricted-val':''}">${r.panNo}</td></tr>
@@ -11733,13 +11733,13 @@ function showLoyaltyCardView(i) {
   line2El.textContent = typeParts.line2.toUpperCase();
   line2El.style.color = theme.brand;
   document.getElementById('loyCardNumberLbl').textContent = loyaltyFormatCardNumber12(item.cardNo);
-  document.getElementById('loyCardNameLbl').textContent = (item.custName || '').toUpperCase();
+  document.getElementById('loyCardNameLbl').textContent = properCase(item.custName || '');
   document.getElementById('loyCardExpiryLbl').textContent = loyaltyFormatExpiry(item.cardDateISO);
 
   const qrHolder = document.getElementById('loyQrHolder');
   qrHolder.innerHTML = '';
   new QRCode(qrHolder, {
-    text: 'VSR GOLD | Card:' + item.cardNo + ' | ' + item.custName,
+    text: 'VSR GOLD | Card:' + item.cardNo + ' | ' + properCase(item.custName),
     width: 44, height: 44, colorDark: '#000000', colorLight: '#ffffff'
   });
 
@@ -11819,7 +11819,7 @@ function loadLoyaltyMyStats() {
             <th>#</th><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th>
           </tr></thead><tbody>`;
         res.rangeCards.forEach((c, idx) => {
-          html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`;
+          html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td></tr>`;
         });
         html += `</tbody></table></div>`;
       }
@@ -11874,8 +11874,8 @@ function loadLoyaltyMyCards() {
         html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;">
           ${c.custPhotoUrl ? `<img src="${c.custPhotoUrl}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);" onerror="this.style.display='none'">` : `<div style="width:56px;height:56px;border-radius:8px;background:var(--purple-bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🪪</div>`}
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:13.5px;color:var(--text);">${c.custName} <span style="font-weight:400;color:var(--text3);font-size:11.5px;">#${c.cardNo} · ${c.cardType}</span></div>
-            <div style="font-size:12px;color:var(--text2);margin-top:4px;">📍 ${c.address}</div>
+            <div style="font-weight:700;font-size:13.5px;color:var(--text);">${properCase(c.custName)} <span style="font-weight:400;color:var(--text3);font-size:11.5px;">#${c.cardNo} · ${c.cardType}</span></div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">📍 ${properCase(c.address)}</div>
             <div style="font-size:12px;color:var(--text2);margin-top:2px;">📱 ${c.phone} &nbsp;·&nbsp; 🪪 ${c.aadhaarNo}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:4px;">Issued: ${c.cardDate}</div>
           </div>
@@ -11954,8 +11954,8 @@ function loadLoyaltyAllCardsAdmin() {
       res.cards.forEach(c => {
         html += `<tr>
           <td>${c.custPhotoUrl ? `<img src="${c.custPhotoUrl}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">` : '—'}</td>
-          <td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td><td>${c.address}</td>
-          <td>${c.phone}</td><td>${c.aadhaarNo}</td><td>${c.empName}</td><td>${c.cardDate}</td>
+          <td>#${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td><td>${properCase(c.address)}</td>
+          <td>${c.phone}</td><td>${c.aadhaarNo}</td><td>${properCase(c.empName)}</td><td>${c.cardDate}</td>
         </tr>`;
       });
       html += `</tbody></table></div><button class="btn-loy-card" onclick="mailLoyaltyAllCards()">📧 Mail This List</button>`;
@@ -11973,8 +11973,8 @@ function mailLoyaltyAllCards() {
     <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${c.cardDate}</td>
     <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;font-family:monospace;">#${c.cardNo}</td>
     <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;"><span style="background:#f3e8ff;color:#6b21a8;border-radius:12px;padding:2px 9px;font-size:10.5px;font-weight:700;">${c.cardType}</span></td>
-    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#1a1a2e;font-weight:700;">${c.custName}</td>
-    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${c.empName}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#1a1a2e;font-weight:700;">${properCase(c.custName)}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${properCase(c.empName)}</td>
   </tr>`).join('');
   const scopeLabel = empFilter ? empFilter : 'All Employees';
   const bodyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;">
@@ -12031,7 +12031,7 @@ function downloadLoyaltyMyStatsPDF() {
   doc.setFontSize(9); doc.setTextColor(30, 30, 30);
   res.rangeCards.forEach(c => {
     if (y > 280) { doc.addPage(); y = 18; }
-    doc.text(`${c.cardDate}  #${c.cardNo}  ${c.cardType}  ${c.custName}`, 14, y);
+    doc.text(`${c.cardDate}  #${c.cardNo}  ${c.cardType}  ${properCase(c.custName)}`, 14, y);
     y += 5.5;
   });
 
@@ -12043,7 +12043,7 @@ function mailLoyaltyMyStats() {
   const res = window.__loyMyStatsData;
   if (!res) { toast('Load your incentive first', 'error'); return; }
   const o = res.overall;
-  const rowsHtml = res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`).join('');
+  const rowsHtml = res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
     <h2 style="color:#6b21a8;">VSR GOLD — My Loyalty Incentive</h2>
     <p>Total: ${o.totalCards} · Approved: ${o.approvedCards} · Balance: ${o.balanceCards} · Total Incentive ₹${fmtNum(o.totalIncentive)} · Pending ₹${fmtNum(o.pendingIncentive)}</p>
@@ -12069,7 +12069,7 @@ function loadLoyaltyAdminStats() {
       res.rows.forEach(r => {
         html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;cursor:pointer;" onclick="openLoyEmpDetail('${escJs(r.empName)}')">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-weight:700;font-size:13.5px;">${r.empName}</div>
+            <div style="font-weight:700;font-size:13.5px;">${properCase(r.empName)}</div>
             <span class="pill" style="background:var(--purple-bg);color:var(--purple-dark);">${r.status}</span>
           </div>
           <div style="font-size:12px;color:var(--text2);margin-top:6px;">
@@ -12115,7 +12115,7 @@ function loadLoyaltyAdminStatsOverview() {
 function mailLoyaltyAdminStats() {
   const res = window.__loyAdminStatsData;
   if (!res) { toast('Load the report first', 'error'); return; }
-  const rowsHtml = res.rows.map(r => `<tr><td>${r.empName}</td><td>${r.totalCards}</td><td>${r.approvedCards}</td><td>${r.balanceCards}</td><td>${r.status}</td><td>₹${fmtNum(r.pendingIncentive)}</td><td>₹${fmtNum(r.totalIncentive)}</td></tr>`).join('');
+  const rowsHtml = res.rows.map(r => `<tr><td>${properCase(r.empName)}</td><td>${r.totalCards}</td><td>${r.approvedCards}</td><td>${r.balanceCards}</td><td>${r.status}</td><td>₹${fmtNum(r.pendingIncentive)}</td><td>₹${fmtNum(r.totalIncentive)}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:700px;">
     <h2 style="color:#6b21a8;">VSR GOLD — All Employees Incentive Summary</h2>
     <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
@@ -12162,7 +12162,7 @@ function loadLoyaltyLeaderboard(who, start, end) {
       let html = `<div class="card-title">${res.title || '🏆 Loyalty Card Leaderboard'}</div>
         <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Rank</th><th>Employee</th><th>Cards</th><th>% of Total</th></tr></thead><tbody>`;
       res.rows.forEach(r => {
-        html += `<tr><td>${medal(r.rank)}</td><td><b>${r.employee}</b></td><td>${r.cardsIssued}</td><td>${r.pctOfTotal}</td></tr>`;
+        html += `<tr><td>${medal(r.rank)}</td><td><b>${properCase(r.employee)}</b></td><td>${r.cardsIssued}</td><td>${r.pctOfTotal}</td></tr>`;
       });
       html += `</tbody></table></div>`;
       if (res.total) html += `<div class="leave-card-date" style="margin-top:8px;font-weight:800;border-top:1px dashed var(--border);padding-top:8px;">TOTAL: ${res.total.cardsIssued} cards</div>`;
@@ -12248,7 +12248,7 @@ async function loadKpiTrend(who) {
     if (who === 'admin') {
       const sel = document.getElementById('kpiTrendEmpSelect-admin');
       const current = sel.value;
-      sel.innerHTML = res.employees.map(e => `<option value="${e.employee}">${e.employee}</option>`).join('');
+      sel.innerHTML = res.employees.map(e => `<option value="${e.employee}">${properCase(e.employee)}</option>`).join('');
       if (current && res.employees.some(e => e.employee === current)) sel.value = current;
       window.__kpiTrendData = res.employees;
       renderKpiTrendChart('admin');
@@ -12364,7 +12364,7 @@ function loadKpiTarget(who) {
     let html = '';
     res.rows.forEach(r => {
       html += `<div class="kd-card">
-        <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill gold">📅 ${r.month}</span></div>
+        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill gold">📅 ${r.month}</span></div>
         <div class="kd-stats">
           <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyaltyTarget}</span><span class="kd-lbl">Loyalty Target</span></div>
           <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.goldenTarget}</span><span class="kd-lbl">Golden Target</span></div>
@@ -12409,7 +12409,7 @@ function kpiTableHtml(rows, storeTotal) {
     <th></th>
   </tr>`;
   const body = rows.map(r => `<tr>
-    <td>${r.place}</td><td style="text-align:left;font-weight:700;">${r.employee}</td><td>${r.grade}</td><td>${r.gradeLabel}</td>
+    <td>${r.place}</td><td style="text-align:left;font-weight:700;">${properCase(r.employee)}</td><td>${r.grade}</td><td>${r.gradeLabel}</td>
     <td style="font-weight:800;">${fmtScore(r.overallScore)}</td><td>${r.deals}</td><td style="font-weight:700;color:var(--gold-dark,#8a6a2a);">${r.conversionPct}</td>
     <td>${r.purchTarget}</td><td>${r.purchases}</td><td>${r.purchAchPct}</td><td>${r.purchScore}</td><td>${r.dealsRatio}</td><td>${r.dealsBonus}</td>
     <td>${r.loyalTarget}</td><td>${r.loyaltyCards}</td><td>${r.loyaltyAchPct}</td><td>${r.loyaltyScore}</td>
@@ -12439,7 +12439,7 @@ function kpiTableHtml(rows, storeTotal) {
   // Score sub-columns (Purch/Loyalty/Golden/DSR Score) genuinely
   // don't have a meaningful store-wide equivalent, so those stay —.
   const storeTotalRow = storeTotal ? `<tr style="background:var(--purple-bg,#f3e8ff);font-weight:800;border-top:2px solid var(--purple);">
-    <td>—</td><td style="text-align:left;">🏪 ${storeTotal.employee}</td><td>—</td><td>—</td>
+    <td>—</td><td style="text-align:left;">🏪 ${properCase(storeTotal.employee)}</td><td>—</td><td>—</td>
     <td>${storeTotal.avgOverallScore}</td><td>${storeTotal.deals}</td><td>${storeTotal.conversionPct}</td>
     <td>${storeTotal.purchTargetTotal}</td><td>${storeTotal.purchases}</td><td>${storeTotal.purchAchPct}</td><td>—</td><td>—</td><td>—</td>
     <td>${storeTotal.loyalTargetTotal}</td><td>${storeTotal.loyaltyCards}</td><td>${storeTotal.loyaltyAchPct}</td><td>—</td>
@@ -12485,7 +12485,7 @@ function kpiRowCardHtml(r) {
   const score = Number(r.overallScore); const scoreDisp = isNaN(score) ? r.overallScore : score.toFixed(2);
   return `<div class="kd-card">
     <div class="kd-head">
-      <span class="kd-name"><span class="kd-place">${r.place}</span>${r.employee}</span>
+      <span class="kd-name"><span class="kd-place">${r.place}</span>${properCase(r.employee)}</span>
       <span class="kd-pill gold">Grade ${r.grade} · ${r.gradeLabel}</span>
     </div>
     <div class="kd-stats" style="margin-bottom:8px;">
@@ -12628,7 +12628,7 @@ function loadKpiTillDateRange(who, start, end, mode) {
     let html = `<div class="kd-note">${label}</div>`;
     res.rows.forEach(r => {
       html += `<div class="kd-card">
-        <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill gold">🔁 ${r.conversionPct}% conversion</span></div>
+        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill gold">🔁 ${r.conversionPct}% conversion</span></div>
         <div class="kd-stats">
           <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
           <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
@@ -12679,7 +12679,7 @@ function loadKpiRangeSummary(who) {
     let html = `<div class="kd-note">${fmtDMY(res.start)} to ${fmtDMY(res.end)}</div>`;
     res.rows.forEach(r => {
       html += `<div class="kd-card">
-        <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill gold">🔁 ${r.conversionPct}% conversion</span></div>
+        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill gold">🔁 ${r.conversionPct}% conversion</span></div>
         <div class="kd-stats">
           <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
           <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.purchases}</span><span class="kd-lbl">Purchases</span></div>
@@ -13658,7 +13658,7 @@ function loadDsrStatus(who) {
       const complete = noSales || String(r.status).toLowerCase().indexOf('complete') === 0;
       const statusLabel = noSales ? 'Complete (No Sales)' : r.status;
       html += `<div class="kd-card ${complete ? 'kd-ok' : 'kd-danger'}">
-        <div class="kd-head"><span class="kd-name">${r.employee}</span>
+        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span>
           <span class="kd-pill ${complete ? 'green' : 'red'}">${complete ? '✅' : '⏳'} ${statusLabel}</span></div>
         <div class="kd-stats">
           <div class="kd-box"><span class="kd-ic">🤝</span><span class="kd-val">${r.deals}</span><span class="kd-lbl">Deals</span></div>
@@ -13741,7 +13741,7 @@ function loadDsrMissing(who, start, end) {
       const totalMissing = sanitizeCount(r.totalMissing);
       const noMissing = totalMissing === 0;
       html += `<div class="kd-card ${noMissing ? 'kd-ok' : 'kd-danger'}" ${noMissing ? '' : `style="cursor:pointer;" onclick="showDsrMissingDetail(${idx})"`}>
-        <div class="kd-head"><span class="kd-name">${r.employee}</span>
+        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span>
           <span class="kd-pill ${noMissing ? 'green' : 'red'}">${noMissing ? '✅ 0 Missing' : '🚫 ' + totalMissing + ' Missing'}</span></div>
         <div class="kd-stats">
           <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${totalPurchases}</span><span class="kd-lbl">Purchases</span></div>
@@ -13782,7 +13782,7 @@ function showDsrMissingDetail(idx) {
   }
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="document.getElementById('dsrMissingDetailModal').remove()" title="Close">✕</button>
-    <div class="modal-title">🧾 ${r.employee} — Missing Dates</div>
+    <div class="modal-title">🧾 ${properCase(r.employee)} — Missing Dates</div>
     <p style="font-size:11.5px;color:var(--text3);margin:8px 0 12px;">${r.totalPurchases} Purchases · ${r.dsrEntered} DSR Entered · ${r.totalMissing} Missing (in the currently selected date range)</p>
     ${bodyHtml}
   </div>`;
@@ -13795,7 +13795,7 @@ function dsrRangeResultHtml(res) {
   res.rows.forEach(r => {
     const good = Number(r.dsrPct) >= 90;
     html += `<div class="kd-card ${good ? 'kd-ok' : 'kd-danger'}">
-      <div class="kd-head"><span class="kd-name">${r.employee}</span><span class="kd-pill ${good ? 'green' : 'red'}">${r.dsrPct}%</span></div>
+      <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill ${good ? 'green' : 'red'}">${r.dsrPct}%</span></div>
       <div class="kd-stats">
         <div class="kd-box"><span class="kd-ic">🛍️</span><span class="kd-val">${r.totalPurch}</span><span class="kd-lbl">Purchases</span></div>
         <div class="kd-box"><span class="kd-ic">✅</span><span class="kd-val">${r.dsrOnTime}</span><span class="kd-lbl">On-Time</span></div>
@@ -14912,7 +14912,12 @@ async function dsrfTagLookup(who, eid, kind) {
   if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
   let res;
   try {
-    res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
+    // v-fix (BRO: "photo load chala late avutundi, dsr form lo kuda, so fast ga load avali" — this
+    // lookup no longer asks for the photo (withPhoto dropped), so it comes back fast and every other
+    // field (Product/Design/Tunch/Weight/...) fills in immediately. The photo — a live Google Drive
+    // read, which can take a few seconds especially for an older/larger stock photo — is fetched
+    // separately right below, AFTER the fields are already on screen, so it never holds them up.
+    res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
   } catch (e) {
     if (inp.__lk === my && !cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
     return;
@@ -14923,21 +14928,37 @@ async function dsrfTagLookup(who, eid, kind) {
     const it = res.item || {};
     dsrfApplyStockItem(who, eid, it, tagN);
     // v-fix (BRO: "auto fill ayyelaga chei with photo tho patu, aa data local cache lo save aina data
-    // nundi vastundi" — cache the FULL item (every field dsrfApplyStockItem can fill, plus the photo
-    // that this withPhoto=1 lookup already fetched) so the NEXT time this tag is typed — even fully
-    // offline — every field including the photo fills in instantly from cache, not just Product/
-    // Design/Counter/Type like before.
-    stockTagCacheAdd(tagN, {
+    // nundi vastundi" — cache every field dsrfApplyStockItem can fill; the photo itself is added to
+    // this same cache entry a little later, once the separate photo fetch below finishes (or kept as
+    // whatever was already cached for this tag, so a photo already known isn't lost here).
+    const cacheFields = {
       counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type,
       tunch: it.tunch || '', weight: it.weight || '', gross: it.gross || '', net: it.net || '',
-      carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || '',
-      photoData: it.photoData || ''
-    });
+      carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || ''
+    };
+    stockTagCacheAdd(tagN, Object.assign({}, cacheFields, { photoData: (cachedNow && cachedNow.photoData) || '' }));
     // the message belongs to whichever block (Gold / Diamond) is showing now
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
     dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
+
+    // Photo fetch — separate, non-blocking. Skipped entirely if a photo is already showing (from
+    // cache, or one the person already picked/took) since dsrfSetPhotoData never overwrites that.
+    const pfxNow = kNow === 'd' ? 'dia' : 'g';
+    const hidNow = document.getElementById(`dsrfPh-${pfxNow}-${who}-${eid}`);
+    if (!hidNow || !(hidNow.value && hidNow.value.length > 100)) {
+      const wNow = document.getElementById(`dsrfPw-${pfxNow}-${who}-${eid}`);
+      if (wNow) { wNow.textContent = '⏳ Loading photo…'; wNow.className = 'photo-ok show'; }
+      _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json()).then(pres => {
+        if (inp.__lk !== my) return;   // a different tag was typed meanwhile — drop this stale answer
+        const pit = (pres && pres.ok && pres.item) || {};
+        if (pit.photoData) {
+          dsrfSetPhotoData(who, eid, pfxNow, pit.photoData);
+          stockTagCacheAdd(tagN, Object.assign({}, cacheFields, { photoData: pit.photoData }));
+        } else if (wNow) { wNow.textContent = ''; wNow.className = ''; }
+      }).catch(() => { if (wNow) { wNow.textContent = ''; wNow.className = ''; } });
+    }
   } else if (res.status === 'sold') {
     dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
     const sd = res.sold || {};
@@ -16839,7 +16860,7 @@ function gaShowPreview(p, who) {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 ${p.planType} #${p.planNo}</span><span class="kd-pill gold">₹${p.amount}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${p.custName}</div>
+        <div class="dsr-cust-name">${properCase(p.custName)}</div>
         <div class="dsr-cust-addr"><b>📍 ${[p.street,p.area,p.town,p.district,p.state,p.pin].filter(Boolean).join(', ')}</b></div>
         <div class="dsr-meta-row">📱 ${p.mobile} &nbsp;·&nbsp; 📅 Enroll: ${fmtDMY(p.enrollDate)}</div>
         <div class="dsr-meta-row" style="border-bottom:none;">🆔 Aadhaar: ${p.aadhaarNo || '—'} &nbsp;·&nbsp; PAN: ${p.panNo || '—'}</div>
@@ -16984,9 +17005,9 @@ function loadGoldenAuraList(who) {
       html += `<div class="dsr-receipt-card">
         <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 Plan #${r.planNo} — ${r.planType}</span><span class="kd-pill gold">₹${r.amount}</span></div>
         <div class="dsr-receipt-body">
-          <div class="dsr-cust-name">${r.custName}</div>
-          <div class="dsr-meta-row">📱 ${r.mobile} &nbsp;·&nbsp; 📍 ${r.town || '—'}, ${r.state || '—'}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">👤 ${r.employee} &nbsp;·&nbsp; 📅 Enrolled: ${fmtDMY(r.enrollDate)}</div>
+          <div class="dsr-cust-name">${properCase(r.custName)}</div>
+          <div class="dsr-meta-row">📱 ${r.mobile} &nbsp;·&nbsp; 📍 ${properCase(r.town) || '—'}, ${properCase(r.state) || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">👤 ${properCase(r.employee)} &nbsp;·&nbsp; 📅 Enrolled: ${fmtDMY(r.enrollDate)}</div>
         </div>
       </div>`;
     });
@@ -18090,7 +18111,7 @@ function renderEmpSubmittedTable() {
   visible.forEach(({ e, idx }) => {
     html += `<tr>
       <td><input type="checkbox" class="emp-submitted-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
-      <td>${e.name || e.customerName || 'Unknown'}</td>
+      <td>${properCase(e.name || e.customerName) || 'Unknown'}</td>
       <td><span class="kd-pill green">${e.status || ''}</span></td>
       <td>${e.duration || '—'}</td>
       <td>${e.date || e.timestamp || ''}</td>
@@ -18355,7 +18376,7 @@ async function loadAdminLeadsReport(startDate, endDate) {
       // numbers BRO asked for.
       const avoidedSub = (r.avoidedAuto || r.avoidedManual)
         ? `<div style="font-size:9.5px;color:var(--text3);font-weight:400;">${r.avoidedAuto || 0} auto · ${r.avoidedManual || 0} manual</div>` : '';
-      html += `<tr><td style="text-align:left;font-weight:700;">${r.employee}</td><td style="text-align:center;">${r.assigned}</td>` +
+      html += `<tr><td style="text-align:left;font-weight:700;">${properCase(r.employee)}</td><td style="text-align:center;">${r.assigned}</td>` +
         `<td style="text-align:center;">${r.submitted}</td><td style="text-align:center;">${r.pending}</td>` +
         `<td style="text-align:center;">${r.avoided}${avoidedSub}</td>` +
         `<td style="text-align:center;">${r.flagged || 0}</td>` +
@@ -18367,7 +18388,7 @@ async function loadAdminLeadsReport(startDate, endDate) {
       const statuses = Object.keys(r.statusBreakdown || {});
       if (!statuses.length) return;
       // Same vertical Status | Count layout as the employee's own report.
-      html += `<div class="card" style="margin-top:8px;"><div class="card-title">${r.employee} — Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
+      html += `<div class="card" style="margin-top:8px;"><div class="card-title">${properCase(r.employee)} — Status Break-up</div><div class="kd-table-wrap"><table class="kd-table"><thead><tr>` +
         '<th style="text-align:left;">Status</th><th>Count</th></tr></thead><tbody>' +
         statuses.map(s => `<tr><td style="text-align:left;">${s}</td><td style="text-align:center;font-weight:700;">${r.statusBreakdown[s]}</td></tr>`).join('') +
         '</tbody></table></div></div>';
@@ -18440,7 +18461,7 @@ function renderAdminSubmittedTable() {
   visible.forEach(({ e, idx }) => {
     html += `<tr>
       <td><input type="checkbox" class="admin-submitted-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
-      <td>${e.name || e.customerName || 'Unknown'}</td>
+      <td>${properCase(e.name || e.customerName) || 'Unknown'}</td>
       <td>${e.empName || ''}</td>
       <td><span class="kd-pill green">${e.status || ''}</span></td>
       <td>${e.duration || '—'}</td>
@@ -18542,7 +18563,7 @@ function toggleAdminAssignmentDetail(employeeName, elId) {
   const leads = __adminAssignmentData[employeeName] || [];
   let html = '<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th style="text-align:left;">Customer</th><th style="text-align:left;">Phone</th><th>Assigned At</th></tr></thead><tbody>';
   leads.forEach(l => {
-    html += `<tr><td style="text-align:left;">${l.customerName || '—'}</td><td style="text-align:left;">${l.phone}</td><td style="text-align:center;">${l.assignedAt || '—'}</td></tr>`;
+    html += `<tr><td style="text-align:left;">${properCase(l.customerName) || '—'}</td><td style="text-align:left;">${l.phone}</td><td style="text-align:center;">${l.assignedAt || '—'}</td></tr>`;
   });
   html += '</tbody></table></div>';
   el.innerHTML = html;
@@ -18609,7 +18630,7 @@ function renderOverdueLeadsTable() {
   leads.forEach((l, idx) => {
     html += `<tr>
       <td><input type="checkbox" class="overdue-row-check" data-idx="${idx}" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;"></td>
-      <td>${l.customerName || 'Unknown'}</td>
+      <td>${properCase(l.customerName) || 'Unknown'}</td>
       <td>${l.phone}</td>
       <td>${l.employeeName}</td>
       <td>${l.assignedDate}</td>
@@ -18833,8 +18854,8 @@ function _renderConversionTable(who) {
     const statusColor = r.status === 'Success Conversion' ? 'var(--green,#1b7a43)' : (r.status === 'No Conversion Yet' ? 'var(--text3)' : 'var(--orange,#b8860b)');
     const statusIcon = r.status === 'Success Conversion' ? '✅' : (r.status === 'No Conversion Yet' ? '❌' : '🚶');
     html += `<tr style="border-bottom:1px solid var(--border);">
-      ${who === 'admin' ? `<td style="padding:6px 8px;font-weight:600;">${r.employee}</td>` : ''}
-      <td style="padding:6px 8px;">${r.customerName || '—'}</td>
+      ${who === 'admin' ? `<td style="padding:6px 8px;font-weight:600;">${properCase(r.employee)}</td>` : ''}
+      <td style="padding:6px 8px;">${properCase(r.customerName) || '—'}</td>
       <td style="padding:6px 8px;white-space:nowrap;">${r.mobile || '—'}</td>
       <td style="padding:6px 8px;white-space:nowrap;">${r.callDate}</td>
       <td style="padding:6px 8px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusIcon} ${r.status}</td>
@@ -18909,7 +18930,7 @@ async function loadFlaggedNumbersPage() {
       const isPending = status.toLowerCase() === 'pending';
       return `<tr>
         ${!flagHistoryMode ? `<td style="padding:6px 4px;"><input type="checkbox" class="flag-num-checkbox" value="${r.phone}"></td>` : ''}
-        <td style="padding:6px 4px;font-weight:600;">${r.customerName || 'Unknown'}</td>
+        <td style="padding:6px 4px;font-weight:600;">${properCase(r.customerName) || 'Unknown'}</td>
         <td style="padding:6px 4px;"><a href="tel:${r.phone}" style="color:var(--purple);">${r.phone}</a></td>
         <td style="padding:6px 4px;color:#c0392b;">${r.reason || ''}</td>
         <td style="padding:6px 4px;">${r.flaggedBy || ''}</td>
@@ -19020,8 +19041,8 @@ function renderCustomerEventsList(box, events) {
     return `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;border-left:4px solid ${color};">
       <div style="font-size:24px;">${icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:13.5px;">${ev.name}${yearsTxt}</div>
-        <div style="font-size:11px;color:var(--text3);">${ev.phone || ''}${ev.address ? ' · ' + ev.address : ''}</div>
+        <div style="font-weight:700;font-size:13.5px;">${properCase(ev.name)}${yearsTxt}</div>
+        <div style="font-size:11px;color:var(--text3);">${ev.phone || ''}${ev.address ? ' · ' + properCase(ev.address) : ''}</div>
         <div style="font-size:11.5px;font-weight:600;color:${color};margin-top:2px;">📅 ${ev.date} — ${whenLabel}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;">
@@ -19251,7 +19272,7 @@ function renderWalkinTrackTable(who, rows) {
 
   const rowHtml = r => `<tr id="wtRow-${r.rowNum}" style="border-bottom:1px solid var(--border);">
     <td style="padding:5px 8px;white-space:nowrap;">${r.date}</td>
-    ${isAdmin ? `<td style="padding:5px 8px;font-weight:600;white-space:nowrap;">${r.employee}</td>` : ''}
+    ${isAdmin ? `<td style="padding:5px 8px;font-weight:600;white-space:nowrap;">${properCase(r.employee)}</td>` : ''}
     <td class="wt-cell" data-k="deals" style="padding:5px 8px;text-align:center;">${r.deals}</td>
     <td class="wt-cell" data-k="goldenPlans" style="padding:5px 8px;text-align:center;">${r.goldenPlans}</td>
     <td class="wt-cell" data-k="loyaltyCards" style="padding:5px 8px;text-align:center;">${r.loyaltyCards}</td>
@@ -19368,7 +19389,7 @@ function loadStockReport(who, mode) {
     let html = `<div class="kd-note">${type} — ${fmtDMY(res.start)} to ${fmtDMY(res.end)}</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Checklists Done</th></tr></thead><tbody>`;
     res.empSummary.forEach(r => {
-      html += `<tr><td><b>${r.employee}</b></td><td>${r.count}</td></tr>`;
+      html += `<tr><td><b>${properCase(r.employee)}</b></td><td>${r.count}</td></tr>`;
     });
     html += `</tbody></table></div>`;
     box.innerHTML = html;
@@ -20117,8 +20138,8 @@ function dsrfShowPreview(who, rows) {
     const itemTagNo = isDiamond ? r.diamondTagNo : r.tagNo;
     itemsHtml += `<div class="dsr-item-row" style="align-items:flex-start;">
       <div>
-        <b>${itemName || '—'}</b>
-        <span class="dsr-item-sub">${isDiamond && r.diamondCent ? ' · Cent ' + r.diamondCent : ''}${isDiamond && r.diamondQuality ? ' · Quality ' + r.diamondQuality : ''}${!isSilver && !isDiamond && r.design ? ' · ' + r.design : ''}${!isSilver && !isDiamond && r.tunch ? ' · Tunch ' + r.tunch : ''}
+        <b>${properCase(itemName) || '—'}</b>
+        <span class="dsr-item-sub">${isDiamond && r.diamondCent ? ' · Cent ' + r.diamondCent : ''}${isDiamond && r.diamondQuality ? ' · Quality ' + r.diamondQuality : ''}${!isSilver && !isDiamond && r.design ? ' · ' + properCase(r.design) : ''}${!isSilver && !isDiamond && r.tunch ? ' · Tunch ' + r.tunch : ''}
           ${itemWeight ? ' · ' + itemWeight + 'g' : ''}${isDiamond && r.diamondGrossWt ? ' · Gross ' + r.diamondGrossWt + 'g' : ''}${isDiamond && r.diamondNetWt ? ' · Net ' + r.diamondNetWt + 'g' : ''}${!isSilver && itemTagNo ? ' · Tag ' + itemTagNo : ''}</span>
       </div>
       ${photo ? `<img src="${photo}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${photo}','_blank')">` : '<span class="kd-pill red" style="font-size:9.5px;">No Photo</span>'}
@@ -20137,10 +20158,10 @@ function dsrfShowPreview(who, rows) {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isRDR ? '↩️ New Return / Damage / Repair' : isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
       <div class="dsr-receipt-body">
-        ${isRDR ? (r0.remarks ? `<div class="dsr-cust-addr"><b>📝 ${r0.remarks}</b></div>` : '') : `
-        <div class="dsr-cust-name">${r0.customerName}</div>
-        <div class="dsr-cust-addr"><b>📍 ${r0.address}</b></div>`}
-        <div class="dsr-meta-row">👤 ${r0.employeeName}${r0.mobileNumber ? (isOutlet ? ' &nbsp;·&nbsp; 👤 Contact: ' + r0.mobileNumber : ' &nbsp;·&nbsp; 📱 ' + r0.mobileNumber) : ''} &nbsp;·&nbsp; 📅 ${(isOutlet || isRDR) ? 'Date' : 'Bill'}: ${fmtDMY(r0.billDate)}</div>
+        ${isRDR ? (r0.remarks ? `<div class="dsr-cust-addr"><b>📝 ${properCase(r0.remarks)}</b></div>` : '') : `
+        <div class="dsr-cust-name">${properCase(r0.customerName)}</div>
+        <div class="dsr-cust-addr"><b>📍 ${properCase(r0.address)}</b></div>`}
+        <div class="dsr-meta-row">👤 ${properCase(r0.employeeName)}${r0.mobileNumber ? (isOutlet ? ' &nbsp;·&nbsp; 👤 Contact: ' + r0.mobileNumber : ' &nbsp;·&nbsp; 📱 ' + r0.mobileNumber) : ''} &nbsp;·&nbsp; 📅 ${(isOutlet || isRDR) ? 'Date' : 'Bill'}: ${fmtDMY(r0.billDate)}</div>
         ${isRDR ? `<div class="dsr-meta-row">${rows.map(r => r.reason).filter((v,i,a)=>a.indexOf(v)===i).join(' / ')}</div>` : ''}
         <div class="dsr-items-wrap">${itemsHtml}</div>
       </div>
@@ -20329,7 +20350,7 @@ function renderAdvanceOrderListRows(who) {
       : `<span class="kd-pill" style="background:#e6f0ff;color:#1565C0;border:1px solid #1565C0;">${tagIcon} ${r.tag}</span>`;
     html += `<div class="kd-card" style="cursor:pointer;margin-bottom:10px;" onclick="openAdvanceOrderEdit('${who}','${escJs(r.dsrId)}')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <b>${r.customerName || '—'}</b>
+        <b>${properCase(r.customerName) || '—'}</b>
         ${tagPill}
       </div>
       <div style="font-size:12px;color:var(--text3);margin-top:4px;">🧾 ${r.dsrId} &nbsp;·&nbsp; 👤 ${r.employeeName} &nbsp;·&nbsp; 📱 ${r.mobile || '—'}</div>
@@ -20791,7 +20812,7 @@ function mailLoyaltyDashboard(who) {
   const res = window['__loyDashData_' + who];
   if (!res) { toast('Load the dashboard first', 'error'); return; }
   const k = res.kpi;
-  let rowsHtml = res.empRows.map(r => `<tr><td>${r.empName}</td><td>${r.totalCards}</td><td>${r.approved}</td><td>${r.pending}</td><td>₹${fmtNum(r.pendingAmount)}</td></tr>`).join('');
+  let rowsHtml = res.empRows.map(r => `<tr><td>${properCase(r.empName)}</td><td>${r.totalCards}</td><td>${r.approved}</td><td>${r.pending}</td><td>₹${fmtNum(r.pendingAmount)}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
     <h2 style="color:#6b21a8;">VSR GOLD — Loyalty ${res.isAdmin ? 'Store' : 'My'} Dashboard</h2>
     <p>Total: ${k.totalCards} · Approved: ${k.approvedCards} · Pending: ${k.pendingCards} · Pending ₹${fmtNum(k.pendingIncentive)}</p>
@@ -20854,7 +20875,7 @@ function loadLoyEmpDetail() {
             <th>#</th><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th>
           </tr></thead><tbody>`;
         res.rangeCards.forEach((c, idx) => {
-          html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${c.custName}</td></tr>`;
+          html += `<tr><td>${idx + 1}</td><td>${c.cardDate}</td><td>#${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td></tr>`;
         });
         html += `</tbody></table></div>`;
       }
@@ -20874,7 +20895,7 @@ function mailLoyaltyTimeline() {
     <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;">${c.cardDate}</td>
     <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#374151;font-family:monospace;">#${c.cardNo}</td>
     <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;"><span style="background:#f3e8ff;color:#6b21a8;border-radius:12px;padding:2px 9px;font-size:10.5px;font-weight:700;">${c.cardType}</span></td>
-    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#1a1a2e;font-weight:700;">${c.custName}</td>
+    <td style="padding:9px 12px;border-bottom:1px solid #ece5ff;font-size:12px;color:#1a1a2e;font-weight:700;">${properCase(c.custName)}</td>
   </tr>`).join('');
   const bodyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;">
     <div style="font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:2px;">🪪 ${empName}'s Card Timeline</div>
@@ -20906,7 +20927,7 @@ function loadLoyaltyUpcomingApprovals() {
           ? `<span class="kd-pill green">🔔 ${r.readySets} set(s) ready${r.readyAmount ? ' · ₹' + fmtNum(r.readyAmount) : ''}</span>`
           : `<span class="kd-pill gold">${r.cardsUntilNextSet} more for next set</span>`;
         rowsHtml += `<tr>
-          <td class="loy-appr-name">${r.empName}</td>
+          <td class="loy-appr-name">${properCase(r.empName)}</td>
           <td style="text-align:center;">${r.balanceCards}</td>
           <td style="text-align:center;">${r.firstCard}</td>
           <td style="text-align:center;">${r.lastCard}</td>
@@ -21062,7 +21083,7 @@ function loadLoyaltyIncentiveHistory() {
       } else {
         res.rows.forEach(r => {
           html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;">
-            <div style="font-weight:700;font-size:13.5px;">${r.empName}</div>
+            <div style="font-weight:700;font-size:13.5px;">${properCase(r.empName)}</div>
             <div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${r.date} · #${r.firstCard} → #${r.lastCard} (${r.cards} cards) · 💵 ₹${fmtNum(r.amount)}</div>
           </div>`;
         });
@@ -21070,7 +21091,7 @@ function loadLoyaltyIncentiveHistory() {
         // (openBoxExportModal) reads a <table> first if one exists, so
         // Export → Excel/PDF works without changing the visible card list.
         html += `<table style="display:none;"><tr><th>Employee</th><th>Date</th><th>First Card</th><th>Last Card</th><th>Cards</th><th>Amount</th></tr>` +
-          res.rows.map(r => `<tr><td>${r.empName}</td><td>${r.date}</td><td>${r.firstCard}</td><td>${r.lastCard}</td><td>${r.cards}</td><td>${r.amount}</td></tr>`).join('') +
+          res.rows.map(r => `<tr><td>${properCase(r.empName)}</td><td>${r.date}</td><td>${r.firstCard}</td><td>${r.lastCard}</td><td>${r.cards}</td><td>${r.amount}</td></tr>`).join('') +
           `</table>`;
       }
       content.innerHTML = html;
@@ -22130,7 +22151,7 @@ function renderAdminDashboardBody() {
       </div>
       <div class="dh-subhead">👤 Employee-wise</div>
       ${empRows.length ? `<div class="dh-table-wrap"><table class="dh-mini-table"><thead><tr><th>Employee</th><th style="text-align:right;">Sent</th><th style="text-align:right;">Submitted</th><th style="text-align:right;">Pending</th><th style="text-align:right;">%</th></tr></thead><tbody>
-        ${empRows.map(r => `<tr><td>${r.employee}</td><td style="text-align:right;">${r.assigned}</td><td style="text-align:right;">${r.submitted}</td><td style="text-align:right;">${r.pending}</td><td style="text-align:right;font-weight:800;color:${pctColor(r.completionPct)};">${r.completionPct}%</td></tr>`).join('')}
+        ${empRows.map(r => `<tr><td>${properCase(r.employee)}</td><td style="text-align:right;">${r.assigned}</td><td style="text-align:right;">${r.submitted}</td><td style="text-align:right;">${r.pending}</td><td style="text-align:right;font-weight:800;color:${pctColor(r.completionPct)};">${r.completionPct}%</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">No leads assigned today.</div>'}
     </div>`;
   }
@@ -22149,15 +22170,15 @@ function renderAdminDashboardBody() {
       </div>
       <div class="dh-subhead">🏆 Leaderboard (All-Time)</div>
       ${lb.length ? `<div class="dh-table-wrap"><table class="dh-mini-table dh-mini-table-bordered"><thead><tr><th>Rank</th><th>Employee</th><th style="text-align:right;">Cards</th><th style="text-align:right;">% of Total</th></tr></thead><tbody>
-        ${lb.map(r => `<tr><td>${['🥇','🥈','🥉'][r.rank-1] || ('#'+r.rank)}</td><td>${r.employee}</td><td style="text-align:right;">${r.cardsIssued}</td><td style="text-align:right;">${r.pctOfTotal}</td></tr>`).join('')}
+        ${lb.map(r => `<tr><td>${['🥇','🥈','🥉'][r.rank-1] || ('#'+r.rank)}</td><td>${properCase(r.employee)}</td><td style="text-align:right;">${r.cardsIssued}</td><td style="text-align:right;">${r.pctOfTotal}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">No cards yet.</div>'}
       <div class="dh-subhead">💰 Incentive History — Recent (Total Paid: ₹${(ly.incentiveHistory && ly.incentiveHistory.totalPaid) || 0})</div>
       ${hist.length ? `<div class="dh-table-wrap"><table class="dh-mini-table dh-mini-table-bordered"><thead><tr><th>Name</th><th>Date</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
-        ${hist.map(r => `<tr><td>${r.empName}</td><td>${r.date}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.amount}</td></tr>`).join('')}
+        ${hist.map(r => `<tr><td>${properCase(r.empName)}</td><td>${r.date}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.amount}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">No payments recorded yet.</div>'}
       <div class="dh-subhead">⏳ Upcoming Incentive — Pending (Total: ₹${up.total})</div>
       ${(up.byEmployee||[]).length ? `<div class="dh-table-wrap"><table class="dh-mini-table dh-mini-table-bordered"><thead><tr><th>Name</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
-        ${up.byEmployee.map(r => `<tr><td>${r.employee}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.pendingIncentive}</td></tr>`).join('')}
+        ${up.byEmployee.map(r => `<tr><td>${properCase(r.employee)}</td><td style="text-align:right;font-weight:800;color:var(--purple);">₹${r.pendingIncentive}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="dh-empty-mini">Nothing pending.</div>'}
     </div>`;
   }
@@ -22195,7 +22216,7 @@ function renderAdminDashboardBody() {
     html += `<div class="dh-panel" style="background:var(--green-bg,#e6f7ef);--dh-accent:#1a7a4f;">
       <div class="dh-panel-title"><span class="t">📈 KPI — This Month's Topper</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div style="text-align:center;padding:6px 0 10px;">
-        <div style="font-size:16px;font-weight:800;color:var(--gold-dark,#B8860B);">🏆 ${t.employee}</div>
+        <div style="font-size:16px;font-weight:800;color:var(--gold-dark,#B8860B);">🏆 ${properCase(t.employee)}</div>
         <div style="font-size:26px;font-weight:800;color:#1a7a4f;margin-top:2px;">${t.overallScore}</div>
       </div>
       ${t.conversionPct != null ? `<div class="dh-mini-row"><span class="dh-mini-name">Conversion %</span><span class="dh-mini-val">${t.conversionPct}</span></div>` : ''}
@@ -22262,8 +22283,8 @@ function renderAdminDashboardBody() {
   if (st) {
     const stKeys = st.ok && st.today ? Object.keys(st.today) : [];
     const personBadge = p => p.done
-      ? `<span class="duty-person">👤 ${p.employee}</span> <span class="duty-badge duty-done">✅ Done</span>`
-      : `<span class="duty-person duty-suggested-only">👤 ${p.employee} — Suggested</span>`;
+      ? `<span class="duty-person">👤 ${properCase(p.employee)}</span> <span class="duty-badge duty-done">✅ Done</span>`
+      : `<span class="duty-person duty-suggested-only">👤 ${properCase(p.employee)} — Suggested</span>`;
     const cellForShift = (arr) => {
       const list = arr || [];
       if (!list.length) return '<span class="duty-empty">—</span>';
@@ -22273,7 +22294,7 @@ function renderAdminDashboardBody() {
       return list.map(p => p.done
         ? personBadge(p)
         : (p.status === 'Pending'
-            ? `<span class="duty-person">👤 ${p.employee}</span> <span class="duty-badge duty-pending">⏳ Pending</span>`
+            ? `<span class="duty-person">👤 ${properCase(p.employee)}</span> <span class="duty-badge duty-pending">⏳ Pending</span>`
             : personBadge(p))
       ).join('<br>');
     };
