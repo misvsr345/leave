@@ -5895,7 +5895,7 @@ function renderEmpOverview() {
   document.getElementById('empBalanceCard').innerHTML = `
     <div class="home-header">
       <div class="home-header-title">VSR GOLD</div>
-      <div class="home-header-name">${state.empName}</div>
+      <div class="home-header-name">${properCase(state.empName)}</div>
       <div class="home-header-sub">${empMeta}</div>
       <div class="home-balance-row">
         <div class="home-bal-box"><div class="home-bal-val" style="color:${balColorHex}">${fmtNum(b)}</div><div class="home-bal-lbl">Balance</div></div>
@@ -8283,7 +8283,7 @@ function directShowPreview() {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${escHtml(c.leaveType)}</span><span class="kd-pill gold">${totalDays} day(s) total${c.segments.length > 1 ? ' — ' + c.segments.length + ' separate leaves' : ''}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${escHtml(c.empName)}</div>
+        <div class="dsr-cust-name">${escHtml(properCase(c.empName))}</div>
         <div class="dsr-meta-row"><b>${outLbl}</b></div>
         ${segRows}
         <div class="dsr-meta-row" style="border-bottom:none;">${c.purpose ? '📝 <b>' + escHtml(c.purpose) + '</b>' : ''}${c.leaveAddress ? '<br>📍 ' + escHtml(c.leaveAddress) : ''}${c.reason ? '<br>🗒️ ' + escHtml(c.reason) : ''}${c.authMet === 'Yes' ? '<br>✅ Authority Met: ' + escHtml(c.authWho) : ''}</div>
@@ -9311,9 +9311,9 @@ async function loadExtraDsrDetailBody(employee, date) {
           </span>
         </div>
         <div class="dsr-receipt-body">
-          <div class="dsr-cust-name">${en.customerName || '—'}</div>
-          <div class="dsr-meta-row">📱 ${en.mobileNumber || '—'} &nbsp;·&nbsp; 🕐 ${en.timestamp || '—'}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${en.type || '—'} — ${en.itemName || '—'}${en.weight ? ' — ' + en.weight + 'g' : ''}</div>
+          <div class="dsr-cust-name">${properCase(en.customerName) || '—'}</div>
+          <div class="dsr-meta-row">${en.mobileNumber ? fmtPhone(en.mobileNumber) : '—'} &nbsp;·&nbsp; 🕐 ${en.timestamp || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${en.type || '—'} — ${properCase(en.itemName) || '—'}${en.weight ? ' — ' + en.weight + 'g' : ''}</div>
         </div>
         <div class="btn-row" style="padding:0 14px 12px;">
           <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;" onclick="extraDsrEditEntry(${i})">✏️ Edit</button>
@@ -9721,13 +9721,13 @@ async function loadCustomer360() {
 
   let html = `<div style="display:grid;gap:10px;">`;
   html += section('Loyalty Card', '💳', loy ? loy.cards : null, c =>
-    `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${c.custName} — issued ${c.cardDate} by ${c.empName}</div>`, !loy);
+    `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${properCase(c.custName)} — issued ${c.cardDate} by ${properCase(c.empName)}</div>`, !loy);
   html += section('Golden Aura', '🏆', ga ? ga.plans : null, p =>
-    `<div class="kd-note" style="margin:4px 0;">#${p.planNo} — ${p.planType} — ₹${p.amount} — ${p.custName} — enrolled ${p.enrollDate} by ${p.empName}</div>`, !ga);
+    `<div class="kd-note" style="margin:4px 0;">#${p.planNo} — ${p.planType} — ₹${p.amount} — ${properCase(p.custName)} — enrolled ${p.enrollDate} by ${properCase(p.empName)}</div>`, !ga);
   html += section('Lead Call History', '📞', lead ? lead.calls : null, c =>
-    `<div class="kd-note" style="margin:4px 0;">${c.date} — ${c.employee} — <b>${c.status}</b>${c.feedback ? ' — ' + c.feedback : ''}</div>`, !lead);
+    `<div class="kd-note" style="margin:4px 0;">${c.date} — ${properCase(c.employee)} — <b>${c.status}</b>${c.feedback ? ' — ' + c.feedback : ''}</div>`, !lead);
   html += section('DSR Purchases', '🛍️', ds ? ds.entries : null, en =>
-    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${en.employeeName} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => it.productName || it.diamondProductName || it.silverItemName).filter(Boolean).join(', ') || '—'}</div>`, !ds);
+    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${properCase(en.employeeName)} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => properCase(it.productName || it.diamondProductName || it.silverItemName)).filter(Boolean).join(', ') || '—'}</div>`, !ds);
   html += `</div>`;
   box.innerHTML = html;
 }
@@ -9950,14 +9950,14 @@ async function sharePortalLink() {
 }
 
 async function renderEmpProfile() {
-  document.getElementById('profileEmpName').textContent = state.empName || '—';
+  document.getElementById('profileEmpName').textContent = properCase(state.empName) || '—';
   document.getElementById('profileEmpMeta').textContent = [state.empDesig, state.empDept].filter(Boolean).join(' · ') || '—';
 
   // Basic rows from the login session — shown immediately, before the
   // fuller detail call (below) resolves, so the page never looks empty.
   const rows = [
     ['🆔', 'Employee ID', state.empId],
-    ['👤', 'Name', state.empName],
+    ['👤', 'Name', properCase(state.empName)],
     ['🏢', 'Department', state.empDept],
     ['🏪', 'Counter', state.empCounter],
     ['🎓', 'Designation', state.empDesig],
@@ -9982,13 +9982,13 @@ async function renderEmpProfile() {
 function fullProfileRows_(d) {
   return [
     ['🆔', 'Employee ID', d.empId],
-    ['👤', 'Name', d.name],
+    ['👤', 'Name', properCase(d.name)],
     ['🏢', 'Department', d.department],
     ['🏪', 'Counter', d.counter],
     ['🎓', 'Designation', d.designation],
     ['📧', 'Email', d.email],
-    ['📱', 'Mobile Number', d.mobile],
-    ['🏠', 'Address', [d.address, d.city, d.state, d.pincode].filter(Boolean).join(', ')],
+    ['📱', 'Mobile Number', fmtPhone(d.mobile)],
+    ['🏠', 'Address', properCase([d.address, d.city, d.state, d.pincode].filter(Boolean).join(', '))],
     ['🪪', 'Aadhaar Card', d.aadhaar],
     ['💳', 'PAN Card', d.panCard || 'Not on file'],
     ['🎂', 'Date of Birth', d.dob],
@@ -10332,7 +10332,7 @@ async function checkLeaveLeadsConflictsPopup() {
       const statusColor = r.leaveStatus.toLowerCase() === 'approved' ? '#065f46' : r.leaveStatus.toLowerCase() === 'absent' ? '#991b1b' : '#92400e';
       const statusBg = r.leaveStatus.toLowerCase() === 'approved' ? '#d1fae5' : r.leaveStatus.toLowerCase() === 'absent' ? '#fee2e2' : '#fef3c7';
       return `<div class="dsr-receipt-card" style="margin-bottom:8px;">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${r.empName}</span>
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${properCase(r.empName)}</span>
         <span class="kd-pill" style="background:${statusBg};color:${statusColor};">${r.leaveStatus}</span></div>
         <div class="dsr-receipt-body"><div class="dsr-meta-row" style="border-bottom:none;">📞 <b>${r.leadCount}</b> lead(s) assigned today</div></div>
       </div>`;
@@ -10557,7 +10557,7 @@ function showNextMISLeaveLeadPopup() {
   div.innerHTML = `<div class="modal-box" style="max-width:400px;">
     <div class="modal-title">⏳ Pending Leave — Action Needed</div>
     <div class="kd-note" style="background:#FFF3CD;border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin-bottom:12px;">
-      <b>${item.empName}</b> applied for <b>${item.leaveType}</b> today (${item.leaveDate}) — still <b>Pending</b>.
+      <b>${properCase(item.empName)}</b> applied for <b>${item.leaveType}</b> today (${item.leaveDate}) — still <b>Pending</b>.
       They have leads assigned today that haven't all been called yet.
     </div>
     <div class="kd-table-wrap" style="margin-bottom:14px;">
@@ -10567,7 +10567,7 @@ function showNextMISLeaveLeadPopup() {
         <tr><td>Still Active (not called)</td><td><b>${item.remainingLeads}</b></td></tr>
       </table>
     </div>
-    <p style="font-size:12.5px;color:var(--text2);margin-bottom:12px;">Did ${item.empName} genuinely leave the store, or was this leave applied by mistake?</p>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:12px;">Did ${properCase(item.empName)} genuinely leave the store, or was this leave applied by mistake?</p>
     <div id="misLeaveLeadErr" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:6px;"></div>
     <button class="btn-primary" style="width:100%;margin-bottom:8px;background:var(--green);" id="misLeaveGenuineBtn" onclick="misLeaveLeadDecide('GENUINE')">✅ YES — Leave Genuine (void the ${item.remainingLeads} remaining lead(s))</button>
     <button class="btn-secondary" style="width:100%;" id="misLeaveMistakeBtn" onclick="misLeaveLeadDecide('MISTAKE')">❌ NO — Leave by Mistake (keep leads active)</button>
@@ -10626,7 +10626,7 @@ function checkLoyaltyAlerts(who) {
           html += `<div class="card" style="padding:10px 12px;margin-bottom:8px;background:#fdecea;border-color:var(--red);">
             <div style="font-weight:700;font-size:13px;">Card #${d.cardNo} (${d.cardType}) — entered ${d.entries.length} times</div>`;
           d.entries.forEach(en => {
-            html += `<div style="font-size:12px;color:var(--text2);margin-top:4px;">👤 ${en.empName} → ${en.custName} · 📅 ${en.cardDate}</div>`;
+            html += `<div style="font-size:12px;color:var(--text2);margin-top:4px;">👤 ${properCase(en.empName)} → ${properCase(en.custName)} · 📅 ${en.cardDate}</div>`;
           });
           html += `</div>`;
         });
@@ -13316,8 +13316,8 @@ function renderDsrTodayFiltered(who) {
           <td>${it.productFrom || '—'}</td>
           <td>${it.tagStatus || '—'}</td>
           <td>${it.tagNo || '—'}</td>
-          <td>${it.itemName || '—'}</td>
-          <td>${isDiaRow ? (it.diamondCent || '—') : (it.design || '—')}</td>
+          <td>${properCase(it.itemName) || '—'}</td>
+          <td>${isDiaRow ? (it.diamondCent || '—') : (properCase(it.design) || '—')}</td>
           <td>${isDiaRow ? (it.diamondQuality || '—') : (it.tunch || '—')}</td>
           <td>${it.weight || '—'}</td>
           <td style="white-space:nowrap;">${photoBtn}${editBtn}</td>
@@ -13330,9 +13330,9 @@ function renderDsrTodayFiltered(who) {
           <span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>
         </div>
         <div class="dsr-receipt-body">
-          <div class="dsr-cust-name">${g.customerName || '—'}</div>
-          <div class="dsr-cust-addr"><b>📍 ${g.address || '—'}</b></div>
-          <div class="dsr-meta-row"><span style="font-size:13px;font-weight:700;color:var(--purple-dark);">👤 ${g.employee}</span> &nbsp;·&nbsp; 📱 ${g.mobile || '—'} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(g.billDate)} &nbsp;·&nbsp; 🕐 ${g.entryTime}</div>
+          <div class="dsr-cust-name">${properCase(g.customerName) || '—'}</div>
+          <div class="dsr-cust-addr"><b>📍 ${properCase(g.address) || '—'}</b></div>
+          <div class="dsr-meta-row"><span style="font-size:13px;font-weight:700;color:var(--purple-dark);">👤 ${properCase(g.employee)}</span> &nbsp;·&nbsp; ${g.mobile ? fmtPhone(g.mobile) : '—'} &nbsp;·&nbsp; 📅 Bill: ${fmtDMY(g.billDate)} &nbsp;·&nbsp; 🕐 ${g.entryTime}</div>
           <div class="dsr-items-wrap" style="border:1.5px solid var(--border);border-radius:8px;overflow-x:auto;margin-top:8px;">
             <table class="dsr-items-table" style="white-space:nowrap;">
               <thead>
@@ -13456,7 +13456,7 @@ function confirmDeleteDsrEntry(idx, who) {
   confirmDiv.className = 'modal-overlay show';
   confirmDiv.innerHTML = `<div class="modal-box" style="max-width:360px;"><button class="modal-close-x" onclick="document.getElementById('dsrDeleteConfirmModal').remove()" title="Close">✕</button>
     <div class="modal-title">🗑️ Delete DSR Entry?</div>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">This permanently removes <b>${it.itemName || 'this item'}</b> for <b>${it.customerName || 'this customer'}</b>. This cannot be undone.</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">This permanently removes <b>${properCase(it.itemName) || 'this item'}</b> for <b>${properCase(it.customerName) || 'this customer'}</b>. This cannot be undone.</p>
     <div class="btn-row">
       <button class="btn-primary" style="margin-bottom:10px;background:linear-gradient(135deg,#c0392b,#e74c3c);" onclick="deleteDsrEntry(${idx},'${who}')">🗑️ Yes, Delete Permanently</button>
       <button class="btn-secondary" style="" onclick="document.getElementById('dsrDeleteConfirmModal').remove()">Cancel</button>
@@ -13560,10 +13560,10 @@ function openDsrDetailModal(key, who) {
   const rows = [
     ['DSR No', g.dsrNo || '—'],
     ['Status', `<span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>`],
-    ['Employee', g.employee || '—'],
-    ['Customer Name', g.customerName || '—'],
-    ['Mobile', g.mobile || '—'],
-    ['Address', g.address || '—'],
+    ['Employee', properCase(g.employee) || '—'],
+    ['Customer Name', properCase(g.customerName) || '—'],
+    ['Mobile', g.mobile ? fmtPhone(g.mobile) : '—'],
+    ['Address', properCase(g.address) || '—'],
     ['Bill Date', fmtDMY(g.billDate) || '—'],
     ['Entry Time', g.entryTime || '—']
   ];
@@ -13584,8 +13584,8 @@ function openDsrDetailModal(key, who) {
       <td>${it.productFrom || '—'}</td>
       <td>${it.tagStatus || '—'}</td>
       <td>${it.tagNo || '—'}</td>
-      <td>${it.itemName || '—'}</td>
-      <td>${isDiaItem ? (it.diamondCent || '—') : (it.design || '—')}</td>
+      <td>${properCase(it.itemName) || '—'}</td>
+      <td>${isDiaItem ? (it.diamondCent || '—') : (properCase(it.design) || '—')}</td>
       <td>${isDiaItem ? (it.diamondQuality || '—') : (it.tunch || '—')}</td>
       <td>${it.weight || '—'}</td>
       <td style="white-space:nowrap;">${photoBtn}</td>
@@ -14606,7 +14606,20 @@ async function stockTagCacheRefresh() {
     const map = {};
     (stockResult.value.rows || []).forEach(r => {
       const tagN = stockNormTag(r.tagNo);
-      if (tagN) map[tagN] = { counter: r.counter || '', productName: r.productName || '', design: r.design || '', type: r.type || '' };
+      // v-fix (BRO: "outlet issue lo tag no enter chesi search cheste, konni fieldlu auto fill
+      // avvatledu" — the bulk refresh used to keep only counter/productName/design/type, dropping
+      // Tunch/Weight/Gross/Net/Carat/Clarity/Color/Cert No entirely, so an OFFLINE (cache-only)
+      // autofill always left those blank even though the live lookup filled them fine. listStock
+      // already returns all of these for free (no extra Drive read like the photo needs), so there's
+      // no reason not to cache them too. Photo is deliberately NOT bulk-cached here — listStock never
+      // fetches photoData (a live Drive read per item, too slow for thousands of rows at once); a
+      // tag's photo gets cached the moment it's individually looked up or freshly entered instead —
+      // see the two stockTagCacheAdd(...) calls below that DO include photoData.
+      if (tagN) map[tagN] = {
+        counter: r.counter || '', productName: r.productName || '', design: r.design || '', type: r.type || '',
+        tunch: r.tunch || '', weight: r.weight || '', gross: r.gross || '', net: r.net || '',
+        carat: r.carat || '', clarity: r.clarity || '', color: r.color || '', certNo: r.certNo || ''
+      };
     });
     STOCK_TAG_CACHE = map;
     stockTagCacheSaveLocal();
@@ -14719,8 +14732,8 @@ function rdrRenderPendingList(who, rows) {
     <div class="dsr-receipt-card" style="margin-bottom:8px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🏷️ ${escHtml(r.tagNo || '—')}</span><span class="kd-pill ${r.status === 'Damage' ? 'red' : 'gold'}">${escHtml(r.status || '')}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${escHtml(r.productName || '')}${r.design ? ' — ' + escHtml(r.design) : ''}</div>
-        <div class="dsr-meta-row">🏬 ${escHtml(r.counter || 'Main Hub')} &nbsp;·&nbsp; 📅 Sent: ${fmtDMY(r.soldDate || '')}</div>
+        <div class="dsr-cust-name">${escHtml(properCase(r.productName) || '')}${r.design ? ' — ' + escHtml(properCase(r.design)) : ''}</div>
+        <div class="dsr-meta-row">🏬 ${escHtml(properCase(r.counter) || 'Main Hub')} &nbsp;·&nbsp; 📅 Sent: ${fmtDMY(r.soldDate || '')}</div>
       </div>
       <button class="btn-primary" style="margin:10px 14px 12px;width:calc(100% - 28px);" onclick="rdrReceiveBack('${who}','${escJs(r.tagNo)}')">✅ Received Back — Add to Stock</button>
     </div>`).join('');
@@ -14859,7 +14872,16 @@ async function dsrfTagLookup(who, eid, kind) {
   // down to exactly one of these three, dropping the counter name / DSR ID / "you can edit" notes
   // that used to pad it out, whether the answer came from the live server or the offline cache).
   const applyFromCache = (cached) => {
-    dsrfApplyStockItem(who, eid, { type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter }, tagN);
+    // v-fix (BRO: "konni fieldlu auto fill avvatledu... aa data local cache lo save aina data nundi
+    // vastundi" — pass through every field now kept in the cache (Tunch/Weight/Gross/Net/Carat/
+    // Clarity/Color/Cert No/Photo), not just Product/Design/Counter/Type, so the instant cache-based
+    // fill is just as complete as the live-lookup fill used to be.
+    dsrfApplyStockItem(who, eid, {
+      type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter,
+      tunch: cached.tunch, weight: cached.weight, gross: cached.gross, net: cached.net,
+      carat: cached.carat, clarity: cached.clarity, color: cached.color, certNo: cached.certNo,
+      photoData: cached.photoData
+    }, tagN);
     const kNow = cached.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
     dsrfTagMsg(otherIds.msg, 'info', '');
@@ -14897,7 +14919,17 @@ async function dsrfTagLookup(who, eid, kind) {
   if (res.status === 'instock') {
     const it = res.item || {};
     dsrfApplyStockItem(who, eid, it, tagN);
-    stockTagCacheAdd(tagN, { counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type });
+    // v-fix (BRO: "auto fill ayyelaga chei with photo tho patu, aa data local cache lo save aina data
+    // nundi vastundi" — cache the FULL item (every field dsrfApplyStockItem can fill, plus the photo
+    // that this withPhoto=1 lookup already fetched) so the NEXT time this tag is typed — even fully
+    // offline — every field including the photo fills in instantly from cache, not just Product/
+    // Design/Counter/Type like before.
+    stockTagCacheAdd(tagN, {
+      counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type,
+      tunch: it.tunch || '', weight: it.weight || '', gross: it.gross || '', net: it.net || '',
+      carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || '',
+      photoData: it.photoData || ''
+    });
     // the message belongs to whichever block (Gold / Diamond) is showing now
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
@@ -14984,7 +15016,7 @@ async function slRenderToday(box) {
       html += `<div class="sl-card" style="cursor:default;margin-bottom:10px;">
         <div class="sl-ct">${escHtml(c.counter)} <span style="font-weight:600;color:var(--dmuted,#7D6E8C);font-size:12px;">— ${c.pcs} pcs · ${slFmtWt(c.wt)} gm</span></div>
         <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag</th><th>Product</th><th>Type</th><th>Wt</th><th>Qty</th><th>Entry</th><th>By</th></tr></thead><tbody>` +
-        c.rows.map(r => `<tr><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.entryType)}</td><td>${escHtml(r.enteredBy)}</td></tr>`).join('') +
+        c.rows.map(r => `<tr><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(properCase(r.productName))}</td><td>${escHtml(r.type)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.entryType)}</td><td>${escHtml(properCase(r.enteredBy))}</td></tr>`).join('') +
         `</tbody></table></div></div>`;
     });
     box.innerHTML = html;
@@ -15003,7 +15035,7 @@ async function slRenderFailed(box) {
     SL.failedRows = res.rows;
     box.innerHTML = `<div class="kd-note">${res.rows.length} item(s) could not be saved automatically — usually a duplicate or already-sold tag typed while offline.</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag</th><th>Product</th><th>Type</th><th>Employee</th><th>Entry Date</th><th>Reason</th><th>Logged</th><th></th></tr></thead><tbody>` +
-      res.rows.map((r,i) => `<tr><td><b>${escHtml(r.tagNo||'—')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.employeeName)}</td><td>${fmtDMY(r.entryDate)}</td><td style="color:var(--red);">${escHtml(r.reason)}</td><td><small>${escHtml(r.loggedAt)}</small></td><td><button class="btn-sm" onclick="slResolveFailed(${i})" title="Mark resolved">✓</button></td></tr>`).join('') +
+      res.rows.map((r,i) => `<tr><td><b>${escHtml(r.tagNo||'—')}</b></td><td>${escHtml(properCase(r.productName))}</td><td>${escHtml(r.type)}</td><td>${escHtml(properCase(r.employeeName))}</td><td>${fmtDMY(r.entryDate)}</td><td style="color:var(--red);">${escHtml(r.reason)}</td><td><small>${escHtml(r.loggedAt)}</small></td><td><button class="btn-sm" onclick="slResolveFailed(${i})" title="Mark resolved">✓</button></td></tr>`).join('') +
       '</tbody></table></div>';
   } catch (e) { slError(box, null); }
 }
@@ -15073,7 +15105,7 @@ async function slPrintReport() {
       <div class="sec-hd">${escHtml(c.counter)} — ${c.pcs} pcs</div>
       <table>
         <thead><tr><th>Tag No</th><th>Product Name</th><th>Design</th><th>Type</th><th>Weight (gm)</th></tr></thead>
-        <tbody>${c.rows.map(r => `<tr><td>${escHtml(r.tagNo || 'Non Tag')}</td><td>${escHtml(r.productName)}</td><td>${escHtml(r.design || '—')}</td><td>${escHtml(r.type)}</td><td class="num">${slFmtWt(r.weight)}</td></tr>`).join('')}</tbody>
+        <tbody>${c.rows.map(r => `<tr><td>${escHtml(r.tagNo || 'Non Tag')}</td><td>${escHtml(properCase(r.productName))}</td><td>${escHtml(properCase(r.design) || '—')}</td><td>${escHtml(r.type)}</td><td class="num">${slFmtWt(r.weight)}</td></tr>`).join('')}</tbody>
       </table>
     </div>`).join('');
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Stock Report — ${escHtml(res.date)}</title>
@@ -15224,7 +15256,7 @@ async function slLoadCounterDetail() {
     const showDesign = !!res.byDesign;
     body.innerHTML = `<div class="kd-note">${res.rows.length} ${showDesign ? 'design(s)' : 'product(s)'} · ${tp} pcs · ${slFmtWt(tw)} gm</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${showDesign ? '<th>Design</th>' : ''}<th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
-      res.rows.map(r => `<tr><td><b>${escHtml(r.product)}</b></td>${showDesign ? `<td>${escHtml(r.design || '—')}</td>` : ''}<td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
+      res.rows.map(r => `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${showDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
       `<tr><td><b>Total</b></td>${showDesign ? '<td></td>' : ''}<td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
     showExportBtn(slBox().id);
   } catch (e) { slError(body, null); }
@@ -15360,7 +15392,7 @@ async function slLoadLedger() {
     let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Closing</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th></tr></thead><tbody>`;
     list.forEach(r => {
       const retCell = r.ret > 0 ? `<a href="#" onclick="slShowRdrDetail('${escJs(r.key)}','${dateVal}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--red);font-weight:800;text-decoration:underline;">${r.ret}</a>` : r.ret;
-      html += `<tr><td><b>${escHtml(r.product)}</b></td>${byDesign ? `<td>${escHtml(r.design || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td></tr>`;
+      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td></tr>`;
     });
     html += '</tbody></table></div>';
     body.innerHTML = html;
@@ -15423,13 +15455,13 @@ async function slLoadSales() {
     const tagCell = (r, idx) => r.photo
       ? `<a href="javascript:void(0)" onclick="slViewSalePhoto(${idx})" style="color:var(--purple-mid,var(--purple));text-decoration:underline;font-weight:700;cursor:pointer;">${escHtml(r.tagNo || 'Non Tag')}</a>`
       : `<b>${escHtml(r.tagNo || 'Non Tag')}</b>`;
-    const rowHtml = (r, idx) => `<tr><td>${fmtDMY(r.soldDate)}</td><td>${tagCell(r, idx)}</td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${typeBadge(r)}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${escHtml(r.payStatus)}</td></tr>`;
+    const rowHtml = (r, idx) => `<tr><td>${fmtDMY(r.soldDate)}</td><td>${tagCell(r, idx)}</td><td>${escHtml(properCase(r.productName))}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${typeBadge(r)}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(properCase(r.soldBy))}</td><td>${escHtml(r.payStatus)}</td></tr>`;
     let html = `<div class="kd-note"><b>${res.pcs}</b> pcs sold · <b>${slFmtWt(res.wt)}</b> gm (${fmtDMY(s)}${s !== e ? ' – ' + fmtDMY(e) : ''})</div>`;
     if (!res.rows.length) html += '<div class="empty-state"><p>No sales in this period.</p></div>';
     else html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>Sale Type</th><th>DSR ID</th><th>Employee</th><th>Status</th></tr></thead><tbody>${res.rows.map((r, idx) => rowHtml(r, idx)).join('')}</tbody></table></div>`;
     if (res.returned && res.returned.length) {
       html += `<div class="kd-note" style="margin-top:14px;">↩ Returned later (${res.returned.length})</div>
-      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Sold</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Returned On</th></tr></thead><tbody>${res.returned.map(r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(r.soldBy)}</td><td>${fmtDMY(r.returnedOn)}</td></tr>`).join('')}</tbody></table></div>`;
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Sold</th><th>Tag No</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt (gm)</th><th>Qty</th><th>DSR ID</th><th>Employee</th><th>Returned On</th></tr></thead><tbody>${res.returned.map(r => `<tr><td>${fmtDMY(r.soldDate)}</td><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(properCase(r.productName))}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.dsrId)}</td><td>${escHtml(properCase(r.soldBy))}</td><td>${fmtDMY(r.returnedOn)}</td></tr>`).join('')}</tbody></table></div>`;
     }
     body.innerHTML = html;
     if (res.rows.length) showExportBtn(slBox().id);
@@ -15455,7 +15487,7 @@ async function slTagSearch() {
     const it = res.item || {};
     const sold = res.status === 'sold';
     const statusText = sold
-      ? `<span class="kd-pill red">SOLD</span> &nbsp;DSR <b>${escHtml(res.sold.dsrId)}</b> · ${fmtDMY(res.sold.soldDate)} · ${escHtml(res.sold.soldBy)} · ${escHtml(res.sold.payStatus)}`
+      ? `<span class="kd-pill red">SOLD</span> &nbsp;DSR <b>${escHtml(res.sold.dsrId)}</b> · ${fmtDMY(res.sold.soldDate)} · ${escHtml(properCase(res.sold.soldBy))} · ${escHtml(res.sold.payStatus)}`
       : `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(it.productFrom === 'Main' ? 'Main (Hub)' : it.counter)}</b>`;
     let saleRow = null;
     // Sold via a real DSR (not a Wholesale "WS..." sale, which has no DSR record to look up) — pull the
@@ -15792,7 +15824,7 @@ function slPhotoZoomBy(delta) { if (window.__slPhotoZoomBy) window.__slPhotoZoom
 // where available; falls back to copying the link, then to opening it in a new tab. ----
 async function slSharePhoto() {
   const r = SLPHOTO.items[SLPHOTO.openIdx]; if (!r || !r.photo) return;
-  const title = (r.tagNo || r.productName || 'Photo') + ' — VSR GOLD';
+  const title = (r.tagNo || properCase(r.productName) || 'Photo') + ' — VSR GOLD';
   const url = r.photo;
   if (navigator.share) {
     try { await navigator.share({ title, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
@@ -15818,7 +15850,7 @@ function slRenderPhotoStage() {
   const alt = dsrPhotoViewUrl(r.photo);
   img.onerror = () => { if (img.src !== alt) img.src = alt; };
   img.src = full;
-  lbl.textContent = (r.tagNo || r.productName || 'Item') + '  ·  ' + (SLPHOTO.openIdx + 1) + ' / ' + SLPHOTO.items.length + (r.status === 'sold' ? '  ·  SOLD' : '  ·  IN STOCK');
+  lbl.textContent = (r.tagNo || properCase(r.productName) || 'Item') + '  ·  ' + (SLPHOTO.openIdx + 1) + ' / ' + SLPHOTO.items.length + (r.status === 'sold' ? '  ·  SOLD' : '  ·  IN STOCK');
   if (box) { box.style.display = 'none'; }
 }
 function slPhotoInfoHtml(r) {
@@ -15836,8 +15868,8 @@ function slPhotoInfoHtml(r) {
   // AVALI, BANGLE SIZE RING SIZE KUDA BOLD AVALI" — Tag No and whichever size field applies get the
   // highlighted/bold treatment (the 3rd item in each row below).
   const rows = [
-    ['Tag No', r.tagNo || '—', true], ['Product', r.productName],
-    !isDia ? ['Design', r.design] : null, !isDia ? ['Tunch', r.tunch] : null,
+    ['Tag No', r.tagNo || '—', true], ['Product', properCase(r.productName)],
+    !isDia ? ['Design', properCase(r.design)] : null, !isDia ? ['Tunch', r.tunch] : null,
     !isDia ? ['Weight (gm)', r.weight] : null,
     isDia ? ['Gross Wt', r.gross] : null, isDia ? ['Net Wt', r.net] : null,
     isDia ? ['Carat', r.carat] : null, isDia ? ['Clarity', r.clarity] : null, isDia ? ['Color', r.color] : null,
@@ -15874,7 +15906,7 @@ async function slLoadManage() {
     if (!SL.rows.length) { body.innerHTML = '<div class="empty-state"><p>No stock found.</p></div>'; return; }
     body.innerHTML = `<div class="kd-note">Showing ${SL.rows.length} of ${res.total} (newest first)</div>
       <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag</th><th>Product</th><th>Type</th><th>Counter</th><th>Wt</th><th>Qty</th><th>Entry</th><th>Action</th></tr></thead><tbody>` +
-      SL.rows.map((r, i) => `<tr><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(r.productName)}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.entryType)}<br><small>${fmtDMY(r.entryDate)}</small></td>
+      SL.rows.map((r, i) => `<tr><td><b>${escHtml(r.tagNo || 'Non Tag')}</b></td><td>${escHtml(properCase(r.productName))}</td><td>${escHtml(r.type)}</td><td>${escHtml(r.counter)}</td><td style="text-align:right;">${slFmtWt(r.weight)}</td><td style="text-align:center;">${r.qty}</td><td>${escHtml(r.entryType)}<br><small>${fmtDMY(r.entryDate)}</small></td>
         <td style="white-space:nowrap;"><button class="btn-sm" onclick="slEditRow(${i})">✏️</button> ${r.tagStatus === 'Non Tag' ? `<button class="btn-sm" onclick="slSellRow(${i})" title="Mark sold">💰</button> ` : ''}<button class="btn-sm" onclick="slDeleteRow(${i})" style="color:var(--red);">🗑️</button></td></tr>`).join('') +
       '</tbody></table></div>';
   } catch (e) { slError(body, null); }
@@ -15931,7 +15963,7 @@ async function slSaveEdit(i) {
 }
 async function slDeleteRow(i) {
   const r = SL.rows[i]; if (!r) return;
-  if (!confirm('Delete this stock entry?\n\n' + (r.tagNo || 'Non Tag') + ' — ' + r.productName + ' (' + r.stockId + ')\n\nThis cannot be undone (it is written to the Audit Log sheet).')) return;
+  if (!confirm('Delete this stock entry?\n\n' + (r.tagNo || 'Non Tag') + ' — ' + properCase(r.productName) + ' (' + r.stockId + ')\n\nThis cannot be undone (it is written to the Audit Log sheet).')) return;
   try {
     const res = await slPost({ action: 'adminDelete', stockId: r.stockId });
     if (res && res.ok) { toast('Deleted', 'success'); slLoadManage(); } else toast((res && res.error) || 'Delete failed', 'error');
@@ -15939,7 +15971,7 @@ async function slDeleteRow(i) {
 }
 function slSellRow(i) {
   const r = SL.rows[i]; if (!r) return;
-  slOpenModal(`<div class="modal-title">💰 Mark sold — ${escHtml(r.productName)}</div>
+  slOpenModal(`<div class="modal-title">💰 Mark sold — ${escHtml(properCase(r.productName))}</div>
     <div class="kd-note">In stock: ${r.qty} pcs · ${slFmtWt(r.weight)} gm (Non Tag item, so it is marked sold manually)</div>
     ${slField('sellQty', 'Quantity sold', r.qty, 'number')}${slField('sellWt', 'Weight sold (gm)', r.weight)}${slField('sellDate', 'Sold date', toYMD(new Date()), 'date')}${slField('sellNote', 'Bill / note (optional)', '')}
     <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="slSaveSell(${i})">Mark sold</button>`);
@@ -19780,10 +19812,10 @@ function dsrIdSearch(who) {
 // Level's Tag Status tab — reused by both, so a tag search never shows a different answer depending on
 // which section it was searched from.
 function slStockLookupCardHtml(it, statusText) {
-  const rows = [['Type', it.type], ['Product', it.productName], ['Design', it.design], ['Tunch', it.tunch], ['Weight (gm)', it.weight],
+  const rows = [['Type', it.type], ['Product', properCase(it.productName)], ['Design', properCase(it.design)], ['Tunch', it.tunch], ['Weight (gm)', it.weight],
     ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''], ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
     ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length],
-    ['Product From', it.productFrom], ['Counter', it.counter], ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', it.enteredBy]]
+    ['Product From', it.productFrom], ['Counter', it.counter], ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', properCase(it.enteredBy)]]
     .filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
   return `<div class="kd-card" style="padding:14px;margin-bottom:10px;">
     <div style="margin-bottom:10px;">${statusText}</div>
@@ -19846,7 +19878,7 @@ function dsrMergedTagCardHtml(it, statusText, saleRow, idx, who) {
   tableRows += `<tr><td class="lbl">Photo</td><td class="val">${photoCell}</td></tr>`;
 
   const specRows = [
-    ['Type', it.type], ['Tag No', it.tagNo], ['Product', it.productName], ['Design', it.design], ['Tunch', it.tunch],
+    ['Type', it.type], ['Tag No', it.tagNo], ['Product', properCase(it.productName)], ['Design', properCase(it.design)], ['Tunch', it.tunch],
     ['Weight (gm)', it.weight], ['Gross / Net (gm)', it.gross ? (it.gross + ' / ' + it.net) : ''],
     ['Carat', it.carat], ['Clarity / Color', [it.clarity, it.color].filter(Boolean).join(' / ')],
     ['Certificate No', it.certNo], ['Bangle Size', it.bangleSize], ['Ring Size', it.ringSize], ['Length', it.length]
@@ -19855,21 +19887,21 @@ function dsrMergedTagCardHtml(it, statusText, saleRow, idx, who) {
 
   const stockOnlyRows = [
     ['Product From', it.productFrom], ['Counter', it.counter],
-    ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', it.enteredBy]
+    ['Entry', (it.entryType || '') + (it.entryDate ? ' · ' + fmtDMY(it.entryDate) : '')], ['Entered By', properCase(it.enteredBy)]
   ].filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
   tableRows += stockOnlyRows.map(r => `<tr><td class="lbl">${escHtml(r[0])}</td><td class="val">${escHtml(r[1])}</td></tr>`).join('');
 
   if (saleRow) {
     const saleRows = [
-      ['DSR No', saleRow.dsrId], ['Bill Date', dt(saleRow.billDate)], ['Sold By', saleRow.employeeName],
-      ['Customer', saleRow.customerName], ['Mobile', saleRow.mobileNumber], ['Address', saleRow.address],
+      ['DSR No', saleRow.dsrId], ['Bill Date', dt(saleRow.billDate)], ['Sold By', properCase(saleRow.employeeName)],
+      ['Customer', properCase(saleRow.customerName)], ['Mobile', (saleRow.mobileNumber && saleRow.mobileNumber !== R) ? fmtPhone(saleRow.mobileNumber) : saleRow.mobileNumber], ['Address', properCase(saleRow.address)],
       ['Bill No', saleRow.billNo], ['Payment Status', saleRow.paymentStatus],
       saleRow.returnDate ? ['Return Date', dt(saleRow.returnDate)] : null
     ].filter(Boolean);
     tableRows += saleRows.map(r => `<tr><td class="lbl">${escHtml(r[0])}</td><td class="val">${dsrSearchCellHtml(r[1])}</td></tr>`).join('');
   }
 
-  const headTxt = (it.tagNo || it.productName || (saleRow && saleRow.productName) || 'Item') + (it.type ? ' · ' + it.type : '');
+  const headTxt = (it.tagNo || properCase(it.productName) || (saleRow && properCase(saleRow.productName)) || 'Item') + (it.type ? ' · ' + it.type : '');
   const returnBtn = saleRow
     ? `<div class="btn-row" style="margin-top:10px;justify-content:center;"><button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Return / Replace</button></div>`
     : '';
@@ -19948,10 +19980,10 @@ function dsrTagResultCardHtml(r, idx, who) {
   if (isAdm) {
     const isDia = r.type === 'Diamond', isSil = r.type === 'Silver', isGold = !isDia && !isSil;
     rows = [
-      ['DSR No', r.dsrId], ['Bill Date', dt(r.billDate)], ['Employee', r.employeeName],
-      ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
-      ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', r.productName],
-      isGold ? ['Design', r.design] : null,
+      ['DSR No', r.dsrId], ['Bill Date', dt(r.billDate)], ['Employee', properCase(r.employeeName)],
+      ['Customer', properCase(r.customerName)], ['Mobile', r.mobileNumber === R ? r.mobileNumber : fmtPhone(r.mobileNumber)], ['Address', properCase(r.address)],
+      ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', properCase(r.productName)],
+      isGold ? ['Design', properCase(r.design)] : null,
       isGold ? ['Tunch', r.tunch] : null,
       (isDia && r.diamondCent) ? ['Cent', r.diamondCent] : null,          // old records only — no longer asked in the form
       (isDia && r.diamondQuality) ? ['Quality', r.diamondQuality] : null, // old records only
@@ -19973,9 +20005,9 @@ function dsrTagResultCardHtml(r, idx, who) {
     // those two only — see dsrMaskEntry_). Return Date only shows up as a row at all when the item was
     // genuinely returned (server sends it blank otherwise, never "Restricted").
     rows = [
-      ['DSR No', r.dsrId], ['Bill Date', dt(r.billDate)], ['Employee', r.employeeName],
-      ['Customer', r.customerName], ['Mobile', r.mobileNumber], ['Address', r.address],
-      ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', r.productName],
+      ['DSR No', r.dsrId], ['Bill Date', dt(r.billDate)], ['Employee', properCase(r.employeeName)],
+      ['Customer', properCase(r.customerName)], ['Mobile', r.mobileNumber === R ? r.mobileNumber : fmtPhone(r.mobileNumber)], ['Address', properCase(r.address)],
+      ['Type', r.type], ['Tag No', r.tagNo], ['Item Name', properCase(r.productName)],
       ['Weight', r.weight], ['Bill No', r.billNo], ['Payment Status', r.paymentStatus],
       r.returnDate ? ['Return Date', dt(r.returnDate)] : null
     ].filter(Boolean);
@@ -19994,8 +20026,8 @@ function dsrTagResultCardHtml(r, idx, who) {
   tableRows = `<tr><td class="lbl">Photo</td><td class="val">${photoCell}</td></tr>` + tableRows;
 
   const headTxt = isAdm
-    ? ((r.tagNo || r.productName || ('DSR ' + (r.dsrId || ''))) + (r.type ? ' · ' + r.type : ''))
-    : (r.productName || 'Item');
+    ? ((r.tagNo || properCase(r.productName) || ('DSR ' + (r.dsrId || ''))) + (r.type ? ' · ' + r.type : ''))
+    : (properCase(r.productName) || 'Item');
 
   return `<div class="card" style="margin-bottom:12px;">
     <div class="tag-grid-wrap"><table class="tag-grid">
