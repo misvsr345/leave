@@ -4117,6 +4117,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
+<!-- Modal: Duplicate Tag No Entry Alert — BRO: "duplicate tag entry elert in dsr or other area, alert
+     mail ravlia mis ki and portal lo kuda pop ravali... tag no and emp name date tho ravali." -->
+<div class="modal-overlay" id="dupAlertModal">
+  <div class="modal-box" style="max-width:560px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title" style="color:var(--red);">⚠️ Duplicate Tag No Entries</div>
+    <div class="modal-sub">Same Tag No entered a second time — usually an offline entry that missed the live "already sold" check. MIS has also been emailed.</div>
+    <div id="dupAlertModalBody"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="dismissDupAlertModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Loyalty Employee Detail — tap a row on "All Employees" to see
      that employee's full card timeline + stats (merges what used to be
      the separate "Employee Timeline" screen). -->
@@ -21876,6 +21889,33 @@ async function loadAdminDashboardHub(force) {
 
   fetchDashSection('sheets', force);
   fetchDashSection('leads', force);
+  checkDuplicateAlertsPortal_();
+}
+
+// v-add (BRO: "duplicate tag entry elert in dsr or other area, alert mail ravlia mis ki and portal lo
+// kuda pop ravali... tag no and emp name date tho ravali." — DSRBackend.gs already logs + emails MIS the
+// moment a duplicate Tag No entry is caught at Stock sync time; this just pops it up here too, for the
+// admin opening the dashboard. Only alerts newer than the last one already shown (remembered in
+// localStorage) trigger the popup, so the same alert never shows twice.
+let DUP_ALERTS_PORTAL_CACHE = [];
+async function checkDuplicateAlertsPortal_() {
+  try {
+    const lastSeen = parseInt(localStorage.getItem('vsrDupAlertLastSeenTs') || '0', 10) || 0;
+    const res = await _fetchWithTimeout(DSR_GAS_URL + '?action=duplicateAlerts&sinceTs=' + lastSeen + '&limit=50', {}, 20000).then(r => r.json());
+    if (!res || !res.ok || !res.alerts || !res.alerts.length) return;
+    DUP_ALERTS_PORTAL_CACHE = res.alerts;
+    const body = document.getElementById('dupAlertModalBody');
+    if (!body) return;
+    body.innerHTML = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Employee</th><th>Date</th><th>New DSR</th><th>Already Sold In</th></tr></thead><tbody>` +
+      DUP_ALERTS_PORTAL_CACHE.map(a => `<tr><td><b>${escHtml(a.tagNo || '—')}</b></td><td>${escHtml(properCase(a.employee) || '—')}</td><td>${escHtml(fmtDMY(a.billDate))}</td><td>${escHtml(a.newDsrId || '—')}</td><td>${escHtml(a.collidingDsrId || '—')}</td></tr>`).join('') +
+      '</tbody></table></div>';
+    openModal('dupAlertModal');
+  } catch (e) {}
+}
+function dismissDupAlertModal() {
+  const maxTs = DUP_ALERTS_PORTAL_CACHE.reduce((m, a) => Math.max(m, a.ts || 0), 0);
+  if (maxTs) { try { localStorage.setItem('vsrDupAlertLastSeenTs', String(maxTs)); } catch (e) {} }
+  closeModal('dupAlertModal');
 }
 
 // One place that knows how to fetch each logical section and where its
