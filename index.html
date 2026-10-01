@@ -15395,6 +15395,14 @@ async function slLoadLedger() {
     const rdrRowsOn = (key, d) => (ledgerData.rdr || []).filter(o => o.date === d && resolveKey_(o) === key);
     const rdrOn = (key, d) => rdrRowsOn(key, d).length;
     SL_LEDGER_RDR_ROWS[dateVal] = ledgerData.rdr || [];
+    // v-add (BRO: "opening stock coutn and closing stock count different undi ante day lo sale or
+    // receved, or return or outlet issue edo okati jarigi untundi kada bro. adi kuda clear ga teliyali
+    // kada" — whenever Opening and Closing differ, the reason should be visible on the row, not just
+    // in the numbers. This Receiving column counts the exact same inbound Entry Types the math above
+    // (receivingUpto) already counts — "Receiving Stock", "Return" (an item physically back in stock)
+    // and "Damage Receive" (a Return/Damage/Repair item received back) — so anything that moves
+    // Closing always shows up here.
+    const receivingOn = (key, d) => entryRows.filter(r => (r.entryType === 'Receiving Stock' || r.entryType === 'Return' || r.entryType === 'Damage Receive') && r.entryDate === d && groupKey_(r.productName, r.design) === key).reduce((s, r) => s + slLedgerRowQty_(r), 0);
 
     // v-fix (BRO: "tag no ki lookup chesi count cheste saripotundi kada" — for TODAY, closing doesn't
     // need to be rebuilt from the whole transaction history: the live Stock snapshot (SL_LEDGER_STOCK,
@@ -15417,16 +15425,19 @@ async function slLoadLedger() {
       const closingPrev = base + receivingUpto(key, prevDate) - saleUpto(key, prevDate) - outletUpto(key, prevDate) - rdrUpto(key, prevDate);
       return {
         product: groups[key].product, design: groups[key].design, key: key,
-        opening: closingPrev, closing: closingToday,
+        opening: closingPrev, closing: closingToday, receiving: receivingOn(key, dateVal),
         sold: saleOn(key, dateVal), ret: rdrOn(key, dateVal), outlet: outletOn(key, dateVal)
       };
     }).sort((a, b) => a.product.localeCompare(b.product, undefined, { numeric: true, sensitivity: 'base' }) || a.design.localeCompare(b.design, undefined, { numeric: true, sensitivity: 'base' }));
 
     if (!list.length) { body.innerHTML = '<div class="empty-state"><p>No ledger data for this counter yet.</p></div>'; return; }
-    let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Closing</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th></tr></thead><tbody>`;
+    // v-fix (BRO: "closgin option ni chivara pettu" — Closing moved to the last column, so the row
+    // reads left-to-right as the story of the day: Opening, then everything that moved it, then
+    // Closing as the final result.
+    let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Receiving</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th><th style="text-align:center;">Closing</th></tr></thead><tbody>`;
     list.forEach(r => {
       const retCell = r.ret > 0 ? `<a href="#" onclick="slShowRdrDetail('${escJs(r.key)}','${dateVal}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--red);font-weight:800;text-decoration:underline;">${r.ret}</a>` : r.ret;
-      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td></tr>`;
+      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.receiving}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td><td style="text-align:center;">${r.closing}</td></tr>`;
     });
     html += '</tbody></table></div>';
     body.innerHTML = html;
