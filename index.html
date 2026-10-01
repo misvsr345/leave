@@ -2663,7 +2663,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
           <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('today-glance')"><span class="quick-action-icon">🖥️</span><div class="quick-action-label">Today at a Glance</div><div class="quick-action-sub">Leads, DSR, Stock, Absent, Loyalty — today</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -2708,7 +2707,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
           <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
           <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
-          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Notices, Settings &amp; more</div></div>
+          <!-- v-fix (BRO: "More unna Absent List button ni Leave seciton lopala pettu. same ala unna vere vi kuda lopala pettu" — moved in from the "☰ More" grid; both are Leave-module items (the Absent report and the Apply-Leave page's Notices editor), not general admin tools) -->
+          <div class="quick-action-btn" id="adminQAMonthlyAbsent" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
+          <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Apply-Leave page message &amp; rules</div></div>
+          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings &amp; more</div></div>
         </div>
       </div>
       <div class="card" id="adminTodayCard"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -3265,14 +3267,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360()">🔍 Search</button>
       </div>
       <div id="customer360Box"><div class="empty-state"><p>Enter a customer's mobile number to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
-    </div>
-
-    <!-- v-add (BRO's Admin "Today at a Glance" Command Center feature) -->
-    <div class="page-section" id="admin-today-glance">
-      <div class="section-hdr"><span class="section-title2">🖥️ Today at a Glance</span>
-        <span onclick="loadTodayGlance()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
-      </div>
-      <div id="todayGlanceBox"><div class="loading"><span class="spinner"></span>Loading today's summary...</div></div>
     </div>
 
     <!-- v-add (BRO's "Extra DSR" discrepancy feature) -->
@@ -3892,9 +3886,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
-        <div class="quick-action-btn" id="adminQANotices" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Edit rules</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
@@ -9246,13 +9238,6 @@ function setAbsentReportMode(mode) {
 // call failed, the rest of the page still renders normally.
 // ============================================================
 // ============================================================
-// v-add (BRO's Admin "Today at a Glance" Command Center feature): four
-// backends called in parallel — portal backend (absent/loyalty/stock-
-// variance, all read directly by todayGlanceAPI), Leads (a separate
-// Apps Script project), and DSR (a third separate project) — same
-// resilient pattern as Customer 360: one backend being slow/down only
-// blanks its own card, not the whole page.
-// ============================================================
 // v-add (BRO's "Extra DSR" discrepancy feature): defaults the date
 // range to today on first visit, then loads.
 function initExtraDsrCheck() {
@@ -9480,7 +9465,6 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📊', label: 'Dashboard', page: 'dashboard-hub' },
   { icon: '📦', label: 'Stock Level', page: 'stocklevel' },
   { icon: '➕', label: 'Stock Entry', page: 'stockentry' },
-  { icon: '🖥️', label: 'Today at a Glance', page: 'today-glance' },
   { icon: '🏖️', label: 'Leave', page: 'dashboard' },
   { icon: '👥', label: 'Leads', page: 'leads' },
   { icon: '💳', label: 'Loyalty Card', page: 'loyalty' },
@@ -9687,41 +9671,6 @@ function jumpToEmpSearchResult(page) {
   const modal = document.getElementById('empSearchModal');
   if (modal) modal.remove();
   showEmpPage(page);
-}
-
-async function loadTodayGlance() {
-  const box = document.getElementById('todayGlanceBox');
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading today\'s summary...</div>';
-
-  const [portalRes, leadsRes, dsrRes] = await Promise.allSettled([
-    jsonp({ page: 'todayGlanceJSON' }),
-    leadsApiGet({ action: 'TODAY_GLANCE_COUNT' }),
-    fetch(DSR_GAS_URL + '?action=todayGlanceCount').then(r => r.json())
-  ]);
-  const okOrNull = r => (r.status === 'fulfilled' && r.value) ? r.value : null;
-  const portal = okOrNull(portalRes), leads = okOrNull(leadsRes), dsr = okOrNull(dsrRes);
-
-  const card = (icon, label, value, sub, failed) => `<div class="card" style="text-align:center;padding:14px 10px;">
-    <div style="font-size:24px;font-weight:800;">${failed ? '—' : value}</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;">${icon} ${label}</div>
-    ${sub ? `<div style="font-size:9.5px;color:var(--text3);margin-top:2px;">${sub}</div>` : ''}
-  </div>`;
-
-  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px;">`;
-  html += card('📤', 'Leads Dispatched', leads ? leads.dispatchedToday : 0, 'today', !leads);
-  html += card('✅', 'Leads Submitted', leads ? leads.submittedToday : 0, 'today', !leads);
-  html += card('🧾', 'DSR Entries', dsr && dsr.status === 'success' ? dsr.count : 0, 'today', !dsr || dsr.status !== 'success');
-  html += card('⚠️', 'Stock Variance', portal ? portal.stockVarianceToday : 0, 'detected today', !portal);
-  html += card('💳', 'Loyalty Cards', portal ? portal.loyaltyToday : 0, 'issued today', !portal);
-  html += card('🔴', 'Absent Today', portal ? portal.absentToday.length : 0, '', !portal);
-  html += `</div>`;
-
-  if (portal && portal.absentToday && portal.absentToday.length) {
-    html += `<div class="kd-card"><div class="kd-head"><span class="kd-name">🔴 Absent Today</span></div>
-      ${portal.absentToday.map(n => `<div class="kd-note" style="margin:3px 0;">${n}</div>`).join('')}
-    </div>`;
-  }
-  box.innerHTML = html;
 }
 
 async function loadCustomer360() {
@@ -10300,7 +10249,6 @@ function showAdminPage(page, opts) {
   if(page==='notices') loadNoticesForAdmin();
   if(page==='leads') loadAdminLeadsHome();
   if(page==='dashboard-hub') loadAdminDashboardHub();
-  if(page==='today-glance') loadTodayGlance();
   if(page==='extra-dsr') initExtraDsrCheck();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
@@ -15450,7 +15398,13 @@ async function slLoadLedger() {
     let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Receiving</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th><th style="text-align:center;">Closing</th></tr></thead><tbody>`;
     list.forEach(r => {
       const retCell = r.ret > 0 ? `<a href="#" onclick="slShowRdrDetail('${escJs(r.key)}','${dateVal}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--red);font-weight:800;text-decoration:underline;">${r.ret}</a>` : r.ret;
-      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.receiving}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td><td style="text-align:center;">${r.closing}</td></tr>`;
+      // v-add (BRO: "opening and closing different 4 undi. aavi evi evi ani ela telustundi" — when
+      // Opening and Closing don't match (TODAY only), Closing is now clickable to see the actual Tag
+      // Nos sitting in stock for that Product(+Design) right now, with Entry Type/Entry Date.
+      const closingCell = (isToday && r.opening !== r.closing)
+        ? `<a href="#" onclick="slShowStockTagsDetail_('${escJs(r.key)}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--purple);font-weight:800;text-decoration:underline;">${r.closing}</a>`
+        : r.closing;
+      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.receiving}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td><td style="text-align:center;">${closingCell}</td></tr>`;
     });
     html += '</tbody></table></div>';
     body.innerHTML = html;
@@ -15472,6 +15426,24 @@ function slShowRdrDetail(key, date, productLabel, byDesign) {
   } else {
     inner += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Reason</th><th>Employee</th></tr></thead><tbody>` +
       rows.map(r => `<tr><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.reason || '—')}</td><td>${escHtml(r.employee || '—')}</td></tr>`).join('') +
+      '</tbody></table></div>';
+  }
+  inner += `<button class="btn-modal-cancel" style="width:100%;margin-top:14px;" onclick="document.getElementById('slModal').remove()">Close</button>`;
+  slOpenModal(inner);
+}
+// v-add (BRO: "opening and closing different 4 undi. aavi evi evi ani ela telustundi" — the Tag Nos
+// behind a mismatched Opening/Closing, straight from the live Stock snapshot Closing is counted from.
+function slShowStockTagsDetail_(key, productLabel, byDesign) {
+  const counter = SL.sel;
+  const rows = (SL_LEDGER_STOCK || []).filter(r => slLedgerRowCounter_(r) === counter && (byDesign ? (r.productName + '|' + String(r.design || '').trim()) : r.productName) === key)
+    .slice().sort((a, b) => new Date(b.entryDate || b.addedAt || 0) - new Date(a.entryDate || a.addedAt || 0));
+  let inner = `<div class="modal-title">📦 ${escHtml(productLabel)} — Items In Stock Now</div>
+    <div class="kd-note">${rows.length} item${rows.length === 1 ? '' : 's'} — most recently added first.</div>`;
+  if (!rows.length) {
+    inner += '<div class="empty-state"><p>No items found.</p></div>';
+  } else {
+    inner += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Entry Type</th><th>Entry Date</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.entryType || '—')}</td><td>${escHtml(fmtDMY(r.entryDate))}</td></tr>`).join('') +
       '</tbody></table></div>';
   }
   inner += `<button class="btn-modal-cancel" style="width:100%;margin-top:14px;" onclick="document.getElementById('slModal').remove()">Close</button>`;
