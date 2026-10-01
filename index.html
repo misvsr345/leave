@@ -15396,9 +15396,24 @@ async function slLoadLedger() {
     const rdrOn = (key, d) => rdrRowsOn(key, d).length;
     SL_LEDGER_RDR_ROWS[dateVal] = ledgerData.rdr || [];
 
+    // v-fix (BRO: "tag no ki lookup chesi count cheste saripotundi kada" — for TODAY, closing doesn't
+    // need to be rebuilt from the whole transaction history: the live Stock snapshot (SL_LEDGER_STOCK,
+    // same "listStock" data slLoadCounterDetail's Current Stock card uses) already IS today's true
+    // physical count, tag by tag. Old DSR data (duplicate rows, a sale recorded before Stock Level even
+    // existed for a tag that's since been reused, etc.) can never perfectly reconstruct a running total
+    // back to day one — but it doesn't need to for TODAY, since what's physically in Stock right now can
+    // just be counted directly. The additive formula is kept ONLY for a PAST date (no live snapshot
+    // exists for a day that's already gone), which is also the only place old-data gaps can still show.
+    const isToday = dateVal === toYMD(new Date());
+    function liveCount(key) {
+      return (SL_LEDGER_STOCK || []).filter(r => slLedgerRowCounter_(r) === counter && groupKey_(r.productName, r.design) === key)
+        .reduce((s, r) => s + slLedgerRowQty_(r), 0);
+    }
+
     const list = Object.keys(groups).map(key => {
       const base = baseline(key);
-      const closingToday = base + receivingUpto(key, dateVal) - saleUpto(key, dateVal) - outletUpto(key, dateVal) - rdrUpto(key, dateVal);
+      const closingToday = isToday ? liveCount(key)
+        : (base + receivingUpto(key, dateVal) - saleUpto(key, dateVal) - outletUpto(key, dateVal) - rdrUpto(key, dateVal));
       const closingPrev = base + receivingUpto(key, prevDate) - saleUpto(key, prevDate) - outletUpto(key, prevDate) - rdrUpto(key, prevDate);
       return {
         product: groups[key].product, design: groups[key].design, key: key,
