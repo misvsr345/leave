@@ -1771,9 +1771,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="leads" id="empSidebarLeads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
     <div class="vsr-sidebar-item" data-page="loyalty" id="empSidebarLoyalty" onclick="showEmpPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
     <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
+    <!-- v-fix (BRO: "DSR sectino lopala undalsina Outlet Issue and Return Damage form bayata undi" — Outlet Issue and Return/Damage/Repair are already reachable as tiles inside the DSR section (empQAOutletIssue/empQARdr below); these separate top-level sidebar entries were redundant, so removed. -->
     <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
-    <div class="vsr-sidebar-item" data-page="outletissue" id="empSidebarOutletIssue" onclick="showEmpPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
-    <div class="vsr-sidebar-item" data-page="rdr" id="empSidebarRdr" onclick="showEmpPage('rdr')"><span class="vsr-sidebar-icon">↩️</span>Return / Damage / Repair</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
@@ -2624,9 +2623,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="leads" id="adminSidebarLeads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
     <div class="vsr-sidebar-item" data-page="loyalty" id="adminSidebarLoyalty" onclick="showAdminPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
     <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
+    <!-- v-fix (BRO: "DSR sectino lopala undalsina Outlet Issue and Return Damage form bayata undi" — Outlet Issue and Return/Damage/Repair are already reachable as tiles inside the DSR section (adminQAOutletIssue/adminQARdr below); these separate top-level sidebar entries were redundant, so removed. -->
     <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
-    <div class="vsr-sidebar-item" data-page="outletissue" id="adminSidebarOutletIssue" onclick="showAdminPage('outletissue')"><span class="vsr-sidebar-icon">🏢</span>Outlet Issue</div>
-    <div class="vsr-sidebar-item" data-page="rdr" id="adminSidebarRdr" onclick="showAdminPage('rdr')"><span class="vsr-sidebar-icon">↩️</span>Return / Damage / Repair</div>
     <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
     <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
@@ -10032,8 +10030,8 @@ const SM_FEATURE_ELEMENTS = {
   // restricted admin ALWAYS saw them regardless of what MIS configured):
   pending: ['adminQAPending'],
   leads: ['adminQALeads', 'adminSidebarLeads'],
-  outletIssue: ['adminQAOutletIssue', 'adminSidebarOutletIssue'],
-  rdr: ['adminQARdr', 'adminSidebarRdr'],
+  outletIssue: ['adminQAOutletIssue'],
+  rdr: ['adminQARdr'],
   stockLevel: ['adminQAStockLevel', 'adminSidebarStockLevel']
 };
 
@@ -13052,8 +13050,8 @@ const EMP_FEATURE_ELEMENTS = {
   // points, so there's no way to independently control just one.
   // v-add (BRO: "Access Setting lo lenivi update chei" — these had real
   // employee buttons already but no permission ever gated them):
-  outletIssue: ['empQAOutletIssue', 'empSidebarOutletIssue'],
-  rdr: ['empQARdr', 'empSidebarRdr'],
+  outletIssue: ['empQAOutletIssue'],
+  rdr: ['empQARdr'],
   stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
   walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins']
 };
