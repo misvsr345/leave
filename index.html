@@ -12291,7 +12291,7 @@ function loadEomBanner(who) {
     box.style.display = 'block';
     box.className = 'bday-marquee-wrap show';
     box.style.cssText = 'background:linear-gradient(135deg,#C9A84C,#E8C766);border:2px solid var(--gold);';
-    box.innerHTML = `<div class="bday-marquee-track"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 EMPLOYEE OF THE MONTH — ${res.name} — Score: ${res.score} 🏆</span></div>`;
+    box.innerHTML = `<div class="bday-marquee-track"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 PERFORMER OF THE MONTH — ${res.name} — Score: ${res.score} 🏆</span></div>`;
   }).catch(() => { box.style.display = 'none'; box.innerHTML = ''; });
 }
 
@@ -12352,7 +12352,7 @@ function renderKpiRules(who) {
       </table>
     </div>
 
-    <div class="card-title" style="margin-top:18px;">🏆 Employee of the Month — Eligibility</div>
+    <div class="card-title" style="margin-top:18px;">🏆 Performer of the Month — Eligibility</div>
     <div class="kd-table-wrap">
       <table class="kd-table">
         <tr><th>Condition</th><th>Requirement</th></tr>
@@ -22203,7 +22203,7 @@ function renderAdminDashboardBody() {
   }
 
   // KPI — Topper name/score + conversion% (data only; gauge chart lives
-  // in Charts Overview above) + Last Month's Employee of the Month.
+  // in Charts Overview above) + Last Month's Performer of the Month.
   // Note: per request, the separate "Top Performers" ranked-list panel
   // that used to sit here has been removed entirely.
   if (kp && kp.ok && kp.thisMonth && kp.thisMonth.topper) {
@@ -22222,7 +22222,7 @@ function renderAdminDashboardBody() {
   if (kp && kp.ok && kp.lastMonthEOM && kp.lastMonthEOM.hasWinner) {
     const eom = kp.lastMonthEOM;
     html += `<div class="dh-panel" style="background:#fef3c7;--dh-accent:#1a7a4f;">
-      <div class="dh-panel-title"><span class="t">🏅 Employee of the Month — Last Month</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
+      <div class="dh-panel-title"><span class="t">🏅 Performer of the Month — Last Month</span><button class="dh-panel-view-btn" onclick="showAdminPage('kpi')">View →</button></div>
       <div style="text-align:center;padding:6px 0 4px;">
         <div style="font-size:16px;font-weight:800;color:#b8860b;">🥇 ${eom.name}</div>
         <div style="font-size:24px;font-weight:800;color:#1a7a4f;margin-top:2px;">${eom.score}</div>
