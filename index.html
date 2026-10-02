@@ -14560,6 +14560,49 @@ function stockTagHasSep(s) { return /[^A-Za-z0-9]/.test(String(s == null ? '' : 
 // letters, and never a separator (space, -, /).
 function dsrTagValid(s) { return /^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+$/.test(String(s == null ? '' : s).trim()); }
 
+// v-add (BRO: "stock level file and dsr file any new addition or deletion in all sheetslo edi modify
+// jarigina triger set chei. portal and stock phtos lo automatic ga update avali. imidiate ga avali." —
+// a fast poll (every ~8 seconds) of a tiny "did anything change" timestamp from each backend, backed by
+// an onChange trigger on each spreadsheet (StockBackend.gs's onStockSheetChange_, DSRBackend.gs's
+// onDsrSheetChange_) that stamps the current time the instant ANY sheet is edited/a row added or
+// deleted — any sheet, not just Stock/Sold or Main file. The moment either stamp moves AND the person
+// is actually sitting on a Stock Level or DSR related page, that page quietly reloads itself — same
+// page, same scroll position as close as the page's own render allows, no "reload the whole app"
+// disruption. (A plain Apps Script + static-page setup can't do true instant server push without a
+// paid push service — this polling is the closest practical equivalent, and in practice means a change
+// made on one device shows up elsewhere within a handful of seconds instead of only on next manual
+// Refresh tap.)
+var PORTAL_STOCKDSR_LIVE_PAGES = ['dsr', 'dsr-today', 'dsr-status', 'dsr-missing', 'dsr-tilldate', 'dsr-newentry',
+  'dsr-advorder', 'outletissue', 'rdr', 'stockentry', 'stocklevel', 'stocklevel-overview', 'stocklevel-counter',
+  'stocklevel-sales', 'stocklevel-tag', 'stocklevel-photos', 'stocklevel-manage', 'stocklevel-today', 'stocklevel-failed'];
+var PORTAL_LAST_SEEN_STOCK_TS = 0, PORTAL_LAST_SEEN_DSR_TS = 0;
+async function pollForStockDsrChanges_() {
+  if (!navigator.onLine) return;
+  try {
+    var results = await Promise.all([
+      fetch(STOCK_GAS_URL + '?action=lastModified').then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch(DSR_GAS_URL + '?action=lastModified').then(function (r) { return r.json(); }).catch(function () { return null; })
+    ]);
+    var stockRes = results[0], dsrRes = results[1];
+    var changed = false;
+    if (stockRes && stockRes.ok && stockRes.ts) {
+      if (PORTAL_LAST_SEEN_STOCK_TS && stockRes.ts > PORTAL_LAST_SEEN_STOCK_TS) changed = true;
+      PORTAL_LAST_SEEN_STOCK_TS = stockRes.ts;
+    }
+    if (dsrRes && dsrRes.ok && dsrRes.ts) {
+      if (PORTAL_LAST_SEEN_DSR_TS && dsrRes.ts > PORTAL_LAST_SEEN_DSR_TS) changed = true;
+      PORTAL_LAST_SEEN_DSR_TS = dsrRes.ts;
+    }
+    if (!changed) return;
+    if (state.__loginKind === 'admin' && PORTAL_STOCKDSR_LIVE_PAGES.indexOf(state._currentPage_admin) > -1) {
+      showAdminPage(state._currentPage_admin, { isBack: true });
+    } else if (state.__loginKind === 'emp' && PORTAL_STOCKDSR_LIVE_PAGES.indexOf(state._currentPage_emp) > -1) {
+      showEmpPage(state._currentPage_emp, { isBack: true });
+    }
+  } catch (e) {}
+}
+setInterval(pollForStockDsrChanges_, 8000);
+
 // ============================================================
 // STOCK TAG CACHE (BRO: "stock entry form lo already enter aina stock, sync dwara offline lo ki
 // automatic ga cache lo update avali. every new data enter aina ventane cache loki sync avali...
