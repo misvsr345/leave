@@ -5483,10 +5483,11 @@ async function checkSessionLoop_() {
 setInterval(checkSessionLoop_, 8000);
 
 // ══════════════════════════════════════
-// AUTO-LOGOUT ON IDLE — 10 minutes of no mouse/touch/keyboard activity
+// AUTO-LOGOUT ON IDLE — 1 minute of no mouse/touch/keyboard activity
 // while logged in (employee or admin) triggers an automatic logout.
+// v-fix (BRO: "1min varaku use lekapote portal automatic ga logout avali" — was 10 minutes, now 1.
 // ══════════════════════════════════════
-const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const IDLE_TIMEOUT_MS = 1 * 60 * 1000; // 1 minute
 let idleTimer = null;
 
 function resetIdleTimer() {
@@ -5502,7 +5503,7 @@ function handleIdleLogout() {
   if (!state.__loginKind) return;
   const who = state.__loginKind === 'emp' ? 'emp' : 'admin';
   logout(who);
-  toast('⏰ Logged out due to 10 minutes of inactivity', 'info');
+  toast('⏰ Logged out due to 1 minute of inactivity', 'info');
 }
 ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt => {
   document.addEventListener(evt, resetIdleTimer, { passive: true });
