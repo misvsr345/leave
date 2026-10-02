@@ -122,7 +122,7 @@
    animation at all (.btn-primary, .btn-sm, .btn-view, .filter-btn's own
    :active, and every other *btn* class in the file, present or future). */
 button, [class*="btn"] {
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
 }
 button:active:not(:disabled), [class*="btn"]:active:not(.disabled) {
   transform: scale(0.95);
@@ -135,6 +135,26 @@ button:active:not(:disabled), [class*="btn"]:active:not(.disabled) {
     transform: scale(0.95);
   }
 }
+
+/* v-add (BRO: "anni buttons kuda different different animation ravali" —
+   each major button family below gets its OWN distinct press animation
+   (defined here as keyframes, applied next to each button class further
+   down this stylesheet) instead of every button doing the same plain
+   scale-down. Any button class not specifically called out still falls
+   back to the plain scale-down above. */
+@keyframes btnPrimaryPress { 0% { transform: scale(1); box-shadow: 0 4px 15px rgba(107,33,168,0.4), 0 0 0 0 rgba(212,168,67,0.6); } 50% { transform: scale(0.95); box-shadow: 0 4px 15px rgba(107,33,168,0.4), 0 0 0 9px rgba(212,168,67,0); } 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(107,33,168,0.4), 0 0 0 0 rgba(212,168,67,0); } }
+@keyframes btnSecondaryPress { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(2px) scale(0.96); } 100% { transform: translateY(0) scale(1); } }
+@keyframes tilePress { 0% { transform: scale(1) rotate(0deg); } 40% { transform: scale(0.91) rotate(-1.2deg); } 100% { transform: scale(1) rotate(0deg); } }
+@keyframes filterPillPress { 0% { transform: scaleX(1); } 50% { transform: scaleX(0.88); } 100% { transform: scaleX(1); } }
+@keyframes iconWiggle { 0% { transform: scale(1) rotate(0deg); } 30% { transform: scale(0.9) rotate(-12deg); } 60% { transform: scale(0.97) rotate(9deg); } 100% { transform: scale(1) rotate(0deg); } }
+@keyframes viewBtnPress { 0% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.2); transform: scale(0.95); } 100% { filter: brightness(1); transform: scale(1); } }
+/* v-add (page-open "zoom in to zoom out" — BRO: "button click cheste, next
+   page open ainappudu zoom in to zoom out avali") — every page section pops
+   in slightly oversized then settles back to normal size the instant it
+   becomes active, on every single navigation (see showEmpPage/showAdminPage
+   — they always remove .active from every section then add it fresh to the
+   one being opened, so this animation replays every time). */
+@keyframes pageZoomPop { 0% { transform: scale(0.95); opacity: 0.5; } 55% { transform: scale(1.015); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 
 /* Theme presets — applied via data-theme attribute on <html>, chosen from
    the theme picker in the More menu and persisted in localStorage. */
@@ -407,6 +427,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   box-shadow: 0 4px 15px rgba(107,33,168,0.4);
 }
 .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.btn-primary:active:not(:disabled) { animation: btnPrimaryPress 0.45s ease; }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-report {
@@ -426,7 +447,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   box-shadow: 0 2px 8px rgba(107,33,168,0.1);
 }
 .btn-secondary:hover { background: var(--purple-bg); transform: translateY(-1px); }
-.btn-secondary:active { transform: scale(0.98); }
+.btn-secondary:active { animation: btnSecondaryPress 0.38s ease; }
 .walkins-quickbtn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .dh-actfilter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -438,7 +459,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   cursor: pointer; box-shadow: 0 3px 10px rgba(13,71,161,0.3); transition: all 0.15s;
 }
 .export-icon-btn:hover { transform: scale(1.08); }
-.export-icon-btn:active { transform: scale(0.95); }
+.export-icon-btn:active { animation: iconWiggle 0.45s ease; }
 
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
 
@@ -725,7 +746,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .sections-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
-.page-section.active { display: block; }
+.page-section.active { display: block; animation: pageZoomPop 0.4s ease-out; transform-origin: center top; }
 
 /* Cards */
 .card {
@@ -1024,6 +1045,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .btn-absent:hover:not(:disabled) { background: var(--orange); color: #fff; }
 .btn-view { background: #f0f0f0; color: #555; border-color: #ddd; }
 .btn-view:hover:not(:disabled) { background: #555; color: #fff; }
+.btn-view:active:not(:disabled) { animation: viewBtnPress 0.35s ease; }
 
 /* Form Styles */
 .form-row { margin-bottom: 14px; }
@@ -1237,8 +1259,8 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
    second lo tanaloga chinnaga ai close avali" — welcome popup zooms in from the
    center, holds briefly, then shrinks back down and closes on its own.) */
 #wbWelcomeModal .modal-box { animation: wbPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
-#wbWelcomeModal.wb-closing .modal-box { animation: wbPopOut 0.32s ease-in forwards; }
-#wbWelcomeModal.wb-closing { animation: wbOverlayFadeOut 0.32s ease-in forwards; }
+#wbWelcomeModal.wb-closing .modal-box { animation: wbPopOut 0.38s ease-in forwards; }
+#wbWelcomeModal.wb-closing { animation: wbOverlayFadeOut 0.38s ease-in forwards; }
 @keyframes wbPopIn { 0% { transform: scale(0.25); opacity: 0; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes wbPopOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.25); opacity: 0; } }
 @keyframes wbOverlayFadeOut { from { opacity: 1; } to { opacity: 0; } }
@@ -1296,6 +1318,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
   box-shadow: 0 1px 3px rgba(0,0,0,0.06); flex: 0 1 auto; white-space: nowrap;
 }
 .filter-btn:hover { border-color: var(--purple-mid); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(107,33,168,0.15); }
+.filter-btn:active { animation: filterPillPress 0.32s ease; }
 .filter-btn.active { background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink)); color: #fff; border-color: var(--gold); box-shadow: 0 3px 10px rgba(107,33,168,0.35); transform: translateY(-1px); }
 @media (max-width: 420px) {
   .filter-btn { font-size: 11px; height: 32px; padding: 0 12px; }
@@ -1406,6 +1429,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .quick-action-btn { background: #fff; border: 1.5px solid #ddd0ee; border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(107,33,168,0.06); }
 .quick-action-btn:hover { border-color: var(--gold); background: #faf5ff; box-shadow: 0 4px 16px rgba(107,33,168,0.18); transform: translateY(-2px); }
+.quick-action-btn:active { animation: tilePress 0.38s ease; }
 .quick-action-icon { font-size: 26px; margin-bottom: 5px; display: block; }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
@@ -4423,7 +4447,7 @@ function wbCloseWelcomePopup_() {
   const modal = document.getElementById('wbWelcomeModal');
   if (!modal.classList.contains('show')) return;
   modal.classList.add('wb-closing');
-  setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 320); // matches wbPopOut duration
+  setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 380); // matches wbPopOut duration
 }
 function todayYMD() { return toYMD(new Date()); }
 
