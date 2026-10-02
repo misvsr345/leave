@@ -5481,13 +5481,20 @@ async function checkSessionLoop_() {
   finally { SESSION_CHECK_IN_FLIGHT = false; }
 }
 setInterval(checkSessionLoop_, 8000);
+// v-fix (BRO: "okesari admin login 2 device lo login aindi" — when a phone's screen is locked
+// or the browser tab is in the background, mobile browsers pause setInterval timers, so the
+// old device's 8-second check simply stops running and never notices it got replaced until
+// it's reopened. Firing an immediate check the instant the tab/app becomes visible or gets
+// focus again closes that gap — the old device finds out and logs out as soon as it's looked at.
+document.addEventListener('visibilitychange', function () { if (!document.hidden) checkSessionLoop_(); });
+window.addEventListener('focus', checkSessionLoop_);
 
 // ══════════════════════════════════════
-// AUTO-LOGOUT ON IDLE — 1 minute of no mouse/touch/keyboard activity
+// AUTO-LOGOUT ON IDLE — 5 minutes of no mouse/touch/keyboard activity
 // while logged in (employee or admin) triggers an automatic logout.
-// v-fix (BRO: "1min varaku use lekapote portal automatic ga logout avali" — was 10 minutes, now 1.
+// v-fix (BRO: "1min mari takkuva undi, 5mins pettu auto logout chei" — was 1 minute, now 5.
 // ══════════════════════════════════════
-const IDLE_TIMEOUT_MS = 1 * 60 * 1000; // 1 minute
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 let idleTimer = null;
 
 function resetIdleTimer() {
@@ -5503,7 +5510,7 @@ function handleIdleLogout() {
   if (!state.__loginKind) return;
   const who = state.__loginKind === 'emp' ? 'emp' : 'admin';
   logout(who);
-  toast('⏰ Logged out due to 1 minute of inactivity', 'info');
+  toast('⏰ Logged out due to 5 minutes of inactivity', 'info');
 }
 ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt => {
   document.addEventListener(evt, resetIdleTimer, { passive: true });
