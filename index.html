@@ -1276,11 +1276,37 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Toast */
-.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s; max-width: 90vw; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+/* v-fix (BRO: "error place page chivara avutundi, dani valla hide ai sariga
+   kanapadam ledu, chala lenthy ga untunnai" — moved up clear of the footer
+   nav bar (was sitting at a flat 22px, low enough to overlap it on mobile),
+   given a hard max-height + scroll + word-wrap so even an unusually long
+   message can never grow tall enough to cover other content, instead of
+   relying only on the JS-side truncation above. */
+.toast { position: fixed; bottom: calc(var(--navbar-h) + 14px); left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s; max-width: 90vw; max-height: 140px; overflow-y: auto; word-break: break-word; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.success { background: var(--green); }
 .toast.error { background: var(--red); }
 .toast.info { background: var(--purple); }
+
+/* v-add (BRO: "page center lo vachi hide aipovali koni. and lenth ga kakunda
+   simple ga undali. oka pop laga ravlai. close button undali" — error messages
+   no longer sit at the page bottom as a toast; they pop up in the CENTER of the
+   screen like a small card, stay short (the 160-char cap in toast() still
+   applies), auto-hide on their own, and also carry an explicit ✕ close button
+   for whenever someone wants to dismiss it right away instead of waiting.) */
+.toast-popup-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
+.toast-popup-overlay.show { display: flex; }
+.toast-popup-box { background: #fff; border-radius: 14px; padding: 24px 22px 20px; width: 100%; max-width: 340px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative; text-align: center; animation: toastPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.toast-popup-overlay.closing .toast-popup-box { animation: toastPopOut 0.2s ease-in forwards; }
+.toast-popup-overlay.closing { animation: toastOverlayFadeOut 0.2s ease-in forwards; }
+@keyframes toastPopIn { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes toastPopOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.75); opacity: 0; } }
+@keyframes toastOverlayFadeOut { from { opacity: 1; } to { opacity: 0; } }
+.toast-popup-icon { font-size: 30px; margin-bottom: 8px; }
+.toast-popup-msg { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.45; word-break: break-word; }
+.toast-popup-box.type-error .toast-popup-msg { color: var(--red); }
+.toast-popup-box.type-success .toast-popup-msg { color: var(--green); }
+.toast-popup-box.type-info .toast-popup-msg { color: var(--text); }
 
 /* Modal */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
@@ -4368,6 +4394,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- v-add: center-screen popup used for error messages (see toast() in JS) -->
+<div class="toast-popup-overlay" id="toastPopupOverlay" onclick="if(event.target===this) closeToastPopup_();">
+  <div class="toast-popup-box" id="toastPopupBox">
+    <button class="modal-close-x" onclick="closeToastPopup_()" title="Close">✕</button>
+    <div class="toast-popup-icon" id="toastPopupIcon">⚠️</div>
+    <div class="toast-popup-msg" id="toastPopupMsg"></div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════
 // CONFIG
@@ -4743,12 +4778,55 @@ function fmtDMY(s) {
 // UTILS
 // ══════════════════════════════════════
 let toastHideTimer = null;
+// v-fix (BRO: "total portal lo error vastundi, aa error place page chivara
+// avutundi, dani valla hide ai sariga kanapadam ledu, chala lenthy ga
+// untunnai" — some error toasts were showing the full raw technical message
+// (a whole server error string, or a JS err.toString()), which could run
+// very long. Sitting fixed near the very bottom of the screen (see .toast
+// CSS), a long multi-line toast grew tall enough to visually overlap/hide
+// the footer nav bar and other bottom content. Two fixes together: (1) any
+// message longer than ~160 characters is now cut to a short, readable
+// summary instead of the full technical dump, and (2) the toast box itself
+// (see .toast CSS) now sits clear above the footer nav and caps its own
+// height with a scrollbar as a safety net, so even a long message can never
+// grow tall enough to cover anything else on screen.
+// v-fix (BRO: "page center lo vachi hide aipovali koni. and lenth ga kakunda
+// simple ga undali. oka pop laga ravlai. close button undali" — errors used to
+// be just another bottom toast, easy to miss and, before the fix above, could
+// run long. Error-type messages now show as a small CENTER-of-screen popup
+// card instead (see showToastPopup_/closeToastPopup_ below) with its own ✕
+// close button, while still auto-hiding on its own — success/info messages
+// are unaffected and keep using the quieter bottom toast bar.)
 function toast(msg, type='info') {
+  let text = String(msg == null ? '' : msg);
+  if (text.length > 160) text = text.slice(0, 157) + '...';
+  if (type === 'error') { showToastPopup_(text, type); return; }
   const t = document.getElementById('toast');
   clearTimeout(toastHideTimer); // cancel any earlier toast's hide-timer so it can't cut this one off early
-  t.textContent = msg;
+  t.textContent = text;
   t.className = 'toast ' + type + ' show';
   toastHideTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+let toastPopupHideTimer_ = null;
+function showToastPopup_(text, type) {
+  const overlay = document.getElementById('toastPopupOverlay');
+  const box = document.getElementById('toastPopupBox');
+  const icon = document.getElementById('toastPopupIcon');
+  clearTimeout(toastPopupHideTimer_);
+  overlay.classList.remove('closing');
+  box.className = 'toast-popup-box type-' + (type || 'error');
+  icon.textContent = type === 'success' ? '✅' : (type === 'info' ? 'ℹ️' : '⚠️');
+  document.getElementById('toastPopupMsg').textContent = text;
+  overlay.classList.add('show');
+  toastPopupHideTimer_ = setTimeout(closeToastPopup_, 5000); // auto-hide on its own after 5s
+}
+function closeToastPopup_() {
+  const overlay = document.getElementById('toastPopupOverlay');
+  if (!overlay.classList.contains('show')) return;
+  clearTimeout(toastPopupHideTimer_);
+  overlay.classList.add('closing');
+  setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200); // matches toastPopOut duration
 }
 
 // Same reasoning as _parseLeadsApiResponse (see LEADS SECTION below): a
@@ -4772,9 +4850,15 @@ async function _parseMainApiResponse(resp) {
 
 // Readable "which device/browser is this" summary, sent along with every
 // login attempt so MIS can see who logged in, when, and from what device
-// (Login Activity page). Best-effort from navigator — browsers don't expose
-// a real device name, so this parses userAgent into something readable
-// like "Chrome on Windows" or "Safari on iPhone".
+// (Login Activity page), AND used by the backend to tell devices apart for
+// the 2-device-per-ID session limit. Best-effort from navigator.
+// v-fix (BRO: "device name only android ani kakudan, device model like phone
+// model ravli" — a generic "Chrome on Android" doesn't tell MIS WHICH phone;
+// Android's userAgent string carries the actual model (e.g. "SM-G991B",
+// "Pixel 7") right before "Build/", so we pull that out when present and
+// show it instead of the bare OS name. iOS does not expose a model number
+// to the browser at all (Apple blocks this), so iPhone/iPad stays as-is —
+// that's a browser limitation, not something fixable from here.
 function getDeviceInfo() {
   try {
     var ua = navigator.userAgent || '';
@@ -4793,7 +4877,16 @@ function getDeviceInfo() {
     else if (/Firefox\//i.test(ua)) browser = 'Firefox';
 
     var isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-    return (isMobile ? '📱 ' : '💻 ') + browser + ' on ' + os;
+
+    // Android: "...; SM-G991B Build/..." or "...; Pixel 7)" — model sits between
+    // the last ";" before "Build/" (or the closing paren) and that marker.
+    var osLabel = os;
+    if (os === 'Android') {
+      var m = ua.match(/Android[^;]*;\s*([^;)]+?)\s*(?:Build\/|\))/i);
+      var model = m && m[1] ? m[1].trim() : '';
+      if (model && !/^(K|unknown)$/i.test(model)) osLabel = model; // fall back to "Android" if nothing usable
+    }
+    return (isMobile ? '📱 ' : '💻 ') + browser + ' on ' + osLabel;
   } catch (e) { return 'Unknown device'; }
 }
 
@@ -5413,6 +5506,13 @@ async function empLogin() {
         state.sessionToken = res.sessionToken || '';
         resetIdleTimer();
         saveSession();
+        // v-add (BRO: "2 divice lo matrame same id tho login ki avali... modata already
+        // vere device lo login undi ani popup ralvi" — only 2 devices may be logged into
+        // this ID at once; if this 3rd login just bumped an older device, say which one
+        // (actual phone model, not just "Android") in a popup right away.
+        if (res.kickedDevice) {
+          setTimeout(() => toast('⚠️ Logged out "' + res.kickedDevice + '" to sign you in here — only 2 devices can be logged in at once.', 'error'), 400);
+        }
         document.getElementById('empNameBadge').textContent = '👤 Employee Portal';
         document.getElementById('empDisplayNameBadge').textContent = '👤 ' + (state.empName || 'Employee');
         document.getElementById('loginPage').style.display = 'none';
@@ -5487,6 +5587,11 @@ async function adminLogin() {
         state.sessionToken = res.sessionToken || '';
         resetIdleTimer();
         saveSession();
+        // v-add (BRO: "2 divice lo matrame same id tho login ki avali... modata already
+        // vere device lo login undi ani popup ralvi" — same 2-device limit for Admin/MIS logins.
+        if (res.kickedDevice) {
+          setTimeout(() => toast('⚠️ Logged out "' + res.kickedDevice + '" to sign you in here — only 2 devices can be logged in at once.', 'error'), 400);
+        }
         document.getElementById('adminRoleBadge').textContent = '🛡️ Admin Portal';
         document.getElementById('adminDisplayNameBadge').textContent = '🛡️ ' + (state.adminName || 'Admin');
         document.getElementById('loginPage').style.display = 'none';
@@ -5600,7 +5705,12 @@ async function checkSessionLoop_() {
   try {
     const res = await jsonp({ page: 'checkSessionAPI', role: role, id: id, token: state.sessionToken });
     if (res && res.ok && res.valid === false) {
-      logout(state.__loginKind, '⚠️ This account was opened on another device/browser, so you were logged out here.');
+      // v-fix (BRO: "2 divice lo matrame same id tho login ki avali" — up to 2 devices can be
+      // active at once now, so THIS device only gets logged out when a 3rd device has taken its
+      // slot; res.device names whichever device(s) are now active, using the real phone model
+      // (see getDeviceInfo) instead of a generic "Android".
+      const whoStr = res.device ? (' (now active on: ' + res.device + ')') : '';
+      logout(state.__loginKind, '⚠️ This account was logged in on another device' + whoStr + ', so you were logged out here.');
     }
   } catch (e) { /* network hiccup — never log someone out just because one check failed to reach the server */ }
   finally { SESSION_CHECK_IN_FLIGHT = false; }
