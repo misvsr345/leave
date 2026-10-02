@@ -751,8 +751,13 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    aina ravali" — the SAME bouncy zoom-from-center style as the welcome
    popup's open animation, now applied on EVERY page open, every time,
    guaranteed (see pptPageTransitionIn_ below — no longer random). */
-.pt-popin { animation: pptPopIn 5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center top; }
+.pt-popin { animation: pptPopIn 2s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center top; }
 @keyframes pptPopIn { 0% { transform: scale(0.85); opacity: 0; } 70% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+/* v-fix (BRO: "side nundi page slide ainattu chei" — page now slides in from
+   the side instead of popping in from the center; see pptPageTransitionIn_
+   below, switched from pt-popin to this. */
+.pt-slidein { animation: pptSlideIn 2s cubic-bezier(0.22, 0.68, 0.36, 1); }
+@keyframes pptSlideIn { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 /* v-add (BRO: "powerpoint lo chala animation lu unnai — fly, split, flip,
    wheel, appear... konni alanti vadachu" — a handful of PowerPoint-style
    page-entrance transitions, kept available here for variety but no longer
@@ -5925,18 +5930,19 @@ function toggleSidebarGroup(role, group) {
   if (caret) caret.classList.toggle('open', !isOpen);
 }
 
-// v-fix (BRO: "Pop In / Pop Out (welcome popup la) idi every new page open
-// aina ravali" — was picking a random PowerPoint-style effect each time;
-// now ALWAYS uses the same bouncy zoom-from-center "Pop In" style as the
-// welcome popup, on every single page open, guaranteed (no more random
-// pick). The other PowerPoint-style classes stay defined in the CSS in
-// case variety is wanted again later — only the selection here changed.
-const PPT_TRANSITIONS_ = ['pt-popin'];
+// v-fix (BRO: "ivi rendu pettu. adi okasari, idi okasari animation avali" —
+// BOTH Pop In (zoom-bounce, like the welcome popup) and Slide In (from the
+// side) are used now, ALTERNATING every page open — one, then the other,
+// then back to the first, and so on — not random, a strict turn-by-turn
+// sequence via pptTransitionTurn_ below.
+const PPT_TRANSITIONS_ = ['pt-popin', 'pt-slidein'];
+let pptTransitionTurn_ = 0;
 function pptPageTransitionIn_(sec) {
   if (!sec) return;
   PPT_TRANSITIONS_.forEach(c => sec.classList.remove(c));
   void sec.offsetWidth; // force reflow so the animation restarts every time
-  const cls = 'pt-popin';
+  const cls = PPT_TRANSITIONS_[pptTransitionTurn_ % PPT_TRANSITIONS_.length];
+  pptTransitionTurn_++;
   sec.classList.add(cls);
   const cleanup = () => { sec.classList.remove(cls); sec.removeEventListener('animationend', cleanup); };
   sec.addEventListener('animationend', cleanup);
