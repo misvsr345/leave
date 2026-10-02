@@ -3200,6 +3200,25 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick a color theme for your own login (saved on this device).</p>
           <button class="btn-sm btn-view" style="width:100%;" onclick="openThemePickerModal()">🎨 Choose Theme (24 options)</button>
         </div>
+
+        <!-- v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite autunda" —
+             instead of hardcoding the auto-logout minutes in code every time, let
+             MIS/Director pick it here. Applies to every Employee + Admin login. -->
+        <div class="card">
+          <div class="card-title">⏱️ Auto-Logout Timer</div>
+          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No activity (mouse/touch/keyboard) for this long auto-logs-out any Employee or Admin login on the portal.</p>
+          <select id="idleTimeoutSelect" class="uniform-select" style="margin-bottom:10px;">
+            <option value="1">1 minute</option>
+            <option value="2">2 minutes</option>
+            <option value="3">3 minutes</option>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="60">1 hour</option>
+          </select>
+          <button class="btn-primary" style="width:100%;" onclick="saveIdleTimeoutSetting()">💾 Save Auto-Logout Timer</button>
+        </div>
       </div>
     </div>
 
@@ -5490,11 +5509,14 @@ document.addEventListener('visibilitychange', function () { if (!document.hidden
 window.addEventListener('focus', checkSessionLoop_);
 
 // ══════════════════════════════════════
-// AUTO-LOGOUT ON IDLE — 5 minutes of no mouse/touch/keyboard activity
-// while logged in (employee or admin) triggers an automatic logout.
-// v-fix (BRO: "1min mari takkuva undi, 5mins pettu auto logout chei" — was 1 minute, now 5.
+// AUTO-LOGOUT ON IDLE — no mouse/touch/keyboard activity for IDLE_TIMEOUT_MS
+// while logged in (employee or admin) triggers an automatic logout. The
+// number of minutes is a central setting (MIS/Director → Settings → Auto-
+// Logout Timer), not hardcoded — see loadIdleTimeoutSetting_() below, which
+// fetches it at app start and overwrites this default.
+// v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite autunda")
 // ══════════════════════════════════════
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+let IDLE_TIMEOUT_MS = 5 * 60 * 1000; // default 5 minutes until the saved setting loads
 let idleTimer = null;
 
 function resetIdleTimer() {
@@ -5510,7 +5532,7 @@ function handleIdleLogout() {
   if (!state.__loginKind) return;
   const who = state.__loginKind === 'emp' ? 'emp' : 'admin';
   logout(who);
-  toast('⏰ Logged out due to 5 minutes of inactivity', 'info');
+  toast('⏰ Logged out due to ' + Math.round(IDLE_TIMEOUT_MS / 60000) + ' minute(s) of inactivity', 'info');
 }
 ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt => {
   document.addEventListener(evt, resetIdleTimer, { passive: true });
@@ -8680,7 +8702,43 @@ async function loadSettingsPage() {
   document.getElementById('settingsWrap').style.display = allowed ? '' : 'none';
   if (!allowed) return;
   switchSettingsTab('emp');
+  const sel = document.getElementById('idleTimeoutSelect');
+  if (sel) sel.value = String(Math.round(IDLE_TIMEOUT_MS / 60000));
 }
+
+// v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite autunda") — MIS/Director
+// picks the auto-logout minutes here; saved centrally so every device/login picks
+// it up, instead of it being hardcoded in the portal's code.
+async function saveIdleTimeoutSetting() {
+  const sel = document.getElementById('idleTimeoutSelect');
+  const minutes = parseInt(sel.value, 10) || 5;
+  try {
+    const res = await jsonp({ page: 'saveIdleTimeout', minutes: minutes });
+    if (res && res.ok) {
+      IDLE_TIMEOUT_MS = minutes * 60 * 1000;
+      resetIdleTimer();
+      toast('✅ Auto-logout set to ' + minutes + ' minute(s)', 'success');
+    } else {
+      toast('❌ Could not save. Try again.', 'error');
+    }
+  } catch (e) {
+    toast('❌ Could not save. Try again.', 'error');
+  }
+}
+
+// Fetches the centrally-saved auto-logout minutes once at app start (and right
+// after login) so this device uses the same timeout everyone else does, instead
+// of whatever used to be hardcoded. Fails open to the existing default on any error.
+async function loadIdleTimeoutSetting_() {
+  try {
+    const res = await jsonp({ page: 'getIdleTimeout' });
+    if (res && res.ok && res.minutes) {
+      IDLE_TIMEOUT_MS = Number(res.minutes) * 60 * 1000;
+      if (state.__loginKind) resetIdleTimer();
+    }
+  } catch (e) { /* keep existing default on any failure */ }
+}
+loadIdleTimeoutSetting_();
 
 function switchSettingsTab(tab) {
   document.getElementById('settingsTab-emp').classList.toggle('active', tab === 'emp');
