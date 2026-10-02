@@ -122,7 +122,7 @@
    animation at all (.btn-primary, .btn-sm, .btn-view, .filter-btn's own
    :active, and every other *btn* class in the file, present or future). */
 button, [class*="btn"] {
-  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  transition: transform 5s ease, box-shadow 5s ease, opacity 5s ease;
 }
 button:active:not(:disabled), [class*="btn"]:active:not(.disabled) {
   transform: scale(0.95);
@@ -427,7 +427,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   box-shadow: 0 4px 15px rgba(107,33,168,0.4);
 }
 .btn-primary:hover:not(:disabled) { opacity: 0.9; }
-.btn-primary:active:not(:disabled) { animation: btnPrimaryPress 0.45s ease; }
+.btn-primary:active:not(:disabled) { animation: btnPrimaryPress 5s ease; }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-report {
@@ -447,7 +447,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   box-shadow: 0 2px 8px rgba(107,33,168,0.1);
 }
 .btn-secondary:hover { background: var(--purple-bg); transform: translateY(-1px); }
-.btn-secondary:active { animation: btnSecondaryPress 0.38s ease; }
+.btn-secondary:active { animation: btnSecondaryPress 5s ease; }
 .walkins-quickbtn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .dh-actfilter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -459,7 +459,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   cursor: pointer; box-shadow: 0 3px 10px rgba(13,71,161,0.3); transition: all 0.15s;
 }
 .export-icon-btn:hover { transform: scale(1.08); }
-.export-icon-btn:active { animation: iconWiggle 0.45s ease; }
+.export-icon-btn:active { animation: iconWiggle 5s ease; }
 
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
 
@@ -747,20 +747,25 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .sections-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
 .page-section.active { display: block; }
+/* v-add (BRO: "Pop In / Pop Out (welcome popup la) idi every new page open
+   aina ravali" — the SAME bouncy zoom-from-center style as the welcome
+   popup's open animation, now applied on EVERY page open, every time,
+   guaranteed (see pptPageTransitionIn_ below — no longer random). */
+.pt-popin { animation: pptPopIn 5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center top; }
+@keyframes pptPopIn { 0% { transform: scale(0.85); opacity: 0; } 70% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 /* v-add (BRO: "powerpoint lo chala animation lu unnai — fly, split, flip,
    wheel, appear... konni alanti vadachu" — a handful of PowerPoint-style
-   page-entrance transitions. One is picked at RANDOM each time a page opens
-   (see pptPageTransitionIn_ in the JS, called from showEmpPage/showAdminPage
-   right after .active is added) so navigation doesn't look the same every
-   time, same spirit as the different per-button press animations above. */
+   page-entrance transitions, kept available here for variety but no longer
+   used by default (pptPageTransitionIn_ now always uses pt-popin above per
+   the newer request). */
 .pt-zoom, .pt-appear, .pt-floatup, .pt-flyin, .pt-split, .pt-flip, .pt-wheel { transform-origin: center top; }
-.pt-zoom { animation: pageZoomPop 0.4s ease-out; }
-.pt-appear { animation: pptAppear 0.4s ease-out; }
-.pt-floatup { animation: pptFloatUp 0.42s ease-out; }
-.pt-flyin { animation: pptFlyIn 0.42s cubic-bezier(0.22,0.68,0.36,1); }
-.pt-split { animation: pptSplit 0.4s ease-out; }
-.pt-flip { animation: pptFlip 0.45s ease-out; perspective: 900px; }
-.pt-wheel { animation: pptWheel 0.45s ease-out; }
+.pt-zoom { animation: pageZoomPop 5s ease-out; }
+.pt-appear { animation: pptAppear 5s ease-out; }
+.pt-floatup { animation: pptFloatUp 5s ease-out; }
+.pt-flyin { animation: pptFlyIn 5s cubic-bezier(0.22,0.68,0.36,1); }
+.pt-split { animation: pptSplit 5s ease-out; }
+.pt-flip { animation: pptFlip 5s ease-out; perspective: 900px; }
+.pt-wheel { animation: pptWheel 5s ease-out; }
 @keyframes pptAppear { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pptFloatUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pptFlyIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
@@ -1065,7 +1070,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .btn-absent:hover:not(:disabled) { background: var(--orange); color: #fff; }
 .btn-view { background: #f0f0f0; color: #555; border-color: #ddd; }
 .btn-view:hover:not(:disabled) { background: #555; color: #fff; }
-.btn-view:active:not(:disabled) { animation: viewBtnPress 0.35s ease; }
+.btn-view:active:not(:disabled) { animation: viewBtnPress 5s ease; }
 
 /* Form Styles */
 .form-row { margin-bottom: 14px; }
@@ -1278,9 +1283,9 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 /* v-add (BRO: "welcome board animationlo... center nundi pedda size avali, konni
    second lo tanaloga chinnaga ai close avali" — welcome popup zooms in from the
    center, holds briefly, then shrinks back down and closes on its own.) */
-#wbWelcomeModal .modal-box { animation: wbPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
-#wbWelcomeModal.wb-closing .modal-box { animation: wbPopOut 0.38s ease-in forwards; }
-#wbWelcomeModal.wb-closing { animation: wbOverlayFadeOut 0.38s ease-in forwards; }
+#wbWelcomeModal .modal-box { animation: wbPopIn 5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
+#wbWelcomeModal.wb-closing .modal-box { animation: wbPopOut 5s ease-in forwards; }
+#wbWelcomeModal.wb-closing { animation: wbOverlayFadeOut 5s ease-in forwards; }
 @keyframes wbPopIn { 0% { transform: scale(0.25); opacity: 0; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes wbPopOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.25); opacity: 0; } }
 @keyframes wbOverlayFadeOut { from { opacity: 1; } to { opacity: 0; } }
@@ -1338,7 +1343,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
   box-shadow: 0 1px 3px rgba(0,0,0,0.06); flex: 0 1 auto; white-space: nowrap;
 }
 .filter-btn:hover { border-color: var(--purple-mid); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(107,33,168,0.15); }
-.filter-btn:active { animation: filterPillPress 0.32s ease; }
+.filter-btn:active { animation: filterPillPress 5s ease; }
 .filter-btn.active { background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink)); color: #fff; border-color: var(--gold); box-shadow: 0 3px 10px rgba(107,33,168,0.35); transform: translateY(-1px); }
 @media (max-width: 420px) {
   .filter-btn { font-size: 11px; height: 32px; padding: 0 12px; }
@@ -1449,7 +1454,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 .quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .quick-action-btn { background: #fff; border: 1.5px solid #ddd0ee; border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(107,33,168,0.06); }
 .quick-action-btn:hover { border-color: var(--gold); background: #faf5ff; box-shadow: 0 4px 16px rgba(107,33,168,0.18); transform: translateY(-2px); }
-.quick-action-btn:active { animation: tilePress 0.38s ease; }
+.quick-action-btn:active { animation: tilePress 5s ease; }
 .quick-action-icon { font-size: 26px; margin-bottom: 5px; display: block; }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
@@ -4467,7 +4472,7 @@ function wbCloseWelcomePopup_() {
   const modal = document.getElementById('wbWelcomeModal');
   if (!modal.classList.contains('show')) return;
   modal.classList.add('wb-closing');
-  setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 380); // matches wbPopOut duration
+  setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 5000); // matches wbPopOut duration
 }
 function todayYMD() { return toYMD(new Date()); }
 
@@ -5920,6 +5925,23 @@ function toggleSidebarGroup(role, group) {
   if (caret) caret.classList.toggle('open', !isOpen);
 }
 
+// v-fix (BRO: "Pop In / Pop Out (welcome popup la) idi every new page open
+// aina ravali" — was picking a random PowerPoint-style effect each time;
+// now ALWAYS uses the same bouncy zoom-from-center "Pop In" style as the
+// welcome popup, on every single page open, guaranteed (no more random
+// pick). The other PowerPoint-style classes stay defined in the CSS in
+// case variety is wanted again later — only the selection here changed.
+const PPT_TRANSITIONS_ = ['pt-popin'];
+function pptPageTransitionIn_(sec) {
+  if (!sec) return;
+  PPT_TRANSITIONS_.forEach(c => sec.classList.remove(c));
+  void sec.offsetWidth; // force reflow so the animation restarts every time
+  const cls = 'pt-popin';
+  sec.classList.add(cls);
+  const cleanup = () => { sec.classList.remove(cls); sec.removeEventListener('animationend', cleanup); };
+  sec.addEventListener('animationend', cleanup);
+}
+
 function syncSidebarActive(role, page) {
   const sidebar = document.getElementById(role + 'Sidebar');
   if (!sidebar) return;
@@ -5968,7 +5990,7 @@ function showEmpPage(page, opts) {
   document.querySelector('#empApp .page-content').classList.toggle('page-content-wide', WIDE_TABLE_PAGES.indexOf(page) > -1);
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
-  if (sec) sec.classList.add('active');
+  if (sec) { sec.classList.add('active'); pptPageTransitionIn_(sec); }
   updateBackFabs('emp', page);
   renderFooterNav('emp', page);
   syncSidebarActive('emp', page);
@@ -10466,7 +10488,7 @@ function showAdminPage(page, opts) {
   document.querySelector('#adminApp .page-content').classList.toggle('page-content-wide', WIDE_TABLE_PAGES.indexOf(page) > -1);
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
-  if (sec) sec.classList.add('active');
+  if (sec) { sec.classList.add('active'); pptPageTransitionIn_(sec); }
   updateBackFabs('admin', page);
   renderFooterNav('admin', page);
   syncSidebarActive('admin', page);
