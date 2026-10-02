@@ -8745,8 +8745,14 @@ function switchSettingsTab(tab) {
   document.getElementById('settingsTab-admin').classList.toggle('active', tab === 'admin');
   document.getElementById('settingsEmpPane').style.display = tab === 'emp' ? 'block' : 'none';
   document.getElementById('settingsAdminPane').style.display = tab === 'admin' ? 'block' : 'none';
-  if (tab === 'emp') { loadPermFeatureList('emp').then(() => { renderSettingsEmpBody(null); loadSettingsEmpList(); }); }
-  if (tab === 'admin') { loadPermFeatureList('admin').then(() => { renderSettingsAdminBody(null); loadSettingsAdminList(); }); }
+  // v-fix (BRO: "section ki vachina ventane endukuload avadam ledu, cache lo
+  // set cheyali kada" — the dropdown (employee/admin list) doesn't depend on
+  // the feature list, so it's kicked off in parallel instead of waiting for
+  // loadPermFeatureList to finish first; loadPermFeatureList itself is now
+  // localStorage-cached (see below) so it resolves instantly after the
+  // first time, instead of a fresh network round trip every visit.
+  if (tab === 'emp') { loadSettingsEmpList(); loadPermFeatureList('emp').then(() => { renderSettingsEmpBody(null); }); }
+  if (tab === 'admin') { loadSettingsAdminList(); loadPermFeatureList('admin').then(() => { renderSettingsAdminBody(null); }); }
 }
 
 // Feature/section structure (labels, keys, groupings) — cached
@@ -8758,19 +8764,35 @@ function switchSettingsTab(tab) {
 // management reports) filtered out server-side — those made no sense
 // as options MIS could tick on for a regular employee. The Admin tab
 // still gets the complete, unfiltered catalogue.
+// v-fix (BRO: "section ki vachina ventane endukuload avadam ledu, cache lo
+// set cheyali kada" — this feature/label list is static config, not live
+// data, so it's cached in localStorage (survives a page refresh, unlike the
+// old in-memory-only window.__permFeaturesByRole) and returned INSTANTLY
+// from that cache when present, while a background fetch quietly refreshes
+// it for next time. Only the very first-ever open (empty cache) still waits
+// on the network.
 async function loadPermFeatureList(forRole) {
   window.__permFeaturesByRole = window.__permFeaturesByRole || {};
   if (window.__permFeaturesByRole[forRole]) return window.__permFeaturesByRole[forRole];
+  const cacheKey = 'vsrGoldPermFeaturesCache_' + forRole;
+  let cachedRes = null;
   try {
-    const res = await jsonpReliable({ page: 'getPermFeatureListAPI', forRole });
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) { const parsed = JSON.parse(cached); if (parsed && parsed.features) cachedRes = parsed; }
+  } catch(e) {}
+  if (cachedRes) window.__permFeaturesByRole[forRole] = cachedRes;
+  const fetchPromise = jsonpReliable({ page: 'getPermFeatureListAPI', forRole }).then(res => {
     if (!res.ok) throw new Error(res.error);
     window.__permFeaturesByRole[forRole] = res;
+    try { localStorage.setItem(cacheKey, JSON.stringify(res)); } catch(e) {}
     return res;
-  } catch(e) {
+  }).catch(e => {
+    if (cachedRes) return cachedRes; // keep showing the cached copy on a network hiccup
     const empty = { features: [] };
     window.__permFeaturesByRole[forRole] = empty;
     return empty;
-  }
+  });
+  return cachedRes || fetchPromise;
 }
 
 // Builds the accordion HTML for a set of features. `perms` is either a
@@ -9140,22 +9162,37 @@ async function saveSettingsAllEmpAccess() {
 }
 
 // ── ADMIN ACCESS PANEL — per-person, full feature accordion ──
+// v-fix (BRO: "section ki vachina ventane endukuload avadam ledu, cache lo
+// set cheyali kada") — same cache-first pattern as loadEmpListWithCache:
+// show the last-known admin list from localStorage INSTANTLY, then quietly
+// refresh from the server so the dropdown is never stuck on "Loading..."
+function renderSettingsAdminSelect_(admins) {
+  const sel = document.getElementById('settingsAdminSelect');
+  window.__settingsAdminList = admins || [];
+  if (!admins || admins.length === 0) {
+    sel.innerHTML = '<option value="">No other admins found in Authorities sheet</option>';
+  } else {
+    sel.innerHTML = '<option value="">-- Select Admin --</option>' +
+      admins.map(a => `<option value="${escJs(a.email)}">${a.name} — ${a.role}</option>`).join('');
+  }
+}
 async function loadSettingsAdminList() {
   const sel = document.getElementById('settingsAdminSelect');
   if (sel.dataset.loaded === '1') return;
+  const cacheKey = 'vsrGoldEmpListCache_settingsAdminList';
+  let hadCache = false;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) { const parsed = JSON.parse(cached); if (parsed && parsed.admins && parsed.admins.length) { renderSettingsAdminSelect_(parsed.admins); hadCache = true; } }
+  } catch(e) {}
   try {
     const res = await jsonpReliable({ page: 'listAdminUsersForPermsAPI' });
     if (!res.ok) throw new Error(res.error);
-    window.__settingsAdminList = res.admins || [];
-    if (res.admins.length === 0) {
-      sel.innerHTML = '<option value="">No other admins found in Authorities sheet</option>';
-    } else {
-      sel.innerHTML = '<option value="">-- Select Admin --</option>' +
-        res.admins.map(a => `<option value="${escJs(a.email)}">${a.name} — ${a.role}</option>`).join('');
-    }
+    renderSettingsAdminSelect_(res.admins || []);
+    try { localStorage.setItem(cacheKey, JSON.stringify({ admins: res.admins || [] })); } catch(e) {}
     sel.dataset.loaded = '1';
   } catch(e) {
-    sel.innerHTML = '<option value="">Could not load admins</option>';
+    if (!hadCache) sel.innerHTML = '<option value="">Could not load admins</option>';
   }
 }
 
@@ -10164,6 +10201,7 @@ const SM_FEATURE_ELEMENTS = {
   dsr: ['adminQADsr', 'adminSidebarDsr'],
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
+  dsrAdvOrder: ['adminQADsrAdvOrder'],
   goldenAura: ['adminQAGoldenAura', 'adminSidebarGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
   stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
   dailyShop: ['adminQADailyShopModule', 'adminSidebarDailyShop'], dailyShopChecklist: ['adminQADailyShopModule'],
@@ -10197,7 +10235,7 @@ const FEATURE_SUBKEYS = {
   kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
   kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
-  dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'],
+  dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'], dsrAdvOrder: ['dsrAdvOrder'],
   goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList'],
   stock: ['stock'], stockRetail: ['stockRetail'], stockWholesale: ['stockWholesale'], stockReport: ['stockReport'],
   dailyShop: ['dailyShop'], dailyShopChecklist: ['dailyShopChecklist'],
@@ -13165,6 +13203,7 @@ const EMP_FEATURE_ELEMENTS = {
   dsr: ['empQADsrModule'],
   dsrNewEntry: ['empQADsrNewEntry'], dsrToday: ['empQADsrToday'], dsrStatus: ['empQADsrStatus'],
   dsrMissing: ['empQADsrMissing'], dsrTillDate: ['empQADsrTillDate'], dsrDateRange: ['empQADsrDateRange'],
+  dsrAdvOrder: ['empQADsrAdvOrder'],
   loyalty: ['empQALoyaltyModule'],
   loySearch: ['empQALoySearch'],
   // loyStats intentionally NOT mapped here — on the employee side this
