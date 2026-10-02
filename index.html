@@ -1290,6 +1290,7 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 /* Home header */
 .home-header { background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink)); border-radius: 16px; padding: 18px; margin-bottom: 14px; border: 2px solid var(--gold); box-shadow: 0 4px 20px rgba(107,33,168,0.3); color: #fff; }
 .home-header-title { font-family: 'Spectral', serif; font-size: 14px; font-weight: 800; color: var(--gold2); letter-spacing: 1.5px; margin-bottom: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+.home-header-greeting { font-size: 12.5px; font-weight: 700; color: #fff; opacity: 0.92; margin-bottom: 6px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 .home-header-name { font-size: 20px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }
 .home-header-sub { font-size: 12px; font-weight: 700; color: #fff; opacity: 0.95; margin-top: 4px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 .home-balance-row { display: flex; gap: 9px; margin-top: 13px; }
@@ -1795,6 +1796,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section active" id="emp-modulepicker">
       <div class="home-header">
         <div class="home-header-title">VSR GOLD</div>
+        <div class="home-header-greeting" id="empGreetingLine"></div>
         <div class="home-header-name" id="empModulePickerName">Employee</div>
         <div class="home-header-sub" id="empModulePickerMeta"></div>
       </div>
@@ -2654,6 +2656,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section active" id="admin-modulepicker">
       <div class="home-header">
         <div class="home-header-title">VSR GOLD</div>
+        <div class="home-header-greeting" id="adminGreetingLine"></div>
         <div class="home-header-name" id="adminModulePickerName">Admin</div>
         <div class="home-header-sub" id="adminModulePickerMeta"></div>
       </div>
@@ -4317,6 +4320,23 @@ function toYMD(dateObj) {
   const d = String(dateObj.getDate()).padStart(2, '0');
   return y + '-' + m + '-' + d;
 }
+
+// v-add (BRO: "portal lo login ayyaka welcome board vaste baguntundi" — a
+// time-of-day greeting + today's date shown right at the top of the
+// module-picker home page, both Employee and Admin side). Pure client-side,
+// no backend call — just the device's own clock, so it's instant on every
+// login/restore and works offline too.
+function wbGreetingLine_() {
+  const now = new Date();
+  const hr = now.getHours();
+  const greet = hr < 12 ? 'Good Morning' : (hr < 17 ? 'Good Afternoon' : 'Good Evening');
+  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+  return `👋 ${greet} · ${dateStr}`;
+}
+function wbShowGreeting_(elId) {
+  const el = document.getElementById(elId);
+  if (el) el.textContent = wbGreetingLine_();
+}
 function todayYMD() { return toYMD(new Date()); }
 
 // ══════════════════════════════════════════════════════════════
@@ -5178,6 +5198,7 @@ function restoreSession() {
     document.getElementById('empApp').classList.add('active');
     document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
     document.getElementById('empModulePickerMeta').textContent = [saved.empId, saved.empDesig, saved.empDept, saved.empCounter].filter(Boolean).join(' · ');
+    wbShowGreeting_('empGreetingLine');
     // v-fix: resume whichever page was open before the refresh, instead of
     // always landing back on the modulepicker/dashboard home page.
     { const lastPageEmp = getLastPage('emp');
@@ -5197,6 +5218,7 @@ function restoreSession() {
     document.getElementById('adminApp').classList.add('active');
     document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
     document.getElementById('adminModulePickerMeta').textContent = [saved.adminRole, saved.adminDesig].filter(Boolean).join(' · ');
+    wbShowGreeting_('adminGreetingLine');
     // v-fix: resume whichever page was open before the refresh, instead of
     // always landing back on the modulepicker/dashboard home page.
     { const lastPageAdmin = getLastPage('admin');
@@ -5252,6 +5274,7 @@ async function empLogin() {
         document.getElementById('empPassInput').value = '';
         document.getElementById('empModulePickerName').textContent = state.empName || 'Employee';
         document.getElementById('empModulePickerMeta').textContent = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
+        wbShowGreeting_('empGreetingLine');
         showEmpPage('modulepicker');
         loadEmpData();
         checkLoyaltyAlerts('emp');
@@ -5321,6 +5344,7 @@ async function adminLogin() {
         document.getElementById('adminApp').classList.add('active');
         document.getElementById('adminModulePickerName').textContent = state.adminName || state.adminRole || 'Admin';
         document.getElementById('adminModulePickerMeta').textContent = [state.adminRole, state.adminDesig].filter(Boolean).join(' · ');
+        wbShowGreeting_('adminGreetingLine');
         showAdminPage('modulepicker');
         await applyAdminRoleRestrictions();
         loadAdminData();
