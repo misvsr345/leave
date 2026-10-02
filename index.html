@@ -4390,7 +4390,7 @@ function wbShowWelcomePopup_(name) {
   modal.classList.remove('wb-closing');
   openModal('wbWelcomeModal');
   clearTimeout(wbAutoCloseTimer_);
-  wbAutoCloseTimer_ = setTimeout(wbCloseWelcomePopup_, 2500); // visible ~2.5s, then auto-shrinks closed
+  wbAutoCloseTimer_ = setTimeout(wbCloseWelcomePopup_, 10000); // v-fix (BRO: "atlist 10 second ravali") — visible ~10s, then auto-shrinks closed; Continue still closes it early any time before that
 }
 function wbCloseWelcomePopup_() {
   clearTimeout(wbAutoCloseTimer_);
