@@ -5189,7 +5189,8 @@ function saveSession() {
     kind: state.__loginKind || '',
     empId: state.empId, empName: state.empName, empDept: state.empDept,
     empCounter: state.empCounter, empEmail: state.empEmail, empDesig: state.empDesig,
-    adminEmail: state.adminEmail, adminRole: state.adminRole, adminName: state.adminName, adminDesig: state.adminDesig, isStoreManager: state.isStoreManager
+    adminEmail: state.adminEmail, adminRole: state.adminRole, adminName: state.adminName, adminDesig: state.adminDesig, isStoreManager: state.isStoreManager,
+    sessionToken: state.sessionToken || ''
   };
   try { localStorage.setItem(SESSION_KEY, JSON.stringify(payload)); } catch(e) {}
 }
@@ -5280,6 +5281,11 @@ async function empLogin() {
           }
         } catch(de) { /* non-fatal */ }
         state.__loginKind = 'emp';
+        // v-add (BRO: "okka id, okka dagara matarame same time lo open chyeli" — this token is this
+        // device's "proof" that it's the current active session for this Emp ID; a later login
+        // elsewhere with the same ID overwrites it server-side, and the periodic check below
+        // (checkSessionLoop_) is what notices that and logs THIS device out.
+        state.sessionToken = res.sessionToken || '';
         resetIdleTimer();
         saveSession();
         document.getElementById('empNameBadge').textContent = '👤 Employee Portal';
@@ -5351,6 +5357,9 @@ async function adminLogin() {
         // should be unrestricted. Conflating those two was the mistake.
         state.isRestrictedAdmin = roleUp.indexOf('MIS') === -1;
         state.__loginKind = 'admin';
+        // v-add (BRO: "okka id, okka dagara matarame same time lo open chyeli" — same one-active-
+        // session mechanism as empLogin above, for Admin/MIS logins too.
+        state.sessionToken = res.sessionToken || '';
         resetIdleTimer();
         saveSession();
         document.getElementById('adminRoleBadge').textContent = '🛡️ Admin Portal';
@@ -5420,7 +5429,7 @@ async function loadLoginActivity(who) {
   }
 }
 
-function logout(who) {
+function logout(who, reason) {
   if(who==='emp') {
     document.getElementById('empApp').classList.remove('active');
     state.empId = ''; state.empName = '';
@@ -5435,13 +5444,43 @@ function logout(who) {
     document.getElementById('adminPassInput').value = '';
     resetAdminRoleRestrictions();
   }
+  state.sessionToken = '';
   clearSession();
   stopIdleTimer();
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('empLoginErr').style.display = 'none';
   document.getElementById('adminLoginErr').style.display = 'none';
-  toast('Logged out successfully', 'info');
+  // v-add (BRO: "okka id, okka dagara matarame same time lo open chyeli" — the session-elsewhere
+  // check below passes an explicit reason here instead of the generic message, so the person
+  // actually understands why they were logged out rather than just landing back on the login page.
+  toast(reason || 'Logged out successfully', reason ? 'error' : 'info');
 }
+
+// ══════════════════════════════════════
+// v-add (BRO: "portal lo oka login id tho mobile lo login ayyanu, aade id tho vere dagara login
+// aite avutunda. manam apalema. okka id, okka dagara matarame same time lo open chyeli ante
+// avutunda" — one Emp ID / Admin email can only be the active session in ONE place. A fresh login
+// elsewhere overwrites the token this device is holding (see startSession_ in PortalBackend.gs);
+// this loop is how THIS device finds out it's been replaced — it asks every ~8 seconds, and the
+// moment the answer is "no longer valid", it shows a clear reason and logs itself out, rather than
+// silently vanishing mid-use.
+// ══════════════════════════════════════
+let SESSION_CHECK_IN_FLIGHT = false;
+async function checkSessionLoop_() {
+  if (!state.__loginKind || !state.sessionToken || SESSION_CHECK_IN_FLIGHT) return;
+  const role = state.__loginKind === 'admin' ? 'ADMIN' : 'EMP';
+  const id = state.__loginKind === 'admin' ? state.adminEmail : state.empId;
+  if (!id) return;
+  SESSION_CHECK_IN_FLIGHT = true;
+  try {
+    const res = await jsonp({ page: 'checkSessionAPI', role: role, id: id, token: state.sessionToken });
+    if (res && res.ok && res.valid === false) {
+      logout(state.__loginKind, '⚠️ This account was opened on another device/browser, so you were logged out here.');
+    }
+  } catch (e) { /* network hiccup — never log someone out just because one check failed to reach the server */ }
+  finally { SESSION_CHECK_IN_FLIGHT = false; }
+}
+setInterval(checkSessionLoop_, 8000);
 
 // ══════════════════════════════════════
 // AUTO-LOGOUT ON IDLE — 10 minutes of no mouse/touch/keyboard activity
