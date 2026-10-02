@@ -746,7 +746,27 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 }
 .sections-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
-.page-section.active { display: block; animation: pageZoomPop 0.4s ease-out; transform-origin: center top; }
+.page-section.active { display: block; }
+/* v-add (BRO: "powerpoint lo chala animation lu unnai — fly, split, flip,
+   wheel, appear... konni alanti vadachu" — a handful of PowerPoint-style
+   page-entrance transitions. One is picked at RANDOM each time a page opens
+   (see pptPageTransitionIn_ in the JS, called from showEmpPage/showAdminPage
+   right after .active is added) so navigation doesn't look the same every
+   time, same spirit as the different per-button press animations above. */
+.pt-zoom, .pt-appear, .pt-floatup, .pt-flyin, .pt-split, .pt-flip, .pt-wheel { transform-origin: center top; }
+.pt-zoom { animation: pageZoomPop 0.4s ease-out; }
+.pt-appear { animation: pptAppear 0.4s ease-out; }
+.pt-floatup { animation: pptFloatUp 0.42s ease-out; }
+.pt-flyin { animation: pptFlyIn 0.42s cubic-bezier(0.22,0.68,0.36,1); }
+.pt-split { animation: pptSplit 0.4s ease-out; }
+.pt-flip { animation: pptFlip 0.45s ease-out; perspective: 900px; }
+.pt-wheel { animation: pptWheel 0.45s ease-out; }
+@keyframes pptAppear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pptFloatUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pptFlyIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pptSplit { 0% { opacity: 0; transform: scaleX(0.6); } 100% { opacity: 1; transform: scaleX(1); } }
+@keyframes pptFlip { 0% { opacity: 0; transform: rotateY(-85deg); } 100% { opacity: 1; transform: rotateY(0deg); } }
+@keyframes pptWheel { 0% { opacity: 0; transform: rotate(-20deg) scale(0.75); } 100% { opacity: 1; transform: rotate(0deg) scale(1); } }
 
 /* Cards */
 .card {
