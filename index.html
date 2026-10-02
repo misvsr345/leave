@@ -15174,10 +15174,11 @@ async function slRenderCounter(box) {
       </div>
       <div id="slCounterLedgerView" style="display:none;">
         <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-bottom:10px;" onclick="slCloseCounterLedger()">← Back to Breakdown</button>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-          <div style="font-weight:800;color:var(--purple);" id="slLedgerTitle"></div>
-          <input type="date" lang="en-GB" id="slLedgerDate" onchange="slLoadLedger()">
-        </div>
+        <!-- v-fix (BRO: "ikada date filter remove chei. sold ki recieving ki annitiki tabs unnai kada
+             akkada chusukuntaru, so ikkada only balance data matrame ivu" — Sold/Receiving/RDR already
+             have their own tabs elsewhere for that day-by-day detail, so no date picker here any more —
+             just the running Opening/Closing balance, always as of today. -->
+        <div style="font-weight:800;color:var(--purple);margin-bottom:8px;" id="slLedgerTitle"></div>
         <div id="slLedgerBody"></div>
       </div>`;
     box.innerHTML = head;
@@ -15244,15 +15245,18 @@ async function slLoadCounterDetail() {
 // v-add (BRO's Opening/Closing Ledger — ported from stock-photos.html into the admin Counter-wise
 // report; same formula, same Tag-No-based counter attribution via the DSR "ledgerData" action, same
 // STOCK_GAS_URL/DSR_GAS_URL this portal already talks to elsewhere — no separate copy of either
-// backend call).
-//   Closing(D) = OpeningBaseline + Receiving(<=D) - Sale(<=D) - OutletIssue(<=D) - Return/Repair(<=D)
-//   Opening(D) = Closing(D-1)
-// Return/Repair/Transfer isn't tracked anywhere yet, so it's 0 until that feature exists (same as the
-// public page). Sold/Outlet Issue columns shown are that single day's rows only.
+// backend call). Kept in lockstep with stock-photos.html's ovLoadLedger().
+// v-fix (BRO: "ikada date filter remove chei. sold ki recieving ki annitiki tabs unnai kada akkada
+// chusukuntaru, so ikkada only balance data matrame ivu" / "only closing and opening rendu matrame
+// ravali" — Receiving/Sold/Return/Damage/Repair/Outlet Issue already have their own dedicated tabs for
+// day-by-day detail, so this view is just the running stock BALANCE per product, always as of today:
+//   - No date picker — always today.
+//   - Only two columns: Opening and Closing.
+//   - Closing is the live physical Stock count (so it always agrees with every other page in the app
+//     — Overview cards, product-count page, etc.); Opening is the additive formula as of yesterday.
 // ============================================================
 let SL_LEDGER_STOCK = null, SL_LEDGER_SOLD = null; // fetched once per session, cached
-const SL_LEDGER_CACHE = {}; // { [uptoDate]: {sales, outletIssues} }
-const SL_LEDGER_RDR_ROWS = {}; // { [date]: rdr[] } — v-add (Return/Damage/Repair) — for slShowRdrDetail's popup
+const SL_LEDGER_CACHE = {}; // { [uptoDate]: {sales, outletIssues, rdr} }
 function slLedgerRowCounter_(r) { return String(r.counter || '').trim() || SL.mainHub; }
 function slLedgerRowQty_(r) { return parseFloat(r.qty) || 1; }
 async function slFetchLedgerSnapshots_() {
@@ -15290,26 +15294,29 @@ function slOpenCounterLedger() {
   document.getElementById('slCounterBreakdownView').style.display = 'none';
   document.getElementById('slCounterLedgerView').style.display = '';
   document.getElementById('slLedgerTitle').textContent = SL.sel + ' — Opening / Closing Ledger';
-  const dateInput = document.getElementById('slLedgerDate');
-  if (!dateInput.value) dateInput.value = toYMD(new Date());
   slLoadLedger();
 }
 function slCloseCounterLedger() {
   document.getElementById('slCounterLedgerView').style.display = 'none';
   document.getElementById('slCounterBreakdownView').style.display = '';
 }
+// v-fix (BRO: "ikada date filter remove chei. sold ki recieving ki annitiki tabs unnai kada akkada
+// chusukuntaru, so ikkada only balance data matrame ivu" — Sold/Receiving/RDR/Outlet Issue already
+// have their own dedicated tabs, so this Ledger is no longer a day-by-day transaction breakdown — it's
+// just the running stock BALANCE per product, always as of today, with no date to pick.
+//   Opening = formula as of yesterday (base + inflow-upto-yesterday - outflow-upto-yesterday)
+//   Closing = today's live physical Stock count (same ground truth every other page already shows)
 async function slLoadLedger() {
   const body = document.getElementById('slLedgerBody'); if (!body) return;
   const counter = SL.sel;
   const byDesign = document.getElementById('slCounterByDesign').checked;
-  const dateVal = document.getElementById('slLedgerDate').value || toYMD(new Date());
+  const dateVal = toYMD(new Date());
   slLoading(body);
   try {
     await slFetchLedgerSnapshots_();
     const ledgerData = await slFetchLedgerUpto_(dateVal);
-    // the person may have picked a different date, or left this view, while the fetch was in flight
+    // the person may have left this view while the fetch was in flight
     if (document.getElementById('slCounterLedgerView').style.display === 'none') return;
-    if (document.getElementById('slLedgerDate').value !== dateVal) return;
 
     const prevDate = slLedgerPrevDate_(dateVal);
     const tagIdx = slBuildLedgerTagIndex_();
@@ -15325,11 +15332,8 @@ async function slLoadLedger() {
       return entryRows.filter(r => r.entryType === 'Opening Stock' && groupKey_(r.productName, r.design) === key)
         .reduce((s, r) => s + slLedgerRowQty_(r), 0);
     }
-    // "Return" here is Stock Level's own entryType (an item physically coming back into this
-    // counter's stock) — counts as an inbound addition just like Receiving Stock. v-add (BRO's
-    // Return/Damage/Repair feature): "Damage Receive" is the entryType used when a Damage/Repair
-    // item is marked Received Back (see StockBackend's rdrReceiveBack_) — also inbound, kept as its
-    // own entryType so it's never confused with a normal Stock Entry "Receiving Stock" row.
+    // "Return"/"Damage Receive" entryTypes are items physically coming back into this counter's
+    // stock — inbound additions just like Receiving Stock.
     function receivingUpto(key, upto) {
       return entryRows.filter(r => (r.entryType === 'Receiving Stock' || r.entryType === 'Return' || r.entryType === 'Damage Receive') && r.entryDate && r.entryDate <= upto && groupKey_(r.productName, r.design) === key)
         .reduce((s, r) => s + slLedgerRowQty_(r), 0);
@@ -15345,33 +15349,14 @@ async function slLoadLedger() {
       return n;
     }
     const saleUpto = (key, upto) => sumMatching(ledgerData.sales, key, s => s.date <= upto);
-    const saleOn = (key, d) => sumMatching(ledgerData.sales, key, s => s.date === d);
     const outletUpto = (key, upto) => sumMatching(ledgerData.outletIssues, key, o => o.date <= upto);
-    const outletOn = (key, d) => sumMatching(ledgerData.outletIssues, key, o => o.date === d);
-    // v-add (BRO's Return/Damage/Repair feature) — the Ledger's "Return" column, combining all 3
-    // reasons into one number for that day, clickable for a per-item detail breakdown.
     const rdrUpto = (key, upto) => sumMatching(ledgerData.rdr, key, o => o.date <= upto);
-    const rdrRowsOn = (key, d) => (ledgerData.rdr || []).filter(o => o.date === d && resolveKey_(o) === key);
-    const rdrOn = (key, d) => rdrRowsOn(key, d).length;
-    SL_LEDGER_RDR_ROWS[dateVal] = ledgerData.rdr || [];
-    // v-add (BRO: "opening stock coutn and closing stock count different undi ante day lo sale or
-    // receved, or return or outlet issue edo okati jarigi untundi kada bro. adi kuda clear ga teliyali
-    // kada" — whenever Opening and Closing differ, the reason should be visible on the row, not just
-    // in the numbers. This Receiving column counts the exact same inbound Entry Types the math above
-    // (receivingUpto) already counts — "Receiving Stock", "Return" (an item physically back in stock)
-    // and "Damage Receive" (a Return/Damage/Repair item received back) — so anything that moves
-    // Closing always shows up here.
-    const receivingOn = (key, d) => entryRows.filter(r => (r.entryType === 'Receiving Stock' || r.entryType === 'Return' || r.entryType === 'Damage Receive') && r.entryDate === d && groupKey_(r.productName, r.design) === key).reduce((s, r) => s + slLedgerRowQty_(r), 0);
 
-    // v-fix (BRO: "tag no ki lookup chesi count cheste saripotundi kada" — for TODAY, closing doesn't
-    // need to be rebuilt from the whole transaction history: the live Stock snapshot (SL_LEDGER_STOCK,
-    // same "listStock" data slLoadCounterDetail's Current Stock card uses) already IS today's true
-    // physical count, tag by tag. Old DSR data (duplicate rows, a sale recorded before Stock Level even
-    // existed for a tag that's since been reused, etc.) can never perfectly reconstruct a running total
-    // back to day one — but it doesn't need to for TODAY, since what's physically in Stock right now can
-    // just be counted directly. The additive formula is kept ONLY for a PAST date (no live snapshot
-    // exists for a day that's already gone), which is also the only place old-data gaps can still show.
-    const isToday = dateVal === toYMD(new Date());
+    // v-fix (BRO: "count differenct chupistundi. okko page okko laga" — the Ledger's pure formula total
+    // can land on a different number than the counter's REAL physical stock shown on the Current Stock
+    // card / breakdown table (old/untracked data a formula can't explain). So Closing is always the
+    // live physical Stock count (same ground truth every other page already shows), never the formula
+    // — the formula is used ONLY to work out Opening (yesterday's close).
     function liveCount(key) {
       return (SL_LEDGER_STOCK || []).filter(r => slLedgerRowCounter_(r) === counter && groupKey_(r.productName, r.design) === key)
         .reduce((s, r) => s + slLedgerRowQty_(r), 0);
@@ -15379,73 +15364,27 @@ async function slLoadLedger() {
 
     const list = Object.keys(groups).map(key => {
       const base = baseline(key);
-      const closingToday = isToday ? liveCount(key)
-        : (base + receivingUpto(key, dateVal) - saleUpto(key, dateVal) - outletUpto(key, dateVal) - rdrUpto(key, dateVal));
       const closingPrev = base + receivingUpto(key, prevDate) - saleUpto(key, prevDate) - outletUpto(key, prevDate) - rdrUpto(key, prevDate);
       return {
         product: groups[key].product, design: groups[key].design, key: key,
-        opening: closingPrev, closing: closingToday, receiving: receivingOn(key, dateVal),
-        sold: saleOn(key, dateVal), ret: rdrOn(key, dateVal), outlet: outletOn(key, dateVal)
+        opening: closingPrev, closing: liveCount(key)
       };
     }).sort((a, b) => a.product.localeCompare(b.product, undefined, { numeric: true, sensitivity: 'base' }) || a.design.localeCompare(b.design, undefined, { numeric: true, sensitivity: 'base' }));
 
     if (!list.length) { body.innerHTML = '<div class="empty-state"><p>No ledger data for this counter yet.</p></div>'; return; }
-    // v-fix (BRO: "closgin option ni chivara pettu" — Closing moved to the last column, so the row
-    // reads left-to-right as the story of the day: Opening, then everything that moved it, then
-    // Closing as the final result.
-    let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Receiving</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Return</th><th style="text-align:center;">Outlet Issue</th><th style="text-align:center;">Closing</th></tr></thead><tbody>`;
+
+    const tot = list.reduce((s, r) => { s.opening += r.opening; s.closing += r.closing; return s; }, { opening: 0, closing: 0 });
+
+    let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${byDesign ? '<th>Design</th>' : ''}<th style="text-align:center;">Opening</th><th style="text-align:center;">Closing</th></tr></thead><tbody>`;
     list.forEach(r => {
-      const retCell = r.ret > 0 ? `<a href="#" onclick="slShowRdrDetail('${escJs(r.key)}','${dateVal}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--red);font-weight:800;text-decoration:underline;">${r.ret}</a>` : r.ret;
-      // v-add (BRO: "opening and closing different 4 undi. aavi evi evi ani ela telustundi" — when
-      // Opening and Closing don't match (TODAY only), Closing is now clickable to see the actual Tag
-      // Nos sitting in stock for that Product(+Design) right now, with Entry Type/Entry Date.
-      const closingCell = (isToday && r.opening !== r.closing)
-        ? `<a href="#" onclick="slShowStockTagsDetail_('${escJs(r.key)}','${escJs(r.product)}',${byDesign});return false;" style="color:var(--purple);font-weight:800;text-decoration:underline;">${r.closing}</a>`
-        : r.closing;
-      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.receiving}</td><td style="text-align:center;">${r.sold}</td><td style="text-align:center;">${retCell}</td><td style="text-align:center;">${r.outlet}</td><td style="text-align:center;">${closingCell}</td></tr>`;
+      html += `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${byDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td style="text-align:center;">${r.opening}</td><td style="text-align:center;">${r.closing}</td></tr>`;
     });
+    html += `<tr style="font-weight:800;border-top:2px solid var(--gold,var(--purple));"><td><b>Total</b></td>${byDesign ? '<td></td>' : ''}<td style="text-align:center;">${tot.opening}</td><td style="text-align:center;">${tot.closing}</td></tr>`;
     html += '</tbody></table></div>';
     body.innerHTML = html;
   } catch (e) {
     body.innerHTML = `<div class="empty-state"><p>${escHtml(e.message || 'Could not load ledger — check the connection.')}</p></div>`;
   }
-}
-// v-add (BRO's Return/Damage/Repair feature) — clicking the Ledger's Return count opens this detail
-// popup listing the individual Tag No / Reason / Employee behind that day's combined number.
-function slShowRdrDetail(key, date, productLabel, byDesign) {
-  const rows = (SL_LEDGER_RDR_ROWS[date] || []).filter(o => {
-    const rowKey = byDesign ? (o.productName + '|' + String(o.design || '').trim()) : o.productName;
-    return rowKey === key;
-  });
-  let inner = `<div class="modal-title">↩️ Return / Damage / Repair — ${escHtml(productLabel)}</div>
-    <div class="kd-note">${fmtDMY(date)} · ${rows.length} item${rows.length === 1 ? '' : 's'}</div>`;
-  if (!rows.length) {
-    inner += '<div class="empty-state"><p>No detail found.</p></div>';
-  } else {
-    inner += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Reason</th><th>Employee</th></tr></thead><tbody>` +
-      rows.map(r => `<tr><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.reason || '—')}</td><td>${escHtml(r.employee || '—')}</td></tr>`).join('') +
-      '</tbody></table></div>';
-  }
-  inner += `<button class="btn-modal-cancel" style="width:100%;margin-top:14px;" onclick="document.getElementById('slModal').remove()">Close</button>`;
-  slOpenModal(inner);
-}
-// v-add (BRO: "opening and closing different 4 undi. aavi evi evi ani ela telustundi" — the Tag Nos
-// behind a mismatched Opening/Closing, straight from the live Stock snapshot Closing is counted from.
-function slShowStockTagsDetail_(key, productLabel, byDesign) {
-  const counter = SL.sel;
-  const rows = (SL_LEDGER_STOCK || []).filter(r => slLedgerRowCounter_(r) === counter && (byDesign ? (r.productName + '|' + String(r.design || '').trim()) : r.productName) === key)
-    .slice().sort((a, b) => new Date(b.entryDate || b.addedAt || 0) - new Date(a.entryDate || a.addedAt || 0));
-  let inner = `<div class="modal-title">📦 ${escHtml(productLabel)} — Items In Stock Now</div>
-    <div class="kd-note">${rows.length} item${rows.length === 1 ? '' : 's'} — most recently added first.</div>`;
-  if (!rows.length) {
-    inner += '<div class="empty-state"><p>No items found.</p></div>';
-  } else {
-    inner += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Entry Type</th><th>Entry Date</th></tr></thead><tbody>` +
-      rows.map(r => `<tr><td><b>${escHtml(r.tagNo || '—')}</b></td><td>${escHtml(r.entryType || '—')}</td><td>${escHtml(fmtDMY(r.entryDate))}</td></tr>`).join('') +
-      '</tbody></table></div>';
-  }
-  inner += `<button class="btn-modal-cancel" style="width:100%;margin-top:14px;" onclick="document.getElementById('slModal').remove()">Close</button>`;
-  slOpenModal(inner);
 }
 
 function slRenderSales(box) {
