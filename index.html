@@ -110,6 +110,32 @@
   --navbar-h: 46px;
 }
 
+/* v-add (BRO: "file motha anni buttons ki edo oka animation pettu" — every
+   clickable button in the portal gets a consistent tap/press animation: a
+   quick scale-down the instant it's pressed (touch or mouse), so every tap
+   gives visible feedback, plus a small lift on hover for mouse users.
+   Placed FIRST in the stylesheet (right after the root variables) on
+   purpose — any button class below that already defines its OWN :hover/
+   :active (e.g. .btn-secondary, .quick-action-btn, .export-icon-btn) still
+   wins for that button, since a later same-specificity rule overrides an
+   earlier one; this block only fills in the ones that had NO press
+   animation at all (.btn-primary, .btn-sm, .btn-view, .filter-btn's own
+   :active, and every other *btn* class in the file, present or future). */
+button, [class*="btn"] {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+button:active:not(:disabled), [class*="btn"]:active:not(.disabled) {
+  transform: scale(0.95);
+}
+@media (hover: hover) {
+  button:hover:not(:disabled), [class*="btn"]:hover:not(.disabled) {
+    transform: translateY(-1px);
+  }
+  button:active:hover:not(:disabled), [class*="btn"]:active:hover:not(.disabled) {
+    transform: scale(0.95);
+  }
+}
+
 /* Theme presets — applied via data-theme attribute on <html>, chosen from
    the theme picker in the More menu and persisted in localStorage. */
 html[data-theme="ocean"] {
