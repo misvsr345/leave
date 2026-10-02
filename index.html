@@ -9244,6 +9244,10 @@ function renderSettingsAdminBody(admin) {
       <input type="checkbox" id="sectionMasterCheck_leads" ${perms && perms.section_leads ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;font-weight:700;color:var(--text);">📞 Leads / CRM Section — entire section on/off</span>
     </label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
+      <input type="checkbox" id="sectionMasterCheck_dailyShop" ${perms && perms.section_dailyShop ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">🕐 Daily Shop Open & Close Section — entire section on/off</span>
+    </label>
     <p style="font-size:11px;color:var(--text3);margin-top:6px;">Unticking a section instantly hides everything under it for this person, even features individually ticked below.</p>
   </div>`;
 
@@ -9316,6 +9320,7 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
   const goldenAuraMaster = document.getElementById('sectionMasterCheck_golden_aura');
   const stockMaster = document.getElementById('sectionMasterCheck_stock');
   const leadsMaster = document.getElementById('sectionMasterCheck_leads');
+  const dailyShopMaster = document.getElementById('sectionMasterCheck_dailyShop');
   if (leaveMaster) payload.section_leave = leaveMaster.checked ? 'true' : 'false';
   if (loyaltyMaster) payload.section_loyalty = loyaltyMaster.checked ? 'true' : 'false';
   if (kpiMaster) payload.section_kpi = kpiMaster.checked ? 'true' : 'false';
@@ -9323,6 +9328,7 @@ async function saveSettingsAdminAccess(targetEmail, targetName, targetRole) {
   if (goldenAuraMaster) payload.section_golden_aura = goldenAuraMaster.checked ? 'true' : 'false';
   if (stockMaster) payload.section_stock = stockMaster.checked ? 'true' : 'false';
   if (leadsMaster) payload.section_leads = leadsMaster.checked ? 'true' : 'false';
+  if (dailyShopMaster) payload.section_dailyShop = dailyShopMaster.checked ? 'true' : 'false';
   document.querySelectorAll('.settings-perm-check').forEach(cb => {
     payload[cb.dataset.key] = cb.checked ? 'true' : 'false';
   });
