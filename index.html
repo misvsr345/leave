@@ -1290,7 +1290,6 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 /* Home header */
 .home-header { background: linear-gradient(135deg, var(--purple-dark), var(--purple), var(--pink)); border-radius: 16px; padding: 18px; margin-bottom: 14px; border: 2px solid var(--gold); box-shadow: 0 4px 20px rgba(107,33,168,0.3); color: #fff; }
 .home-header-title { font-family: 'Spectral', serif; font-size: 14px; font-weight: 800; color: var(--gold2); letter-spacing: 1.5px; margin-bottom: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
-.home-header-greeting { font-size: 12.5px; font-weight: 700; color: #fff; opacity: 0.92; margin-bottom: 6px; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 .home-header-name { font-size: 20px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }
 .home-header-sub { font-size: 12px; font-weight: 700; color: #fff; opacity: 0.95; margin-top: 4px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 .home-balance-row { display: flex; gap: 9px; margin-top: 13px; }
@@ -1796,7 +1795,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section active" id="emp-modulepicker">
       <div class="home-header">
         <div class="home-header-title">VSR GOLD</div>
-        <div class="home-header-greeting" id="empGreetingLine"></div>
         <div class="home-header-name" id="empModulePickerName">Employee</div>
         <div class="home-header-sub" id="empModulePickerMeta"></div>
       </div>
@@ -2656,7 +2654,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section active" id="admin-modulepicker">
       <div class="home-header">
         <div class="home-header-title">VSR GOLD</div>
-        <div class="home-header-greeting" id="adminGreetingLine"></div>
         <div class="home-header-name" id="adminModulePickerName">Admin</div>
         <div class="home-header-sub" id="adminModulePickerMeta"></div>
       </div>
@@ -4166,6 +4163,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      MIS Approved), instead of a generic toast that always just said
      "submitted" no matter what actually happened (e.g. an auto-rejected
      or auto-absent leave used to look identical to a successful one). -->
+<!-- v-add (BRO: "portal lo login ayyaka wel come board vaste baguntundi... pop up ravali annanu
+     kada" — a simple Welcome pop-up right after a successful login, Employee and Admin both.) -->
+<div class="modal-overlay" id="wbWelcomeModal">
+  <div class="modal-box" style="max-width:360px;text-align:center;">
+    <div style="font-size:46px;margin-bottom:8px;line-height:1;">🙏</div>
+    <div class="modal-title" id="wbWelcomeGreeting" style="margin-bottom:4px;">Good Morning!</div>
+    <div style="font-size:17px;font-weight:800;color:var(--purple);margin-bottom:4px;" id="wbWelcomeName"></div>
+    <div class="modal-sub" id="wbWelcomeDate" style="font-size:12.5px;margin-bottom:4px;"></div>
+    <div class="modal-sub" style="font-size:13px;margin-bottom:14px;">Welcome to VSR GOLD Portal</div>
+    <button class="btn-primary" style="width:100%;" onclick="closeModal('wbWelcomeModal')">Continue</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="leaveResultModal">
   <div class="modal-box" style="max-width:400px;text-align:center;">
     <div id="leaveResultIcon" style="font-size:46px;margin-bottom:8px;line-height:1;">📋</div>
@@ -4321,21 +4331,28 @@ function toYMD(dateObj) {
   return y + '-' + m + '-' + d;
 }
 
-// v-add (BRO: "portal lo login ayyaka welcome board vaste baguntundi" — a
-// time-of-day greeting + today's date shown right at the top of the
-// module-picker home page, both Employee and Admin side). Pure client-side,
-// no backend call — just the device's own clock, so it's instant on every
-// login/restore and works offline too.
+// v-add (BRO: "portal lo login ayyaka wel come board vaste baguntundi" /
+// "pop up ravali annanu kada" — a Welcome pop-up shown right after a
+// successful login, Employee and Admin both, with a time-of-day greeting +
+// today's date. Pure client-side, no backend call — just the device's own
+// clock, so it's instant and works offline too. Only fires on an actual
+// fresh login (not on a page-refresh session-restore), so it doesn't nag
+// the person every time the app reopens.)
 function wbGreetingLine_() {
   const now = new Date();
   const hr = now.getHours();
-  const greet = hr < 12 ? 'Good Morning' : (hr < 17 ? 'Good Afternoon' : 'Good Evening');
-  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
-  return `👋 ${greet} · ${dateStr}`;
+  return hr < 12 ? 'Good Morning' : (hr < 17 ? 'Good Afternoon' : 'Good Evening');
 }
-function wbShowGreeting_(elId) {
-  const el = document.getElementById(elId);
-  if (el) el.textContent = wbGreetingLine_();
+function wbShowWelcomePopup_(name) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+  const greetEl = document.getElementById('wbWelcomeGreeting');
+  const nameEl = document.getElementById('wbWelcomeName');
+  const dateEl = document.getElementById('wbWelcomeDate');
+  if (greetEl) greetEl.textContent = wbGreetingLine_() + '!';
+  if (nameEl) nameEl.textContent = name || '';
+  if (dateEl) dateEl.textContent = dateStr;
+  openModal('wbWelcomeModal');
 }
 function todayYMD() { return toYMD(new Date()); }
 
@@ -5198,7 +5215,6 @@ function restoreSession() {
     document.getElementById('empApp').classList.add('active');
     document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
     document.getElementById('empModulePickerMeta').textContent = [saved.empId, saved.empDesig, saved.empDept, saved.empCounter].filter(Boolean).join(' · ');
-    wbShowGreeting_('empGreetingLine');
     // v-fix: resume whichever page was open before the refresh, instead of
     // always landing back on the modulepicker/dashboard home page.
     { const lastPageEmp = getLastPage('emp');
@@ -5218,7 +5234,6 @@ function restoreSession() {
     document.getElementById('adminApp').classList.add('active');
     document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
     document.getElementById('adminModulePickerMeta').textContent = [saved.adminRole, saved.adminDesig].filter(Boolean).join(' · ');
-    wbShowGreeting_('adminGreetingLine');
     // v-fix: resume whichever page was open before the refresh, instead of
     // always landing back on the modulepicker/dashboard home page.
     { const lastPageAdmin = getLastPage('admin');
@@ -5274,8 +5289,8 @@ async function empLogin() {
         document.getElementById('empPassInput').value = '';
         document.getElementById('empModulePickerName').textContent = state.empName || 'Employee';
         document.getElementById('empModulePickerMeta').textContent = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
-        wbShowGreeting_('empGreetingLine');
         showEmpPage('modulepicker');
+        wbShowWelcomePopup_(state.empName || 'Employee');
         loadEmpData();
         checkLoyaltyAlerts('emp');
         checkEmpLoyaltyAccess();
@@ -5344,8 +5359,8 @@ async function adminLogin() {
         document.getElementById('adminApp').classList.add('active');
         document.getElementById('adminModulePickerName').textContent = state.adminName || state.adminRole || 'Admin';
         document.getElementById('adminModulePickerMeta').textContent = [state.adminRole, state.adminDesig].filter(Boolean).join(' · ');
-        wbShowGreeting_('adminGreetingLine');
         showAdminPage('modulepicker');
+        wbShowWelcomePopup_(state.adminName || state.adminRole || 'Admin');
         await applyAdminRoleRestrictions();
         loadAdminData();
         checkLoyaltyAlerts('admin');
