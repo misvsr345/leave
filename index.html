@@ -6147,6 +6147,7 @@ function showEmpPage(page, opts) {
   if(page==='dashboard-hub') loadEmpDashboardHub();
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
+  if(page==='loyalty-search') loyaltyCacheRefresh('emp'); // BRO: warm the cache as soon as this tab opens, not only after the first search
   if(page==='loyalty-mycards') loadLoyaltyMyCards();
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('emp');
   if(page==='kpi') { loadEomBanner('emp'); loadKpiHighlights('emp'); }
@@ -10638,6 +10639,7 @@ function showAdminPage(page, opts) {
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
   if(page==='loyalty') { initLoyaltyPage('admin'); loadLoyaltyHighlights('admin'); }
+  if(page==='loyalty-search') loyaltyCacheRefresh('admin'); // BRO: warm the cache as soon as this tab opens, not only after the first search
   if(page==='loyalty-leaderboard') loadLoyaltyLeaderboard('admin');
   if(page==='kpi') { loadEomBanner('admin'); loadKpiHighlights('admin'); }
   if(page==='kpi-rules') renderKpiRules('admin');
@@ -11954,11 +11956,79 @@ function initLoyaltyPage(who) {
   }
 }
 
+// ============================================================
+// LOYALTY CARD CACHE — BRO: "loyalit card... all data... offline lo cache lo data sync avali.
+// search chesina ventane data ravali." Same instant-from-cache-then-live-refresh pattern as the
+// Stock Tag Cache above, extended to Loyalty customers. Confirmed with BRO: the cache stores the
+// FULL record (Aadhaar No, PAN No included) exactly as this logged-in role's own search would
+// already show it live — a restricted viewer's cache only ever has the masked version, same as a
+// restricted viewer's live search always has, so this never exposes anything beyond what that
+// login could already see. Entry/submit forms are the opposite (deliberately NEVER cached —
+// BRO: "ante entry form matram live kavali... offline lo save aite backend ki properga andaka
+// potundi" — an offline-queued save can silently fail to ever reach the backend, which is a real
+// data-loss risk; a cached LOOKUP has no such risk, it's just read-only reference data).
+// ============================================================
+const LOYALTY_CACHE_KEY = 'vsrLoyaltyCache_v1';
+let LOYALTY_CACHE = { emp: { results: [], savedAt: 0 }, admin: { results: [], savedAt: 0 } };
+function loyaltyCacheLoadLocal() {
+  try {
+    const raw = localStorage.getItem(LOYALTY_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.emp && parsed.admin) LOYALTY_CACHE = parsed;
+    }
+  } catch (e) {}
+}
+function loyaltyCacheSaveLocal() { try { localStorage.setItem(LOYALTY_CACHE_KEY, JSON.stringify(LOYALTY_CACHE)); } catch (e) {} }
+async function loyaltyCacheRefresh(who) {
+  if (!navigator.onLine) return;
+  try {
+    const role = who === 'admin' ? 'ADMIN' : 'EMP';
+    const sectionLoyaltyOnS = (state.loyaltyPerms === null) || state.loyaltyPerms.section_loyalty !== false;
+    const fullData = who === 'admin' ? ((state.loyaltyPerms === null) || !!(sectionLoyaltyOnS && state.loyaltyPerms && state.loyaltyPerms.loySearch_fulldata)) : false;
+    const res = await jsonpReliable({ page: 'loyaltySearchAPI', bulk: '1', role: role, fullData: fullData ? '1' : '0', adminEmail: who === 'admin' ? state.adminEmail : '', adminRole: who === 'admin' ? state.adminRole : '' });
+    if (res && res.ok && Array.isArray(res.results)) {
+      LOYALTY_CACHE[who] = { results: res.results, savedAt: Date.now() };
+      loyaltyCacheSaveLocal();
+    }
+  } catch (e) { /* offline or slow — keep showing whatever was cached last time */ }
+}
+loyaltyCacheLoadLocal();
+window.addEventListener('online', () => { loyaltyCacheRefresh('emp'); loyaltyCacheRefresh('admin'); });
+
+// Mirrors loyaltySearchAPI's own matching rules exactly (name: substring; card: exact if the
+// query is pure digits, else substring; mobile: digits-substring) so the instant cached answer
+// never disagrees with what the live search is about to say a moment later.
+function loyaltyCacheSearch(who, query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return [];
+  const qNum = q.replace(/\D/g, '');
+  const isNumericQuery = /^\d+$/.test(q);
+  const rows = (LOYALTY_CACHE[who] && LOYALTY_CACHE[who].results) || [];
+  return rows.filter(r => {
+    const custName = (r.custName || '').toLowerCase();
+    const cardNo = (r.cardNo || '').toString();
+    const phone = (r.phone || '').toString();
+    const nameHit = custName.indexOf(q) !== -1;
+    const cardHit = isNumericQuery ? cardNo.trim() === q : cardNo.toLowerCase().indexOf(q) !== -1;
+    const phoneHit = qNum.length > 0 && phone.replace(/\D/g, '').indexOf(qNum) !== -1;
+    return nameHit || cardHit || phoneHit;
+  }).slice(0, 50);
+}
+
 function runLoyaltySearch(who) {
   const box = document.getElementById('loy' + (who==='emp'?'Emp':'Admin') + 'SearchBox');
   const resultsEl = document.getElementById('loy' + (who==='emp'?'Emp':'Admin') + 'SearchResults');
   const query = box.value.trim();
   if (!query) { toast('Please type a name, mobile number, or card number', 'error'); return; }
+
+  // Instant answer from the local cache (if we have one) while the live call below confirms/
+  // corrects it a moment later — same reasoning as the Stock Tag Cache's dsrfTagLookup.
+  const cachedResults = loyaltyCacheSearch(who, query);
+  if (cachedResults.length) {
+    renderLoyaltyResults({ ok: true, results: cachedResults }, resultsEl);
+    resultsEl.insertAdjacentHTML('afterbegin', '<div class="kd-note" style="opacity:.7;">⏳ Showing cached results — confirming…</div>');
+  }
 
   // Search covers ALL customers for EVERY employee — it's a shared
   // billing lookup tool (find a customer's card by name/mobile), not
@@ -11978,11 +12048,16 @@ function runLoyaltySearch(who) {
   // just trust what the frontend computed).
   const sectionLoyaltyOnS = (state.loyaltyPerms === null) || state.loyaltyPerms.section_loyalty !== false;
   const fullData = who === 'admin' ? ((state.loyaltyPerms === null) || !!(sectionLoyaltyOnS && state.loyaltyPerms && state.loyaltyPerms.loySearch_fulldata)) : false;
-  resultsEl.innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
+  if (!cachedResults.length) resultsEl.innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
 
   jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role, fullData: fullData ? '1' : '0', adminEmail: who === 'admin' ? state.adminEmail : '', adminRole: who === 'admin' ? state.adminRole : '' })
-    .then(res => renderLoyaltyResults(res, resultsEl))
-    .catch(err => { resultsEl.innerHTML = '<div class="empty-state"><p>Search failed: ' + err.message + '</p></div>'; });
+    .then(res => {
+      renderLoyaltyResults(res, resultsEl);
+      loyaltyCacheRefresh(who); // fire-and-forget — keeps the cache warm for next time, same pattern as the Stock Tag Cache
+    })
+    .catch(err => {
+      if (!cachedResults.length) resultsEl.innerHTML = '<div class="empty-state"><p>Search failed: ' + err.message + '</p></div>';
+    });
 }
 
 function renderLoyaltyResults(res, resultsEl) {
@@ -15527,7 +15602,19 @@ async function stFindTag() {
   ST_FOUND = null;
   if (!raw) { box.innerHTML = ''; return; }
   if (stockTagHasSep(raw)) { box.innerHTML = '<div class="empty-state" style="padding:10px;color:var(--red);">⚠ Space, - or / not allowed. Enter like BOM2154.</div>'; return; }
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Checking...</div>';
+
+  // v-add (BRO: "tag no search cheste cache nunchi ventane data ravali" — same instant-from-cache
+  // glance as Stock Level/DSR. No Transfer button shown yet though — the cached counter/location
+  // could be stale (item may have moved since the cache last synced), and transferring FROM a wrong
+  // location is the kind of mistake that can't be casually undone, so the actual Transfer action only
+  // ever appears once the live lookup below confirms the current location.
+  const cachedNow0 = stockTagCacheGet(stockNormTag(raw));
+  if (cachedNow0) {
+    box.innerHTML = `<div class="st-loc"><span>📍 ${escHtml(cachedNow0.productName || raw)} (${escHtml(stockNormTag(raw))})</span></div>
+      <div class="st-loc"><span>${escHtml(cachedNow0.counter || '')}</span> <span style="opacity:.6;">(cached — confirming current location…)</span></div>`;
+  } else {
+    box.innerHTML = '<div class="loading"><span class="spinner"></span>Checking...</div>';
+  }
   await slEnsureMeta();
   try {
     const res = await slApi({ action: 'lookup', tag: raw });
@@ -15921,9 +16008,24 @@ async function slTagSearch() {
   const body = document.getElementById('slTagBody');
   const raw = (document.getElementById('slTagInput').value || '').trim();
   if (!raw) { toast('Enter a Tag No', 'error'); return; }
-  slLoading(body);
+  const tagN0 = stockNormTag(raw);
+
+  // v-add (BRO: "tag no search cheste, cache lo unte ventane data ravali, tarvata live ki update
+  // avali" — same instant-from-cache-then-live-refresh pattern dsrfTagLookup already uses, applied
+  // here too. The Stock Tag Cache has no customer PII in it (just item specs), so this is safe to
+  // show instantly while the real server call still runs right behind it to confirm/correct.
+  const cachedNow = stockTagCacheGet(tagN0);
+  const cachedSold = !cachedNow ? soldTagCacheGet(tagN0) : null;
+  if (cachedNow) {
+    const statusText = `<span class="kd-pill green">IN STOCK</span> &nbsp;<b>${escHtml(cachedNow.counter || '')}</b> &nbsp;<span style="opacity:.6;">(cached — confirming…)</span>`;
+    body.innerHTML = dsrMergedTagCardHtml(Object.assign({ tagNo: tagN0, photoData: cachedNow.photo || cachedNow.photoData }, cachedNow), statusText, null, 0, 'admin');
+  } else if (cachedSold) {
+    body.innerHTML = `<div class="card" style="margin-bottom:12px;"><div><span class="kd-pill red">SOLD</span> &nbsp;Tag <b>${escHtml(tagN0)}</b> <span style="opacity:.6;">(cached — confirming…)</span></div></div>`;
+  } else {
+    slLoading(body);
+  }
   try {
-    const res = await slApi({ action: 'lookup', withPhoto: 1, tag: stockNormTag(raw) });
+    const res = await slApi({ action: 'lookup', withPhoto: 1, tag: tagN0 });
     if (!res || !res.ok) { slError(body, res); return; }
     if (res.status === 'notfound') { body.innerHTML = `<div class="empty-state"><p>Tag <b>${escHtml(stockNormTag(raw))}</b> — not found in stock or sold list.</p></div>`; return; }
     const it = res.item || {};
@@ -15937,10 +16039,20 @@ async function slTagSearch() {
     // two cards that repeat the same Type/Product/Design/Weight/Tag No.
     if (sold && res.sold.dsrId && res.sold.dsrId.indexOf('WS') !== 0) {
       try {
-        const dsrRes = await _fetchWithTimeout(DSR_GAS_URL + '?action=searchByDsrId&dsrId=' + encodeURIComponent(res.sold.dsrId) + '&role=ADMIN', {}, 30000).then(r => r.json());
+        // v-fix (BRO: "sensitive ani pincinavi hide chei... emp ki restricted unte, data mask lo
+        // ivu" — role here used to be hardcoded 'ADMIN' no matter who was actually logged in, so
+        // even a restricted Admin (not MIS, no full-data grant) saw the customer's real Mobile and
+        // Address on every sold-tag lookup. Now sends 'EMP' for a restricted admin, which makes the
+        // backend itself mask Mobile/Address as "Restricted" (same server-side rule DSR search
+        // already uses) — never trusting a client-side-only mask for this.
+        const restrictedHere = !!state.isRestrictedAdmin;
+        const dsrRes = await _fetchWithTimeout(DSR_GAS_URL + '?action=searchByDsrId&dsrId=' + encodeURIComponent(res.sold.dsrId) + '&role=' + (restrictedHere ? 'EMP' : 'ADMIN'), {}, 30000).then(r => r.json());
         if (dsrRes && dsrRes.status === 'success' && dsrRes.results && dsrRes.results.length) {
           const needle = stockNormTag(raw);
           saleRow = dsrRes.results.find(r => stockNormTag(r.tagNo || '') === needle) || dsrRes.results[0];
+          // Backend doesn't mask Customer Name (EMP role there is for ordinary tag/DSR search, where
+          // the name itself is meant to show) — but here, for a restricted admin, hide it too.
+          if (saleRow && restrictedHere) saleRow = Object.assign({}, saleRow, { customerName: 'Restricted' });
         }
       } catch (e) {}
     }
@@ -15982,8 +16094,14 @@ function slRenderPhotos(box) {
       <div class="form-row"><label>From Wt</label><select class="uniform-select" id="slPhWtFrom" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
       <div class="form-row"><label>To Wt</label><select class="uniform-select" id="slPhWtTo" onchange="slLoadPhotos(true)"><option value="">Any</option></select></div>
     </div>
-    <div class="form-row"><input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" onkeydown="if(event.key==='Enter')slLoadPhotos(true)"></div>
-    <button class="btn-primary" style="width:100%;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
+    <div class="form-row"><div style="display:flex;gap:8px;">
+        <input type="text" id="slPhQ" placeholder="Search Tag No or Product..." autocomplete="off" style="flex:1 1 auto;min-width:0;" onkeydown="if(event.key==='Enter')slLoadPhotos(true)">
+        <button class="btn-secondary" onclick="slPhQClear()" title="Clear" style="width:auto;flex:0 0 auto;padding:12px 16px;">✕</button>
+      </div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-primary" style="flex:1 1 auto;" onclick="slLoadPhotos(true)">🔍 Show Photos</button>
+      <button class="btn-secondary" onclick="slPhotoResetFilters()" title="Reset all filters" style="width:auto;flex:0 0 auto;padding:12px 16px;">↺ Reset</button>
+    </div>
     <div id="slPhGrid" class="sl-photo-grid" style="margin-top:12px;"></div>
     <div id="slPhMoreWrap" style="text-align:center;margin-top:10px;"></div>
     <style>
@@ -16076,6 +16194,27 @@ function slRenderPhotoDimFilters(opts, product) {
   wrap.innerHTML = html;
 }
 
+// v-add (BRO: "stock photos lo kuda chesara" — same clear/reset pattern as Tag Search and
+// Counter-wise: a one-tap ✕ for the search box, and a one-tap ↺ Reset that clears every filter
+// (Show/Counter/Product/Design/size/Weight Range/search text) back to default in one go.
+function slPhQClear() {
+  const inp = document.getElementById('slPhQ');
+  if (inp) { inp.value = ''; inp.focus(); }
+  slLoadPhotos(true);
+}
+async function slPhotoResetFilters() {
+  const statusSel = document.getElementById('slPhStatus'); if (statusSel) statusSel.value = 'all';
+  const counterSel = document.getElementById('slPhCounter'); if (counterSel) counterSel.value = '';
+  const q = document.getElementById('slPhQ'); if (q) q.value = '';
+  const wtOn = document.getElementById('slPhWtRangeOn'); if (wtOn) wtOn.checked = false;
+  const wtBox = document.getElementById('slPhWtRangeBox'); if (wtBox) wtBox.style.display = 'none';
+  const wtFrom = document.getElementById('slPhWtFrom'); if (wtFrom) wtFrom.value = '';
+  const wtTo = document.getElementById('slPhWtTo'); if (wtTo) wtTo.value = '';
+  await slLoadPhotoProductOptions();
+  const prodSel = document.getElementById('slPhProduct'); if (prodSel) prodSel.value = '';
+  await slLoadPhotoDimFilters('');
+  slLoadPhotos(true);
+}
 async function slLoadPhotos(reset) {
   const grid = document.getElementById('slPhGrid'); if (!grid) return;
   if (reset) { SLPHOTO.items = []; SLPHOTO.offset = 0; grid.innerHTML = ''; }
@@ -17427,12 +17566,82 @@ async function confirmSubmitGoldenAura(who, evt) {
   }
 }
 
+// ============================================================
+// GOLDEN AURA CACHE — same instant-from-cache-then-live-refresh pattern as the Loyalty Card
+// Cache above, for the same reason (BRO: "golden plan... anni kuda offline lo cache lo data sync
+// avali"). Stores every plan this role/empName can already see live (no new exposure — Golden
+// Aura's own masking of Mobile for non-admin happens server-side in goldenAuraListAPI exactly as
+// it already did before this cache existed).
+// ============================================================
+const GOLDEN_AURA_CACHE_KEY = 'vsrGoldenAuraCache_v1';
+let GOLDEN_AURA_CACHE = { emp: { rows: [], savedAt: 0 }, admin: { rows: [], savedAt: 0 } };
+function goldenAuraCacheLoadLocal() {
+  try {
+    const raw = localStorage.getItem(GOLDEN_AURA_CACHE_KEY);
+    if (raw) { const parsed = JSON.parse(raw); if (parsed && parsed.emp && parsed.admin) GOLDEN_AURA_CACHE = parsed; }
+  } catch (e) {}
+}
+function goldenAuraCacheSaveLocal() { try { localStorage.setItem(GOLDEN_AURA_CACHE_KEY, JSON.stringify(GOLDEN_AURA_CACHE)); } catch (e) {} }
+async function goldenAuraCacheRefresh(who) {
+  if (!navigator.onLine) return;
+  try {
+    const reqParams = { page: 'goldenAuraListJSON', role: who === 'admin' ? 'ADMIN' : 'EMP' };
+    if (who === 'emp') reqParams.empName = state.empName;
+    // Deliberately no search/planType/empFilter/date filters here — this always pulls the FULL
+    // set this role can see, so whatever the person searches/filters next is answered from cache.
+    const res = await jsonpReliable(reqParams);
+    if (res && res.ok && Array.isArray(res.rows)) {
+      GOLDEN_AURA_CACHE[who] = { rows: res.rows, savedAt: Date.now() };
+      goldenAuraCacheSaveLocal();
+    }
+  } catch (e) { /* offline or slow — keep showing whatever was cached last time */ }
+}
+goldenAuraCacheLoadLocal();
+window.addEventListener('online', () => { goldenAuraCacheRefresh('emp'); goldenAuraCacheRefresh('admin'); });
+
+// Mirrors goldenAuraListAPI's own filter rules so the cached instant answer matches what the live
+// call is about to say a moment later.
+function goldenAuraCacheFilter(who, search, planType, empFilter, startDate, endDate) {
+  const rows = (GOLDEN_AURA_CACHE[who] && GOLDEN_AURA_CACHE[who].rows) || [];
+  const s = (search || '').trim().toLowerCase();
+  return rows.filter(r => {
+    if (planType && r.planType !== planType) return false;
+    if (empFilter && (r.employee || '').toLowerCase() !== empFilter.toLowerCase()) return false;
+    const enrollStr = (r.enrollDate || '').toString();
+    if (startDate && enrollStr && enrollStr < startDate) return false;
+    if (endDate && enrollStr && enrollStr > endDate) return false;
+    if (s) {
+      const hay = ((r.custName || '') + ' ' + (r.mobile || '')).toLowerCase();
+      if (hay.indexOf(s) === -1) return false;
+    }
+    return true;
+  });
+}
+function gaRowsHtml(rows) {
+  return rows.map(r => `<div class="dsr-receipt-card">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 Plan #${r.planNo} — ${r.planType}</span><span class="kd-pill gold">₹${r.amount}</span></div>
+        <div class="dsr-receipt-body">
+          <div class="dsr-cust-name">${properCase(r.custName)}</div>
+          <div class="dsr-meta-row">📱 ${r.mobile} &nbsp;·&nbsp; 📍 ${properCase(r.town) || '—'}, ${properCase(r.state) || '—'}</div>
+          <div class="dsr-meta-row" style="border-bottom:none;">👤 ${properCase(r.employee)} &nbsp;·&nbsp; 📅 Enrolled: ${fmtDMY(r.enrollDate)}</div>
+        </div>
+      </div>`).join('');
+}
+
 function loadGoldenAuraList(who) {
   const box = document.getElementById('gaListBox-' + who);
   hideExportBtn(box.id);
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   const search = document.getElementById('gaSearch-' + who).value.trim();
   const planType = document.getElementById('gaTypeFilter-' + who).value;
+  const empFilterNow = who === 'admin' ? (document.getElementById('gaEmpFilter-admin') || {}).value : '';
+  const startNow = who === 'admin' ? (document.getElementById('gaStartDate-admin') || {}).value : '';
+  const endNow = who === 'admin' ? (document.getElementById('gaEndDate-admin') || {}).value : '';
+  const cachedRows = goldenAuraCacheFilter(who, search, planType, empFilterNow, startNow, endNow);
+  if (cachedRows.length) {
+    box.innerHTML = `<div class="kd-note" style="opacity:.7;">⏳ ${cachedRows.length} scheme(s) — cached, confirming…</div>` + gaRowsHtml(cachedRows);
+  } else {
+    box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  }
   const reqParams = { page: 'goldenAuraListJSON', role: who === 'admin' ? 'ADMIN' : 'EMP' };
   if (who === 'emp') reqParams.empName = state.empName;
   if (search) reqParams.search = search;
@@ -17466,7 +17675,7 @@ function loadGoldenAuraList(who) {
     }
   }
   jsonpReliable(reqParams).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadGoldenAuraList(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
+    if (!res || !res.ok) { if (!cachedRows.length) box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadGoldenAuraList(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
     // Populate the Employee filter dropdown once, without wiping out
     // whatever the admin currently has selected.
     if (who === 'admin' && res.employees) {
@@ -17480,20 +17689,15 @@ function loadGoldenAuraList(who) {
       }
     }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No schemes found.</p></div>'; return; }
-    let html = `<div class="kd-note">${res.rows.length} scheme(s)</div>`;
-    res.rows.forEach(r => {
-      html += `<div class="dsr-receipt-card">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 Plan #${r.planNo} — ${r.planType}</span><span class="kd-pill gold">₹${r.amount}</span></div>
-        <div class="dsr-receipt-body">
-          <div class="dsr-cust-name">${properCase(r.custName)}</div>
-          <div class="dsr-meta-row">📱 ${r.mobile} &nbsp;·&nbsp; 📍 ${properCase(r.town) || '—'}, ${properCase(r.state) || '—'}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">👤 ${properCase(r.employee)} &nbsp;·&nbsp; 📅 Enrolled: ${fmtDMY(r.enrollDate)}</div>
-        </div>
-      </div>`;
-    });
-    box.innerHTML = html;
+    box.innerHTML = `<div class="kd-note">${res.rows.length} scheme(s)</div>` + gaRowsHtml(res.rows);
     showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadGoldenAuraList(\'" + who + "\')" title="Retry">🔄</button></div>'; });
+    // Only a plain, unfiltered open of this screen refreshes the FULL cache (a filtered search
+    // shouldn't overwrite the cache with just the filtered subset) — matches the explicit "no
+    // filters" shape goldenAuraCacheRefresh always sends.
+    if (!search && !planType && !empFilterNow && !startNow && !endNow) goldenAuraCacheRefresh(who);
+  }).catch(() => {
+    if (!cachedRows.length) box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadGoldenAuraList(\'" + who + "\')" title="Retry">🔄</button></div>';
+  });
 }
 
 function loadGoldenAuraCounts(who) {
