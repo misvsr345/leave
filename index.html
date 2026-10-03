@@ -3700,8 +3700,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="form-row">
           <label>Tag No <span class="req">★</span></label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="stTagInput" placeholder="e.g. BOM2154" style="flex:1;" onkeydown="if(event.key==='Enter'){stFindTag();}">
-            <button class="btn-secondary" style="white-space:nowrap;" onclick="stFindTag()">🔍 Find</button>
+            <input type="text" id="stTagInput" placeholder="e.g. BOM2154" style="flex:1 1 auto;min-width:0;" onkeydown="if(event.key==='Enter'){stFindTag();}">
+            <button class="btn-secondary" onclick="stClearTag()" title="Clear" style="white-space:nowrap;width:auto;flex:0 0 auto;padding:12px 16px;">✕</button>
+            <button class="btn-secondary" style="white-space:nowrap;width:auto;flex:0 0 auto;padding:12px 16px;" onclick="stFindTag()">🔍 Find</button>
           </div>
         </div>
         <div id="stFoundBox"></div>
@@ -7185,22 +7186,13 @@ async function confirmSubmitLeave() {
 
   updateConnStatus();
   if(!navigator.onLine) {
-    // v-add (BRO's Multi-Segment Leave feature): a multi-segment
-    // submission calls the SAME single-segment backend function
-    // multiple times server-side, in sequence — the existing offline
-    // queue was only ever built to replay ONE stored request, so
-    // queuing a multi-segment one here would silently only ever submit
-    // as segment #1 once back online. Simplest safe answer: require
-    // being online for this specific case, same as several other
-    // multi-step actions elsewhere in this portal already do, rather
-    // than building and testing a whole second offline-replay path for
-    // what should be a rare combination (offline AND multiple dates in
-    // one go).
-    if (data.isMultiSegment) {
-      toast('📴 Multiple dates in one request need an internet connection — please try again once you\'re back online, or submit them one at a time.', 'error');
-      return;
-    }
-    submitLeaveOffline(data);
+    // v-fix (BRO: "existing entry forms anni offline vadu, only data
+    // matrame sync avali" — Leave now follows the exact same rule as
+    // Stock/DSR: no offline submit queue, nothing saved until the server
+    // confirms it. Reference data (employee list, balances, etc.) can
+    // still be cached and used offline for display — only the actual
+    // submit requires a live connection.
+    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
     return;
   }
 
@@ -7253,9 +7245,10 @@ async function confirmSubmitLeave() {
       }
     } catch(e) {
       if (!navigator.onLine) {
-        // Genuinely offline — this is the correct, intended use of the
-        // offline queue. Safe to auto-sync later.
-        submitLeaveOffline(data);
+        // v-fix (BRO: "existing entry forms anni offline vadu" — connection
+        // dropped mid-request; nothing queues any more, say so plainly so
+        // the employee knows to resubmit once back online.
+        toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
       } else {
         // We WERE online — the request likely already reached and was
         // processed by the server; the client just didn't get the response
@@ -11880,14 +11873,14 @@ async function confirmSubmitLoyaltyCard(evt) {
   // the same way DSR's idemKey already does.
   payload.idemKey = loyIdemKey;
 
-  // v-fix (Loyalty silent-fail-on-bad-network bug): same gap DSR had — no
-  // offline check at all. Goes into the same local offline queue and
-  // auto-uploads (photos included) once the device reconnects.
+  // v-fix (BRO: "existing entry forms anni offline vadu, only data matrame
+  // sync avali" — Loyalty Card is now online-only too, same as Stock/DSR/
+  // Leave: no offline queue, nothing saved until the server confirms it.
   updateConnStatus();
   if (!navigator.onLine) {
     const modalOff = document.getElementById('loyPreviewModal');
     if (modalOff) modalOff.remove();
-    submitLoyaltyOffline(payload);
+    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
     return;
   }
 
@@ -11921,11 +11914,13 @@ async function confirmSubmitLoyaltyCard(evt) {
       errBox.style.display = 'block';
     }
   } catch (err) {
-    // v-fix (same "navigator.onLine lies" bug as DSR — see
-    // dsrfConfirmSubmit's comment): ANY failure here now queues offline,
-    // not just a detected-offline/timeout case. idemKey makes this safe
-    // even if the original request actually did reach the server.
-    submitLoyaltyOffline(payload);
+    // v-fix (BRO: "existing entry forms anni offline vadu" — no more
+    // offline queue on any failure here (dropped connection, timeout, a
+    // "Failed to fetch" on WiFi-but-no-internet). Nothing was saved —
+    // say so plainly instead of silently trusting a local queue.
+    errBox.textContent = '📴 No internet connection — nothing submitted. Please try again.';
+    errBox.style.display = 'block';
+    toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
   }
@@ -14736,8 +14731,11 @@ function dsrfAddEntry(who) {
                 <button onclick="dsrfSetTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
               </div><input type="hidden" id="dsrfTagSt-${who}-${eid}" value="Tag"></div>
             <div id="dsrfTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
-              <input type="text" id="dsrfTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
-                oninput="dsrfTagTyping('${who}',${eid},'g')" onblur="dsrfTagLookup('${who}',${eid},'g')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+              <div style="display:flex;gap:6px;">
+                <input type="text" id="dsrfTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;flex:1 1 auto;min-width:0;"
+                  oninput="dsrfTagTyping('${who}',${eid},'g')" onblur="dsrfTagLookup('${who}',${eid},'g')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                <button type="button" class="btn-secondary" onclick="dsrfClearTagNo('${who}',${eid},'g')" title="Clear" style="flex:0 0 auto;width:auto;padding:0 12px;">✕</button>
+              </div>
               <div id="dsrfTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
           </div>
           <div class="g2 mb12">
@@ -14774,8 +14772,11 @@ function dsrfAddEntry(who) {
                 <button onclick="dsrfSetDiaTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
               </div><input type="hidden" id="dsrfDiaTagSt-${who}-${eid}" value="Tag"></div>
             <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
-              <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
-                oninput="dsrfTagTyping('${who}',${eid},'d')" onblur="dsrfTagLookup('${who}',${eid},'d')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+              <div style="display:flex;gap:6px;">
+                <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;flex:1 1 auto;min-width:0;"
+                  oninput="dsrfTagTyping('${who}',${eid},'d')" onblur="dsrfTagLookup('${who}',${eid},'d')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                <button type="button" class="btn-secondary" onclick="dsrfClearTagNo('${who}',${eid},'d')" title="Clear" style="flex:0 0 auto;width:auto;padding:0 12px;">✕</button>
+              </div>
               <div id="dsrfDiaTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
           </div>
           <!-- v-fix (BRO: Cent, Quality and the single "Weight" field are no longer asked for
@@ -15237,6 +15238,14 @@ function dsrfTagIds(who, eid, kind) {
   const d = kind === 'd';
   return { inp: (d ? 'dsrfDiaTagNo-' : 'dsrfTagNo-') + who + '-' + eid, msg: (d ? 'dsrfDiaTagMsg-' : 'dsrfTagMsg-') + who + '-' + eid };
 }
+// v-add (BRO: "tag no dagara x mark pettu, click cheste remove avali" — one tap clears the Tag No
+// box back to blank, instead of backspacing character by character.
+function dsrfClearTagNo(who, eid, kind) {
+  const ids = dsrfTagIds(who, eid, kind);
+  const inp = document.getElementById(ids.inp);
+  if (inp) { inp.value = ''; inp.classList.remove('err-inp'); inp.focus(); }
+  dsrfTagMsg(ids.msg, 'info', '');
+}
 // Bill No: R or E followed by digits, no spaces — e.g. R1042, E205.
 function dsrBillNoValid(s) { return /^(R|E)\d+$/.test(String(s == null ? '' : s).trim()); }
 function dsrfBillNoTyping(who) {
@@ -15289,13 +15298,21 @@ function dsrfSetProductSel(who, eid, kind, name) {
   dsrfToggleOther(who, eid, kind);
 }
 function dsrfSetPhotoData(who, eid, pfx, dataUrl) {
-  if (!dataUrl || dataUrl.length < 100) return;
+  if (!dataUrl) return;
   const hid = document.getElementById(`dsrfPh-${pfx}-${who}-${eid}`);
-  if (!hid || (hid.value && hid.value.length > 100)) return;   // never overwrite a photo the person already picked
+  if (!hid || hid.value) return;   // never overwrite a photo the person already picked (or already filled)
   hid.value = dataUrl;
   const t = document.getElementById(`dsrfPt-${pfx}-${who}-${eid}`); if (t) { t.textContent = 'Photo from stock'; t.className = 'phn'; }
-  const sz = document.getElementById(`dsrfPs-${pfx}-${who}-${eid}`); if (sz) sz.textContent = Math.round(dataUrl.length * 0.75 / 1024) + ' KB';
+  const sz = document.getElementById(`dsrfPs-${pfx}-${who}-${eid}`);
+  // v-fix (BRO: "existing stock lo unna item ki photo not upload rakudadu, backend lo already photo
+  // untundi" — dataUrl is now usually the existing Drive photo URL itself (a short string, not a big
+  // base64 blob), not a freshly re-encoded copy, so there's no byte size to show for it any more.
+  if (sz) sz.textContent = dataUrl.indexOf('http') === 0 ? 'from stock' : (Math.round(dataUrl.length * 0.75 / 1024) + ' KB');
   const w = document.getElementById(`dsrfPw-${pfx}-${who}-${eid}`); if (w) { w.textContent = '✓ Photo taken from stock (you can replace it)'; w.className = 'photo-ok show'; }
+  // A Drive URL loads directly as an <img src> (Stock photos are shared "anyone with the link") —
+  // same reliable direct-link pattern already used to view saved DSR/Stock photos elsewhere, instead
+  // of waiting on a slow/fragile server-side base64 fetch that used to be the only way this field
+  // ever got filled, and silently left it blank whenever that fetch failed or timed out.
   const pv = document.getElementById(`dsrfPp-${pfx}-${who}-${eid}`); if (pv) { pv.src = dataUrl; pv.classList.add('show'); }
   const rm = document.getElementById(`dsrfPr-${pfx}-${who}-${eid}`); if (rm) rm.style.display = 'inline-block';
 }
@@ -15317,7 +15334,12 @@ function dsrfApplyStockItem(who, eid, it, tagN) {
     dsrfSetSelectLoose(`dsrfDiaClarity-${who}-${eid}`, it.clarity);
     dsrfSetSelectLoose(`dsrfDiaColor-${who}-${eid}`, it.color);
     dsrfSetV(`dsrfDiaCertNo-${who}-${eid}`, it.certNo);
-    dsrfSetPhotoData(who, eid, 'dia', it.photoData);
+    // v-fix (BRO: "existing stock lo unna item ki photo not upload rakudadu, backend lo already
+    // photo untundi" — prefer it.photo (the existing Stock Drive URL, always present, instant, no
+    // network wait) over it.photoData (the base64 copy, only present when withPhoto=1 succeeded and
+    // can silently come back empty on a slow/flaky connection even though every other field filled
+    // fine — that gap was exactly why the photo used to go missing here).
+    dsrfSetPhotoData(who, eid, 'dia', it.photo || it.photoData);
   } else {
     if (dsrfGv(`dsrfTagSt-${who}-${eid}`) !== 'Tag') dsrfClickToggle(`dsrfTglTag-${who}-${eid}`, 'Tag');
     dsrfSetV(`dsrfTagNo-${who}-${eid}`, tagN);
@@ -15325,7 +15347,7 @@ function dsrfApplyStockItem(who, eid, it, tagN) {
     dsrfSetV(`dsrfDes-${who}-${eid}`, it.design);
     dsrfSetSelectLoose(`dsrfTch-${who}-${eid}`, it.tunch);
     dsrfSetV(`dsrfWt-${who}-${eid}`, it.weight);
-    dsrfSetPhotoData(who, eid, 'g', it.photoData);
+    dsrfSetPhotoData(who, eid, 'g', it.photo || it.photoData);   // v-fix: see Diamond branch above for why
   }
 }
 
@@ -15355,7 +15377,7 @@ async function dsrfTagLookup(who, eid, kind) {
       type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter,
       tunch: cached.tunch, weight: cached.weight, gross: cached.gross, net: cached.net,
       carat: cached.carat, clarity: cached.clarity, color: cached.color, certNo: cached.certNo,
-      photoData: cached.photoData
+      photo: cached.photo, photoData: cached.photoData
     }, tagN);
     const kNow = cached.type === 'Diamond' ? 'd' : 'g';
     const nowIds = dsrfTagIds(who, eid, kNow), otherIds = dsrfTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
@@ -15407,7 +15429,7 @@ async function dsrfTagLookup(who, eid, kind) {
       counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type,
       tunch: it.tunch || '', weight: it.weight || '', gross: it.gross || '', net: it.net || '',
       carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || '',
-      photoData: it.photoData || ''
+      photo: it.photo || '', photoData: it.photoData || ''
     });
     // the message belongs to whichever block (Gold / Diamond) is showing now
     const kNow = it.type === 'Diamond' ? 'd' : 'g';
@@ -15490,6 +15512,14 @@ async function slEnsureMeta() {
 // Backend: StockBackend.gs transferStock_ / transferLog_ (action: transferStock / transferLog).
 // ══════════════════════════════════════
 let ST_FOUND = null; // the currently-found stock item {stockId, tagNo, productName, productFrom, counter}
+// v-add (BRO: "tag no dagara x mark pettu, click cheste remove avali" — one tap clears the Tag No
+// box and whatever was found for it, instead of backspacing character by character).
+function stClearTag() {
+  const inp = document.getElementById('stTagInput');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const box = document.getElementById('stFoundBox'); if (box) box.innerHTML = '';
+  ST_FOUND = null;
+}
 async function stFindTag() {
   const inp = document.getElementById('stTagInput');
   const raw = (inp.value || '').trim();
@@ -15725,8 +15755,11 @@ async function slRenderCounter(box) {
     await slEnsureMeta();
     const names = SL.counters.concat([SL.mainHub]);
     if (!SL.sel || names.indexOf(SL.sel) === -1) SL.sel = names[0] || '';
-    const head = `<div class="form-row"><label>Counter</label>
-      <select class="uniform-select" id="slCounterSel" onchange="SL.sel=this.value;slCounterFiltersChanged()">${names.map(n => `<option ${n === SL.sel ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+    const head = `<div class="form-row" style="display:flex;align-items:flex-end;gap:8px;">
+        <div style="flex:1 1 auto;min-width:0;"><label>Counter</label>
+        <select class="uniform-select" id="slCounterSel" onchange="SL.sel=this.value;slCounterFiltersChanged()">${names.map(n => `<option ${n === SL.sel ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+        <button class="btn-secondary" onclick="slCounterResetFilters()" title="Reset all filters" style="width:auto;flex:0 0 auto;padding:12px 16px;">↺ Reset</button>
+      </div>
       <div class="form-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <input type="checkbox" id="slCounterByDesign" onchange="slLoadCounterDetail()" style="width:18px;height:18px;margin:0;">
         <label style="margin:0;text-transform:none;">Design-wise breakdown</label>
@@ -15753,6 +15786,22 @@ async function slRenderCounter(box) {
 // cascade rule as Photos: options only ever offer values that exist), then reload the table.
 async function slCounterFiltersChanged() {
   await slLoadCounterDimOptions();
+  slLoadCounterDetail();
+}
+// v-add (BRO: "counter select chesaka, malli all counter select cheyali ante malli all fields
+// marcharsi vastundi" — one tap resets Counter back to its default AND clears every dependent
+// filter (Design-wise, Bangle/Ring/Length, Weight Range) in one go, instead of changing each
+// field back by hand).
+async function slCounterResetFilters() {
+  const names = SL.counters.concat([SL.mainHub]);
+  SL.sel = names[0] || '';
+  const sel = document.getElementById('slCounterSel'); if (sel) sel.value = SL.sel;
+  const byDesign = document.getElementById('slCounterByDesign'); if (byDesign) byDesign.checked = false;
+  const wtOn = document.getElementById('slCounterWtRangeOn'); if (wtOn) wtOn.checked = false;
+  const wtBox = document.getElementById('slCounterWtRangeBox'); if (wtBox) wtBox.style.display = 'none';
+  const wtFrom = document.getElementById('slCounterWtFrom'); if (wtFrom) wtFrom.value = '';
+  const wtTo = document.getElementById('slCounterWtTo'); if (wtTo) wtTo.value = '';
+  await slLoadCounterDimOptions();   // re-fetches Bangle/Ring/Length options for the reset counter, all back to "All"
   slLoadCounterDetail();
 }
 async function slLoadCounterDimOptions() {
@@ -15855,8 +15904,18 @@ function slRenderTag(box) {
   box.innerHTML = `<div class="form-row"><label>Tag No</label>
       <div style="display:flex;gap:8px;">
         <input type="text" id="slTagInput" placeholder="e.g. BOM2154" autocomplete="off" style="flex:1 1 auto;min-width:0;width:auto;text-transform:uppercase;" onkeydown="if(event.key==='Enter')slTagSearch()">
+        <button class="btn-secondary" onclick="slTagClear()" title="Clear" style="width:auto;flex:0 0 auto;padding:12px 16px;">✕</button>
         <button class="btn-primary" onclick="slTagSearch()" style="width:auto;flex:0 0 auto;padding:12px 26px;">Search</button>
       </div></div><div id="slTagBody"></div>`;
+}
+// v-add (BRO: "tag no enter chesindi remove cheyali ante backspace click chesi okkoti remove
+// cheyalsi vastundi" — one tap to clear the Tag No search back to blank, instead of backspacing
+// through it character by character).
+function slTagClear() {
+  const inp = document.getElementById('slTagInput');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const body = document.getElementById('slTagBody');
+  if (body) body.innerHTML = '';
 }
 async function slTagSearch() {
   const body = document.getElementById('slTagBody');
@@ -16522,7 +16581,10 @@ function seItemHtml(n) {
         <div class="se-mb se-hide" data-role="diaCounterNote"><div class="se-msg info">💎 Diamond Counter selected — Diamond item only.</div></div>
         <div class="se-mb" data-role="tagWrap">
           <label>Tag No <span class="req">★</span></label>
-          <input type="text" data-role="tagNo" placeholder="e.g. BOM2154" autocomplete="off" style="text-transform:uppercase">
+          <div style="display:flex;gap:6px;">
+            <input type="text" data-role="tagNo" placeholder="e.g. BOM2154" autocomplete="off" style="text-transform:uppercase;flex:1 1 auto;min-width:0;">
+            <button type="button" class="btn-secondary" data-role="tagClear" title="Clear" style="flex:0 0 auto;width:auto;padding:0 12px;">✕</button>
+          </div>
           <div class="se-msg info" data-role="tagMsg"></div>
           <label class="se-retconf se-hide" data-role="retWrap"><input type="checkbox" data-role="retChk"><span>Yes — this tag came back from a sale. Add it to stock again (Return).</span></label>
         </div>
@@ -16579,6 +16641,7 @@ function seItemHtml(n) {
           </div>
           <div class="se-msg info" data-role="phTxt"></div>
           <img class="se-phprev" data-role="prev" alt="">
+          <a href="#" data-role="phRemove" style="display:none;color:var(--red);font-size:11px;font-weight:700;margin-top:4px;">✕ Remove Photo</a>
         </div>
       </div>
     </div>`;
@@ -16635,8 +16698,15 @@ function seWireItem(scope, b) {
   });
   tag.addEventListener('change', () => seCheckTag(scope, b));
   tag.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); tag.blur(); } });
+  // v-add (BRO: "tag no dagara x mark pettu, click cheste remove avali" — one tap clears the Tag No
+  // box back to blank, instead of backspacing character by character).
+  seR(b,'tagClear').addEventListener('click', () => {
+    tag.value = ''; tag.classList.remove('se-bad'); b._tagState = ''; seR(b,'retWrap').classList.add('se-hide');
+    seSetTagMsg(b,'info',''); tag.focus();
+  });
   seR(b,'fileCam').addEventListener('change', ev => seLoadPhoto(b, ev.target));
   seR(b,'fileGal').addEventListener('change', ev => seLoadPhoto(b, ev.target));
+  seR(b,'phRemove').addEventListener('click', e => { e.preventDefault(); seRemovePhoto(b); });
 }
 function seSetTagMsg(b, cls, txt) { const m = seR(b,'tagMsg'); m.className = 'se-msg ' + cls; m.textContent = txt; }
 
@@ -16839,10 +16909,23 @@ function seLoadPhoto(b, inp) {
       b._photo = b64;
       seR(b,'phTxt').textContent = f.name + ' (' + kb + ' KB)';
       const pv = seR(b,'prev'); pv.src = b64; pv.classList.add('show');
+      seR(b,'phRemove').style.display = 'inline-block';
     };
     img.src = ev.target.result;
   };
   rd.readAsDataURL(f);
+}
+// v-add (BRO: "all photo upload places lo remove option ivu" — Stock Entry's own item photo was the
+// one spot in the portal missing a "✕ Remove Photo" link (DSR/Loyalty Card/Golden Aura already have
+// one each). Clears the stored photo, the preview, and both file inputs so picking the same file
+// again still fires change.
+function seRemovePhoto(b) {
+  b._photo = '';
+  seR(b,'phTxt').textContent = '';
+  const pv = seR(b,'prev'); pv.src = ''; pv.classList.remove('show');
+  seR(b,'phRemove').style.display = 'none';
+  seR(b,'fileCam').value = '';
+  seR(b,'fileGal').value = '';
 }
 function seItemError(b, msg) {
   const e = b.querySelector('[data-role="itemerr"]'); b.classList.toggle('se-err', !!msg);
@@ -17286,16 +17369,15 @@ async function confirmSubmitGoldenAura(who, evt) {
   // reconnect-and-resubmit) the same way DSR/Loyalty already do.
   payload.idemKey = gaIdemKey;
 
-  // v-fix (Golden Aura silent-fail-on-bad-network bug): same gap DSR and
-  // Loyalty had — no offline check at all, despite this form carrying the
-  // MOST photos (up to 7) of any form in the app, and so being the most
-  // likely to hang or drop on a bad connection. Goes into the same local
-  // offline queue and auto-uploads once the device reconnects.
+  // v-fix (BRO: "existing entry forms anni offline vadu, only data matrame
+  // sync avali" — Golden Aura is now online-only too, same as Stock/DSR/
+  // Leave/Loyalty: no offline queue, nothing saved until the server
+  // confirms it.
   updateConnStatus();
   if (!navigator.onLine) {
     const modalOff = document.getElementById('gaPreviewModal');
     if (modalOff) modalOff.remove();
-    submitGoldenAuraOffline(payload, who);
+    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
     return;
   }
 
@@ -17334,11 +17416,12 @@ async function confirmSubmitGoldenAura(who, evt) {
       msg.textContent = '❌ ' + ((res && res.error) || 'Failed to save');
     }
   } catch (e) {
-    // v-fix (same "navigator.onLine lies" bug as DSR/Loyalty): ANY
-    // failure here now queues offline, not just a detected-offline/
-    // timeout case. idemKey makes this safe even if the original request
-    // actually did reach the server.
-    submitGoldenAuraOffline(payload, who);
+    // v-fix (BRO: "existing entry forms anni offline vadu" — no more
+    // offline queue on any failure here. Nothing was saved — say so
+    // plainly instead of silently trusting a local queue.
+    msg.style.color = 'var(--red)';
+    msg.textContent = '📴 No internet connection — nothing submitted. Please try again.';
+    toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
   }
@@ -18347,6 +18430,18 @@ async function submitLeadCall() {
   const duration = document.getElementById('leadDurationInput').value || '00:00';
   const star = v => v ? (v + ' Star') : '';
 
+  // v-fix (BRO: "existing entry forms anni offline vadu, only data matrame
+  // sync avali" — Leads call-log entry is now online-only too, same as
+  // Stock/DSR/Leave/Loyalty/Golden Aura: no offline queue, nothing saved
+  // until the server confirms it.
+  updateConnStatus();
+  if (!navigator.onLine) {
+    errBox.textContent = '📴 No internet connection — nothing submitted. Reconnect and submit again.';
+    errBox.style.display = 'block';
+    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+    return;
+  }
+
   const btn = document.getElementById('leadSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Saving...';
   try {
@@ -18400,19 +18495,21 @@ async function submitLeadCall() {
         renderEmpLeadsSummaryBox();
       }
     } else {
-      // v-fix (BRO's exact question: "does the submitted data actually get saved"):
-      // a non-network failure response (e.g. the CRM Apps Script itself
-      // erroring, or a flaky-connection response that came back malformed
-      // rather than as a clean timeout) used to just show red text and
-      // stop there — same gap as DSR's doPost error path before that got
-      // fixed. Any unsuccessful attempt now falls back to the offline
-      // queue instead of discarding what the employee just typed.
-      submitLeadCallOffline(payload);
+      // v-fix (BRO: "existing entry forms anni offline vadu" — a non-
+      // network failure response (CRM Apps Script error, malformed
+      // response, etc.) no longer queues offline. Nothing was saved —
+      // say so plainly so the employee knows to retry.
+      errBox.textContent = '❌ ' + ((res && res.error) || 'Failed to save') + ' — nothing was saved. Please try again.';
+      errBox.style.display = 'block';
+      toast('❌ Failed to save — nothing was saved. Please try again.', 'error');
     }
   } catch (e) {
-    // A genuine network failure (offline, timeout, DNS, CORS) — same
-    // treatment: queue it, don't lose it.
-    submitLeadCallOffline(payload);
+    // v-fix (BRO: "existing entry forms anni offline vadu" — a genuine
+    // network failure (offline, timeout, DNS, CORS) no longer queues
+    // offline either. Nothing was saved — say so plainly.
+    errBox.textContent = '📴 No internet connection — nothing submitted. Please try again.';
+    errBox.style.display = 'block';
+    toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit';
   }
@@ -19948,7 +20045,7 @@ function dsrfSubmit(who) {
       const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
-        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: (!isOutletForm && sPhoto.length > 100) ? sPhoto : '',
+        silverItemName: sn, silverItemWeight: sw, silverItemPhoto: (!isOutletForm && sPhoto) ? sPhoto : '',
         silverQuality: sQuality || '', billNo: billNo || '' });
     } else if (type === 'Diamond') {
       // v-fix (BRO: "Diamond kosam Silver laga, vere columns add chei" —
@@ -19978,7 +20075,7 @@ function dsrfSubmit(who) {
         silverItemName: '', silverItemWeight: '', silverItemPhoto: '',
         diamondTagStatus: dTs || '', diamondTagNo: (dTn || '').toUpperCase(), diamondProductName: dpn,
         diamondCent: '', diamondQuality: '', diamondWeight: '',
-        diamondPhoto: (!isOutletForm && dPhoto.length > 100) ? dPhoto : '',
+        diamondPhoto: (!isOutletForm && dPhoto) ? dPhoto : '',
         diamondGrossWt: dGrossWt || '', diamondNetWt: dNetWt || '', diamondGoldTunch: dGoldTunch || '',
         diamondCarat: dCarat || '', diamondClarity: dClarity || '', diamondColor: dColor || '',
         diamondCertNo: dCertNo || '', billNo: billNo || '' });
@@ -19997,7 +20094,7 @@ function dsrfSubmit(who) {
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
         type, productFrom: pf, tagStatus: ts || '', tagNo: (tn || '').toUpperCase(), productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
-        photo: (!isOutletForm && gPhoto.length > 100) ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: billNo || '' });
+        photo: (!isOutletForm && gPhoto) ? gPhoto : '', silverItemName: '', silverItemWeight: '', silverItemPhoto: '', billNo: billNo || '' });
     }
   });
 
@@ -20588,16 +20685,18 @@ function dsrfConfirmSubmit(who, evt) {
   // is even removed.
   if (isDuplicateSubmission(idemKey)) { toast('Already submitting, please wait...', 'info'); return; }
 
-  // v-fix (DSR silent-fail-on-bad-network bug): DSR had no offline check
-  // at all, unlike Leave. On a genuinely dropped connection this used to
-  // just hang/fail with nothing saved anywhere but the on-screen form. Now
-  // it goes straight into the same local offline queue Leave uses, and
-  // auto-uploads (photos included) the moment the device reconnects.
+  // v-fix (BRO: "dsr entry kuda online lo untene save avali. cache lo save
+  // vaddu. every data entry only in online. stock sensitive matter" — DSR
+  // data is sensitive the same way Stock is, so this now follows the exact
+  // same rule seSave already follows for Stock Entry: no offline queue, no
+  // "saved" message unless the server actually confirmed it. A queued
+  // "saved" that silently never reaches the sheet is worse than a clear,
+  // visible failure the person can act on immediately.
   updateConnStatus();
   if (!navigator.onLine) {
     const modalOff = document.getElementById('dsrPreviewModal');
     if (modalOff) modalOff.remove();
-    submitDsrOffline(rows, idemKey, who, undefined);
+    toast('📴 No internet connection — nothing saved. Reconnect and submit again.', 'error');
     return;
   }
 
@@ -20670,25 +20769,17 @@ function dsrfConfirmSubmit(who, evt) {
         if (payBtn) dsrfSetPayStatus(who, 'Purchased', payBtn);
       } else {
         msg.style.color = 'var(--red)';
-        msg.textContent = '❌ ' + (result.message || 'Failed to save') + ' — saved offline instead, will retry automatically.';
-        // v-fix (BRO: "employee submitted right in front of me, but it's
-        // not even in the log — the data is just GONE" — root cause): a
-        // server-side error response (e.g. doPost's JSON.parse choking on
-        // a truncated/corrupted body — very plausible for a multi-photo
-        // DSR over flaky mobile data) is a completely VALID, successful
-        // HTTP response with {status:"error"} in it. It never touches the
-        // .catch() below (that's for network-level failures only), so
-        // this branch used to just show red text and otherwise do
-        // NOTHING — no offline queue, no retry, nothing. If the employee
-        // didn't notice/preserve that exact red message before navigating
-        // away, the DSR vanished with zero trace anywhere: not in the
-        // sheet, not in the Log tab (the request never even reached
-        // saveData() to log its own start), not in any local queue. Any
-        // unsuccessful server response now falls back to the same local
-        // offline queue as a genuine network failure — idemKey keeps this
-        // safe even on the rare case the original request actually did
-        // partially succeed server-side.
-        submitDsrOffline(rows, idemKey, who, '⚠️ Server error');
+        msg.textContent = '❌ ' + (result.message || 'Failed to save') + ' — nothing was saved. Please try again.';
+        // v-fix (BRO: "dsr entry kuda online lo untene save avali. cache lo
+        // save vaddu" — BRO explicitly turned off the offline-queue safety
+        // net for DSR, same as Stock: a server-side error response (e.g.
+        // doPost's JSON.parse choking on a truncated/corrupted body) means
+        // nothing was saved, so show it plainly in the center error popup
+        // (toast(...,'error') — manual close or auto-hides on its own) and
+        // stop. The employee re-submits once they're back on a good
+        // connection; idemKey still protects against an accidental double-
+        // save if the original request actually did partially land.
+        toast('❌ ' + (result.message || 'Failed to save') + ' — nothing was saved. Please try again.', 'error');
         return;
       }
     })
@@ -20696,20 +20787,17 @@ function dsrfConfirmSubmit(who, evt) {
       clearInterval(progInt);
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
       btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who);
-      // v-fix (BRO: "a DSR was entered and the data never arrived — it reported being queued offline but the data was never actually saved" — root cause): this only queued offline
-      // for navigator.onLine===false or a genuine timeout (AbortError).
-      // But navigator.onLine is notoriously unreliable — it reports TRUE
-      // whenever the device is connected to ANY WiFi/mobile network, even
-      // one with no real internet access (very common on flaky store
-      // WiFi/mobile data). In that exact situation the fetch fails with a
-      // plain "Failed to fetch" — neither offline NOR a timeout — so
-      // neither condition matched, nothing got queued, and the DSR really
-      // did just vanish with only a red error text easy to miss/dismiss.
-      // Now ANY failure here queues offline, no exceptions. This is
-      // always safe: idemKey means a genuine duplicate (if the original
-      // request actually DID reach the server before failing) is caught
-      // and ignored server-side rather than saved twice.
-      submitDsrOffline(rows, idemKey, who, undefined);
+      // v-fix (BRO: "dsr entry kuda online lo untene save avali. cache lo
+      // save vaddu. stock sensitive matter" — DSR, like Stock, no longer
+      // queues offline on a network failure here (timeout, connection
+      // dropped, "Failed to fetch" on a WiFi-but-no-internet connection,
+      // etc). Nothing is saved until the server confirms it — tell the
+      // person plainly via the center error popup so they see it and
+      // resubmit, instead of silently trusting a local queue that may or
+      // may not actually be synced later.
+      msg.style.color = 'var(--red)';
+      msg.textContent = '📴 No internet connection — nothing was saved. Please try again.';
+      toast('📴 No internet connection — nothing was saved. Please try again.', 'error');
     });
 }
 
