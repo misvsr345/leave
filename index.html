@@ -741,6 +741,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   font-size: 12px; font-weight: 700; font-family: 'Spectral', serif;
   box-shadow: 0 3px 12px rgba(0,0,0,0.3); cursor: grab; touch-action: none;
   user-select: none; -webkit-user-select: none;
+  transition: left 0.22s ease, top 0.22s ease;
 }
 .back-fab-float.show { display: flex; }
 .back-fab-float:active { transform: scale(0.95); }
@@ -748,6 +749,15 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 /* Drag-grip hint, as ::before (not a child element) so it survives
    backFab.textContent reassignment on every page change. */
 .back-fab-float::before { content: '⠿'; font-size: 13px; opacity: 0.8; margin-right: 1px; }
+/* v-add (BRO: "Section ni Home ga treat chei" — a floating Home button next to the
+   floating Back button, stacked just above it by default so neither overlaps the
+   other regardless of each button's text width; both are independently
+   drag-to-reposition (see initBackFabDrag_). */
+.home-fab-float {
+  bottom: calc(var(--navbar-h, 0px) + 62px);
+  background: linear-gradient(135deg, #1565C0, #0D47A1);
+}
+.home-fab-float::before { content: ''; margin-right: 0; }
 .sections-fab-top {
   display: flex; align-items: center; gap: 5px;
   background: linear-gradient(135deg, #1565C0, #0D47A1);
@@ -1906,10 +1916,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="empDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
         <button class="tb-chip" id="syncNowBtn" onclick="syncNowClicked()" style="display:none;background:var(--gold);border-color:var(--gold);color:#4a3600;font-weight:800;">📤 Sync</button>
-        <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
-        <button class="tb-chip" id="empSearchBtn" onclick="openEmpQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
-        <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
-        <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
+        <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
+        <button class="tb-chip" id="empSearchBtn" onclick="openEmpQuickSearch()" title="Search sections & options">🔍</button>
+        <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Home</button>
+        <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()">🖥️ Desktop</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -2753,10 +2763,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="adminDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
         <button class="tb-chip" id="syncNowBtnAdmin" onclick="syncNowClicked()" style="display:none;background:var(--gold);border-color:var(--gold);color:#4a3600;font-weight:800;">📤 Sync</button>
-        <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
-        <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
-        <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
-        <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
+        <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
+        <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options">🔍</button>
+        <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Home</button>
+        <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()">🖥️ Desktop</button>
         <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -4452,6 +4462,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <button class="back-fab-float" id="empBackFab" onclick="goBackOneStep('emp')" title="Press and drag to move">← Back</button>
 <button class="back-fab-float" id="adminBackFab" onclick="goBackOneStep('admin')" title="Press and drag to move">← Back</button>
 
+<!-- v-fix (BRO: "paina section ani unna danni home ga change chei, home button ante
+     section button lu unna page ani ardham, ika nundi section ni home ga treat chei" —
+     topbar chip renamed 🏠 Section → 🏠 Home above; this is the SAME destination
+     (modulepicker — the all-sections page) also made reachable right next to the
+     floating Back button, so BRO doesn't have to reach up to the topbar every time.
+     Same show/hide rule as the topbar Home chip (hidden once already on that page),
+     same drag-to-reposition as Back. -->
+<button class="back-fab-float home-fab-float" id="empHomeFab" onclick="showEmpPage('modulepicker')" title="Press and drag to move">🏠 Home</button>
+<button class="back-fab-float home-fab-float" id="adminHomeFab" onclick="showAdminPage('modulepicker')" title="Press and drag to move">🏠 Home</button>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -6055,6 +6075,9 @@ function goBackOneStep(who) {
 function updateBackFabs(who, page) {
   const backFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
   const sectionsFab = document.getElementById(who === 'admin' ? 'adminSectionsFab' : 'empSectionsFab');
+  // v-add (BRO: "section ni home ga treat chei" — floating Home fab next to the
+  // floating Back fab, same visibility rule as the topbar Home chip above.
+  const homeFab = document.getElementById(who === 'admin' ? 'adminHomeFab' : 'empHomeFab');
   const dash = getSectionDashboardPage(who, page);
   const isHomePage = page === 'modulepicker' || (dash === page);
   if (backFab) {
@@ -6063,6 +6086,7 @@ function updateBackFabs(who, page) {
     backFab.textContent = backLabelFor(page);
   }
   if (sectionsFab) sectionsFab.classList.toggle('show', page !== 'modulepicker');
+  if (homeFab) homeFab.classList.toggle('show', page !== 'modulepicker');
 }
 
 function backLabelFor(page) {
@@ -7593,19 +7617,35 @@ setInterval(pollForPortalChanges_, 10000);
 // one remembered spot (only one of the two is ever visible at a time — see
 // updateBackFabs), saved to localStorage so it stays wherever it's dropped
 // across reloads and logins instead of resetting to the default corner.
-function initBackFabDrag_() {
-  var posKey = 'vsrBackFabPos';
+// Shared by the floating Home fab below (BRO: "section ni home ga treat
+// chei") with its own id list + localStorage key, same drag mechanics.
+function initFloatFabDrag_(ids, posKey) {
   var saved = (function () { try { return JSON.parse(localStorage.getItem(posKey) || 'null'); } catch (e) { return null; } })();
-  ['empBackFab', 'adminBackFab'].forEach(function (id) {
+  ids.forEach(function (id) {
     var el = document.getElementById(id);
     if (!el) return;
+    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+    // v-fix (BRO: "back button page center lo unchite undakudadu... left or right
+    // edi dagara ga unte akadiki vellipovali. left lo meeda-kindaki, right lo kuda
+    // same move avali" — on release, snap horizontally to whichever edge (left or
+    // right) is nearer, so it never sits stranded mid-page blocking content;
+    // vertical (top) position stays exactly wherever it was dropped — free to move
+    // up/down on either edge, only the left/right snap is forced.
+    function snapToNearestEdge(left, top, w, h) {
+      const margin = 4;
+      const center = left + w / 2;
+      const snappedLeft = (center < window.innerWidth / 2) ? margin : (window.innerWidth - w - margin);
+      const snappedTop = clamp(top, margin, window.innerHeight - h - margin);
+      return { left: snappedLeft, top: snappedTop };
+    }
     if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
-      el.style.left = saved.left + 'px';
-      el.style.top = saved.top + 'px';
+      const rect0 = el.getBoundingClientRect();
+      const snapped0 = snapToNearestEdge(saved.left, saved.top, rect0.width || 100, rect0.height || 36);
+      el.style.left = snapped0.left + 'px';
+      el.style.top = snapped0.top + 'px';
       el.style.bottom = 'auto';
     }
     var dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
-    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
     function pointOf(e) {
       if (e.touches && e.touches.length) return e.touches[0];
       if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0];
@@ -7639,7 +7679,11 @@ function initBackFabDrag_() {
       el.classList.remove('dragging');
       if (moved) {
         var rect = el.getBoundingClientRect();
-        try { localStorage.setItem(posKey, JSON.stringify({ left: rect.left, top: rect.top })); } catch (e) {}
+        var snapped = snapToNearestEdge(rect.left, rect.top, rect.width, rect.height);
+        el.style.left = snapped.left + 'px';
+        el.style.top = snapped.top + 'px';
+        el.style.bottom = 'auto';
+        try { localStorage.setItem(posKey, JSON.stringify(snapped)); } catch (e) {}
       }
     }
     function suppressClickIfDragged(e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }
@@ -7658,11 +7702,14 @@ function initBackFabDrag_() {
     el.addEventListener('touchstart', onDown, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('touchend', onUp);
-    // A real drag shouldn't also fire the "← Back" navigation click right after.
+    // A real drag shouldn't also fire the button's own navigation click right after.
     el.addEventListener('click', suppressClickIfDragged, true);
   });
 }
-initBackFabDrag_();
+initFloatFabDrag_(['empBackFab', 'adminBackFab'], 'vsrBackFabPos');
+// v-add (BRO: "section ni home ga treat chei" — the floating Home fab is
+// draggable too, independently of Back, with its own remembered spot.
+initFloatFabDrag_(['empHomeFab', 'adminHomeFab'], 'vsrHomeFabPos');
 
 // ══════════════════════════════════════
 // OFFLINE PENDING ITEMS VIEWER — "More" → "🔄 Sync Offline Data"
