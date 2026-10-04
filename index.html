@@ -5681,6 +5681,14 @@ function logout(who, reason) {
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('empLoginErr').style.display = 'none';
   document.getElementById('adminLoginErr').style.display = 'none';
+  // v-fix (BRO: "login page lo back or home button deniki useless" — updateBackFabs()
+  // only ever runs inside showEmpPage/showAdminPage, so on logout the floating Back/Home
+  // fabs (and the topbar Home chips) stayed visible from whatever page was open right
+  // before logging out, floating uselessly over the login screen). Explicitly hidden here.
+  ['empBackFab','adminBackFab','empHomeFab','adminHomeFab','empSectionsFab','adminSectionsFab'].forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
   // v-add (BRO: "okka id, okka dagara matarame same time lo open chyeli" — the session-elsewhere
   // check below passes an explicit reason here instead of the generic message, so the person
   // actually understands why they were logged out rather than just landing back on the login page.
