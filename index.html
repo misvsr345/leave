@@ -15738,10 +15738,32 @@ async function slRefreshFailedBadge() {
   } catch (e) {}
 }
 
+// v-fix (BRO: "counter names localStorage lo save chei cheppanu kada" — counter list should load
+// INSTANTLY from cache like the other lists (DSR products, employees), not wait on the network every
+// time). First-ever call still waits for the real fetch (nothing cached yet); every call after that
+// returns instantly from localStorage and quietly refreshes the cache in the background.
+const SL_META_CACHE_KEY = 'vsrStockMetaCache';
+function slLoadMetaCache_() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(SL_META_CACHE_KEY) || 'null');
+    if (cached && cached.counters && cached.counters.length) { SL.counters = cached.counters; SL.mainHub = cached.mainHub || 'Main Hub'; return true; }
+  } catch (e) {}
+  return false;
+}
+function slSaveMetaCache_() {
+  try { localStorage.setItem(SL_META_CACHE_KEY, JSON.stringify({ counters: SL.counters, mainHub: SL.mainHub })); } catch (e) {}
+}
 async function slEnsureMeta() {
   if (SL.counters.length) return;
+  if (slLoadMetaCache_()) {
+    // Quiet background refresh — don't make the caller wait on it.
+    slApi({ action: 'meta' }).then(m => {
+      if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; slSaveMetaCache_(); }
+    }).catch(() => {});
+    return;
+  }
   const m = await slApi({ action: 'meta' });
-  if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; }
+  if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; slSaveMetaCache_(); }
 }
 
 // ══════════════════════════════════════
