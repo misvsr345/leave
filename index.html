@@ -6075,23 +6075,30 @@ function goBackOneStep(who) {
 function updateBackFabs(who, page) {
   const backFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
   const sectionsFab = document.getElementById(who === 'admin' ? 'adminSectionsFab' : 'empSectionsFab');
-  // v-add (BRO: "section ni home ga treat chei" — floating Home fab next to the
-  // floating Back fab, same visibility rule as the topbar Home chip above.
+  // v-fix (BRO: "section home page lo back avasaram ledu, home button pettu.
+  // akadinundi next e page ki velina home vadu, only back pettu" — floating
+  // Back and Home fabs are now mutually exclusive, never both shown together:
+  //   modulepicker itself        → neither (already home)
+  //   a section's own home page  → Home only (dash === page, going further
+  //                                 "back" would just reload the same page)
+  //   any deeper page inside it  → Back only
   const homeFab = document.getElementById(who === 'admin' ? 'adminHomeFab' : 'empHomeFab');
   const dash = getSectionDashboardPage(who, page);
-  const isHomePage = page === 'modulepicker' || (dash === page);
+  const isSectionHome = dash === page && page !== 'modulepicker';
+  const isHomePage = page === 'modulepicker' || isSectionHome;
   if (backFab) {
     backFab.classList.toggle('show', !isHomePage);
     backFab.onclick = function() { goBackOneStep(who); };
     backFab.textContent = backLabelFor(page);
   }
+  if (homeFab) homeFab.classList.toggle('show', isSectionHome);
   if (sectionsFab) sectionsFab.classList.toggle('show', page !== 'modulepicker');
-  if (homeFab) homeFab.classList.toggle('show', page !== 'modulepicker');
 }
 
+// v-fix (BRO: "back to leave ani vaddu, only back" — dropped the
+// section-specific "← Back to <Section>" label; always just "← Back" now.
 function backLabelFor(page) {
-  const section = SECTION_LABEL_MAP[page];
-  return section ? ('← Back to ' + section) : '← Back';
+  return '← Back';
 }
 
 function goHomeSmart(who) {
