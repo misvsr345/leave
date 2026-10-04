@@ -724,19 +724,27 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .footer-nav-btn:active { opacity: 0.6; }
 .footer-nav.footnav-hidden { display: none; }
 
-/* Back / Section buttons — now normal chips inside topbar-row2 (not
-   floating), so they wrap naturally on narrow/mobile screens instead of
-   overlapping other topbar elements. Both the generic "← Back" and the
-   section-specific "↩ Back to <Section>" occupy the same slot — only one
-   is ever visible at a time (see updateBackFabs in JS). */
-.back-fab-top {
+/* v-fix (BRO: "back button paina unna row lo remove chei, floating button laga
+   ivu, manual ga move avali" — reverted off the topbar row, back to a floating
+   button like before, but this time drag-to-reposition so it can't overlap other
+   topbar elements the way the original floating version used to — the user just
+   drags it wherever it's out of the way, once, and it stays there). Both the
+   generic "← Back" and the section-specific "↩ Back to <Section>" text occupy
+   the same button — only one of empBackFab/adminBackFab is ever shown at a time
+   (see updateBackFabs in JS — untouched, just targets a floating button now). */
+.back-fab-float {
   display: none; align-items: center; gap: 5px;
+  position: fixed; left: 14px; bottom: calc(var(--navbar-h, 0px) + 18px);
+  z-index: 400; height: 36px; padding: 0 14px; border-radius: 999px;
   background: linear-gradient(135deg, var(--purple), var(--purple-mid));
-  color: #fff; border: 1.5px solid rgba(255,255,255,0.5) !important;
-  font-size: 11px; font-weight: 700;
+  color: #fff; border: 1.5px solid rgba(255,255,255,0.5);
+  font-size: 12px; font-weight: 700; font-family: 'Spectral', serif;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.3); cursor: grab; touch-action: none;
+  user-select: none; -webkit-user-select: none;
 }
-.back-fab-top.show { display: flex; }
-.back-fab-top:active { transform: scale(0.95); }
+.back-fab-float.show { display: flex; }
+.back-fab-float:active { transform: scale(0.95); }
+.back-fab-float.dragging { cursor: grabbing; opacity: 0.85; transition: none; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
 .sections-fab-top {
   display: flex; align-items: center; gap: 5px;
   background: linear-gradient(135deg, #1565C0, #0D47A1);
@@ -1894,12 +1902,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="topbar-row2">
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="empDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDot"></span><span id="connLabel">Online</span></span>
-        <button class="tb-chip" id="syncNowBtn" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
+        <button class="tb-chip" id="syncNowBtn" onclick="syncNowClicked()" style="display:none;background:var(--gold);border-color:var(--gold);color:#4a3600;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
         <button class="tb-chip" id="empSearchBtn" onclick="openEmpQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
         <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
-        <button class="tb-chip back-fab-top back-fab-main" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -2742,12 +2749,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="topbar-row2">
         <span class="tb-chip tb-badge" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple-mid);font-weight:800;" id="adminDisplayNameBadge">—</span>
         <span class="tb-chip tb-conn"><span class="tb-dot" id="connDotAdmin"></span><span id="connLabelAdmin">Online</span></span>
-        <button class="tb-chip" id="syncNowBtnAdmin" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
+        <button class="tb-chip" id="syncNowBtnAdmin" onclick="syncNowClicked()" style="display:none;background:var(--gold);border-color:var(--gold);color:#4a3600;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
         <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
-        <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
         <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
     </div>
@@ -4434,6 +4440,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </div>
   </div>
 </div>
+
+<!-- v-fix (BRO: "back button paina unna row lo remove chei, floating button laga ivu,
+     adi manual ga ekkadiki chetto move chesina move avali" — Back was a topbar chip that
+     was crowding topbar-row2 (part of why Sync/Desktop chips were running out of room on
+     narrow screens). Moved out to a standalone floating round button, same show/hide and
+     click logic (goBackOneStep/updateBackFabs in JS, untouched), now also drag-to-reposition
+     — press and drag it anywhere on screen, it stays there (saved per-device via
+     localStorage, see initBackFabDrag_ in JS) instead of snapping back. -->
+<button class="back-fab-float" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
+<button class="back-fab-float" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -7475,19 +7491,24 @@ function updateConnStatus() {
     if (!btn) return;
     btn.style.display = 'flex';
     if (pendingCount > 0) {
+      // v-fix (BRO: "sync button backend color change chei, adi
+      // kanipadam ledu sariga" — the old rgba(...,0.28) gold was
+      // near-transparent against the topbar and barely visible): solid
+      // gold fill now, same as the button's resting state in the HTML,
+      // so it's unmistakable whenever something is actually waiting.
       btn.innerHTML = '📤 Sync (' + pendingCount + ')';
-      btn.title = pendingCount + ' item(s) saved offline — tap to upload now';
-      btn.style.background = 'rgba(212,168,67,0.28)';
+      btn.title = pendingCount + ' item(s) saved offline — tap to upload + pull latest now';
+      btn.style.background = 'var(--gold)';
       btn.style.borderColor = 'var(--gold)';
-      btn.style.color = '#7a5b00';
+      btn.style.color = '#4a3600';
       btn.disabled = false;
     } else {
       btn.innerHTML = '✅ Synced';
-      btn.title = 'Nothing pending — everything entered on this device has been sent';
-      btn.style.background = 'rgba(34,139,87,0.16)';
+      btn.title = 'Nothing pending — tap anytime to pull the latest data manually';
+      btn.style.background = 'var(--green, #228b57)';
       btn.style.borderColor = 'var(--green, #228b57)';
-      btn.style.color = '#1a5c3a';
-      btn.disabled = false; // still clickable — harmless no-op re-check
+      btn.style.color = '#fff';
+      btn.disabled = false; // still clickable — manual full sync (push + pull), not a no-op
     }
   });
 }
@@ -7502,6 +7523,66 @@ async function flushAllOfflineQueues() {
 }
 window.addEventListener('online', () => { updateConnStatus(); flushAllOfflineQueues(); });
 window.addEventListener('offline', updateConnStatus);
+
+// v-add (BRO: "sync button click cheste avadam leud, just chupistundi.
+// click cheste new data sync avali, manual kakunda automatic ga kuda
+// sync avali" — this pill used to ONLY flush the OUTGOING offline
+// queue (flushAllOfflineQueues), so tapping it while nothing was
+// queued — the normal, everyday case — silently did nothing at all:
+// no toast, no visible change, nothing. That's exactly why it looked
+// "not working". A real Sync now does BOTH directions on every tap —
+// pushes anything queued AND pulls fresh data for whatever's on
+// screen — and always ends with a toast either way, so a tap is never
+// silent again.
+async function syncNowClicked() {
+  const btns = [document.getElementById('syncNowBtn'), document.getElementById('syncNowBtnAdmin')].filter(Boolean);
+  btns.forEach(btn => { btn.disabled = true; btn.innerHTML = '⏳ Syncing...'; btn.style.background = 'var(--blue, #1565C0)'; btn.style.borderColor = 'var(--blue, #1565C0)'; btn.style.color = '#fff'; });
+  try {
+    await flushAllOfflineQueues(); // push anything saved offline first
+    if (state.__loginKind === 'admin') {
+      await loadAdminData();
+      loyaltyCacheRefresh('admin'); goldenAuraCacheRefresh('admin'); stockTagCacheRefresh().catch(() => {});
+    } else if (state.__loginKind === 'emp') {
+      await loadEmpData();
+      loyaltyCacheRefresh('emp'); goldenAuraCacheRefresh('emp'); stockTagCacheRefresh().catch(() => {});
+    }
+    toast('✅ Synced — latest data pulled', 'success');
+  } catch (e) {
+    toast('Sync failed — check connection', 'error');
+  } finally {
+    updateConnStatus(); // restores the pill's normal pending/synced color+label
+  }
+}
+
+// v-add (BRO: "backend unde all sheets means portal ku related ga unte
+// all backend sheet lo edi modify jarigina ventane automatic ga portal
+// backend lo manaku teliyakunda sync avali" — the exact same
+// "something changed" stamp-and-poll pattern pollForStockDsrChanges_
+// above already uses for Stock Level/DSR, extended to this Portal
+// backend's own sheets (Leave, Loyalty, Golden Aura) via the new
+// onPortalSheetChange_ trigger + lastModified_ endpoint in
+// PortalBackend.gs. Runs every 10s while the app is open; the instant
+// the stamp moves, it silently re-pulls — no click, no page reload,
+// nothing for the person to notice except the numbers being current.
+var PORTAL_LAST_SEEN_TS = 0;
+async function pollForPortalChanges_() {
+  if (!navigator.onLine || !state.__loginKind) return;
+  try {
+    const res = await fetch(WEB_APP_URL + '?action=lastModified').then(r => r.json()).catch(() => null);
+    if (!res || !res.ok || !res.ts) return;
+    if (PORTAL_LAST_SEEN_TS && res.ts > PORTAL_LAST_SEEN_TS) {
+      if (state.__loginKind === 'admin') {
+        loadAdminData();
+        loyaltyCacheRefresh('admin'); goldenAuraCacheRefresh('admin');
+      } else {
+        loadEmpData();
+        loyaltyCacheRefresh('emp'); goldenAuraCacheRefresh('emp');
+      }
+    }
+    PORTAL_LAST_SEEN_TS = res.ts;
+  } catch (e) {}
+}
+setInterval(pollForPortalChanges_, 10000);
 
 // ══════════════════════════════════════
 // OFFLINE PENDING ITEMS VIEWER — "More" → "🔄 Sync Offline Data"
