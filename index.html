@@ -531,7 +531,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   height: 30px; padding: 0 10px; border-radius: 8px; display: flex; align-items: center;
   justify-content: center; font-size: 11px; font-weight: 700; white-space: nowrap;
   flex-shrink: 0; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1);
-  color: #fff; cursor: default; gap: 5px;
+  color: #fff; cursor: default; gap: 5px; overflow: visible; min-width: max-content;
 }
 button.tb-chip { cursor: pointer; transition: background 0.2s; font-family: 'Spectral', serif; }
 button.tb-chip:hover { background: rgba(255,255,255,0.28); }
@@ -745,6 +745,9 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .back-fab-float.show { display: flex; }
 .back-fab-float:active { transform: scale(0.95); }
 .back-fab-float.dragging { cursor: grabbing; opacity: 0.85; transition: none; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+/* Drag-grip hint, as ::before (not a child element) so it survives
+   backFab.textContent reassignment on every page change. */
+.back-fab-float::before { content: '⠿'; font-size: 13px; opacity: 0.8; margin-right: 1px; }
 .sections-fab-top {
   display: flex; align-items: center; gap: 5px;
   background: linear-gradient(135deg, #1565C0, #0D47A1);
@@ -3389,21 +3392,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">📋 Monthly Absent Report</span>
         <span onclick="loadMonthlyAbsentReport()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
       </div>
-      <!-- v-fix (BRO: "This Month / Running Month / Customized Month —
-           month based only, no From/To date range"): three buttons
-           instead of a bare month-picker. "This Month" and "Running
-           Month" both resolve to the current calendar month (BRO listed
-           them as two separate options; for a MONTHLY report there is
-           no meaningful difference between them the way "Today" vs
-           "Running Month" differs for a DAILY report elsewhere in this
-           portal — both are kept as separate buttons exactly as
-           specified rather than assuming BRO meant to merge them).
-           "Customized Month" reveals a single <input type="month">
-           picker — a full calendar month (1st to last day), never a
-           date-range. -->
+      <!-- v-fix (BRO: "This Month and Running Month ante both same meaning
+           kada" — confirmed duplicate, both resolved to the current
+           calendar month with no difference for this monthly report, so
+           "Running Month" is removed here; "This Month" and "Customized
+           Month" (a single <input type="month"> picker — a full calendar
+           month, 1st to last day, never a date-range) cover the same
+           ground with one less redundant button. -->
       <div class="filter-bar" style="margin-bottom:8px;">
         <button class="filter-btn active" id="absentModeThisMonth" onclick="setAbsentReportMode('this')">📅 This Month</button>
-        <button class="filter-btn" id="absentModeRunningMonth" onclick="setAbsentReportMode('running')">🗓️ Running Month</button>
         <button class="filter-btn" id="absentModeCustom" onclick="setAbsentReportMode('custom')">🔍 Customized Month</button>
       </div>
       <input type="month" id="absentReportMonth" onchange="loadMonthlyAbsentReport()" style="display:none;width:100%;margin-bottom:10px;padding:8px;border:1.5px solid var(--border);border-radius:8px;">
@@ -4448,8 +4445,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      click logic (goBackOneStep/updateBackFabs in JS, untouched), now also drag-to-reposition
      — press and drag it anywhere on screen, it stays there (saved per-device via
      localStorage, see initBackFabDrag_ in JS) instead of snapping back. -->
-<button class="back-fab-float" id="empBackFab" onclick="goBackOneStep('emp')">← Back</button>
-<button class="back-fab-float" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
+<!-- note: backFab.textContent gets overwritten on every page change (updateBackFabs
+     in JS, unchanged) — so the drag-grip hint below is a CSS ::before on
+     .back-fab-float, NOT a child element, since a child span here would get wiped
+     out the next time textContent is set. -->
+<button class="back-fab-float" id="empBackFab" onclick="goBackOneStep('emp')" title="Press and drag to move">← Back</button>
+<button class="back-fab-float" id="adminBackFab" onclick="goBackOneStep('admin')" title="Press and drag to move">← Back</button>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -7584,6 +7585,85 @@ async function pollForPortalChanges_() {
 }
 setInterval(pollForPortalChanges_, 10000);
 
+// v-fix (BRO: "back button paina unna row lo remove chei. and danni floating
+// button laga ivu. adi manual ga ekkadiki chetto move chesina move avali" —
+// Back came off the topbar row (see back-fab-float in CSS + the markup near
+// the toast div) and is now a standalone floating pill the user can
+// press-and-drag anywhere on screen. Both empBackFab and adminBackFab share
+// one remembered spot (only one of the two is ever visible at a time — see
+// updateBackFabs), saved to localStorage so it stays wherever it's dropped
+// across reloads and logins instead of resetting to the default corner.
+function initBackFabDrag_() {
+  var posKey = 'vsrBackFabPos';
+  var saved = (function () { try { return JSON.parse(localStorage.getItem(posKey) || 'null'); } catch (e) { return null; } })();
+  ['empBackFab', 'adminBackFab'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+      el.style.left = saved.left + 'px';
+      el.style.top = saved.top + 'px';
+      el.style.bottom = 'auto';
+    }
+    var dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+    function pointOf(e) {
+      if (e.touches && e.touches.length) return e.touches[0];
+      if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0];
+      return e;
+    }
+    function onDown(e) {
+      var pt = pointOf(e);
+      dragging = true; moved = false;
+      var rect = el.getBoundingClientRect();
+      startX = pt.clientX; startY = pt.clientY;
+      startLeft = rect.left; startTop = rect.top;
+      el.classList.add('dragging');
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      var pt = pointOf(e);
+      var dx = pt.clientX - startX, dy = pt.clientY - startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      if (!moved) return;
+      if (e.cancelable) e.preventDefault();
+      var rect = el.getBoundingClientRect();
+      var newLeft = clamp(startLeft + dx, 4, window.innerWidth - rect.width - 4);
+      var newTop = clamp(startTop + dy, 4, window.innerHeight - rect.height - 4);
+      el.style.left = newLeft + 'px';
+      el.style.top = newTop + 'px';
+      el.style.bottom = 'auto';
+    }
+    function onUp() {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove('dragging');
+      if (moved) {
+        var rect = el.getBoundingClientRect();
+        try { localStorage.setItem(posKey, JSON.stringify({ left: rect.left, top: rect.top })); } catch (e) {}
+      }
+    }
+    function suppressClickIfDragged(e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }
+    // v-fix: Pointer Events alone turned out unreliable for this (BRO: "floating
+    // ante, manual ga move chesina avali" — reported not moving) — some
+    // mobile/embedded WebViews don't fire pointermove reliably once a drag
+    // starts on a <button>. Mouse + Touch listeners are now wired in parallel
+    // as a belt-and-braces fallback (harmless if Pointer Events already
+    // handled it — "dragging" guards make the handlers idempotent either way).
+    el.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', onUp);
+    el.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    el.addEventListener('touchstart', onDown, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+    // A real drag shouldn't also fire the "← Back" navigation click right after.
+    el.addEventListener('click', suppressClickIfDragged, true);
+  });
+}
+initBackFabDrag_();
+
 // ══════════════════════════════════════
 // OFFLINE PENDING ITEMS VIEWER — "More" → "🔄 Sync Offline Data"
 // v-add (BRO: "if saved offline, the box should show exactly what data was saved" —
@@ -9740,15 +9820,15 @@ function renderTrend() {
 // ══════════════════════════════════════
 // v-add (BRO's Monthly Absent Report — salary deduction identification):
 // defaults to the current running month if no month is picked yet.
-// v-fix (BRO: "This Month / Running Month / Customized Month — month
-// based only") — mode-toggle for the three filter buttons. 'this' and
-// 'running' both resolve to the current calendar month (see the HTML
-// comment above these buttons for why); 'custom' reveals the month
-// picker so any other month can be chosen, always a full calendar
+// v-fix (BRO: "This Month / Customized Month — month based only") —
+// mode-toggle for the two filter buttons (the old third "Running Month"
+// button was a confirmed duplicate of "This Month" and was removed).
+// 'this' resolves to the current calendar month; 'custom' reveals the
+// month picker so any other month can be chosen, always a full calendar
 // month (1st through last day) — never a date-range.
 function setAbsentReportMode(mode) {
-  ['this', 'running', 'custom'].forEach(m => {
-    const btn = document.getElementById('absentMode' + (m === 'this' ? 'ThisMonth' : m === 'running' ? 'RunningMonth' : 'Custom'));
+  ['this', 'custom'].forEach(m => {
+    const btn = document.getElementById('absentMode' + (m === 'this' ? 'ThisMonth' : 'Custom'));
     if (btn) btn.classList.toggle('active', m === mode);
   });
   const monthInp = document.getElementById('absentReportMonth');
