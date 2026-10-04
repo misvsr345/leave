@@ -2791,7 +2791,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
     <div class="vsr-sidebar-item" data-page="stocklevel" id="adminSidebarStockLevel" onclick="showAdminPage('stocklevel')"><span class="vsr-sidebar-icon">📦</span>Stock Level</div>
-    <div class="vsr-sidebar-item" data-page="stocktransfer" id="adminSidebarStockTransfer" onclick="showAdminPage('stocktransfer')"><span class="vsr-sidebar-icon">🔄</span>Stock Transfer</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
@@ -2832,7 +2831,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
-          <div class="quick-action-btn" id="adminQAStockTransfer" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div><div class="quick-action-sub">Move stock: Hub ⇄ Counter</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings, notices, theme, password</div></div>
         </div>
       </div>
@@ -3640,6 +3638,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-actions-grid">
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stockentry')" style="background:var(--purple,#4A0E8F);"><span class="quick-action-icon" style="filter:brightness(2);">➕</span><div class="quick-action-label" style="color:#fff;">Stock Entry</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('stocklevel-tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
@@ -6021,6 +6020,12 @@ const SECTION_LABEL_MAP = {
   'stocklevel-today': 'Stock Level',
   'stocklevel-failed': 'Stock Level',
   'stocklevel-print': 'Stock Level',
+  // v-fix (BRO: "stock transfer, stock level button click cheste, lopala
+  // ravali" — Stock Transfer moved inside the Stock Level hub, no longer
+  // its own sidebar/quick-action entry): now treated as part of the
+  // Stock Level section too, so "← Back" from it returns to the Stock
+  // Level hub (not all the way to the main Home page).
+  stocktransfer: 'Stock Level',
   stockentry: 'Stock Entry',
   profile: 'Emp Details'
 };
