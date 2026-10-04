@@ -728,11 +728,17 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   background: linear-gradient(135deg, #1565C0, #0D47A1);
 }
 .sections-fab-top {
-  display: flex; align-items: center; gap: 5px;
+  /* v-fix (BRO: "same home page lo home ani vastundi... useless" — this chip had
+     display:flex hardcoded here, so the JS classList.toggle('show', ...) in
+     updateBackFabs() never actually hid it — it showed on EVERY page, including
+     the Home/modulepicker page itself where it's pointless). Hidden by default now,
+     shown only via the .show class, same pattern as .back-fab-float. */
+  display: none; align-items: center; gap: 5px;
   background: linear-gradient(135deg, #1565C0, #0D47A1);
   color: #fff; border: 1.5px solid rgba(255,255,255,0.5) !important;
   font-size: 11px; font-weight: 700;
 }
+.sections-fab-top.show { display: flex; }
 .sections-fab-top:active { transform: scale(0.95); }
 .page-section { display: none; }
 .page-section.active { display: block; }
