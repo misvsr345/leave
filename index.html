@@ -746,9 +746,9 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .back-fab-float.show { display: flex; }
 .back-fab-float:active { transform: scale(0.95); }
 .back-fab-float.dragging { cursor: grabbing; opacity: 0.85; transition: none; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
-/* Drag-grip hint, as ::before (not a child element) so it survives
-   backFab.textContent reassignment on every page change. */
-.back-fab-float::before { content: '⠿'; font-size: 13px; opacity: 0.8; margin-right: 1px; }
+/* v-fix (BRO: "back button ki back kakunda, dots enduku" — the ⠿ drag-grip
+   hint was confusing, not helpful; removed. The button still drags fine via
+   press-and-hold, just without a visual hint in front of the text now. */
 /* v-add (BRO: "Section ni Home ga treat chei" — a floating Home button next to the
    floating Back button, stacked just above it by default so neither overlaps the
    other regardless of each button's text width; both are independently
@@ -757,7 +757,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   bottom: calc(var(--navbar-h, 0px) + 62px);
   background: linear-gradient(135deg, #1565C0, #0D47A1);
 }
-.home-fab-float::before { content: ''; margin-right: 0; }
 .sections-fab-top {
   display: flex; align-items: center; gap: 5px;
   background: linear-gradient(135deg, #1565C0, #0D47A1);
