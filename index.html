@@ -15865,12 +15865,12 @@ async function saLoadAlerts() {
     SA_ROWS = res.rows || [];
     if (!SA_ROWS.length) { box.innerHTML = '<div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">No Target Qty configured yet' + (counter ? (' for ' + escHtml(counter)) : '') + ' — use "🔄 Sync from Products" first, then fill Target Qty in the Target - &lt;Counter&gt; sheet.</div>'; return; }
     box.innerHTML = '<div style="overflow-x:auto;"><table class="sa-tbl"><thead><tr>' +
-      '<th>Counter</th><th>Design</th><th>Product</th><th>Bangle</th><th>Ring</th><th>Length</th><th>Wt Range</th><th>Target</th><th>Current</th><th>Status</th><th>Diff</th>' +
+      '<th>Counter</th><th>Product</th><th>Design</th><th>Bangle</th><th>Ring</th><th>Length</th><th>Wt Range</th><th>Target</th><th>Current</th><th>Status</th><th>Diff</th>' +
       '</tr></thead><tbody>' +
       SA_ROWS.map(r => '<tr>' +
         '<td>' + escHtml(r.counter) + '</td>' +
-        '<td>' + escHtml(r.design) + '</td>' +
         '<td>' + escHtml(r.productName || '—') + '</td>' +
+        '<td>' + escHtml(r.design) + '</td>' +
         '<td>' + escHtml(r.bangleSize || '—') + '</td>' +
         '<td>' + escHtml(r.ringSize || '—') + '</td>' +
         '<td>' + escHtml(r.length || '—') + '</td>' +
@@ -15887,10 +15887,10 @@ async function saLoadAlerts() {
 }
 function saDownloadCsv() {
   if (!SA_ROWS.length) { toast('Load the data first', 'error'); return; }
-  const headers = ['Counter', 'Design', 'Product Name', 'Bangle Size', 'Ring Size', 'Length', 'Weight Range', 'Target Qty', 'Current Qty', 'Status', 'Diff'];
+  const headers = ['Counter', 'Product Name', 'Design', 'Bangle Size', 'Ring Size', 'Length', 'Weight Range', 'Target Qty', 'Current Qty', 'Status', 'Diff'];
   const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
   const lines = [headers.map(esc).join(',')].concat(SA_ROWS.map(r => [
-    r.counter, r.design, r.productName, r.bangleSize, r.ringSize, r.length, saWtRange(r), r.targetQty, r.currentQty, r.status, r.status === 'OK' ? '' : r.diff
+    r.counter, r.productName, r.design, r.bangleSize, r.ringSize, r.length, saWtRange(r), r.targetQty, r.currentQty, r.status, r.status === 'OK' ? '' : r.diff
   ].map(esc).join(',')));
   const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
