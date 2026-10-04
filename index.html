@@ -3670,6 +3670,38 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
     </div>
 
+    <!-- ══════════════ STOCK ALERTS / INDENT (admin only) — v-add (BRO: "anukunna qty datina,
+         taggina... portal lo option ravali, indent pedatamu company ki" — per-counter Target Qty
+         tabs (synced from DSR Products sheet) compared live against current Stock, so shortage/
+         excess items needing an indent to the company show up here. No mail, no persisted Alerts
+         sheet — computed live on every Load, download via CSV if needed. Backend:
+         StockBackend.gs syncTargetTabs_/stockAlertsAPI_ (action: syncTargets / stockAlerts). ══ -->
+    <div class="page-section" id="admin-stockalerts">
+      <style>
+        .sa-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+        .sa-tbl th{text-align:left;padding:7px 8px;background:var(--purple-bg,#F5EEFB);color:var(--purple,#4A0E8F);font-weight:700;border-bottom:1.5px solid var(--gold,#B8860B);white-space:nowrap;}
+        .sa-tbl td{padding:6px 8px;border-bottom:1px solid var(--border,#E2D9EE);white-space:nowrap;}
+        .sa-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-weight:700;font-size:11px;}
+        .sa-badge.short{background:#FFF1EF;color:#C0392B;}
+        .sa-badge.excess{background:#FFF6E0;color:#B26A00;}
+        .sa-badge.ok{background:#E7F5EE;color:#1E7A4B;}
+      </style>
+      <div class="section-hdr"><span class="section-title2">📊 Stock Alerts</span></div>
+      <div class="card">
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Compares current stock against the Target Qty set per counter (in the "Target - &lt;Counter&gt;" sheets) — shortage items need an indent to the company, excess items are overstocked.</p>
+        <div class="form-row">
+          <label>Counter</label>
+          <select class="uniform-select" id="saCounterSelect"><option value="">All Counters</option></select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn-primary" style="flex:1 1 auto;" onclick="saLoadAlerts()">🔍 Load</button>
+          <button class="btn-secondary" style="flex:0 0 auto;white-space:nowrap;" onclick="saDownloadCsv()">⬇️ Download CSV</button>
+          <button class="btn-secondary" style="flex:0 0 auto;white-space:nowrap;" onclick="saSyncTargets()">🔄 Sync from Products</button>
+        </div>
+        <div id="saResultBox" style="margin-top:12px;"><div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">Select a counter (or leave as All) and tap Load.</div></div>
+      </div>
+    </div>
+
     <!-- ══════════════ STOCK ENTRY (admin) ══════════════ -->
     <div class="page-section" id="admin-stockentry">
       <div class="section-hdr"><span class="section-title2">📦 Stock Entry</span></div>
@@ -5916,6 +5948,7 @@ const SECTION_LABEL_MAP = {
   // Stock Level section too, so "← Back" from it returns to the Stock
   // Level hub (not all the way to the main Home page).
   stocktransfer: 'Stock Level',
+  stockalerts: 'Stock Level',
   stockentry: 'Stock Entry',
   profile: 'Emp Details'
 };
@@ -15782,6 +15815,86 @@ async function stLoadHistory() {
       </div>`).join('');
   } catch (e) {
     box.innerHTML = '<div class="empty-state" style="padding:14px;text-align:center;color:var(--red);">Could not load history.</div>';
+  }
+}
+
+// ══════════════════════════════════════
+// STOCK ALERTS / INDENT (admin) — v-add. Live shortage/excess compare, no mail, no persisted
+// Alerts sheet. Backend: StockBackend.gs stockAlertsAPI_ / syncTargetTabs_
+// (action: stockAlerts / syncTargets).
+// ══════════════════════════════════════
+let SA_ROWS = []; // last-loaded rows, kept around for the CSV download button
+async function saEnsureCounterOptions() {
+  const sel = document.getElementById('saCounterSelect');
+  if (!sel || sel.dataset.filled) return;
+  await slEnsureMeta();
+  (SL.counters || []).forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+  sel.dataset.filled = '1';
+}
+function saWtRange(r) {
+  if (r.weightFrom == null && r.weightTo == null) return '';
+  return (r.weightFrom != null ? r.weightFrom : '') + '–' + (r.weightTo != null ? r.weightTo : '');
+}
+function saBadge(status) {
+  const cls = status === 'Shortage' ? 'short' : (status === 'Excess' ? 'excess' : 'ok');
+  return '<span class="sa-badge ' + cls + '">' + escHtml(status) + '</span>';
+}
+async function saLoadAlerts() {
+  const box = document.getElementById('saResultBox');
+  if (!stockIsConfigured()) { box.innerHTML = '<div class="empty-state"><p>Stock Level is not connected yet.</p></div>'; return; }
+  await saEnsureCounterOptions();
+  const counter = document.getElementById('saCounterSelect').value;
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await slApi({ action: 'stockAlerts', counter: counter });
+    if (!res || !res.ok) { slError(box, res); return; }
+    SA_ROWS = res.rows || [];
+    if (!SA_ROWS.length) { box.innerHTML = '<div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">No Target Qty configured yet' + (counter ? (' for ' + escHtml(counter)) : '') + ' — use "🔄 Sync from Products" first, then fill Target Qty in the Target - &lt;Counter&gt; sheet.</div>'; return; }
+    box.innerHTML = '<div style="overflow-x:auto;"><table class="sa-tbl"><thead><tr>' +
+      '<th>Counter</th><th>Design</th><th>Product</th><th>Bangle</th><th>Ring</th><th>Length</th><th>Wt Range</th><th>Target</th><th>Current</th><th>Status</th><th>Diff</th>' +
+      '</tr></thead><tbody>' +
+      SA_ROWS.map(r => '<tr>' +
+        '<td>' + escHtml(r.counter) + '</td>' +
+        '<td>' + escHtml(r.design) + '</td>' +
+        '<td>' + escHtml(r.productName || '—') + '</td>' +
+        '<td>' + escHtml(r.bangleSize || '—') + '</td>' +
+        '<td>' + escHtml(r.ringSize || '—') + '</td>' +
+        '<td>' + escHtml(r.length || '—') + '</td>' +
+        '<td>' + escHtml(saWtRange(r) || '—') + '</td>' +
+        '<td>' + r.targetQty + '</td>' +
+        '<td>' + r.currentQty + '</td>' +
+        '<td>' + saBadge(r.status) + '</td>' +
+        '<td>' + (r.status === 'OK' ? '—' : r.diff) + '</td>' +
+        '</tr>').join('') +
+      '</tbody></table></div>';
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state" style="padding:14px;text-align:center;color:var(--red);">Network error. Try again.</div>';
+  }
+}
+function saDownloadCsv() {
+  if (!SA_ROWS.length) { toast('Load the data first', 'error'); return; }
+  const headers = ['Counter', 'Design', 'Product Name', 'Bangle Size', 'Ring Size', 'Length', 'Weight Range', 'Target Qty', 'Current Qty', 'Status', 'Diff'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const lines = [headers.map(esc).join(',')].concat(SA_ROWS.map(r => [
+    r.counter, r.design, r.productName, r.bangleSize, r.ringSize, r.length, saWtRange(r), r.targetQty, r.currentQty, r.status, r.status === 'OK' ? '' : r.diff
+  ].map(esc).join(',')));
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Stock_Alerts_' + todayYMD() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function saSyncTargets() {
+  if (!stockIsConfigured()) return;
+  const box = document.getElementById('saResultBox');
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Syncing from Products sheet...</div>';
+  try {
+    const res = await slApi({ action: 'syncTargets' });
+    if (res && res.ok) { toast('✅ Target Qty tabs synced from Products sheet', 'success'); saLoadAlerts(); }
+    else { toast((res && res.error) || 'Sync failed', 'error'); saLoadAlerts(); }
+  } catch (e) {
+    toast('Network error — sync not done. Try again.', 'error');
+    saLoadAlerts();
   }
 }
 
