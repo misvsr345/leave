@@ -431,7 +431,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-report {
-  width: 100%; padding: 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;
   background: linear-gradient(135deg, #0D47A1, #1565C0, #1976D2); color: #fff;
   border: 2px solid var(--gold); border-radius: var(--r2); font-family: 'Spectral', serif;
   font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.4px;
@@ -441,7 +441,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
 .btn-report:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,71,161,0.45); }
 .btn-report:active { transform: scale(0.98); }
 .btn-secondary {
-  width: 100%; padding: 13px; background: var(--card); color: var(--purple);
+  width: 100%; padding: 14px; background: var(--card); color: var(--purple);
   border: 2px solid var(--purple-mid); border-radius: var(--r2); font-family: 'Spectral', serif;
   font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
   box-shadow: 0 2px 8px rgba(107,33,168,0.1);
@@ -684,8 +684,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
      Mobile is untouched — this page stays the main landing screen there. */
   #admin-modulepicker, #emp-modulepicker,
   #adminSectionsFab, #empSectionsFab,
-  #adminSectionBackFab, #empSectionBackFab,
-  #adminDashboardFabTop, #empDashboardFabTop { display: none !important; }
+  #adminSectionBackFab, #empSectionBackFab { display: none !important; }
   /* The single "← Back" fab is desktop-visible too now (JS toggles it
      with .show — see updateBackFabs) so there's always exactly one way
      back, one step at a time, even on desktop. */
@@ -1058,9 +1057,10 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 
 /* Action Buttons — uniform sizing */
 .btn-sm {
-  height: 32px; padding: 0 13px; border-radius: 8px; font-family: 'Spectral', serif; font-size: 12px;
+  height: 32px; min-width: 92px; box-sizing: border-box; padding: 0 13px; border-radius: 8px;
+  font-family: 'Spectral', serif; font-size: 12px;
   font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all 0.2s;
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
 }
 .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-cancel { background: var(--red-bg); color: var(--red); border-color: #f5c6c2; }
@@ -1130,6 +1130,50 @@ html.vsr-force-mobile #admin-dashboard-hub .dh-scroll-body, html.vsr-force-mobil
 }
 .uniform-input:focus { border-color: var(--purple-mid); background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* v-fix (BRO: "all drop down and date pickers rich laga ivu. drop down
+   box lo chivara box laga untundi. ala vaddu. down arow undali" — a
+   plain flat box with no visible arrow): .form-row select/.uniform-
+   select/.uniform-input above only apply the rich purple-bordered,
+   down-arrow look to a SELECT/INPUT that was deliberately given one of
+   those classes — a full audit found 64 of the 104 <select> elements
+   and 73 of the 81 date <input>s across this file have no class at
+   all, so they fell straight through to the browser's bare native
+   control instead. Rather than hand-editing every one of those (high
+   risk of missing some or breaking an inline style), this is a global
+   baseline: EVERY select and date/month input in the app gets this
+   same rich styling by default now, whether it was classed or not.
+   The existing .form-row select/.uniform-select/.uniform-input rules
+   above are more specific and still win wherever they already apply,
+   so nothing already styled changes — this only catches what was
+   previously left plain. An element's own inline style="" (several of
+   these have one, e.g. a fixed max-width) still wins over this for
+   whatever properties it sets, exactly as it always does in CSS. */
+select, input[type="date"], input[type="month"] {
+  border: 1.5px solid var(--border); border-radius: var(--r2);
+  font-family: 'Spectral', serif; color: var(--text); background: var(--bg);
+  outline: none; transition: all 0.2s;
+}
+select:focus, input[type="date"]:focus, input[type="month"]:focus {
+  border-color: var(--purple-mid); background-color: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+}
+select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  cursor: pointer; font-weight: 600;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
+/* Only pad room for the arrow on a select with no explicit padding of
+   its own (inline style="padding:...") — several small/compact
+   selects set a tight inline padding on purpose and already reserve
+   their own space; this would otherwise fight that. */
+select:not([style*="padding"]) { padding: 10px 34px 10px 12px; }
+select[style*="padding"] { padding-right: 30px !important; }
+input[type="date"]:not([style*="padding"]), input[type="month"]:not([style*="padding"]) { padding: 10px 12px; }
+select:hover, input[type="date"]:hover, input[type="month"]:hover { border-color: var(--purple-mid); }
+select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* v-fix (BRO's "Start Date, End Date, and Load should all sit on one line" request):
    Start Date + End Date + Load button, all three in a single row instead
@@ -1881,7 +1925,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <nav class="vsr-sidebar" id="empSidebar">
     <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD</div>
     <div class="vsr-sidebar-item" data-page="profile" onclick="showEmpPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
-    <div class="vsr-sidebar-item" data-page="dashboard-hub" onclick="showEmpPage('dashboard-hub')"><span class="vsr-sidebar-icon">📊</span>Dashboard</div>
     <div class="vsr-sidebar-item" data-page="overview" id="empSidebarLeave" onclick="showEmpPage('overview')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
     <div class="vsr-sidebar-item" data-page="leads" id="empSidebarLeads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
     <div class="vsr-sidebar-item" data-page="loyalty" id="empSidebarLoyalty" onclick="showEmpPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
@@ -1916,7 +1959,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-section">
         <div class="quick-actions-title">📊 Dashboard</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="empQADashboard" onclick="showEmpPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">My data at a glance</div></div>
           <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
@@ -1930,18 +1972,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Events, theme, password</div></div>
         </div>
       </div>
-    </div>
-
-    <!-- NEW EMPLOYEE DASHBOARD — own data only. Backend (empDashboardAPI)
-         filters by this employee's own identity server-side, not just
-         hidden in the UI — the same request can never return anyone
-         else's numbers no matter what. -->
-    <div class="page-section" id="emp-dashboard-hub">
-      <div class="section-hdr"><span class="section-title2">📊 My Dashboard</span>
-        <button class="btn-sm btn-view" onclick="loadEmpDashboardHub(true)">🔄 Refresh</button>
-      </div>
-      <div class="dh-fixed-top" id="empDashHubFixedOuter"><div class="dh-fixed-top-inner" id="empDashHubFixed"></div></div>
-      <div class="dh-scroll-body" id="empDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
 
     <!-- HOME / OVERVIEW (Leave section landing) -->
@@ -2715,7 +2745,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <button class="tb-chip" id="syncNowBtnAdmin" onclick="flushAllOfflineQueues()" style="display:none;background:rgba(212,168,67,0.28);border-color:var(--gold);color:#7a5b00;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now" style="background:#eef2f7;border-color:#c7d2de;">🔄</button>
         <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options" style="background:#eef2f7;border-color:#c7d2de;">🔍</button>
-        <button class="tb-chip" id="adminDashboardFabTop" onclick="showAdminPage('dashboard-hub')" title="Dashboard">📊 Dashboard</button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Section</button>
         <button class="tb-chip vsr-viewmode-chip" onclick="toggleViewMode()" style="background:#eef2f7;border-color:#c7d2de;">🖥️ Desktop</button>
         <button class="tb-chip back-fab-top back-fab-main" id="adminBackFab" onclick="goBackOneStep('admin')">← Back</button>
@@ -2733,7 +2762,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <nav class="vsr-sidebar" id="adminSidebar">
     <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD</div>
     <div class="vsr-sidebar-item" data-page="profile" onclick="showAdminPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
-    <div class="vsr-sidebar-item" data-page="dashboard-hub" onclick="showAdminPage('dashboard-hub')"><span class="vsr-sidebar-icon">📊</span>Dashboard</div>
     <div class="vsr-sidebar-item" data-page="dashboard" onclick="showAdminPage('dashboard')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
     <div class="vsr-sidebar-item" data-page="leads" id="adminSidebarLeads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
     <div class="vsr-sidebar-item" data-page="loyalty" id="adminSidebarLoyalty" onclick="showAdminPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
@@ -2776,7 +2804,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-section">
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="adminQADashboard" onclick="showAdminPage('dashboard-hub')" style="background:linear-gradient(135deg,var(--purple-bg),var(--gold-bg,#fff8e1));border:1.5px solid var(--gold);"><span class="quick-action-icon">📊</span><div class="quick-action-label">Dashboard</div><div class="quick-action-sub">All sections at a glance</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -2791,22 +2818,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings, notices, theme, password</div></div>
         </div>
       </div>
-    </div>
-
-    <!-- NEW ADMIN DASHBOARD (built from scratch — the old one that hung
-         on "Loading dashboard..." for ~2 days is completely removed,
-         not fixed. This ONLY loads when actually opened — never
-         auto-triggered from the Section Page — and every box below is
-         independently fetched server-side inside ONE call, so a single
-         failing section shows its own "No data yet" fallback instead of
-         ever leaving the whole page stuck spinning.) -->
-    <div class="page-section" id="admin-dashboard-hub">
-      <div class="section-hdr"><span class="section-title2">📊 Dashboard</span>
-        <button class="btn-sm btn-view" onclick="loadAdminDashboardHub(true)">🔄 Refresh</button>
-      </div>
-      <div id="adminDashWelcome" style="font-size:12.5px;color:var(--text3);margin:4px 0 12px;"></div>
-      <div class="dh-fixed-top" id="adminDashHubFixedOuter"><div class="dh-fixed-top-inner" id="adminDashHubFixed"></div></div>
-      <div class="dh-scroll-body" id="adminDashHubBody"><div class="loading"><span class="spinner"></span>Loading dashboard...</div></div>
     </div>
 
     <!-- DASHBOARD (Leave section landing) -->
@@ -6028,7 +6039,7 @@ function updateBackFabs(who, page) {
   const backFab = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
   const sectionsFab = document.getElementById(who === 'admin' ? 'adminSectionsFab' : 'empSectionsFab');
   const dash = getSectionDashboardPage(who, page);
-  const isHomePage = page === 'modulepicker' || page === 'dashboard-hub' || (dash === page);
+  const isHomePage = page === 'modulepicker' || (dash === page);
   if (backFab) {
     backFab.classList.toggle('show', !isHomePage);
     backFab.onclick = function() { goBackOneStep(who); };
@@ -6104,7 +6115,7 @@ function syncSidebarActive(role, page) {
   if (!matched) {
     items.forEach(it => {
       const dp = it.dataset.page;
-      if (dp && dp !== 'dashboard-hub' && page.indexOf(dp) === 0) it.classList.add('active');
+      if (dp && page.indexOf(dp) === 0) it.classList.add('active');
     });
   }
 }
@@ -6116,7 +6127,7 @@ function showEmpPage(page, opts) {
   // (e.g. right after login, which normally opens modulepicker first).
   // v-fix (BRO: mobile-view toggle bug): window.innerWidth alone can never go below 1024 on a real
   // desktop browser, so an explicit "Mobile View" choice must override this even on a wide window.
-  if (page === 'modulepicker' && window.innerWidth >= 1024 && !isForcedMobileView()) page = 'dashboard-hub';
+  if (page === 'modulepicker' && window.innerWidth >= 1024 && !isForcedMobileView()) page = 'profile';
   const prevPage = state._currentPage_emp;
   if (!opts.isBack && prevPage && prevPage !== page) {
     state._pageHistory_emp = state._pageHistory_emp || [];
@@ -6144,7 +6155,6 @@ function showEmpPage(page, opts) {
   renderFooterNav('emp', page);
   syncSidebarActive('emp', page);
   window.scrollTo(0, 0);
-  if(page==='dashboard-hub') loadEmpDashboardHub();
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
   if(page==='loyalty-search') loyaltyCacheRefresh('emp'); // BRO: warm the cache as soon as this tab opens, not only after the first search
@@ -9907,7 +9917,6 @@ async function extraDsrDeleteEntry(i) {
 // in a comment or string elsewhere.
 // ============================================================
 const ADMIN_SEARCH_INDEX = [
-  { icon: '📊', label: 'Dashboard', page: 'dashboard-hub' },
   { icon: '📦', label: 'Stock Level', page: 'stocklevel' },
   { icon: '➕', label: 'Stock Entry', page: 'stockentry' },
   { icon: '🏖️', label: 'Leave', page: 'dashboard' },
@@ -10025,7 +10034,6 @@ function jumpToAdminSearchResult(page) {
 // different pages/permissions than Admin, not a shared list filtered
 // by role).
 const EMP_SEARCH_INDEX = [
-  { icon: '📊', label: 'Dashboard', page: 'dashboard-hub' },
   { icon: '🏖️', label: 'Leave', page: 'overview' },
   { icon: '👥', label: 'Leads', page: 'leads' },
   { icon: '💳', label: 'Loyalty Card', page: 'loyalty' },
@@ -10611,7 +10619,7 @@ function showAdminPage(page, opts) {
   // to the Dashboard instead so desktop never lands on an empty screen.
   // v-fix (BRO: mobile-view toggle bug): same override as the employee side — an explicit "Mobile View"
   // choice must win even though window.innerWidth stays ≥1024 on a real desktop browser.
-  if (page === 'modulepicker' && window.innerWidth >= 1024 && !isForcedMobileView()) page = 'dashboard-hub';
+  if (page === 'modulepicker' && window.innerWidth >= 1024 && !isForcedMobileView()) page = 'profile';
   const prevPage = state._currentPage_admin;
   if (!opts.isBack && prevPage && prevPage !== page) {
     state._pageHistory_admin = state._pageHistory_admin || [];
@@ -10698,7 +10706,6 @@ function showAdminPage(page, opts) {
   if(page==='pending') renderPending();
   if(page==='notices') loadNoticesForAdmin();
   if(page==='leads') loadAdminLeadsHome();
-  if(page==='dashboard-hub') loadAdminDashboardHub();
   if(page==='extra-dsr') initExtraDsrCheck();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
