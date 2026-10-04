@@ -1673,6 +1673,13 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .tag-grid tr.hl td.lbl{font-weight:800;}
 .tag-grid tr.hl td.val{font-weight:800;color:var(--purple);}
 .tag-grid img.tag-photo{width:100%;max-width:220px;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;display:block;margin:0 auto;}
+/* v-fix (BRO: "data text laga vadu, table laga undali, all cell ki boarder undali, portal all
+   table ki kuda every cell ki boarder ravali" — a portal-wide safety-net rule so EVERY table
+   anywhere, including any that forgets to set its own cell borders, still gets a visible grid
+   instead of looking like loose unbordered text. More specific rules below (.kd-table, .sa-tbl,
+   etc.) still win where they set their own border color/width — this only fills the gap. */
+table{border-collapse:collapse;}
+table td, table th{border:1px solid var(--border,#E2D9EE);}
 .kd-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2);}
 .kd-table{width:100%;border-collapse:collapse;font-size:12px;border:2px solid var(--gold);}
 .kd-table th{position:sticky;top:0;text-align:left;padding:9px 12px;background:var(--purple-bg);color:var(--purple);font-weight:700;white-space:nowrap;border:1px solid var(--purple-mid);}
@@ -2736,7 +2743,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('settings')">⚙️ Settings</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('notices')">📢 Notices</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
@@ -3684,9 +3690,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
          StockBackend.gs syncTargetTabs_/stockAlertsAPI_ (action: syncTargets / stockAlerts). ══ -->
     <div class="page-section" id="admin-stockalerts">
       <style>
-        .sa-tbl{width:100%;border-collapse:collapse;font-size:12px;}
-        .sa-tbl th{text-align:left;padding:7px 8px;background:var(--purple-bg,#F5EEFB);color:var(--purple,#4A0E8F);font-weight:700;border-bottom:1.5px solid var(--gold,#B8860B);white-space:nowrap;}
-        .sa-tbl td{padding:6px 8px;border-bottom:1px solid var(--border,#E2D9EE);white-space:nowrap;}
+        .sa-tbl{width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid var(--gold,#B8860B);}
+        .sa-tbl th{text-align:left;padding:7px 8px;background:var(--purple-bg,#F5EEFB);color:var(--purple,#4A0E8F);font-weight:700;border:1px solid var(--gold,#B8860B);white-space:nowrap;}
+        .sa-tbl td{padding:6px 8px;border:1px solid var(--border,#E2D9EE);white-space:nowrap;}
         .sa-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-weight:700;font-size:11px;}
         .sa-badge.short{background:#FFF1EF;color:#C0392B;}
         .sa-badge.excess{background:#FFF6E0;color:#B26A00;}
@@ -3700,9 +3706,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <select class="uniform-select" id="saCounterSelect"><option value="">All Counters</option></select>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <button class="btn-primary" style="flex:1 1 auto;" onclick="saLoadAlerts()">🔍 Load</button>
-          <button class="btn-secondary" style="flex:0 0 auto;white-space:nowrap;" onclick="saDownloadCsv()">⬇️ Download CSV</button>
-          <button class="btn-secondary" style="flex:0 0 auto;white-space:nowrap;" onclick="saSyncTargets()">🔄 Sync from Products</button>
+          <button class="btn-primary" style="width:auto;flex:0 0 auto;padding:7px 14px;font-size:12px;" onclick="saLoadAlerts()">🔍 Load</button>
+          <button class="btn-secondary" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:7px 14px;font-size:12px;" onclick="saDownloadCsv()">⬇️ Download CSV</button>
+          <button class="btn-secondary" style="width:auto;flex:0 0 auto;white-space:nowrap;padding:7px 14px;font-size:12px;" onclick="saSyncTargets()">🔄 Sync from Products</button>
         </div>
         <div id="saResultBox" style="margin-top:12px;"><div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">Select a counter (or leave as All) and tap Load.</div></div>
       </div>
