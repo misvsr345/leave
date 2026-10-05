@@ -4356,6 +4356,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
+<!-- v-add (BRO: "dsr pending unna, emp ki valla data pop ravali. missing dsr ani rvali, with date
+     ravali" — shown right after Employee login (and queued behind the Welcome popup if that's
+     still up) when this employee has one or more missing-DSR dates this month. -->
+<div class="modal-overlay" id="empMissingDsrModal">
+  <div class="modal-box" style="max-width:380px;text-align:center;">
+    <div style="font-size:42px;margin-bottom:8px;line-height:1;">⚠️</div>
+    <div class="modal-title" style="margin-bottom:6px;color:var(--red);">Missing DSR</div>
+    <div class="modal-sub" id="empMissingDsrSub" style="font-size:13px;margin-bottom:12px;"></div>
+    <div id="empMissingDsrDates" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:6px;"></div>
+    <button class="btn-primary" style="width:100%;margin-top:14px;" onclick="closeEmpMissingDsrModal_(true)">🧾 Go to DSR</button>
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="closeEmpMissingDsrModal_(false)">Later</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="leaveResultModal">
   <div class="modal-box" style="max-width:400px;text-align:center;">
     <div id="leaveResultIcon" style="font-size:46px;margin-bottom:8px;line-height:1;">📋</div>
