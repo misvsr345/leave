@@ -2318,12 +2318,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-customer-360">
       <div class="section-hdr"><span class="section-title2">🔍 Customer 360°</span></div>
       <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-        <input type="tel" id="c360MobileInput-emp" placeholder="Mobile number" maxlength="10" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360('emp')">
-        <input type="text" id="c360CardNoInput-emp" placeholder="or Loyalty Card No" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360('emp')">
+        <input type="text" id="c360SearchInput-emp" placeholder="Mobile / Customer Name / Loyalty Card No / Golden Plan No / DSR ID" style="flex:1;min-width:200px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360('emp')">
         <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360('emp')">🔍 Search</button>
       </div>
-      <p style="font-size:11px;color:var(--text3);margin:0 0 10px;">Some details (address, Aadhaar, PAN, photos) are restricted to Admin.</p>
-      <div id="customer360Box-emp"><div class="empty-state"><p>Search by mobile number or Loyalty Card No to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
+      <p style="font-size:11px;color:var(--text3);margin:0 0 10px;">Some details (address, Aadhaar, PAN, photos, full mobile) are restricted to Admin.</p>
+      <div id="customer360Box-emp"><div class="empty-state"><p>Search by mobile number, customer name, Loyalty Card No, Golden Plan No, or DSR ID to see every visit, Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
     </div>
 
     <div class="page-section" id="emp-profile">
@@ -3407,11 +3406,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-customer-360">
       <div class="section-hdr"><span class="section-title2">🔍 Customer 360°</span></div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <input type="tel" id="c360MobileInput" placeholder="Mobile number" maxlength="10" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
-        <input type="text" id="c360CardNoInput" placeholder="or Loyalty Card No" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
+        <input type="text" id="c360SearchInput" placeholder="Mobile / Customer Name / Loyalty Card No / Golden Plan No / DSR ID" style="flex:1;min-width:200px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
         <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360()">🔍 Search</button>
       </div>
-      <div id="customer360Box"><div class="empty-state"><p>Search by mobile number or Loyalty Card No to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
+      <div id="customer360Box"><div class="empty-state"><p>Search by mobile number, customer name, Loyalty Card No, Golden Plan No, or DSR ID to see every visit, Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
     </div>
 
     <!-- v-add (BRO's "Extra DSR" discrepancy feature) -->
@@ -10432,18 +10430,72 @@ function c360BiodataHtml_(c) {
   return `<div style="margin:4px 0 8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;">${rows.join('<br>')}${photos ? '<div style="margin-top:6px;">' + photos + '</div>' : ''}</div>`;
 }
 
+function c360MaskMobile_(m) {
+  const d = String(m || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.length <= 5) return d;
+  return 'X'.repeat(d.length - 5) + d.slice(-5);
+}
+
+// Resolves the real visit date for one "Customer Data" (feedback form)
+// row: BRO's rule is "first check Loyalty Card / Golden Plan entry date
+// for that row's card/plan number; if there isn't one, the feedback
+// timestamp minus one day IS the visit date" (feedback often gets typed
+// in late/the next day, not necessarily same-day).
+function c360ResolveVisitDate_(visit, loy, ga) {
+  if (visit.loyaltyCardNo && loy && loy.cards) {
+    const m = loy.cards.find(c => String(c.cardNo || '').trim().toLowerCase() === visit.loyaltyCardNo.trim().toLowerCase());
+    if (m && m.cardDate) return { date: m.cardDate, via: 'Loyalty Card #' + m.cardNo };
+  }
+  if (visit.goldenPlanNo && ga && ga.plans) {
+    const m = ga.plans.find(p => String(p.planNo || '').trim().toLowerCase() === visit.goldenPlanNo.trim().toLowerCase());
+    if (m && m.enrollDate) return { date: m.enrollDate, via: 'Golden Aura #' + m.planNo };
+  }
+  if (visit.timestamp) {
+    const d = new Date(visit.timestamp.replace(/-/g, ' '));
+    if (!isNaN(d.getTime())) {
+      d.setDate(d.getDate() - 1);
+      return { date: d.toLocaleDateString('en-GB'), via: 'feedback entry (−1 day)' };
+    }
+  }
+  return { date: '—', via: '' };
+}
+
+function c360BiodataHtml_(c) {
+  // Only present at all when the backend granted full access (Admin/MIS) —
+  // for an Employee session these fields simply aren't in the response.
+  const rows = [];
+  if (c.mobile)    rows.push(`📱 ${c.mobile}`);
+  if (c.address)   rows.push(`🏠 ${c.address}`);
+  if (c.aadhaarNo) rows.push(`🪪 Aadhaar: ${c.aadhaarNo}`);
+  if (c.panNo)     rows.push(`🪪 PAN: ${c.panNo}`);
+  const photos = ['custPhoto', 'aadhaarFront', 'aadhaarBack', 'aadhaarPhoto', 'panPhoto']
+    .filter(k => c[k]).map(k => `<a href="${c[k]}" target="_blank" rel="noopener" style="margin-right:10px;">📷 ${k.replace('Photo','').replace(/([A-Z])/g,' $1')}</a>`).join('');
+  if (!rows.length && !photos) return '';
+  return `<div style="margin:4px 0 8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;">${rows.join('<br>')}${photos ? '<div style="margin-top:6px;">' + photos + '</div>' : ''}</div>`;
+}
+
+// BRO: "Customer Name/Mobile/loyalty card no/golden plan/dsr id edaina
+// enter chesina customer data motham ravali" — ONE search box, any of
+// those five identifiers, full combined record back. "Customer Data"
+// (the walk-in feedback form sheet) already carries phone + name +
+// Loyalty Card No + Golden Plan No together on one row, so that's
+// searched FIRST (by whichever of those four was typed) to resolve the
+// customer's real mobile number, then every other section is fetched
+// by that mobile. A DSR ID is tried in parallel since it isn't in that
+// sheet at all.
 async function loadCustomer360(who) {
   who = who || 'admin';
   const suffix = who === 'emp' ? '-emp' : '';
-  const rawMobile = document.getElementById('c360MobileInput' + suffix).value.trim();
-  const rawCardNo = document.getElementById('c360CardNoInput' + suffix) ? document.getElementById('c360CardNoInput' + suffix).value.trim() : '';
-  let mobile = rawMobile.replace(/\D/g, '');
-  const cardNo = rawCardNo;
-  if (!mobile && !cardNo) { toast('Enter a mobile number or a Loyalty Card No', 'error'); return; }
-  if (mobile && mobile.length !== 10) { toast('Enter a valid 10-digit mobile number', 'error'); return; }
+  const raw = document.getElementById('c360SearchInput' + suffix).value.trim();
+  if (!raw) { toast('Enter a mobile number, customer name, Loyalty Card No, Golden Plan No, or DSR ID', 'error'); return; }
+  const digits = raw.replace(/\D/g, '');
+  let mobile = (digits.length === 10 && /^[6-9]/.test(digits)) ? digits : '';
+  const query = raw; // used as name/cardNo/planNo/dsrId whenever it isn't a plain mobile
   const role = who === 'emp' ? 'EMPLOYEE' : (state.adminRole || 'ADMIN');
+  const isAdminView = role.toUpperCase().indexOf('ADMIN') !== -1 || role.toUpperCase().indexOf('MIS') !== -1;
   const box = document.getElementById('customer360Box' + suffix);
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Searching across Loyalty Card, Golden Aura, Leads, and DSR...</div>';
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Searching across Visits, Loyalty Card, Golden Aura, Leads, and DSR...</div>';
 
   const errOf = r => {
     if (r.status === 'rejected') return (r.reason && r.reason.message) || 'Request failed';
@@ -10452,24 +10504,31 @@ async function loadCustomer360(who) {
   };
   const okOrNull = r => (r.status === 'fulfilled' && r.value && r.value.ok !== false) ? r.value : null;
 
-  // Loyalty + Golden Aura can be searched by mobile OR Loyalty Card No.
+  // Phase 1 — "Customer Data" (Visits) by mobile OR name/cardNo/planNo;
+  // its resolvedMobile lets a name/card/plan search chain into everything else.
+  const visitsRes = okOrNull(await leadsApiGet({ action: 'CUSTOMER_360_VISITS', mobile, query: mobile ? '' : query }).then(v => ({ status: 'fulfilled', value: v })).catch(e => ({ status: 'rejected', reason: e })));
+  const visitsErr = null; // best-effort — a Visits miss shouldn't block the rest of the view
+  if (!mobile && visitsRes && visitsRes.resolvedMobile) mobile = visitsRes.resolvedMobile;
+
+  // Phase 2 — Loyalty + Golden Aura, by mobile, or by name/card/plan No
+  // directly (covers the case where Visits had no row for this customer
+  // but a Loyalty/Golden Aura one still exists).
   const [loyalty, goldenAura] = await Promise.allSettled([
-    jsonpReliable({ page: 'customer360LoyaltyJSON', mobile, cardNo, role }),
-    jsonpReliable({ page: 'customer360GoldenAuraJSON', mobile, cardNo, role })
+    jsonpReliable({ page: 'customer360LoyaltyJSON', mobile, cardNo: mobile ? '' : query, name: mobile ? '' : query, role }),
+    jsonpReliable({ page: 'customer360GoldenAuraJSON', mobile, cardNo: mobile ? '' : query, name: mobile ? '' : query, role })
   ]);
   const loy = okOrNull(loyalty), ga = okOrNull(goldenAura);
   const loyErr = errOf(loyalty), gaErr = errOf(goldenAura);
 
-  // If we searched by Card No only and a match gave us a real (unmasked)
-  // mobile — i.e. Admin/MIS — chain into Leads + DSR with it so the rest
-  // of the view still fills in. Otherwise (Employee, or no match), those
-  // two just need a mobile number typed in directly.
   if (!mobile) {
     const foundMobile = (loy && loy.cards && loy.cards[0] && loy.cards[0].mobile) ||
                          (ga && ga.plans && ga.plans[0] && ga.plans[0].mobile) || '';
     if (foundMobile && /^\d{10}$/.test(foundMobile.replace(/\D/g, ''))) mobile = foundMobile.replace(/\D/g, '');
   }
 
+  // Phase 3 — Leads call history + DSR purchases, by mobile when we have
+  // one by now (from the typed input OR resolved above); DSR ID search
+  // as the fallback when the typed query never resolved to a mobile.
   let lead = null, ds = null, leadErr = null, dsErr = null;
   if (mobile) {
     const [leadsR, dsrR] = await Promise.allSettled([
@@ -10480,7 +10539,12 @@ async function loadCustomer360(who) {
     leadErr = errOf(leadsR); dsErr = errOf(dsrR);
   } else {
     leadErr = 'Search by mobile number to check Lead calls.';
-    dsErr = 'Search by mobile number to check DSR purchases.';
+    const dsrIdR = await fetch(DSR_GAS_URL + '?action=searchByDsrId&dsrId=' + encodeURIComponent(query) + '&role=' + encodeURIComponent(role)).then(r => r.json()).catch(() => null);
+    if (dsrIdR && dsrIdR.status === 'success' && dsrIdR.results && dsrIdR.results.length) {
+      ds = { entries: dsrIdR.results.map(en => ({ dsrId: en.dsrId, billDate: en.billDate, employeeName: en.employeeName, paymentStatus: en.paymentStatus, items: [en] })) };
+    } else {
+      dsErr = 'Search by mobile number or an exact DSR ID to see DSR purchases.';
+    }
   }
 
   const section = (title, icon, items, renderItem, errMsg) => {
@@ -10490,6 +10554,11 @@ async function loadCustomer360(who) {
   };
 
   let html = `<div style="display:grid;gap:10px;">`;
+  html += section('Visits', '🚶', visitsRes ? visitsRes.visits : null, v => {
+    const r = c360ResolveVisitDate_(v, loy, ga);
+    const shownPhone = isAdminView ? v.phone : c360MaskMobile_(v.phone);
+    return `<div class="kd-note" style="margin:4px 0;">📅 ${r.date}${r.via ? ' <span style="opacity:.6;font-size:11px;">(' + r.via + ')</span>' : ''} — ${properCase(v.customerName)}${shownPhone ? ' — ' + shownPhone : ''}${v.status ? ' — <b>' + v.status + '</b>' : ''}${v.product ? ' — interested: ' + properCase(v.product) : ''}${v.feedback ? ' — ' + v.feedback : ''} ${v.employeeName ? '<span style="opacity:.6;">(by ' + properCase(v.employeeName) + ')</span>' : ''}</div>`;
+  }, visitsErr);
   html += section('Loyalty Card', '💳', loy ? loy.cards : null, c =>
     `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${properCase(c.custName)} — issued ${c.cardDate} by ${properCase(c.empName)}</div>${c360BiodataHtml_(c)}`,
     loyErr ? ('Could not load this section right now. (' + loyErr + ')') : null);
