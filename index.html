@@ -4347,6 +4347,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      kada" — a simple Welcome pop-up right after a successful login, Employee and Admin both.) -->
 <div class="modal-overlay" id="wbWelcomeModal">
   <div class="modal-box" style="max-width:360px;text-align:center;">
+    <button class="modal-close-x" onclick="wbCloseWelcomePopup_()" title="Close">✕</button>
     <div style="font-size:46px;margin-bottom:8px;line-height:1;">🙏</div>
     <div class="modal-title" id="wbWelcomeGreeting" style="margin-bottom:4px;">Good Morning!</div>
     <div style="font-size:17px;font-weight:800;color:var(--purple);margin-bottom:4px;" id="wbWelcomeName"></div>
@@ -4602,6 +4603,48 @@ function wbCloseWelcomePopup_() {
   setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 5000); // matches wbPopOut duration
 }
 function todayYMD() { return toYMD(new Date()); }
+
+// v-add (BRO: "dsr pending unna, emp ki valla data pop ravali. missing dsr ani
+// rvali, with date ravali" — right after an EMPLOYEE logs in, silently check
+// if they have any missing-DSR dates this month (reuses the existing admin
+// dsrMissingAPI, now also exposed to the employee's own login via role:'EMP'),
+// and if so show a dedicated "Missing DSR" popup naming the exact dates.
+// Fire-and-forget background check — never blocks login, never shows an
+// error toast on failure (same pattern as checkLoyaltyAlerts('emp') above it).
+async function checkEmpMissingDsrPopup() {
+  try {
+    if (!state.empName) return;
+    const monthStart = todayYMD().substring(0, 8) + '01';
+    const res = await jsonpReliable({ page: 'dsrMissingAPI', role: 'EMP', empName: state.empName, start: monthStart, end: todayYMD() });
+    if (!res || !res.rows || !res.rows.length) return;
+    const row = res.rows[0];
+    const perDate = row.perDate || {};
+    // v-fix (BRO: "popup ravadam leydu" — the missing-cell check here was
+    // guessed wrong; the sheet actually marks a missing date as "M:<n>"
+    // (same convention the working Admin "DSR Missing" dashboard already
+    // uses via showDsrMissingDetail's missEntries filter above) — anything
+    // else (a checkmark, a count) is NOT missing. Matching that exact
+    // convention instead of a generic non-'-'/non-'0' guess.
+    const missingDates = Object.keys(perDate).filter(iso => String(perDate[iso]).indexOf('M:') === 0).sort();
+    if (!missingDates.length) return;
+    showEmpMissingDsrModal(missingDates);
+  } catch (e) { /* silent — not critical to login */ }
+}
+function showEmpMissingDsrModal(dates) {
+  const subEl = document.getElementById('empMissingDsrSub');
+  const datesEl = document.getElementById('empMissingDsrDates');
+  if (!subEl || !datesEl) return;
+  subEl.textContent = 'You have ' + dates.length + ' day' + (dates.length > 1 ? 's' : '') + ' this month with no DSR entered:';
+  datesEl.innerHTML = dates.map(iso => `<span class="pill pill-rejected" style="margin:0;">📅 ${fmtDMY(iso)}</span>`).join('');
+  // Queue behind the Welcome popup if it's still showing, so the two never overlap.
+  const wb = document.getElementById('wbWelcomeModal');
+  const delay = (wb && wb.classList.contains('show')) ? 10200 : 300;
+  setTimeout(() => openModal('empMissingDsrModal'), delay);
+}
+function closeEmpMissingDsrModal_(goToDsr) {
+  closeModal('empMissingDsrModal');
+  if (goToDsr) showEmpPage('dsr');
+}
 
 // ══════════════════════════════════════════════════════════════
 // DATE SCOPE FILTER — shared "Today / Running Month / Custom Date"
@@ -5568,6 +5611,7 @@ async function empLogin() {
         checkLoyaltyAlerts('emp');
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
+        checkEmpMissingDsrPopup();
         toast('Welcome, ' + state.empName + '!', 'success');
         // v-fix (BRO: "if Malleswara has a pending DSR queued on a device, does it sync when Liza logs in on that same device?" — answer was no, login wasn't one of
         // the trigger points): a shared device passing between employees
