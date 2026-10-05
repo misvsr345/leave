@@ -15916,6 +15916,60 @@ async function slEnsureMeta() {
   if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; slSaveMetaCache_(); }
 }
 
+// ══════════════════════════════════════════════════════════════
+// v-add (BRO: "all new entry form lo star unte, compulsary annaru
+// kada, daniki edaina toggle pettu" — Admin can now switch OFF the
+// "required" (★) flag on individual form fields from a Settings
+// screen, per-field, instead of it being hard-coded in the HTML.
+// Stage 1 (this round): wired into Stock Entry / Transfer only —
+// DSR and Leave forms still have their stars hard-coded and will
+// get the same treatment in a follow-up round (said this to BRO
+// directly, not silently half-done).
+//
+// Storage: PortalBackend.gs keeps a small JSON object in
+// PropertiesService — only fields explicitly turned OFF are stored
+// (default is always "required" unless listed here), fetched once
+// per session and cached in localStorage so forms render instantly
+// without waiting on a network round-trip every time, same pattern
+// as the Stock counters cache just above.
+// ══════════════════════════════════════════════════════════════
+const FIELD_REQ_LS_KEY = 'vsrFieldReqOverrides_v1';
+let FIELD_REQ_OVERRIDES = {};
+// The master list of every field this admin screen can toggle —
+// grouped by form. Each entry's "key" is what seCollect()/frqStar()
+// check against; "label" is what the admin sees. New forms (DSR,
+// Leave) get appended here when their turn comes.
+const FIELD_REQ_REGISTRY = [
+  { form: 'Stock Entry / Transfer', key: 'stock.date', label: 'Date' },
+  { form: 'Stock Entry / Transfer', key: 'stock.entryType', label: 'Stock Entry Type' },
+  { form: 'Stock Entry / Transfer', key: 'stock.counter', label: 'Counter Name (Retail)' },
+  { form: 'Stock Entry / Transfer', key: 'stock.productName', label: 'Product Name' },
+  { form: 'Stock Entry / Transfer', key: 'stock.tagNo', label: 'Tag No' },
+  { form: 'Stock Entry / Transfer', key: 'stock.qty', label: 'Quantity (Non-Tag)' },
+  { form: 'Stock Entry / Transfer', key: 'stock.bangleSize', label: 'Bangle Size' },
+  { form: 'Stock Entry / Transfer', key: 'stock.ringSize', label: 'Ring Size' },
+  { form: 'Stock Entry / Transfer', key: 'stock.length', label: 'Length' },
+  { form: 'Stock Entry / Transfer', key: 'stock.design', label: 'Design' },
+  { form: 'Stock Entry / Transfer', key: 'stock.tunch', label: 'Tunch' },
+  { form: 'Stock Entry / Transfer', key: 'stock.weight', label: 'Weight (gm)' },
+  { form: 'Stock Entry / Transfer', key: 'stock.grossWt', label: 'Gross Wt (gm)' },
+  { form: 'Stock Entry / Transfer', key: 'stock.netWt', label: 'Net Wt (gm)' }
+];
+function frqLoadCache_() {
+  try { FIELD_REQ_OVERRIDES = JSON.parse(localStorage.getItem(FIELD_REQ_LS_KEY) || '{}') || {}; } catch (e) { FIELD_REQ_OVERRIDES = {}; }
+}
+function frqSaveCache_() { try { localStorage.setItem(FIELD_REQ_LS_KEY, JSON.stringify(FIELD_REQ_OVERRIDES)); } catch (e) {} }
+async function frqRefresh() {
+  try {
+    const res = await jsonpReliable({ page: 'getFieldRequiredSettings' });
+    if (res && res.ok) { FIELD_REQ_OVERRIDES = res.overrides || {}; frqSaveCache_(); }
+  } catch (e) { /* keep whatever's cached — not critical to block on */ }
+}
+function frqIsRequired(key) { return FIELD_REQ_OVERRIDES[key] !== false; } // default: required, unless explicitly switched off
+function frqStar(key) { return frqIsRequired(key) ? '<span class="req">★</span>' : ''; }
+frqLoadCache_(); // instant from localStorage on page load
+frqRefresh(); // fire-and-forget — quietly brings it current in the background (admin or employee, either can be filling a form)
+
 // ══════════════════════════════════════
 // STOCK TRANSFER (admin) — v-add (BRO: "main hub ki stock ela add cheyali, hub nundi counter
 // ki ela transfer cheyali, counter nundi vere counter ki ela trnfer cheyali... separate unte
@@ -17093,8 +17147,8 @@ function seFormHtml(scope) {
           <div style="padding:11px 14px;background:var(--purple-bg,#F5EEFB);border:1.5px solid var(--gold,#B8860B);border-radius:10px;font-weight:700;color:var(--purple,#4A0E8F);font-size:15px;" id="${seId(scope,'empDisplay')}">👤 —</div>
         </div>
         <div class="se-g2 se-mb">
-          <div><label>Date <span class="req">★</span></label><input type="date" id="${seId(scope,'date')}"></div>
-          <div><label>Stock Entry Type <span class="req">★</span></label>
+          <div><label>Date ${frqStar('stock.date')}</label><input type="date" id="${seId(scope,'date')}"></div>
+          <div><label>Stock Entry Type ${frqStar('stock.entryType')}</label>
             <div class="se-tgl" id="${seId(scope,'tglType')}">
               <button type="button" data-v="Opening Stock" class="on">Opening</button>
               <button type="button" data-v="Receiving Stock">Receiving</button>
@@ -17109,7 +17163,7 @@ function seFormHtml(scope) {
             </div>
           </div>
           <div id="${seId(scope,'counterWrap')}">
-            <label>Counter Name <span class="req">★</span></label>
+            <label>Counter Name ${frqStar('stock.counter')}</label>
             <select id="${seId(scope,'counter')}"><option value="">-- Select Counter --</option></select>
           </div>
         </div>
@@ -17136,7 +17190,7 @@ function seItemHtml(n) {
         </div>
         <div class="se-mb se-hide" data-role="diaCounterNote"><div class="se-msg info">💎 Diamond Counter selected — Diamond item only.</div></div>
         <div class="se-mb" data-role="tagWrap">
-          <label>Tag No <span class="req">★</span></label>
+          <label>Tag No ${frqStar('stock.tagNo')}</label>
           <div style="display:flex;gap:6px;">
             <input type="text" data-role="tagNo" placeholder="e.g. BOM2154" autocomplete="off" style="text-transform:uppercase;flex:1 1 auto;min-width:0;">
             <button type="button" class="btn-secondary" data-role="tagClear" title="Clear" style="flex:0 0 auto;width:auto;padding:0 12px;">✕</button>
@@ -17500,9 +17554,9 @@ function seCollect(scope) {
   };
   let hErr = '';
   if (!header.enteredBy) hErr = 'Employee not identified — please log in again.';
-  else if (!header.entryDate) hErr = 'Select Date.';
-  else if (!header.entryType) hErr = 'Select Stock Entry Type.';
-  else if (header.productFrom==='Retail' && !header.counter) hErr = 'Select Counter Name.';
+  else if (frqIsRequired('stock.date') && !header.entryDate) hErr = 'Select Date.';
+  else if (frqIsRequired('stock.entryType') && !header.entryType) hErr = 'Select Stock Entry Type.';
+  else if (frqIsRequired('stock.counter') && header.productFrom==='Retail' && !header.counter) hErr = 'Select Counter Name.';
   if (hErr) return {header, hErr};
 
   const tagsSeen = {};
@@ -17510,16 +17564,16 @@ function seCollect(scope) {
     const type = seTogVal(seR(b,'type')), isTag = seTogVal(seR(b,'tagst'))==='Tag';
     const e = m => errs.push({b, m});
     const pn = seProductNameOf(b);
-    if (!pn) return e('Select / enter Product Name.');
+    if (frqIsRequired('stock.productName') && !pn) return e('Select / enter Product Name.');
     let tagNo = '';
     if (isTag) {
       tagNo = seK(b,'tagNo').value.trim();
-      if (!tagNo) return e('Enter Tag No.');
-      if (stockTagHasSep(tagNo)) return e('Tag No: space, - or / not allowed. Enter like BOM2154.');
-      if (!dsrTagValid(tagNo)) return e('Tag No needs both letters and numbers — e.g. BOM2154.');
+      if (frqIsRequired('stock.tagNo') && !tagNo) return e('Enter Tag No.');
+      if (tagNo && stockTagHasSep(tagNo)) return e('Tag No: space, - or / not allowed. Enter like BOM2154.');
+      if (tagNo && !dsrTagValid(tagNo)) return e('Tag No needs both letters and numbers — e.g. BOM2154.');
       const tn = stockNormTag(tagNo);
-      if (tagsSeen[tn]) return e('Duplicate: this tag is entered twice in this form.');
-      tagsSeen[tn] = 1;
+      if (tn && tagsSeen[tn]) return e('Duplicate: this tag is entered twice in this form.');
+      if (tn) tagsSeen[tn] = 1;
       if (b._tagState==='dup') return e('Duplicate tag — already in stock.');
       if (b._tagState==='sold') {
         if (seR(b,'retChk').checked) confirmReturn.push(tn);
@@ -17527,20 +17581,20 @@ function seCollect(scope) {
       }
     } else {
       const q = parseInt(seK(b,'qty').value,10);
-      if (!q || q<1) return e('Quantity must be 1 or more.');
+      if (frqIsRequired('stock.qty') && (!q || q<1)) return e('Quantity must be 1 or more.');
     }
     const sf = seSizeFlagsOf(scope, b);
-    if (sf.bangle && !sePickVal(b,'bangleSize')) return e('Select Bangle Size.');
-    if (sf.ring && !sePickVal(b,'ringSize')) return e('Select Ring Size.');
-    if (sf.length && !sePickVal(b,'length')) return e('Select Length.');
-    const row = { type, tagStatus: isTag?'Tag':'Non Tag', tagNo, qty: isTag?1:parseInt(seK(b,'qty').value,10), productName: pn,
+    if (sf.bangle && frqIsRequired('stock.bangleSize') && !sePickVal(b,'bangleSize')) return e('Select Bangle Size.');
+    if (sf.ring && frqIsRequired('stock.ringSize') && !sePickVal(b,'ringSize')) return e('Select Ring Size.');
+    if (sf.length && frqIsRequired('stock.length') && !sePickVal(b,'length')) return e('Select Length.');
+    const row = { type, tagStatus: isTag?'Tag':'Non Tag', tagNo, qty: isTag?1:(parseInt(seK(b,'qty').value,10)||0), productName: pn,
       bangleSize: sf.bangle?sePickVal(b,'bangleSize'):'', ringSize: sf.ring?sePickVal(b,'ringSize'):'',
       length: sf.length?sePickVal(b,'length'):'', photo: b._photo||'' };
     if (type==='Gold') {
       row.design = dsrTitleCase(sePickVal(b,'design')); row.tunch = seK(b,'tunch').value; row.weight = seK(b,'weight').value.trim();
-      if (!row.design) return e('Select / enter Design.');
-      if (!row.tunch) return e('Select Tunch.');
-      if (!(parseFloat(row.weight)>0)) return e('Enter Weight.');
+      if (frqIsRequired('stock.design') && !row.design) return e('Select / enter Design.');
+      if (frqIsRequired('stock.tunch') && !row.tunch) return e('Select Tunch.');
+      if (frqIsRequired('stock.weight') && !(parseFloat(row.weight)>0)) return e('Enter Weight.');
     } else {
       const merged = seIsDiamondCounterSelected(scope);
       row.gross = seK(b,'gross').value.trim(); row.net = seK(b,'net').value.trim();
@@ -17549,13 +17603,13 @@ function seCollect(scope) {
         // Diamond Counter merge: Design/Tunch come from goldBox; Weight is optional here (Gross/Net Wt
         // already cover it — blank Weight falls back to Net Wt on the server).
         row.design = dsrTitleCase(sePickVal(b,'design')); row.tunch = seK(b,'tunch').value; row.weight = seK(b,'weight').value.trim();
-        if (!row.design) return e('Select / enter Design.');
-        if (!row.tunch) return e('Select Tunch.');
+        if (frqIsRequired('stock.design') && !row.design) return e('Select / enter Design.');
+        if (frqIsRequired('stock.tunch') && !row.tunch) return e('Select Tunch.');
       } else {
         row.tunch = seK(b,'diaTunch').value;
       }
-      if (!(parseFloat(row.gross)>0)) return e('Enter Gross Wt.');
-      if (!(parseFloat(row.net)>0)) return e('Enter Net Wt.');
+      if (frqIsRequired('stock.grossWt') && !(parseFloat(row.gross)>0)) return e('Enter Gross Wt.');
+      if (frqIsRequired('stock.netWt') && !(parseFloat(row.net)>0)) return e('Enter Net Wt.');
       if (parseFloat(row.net)>parseFloat(row.gross)) return e('Net Wt cannot be more than Gross Wt.');
     }
     rows.push({row, b});
