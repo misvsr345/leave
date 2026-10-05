@@ -1994,13 +1994,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="notice-render" id="noticeRenderBox">Loading notices...</div>
         <label style="display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);cursor:pointer;">
           <input type="checkbox" id="ackNotices" onchange="onAckChange()" style="width:19px;height:19px;flex-shrink:0;margin-top:1px;accent-color:var(--purple);cursor:pointer;">
-          <span style="font-size:12px;color:var(--text2);font-weight:600;line-height:1.5;">I have read and understood the notices above *</span>
+          <span style="font-size:12px;color:var(--text2);font-weight:600;line-height:1.5;">I have read and understood the notices above <span id="frqStarAckNotices">*</span></span>
         </label>
       </div>
       <div class="card">
         <div class="card-title">➕ Apply for Leave</div>
         <div class="form-row">
-          <label>Leave Type *</label>
+          <label>Leave Type <span id="frqStarLeaveType">*</span></label>
           <select id="applyLeaveType" onchange="onLeaveTypeChange()">
             <option value="">-- Select Leave Type --</option>
             <option value="Casual Leave">Casual Leave</option>
@@ -2071,7 +2071,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="form-row" id="authorityRow" style="display:none;">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
             <input type="checkbox" id="applyAuthMetCheck" onchange="onAuthMetChange()" style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-            <span>Authority Met *</span>
+            <span>Authority Met <span id="frqStarAuthMet">*</span></span>
           </label>
           <div id="authWhoRow" style="display:none;margin-top:12px;">
             <label>Who did you meet? *</label>
@@ -2091,7 +2091,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             </div>
           </div>
         </div>
-        <div class="form-row"><label>Purpose / Reason *</label><textarea id="applyPurpose" rows="3" placeholder="Briefly describe the reason for leave"></textarea></div>
+        <div class="form-row"><label>Purpose / Reason <span id="frqStarPurpose">*</span></label><textarea id="applyPurpose" rows="3" placeholder="Briefly describe the reason for leave"></textarea></div>
         <div class="form-row"><label>Leave Address</label><input type="text" id="applyAddress" placeholder="Where will you be during leave?"></div>
         <div id="applyDaysInfo" style="display:none; padding: 10px 14px; background: var(--orange-bg); border-radius: 8px; margin-bottom: 14px; font-size: 13px; color: var(--orange); font-weight: 600;"></div>
         <div style="display:flex;gap:10px;">
@@ -4156,7 +4156,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <option value="Second Half (Afternoon)">Second Half (Afternoon)</option>
       </select>
     </div>
-    <div class="form-row"><label>Reason for Modification *</label><textarea id="modifyReason" rows="2" placeholder="Why are you modifying?"></textarea></div>
+    <div class="form-row"><label>Reason for Modification <span id="frqStarModifyReason">*</span></label><textarea id="modifyReason" rows="2" placeholder="Why are you modifying?"></textarea></div>
     <div class="modal-btns">
       <button class="btn-modal-cancel" onclick="closeModal('modifyModal')">Cancel</button>
       <button class="btn-modal-confirm" id="modifyConfirmBtn" onclick="confirmModify()" style="background:var(--blue);">✏️ Confirm Modify</button>
@@ -4368,6 +4368,21 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div id="empMissingDsrDates" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:6px;"></div>
     <button class="btn-primary" style="width:100%;margin-top:14px;" onclick="closeEmpMissingDsrModal_(true)">🧾 Go to DSR</button>
     <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="closeEmpMissingDsrModal_(false)">Later</button>
+  </div>
+</div>
+
+<!-- v-add (BRO: "all new entry form lo star unte, compulsary annaru kada, daniki edaina
+     toggle pettu" — Admin-only. Lists every toggleable field (FIELD_REQ_REGISTRY — Stock
+     Entry/Transfer for now, DSR + Leave to follow) with an ON/OFF switch for whether that
+     field's ★ is actually enforced on submit. Saves to PortalBackend.gs via
+     saveFieldRequiredSettings, which every form's frqRefresh() then picks up. -->
+<div class="modal-overlay" id="fieldReqModal">
+  <div class="modal-box" style="max-width:440px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="frqCloseModal()" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:4px;">⚙️ Required Fields Settings</div>
+    <div class="modal-sub" style="font-size:12.5px;margin-bottom:14px;">Switch OFF a field here to make it optional on that form — no ★, no "please fill this" block on save. Switch it back ON any time.</div>
+    <div id="fieldReqBody"></div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" id="fieldReqSaveBtn" onclick="frqSave()">Save Changes</button>
   </div>
 </div>
 
@@ -6719,7 +6734,7 @@ async function confirmModify() {
   const mode = document.getElementById('modifyMode').value;
   const halfDay = mode === 'Half Day' ? document.getElementById('modifyHalfDay').value : '';
   const reason = document.getElementById('modifyReason').value.trim();
-  if(!reason) { toast('Please enter a reason', 'error'); return; }
+  if(frqIsRequired('leave.reason') && !reason) { toast('Please enter a reason', 'error'); return; }
   if(!newStart || !newEnd) { toast('Please select the dates', 'error'); return; }
   if(newEnd < newStart) { toast('End date cannot be before start date', 'error'); return; }
   if(mode === 'Half Day' && newStart !== newEnd) { toast('Half Day leave must have the same Start Date and End Date', 'error'); return; }
@@ -7024,7 +7039,7 @@ function onMixedModeChange(idx) {
 }
 
 async function submitLeave() {
-  if(!document.getElementById('ackNotices').checked) {
+  if(frqIsRequired('leave.ackNotices') && !document.getElementById('ackNotices').checked) {
     toast('Please tick "I have read and understood the notices" first', 'error');
     document.getElementById('applyNoticesCard').scrollIntoView({behavior:'smooth'});
     return;
@@ -7035,7 +7050,8 @@ async function submitLeave() {
   const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
   const durType = window.__leaveDurationType;
 
-  if (!lt || !purpose) { toast('Please fill all required fields', 'error'); return; }
+  if (frqIsRequired('leave.leaveType') && !lt) { toast('Please select a Leave Type', 'error'); return; }
+  if (frqIsRequired('leave.purpose') && !purpose) { toast('Please fill the Purpose / Reason', 'error'); return; }
 
   let segments = [];
   if (durType === 'single') {
@@ -7075,7 +7091,7 @@ async function submitLeave() {
   // without both, since these leave types cannot go for approval otherwise.
   let authMet = '';
   let authWho = '';
-  if (isDual) {
+  if (isDual && frqIsRequired('leave.authorityMet')) {
     const metChecked = document.getElementById('applyAuthMetCheck').checked;
     if (!metChecked) {
       toast('Please tick "Authority Met" before submitting ' + lt, 'error');
@@ -7087,6 +7103,11 @@ async function submitLeave() {
       return;
     }
     authMet = 'Yes';
+  } else if (isDual) {
+    // Toggle switched OFF — still carry through whatever was actually ticked/selected (if any),
+    // just don't block submission on it being filled in.
+    authMet = document.getElementById('applyAuthMetCheck').checked ? 'Yes' : '';
+    authWho = getAuthWho();
   }
 
   const first = segments[0];
@@ -14806,11 +14827,11 @@ function renderDsrEntryForm(who, force) {
         <div class="ch">🏢 &nbsp;Outlet Issue Details</div>
         <div class="cb">
           <div class="g2 mb14">
-            <div><label>Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
-            <div><label>Shop Name <span class="req">★</span></label><input type="text" id="dsrfCust-${who}" placeholder="Shop / party name"></div>
+            <div><label>Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
+            <div><label>Shop Name ${frqStar('dsr.custName')}</label><input type="text" id="dsrfCust-${who}" placeholder="Shop / party name"></div>
           </div>
           <div class="g2">
-            <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
+            <div><label>Address ${frqStar('dsr.address')}</label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
             <div><label>Contact Name</label><input type="text" id="dsrfMobile-${who}" placeholder="Optional"></div>
           </div>
         </div>
@@ -14824,7 +14845,7 @@ function renderDsrEntryForm(who, force) {
         <div class="ch">↩️ &nbsp;Return / Damage / Repair Details</div>
         <div class="cb">
           <div class="g2">
-            <div><label>Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
+            <div><label>Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
             <div><label>Remarks</label><input type="text" id="dsrfCust-${who}" placeholder="Optional note"></div>
           </div>
         </div>
@@ -14834,18 +14855,18 @@ function renderDsrEntryForm(who, force) {
         <div class="ch">✎ &nbsp;Bill Details</div>
         <div class="cb">
           <div class="g2 mb14">
-            <div><label>Bill Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
-            <div><label>Customer Name <span class="req">★</span></label><input type="text" id="dsrfCust-${who}" placeholder="Customer full name"></div>
+            <div><label>Bill Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
+            <div><label>Customer Name ${frqStar('dsr.custName')}</label><input type="text" id="dsrfCust-${who}" placeholder="Customer full name"></div>
           </div>
           <div class="g2">
-            <div><label>Mobile Number <span class="req">★</span></label>
+            <div><label>Mobile Number ${frqStar('dsr.mobile')}</label>
               <input type="tel" id="dsrfMobile-${who}" maxlength="10" placeholder="10-digit number" oninput="dsrfChkMob('${who}',this)">
               <div class="mob-err" id="dsrfMobErr-${who}">⚠ WRONG</div>
             </div>
-            <div><label>Address <span class="req">★</span></label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
+            <div><label>Address ${frqStar('dsr.address')}</label><input type="text" id="dsrfAddr-${who}" placeholder="City / Area"></div>
           </div>
           <div class="g2" style="margin-top:14px;">
-            <div><label id="dsrfBillNoLbl-${who}">Bill No <span class="req">★</span></label>
+            <div><label id="dsrfBillNoLbl-${who}">Bill No ${frqStar('dsr.billNo')}</label>
               <input type="text" id="dsrfBillNo-${who}" placeholder="e.g. R1042, E205" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
                 oninput="dsrfBillNoTyping('${who}')">
               <div style="font-size:11.5px;margin-top:5px;line-height:1.4;" id="dsrfBillNoMsg-${who}"></div>
@@ -14855,7 +14876,7 @@ function renderDsrEntryForm(who, force) {
           <!-- Return/Replace only: date the customer actually returned the item
                (Bill Date stays locked to the original sale). Hidden in a normal DSR entry. -->
           <div class="g2" id="dsrfReturnDateWrap-${who}" style="display:none;margin-top:14px;">
-            <div><label>Return Date <span class="req">★</span></label><input type="date" lang="en-GB" id="dsrfReturnDate-${who}"></div>
+            <div><label>Return Date ${frqStar('dsr.returnDate')}</label><input type="date" lang="en-GB" id="dsrfReturnDate-${who}"></div>
             <div></div>
           </div>
         </div>
@@ -15072,7 +15093,7 @@ function dsrfAddEntry(who) {
   div.className = 'entry';
   div.id = `dsrf-entry-${who}-${eid}`;
 
-  const req = isOrder ? '' : '<span class="req">★</span>';
+  const req = isOrder ? '' : frqStar('dsr.productName');
   const isRDR = dsrfIsRDR(who);
   div.innerHTML = `
     <div class="entry-hd">
@@ -15084,7 +15105,7 @@ function dsrfAddEntry(who) {
          mix Return/Damage/Repair items. -->
     <div class="card" style="margin:14px 14px 0;">
       <div class="ch">↩️ &nbsp;Reason</div>
-      <div class="cb"><label>Reason <span class="req">★</span></label>
+      <div class="cb"><label>Reason ${frqStar('dsr.reason')}</label>
         <select id="dsrfRdrReason-${who}-${eid}" class="uniform-select">
           <option value="">-- Select --</option>
           <option value="Return">Return</option>
@@ -15120,7 +15141,7 @@ function dsrfAddEntry(who) {
                 <button class="on" onclick="dsrfSetTagTgl('${who}',${eid},'Tag',this)">Tag</button>
                 <button onclick="dsrfSetTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
               </div><input type="hidden" id="dsrfTagSt-${who}-${eid}" value="Tag"></div>
-            <div id="dsrfTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
+            <div id="dsrfTagNoWrap-${who}-${eid}"><label>Tag No ${frqStar('dsr.tagNo')}</label>
               <div style="display:flex;gap:6px;">
                 <input type="text" id="dsrfTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;flex:1 1 auto;min-width:0;"
                   oninput="dsrfTagTyping('${who}',${eid},'g')" onblur="dsrfTagLookup('${who}',${eid},'g')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
@@ -15132,11 +15153,11 @@ function dsrfAddEntry(who) {
             <div><label>Product Name ${req}</label>
               <select id="dsrfPn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'gold')"><option value="">-- Select --</option></select>
               <div id="dsrfPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfPnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
-            <div><label>Design ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDes-${who}-${eid}" placeholder="Bombay, Traditional..."></div>
+            <div><label>Design ${!isOrder ? frqStar('dsr.design') : ''}</label><input type="text" id="dsrfDes-${who}-${eid}" placeholder="Bombay, Traditional..."></div>
           </div>
           <div class="g3">
-            <div><label>Tunch ${!isOrder ? '<span class="req">★</span>' : ''}</label><select id="dsrfTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
-            <div><label>Weight (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37"></div>
+            <div><label>Tunch ${!isOrder ? frqStar('dsr.tunch') : ''}</label><select id="dsrfTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
+            <div><label>Weight (gm) ${!isOrder ? frqStar('dsr.weight') : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37"></div>
             <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'g')}</div>
           </div>
         </div>
@@ -15161,7 +15182,7 @@ function dsrfAddEntry(who) {
                 <button class="on" onclick="dsrfSetDiaTagTgl('${who}',${eid},'Tag',this)">Tag</button>
                 <button onclick="dsrfSetDiaTagTgl('${who}',${eid},'No Tag',this)">Non Tag</button>
               </div><input type="hidden" id="dsrfDiaTagSt-${who}-${eid}" value="Tag"></div>
-            <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No <span class="req">★</span></label>
+            <div id="dsrfDiaTagNoWrap-${who}-${eid}"><label>Tag No ${frqStar('dsr.tagNo')}</label>
               <div style="display:flex;gap:6px;">
                 <input type="text" id="dsrfDiaTagNo-${who}-${eid}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;flex:1 1 auto;min-width:0;"
                   oninput="dsrfTagTyping('${who}',${eid},'d')" onblur="dsrfTagLookup('${who}',${eid},'d')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
@@ -15177,8 +15198,8 @@ function dsrfAddEntry(who) {
             <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div>
           </div>
           <div class="g2 mb12">
-            <div><label>Gross Wt (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
-            <div><label>Net Wt (gm) ${!isOrder ? '<span class="req">★</span>' : ''}</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
+            <div><label>Gross Wt (gm) ${!isOrder ? frqStar('dsr.diaGrossWt') : ''}</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
+            <div><label>Net Wt (gm) ${!isOrder ? frqStar('dsr.diaNetWt') : ''}</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Gold Tunch</label><select id="dsrfDiaGoldTunch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
@@ -15201,10 +15222,10 @@ function dsrfAddEntry(who) {
         <div class="ch">◎ &nbsp;Silver Item Details</div>
         <div class="cb">
           <div class="g2 mb12">
-            <div><label>Silver Item <span class="req">★</span></label>
+            <div><label>Silver Item ${frqStar('dsr.silverItem')}</label>
               <select id="dsrfSn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'silver')"><option value="">-- Select --</option></select>
               <div id="dsrfSnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfSnCustom-${who}-${eid}" placeholder="Enter silver item name"></div></div>
-            <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="dsrfSw-${who}-${eid}" placeholder="e.g. 12.50"></div>
+            <div><label>Weight (gm) ${frqStar('dsr.silverWeight')}</label><input type="text" id="dsrfSw-${who}-${eid}" placeholder="e.g. 12.50"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Quality</label><input type="text" id="dsrfSilverQuality-${who}-${eid}" placeholder="e.g. 925 Sterling"></div>
@@ -15953,7 +15974,28 @@ const FIELD_REQ_REGISTRY = [
   { form: 'Stock Entry / Transfer', key: 'stock.tunch', label: 'Tunch' },
   { form: 'Stock Entry / Transfer', key: 'stock.weight', label: 'Weight (gm)' },
   { form: 'Stock Entry / Transfer', key: 'stock.grossWt', label: 'Gross Wt (gm)' },
-  { form: 'Stock Entry / Transfer', key: 'stock.netWt', label: 'Net Wt (gm)' }
+  { form: 'Stock Entry / Transfer', key: 'stock.netWt', label: 'Net Wt (gm)' },
+  { form: 'DSR Entry', key: 'dsr.billDate', label: 'Date / Bill Date' },
+  { form: 'DSR Entry', key: 'dsr.custName', label: 'Customer / Shop Name' },
+  { form: 'DSR Entry', key: 'dsr.mobile', label: 'Mobile Number' },
+  { form: 'DSR Entry', key: 'dsr.address', label: 'Address' },
+  { form: 'DSR Entry', key: 'dsr.billNo', label: 'Bill No' },
+  { form: 'DSR Entry', key: 'dsr.returnDate', label: 'Return Date (Return/Replace)' },
+  { form: 'DSR Entry', key: 'dsr.reason', label: 'Reason (Return/Damage/Repair)' },
+  { form: 'DSR Entry', key: 'dsr.productName', label: 'Product Name' },
+  { form: 'DSR Entry', key: 'dsr.tagNo', label: 'Tag No' },
+  { form: 'DSR Entry', key: 'dsr.design', label: 'Design (Gold)' },
+  { form: 'DSR Entry', key: 'dsr.tunch', label: 'Tunch (Gold)' },
+  { form: 'DSR Entry', key: 'dsr.weight', label: 'Weight (Gold)' },
+  { form: 'DSR Entry', key: 'dsr.diaGrossWt', label: 'Gross Wt (Diamond)' },
+  { form: 'DSR Entry', key: 'dsr.diaNetWt', label: 'Net Wt (Diamond)' },
+  { form: 'DSR Entry', key: 'dsr.silverItem', label: 'Silver Item' },
+  { form: 'DSR Entry', key: 'dsr.silverWeight', label: 'Weight (Silver)' },
+  { form: 'Leave Application', key: 'leave.ackNotices', label: 'Notices Acknowledgement tick' },
+  { form: 'Leave Application', key: 'leave.leaveType', label: 'Leave Type' },
+  { form: 'Leave Application', key: 'leave.purpose', label: 'Purpose / Reason' },
+  { form: 'Leave Application', key: 'leave.authorityMet', label: 'Authority Met (Emergency/Special Permission)' },
+  { form: 'Leave Application', key: 'leave.reason', label: 'Reason for Modification' }
 ];
 function frqLoadCache_() {
   try { FIELD_REQ_OVERRIDES = JSON.parse(localStorage.getItem(FIELD_REQ_LS_KEY) || '{}') || {}; } catch (e) { FIELD_REQ_OVERRIDES = {}; }
@@ -15967,8 +16009,69 @@ async function frqRefresh() {
 }
 function frqIsRequired(key) { return FIELD_REQ_OVERRIDES[key] !== false; } // default: required, unless explicitly switched off
 function frqStar(key) { return frqIsRequired(key) ? '<span class="req">★</span>' : ''; }
+// Leave Application's star markers live in plain static HTML (not a JS template literal
+// rebuilt on demand like Stock Entry/DSR are), so they can't use frqStar() inline — each one
+// got a stable id instead, and this just shows/hides that id's "*" after the overrides are
+// known (on load from cache, and again once frqRefresh()'s network call lands).
+const FRQ_STATIC_STAR_MAP = {
+  frqStarAckNotices: 'leave.ackNotices', frqStarLeaveType: 'leave.leaveType',
+  frqStarPurpose: 'leave.purpose', frqStarAuthMet: 'leave.authorityMet', frqStarModifyReason: 'leave.reason'
+};
+function frqApplyStaticStars_() {
+  Object.keys(FRQ_STATIC_STAR_MAP).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = frqIsRequired(FRQ_STATIC_STAR_MAP[id]) ? '' : 'none';
+  });
+}
 frqLoadCache_(); // instant from localStorage on page load
-frqRefresh(); // fire-and-forget — quietly brings it current in the background (admin or employee, either can be filling a form)
+frqApplyStaticStars_();
+frqRefresh().then(frqApplyStaticStars_); // fire-and-forget — quietly brings it current in the background (admin or employee, either can be filling a form)
+
+function frqOpenModal() {
+  frqRenderList_();
+  openModal('fieldReqModal');
+}
+function frqCloseModal() { closeModal('fieldReqModal'); }
+function frqRenderList_() {
+  const body = document.getElementById('fieldReqBody');
+  if (!body) return;
+  const groups = {};
+  FIELD_REQ_REGISTRY.forEach(f => { (groups[f.form] = groups[f.form] || []).push(f); });
+  let html = '';
+  Object.keys(groups).forEach(formName => {
+    html += `<div style="font-weight:700;font-size:12.5px;color:var(--purple,#4A0E8F);margin:14px 0 6px;">${formName}</div>`;
+    groups[formName].forEach(f => {
+      const checked = frqIsRequired(f.key);
+      html += `<label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px;">
+        <span>${f.label}</span>
+        <input type="checkbox" data-frq-key="${f.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple,#4A0E8F);cursor:pointer;">
+      </label>`;
+    });
+  });
+  body.innerHTML = html;
+}
+async function frqSave() {
+  const btn = document.getElementById('fieldReqSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const checks = document.querySelectorAll('#fieldReqBody [data-frq-key]');
+    const overrides = {};
+    checks.forEach(c => { if (!c.checked) overrides[c.dataset.frqKey] = false; });
+    const res = await jsonpWriteOnce({ page: 'saveFieldRequiredSettings', role: state.adminRole || 'ADMIN', overrides: JSON.stringify(overrides) }, 'frq_' + Date.now(), 20000);
+    if (res && res.ok) {
+      FIELD_REQ_OVERRIDES = res.overrides || overrides;
+      frqSaveCache_();
+      toast('✅ Saved. Reopen Stock Entry page to see the updated stars.', 'success');
+      frqCloseModal();
+    } else {
+      toast('Could not save — ' + (res && res.error ? res.error : 'try again.'), 'error');
+    }
+  } catch (e) {
+    toast('Could not save — network error.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+  }
+}
 
 // ══════════════════════════════════════
 // STOCK TRANSFER (admin) — v-add (BRO: "main hub ki stock ela add cheyali, hub nundi counter
@@ -17173,6 +17276,7 @@ function seFormHtml(scope) {
     <button class="se-add" type="button" id="${seId(scope,'addItem')}">＋ &nbsp;Add Another Item</button>
     <div class="se-banner" id="${seId(scope,'resultBanner')}"></div>
     <button class="se-save" type="button" id="${seId(scope,'saveBtn')}">★ &nbsp;Save Stock &nbsp;★</button>
+    ${scope==='admin' ? `<button type="button" class="btn-secondary" style="width:100%;margin-top:8px;" onclick="frqOpenModal()">⚙️ Required Fields Settings</button>` : ''}
   </div>`;
 }
 
@@ -17199,29 +17303,29 @@ function seItemHtml(n) {
           <label class="se-retconf se-hide" data-role="retWrap"><input type="checkbox" data-role="retChk"><span>Yes — this tag came back from a sale. Add it to stock again (Return).</span></label>
         </div>
         <div class="se-mb se-hide" data-role="qtyWrap">
-          <label>Quantity (pcs) <span class="req">★</span></label>
+          <label>Quantity (pcs) ${frqStar('stock.qty')}</label>
           <input type="number" data-role="qty" min="1" step="1" value="1">
         </div>
         <div class="se-mb">
-          <label>Product Name <span class="req">★</span></label>
+          <label>Product Name ${frqStar('stock.productName')}</label>
           <select data-role="productName"></select>
           <input type="text" data-role="productCustom" class="se-hide" placeholder="Enter product name" style="margin-top:8px">
         </div>
         <div class="se-g3 se-mb se-hide" data-role="sizeRow">
-          <div data-role="bangleWrap" class="se-hide"><label>Bangle Size <span class="req">★</span></label>
+          <div data-role="bangleWrap" class="se-hide"><label>Bangle Size ${frqStar('stock.bangleSize')}</label>
             <select data-role="bangleSize"></select><input type="text" data-role="bangleSizeCustom" class="se-hide" placeholder="Type size" style="margin-top:8px"></div>
-          <div data-role="ringWrap" class="se-hide"><label>Ring Size <span class="req">★</span></label>
+          <div data-role="ringWrap" class="se-hide"><label>Ring Size ${frqStar('stock.ringSize')}</label>
             <select data-role="ringSize"></select><input type="text" data-role="ringSizeCustom" class="se-hide" placeholder="Type size" style="margin-top:8px"></div>
-          <div data-role="lengthWrap" class="se-hide"><label>Length <span class="req">★</span></label>
+          <div data-role="lengthWrap" class="se-hide"><label>Length ${frqStar('stock.length')}</label>
             <select data-role="length"></select><input type="text" data-role="lengthCustom" class="se-hide" placeholder="Type length" style="margin-top:8px"></div>
         </div>
         <div class="se-subbox" data-role="goldBox">
           <div class="se-subbox-hd">Gold Details</div>
           <div class="se-subbox-body">
             <div class="se-g3 se-mb">
-              <div><label>Design <span class="req">★</span></label><select data-role="design"></select><input type="text" data-role="designCustom" class="se-hide" placeholder="Enter design name" style="margin-top:8px"></div>
-              <div><label>Tunch <span class="req">★</span></label><select data-role="tunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
-              <div><label data-role="wtLbl">Weight (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="weight" placeholder="e.g. 21.37"></div>
+              <div><label>Design ${frqStar('stock.design')}</label><select data-role="design"></select><input type="text" data-role="designCustom" class="se-hide" placeholder="Enter design name" style="margin-top:8px"></div>
+              <div><label>Tunch ${frqStar('stock.tunch')}</label><select data-role="tunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
+              <div><label data-role="wtLbl">Weight (gm) ${frqStar('stock.weight')}</label><input type="text" inputmode="decimal" data-role="weight" placeholder="e.g. 21.37"></div>
             </div>
           </div>
         </div>
@@ -17229,8 +17333,8 @@ function seItemHtml(n) {
           <div class="se-subbox-hd">Diamond Details</div>
           <div class="se-subbox-body">
             <div class="se-g2 se-mb" data-role="diaGrossNetWrap">
-              <div><label>Gross Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="gross" placeholder="e.g. 6.10"></div>
-              <div><label>Net Wt (gm) <span class="req">★</span></label><input type="text" inputmode="decimal" data-role="net" placeholder="e.g. 5.20"></div>
+              <div><label>Gross Wt (gm) ${frqStar('stock.grossWt')}</label><input type="text" inputmode="decimal" data-role="gross" placeholder="e.g. 6.10"></div>
+              <div><label>Net Wt (gm) ${frqStar('stock.netWt')}</label><input type="text" inputmode="decimal" data-role="net" placeholder="e.g. 5.20"></div>
             </div>
             <div class="se-g2 se-mb">
               <div data-role="diaGoldTunchWrap"><label>Gold Tunch</label><select data-role="diaTunch"><option value="">-- Select --</option>${SE_TUNCHS.map(t=>`<option>${t}</option>`).join('')}</select></div>
@@ -17404,7 +17508,7 @@ function seRecheckAllTags(scope) {
 function seUpdateWeightLabel(scope, b) {
   const tagVal = seTogVal(seR(b,'tagst'));
   const base = tagVal==='Tag' ? 'Weight (gm)' : 'Total weight (gm)';
-  seR(b,'wtLbl').innerHTML = base + (seIsDiamondCounterSelected(scope) ? '' : ' <span class="req">★</span>');
+  seR(b,'wtLbl').innerHTML = base + (seIsDiamondCounterSelected(scope) ? '' : ' ' + frqStar('stock.weight'));
 }
 function seApplyDiamondCounterLock(scope, b) {
   const locked = seIsDiamondCounterSelected(scope);
@@ -20668,24 +20772,29 @@ function dsrfSubmit(who) {
   const inReturn = !!DSR_ST[who].returnMode;
   if (inReturn) {
     const rdVal = dsrfGv('dsrfReturnDate-' + who);
-    if (!rdVal) { toast('Please select the Return Date', 'error'); return; }
-    if (rdVal > toYMD(new Date())) { toast('Return Date cannot be in the future', 'error'); return; }
+    if (frqIsRequired('dsr.returnDate') && !rdVal) { toast('Please select the Return Date', 'error'); return; }
+    if (rdVal && rdVal > toYMD(new Date())) { toast('Return Date cannot be in the future', 'error'); return; }
     const bdVal = DSR_ST[who].returnMode.billDate;
-    if (bdVal && rdVal < bdVal) { toast('Return Date cannot be before the Bill Date (' + fmtDMY(bdVal) + ')', 'error'); return; }
+    if (bdVal && rdVal && rdVal < bdVal) { toast('Return Date cannot be before the Bill Date (' + fmtDMY(bdVal) + ')', 'error'); return; }
   } else {
     if (!empName) { toast('Employee not identified — please log in again', 'error'); return; }
     if (dsrfIsOutlet(who)) {
       // Outlet Issue's minimal header — Contact Name (held in "mob" here) is
       // explicitly optional, no Bill No, no mobile-number format check.
-      if (!date || !cust || !addr) { toast('Please fill Date, Shop Name and Address!', 'error'); return; }
+      if (frqIsRequired('dsr.billDate') && !date) { toast('Please select the Date!', 'error'); return; }
+      if (frqIsRequired('dsr.custName') && !cust) { toast('Please enter the Shop Name!', 'error'); return; }
+      if (frqIsRequired('dsr.address') && !addr) { toast('Please enter the Address!', 'error'); return; }
     } else if (dsrfIsRDR(who)) {
       // Return/Damage/Repair's minimal header — Remarks (held in "cust" here) is optional.
-      if (!date) { toast('Please select the Date!', 'error'); return; }
+      if (frqIsRequired('dsr.billDate') && !date) { toast('Please select the Date!', 'error'); return; }
     } else {
-      if (!date || !cust || !mob || !addr) { toast('Please fill all Bill Details!', 'error'); return; }
-      if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
-      if (!billNo) { toast('Please enter Bill No!', 'error'); return; }
-      if (!dsrBillNoValid(billNo)) { toast('Bill No must start with R or E followed by a number, no spaces — e.g. R1042, E205', 'error'); return; }
+      if (frqIsRequired('dsr.billDate') && !date) { toast('Please select the Bill Date!', 'error'); return; }
+      if (frqIsRequired('dsr.custName') && !cust) { toast('Please enter the Customer Name!', 'error'); return; }
+      if (frqIsRequired('dsr.mobile') && !mob) { toast('Please enter the Mobile Number!', 'error'); return; }
+      if (mob && !/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
+      if (frqIsRequired('dsr.address') && !addr) { toast('Please enter the Address!', 'error'); return; }
+      if (frqIsRequired('dsr.billNo') && !billNo) { toast('Please enter Bill No!', 'error'); return; }
+      if (billNo && !dsrBillNoValid(billNo)) { toast('Bill No must start with R or E followed by a number, no spaces — e.g. R1042, E205', 'error'); return; }
     }
   }
 
@@ -20709,13 +20818,13 @@ function dsrfSubmit(who) {
     const type = dsrfGv(`dsrfTyp-${who}-${eid}`), pf = dsrfGv(`dsrfPf-${who}-${eid}`);
     // v-add (BRO's Return/Damage/Repair feature) — Reason is per item.
     const rdrReason = isRDR ? dsrfGv(`dsrfRdrReason-${who}-${eid}`) : '';
-    if (isRDR && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Return/Damage/Repair) for every item!'; return; }
+    if (isRDR && frqIsRequired('dsr.reason') && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Return/Damage/Repair) for every item!'; return; }
 
     if (type === 'Silver') {
       let sn = dsrfGv(`dsrfSn-${who}-${eid}`); if (sn === 'Other') sn = dsrfGv(`dsrfSnCustom-${who}-${eid}`);
       const sw = dsrfGv(`dsrfSw-${who}-${eid}`);
-      if (!sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
-      if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
+      if (frqIsRequired('dsr.silverItem') && !sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
+      if (frqIsRequired('dsr.silverWeight') && !sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
       const sPhoto = dsrfGv(`dsrfPh-s-${who}-${eid}`);
       const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
@@ -20736,12 +20845,12 @@ function dsrfSubmit(who) {
             dGoldTunch = dsrfGv(`dsrfDiaGoldTunch-${who}-${eid}`), dCarat = dsrfGv(`dsrfDiaCarat-${who}-${eid}`),
             dClarity = dsrfGv(`dsrfDiaClarity-${who}-${eid}`), dColor = dsrfGv(`dsrfDiaColor-${who}-${eid}`),
             dCertNo = dsrfGv(`dsrfDiaCertNo-${who}-${eid}`);
-      if (!dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
+      if (frqIsRequired('dsr.productName') && !dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
-        if (!dGrossWt) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
-        if (!dNetWt) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
-        if (parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
-        if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+        if (frqIsRequired('dsr.diaGrossWt') && !dGrossWt) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
+        if (frqIsRequired('dsr.diaNetWt') && !dNetWt) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
+        if (dNetWt && dGrossWt && parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
+        if (dTs === 'Tag' && frqIsRequired('dsr.tagNo') && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
       if (dTs === 'Tag' && dTn && !dsrTagValid(dTn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
@@ -20758,12 +20867,12 @@ function dsrfSubmit(who) {
       let pn = dsrfGv(`dsrfPn-${who}-${eid}`); if (pn === 'Other') pn = dsrTitleCase(dsrfGv(`dsrfPnCustom-${who}-${eid}`));
       const des = dsrTitleCase(dsrfGv(`dsrfDes-${who}-${eid}`)), tch = dsrfGv(`dsrfTch-${who}-${eid}`), wt = dsrfGv(`dsrfWt-${who}-${eid}`),
             ts = dsrfGv(`dsrfTagSt-${who}-${eid}`), tn = dsrfGv(`dsrfTagNo-${who}-${eid}`);
-      if (!pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
+      if (frqIsRequired('dsr.productName') && !pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
-        if (!des) { ok = false; errMsg = 'Please enter Design!'; return; }
-        if (!tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
-        if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
-        if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+        if (frqIsRequired('dsr.design') && !des) { ok = false; errMsg = 'Please enter Design!'; return; }
+        if (frqIsRequired('dsr.tunch') && !tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
+        if (frqIsRequired('dsr.weight') && !wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+        if (ts === 'Tag' && frqIsRequired('dsr.tagNo') && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
       if (ts === 'Tag' && tn && !dsrTagValid(tn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
