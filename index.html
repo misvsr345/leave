@@ -2769,6 +2769,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
     <div class="vsr-sidebar-item" data-page="stocklevel" id="adminSidebarStockLevel" onclick="showAdminPage('stocklevel')"><span class="vsr-sidebar-icon">📦</span>Stock Level</div>
+    <!-- v-fix (BRO: "side bar lo 360 ekada undi" — Customer 360° was only
+         reachable via the "More" flyout; now a direct top-level item. -->
+    <div class="vsr-sidebar-item" data-page="customer-360" id="adminSidebarCustomer360" onclick="showAdminPage('customer-360')"><span class="vsr-sidebar-icon">🔍</span>Customer 360°</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
@@ -2780,7 +2783,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
            here at all. Every admin page now has a one-click route from
            this flyout too. -->
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('profile')">🪪 Profile</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('customer-360')">🔍 Customer 360°</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('monthly-absent')">📋 Monthly Absent Report</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('notices')">📢 Notices</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('extra-dsr')">⚠️ Extra DSR Check</div>
