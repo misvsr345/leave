@@ -23698,7 +23698,12 @@ async function adminApprove(row, leaveId, empId) {
       // up to 2 extra times on timeout, which on a WRITE call re-executes
       // the same approval and creates duplicate rows. Exactly one attempt
       // here, plus an idempotency key the server can use to de-duplicate.
-      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'approve', row: row, leaveId, adminEmail: state.adminEmail, role: state.adminRole }, idem);
+      // v-fix (BRO: "reject cheste avvadam ledu, sheet lo pending lage undi" — adminActionAPI can
+      // legitimately take longer than the old 30s default (LockService waits up to 25s if another
+      // admin action is mid-flight, plus the actual write + mail send on top of that), so a slow-but-
+      // real server run was being reported as "No confirmation" here even when nothing had failed yet.
+      // 50s gives real headroom without making a genuine failure feel like a long hang.
+      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'approve', row: row, leaveId, adminEmail: state.adminEmail, role: state.adminRole }, idem, 50000);
       if(res.ok) {
         toast('✅ ' + res.message, 'success');
         fadeOutLeaveCard(leaveId);
@@ -23757,7 +23762,7 @@ async function confirmReject() {
     closeModal('rejectModal');
     toast('⏳ Rejecting...', 'info');
     try {
-      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'reject', row: state.rejectRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole }, idem);
+      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'reject', row: state.rejectRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole }, idem, 50000);
       if(res.ok) {
         toast('❌ ' + res.message, 'success');
         fadeOutLeaveCard(leaveId);
@@ -23805,7 +23810,7 @@ async function confirmAbsent() {
       // Uses adminActionAPI with action=reject plus an Absent flag the backend
       // can branch on — see Code.gs patch notes for the small server addition
       // required (adminActionAPI currently only supports approve/reject).
-      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'absent', row: state.absentRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole }, idem);
+      const res = await jsonpWriteOnce({ page:'adminActionAPI', action:'absent', row: state.absentRow, leaveId, reason, adminEmail: state.adminEmail, role: state.adminRole }, idem, 50000);
       if(res.ok) {
         toast('⚠️ ' + res.message, 'success');
         fadeOutLeaveCard(leaveId);
