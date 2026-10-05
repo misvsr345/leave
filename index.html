@@ -1944,6 +1944,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🥇</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
+          <div class="quick-action-btn" id="empQACustomer360" onclick="showEmpPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
           <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
@@ -2305,6 +2306,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No leave applications are accepted on these weekdays, every week.</p>
         <div id="empBlockedDaysList"></div>
       </div>
+    </div>
+
+    <!-- v-add (BRO: "oka customer trend chudali ante emi cheyali" → "emp ki kuda
+         chupistunda" → "anni kanipinchali, kani strict ga undali — view-only, admin
+         per-employee toggle, all customers" — employee-side Customer 360°, same data
+         as Admin's (Loyalty + Golden Aura + Leads + DSR), reusing loadCustomer360('emp').
+         It's already view-only (no edit/export anywhere in that render), and visibility
+         is gated per-employee via the 'customer360' permission key below, same system as
+         every other Detailed Sub-Option Access toggle. -->
+    <div class="page-section" id="emp-customer-360">
+      <div class="section-hdr"><span class="section-title2">🔍 Customer 360°</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+        <input type="tel" id="c360MobileInput-emp" placeholder="Mobile number" maxlength="10" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360('emp')">
+        <input type="text" id="c360CardNoInput-emp" placeholder="or Loyalty Card No" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360('emp')">
+        <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360('emp')">🔍 Search</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin:0 0 10px;">Some details (address, Aadhaar, PAN, photos) are restricted to Admin.</p>
+      <div id="customer360Box-emp"><div class="empty-state"><p>Search by mobile number or Loyalty Card No to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
     </div>
 
     <div class="page-section" id="emp-profile">
@@ -2754,6 +2773,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
+      <!-- v-fix (BRO: "sidebar lo chala option lu levu" — the sidebar's More
+           flyout only had 6 of the 8 tiles the full-page "More" hub
+           (#admin-more) has, and 3 pages that were only ever reachable by
+           drilling into another module's own sub-hub (Leave → Monthly
+           Absent/Notices, DSR → Extra DSR Check) had NO direct path from
+           here at all. Every admin page now has a one-click route from
+           this flyout too. -->
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('profile')">🪪 Profile</div>
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('customer-360')">🔍 Customer 360°</div>
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('monthly-absent')">📋 Monthly Absent Report</div>
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('notices')">📢 Notices</div>
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('extra-dsr')">⚠️ Extra DSR Check</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('settings')">⚙️ Settings</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
@@ -3375,11 +3406,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <!-- v-add (BRO's Customer 360° View feature) -->
     <div class="page-section" id="admin-customer-360">
       <div class="section-hdr"><span class="section-title2">🔍 Customer 360°</span></div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input type="tel" id="c360MobileInput" placeholder="Enter 10-digit mobile number" maxlength="10" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <input type="tel" id="c360MobileInput" placeholder="Mobile number" maxlength="10" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
+        <input type="text" id="c360CardNoInput" placeholder="or Loyalty Card No" style="flex:1;min-width:140px;padding:10px;border:1.5px solid var(--border);border-radius:8px;" onkeydown="if(event.key==='Enter')loadCustomer360()">
         <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360()">🔍 Search</button>
       </div>
-      <div id="customer360Box"><div class="empty-state"><p>Enter a customer's mobile number to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
+      <div id="customer360Box"><div class="empty-state"><p>Search by mobile number or Loyalty Card No to see every Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
     </div>
 
     <!-- v-add (BRO's "Extra DSR" discrepancy feature) -->
@@ -4067,6 +4099,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Apply-Leave page message &amp; rules</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
@@ -10333,7 +10368,8 @@ const EMP_SEARCH_INDEX = [
   { icon: '📅', label: 'Calendar (Leave)', page: 'calendar' },
   { icon: '🚫', label: 'Blocked Dates (Leave)', page: 'blocked' },
   { icon: '📈', label: 'My Trends (Leave)', page: 'trend' },
-  { icon: '📆', label: 'Events (Leave)', page: 'events' }
+  { icon: '📆', label: 'Events (Leave)', page: 'events' },
+  { icon: '🔍', label: 'Customer 360°', page: 'customer-360' }
 ];
 
 function openEmpQuickSearch() {
@@ -10382,38 +10418,90 @@ function jumpToEmpSearchResult(page) {
   showEmpPage(page);
 }
 
-async function loadCustomer360() {
-  const raw = document.getElementById('c360MobileInput').value.trim();
-  const mobile = raw.replace(/\D/g, '');
-  const box = document.getElementById('customer360Box');
-  if (mobile.length !== 10) { toast('Enter a valid 10-digit mobile number', 'error'); return; }
+function c360BiodataHtml_(c) {
+  // Only present at all when the backend granted full access (Admin/MIS) —
+  // for an Employee session these fields simply aren't in the response.
+  const rows = [];
+  if (c.mobile)    rows.push(`📱 ${c.mobile}`);
+  if (c.address)   rows.push(`🏠 ${c.address}`);
+  if (c.aadhaarNo) rows.push(`🪪 Aadhaar: ${c.aadhaarNo}`);
+  if (c.panNo)     rows.push(`🪪 PAN: ${c.panNo}`);
+  const photos = ['custPhoto', 'aadhaarFront', 'aadhaarBack', 'aadhaarPhoto', 'panPhoto']
+    .filter(k => c[k]).map(k => `<a href="${c[k]}" target="_blank" rel="noopener" style="margin-right:10px;">📷 ${k.replace('Photo','').replace(/([A-Z])/g,' $1')}</a>`).join('');
+  if (!rows.length && !photos) return '';
+  return `<div style="margin:4px 0 8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;">${rows.join('<br>')}${photos ? '<div style="margin-top:6px;">' + photos + '</div>' : ''}</div>`;
+}
+
+async function loadCustomer360(who) {
+  who = who || 'admin';
+  const suffix = who === 'emp' ? '-emp' : '';
+  const rawMobile = document.getElementById('c360MobileInput' + suffix).value.trim();
+  const rawCardNo = document.getElementById('c360CardNoInput' + suffix) ? document.getElementById('c360CardNoInput' + suffix).value.trim() : '';
+  let mobile = rawMobile.replace(/\D/g, '');
+  const cardNo = rawCardNo;
+  if (!mobile && !cardNo) { toast('Enter a mobile number or a Loyalty Card No', 'error'); return; }
+  if (mobile && mobile.length !== 10) { toast('Enter a valid 10-digit mobile number', 'error'); return; }
+  const role = who === 'emp' ? 'EMPLOYEE' : (state.adminRole || 'ADMIN');
+  const box = document.getElementById('customer360Box' + suffix);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Searching across Loyalty Card, Golden Aura, Leads, and DSR...</div>';
 
-  const [loyalty, goldenAura, leads, dsr] = await Promise.allSettled([
-    jsonp({ page: 'customer360LoyaltyJSON', mobile }),
-    jsonp({ page: 'customer360GoldenAuraJSON', mobile }),
-    leadsApiGet({ action: 'CUSTOMER_360_CALLS', mobile }),
-    fetch(DSR_GAS_URL + '?action=searchByMobile&mobile=' + mobile).then(r => r.json())
+  const errOf = r => {
+    if (r.status === 'rejected') return (r.reason && r.reason.message) || 'Request failed';
+    if (r.value && r.value.ok === false) return r.value.error || 'Server returned an error';
+    return null;
+  };
+  const okOrNull = r => (r.status === 'fulfilled' && r.value && r.value.ok !== false) ? r.value : null;
+
+  // Loyalty + Golden Aura can be searched by mobile OR Loyalty Card No.
+  const [loyalty, goldenAura] = await Promise.allSettled([
+    jsonpReliable({ page: 'customer360LoyaltyJSON', mobile, cardNo, role }),
+    jsonpReliable({ page: 'customer360GoldenAuraJSON', mobile, cardNo, role })
   ]);
+  const loy = okOrNull(loyalty), ga = okOrNull(goldenAura);
+  const loyErr = errOf(loyalty), gaErr = errOf(goldenAura);
 
-  const okOrNull = r => (r.status === 'fulfilled' && r.value) ? r.value : null;
-  const loy = okOrNull(loyalty), ga = okOrNull(goldenAura), lead = okOrNull(leads), ds = okOrNull(dsr);
+  // If we searched by Card No only and a match gave us a real (unmasked)
+  // mobile — i.e. Admin/MIS — chain into Leads + DSR with it so the rest
+  // of the view still fills in. Otherwise (Employee, or no match), those
+  // two just need a mobile number typed in directly.
+  if (!mobile) {
+    const foundMobile = (loy && loy.cards && loy.cards[0] && loy.cards[0].mobile) ||
+                         (ga && ga.plans && ga.plans[0] && ga.plans[0].mobile) || '';
+    if (foundMobile && /^\d{10}$/.test(foundMobile.replace(/\D/g, ''))) mobile = foundMobile.replace(/\D/g, '');
+  }
 
-  const section = (title, icon, items, renderItem, failed) => {
-    if (failed) return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span></div><p style="color:var(--text3);font-size:12px;">Could not load this section right now.</p></div>`;
+  let lead = null, ds = null, leadErr = null, dsErr = null;
+  if (mobile) {
+    const [leadsR, dsrR] = await Promise.allSettled([
+      leadsApiGet({ action: 'CUSTOMER_360_CALLS', mobile }),
+      fetch(DSR_GAS_URL + '?action=searchByMobile&mobile=' + mobile).then(r => r.json())
+    ]);
+    lead = okOrNull(leadsR); ds = okOrNull(dsrR);
+    leadErr = errOf(leadsR); dsErr = errOf(dsrR);
+  } else {
+    leadErr = 'Search by mobile number to check Lead calls.';
+    dsErr = 'Search by mobile number to check DSR purchases.';
+  }
+
+  const section = (title, icon, items, renderItem, errMsg) => {
+    if (errMsg) return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span></div><p style="color:var(--text3);font-size:12px;">${errMsg}</p></div>`;
     if (!items || !items.length) return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span><span class="kd-pill">0</span></div><p style="color:var(--text3);font-size:12px;">No record found.</p></div>`;
     return `<div class="kd-card"><div class="kd-head"><span class="kd-name">${icon} ${title}</span><span class="kd-pill gold">${items.length}</span></div>${items.map(renderItem).join('')}</div>`;
   };
 
   let html = `<div style="display:grid;gap:10px;">`;
   html += section('Loyalty Card', '💳', loy ? loy.cards : null, c =>
-    `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${properCase(c.custName)} — issued ${c.cardDate} by ${properCase(c.empName)}</div>`, !loy);
+    `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${properCase(c.custName)} — issued ${c.cardDate} by ${properCase(c.empName)}</div>${c360BiodataHtml_(c)}`,
+    loyErr ? ('Could not load this section right now. (' + loyErr + ')') : null);
   html += section('Golden Aura', '🏆', ga ? ga.plans : null, p =>
-    `<div class="kd-note" style="margin:4px 0;">#${p.planNo} — ${p.planType} — ₹${p.amount} — ${properCase(p.custName)} — enrolled ${p.enrollDate} by ${properCase(p.empName)}</div>`, !ga);
+    `<div class="kd-note" style="margin:4px 0;">#${p.planNo} — ${p.planType} — ₹${p.amount} — ${properCase(p.custName)} — enrolled ${p.enrollDate} by ${properCase(p.empName)}</div>${c360BiodataHtml_(p)}`,
+    gaErr ? ('Could not load this section right now. (' + gaErr + ')') : null);
   html += section('Lead Call History', '📞', lead ? lead.calls : null, c =>
-    `<div class="kd-note" style="margin:4px 0;">${c.date} — ${properCase(c.employee)} — <b>${c.status}</b>${c.feedback ? ' — ' + c.feedback : ''}</div>`, !lead);
+    `<div class="kd-note" style="margin:4px 0;">${c.date} — ${properCase(c.employee)} — <b>${c.status}</b>${c.feedback ? ' — ' + c.feedback : ''}</div>`,
+    leadErr && !lead ? (lead === null && leadErr.indexOf('Search by') === 0 ? leadErr : ('Could not load this section right now. (' + leadErr + ')')) : null);
   html += section('DSR Purchases', '🛍️', ds ? ds.entries : null, en =>
-    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${properCase(en.employeeName)} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => properCase(it.productName || it.diamondProductName || it.silverItemName)).filter(Boolean).join(', ') || '—'}</div>`, !ds);
+    `<div class="kd-note" style="margin:4px 0;">DSR ${en.dsrId} — ${en.billDate} — ${properCase(en.employeeName)} — <b>${en.paymentStatus}</b> — ${(en.items || []).map(it => properCase(it.productName || it.diamondProductName || it.silverItemName)).filter(Boolean).join(', ') || '—'}</div>`,
+    dsErr && !ds ? (ds === null && dsErr.indexOf('Search by') === 0 ? dsErr : ('Could not load this section right now. (' + dsErr + ')')) : null);
   html += `</div>`;
   box.innerHTML = html;
 }
@@ -13917,7 +14005,11 @@ const EMP_FEATURE_ELEMENTS = {
   outletIssue: ['empQAOutletIssue'],
   rdr: ['empQARdr'],
   stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
-  walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins']
+  walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins'],
+  // v-add (BRO: "anni kanipinchali, kani strict ga undali" — Customer 360°, default OFF-like
+  // every other sub-option here unless MIS explicitly ticks it per employee in Settings →
+  // Employee Access → Detailed Sub-Option Access).
+  customer360: ['empQACustomer360']
 };
 
 // Fetches this specific employee's granular sub-option permissions and
