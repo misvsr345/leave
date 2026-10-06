@@ -1923,6 +1923,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('emp')">🔑 Change Password</div>
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
             <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="empSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
+      <div class="vsr-sidebar-subitem" onclick="openNotifHistoryModal()">🔔 Notifications</div>
     </div>
   </nav>
 
@@ -2720,6 +2721,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="openSyncOfflineModal()"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync Offline Data</div><div class="quick-action-sub" id="empMoreSyncLabel">Checking...</div></div>
+        <!-- v-add (BRO: "popup vastundi, tarvata epudaina chudadaniki vilu untundi, 7 days data
+             matrame unchali" — new-entry "go check it" popups and error popups auto-hide after a
+             few seconds; this is just a reopenable history of them, last 7 days, device-local. -->
+        <div class="quick-action-btn" onclick="openNotifHistoryModal()"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Notifications</div><div class="quick-action-sub">Last 7 days</div></div>
       </div>
     </div>
 
@@ -2793,6 +2798,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
             <div class="vsr-sidebar-subitem" onclick="showAdminPage('login-activity')">🔐 Login Activity</div>
       <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="adminSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
+      <div class="vsr-sidebar-subitem" onclick="openNotifHistoryModal()">🔔 Notifications</div>
     </div>
   </nav>
 
@@ -4107,6 +4113,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
         <div class="quick-action-btn" onclick="openSyncOfflineModal()"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync Offline Data</div><div class="quick-action-sub" id="adminMoreSyncLabel">Checking...</div></div>
+        <!-- v-add (BRO: "popup vastundi, tarvata epudaina chudadaniki vilu untundi, 7 days data
+             matrame unchali" — same as Employee side above. -->
+        <div class="quick-action-btn" onclick="openNotifHistoryModal()"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Notifications</div><div class="quick-action-sub">Last 7 days</div></div>
       </div>
     </div>
 
@@ -4429,6 +4438,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="modal-sub" style="font-size:12.5px;margin-bottom:14px;">Switch OFF a field here to make it optional on that form — no ★, no "please fill this" block on save. Switch it back ON any time.</div>
     <div id="fieldReqBody"></div>
     <button class="btn-primary" style="width:100%;margin-top:16px;" id="fieldReqSaveBtn" onclick="frqSave()">Save Changes</button>
+  </div>
+</div>
+
+<!-- v-add (BRO: "popup vastundi, tarvata epudaina chudadaniki vilu untundi, 7 days data matrame
+     unchali" — reopenable history of the new-entry "go check it" popups + error popups, kept
+     device-local in localStorage, auto-pruned to the last 7 days. See notifHistory_* in JS. -->
+<div class="modal-overlay" id="notifHistoryModal">
+  <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('notifHistoryModal')" title="Close">✕</button>
+    <div class="modal-title">🔔 Notifications</div>
+    <div class="modal-sub">Last 7 days, this device only.</div>
+    <div id="notifHistoryList" style="margin-top:10px;"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="clearNotifHistory_()">🗑️ Clear</button>
+      <button class="btn-modal-confirm" style="flex:1;background:var(--blue);" onclick="closeModal('notifHistoryModal')">Close</button>
+    </div>
   </div>
 </div>
 
