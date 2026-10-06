@@ -4441,6 +4441,21 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
+<!-- v-add (BRO: "loyalty card submit cheste, congratulation popup ravali. golden plan ki kuda,
+     anitiki daniki related success/congrats/thank you popup ravali, only own data matrame" —
+     one reusable "success" popup for both forms, filled with ONLY the record just submitted
+     (never other customers' data) via showCongratsPopup_() in JS. -->
+<div class="modal-overlay" id="congratsModal">
+  <div class="modal-box" style="max-width:380px;text-align:center;">
+    <button class="modal-close-x" onclick="closeModal('congratsModal')" title="Close">✕</button>
+    <div id="congratsIcon" style="font-size:50px;margin-bottom:8px;line-height:1;">🎉</div>
+    <div class="modal-title" id="congratsTitle" style="margin-bottom:4px;">Congratulations!</div>
+    <div class="modal-sub" id="congratsMsg" style="font-size:13px;line-height:1.6;margin-bottom:14px;"></div>
+    <div id="congratsDetails" style="text-align:left;border:1px solid var(--border);border-radius:10px;overflow:hidden;"></div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeModal('congratsModal')">🙏 Thank You</button>
+  </div>
+</div>
+
 <!-- v-add (BRO: "popup vastundi, tarvata epudaina chudadaniki vilu untundi, 7 days data matrame
      unchali" — reopenable history of the new-entry "go check it" popups + error popups, kept
      device-local in localStorage, auto-pruned to the last 7 days. See notifHistory_* in JS. -->
@@ -5033,10 +5048,80 @@ function showToastPopup_(text, type) {
   clearTimeout(toastPopupHideTimer_);
   overlay.classList.remove('closing');
   box.className = 'toast-popup-box type-' + (type || 'error');
-  icon.textContent = type === 'success' ? '✅' : (type === 'info' ? 'ℹ️' : '⚠️');
+  const iconChar = type === 'success' ? '✅' : (type === 'info' ? 'ℹ️' : '⚠️');
+  icon.textContent = iconChar;
   document.getElementById('toastPopupMsg').textContent = text;
   overlay.classList.add('show');
   toastPopupHideTimer_ = setTimeout(closeToastPopup_, 5000); // auto-hide on its own after 5s
+  logNotifHistory_(iconChar, text); // v-add — see notifHistory_* below
+}
+
+// ══════════════════════════════════════
+// NOTIFICATION HISTORY — v-add (BRO: "popup vastundi, tarvata epudaina
+// chudadaniki vilu untundi, 7 days data matrame unchali" — the new-entry
+// "go check it" popups (showNewEntryPopup below) and error popups
+// (showToastPopup_ above) both auto-hide after a few seconds with no way
+// to look back at them. This logs every one of them to localStorage
+// (device-local, not synced anywhere), auto-pruned to the last 7 days,
+// reopenable any time from More → 🔔 Notifications.
+// ══════════════════════════════════════
+const NOTIF_HISTORY_KEY = 'vsrGoldNotifHistory';
+const NOTIF_HISTORY_DAYS = 7;
+const NOTIF_HISTORY_MAX = 300; // safety cap so one bad burst can't grow localStorage unbounded
+
+function _notifHistoryLoad_() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(NOTIF_HISTORY_KEY) || '[]');
+    if (!Array.isArray(raw)) return [];
+    const cutoff = Date.now() - (NOTIF_HISTORY_DAYS * 24 * 60 * 60 * 1000);
+    return raw.filter(n => n && n.ts && n.ts >= cutoff);
+  } catch (e) { return []; }
+}
+function _notifHistorySave_(list) {
+  try { localStorage.setItem(NOTIF_HISTORY_KEY, JSON.stringify(list.slice(0, NOTIF_HISTORY_MAX))); } catch (e) {}
+}
+function logNotifHistory_(icon, html) {
+  try {
+    const list = _notifHistoryLoad_();
+    list.unshift({ ts: Date.now(), icon: icon || '🔔', html: html || '' });
+    _notifHistorySave_(list);
+  } catch (e) {}
+}
+function clearNotifHistory_() {
+  try { localStorage.removeItem(NOTIF_HISTORY_KEY); } catch (e) {}
+  renderNotifHistoryList_();
+}
+function _notifTimeAgo_(ts) {
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return 'just now';
+  const mins = Math.floor(diffSec / 60);
+  if (mins < 60) return mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + ' hour' + (hrs > 1 ? 's' : '') + ' ago';
+  const days = Math.floor(hrs / 24);
+  return days + ' day' + (days > 1 ? 's' : '') + ' ago';
+}
+function renderNotifHistoryList_() {
+  const box = document.getElementById('notifHistoryList');
+  if (!box) return;
+  const list = _notifHistoryLoad_();
+  if (!list.length) {
+    box.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12.5px;padding:20px 0;">No notifications in the last 7 days.</div>';
+    return;
+  }
+  box.innerHTML = list.map(n =>
+    '<div style="display:flex;gap:8px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--border);">' +
+      '<span style="font-size:16px;line-height:1.4;">' + n.icon + '</span>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:12px;color:var(--text);line-height:1.5;">' + n.html + '</div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">' + _notifTimeAgo_(n.ts) + '</div>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+function openNotifHistoryModal() {
+  renderNotifHistoryList_();
+  openModal('notifHistoryModal');
 }
 function closeToastPopup_() {
   const overlay = document.getElementById('toastPopupOverlay');
@@ -11486,6 +11571,7 @@ function showNewEntryPopup(html) {
   setTimeout(() => _closeNewEntryPopup(card), 8000);
   // Keep at most 5 stacked at once so a burst of entries can't fill the screen.
   while (stack.children.length > 5) stack.removeChild(stack.firstChild);
+  logNotifHistory_('🔔', html); // v-add — see notifHistory_* below
 }
 function _closeNewEntryPopup(card) {
   if (!card || !card.parentNode || card.classList.contains('closing')) return;
