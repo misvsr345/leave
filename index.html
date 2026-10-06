@@ -5000,7 +5000,7 @@ function showToastPopup_(text, type) {
   document.getElementById('toastPopupMsg').textContent = text;
   overlay.classList.add('show');
   toastPopupHideTimer_ = setTimeout(closeToastPopup_, 5000); // auto-hide on its own after 5s
-  logNotifHistory_(iconChar, text); // v-add — see notifHistory_* below
+  logNotifHistory_(iconChar, text, 'errors'); // v-add — see notifHistory_* below
 }
 
 // ══════════════════════════════════════
@@ -5010,11 +5010,45 @@ function showToastPopup_(text, type) {
 // (showToastPopup_ above) both auto-hide after a few seconds with no way
 // to look back at them. This logs every one of them to localStorage
 // (device-local, not synced anywhere), auto-pruned to the last 7 days,
-// reopenable any time from More → 🔔 Notifications.
+// reopenable any time from the 🔔 Notifications quick-action tile.
+//
+// v-fix (BRO: "notification option lo alane unchu. pop up laga vaddu. full page
+// lagaravali. dantlo table laga data undali. section wise separate ga undali.
+// only last 7days data mtarme undali" + "total details undali, mail lo evaithe
+// vastundo aa details undali, emp name munu undi, table laga, every cell ki
+// boarder tho" + "Time + Icon + Message vere vere columns") — this used to log
+// just {icon, html} and show it as a popup/modal list of plain lines. Now every
+// entry also carries a `type` (which kind of entry it is — DSR, Stock, Leave/
+// Loyalty/Golden Aura, Walk-in, or an Employee's own Loyalty Card/Stock Entry/
+// Stock Transfer/Golden Aura/Lead Call/DSR submission, or an Error) so the full
+// page below (renderNotifHistoryPage_) can group entries into separate bordered
+// tables per type, each row showing Time + Icon + Message, where Message is the
+// SAME full-detail mini-table already used in the MIS digest mail for that entry
+// (name/ID first, then its other fields) — not a flattened one-line summary.
+// 7-day retention (NOTIF_HISTORY_DAYS) is unchanged.
 // ══════════════════════════════════════
 const NOTIF_HISTORY_KEY = 'vsrGoldNotifHistory';
 const NOTIF_HISTORY_DAYS = 7;
 const NOTIF_HISTORY_MAX = 300; // safety cap so one bad burst can't grow localStorage unbounded
+
+// Section labels for the full Notifications page, keyed by the `type` passed to
+// logNotifHistory_. Admin-side types (dsr/stock/portal/walkin) come straight from
+// MIS_POPUP_SOURCES below; employee-side types come from each showCongratsPopup_ call.
+const NOTIF_TYPE_LABELS_ = {
+  errors:     '⚠️ Errors & Alerts',
+  dsr:        '🧾 DSR / Returns / Outlet Issues',
+  stock:      '📦 Stock Entry & Transfer (Admin)',
+  portal:     '🏖️ Leave / Loyalty Card / Golden Aura (Admin)',
+  walkin:     '🚶 Walk-in Track',
+  loyalty:    '💳 Loyalty Card (My Submissions)',
+  sttransfer: '🔁 Stock Transfer (My Submissions)',
+  stentry:    '📦 Stock Entry (My Submissions)',
+  goldenaura: '🥇 Golden Aura (My Submissions)',
+  leadcall:   '📞 Lead Calls (My Submissions)',
+  other:      '🔔 Other'
+};
+// Fixed display order so the page doesn't reshuffle section order on every load.
+const NOTIF_TYPE_ORDER_ = ['errors','dsr','stock','portal','walkin','loyalty','sttransfer','stentry','goldenaura','leadcall','other'];
 
 function _notifHistoryLoad_() {
   try {
@@ -5027,16 +5061,19 @@ function _notifHistoryLoad_() {
 function _notifHistorySave_(list) {
   try { localStorage.setItem(NOTIF_HISTORY_KEY, JSON.stringify(list.slice(0, NOTIF_HISTORY_MAX))); } catch (e) {}
 }
-function logNotifHistory_(icon, html) {
+function logNotifHistory_(icon, html, type) {
   try {
     const list = _notifHistoryLoad_();
-    list.unshift({ ts: Date.now(), icon: icon || '🔔', html: html || '' });
+    list.unshift({ ts: Date.now(), icon: icon || '🔔', html: html || '', type: type || 'other' });
     _notifHistorySave_(list);
   } catch (e) {}
 }
 function clearNotifHistory_() {
   try { localStorage.removeItem(NOTIF_HISTORY_KEY); } catch (e) {}
-  renderNotifHistoryList_();
+  // Re-render whichever Notifications page is actually open right now (full-page
+  // now, not a modal — could be either admin's or employee's).
+  if (document.getElementById('notifHistoryPage-emp')) renderNotifHistoryPage_('emp');
+  if (document.getElementById('notifHistoryPage-admin')) renderNotifHistoryPage_('admin');
 }
 function _notifTimeAgo_(ts) {
   const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
@@ -5048,27 +5085,65 @@ function _notifTimeAgo_(ts) {
   const days = Math.floor(hrs / 24);
   return days + ' day' + (days > 1 ? 's' : '') + ' ago';
 }
-function renderNotifHistoryList_() {
-  const box = document.getElementById('notifHistoryList');
+// Builds the same bordered label:value mini-table look as the backend's
+// _misDigestRowTable_dsr_/_stk_/_portal_ (accent header row + alternating rows),
+// so an employee's OWN Congrats-popup entries (Loyalty Card, Stock Entry, Stock
+// Transfer, Golden Aura, Lead Call, DSR) render with the exact same "full detail,
+// every cell bordered" look as the admin-side MIS-digest-sourced entries.
+function _notifMiniTable_(accentColor, headerHtml, pairs) {
+  var html = '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0;font-family:Arial,sans-serif;font-size:12px;border:1px solid #e3e3e3;border-radius:4px;overflow:hidden;">' +
+    '<tr style="background:' + accentColor + ';"><td colspan="2" style="padding:7px 10px;color:#fff;font-weight:700;font-size:12px;border:1px solid ' + accentColor + ';">' + headerHtml + '</td></tr>';
+  (pairs || []).forEach(function (p, i) {
+    var bg = (i % 2 === 0) ? '#FAFAFA' : '#ffffff';
+    html += '<tr style="background:' + bg + ';"><td style="padding:6px 10px;font-weight:700;color:' + accentColor + ';width:36%;border:1px solid #eee;vertical-align:top;">' + p[0] + '</td>' +
+      '<td style="padding:6px 10px;border:1px solid #eee;color:#222;">' + p[1] + '</td></tr>';
+  });
+  html += '</table>';
+  return html;
+}
+// Full-page Notifications view (replaces the old popup/modal). Groups entries by
+// `type` into separate bordered tables, each with 3 columns: Time | Icon | Message
+// (Message = the full per-entry detail, built above or received already-built from
+// the server's own MIS-digest table). who = 'emp' | 'admin'.
+function renderNotifHistoryPage_(who) {
+  const box = document.getElementById('notifHistoryPage-' + who);
   if (!box) return;
   const list = _notifHistoryLoad_();
   if (!list.length) {
-    box.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12.5px;padding:20px 0;">No notifications in the last 7 days.</div>';
+    box.innerHTML = '<div class="card" style="text-align:center;color:var(--text3);font-size:12.5px;padding:24px 0;">No notifications in the last 7 days.</div>';
     return;
   }
-  box.innerHTML = list.map(n =>
-    '<div style="display:flex;gap:8px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--border);">' +
-      '<span style="font-size:16px;line-height:1.4;">' + n.icon + '</span>' +
-      '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:12px;color:var(--text);line-height:1.5;">' + n.html + '</div>' +
-        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">' + _notifTimeAgo_(n.ts) + '</div>' +
-      '</div>' +
-    '</div>'
-  ).join('');
+  const groups = {};
+  list.forEach(n => { const t = n.type || 'other'; (groups[t] = groups[t] || []).push(n); });
+  const tableCellStyle = 'border:1px solid var(--border);padding:7px 9px;vertical-align:top;';
+  let out = '';
+  NOTIF_TYPE_ORDER_.forEach(type => {
+    const entries = groups[type];
+    if (!entries || !entries.length) return;
+    out += '<div class="card" style="margin-bottom:14px;padding:0;overflow:hidden;">' +
+      '<div style="padding:9px 12px;font-weight:700;font-size:12.5px;background:var(--bg2);border-bottom:1px solid var(--border);">' + (NOTIF_TYPE_LABELS_[type] || NOTIF_TYPE_LABELS_.other) + ' <span style="color:var(--text3);font-weight:400;">(' + entries.length + ')</span></div>' +
+      '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+      '<tr>' +
+        '<th style="' + tableCellStyle + 'background:var(--bg2);text-align:left;white-space:nowrap;width:90px;">Time</th>' +
+        '<th style="' + tableCellStyle + 'background:var(--bg2);text-align:center;width:40px;">Icon</th>' +
+        '<th style="' + tableCellStyle + 'background:var(--bg2);text-align:left;">Message</th>' +
+      '</tr>' +
+      entries.map(n =>
+        '<tr>' +
+          '<td style="' + tableCellStyle + 'white-space:nowrap;color:var(--text3);font-size:11px;">' + _notifTimeAgo_(n.ts) + '</td>' +
+          '<td style="' + tableCellStyle + 'text-align:center;font-size:16px;">' + n.icon + '</td>' +
+          '<td style="' + tableCellStyle + '">' + n.html + '</td>' +
+        '</tr>'
+      ).join('') +
+      '</table></div></div>';
+  });
+  box.innerHTML = out;
 }
+// BRO still calls this by its old name from the quick-action tiles — kept so no
+// HTML entry point needs touching. It no longer opens a modal; it navigates to the
+// full Notifications page instead (admin or employee, whichever role is active).
 function openNotifHistoryModal() {
-  renderNotifHistoryList_();
-  openModal('notifHistoryModal');
+  (state.adminRole ? showAdminPage : showEmpPage)('notifications');
 }
 function closeToastPopup_() {
   const overlay = document.getElementById('toastPopupOverlay');
@@ -6392,6 +6467,7 @@ function showEmpPage(page, opts) {
   if(page==='trend') renderTrend();
   if(page==='profile') renderEmpProfile();
   if(page==='blocked') renderEmpBlockedDates();
+  if(page==='notifications') renderNotifHistoryPage_('emp');
   if(page==='myleaves') renderMyLeaves();
   if(page==='apply') {
     loadNoticesForEmployee();
@@ -7355,11 +7431,14 @@ function showCongratsPopup_(opts) {
   openModal('congratsModal');
   // v-add (BRO: "emp ki kuda notification option undali, vala data kuda check cheyadaniki
   // velu avutundi" — every entry's own Congrats popup now also logs into that same person's
-  // Notification History (🔔, More menu), so Employee can look back at their OWN past
+  // Notification History (🔔 Notifications), so Employee can look back at their OWN past
   // submissions too, not just errors. Still device-local, still own data only — this
   // popup only ever carries the ONE record the person themselves just submitted.
-  const detailLine = rows.map(([label, val]) => label + ': ' + val).join(' · ');
-  logNotifHistory_(opts.icon || '🎉', (opts.msg || '') + (detailLine ? '<br><span style="color:var(--text3);font-size:11px;">' + detailLine + '</span>' : ''));
+  // v-fix (BRO: "total details undali, mail lo evaithe vastundo aa details undali... table
+  // laga undali, every cell ki boarder tho" — now logs the FULL details as the same bordered
+  // mini-table used server-side for the MIS digest mail, not a flattened one-line summary.
+  const _notifTbl = _notifMiniTable_('#b8860b', opts.title || 'Congratulations!', rows);
+  logNotifHistory_(opts.icon || '🎉', (opts.msg || '') + '<div style="margin-top:6px;">' + _notifTbl + '</div>', opts.type || 'other');
 }
 
 // Called only when the submit request itself timed out (no response
@@ -11206,6 +11285,7 @@ function showAdminPage(page, opts) {
   if(page==='balance') renderBalance();
   if(page==='direct') loadDirectActionPage();
   if(page==='blocked') loadBlockedDatesPage();
+  if(page==='notifications') renderNotifHistoryPage_('admin');
   if(page==='settings') loadSettingsPage();
   if(page==='backend-sheets') loadBackendSheetsPage();
   if(page==='monthly-absent') loadMonthlyAbsentReport();
@@ -11521,7 +11601,7 @@ async function pollNewEntryPopups() {
       if (!res || !res.ok || !res.rows || !res.rows.length) continue;
       let maxTs = since;
       res.rows.forEach(row => {
-        showNewEntryPopup(row.html);
+        showNewEntryPopup(row.html, src.key);
         if (row.ts > maxTs) maxTs = row.ts;
       });
       _misPopupSetLastTs_(src.key, maxTs);
@@ -11529,7 +11609,7 @@ async function pollNewEntryPopups() {
   }
 }
 
-function showNewEntryPopup(html) {
+function showNewEntryPopup(html, srcKey) {
   const stack = document.getElementById('newEntryPopupStack');
   if (!stack) return;
   const card = document.createElement('div');
@@ -11540,7 +11620,10 @@ function showNewEntryPopup(html) {
   setTimeout(() => _closeNewEntryPopup(card), 8000);
   // Keep at most 5 stacked at once so a burst of entries can't fill the screen.
   while (stack.children.length > 5) stack.removeChild(stack.firstChild);
-  logNotifHistory_('🔔', html); // v-add — see notifHistory_* below
+  // v-fix — srcKey ('dsr'/'stock'/'portal'/'walkin', from MIS_POPUP_SOURCES) tags this
+  // entry for the full Notifications page (renderNotifHistoryPage_) so it groups into
+  // its own type-wise table instead of one flat "Other" bucket.
+  logNotifHistory_('🔔', html, srcKey || 'other'); // v-add — see notifHistory_* below
 }
 function _closeNewEntryPopup(card) {
   if (!card || !card.parentNode || card.classList.contains('closing')) return;
@@ -12453,6 +12536,7 @@ async function confirmSubmitLoyaltyCard(evt) {
       showCongratsPopup_({
         icon: '💳🎉',
         title: 'Congratulations!',
+        type: 'loyalty',
         msg: 'Loyalty Card enrolled successfully for <b>' + properCase(payload.custName) + '</b>.',
         details: [
           ['Card No', result.cardNo],
@@ -16364,6 +16448,7 @@ async function stDoTransfer() {
       showCongratsPopup_({
         icon: '🔁🎉',
         title: 'Congratulations!',
+        type: 'sttransfer',
         msg: 'Stock Transfer saved successfully.',
         details: [
           ['Tag No', res.tagNo],
@@ -18030,6 +18115,7 @@ async function seSave(scope) {
       showCongratsPopup_({
         icon: '📦🎉',
         title: 'Congratulations!',
+        type: 'stentry',
         msg: 'Stock Entry saved successfully.',
         details: [
           ['Counter', c.header.productFrom==='Main' ? 'Main Hub' : c.header.counter],
@@ -18383,6 +18469,7 @@ async function confirmSubmitGoldenAura(who, evt) {
       showCongratsPopup_({
         icon: '🥇🎉',
         title: 'Congratulations!',
+        type: 'goldenaura',
         msg: 'Golden Aura enrollment saved successfully for <b>' + properCase(payload.custName) + '</b>.',
         details: [
           ['Plan No', res.planNo],
@@ -19513,6 +19600,7 @@ async function submitLeadCall() {
       showCongratsPopup_({
         icon: '📞🎉',
         title: 'Congratulations!',
+        type: 'leadcall',
         msg: 'Call logged successfully for <b>' + properCase(__leadCallCurrent.name || __leadCallCurrent.phone) + '</b>.',
         details: [
           ['Customer', properCase(__leadCallCurrent.name || '—')],
@@ -21818,6 +21906,7 @@ function dsrfConfirmSubmit(who, evt) {
         showCongratsPopup_({
           icon: isRDR ? '🔄🎉' : isOutlet ? '🏬🎉' : '🧾🎉',
           title: 'Congratulations!',
+          type: 'dsr',
           msg: (isRDR ? 'Return / Damage / Repair' : isOutlet ? 'Outlet Issue' : 'DSR entry') + ' saved successfully.',
           details: [
             [isRDR ? 'ID' : isOutlet ? 'Outlet Issue ID' : 'DSR ID', result.dsrId || '—'],
