@@ -7387,6 +7387,34 @@ function showLeaveResultPopup(res) {
   openModal('leaveResultModal');
 }
 
+// v-add (BRO: "loyalty card submit cheste, congratulation popup ravali. golden plan ki kuda,
+// same, edi enter chesi, anitiki daniki related success/congrats/thank you popup ravali, only
+// own data matrame ravali" — one shared "success" popup, same visual family as
+// showLeaveResultPopup above. Called right after the server confirms a save, with ONLY the
+// fields from that one submission (never pulled from any list/search of other records), so it
+// can never show anyone else's data.
+function showCongratsPopup_(opts) {
+  document.getElementById('congratsIcon').textContent = opts.icon || '🎉';
+  document.getElementById('congratsTitle').textContent = opts.title || 'Congratulations!';
+  document.getElementById('congratsMsg').innerHTML = opts.msg || '';
+  const rows = opts.details || [];
+  document.getElementById('congratsDetails').innerHTML = rows.map(([label, val], i) => {
+    const bg = i % 2 === 0 ? '#fdfcff' : '#ffffff';
+    return `<div style="background:${bg};padding:9px 12px;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);">
+      <span style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">${label}</span>
+      <span style="font-size:12.5px;color:var(--text);font-weight:700;text-align:right;">${val}</span>
+    </div>`;
+  }).join('');
+  openModal('congratsModal');
+  // v-add (BRO: "emp ki kuda notification option undali, vala data kuda check cheyadaniki
+  // velu avutundi" — every entry's own Congrats popup now also logs into that same person's
+  // Notification History (🔔, More menu), so Employee can look back at their OWN past
+  // submissions too, not just errors. Still device-local, still own data only — this
+  // popup only ever carries the ONE record the person themselves just submitted.
+  const detailLine = rows.map(([label, val]) => label + ': ' + val).join(' · ');
+  logNotifHistory_(opts.icon || '🎉', (opts.msg || '') + (detailLine ? '<br><span style="color:var(--text3);font-size:11px;">' + detailLine + '</span>' : ''));
+}
+
 // Called only when the submit request itself timed out (no response
 // within jsonpWriteOnce's window) but the device was online. Apps
 // Script keeps executing on the server regardless of whether the
@@ -12481,6 +12509,17 @@ async function confirmSubmitLoyaltyCard(evt) {
 
     if (result && result.ok) {
       toast('✅ Card ' + result.cardNo + ' enrolled successfully', 'success');
+      showCongratsPopup_({
+        icon: '💳🎉',
+        title: 'Congratulations!',
+        msg: 'Loyalty Card enrolled successfully for <b>' + properCase(payload.custName) + '</b>.',
+        details: [
+          ['Card No', result.cardNo],
+          ['Card Type', payload.cardType],
+          ['Customer', properCase(payload.custName)],
+          ['Phone', payload.phone]
+        ]
+      });
       draftClear('loyaltyNewCard');
       resetNewLoyaltyCardForm();
       showEmpPage('loyalty');
@@ -16380,6 +16419,17 @@ async function stDoTransfer() {
     const res = await slPost({ action: 'transferStock', tagNo: ST_FOUND.tagNo, toProductFrom: toMain ? 'Main' : 'Retail', toCounter: toMain ? '' : dest });
     if (res && res.ok) {
       toast('✅ ' + res.tagNo + ' moved: ' + res.from + ' → ' + res.to, 'success');
+      // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this transfer's own fields.
+      showCongratsPopup_({
+        icon: '🔁🎉',
+        title: 'Congratulations!',
+        msg: 'Stock Transfer saved successfully.',
+        details: [
+          ['Tag No', res.tagNo],
+          ['From', res.from],
+          ['To', res.to]
+        ]
+      });
       document.getElementById('stTagInput').value = '';
       document.getElementById('stFoundBox').innerHTML = '';
       ST_FOUND = null;
@@ -18020,6 +18070,16 @@ async function seSave(scope) {
       let msg = 'Saved ' + res.saved + (res.saved===1?' item':' items') + ' to ' + (c.header.productFrom==='Main' ? 'Main Hub' : c.header.counter) + '.';
       if (movedN) msg += ' (' + movedN + ' of them moved from Main Hub, not newly entered.)';
       seShowBanner(scope,'ok', msg);
+      // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this save's own fields.
+      showCongratsPopup_({
+        icon: '📦🎉',
+        title: 'Congratulations!',
+        msg: 'Stock Entry saved successfully.',
+        details: [
+          ['Counter', c.header.productFrom==='Main' ? 'Main Hub' : c.header.counter],
+          ['Items Saved', res.saved + (res.saved===1?' item':' items')]
+        ].concat(movedN ? [['Moved from Main Hub', String(movedN)]] : [])
+      });
     } else if (res.errors && res.errors.length) {
       res.errors.forEach(er => { const b = c.rows[er.index] && c.rows[er.index].b; if (b) seItemError(b, er.message); });
       seShowBanner(scope,'err','Nothing was saved. Fix the highlighted item(s) and save again.');
@@ -18364,6 +18424,17 @@ async function confirmSubmitGoldenAura(who, evt) {
       msg.style.color = 'var(--green)';
       msg.innerHTML = `✅ Saved! Plan No: <b>${res.planNo}</b>`;
       toast('Golden Aura enrollment saved!', 'success');
+      showCongratsPopup_({
+        icon: '🥇🎉',
+        title: 'Congratulations!',
+        msg: 'Golden Aura enrollment saved successfully for <b>' + properCase(payload.custName) + '</b>.',
+        details: [
+          ['Plan No', res.planNo],
+          ['Plan Type', payload.planType],
+          ['Customer', properCase(payload.custName)],
+          ['Amount', 'Rs ' + payload.amount]
+        ]
+      });
       draftClear('goldenAura-' + who);
       renderGoldenAuraForm(who, true); // force — real clear after a successful submit
     } else {
@@ -19482,6 +19553,17 @@ async function submitLeadCall() {
     const res = await leadsApiPost(payload);
     if (res && res.ok) {
       toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
+      // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this call-log's own fields.
+      showCongratsPopup_({
+        icon: '📞🎉',
+        title: 'Congratulations!',
+        msg: 'Call logged successfully for <b>' + properCase(__leadCallCurrent.name || __leadCallCurrent.phone) + '</b>.',
+        details: [
+          ['Customer', properCase(__leadCallCurrent.name || '—')],
+          ['Mobile', __leadCallCurrent.phone || '—'],
+          ['Status', status]
+        ]
+      });
       closeLeadCallPanel();
       // v-fix (a submitted lead used to be REMOVED from the list
       // entirely, right after submit — it should stay visible): now it
@@ -21775,6 +21857,18 @@ function dsrfConfirmSubmit(who, evt) {
           ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
           : `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
         toast(isRDR ? 'Return/Damage/Repair saved!' : isOutlet ? 'Outlet Issue saved!' : 'DSR entry saved!', 'success');
+        // v-add (BRO: "all new entrys ivali" — same Congratulations popup as Loyalty
+        // Card/Golden Aura, filled with ONLY this one just-saved submission's own fields.
+        showCongratsPopup_({
+          icon: isRDR ? '🔄🎉' : isOutlet ? '🏬🎉' : '🧾🎉',
+          title: 'Congratulations!',
+          msg: (isRDR ? 'Return / Damage / Repair' : isOutlet ? 'Outlet Issue' : 'DSR entry') + ' saved successfully.',
+          details: [
+            [isRDR ? 'ID' : isOutlet ? 'Outlet Issue ID' : 'DSR ID', result.dsrId || '—'],
+            ['Customer', properCase(r0.customerName || '')],
+            ['Items', (result.savedCount || rows.length) + ' item(s)']
+          ]
+        });
         draftClear('dsr-' + who);
         DSR_ST[who].eSeq = 0;
         document.getElementById('dsrfEntriesList-' + who).innerHTML = '';
