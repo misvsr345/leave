@@ -6386,10 +6386,14 @@ function syncSidebarActive(role, page) {
 
 function showEmpPage(page, opts) {
   opts = opts || {};
-  // Section/modulepicker page is hidden on desktop (see CSS) — redirect
-  // to the Dashboard instead so desktop never lands on an empty screen
-  // (e.g. right after login, which normally opens modulepicker first).
-  if (page === 'modulepicker' && window.innerWidth >= 1024) page = 'profile';
+  // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — after the sidebar
+  // was removed so desktop renders exactly like mobile, this old redirect was left behind: it
+  // used to skip modulepicker on desktop because the (now-removed) CSS used to hide
+  // #emp-modulepicker there, forcing desktop straight onto the Profile page, which has no
+  // section buttons on it at all — the sidebar used to be desktop's only way to switch
+  // sections, so losing the sidebar meant losing navigation entirely. Modulepicker (with its
+  // section buttons) is never hidden anymore, on any width, so this redirect is removed —
+  // desktop now lands on modulepicker too, same as mobile.
   const prevPage = state._currentPage_emp;
   if (!opts.isBack && prevPage && prevPage !== page) {
     state._pageHistory_emp = state._pageHistory_emp || [];
@@ -11205,9 +11209,11 @@ function resetAdminRoleRestrictions() {
 // ══════════════════════════════════════
 function showAdminPage(page, opts) {
   opts = opts || {};
-  // Section/modulepicker page is hidden on desktop (see CSS) — redirect
-  // to the Dashboard instead so desktop never lands on an empty screen.
-  if (page === 'modulepicker' && window.innerWidth >= 1024) page = 'profile';
+  // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — same redirect
+  // removed as in showEmpPage above: it used to send desktop straight to the Profile page
+  // (no section buttons there) because modulepicker's CSS used to be hidden on desktop,
+  // back when the sidebar was desktop's only navigation. Modulepicker is never hidden now,
+  // so desktop lands on it too, same as mobile — see sidebar-removal fix for the CSS side.
   const prevPage = state._currentPage_admin;
   if (!opts.isBack && prevPage && prevPage !== page) {
     state._pageHistory_admin = state._pageHistory_admin || [];
