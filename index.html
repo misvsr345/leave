@@ -5105,16 +5105,39 @@ function _notifMiniTable_(accentColor, headerHtml, pairs) {
 // `type` into separate bordered tables, each with 3 columns: Time | Icon | Message
 // (Message = the full per-entry detail, built above or received already-built from
 // the server's own MIS-digest table). who = 'emp' | 'admin'.
-function renderNotifHistoryPage_(who) {
+//
+// v-fix (BRO: "notification lo last 7days lo vachina submit, loyalticard, all submited data
+// notification laga ravali. old data kuda ivu" — logNotifHistory_ only ever recorded entries
+// going FORWARD, on this one device, from the moment this feature shipped — nothing already sitting
+// in the backend sheets before that showed up. For the types where an employee's own submission
+// history can be pulled straight from the backend (Loyalty Card, Golden Aura, Stock Transfer,
+// Stock Entry, DSR, Lead Calls), this now does exactly that every time the page opens — the
+// backend sheet is the real source of truth, so every one of THIS employee's own submissions in
+// the last 7 days shows up, not just ones logged on this device after this page existed. Those
+// backend-sourced types are dropped from the local list first so nothing shows twice.
+const NOTIF_EMP_BACKEND_TYPES_ = ['loyalty', 'goldenaura', 'sttransfer', 'stentry', 'dsr', 'leadcall'];
+
+async function renderNotifHistoryPage_(who) {
   const box = document.getElementById('notifHistoryPage-' + who);
   if (!box) return;
-  const list = _notifHistoryLoad_();
+  let list = _notifHistoryLoad_();
+  if (who === 'emp') {
+    box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+    list = list.filter(n => NOTIF_EMP_BACKEND_TYPES_.indexOf(n.type) === -1);
+    const hist = await _notifFetchHistoricalEmp_();
+    list = list.concat(hist);
+  }
+  _notifRenderGroupedTable_(box, list);
+}
+
+function _notifRenderGroupedTable_(box, list) {
   if (!list.length) {
     box.innerHTML = '<div class="card" style="text-align:center;color:var(--text3);font-size:12.5px;padding:24px 0;">No notifications in the last 7 days.</div>';
     return;
   }
   const groups = {};
   list.forEach(n => { const t = n.type || 'other'; (groups[t] = groups[t] || []).push(n); });
+  Object.keys(groups).forEach(t => groups[t].sort((a, b) => b.ts - a.ts));
   const tableCellStyle = 'border:1px solid var(--border);padding:7px 9px;vertical-align:top;';
   let out = '';
   NOTIF_TYPE_ORDER_.forEach(type => {
@@ -5138,6 +5161,111 @@ function renderNotifHistoryPage_(who) {
       '</table></div></div>';
   });
   box.innerHTML = out;
+}
+
+// Best-effort parse of a date-only value (yyyy-mm-dd, dd-mm-yyyy, dd/mm/yyyy, or an already-ISO
+// datetime) into a millisecond timestamp — used for the backend history sources above that only
+// carry a date (Loyalty/Golden Aura "Issued"/"Enrolled" date), not an exact submit time.
+function _notifParseDate_(v) {
+  if (!v) return 0;
+  if (typeof v === 'number') return v;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+  m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+  const t = new Date(s).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
+// Pulls this employee's OWN last-7-days submissions for the 6 backend-backed types, in parallel,
+// each wrapped in its own try/catch so one source failing (e.g. offline) never blanks the rest.
+// Every row is converted into the same {ts, icon, html, type} shape logNotifHistory_ stores, with
+// `html` built from the same _notifMiniTable_ look as a live Congrats-popup log entry.
+async function _notifFetchHistoricalEmp_() {
+  const cutoff = Date.now() - (NOTIF_HISTORY_DAYS * 24 * 60 * 60 * 1000);
+  const out = [];
+  const empName = state.empName || '';
+  const jobs = [];
+
+  // Loyalty Card
+  jobs.push(jsonpReliable({ page: 'loyaltyMyCardsAPI', empName: empName }).then(res => {
+    (res && res.ok && res.cards || []).forEach(c => {
+      const t = _notifParseDate_(c.cardDate);
+      if (!t || t < cutoff) return;
+      const tbl = _notifMiniTable_('#b8860b', '💳 Loyalty Card #' + (c.cardNo || '') + ' — ' + empName, [
+        ['Card Type', c.cardType || '—'], ['Customer', properCase(c.custName || '')], ['Phone', c.phone || '—'], ['Issued', c.cardDate || '—']
+      ]);
+      out.push({ ts: t, icon: '💳🎉', html: tbl, type: 'loyalty' });
+    });
+  }).catch(() => {}));
+
+  // Golden Aura
+  jobs.push(jsonpReliable({ page: 'goldenAuraListJSON', role: 'EMP', empName: empName }).then(res => {
+    (res && res.ok && res.rows || []).forEach(r => {
+      const t = _notifParseDate_(r.enrollDate);
+      if (!t || t < cutoff) return;
+      const tbl = _notifMiniTable_('#b8860b', '🥇 Golden Aura #' + (r.planNo || '') + ' — ' + empName, [
+        ['Plan Type', r.planType || '—'], ['Customer', properCase(r.custName || '')], ['Amount', 'Rs ' + (r.amount || '0')], ['Enrolled', r.enrollDate || '—']
+      ]);
+      out.push({ ts: t, icon: '🥇🎉', html: tbl, type: 'goldenaura' });
+    });
+  }).catch(() => {}));
+
+  // Stock Transfer — transferLog is a global (not per-employee) recent-transfers log, so filter
+  // by `by` client-side.
+  jobs.push(slApi({ action: 'transferLog', limit: 150 }).then(res => {
+    (res && res.ok && res.rows || []).forEach(r => {
+      if (String(r.by || '').trim().toLowerCase() !== empName.trim().toLowerCase()) return;
+      const t = _notifParseDate_(r.ts);
+      if (!t || t < cutoff) return;
+      const tbl = _notifMiniTable_('#1d4ed8', '🔁 Stock Transfer — ' + (r.by || empName), [
+        ['Tag No', r.tagNo || '—'], ['Product', r.productName || '—'], ['From', r.from || '—'], ['To', r.to || '—']
+      ]);
+      out.push({ ts: t, icon: '🔁🎉', html: tbl, type: 'sttransfer' });
+    });
+  }).catch(() => {}));
+
+  // Stock Entry — new stockEntryLog action (StockBackend.gs), already filtered server-side by `by`.
+  jobs.push(slApi({ action: 'stockEntryLog', by: empName, limit: 200 }).then(res => {
+    (res && res.ok && res.rows || []).forEach(r => {
+      const t = _notifParseDate_(r.addedAt);
+      if (!t || t < cutoff) return;
+      const tbl = _notifMiniTable_('#b8860b', '📦 Stock Entry — ' + (r.enteredBy || empName), [
+        ['Counter', r.productFrom === 'Main' ? 'Main Hub' : (r.counter || '—')],
+        ['Tag No', r.tagNo || '—'], ['Item', r.productName || r.type || '—'], ['Entry Type', r.entryType || '—']
+      ]);
+      out.push({ ts: t, icon: '📦🎉', html: tbl, type: 'stentry' });
+    });
+  }).catch(() => {}));
+
+  // DSR — new myDsrLog action (DSRBackend.gs), already filtered server-side by empName.
+  jobs.push(_fetchWithTimeout(DSR_GAS_URL + '?action=myDsrLog&empName=' + encodeURIComponent(empName) + '&days=' + NOTIF_HISTORY_DAYS, {}, 20000)
+    .then(r => r.json()).then(res => {
+      (res && res.ok && res.rows || []).forEach(r => {
+        const t = Number(r.ts) || 0;
+        if (!t || t < cutoff) return;
+        const tbl = _notifMiniTable_('#4A0E8F', '🧾 DSR ' + (r.dsrId || '') + ' — ' + (r.employeeName || empName), [
+          ['Customer', properCase(r.customerName || '')], ['Items', String(r.itemCount || '')], ['Status', r.paymentStatus || '—']
+        ]);
+        out.push({ ts: t, icon: '🧾🎉', html: tbl, type: 'dsr' });
+      });
+    }).catch(() => {}));
+
+  // Lead Calls — new MY_CALL_LOG action (LeadsBackend.gs), already filtered server-side by empName.
+  jobs.push(leadsApiGet({ action: 'MY_CALL_LOG', empName: empName, days: NOTIF_HISTORY_DAYS }).then(res => {
+    (res && res.ok && res.rows || []).forEach(r => {
+      const t = Number(r.ts) || 0;
+      if (!t || t < cutoff) return;
+      const tbl = _notifMiniTable_('#1d4ed8', '📞 Lead Call — ' + (r.empName || empName), [
+        ['Customer', properCase(r.custName || '—')], ['Mobile', r.phone || '—'], ['Status', r.status || '—']
+      ]);
+      out.push({ ts: t, icon: '📞🎉', html: tbl, type: 'leadcall' });
+    });
+  }).catch(() => {}));
+
+  await Promise.all(jobs);
+  return out;
 }
 // BRO still calls this by its old name from the quick-action tiles — kept so no
 // HTML entry point needs touching. It no longer opens a modal; it navigates to the
@@ -9545,6 +9673,13 @@ async function loadPermFeatureList(forRole) {
 // Golden Aura, Stock), with every one of its features listed directly
 // underneath as a plain checkbox — nothing to expand, nothing that
 // opens another box, tick what's needed and Save.
+// v-fix (BRO: "confuse ga undi... redesign cheyali" — this used to dump every single
+// module's checkboxes onto the screen at once, fully expanded, all the time (Leave alone has
+// 9, KPI 5, DSR 7 — 30+ checkboxes visible simultaneously with the module's own name repeated
+// as both the bold heading AND the first checkbox's label). Now each module is a collapsed
+// <details> row by default — tap it to expand just that one module's options — with its own
+// "whole module" checkbox moved INTO the header itself (so the name isn't shown twice) and a
+// live "3/9" count so MIS can see how much of a module is turned on without opening it.
 function buildPermAccordionHtml(features, perms, checkClass, idPrefix, onChangeFn) {
   // Group the flat features[] list (each entry still labeled "↳ Leave:
   // X" from the backend for backward compatibility) by its module
@@ -9569,19 +9704,44 @@ function buildPermAccordionHtml(features, perms, checkClass, idPrefix, onChangeF
   });
 
   let html = '';
-  groups.forEach(g => {
-    html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:13.5px;font-weight:800;color:var(--text);margin-bottom:8px;">${g.sectionIcon} ${g.sectionLabel}</div>`;
-    g.items.forEach(s => {
-      const checked = perms ? !!perms[s.key] : false;
-      html += `<label style="display:flex;align-items:center;gap:9px;padding:7px 2px;cursor:pointer;">
-        <input type="checkbox" class="${checkClass}" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="${onChangeFn}('${s.key}')">
-        <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
-      </label>`;
-    });
-    html += `</div>`;
+  groups.forEach((g, gi) => {
+    // items[0] is always that module's own "whole module" box (pushed first, above) — pull it
+    // out to double as the <details> row's own master checkbox instead of repeating the module
+    // name a second time as a line inside the expanded body.
+    const master = g.items[0];
+    const rest = g.items.slice(1);
+    const detailsId = idPrefix + '_acc_' + gi;
+    const checkedCount = g.items.filter(s => perms && perms[s.key]).length;
+    html += `<details class="card perm-acc-details" id="${detailsId}" style="padding:0;margin-bottom:8px;overflow:hidden;">
+      <summary style="list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" class="${checkClass}" data-key="${master ? master.key : ''}" ${master && perms && perms[master.key] ? 'checked' : ''} onclick="event.stopPropagation();" onchange="${onChangeFn}('${master ? master.key : ''}');_permAccSummaryCount_('${detailsId}')" style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
+        <span style="font-size:13.5px;font-weight:800;color:var(--text);flex:1;">${g.sectionIcon} ${g.sectionLabel}</span>
+        ${rest.length ? `<span class="perm-acc-count" style="font-size:10.5px;color:var(--text3);font-weight:600;white-space:nowrap;">${checkedCount}/${g.items.length} on</span><span style="color:var(--text3);font-size:11px;">▾</span>` : ''}
+      </summary>`;
+    if (rest.length) {
+      html += `<div style="padding:2px 14px 10px 42px;border-top:1px solid var(--border);">`;
+      rest.forEach(s => {
+        const checked = perms ? !!perms[s.key] : false;
+        html += `<label style="display:flex;align-items:center;gap:9px;padding:7px 2px;cursor:pointer;">
+          <input type="checkbox" class="${checkClass}" data-key="${s.key}" ${checked ? 'checked' : ''} style="width:17px;height:17px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;" onchange="${onChangeFn}('${s.key}');_permAccSummaryCount_('${detailsId}')">
+          <span style="font-size:12.5px;color:var(--text2);">${s.label}</span>
+        </label>`;
+      });
+      html += `</div>`;
+    }
+    html += `</details>`;
   });
   return html;
+}
+
+// Recomputes and updates one module's "3/9 on" live count badge after any checkbox inside it
+// (including its own header checkbox) changes — scoped to just that <details> block by id.
+function _permAccSummaryCount_(detailsId) {
+  const root = document.getElementById(detailsId);
+  if (!root) return;
+  const boxes = Array.from(root.querySelectorAll('input[type="checkbox"]'));
+  const countEl = root.querySelector('.perm-acc-count');
+  if (countEl) countEl.textContent = boxes.filter(b => b.checked).length + '/' + boxes.length + ' on';
 }
 
 // ── EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off + detailed sub-options ──
@@ -9791,9 +9951,8 @@ function resetSettingsEmpChecks() {
   const checkedCount = checks.filter(cb => cb.checked).length;
   const selectAll = checkedCount < checks.length;
   checks.forEach(cb => { cb.checked = selectAll; });
-  document.querySelectorAll('[id^="emp_acc_body_"]').forEach(bodyEl => {
-    onSettingsCheckChangeEmp(bodyEl.id.replace('emp_acc_body_', ''));
-  });
+  // Refresh every module's "3/9 on" live count badge to match (see buildPermAccordionHtml).
+  document.querySelectorAll('[id^="emp_acc_"]').forEach(d => _permAccSummaryCount_(d.id));
   toast(selectAll ? '✅ All detailed options selected — click Save to apply' : '⬜ All detailed options deselected — click Save to apply', 'info');
 }
 
@@ -10033,11 +10192,8 @@ function resetSettingsAdminChecks() {
   const selectAll = checkedCount < allChecks.length; // any unchecked box -> select all; otherwise deselect all
   allChecks.forEach(cb => { cb.checked = selectAll; });
 
-  // Refresh every accordion header's ON/OFF badge to match the new state.
-  document.querySelectorAll('[id^="adm_acc_body_"]').forEach(bodyEl => {
-    const key = bodyEl.id.replace('adm_acc_body_', '');
-    onSettingsCheckChange(key);
-  });
+  // Refresh every module's "3/9 on" live count badge to match (see buildPermAccordionHtml).
+  document.querySelectorAll('[id^="adm_acc_"]').forEach(d => _permAccSummaryCount_(d.id));
 
   toast(selectAll ? '✅ All permissions selected — click Save to apply' : '⬜ All permissions deselected — click Save to apply', 'info');
 }
