@@ -9776,8 +9776,18 @@ function renderSettingsEmpBody(emp) {
   const features = (window.__permFeaturesByRole && window.__permFeaturesByRole.emp && window.__permFeaturesByRole.emp.features) || [];
   const perms = emp ? emp.granularPerms : null; // filled in by loadSettingsEmpGranular once fetched
 
-  let html = `<div class="card">
-    <div class="card-title">${nameLabel}</div>
+  // v-fix (BRO: "confuse ga undi... redesign cheyali" — this whole panel used to be one long,
+  // unlabeled scroll of 4 very different controls (a quick on/off per module, which leave types
+  // are allowed, a bulk apply-to-everyone tool, and a 30+ checkbox fine-grained list) with no
+  // visual separation between them and no explanation of why there even ARE two overlapping
+  // "module on/off" systems. Now each of the 4 is its own clearly numbered, titled block; the
+  // one that's rarely touched (bulk Apply to All) starts collapsed so it doesn't crowd the
+  // normal per-employee flow; and the huge Detailed list (buildPermAccordionHtml) now opens one
+  // module at a time instead of dumping every checkbox on screen together.
+  let html = `
+  <p style="font-size:11px;color:var(--text3);margin:0 0 12px;padding:8px 10px;background:var(--purple-bg,#F5EEFB);border:1px solid var(--border);border-radius:8px;">ℹ️ There are two layers below: <b>① Module Access</b> is a quick whole-page on/off switch. <b>④ Detailed Sub-Option Access</b> is finer — it can turn on a module but hide specific buttons inside it. When in doubt, use ④ — it always wins over ①.</p>
+  <div class="card">
+    <div class="card-title">① ${nameLabel}</div>
     ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : ''}
     <p style="font-size:11px;color:var(--text3);margin:0 0 8px;">📊 Dashboard is always visible to every employee by default — no access setting for it.</p>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
@@ -9794,27 +9804,26 @@ function renderSettingsEmpBody(emp) {
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empDsrAccessCheck" ${emp && emp.dsrAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(saved, but no longer hides the button — see note below)</span></span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">🧾 DSR Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(no real effect — see ⚠️ below)</span></span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empLeadsAccessCheck" ${emp && emp.leadsAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">📞 Leads Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(saved, but no longer hides the button — see note below)</span></span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📞 Leads Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(no real effect — see ⚠️ below)</span></span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empStockAccessCheck" ${emp && emp.stockAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
-      <span style="font-size:13px;color:var(--text);font-weight:600;">📦 Stock Checklist Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(saved, but no longer hides the button — see note below)</span></span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">📦 Stock Checklist Access <span style="font-weight:400;color:var(--text3);font-size:11px;">(no real effect — see ⚠️ below)</span></span>
     </label>
     <label style="display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;">
       <input type="checkbox" id="empGoldenAuraAccessCheck" ${emp && emp.goldenAuraAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">🌟 Golden Aura Access</span>
     </label>
-    <p style="font-size:11px;color:var(--text3);margin:6px 0 0;padding:8px 10px;background:#fff8e1;border:1px solid var(--gold);border-radius:8px;">⚠️ DSR, Leads and Stock Checklist run on separate systems from this Portal, so turning these off no longer hides that button — it would only hide the Portal shortcut while the employee could still reach the real form directly (bookmark, browser history). The value is still saved here for future use, but currently has no real effect for these three.</p>
-    <p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">Off = this employee won't see that module at all after their next login. On (default) = full employee-level access, same as everyone else. For finer control over WHICH sub-options within an ON module they can see, use the detailed list below instead.</p>
-    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
+    <p style="font-size:11px;color:var(--text3);margin:6px 0 0;padding:8px 10px;background:#fff8e1;border:1px solid var(--gold);border-radius:8px;">⚠️ DSR, Leads and Stock Checklist run on separate systems from this Portal, so turning these off here no longer hides that button — the employee could still reach the real form directly (bookmark, browser history). Still saved for future use, but use ④ Detailed Sub-Option Access below for these three instead.</p>
+    <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;margin-top:8px;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
   <div class="card" style="margin-top:14px;">
-    <div class="card-title">🗓️ Leave Type Access</div>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">A DIFFERENT layer from Module Access above — this controls WHICH leave types this employee can pick, once inside the Leave module. Off = that leave type is hidden and blocked (server-side too) for this employee.</p>
+    <div class="card-title">② 🗓️ Leave Type Access</div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">A DIFFERENT layer from ① above — this controls WHICH leave types this employee can pick, once inside the Leave module. Off = that leave type is hidden and blocked (server-side too) for this employee.</p>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;">
       <input type="checkbox" id="empLtaCasualCheck" ${emp && emp.leaveTypeAccess?.allowed?.['Casual Leave'] !== false ? 'checked' : ''} ${disabled} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:12.5px;color:var(--text2);">Casual Leave</span>
@@ -9838,9 +9847,10 @@ function renderSettingsEmpBody(emp) {
     ${emp && emp.leaveTypeAccess && emp.leaveTypeAccess.specialPermissionLimit !== null && emp.leaveTypeAccess.specialPermissionLimit !== undefined ? `<p style="font-size:11px;color:var(--text3);margin:4px 0 0;">Used ${emp.leaveTypeAccess.specialPermissionUsed || 0} of ${emp.leaveTypeAccess.specialPermissionLimit} this month.</p>` : ''}
     <button class="btn-primary" id="settingsSaveEmpLtaBtn" style="width:100%;margin-top:10px;" ${disabled} onclick="saveSettingsEmpLeaveTypeAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Leave Type Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
-  <div class="card" style="margin-top:14px;border:1.5px dashed var(--purple);">
-    <div class="card-title">👥 Apply to All Employees</div>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save — this overwrites the module-level access above for every employee in one go. Doesn't touch anyone's Detailed Sub-Option Access.</p>
+  <details class="card" style="margin-top:14px;border:1.5px dashed var(--purple);padding:0;overflow:hidden;">
+    <summary style="list-style:none;cursor:pointer;padding:12px 14px;"><span class="card-title" style="display:inline;">③ 👥 Apply to All Employees</span> <span style="font-size:11px;color:var(--text3);">(tap to open — rarely needed)</span></summary>
+    <div style="padding:0 14px 14px;">
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save — this overwrites ① Module Access above for every employee in one go. Doesn't touch anyone's ④ Detailed Sub-Option Access.</p>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeaveAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📋 Leave Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLoyaltyAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">💳 Loyalty Card Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpKpiAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📊 KPI Access</span></label>
@@ -9849,9 +9859,11 @@ function renderSettingsEmpBody(emp) {
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpStockAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📦 Stock Checklist Access</span></label>
     <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpGoldenAuraAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🌟 Golden Aura Access</span></label>
     <button class="btn-primary" id="settingsSaveAllEmpBtn" style="width:100%;margin-top:8px;background:var(--red);" onclick="saveSettingsAllEmpAccess()">💾 Save For ALL Employees</button>
-  </div>
+    </div>
+  </details>
   <div id="settingsEmpGranularBody" style="margin-top:14px;">
-    <div class="section-hdr" style="margin-bottom:8px;"><span class="section-title2" style="font-size:13px;">🔎 Detailed Sub-Option Access</span></div>
+    <div class="section-hdr" style="margin-bottom:4px;"><span class="section-title2" style="font-size:13px;">④ 🔎 Detailed Sub-Option Access</span></div>
+    <p style="font-size:11px;color:var(--text3);margin:0 0 8px;">Fine control, button by button. Tap a module below to open it — its own "whole module" switch is the checkbox in its title row, with individual buttons underneath once opened.</p>
     ${buildPermAccordionHtml(features, perms, 'settings-perm-check-emp', 'emp', 'onSettingsCheckChangeEmp')}
     <button class="btn-secondary" id="settingsResetEmpBtn" style="width:100%;margin-top:6px;margin-bottom:8px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset (Select All / Deselect All)</button>
     <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Detailed Access${emp ? ' for ' + emp.name : ''}</button>
