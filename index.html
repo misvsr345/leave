@@ -4130,6 +4130,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Modal: Cancel -->
 <div class="modal-overlay" id="cancelModal">
   <div class="modal-box">
+    <button class="modal-close-x" onclick="closeModal('cancelModal')" title="Close">✕</button>
     <div class="modal-title">🚫 Cancel Leave</div>
     <div class="modal-sub" id="cancelModalSub">Are you sure you want to cancel this leave?</div>
     <div class="modal-btns">
@@ -4142,6 +4143,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Modal: Reject -->
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-box">
+    <button class="modal-close-x" onclick="closeModal('rejectModal')" title="Close">✕</button>
     <div class="modal-title">❌ Reject Leave</div>
     <div class="modal-sub" id="rejectModalSub">Enter reason for rejection</div>
     <div class="form-row"><textarea id="rejectReason" rows="3" placeholder="Enter rejection reason..."></textarea></div>
@@ -4155,6 +4157,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Modal: Mark Absent (admin) -->
 <div class="modal-overlay" id="absentModal">
   <div class="modal-box">
+    <button class="modal-close-x" onclick="closeModal('absentModal')" title="Close">✕</button>
     <div class="modal-title">⚠️ Mark Absent</div>
     <div class="modal-sub" id="absentModalSub">Enter reason for marking absent</div>
     <div class="form-row"><textarea id="absentReason" rows="3" placeholder="e.g. No prior application, uninformed absence..."></textarea></div>
@@ -4168,6 +4171,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Modal: Modify -->
 <div class="modal-overlay" id="modifyModal">
   <div class="modal-box">
+    <button class="modal-close-x" onclick="closeModal('modifyModal')" title="Close">✕</button>
     <div class="modal-title">✏️ Modify Leave</div>
     <div class="modal-sub" id="modifyModalSub">Update your leave dates</div>
     <div style="background:var(--orange-bg);border-left:3px solid var(--orange);padding:9px 12px;border-radius:0 8px 8px 0;font-size:11.5px;color:var(--orange);font-weight:600;margin-bottom:14px;line-height:1.6;">
@@ -4254,6 +4258,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Modal: Theme Picker -->
 <div class="modal-overlay" id="themePickerModal">
   <div class="modal-box">
+    <button class="modal-close-x" onclick="closeModal('themePickerModal')" title="Close">✕</button>
     <div class="modal-title">🎨 Choose Theme</div>
     <div class="theme-current-banner">
       <div class="theme-current-swatch" id="themeCurrentSwatch"></div>
@@ -4302,6 +4307,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <!-- Modal: Change Password -->
 <div class="modal-overlay" id="pwModal">
   <div class="modal-box">
+    <button class="modal-close-x" onclick="closeModal('pwModal')" title="Close">✕</button>
     <div class="modal-title">🔑 Change Password</div>
     <div class="modal-sub" id="pwModalSub">Update your login password</div>
     <div class="form-row">
@@ -4327,6 +4333,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      mail ravlia mis ki and portal lo kuda pop ravali... tag no and emp name date tho ravali." -->
 <div class="modal-overlay" id="dupAlertModal">
   <div class="modal-box" style="max-width:560px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="dismissDupAlertModal()" title="Close">✕</button>
     <div class="modal-title" style="color:var(--red);">⚠️ Duplicate Tag No Entries</div>
     <div class="modal-sub">Same Tag No entered a second time — usually an offline entry that missed the live "already sold" check. MIS has also been emailed.</div>
     <div id="dupAlertModalBody"></div>
@@ -4341,6 +4348,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      the separate "Employee Timeline" screen). -->
 <div class="modal-overlay" id="loyEmpDetailModal">
   <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('loyEmpDetailModal')" title="Close">✕</button>
     <div class="modal-title" id="loyEmpDetailTitle">👤 Employee Detail</div>
     <div class="card" style="padding:10px 14px;margin:8px 0;">
       <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('loyEmpDetail', this)">🔍 Custom Date</button>
@@ -4363,6 +4371,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      mode, submitted time, approved/processed time, purpose, address, etc. -->
 <div class="modal-overlay" id="leaveDetailModal">
   <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('leaveDetailModal')" title="Close">✕</button>
     <div class="modal-title" id="ldTitle">📄 Leave Details</div>
     <div class="modal-sub" id="ldSub"></div>
     <div id="leaveDetailBody"></div>
@@ -4398,6 +4407,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      still up) when this employee has one or more missing-DSR dates this month. -->
 <div class="modal-overlay" id="empMissingDsrModal">
   <div class="modal-box" style="max-width:380px;text-align:center;">
+    <button class="modal-close-x" onclick="closeEmpMissingDsrModal_(false)" title="Close">✕</button>
     <div style="font-size:42px;margin-bottom:8px;line-height:1;">⚠️</div>
     <div class="modal-title" style="margin-bottom:6px;color:var(--red);">Missing DSR</div>
     <div class="modal-sub" id="empMissingDsrSub" style="font-size:13px;margin-bottom:12px;"></div>
@@ -4424,6 +4434,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
 <div class="modal-overlay" id="leaveResultModal">
   <div class="modal-box" style="max-width:400px;text-align:center;">
+    <button class="modal-close-x" onclick="closeModal('leaveResultModal')" title="Close">✕</button>
     <div id="leaveResultIcon" style="font-size:46px;margin-bottom:8px;line-height:1;">📋</div>
     <div class="modal-title" id="leaveResultTitle" style="margin-bottom:4px;">Leave Submitted</div>
     <div class="modal-sub" id="leaveResultMsg" style="font-size:13px;line-height:1.6;margin-bottom:14px;"></div>
