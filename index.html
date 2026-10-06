@@ -2310,11 +2310,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
     <!-- v-add (BRO: "oka customer trend chudali ante emi cheyali" → "emp ki kuda
          chupistunda" → "anni kanipinchali, kani strict ga undali — view-only, admin
-         per-employee toggle, all customers" — employee-side Customer 360°, same data
-         as Admin's (Loyalty + Golden Aura + Leads + DSR), reusing loadCustomer360('emp').
-         It's already view-only (no edit/export anywhere in that render), and visibility
-         is gated per-employee via the 'customer360' permission key below, same system as
-         every other Detailed Sub-Option Access toggle. -->
+         per-employee toggle, all customers" → later: "360 no toggle. andariki
+         kanipinchali" — employee-side Customer 360°, same data as Admin's (Visits +
+         Loyalty + Golden Aura + Leads + DSR), reusing loadCustomer360('emp'). It's
+         view-only (no edit/export anywhere in that render); biodata (address/Aadhaar/
+         PAN/photos/full mobile) is still Admin-only at the API level, but the page
+         itself is visible to every employee, no permission toggle at all. -->
     <div class="page-section" id="emp-customer-360">
       <div class="section-hdr"><span class="section-title2">🔍 Customer 360°</span></div>
       <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
@@ -10418,18 +10419,33 @@ function jumpToEmpSearchResult(page) {
   showEmpPage(page);
 }
 
+// v-fix (BRO: "customer photo circle lo pettali, direct open avali,
+// andariki open avali. Other document name ichi, proper case lo undi,
+// view ani chinna button undali" — Customer Photo is now a round avatar
+// that's always shown (not Admin-gated — see customer360LoyaltyAPI/
+// GoldenAuraAPI, custPhoto is sent regardless of role now), clickable to
+// open full-size for everyone. The other documents (Aadhaar Front/Back,
+// PAN Photo, Signature — still Admin/MIS-only, same as before) are shown
+// as a proper-case label plus a small "View" button instead of a plain
+// emoji link.
 function c360BiodataHtml_(c) {
-  // Only present at all when the backend granted full access (Admin/MIS) —
-  // for an Employee session these fields simply aren't in the response.
+  const DOC_LABELS = { aadhaarFront: 'Aadhaar Front', aadhaarBack: 'Aadhaar Back', aadhaarPhoto: 'Aadhaar Photo', panPhoto: 'PAN Photo', sigPhoto: 'Signature' };
+  const avatar = c.custPhoto
+    ? `<a href="${c.custPhoto}" target="_blank" rel="noopener" title="Open full photo"><img src="${c.custPhoto}" alt="Customer photo" style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border);display:block;" onerror="this.parentElement.style.display='none'"></a>`
+    : '';
   const rows = [];
   if (c.mobile)    rows.push(`📱 ${c.mobile}`);
   if (c.address)   rows.push(`🏠 ${c.address}`);
   if (c.aadhaarNo) rows.push(`🪪 Aadhaar: ${c.aadhaarNo}`);
   if (c.panNo)     rows.push(`🪪 PAN: ${c.panNo}`);
-  const photos = ['custPhoto', 'aadhaarFront', 'aadhaarBack', 'aadhaarPhoto', 'panPhoto']
-    .filter(k => c[k]).map(k => `<a href="${c[k]}" target="_blank" rel="noopener" style="margin-right:10px;">📷 ${k.replace('Photo','').replace(/([A-Z])/g,' $1')}</a>`).join('');
-  if (!rows.length && !photos) return '';
-  return `<div style="margin:4px 0 8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;">${rows.join('<br>')}${photos ? '<div style="margin-top:6px;">' + photos + '</div>' : ''}</div>`;
+  const docButtons = Object.keys(DOC_LABELS).filter(k => c[k]).map(k =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;margin:3px 12px 3px 0;">${DOC_LABELS[k]} <a href="${c[k]}" target="_blank" rel="noopener" class="btn-secondary" style="width:auto;padding:2px 12px;font-size:11px;display:inline-block;">View</a></span>`
+  ).join('');
+  if (!avatar && !rows.length && !docButtons) return '';
+  return `<div style="margin:4px 0 8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;display:flex;gap:10px;align-items:flex-start;">
+    ${avatar ? `<div style="flex-shrink:0;">${avatar}</div>` : ''}
+    <div style="flex:1;min-width:0;">${rows.join('<br>')}${docButtons ? '<div style="margin-top:6px;">' + docButtons + '</div>' : ''}</div>
+  </div>`;
 }
 
 function c360MaskMobile_(m) {
@@ -10461,20 +10477,6 @@ function c360ResolveVisitDate_(visit, loy, ga) {
     }
   }
   return { date: '—', via: '' };
-}
-
-function c360BiodataHtml_(c) {
-  // Only present at all when the backend granted full access (Admin/MIS) —
-  // for an Employee session these fields simply aren't in the response.
-  const rows = [];
-  if (c.mobile)    rows.push(`📱 ${c.mobile}`);
-  if (c.address)   rows.push(`🏠 ${c.address}`);
-  if (c.aadhaarNo) rows.push(`🪪 Aadhaar: ${c.aadhaarNo}`);
-  if (c.panNo)     rows.push(`🪪 PAN: ${c.panNo}`);
-  const photos = ['custPhoto', 'aadhaarFront', 'aadhaarBack', 'aadhaarPhoto', 'panPhoto']
-    .filter(k => c[k]).map(k => `<a href="${c[k]}" target="_blank" rel="noopener" style="margin-right:10px;">📷 ${k.replace('Photo','').replace(/([A-Z])/g,' $1')}</a>`).join('');
-  if (!rows.length && !photos) return '';
-  return `<div style="margin:4px 0 8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;">${rows.join('<br>')}${photos ? '<div style="margin-top:6px;">' + photos + '</div>' : ''}</div>`;
 }
 
 // BRO: "Customer Name/Mobile/loyalty card no/golden plan/dsr id edaina
@@ -10559,7 +10561,11 @@ async function loadCustomer360(who) {
   html += section('Visits', '🚶', visitsRes ? visitsRes.visits : null, v => {
     const r = c360ResolveVisitDate_(v, loy, ga);
     const shownPhone = isAdminView ? v.phone : c360MaskMobile_(v.phone);
-    return `<div class="kd-note" style="margin:4px 0;">📅 ${r.date}${r.via ? ' <span style="opacity:.6;font-size:11px;">(' + r.via + ')</span>' : ''} — ${properCase(v.customerName)}${shownPhone ? ' — ' + shownPhone : ''}${v.status ? ' — <b>' + v.status + '</b>' : ''}${v.product ? ' — interested: ' + properCase(v.product) : ''}${v.feedback ? ' — ' + v.feedback : ''} ${v.employeeName ? '<span style="opacity:.6;">(by ' + properCase(v.employeeName) + ')</span>' : ''}</div>`;
+    // v-fix (BRO: "ilanti lines, and quotation no need. backend lo
+    // pettuko, kani frontend ki vaddu" — r.via (how the date was worked
+    // out — card date / plan date / feedback−1day) stays computed, just
+    // not shown to the user anymore.
+    return `<div class="kd-note" style="margin:4px 0;">📅 ${r.date} — ${properCase(v.customerName)}${shownPhone ? ' — ' + shownPhone : ''}${v.status ? ' — <b>' + v.status + '</b>' : ''}${v.product ? ' — interested: ' + properCase(v.product) : ''}${v.feedback ? ' — ' + v.feedback : ''} ${v.employeeName ? '<span style="opacity:.6;">(by ' + properCase(v.employeeName) + ')</span>' : ''}</div>`;
   }, visitsErr);
   html += section('Loyalty Card', '💳', loy ? loy.cards : null, c =>
     `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${properCase(c.custName)} — issued ${c.cardDate} by ${properCase(c.empName)}</div>${c360BiodataHtml_(c)}`,
@@ -12117,6 +12123,11 @@ function ncPhotoChanged(inputId) {
     return;
   }
 
+  // v-note: _photoFieldKind always returns 'plain' now (crop/preview
+  // review was removed earlier per BRO), so this branch never actually
+  // runs — kept only because deleting it outright risked touching the
+  // unrelated _showPhotoConfirmModal/_processAadhaarPhoto/
+  // _processPortraitPhoto helpers other code might still reach for.
   fb.innerHTML = `<span class="spinner"></span> Reading photo...`;
   const reader = new FileReader();
   reader.onload = () => {
@@ -12126,68 +12137,29 @@ function ncPhotoChanged(inputId) {
     _showPhotoConfirmModal(title, originalUrl, processProm, (chosenUrl) => {
       state.confirmedPhotos[inputId] = chosenUrl;
       fb.innerHTML = `✓ Photo confirmed <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
-      // v-add: Loyalty Card's Aadhaar-Back specifically feeds the
-      // address-match check — see the module comment above for why
-      // this is scoped to this one field only.
-      if (inputId === 'ncAadhaarBack') _runLoyaltyAddressMatch();
     }, inputId);
   };
   reader.readAsDataURL(f);
 }
 
-async function _runLoyaltyAddressMatch() {
-  const box = document.getElementById('ncAddressMatchResult') || (() => {
-    const d = document.createElement('div'); d.id = 'ncAddressMatchResult';
-    document.getElementById('ncAddress').insertAdjacentElement('afterend', d);
-    return d;
-  })();
-  const manual = document.getElementById('ncAddress').value.trim();
-  const img = state.confirmedPhotos['ncAadhaarBack'];
-  if (!manual || !img) return;
-  box.innerHTML = `<div style="font-size:11.5px;color:var(--text3);margin-top:4px;"><span class="spinner"></span> Verifying address against Aadhaar (in your browser)...</div>`;
-  try {
-    const { data: { text } } = await Tesseract.recognize(img, 'eng');
-    const pct = _addressMatchPct(manual, text);
-    state.ncAddressMatchPct = pct;
-    // v-fix (BRO: "does this work offline" — a real gap this
-    // surfaced): distinguish a CONFIRMED bad match (status='failed',
-    // this should block submit) from simply being UNABLE to check
-    // right now (status='unavailable', e.g. Tesseract.js itself never
-    // finished loading because there was no signal at the time) — see
-    // the submit-time gate below, which now only blocks on 'failed'.
-    state.ncAddressMatchStatus = pct >= 50 ? 'passed' : 'failed';
-    if (pct >= 50) {
-      box.innerHTML = `<div style="font-size:11.5px;color:var(--green);margin-top:4px;">✅ Address matches Aadhaar — ${pct}% match</div>`;
-    } else {
-      box.innerHTML = `<div style="font-size:11.5px;color:var(--red);margin-top:4px;">❌ Address does not sufficiently match the Aadhaar Card (${pct}%). Please correct the address above and it will re-check automatically.</div>`;
-    }
-  } catch (e) {
-    state.ncAddressMatchPct = null;
-    state.ncAddressMatchStatus = 'unavailable';
-    // v-fix: an honest, specific reason when this is simply an offline/
-    // library-loading issue, not a real verification failure — this is
-    // NOT a reason to block the employee from submitting (their entry
-    // still goes into the same offline queue as everything else in
-    // this portal, and the backend independently re-verifies once it
-    // actually reaches the server — see loyaltySubmitCardAPI_).
-    box.innerHTML = navigator.onLine
-      ? `<div style="font-size:11.5px;color:var(--text3);margin-top:4px;">Could not read the Aadhaar back photo clearly right now — you can still submit; this will be verified when it reaches the server.</div>`
-      : `<div style="font-size:11.5px;color:var(--orange);margin-top:4px;">📴 You're offline, so this can't be checked on your device right now. You can still submit — it will be verified automatically once your entry syncs.</div>`;
-  }
-}
-// Address field is often typed/corrected AFTER the Aadhaar-Back photo
-// is already confirmed — re-check on every edit, not just once.
-document.addEventListener('input', (e) => {
-  if (e.target && e.target.id === 'ncAddress' && state.confirmedPhotos['ncAadhaarBack']) _runLoyaltyAddressMatch();
-});
-
+// v-fix (BRO: "Aadhar card submit dagara, remove ravadam leud. and lengthy
+// text vastundi, aa text remove chei" — backend lo pettuko, kani frontend
+// ki vaddu): the in-browser OCR address-match (_runLoyaltyAddressMatch)
+// used to run automatically the moment an Aadhaar Back photo was picked,
+// show a long status line under Address, and — worse — BLOCK Submit
+// outright if it decided the address didn't match, with an error message
+// that told the employee to "remove the Aadhaar Back photo to skip
+// verification" even though that didn't actually clear the block
+// reliably. Fully removed from the frontend now, per BRO's standing call
+// (same as the earlier crop/preview removal) — no OCR, no status text, no
+// submit-time gate. The backend's own independent OCR re-check inside
+// loyaltySubmitCardAPI_ is untouched and keeps doing this server-side.
 function ncPhotoClear(inputId) {
   const inp = document.getElementById(inputId);
   inp.value = '';
   delete state.confirmedPhotos[inputId];
   const fb = document.getElementById(inputId + '-fb');
   if (fb) fb.innerHTML = '';
-  if (inputId === 'ncAadhaarBack') { const r = document.getElementById('ncAddressMatchResult'); if (r) r.innerHTML = ''; state.ncAddressMatchPct = null; state.ncAddressMatchStatus = null; }
 }
 
 function fileToBase64(inputEl) {
@@ -12240,28 +12212,12 @@ async function submitNewLoyaltyCard() {
     return;
   }
 
-  // v-add (BRO's Employee_Application.docx Rule 6, applied here to
-  // Customer verification): if an Aadhaar-Back photo was provided, the
-  // address-match must have actually passed 50% before this can go any
-  // further — same check will run again independently on the server
-  // (see loyaltySubmitCardAPI), this is just the fast, friendly
-  // front-end version so the employee doesn't wait for a round-trip to
-  // find out.
-  // v-fix (BRO: "does this work offline" — this gate used to
-  // block on ANY non-passing status, including 'unavailable' (couldn't
-  // check at all, e.g. offline) — treating "couldn't verify" the same
-  // as "confirmed wrong address" was the actual bug. Now blocks ONLY on
-  // a genuinely confirmed bad match; 'unavailable' or never-run lets
-  // this through to the existing offline queue exactly like every
-  // other module in this portal, with the backend's own independent
-  // OCR re-check (loyaltySubmitCardAPI_) as the real, final gate once
-  // it actually reaches the server.
+  // v-fix (BRO: "Aadhar card submit dagara, remove ravadam leud. and
+  // lengthy text vastundi, aa text remove chei" — the front-end
+  // address-vs-Aadhaar OCR match (and the submit-blocking gate it fed)
+  // is removed entirely. The backend's own independent OCR re-check
+  // inside loyaltySubmitCardAPI_ is the only place this is verified now.
   const aadhaarBackFile = document.getElementById('ncAadhaarBack').files[0];
-  if (aadhaarBackFile && state.ncAddressMatchStatus === 'failed') {
-    errBox.textContent = 'Address does not sufficiently match the Aadhaar Card (' + (state.ncAddressMatchPct != null ? state.ncAddressMatchPct + '%' : '') + '). Please correct the address above, or remove the Aadhaar Back photo to skip verification.';
-    errBox.style.display = 'block';
-    return;
-  }
 
   const btn = document.getElementById('ncSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
@@ -12303,11 +12259,11 @@ async function submitNewLoyaltyCard() {
       custName, occupation, orgName, phone, address, aadhaarNo, panNo,
       cardType, cardNo, cardIssuedDate: cardDate,
       sigPhoto, custPhoto, aadhaarFront, aadhaarBack, panPhoto,
-      // v-add: clientMatchPct is informational only — the backend
-      // redoes this OCR check itself independently (see
-      // loyaltySubmitCardAPI) rather than trusting a value a modified
-      // frontend could simply fabricate.
-      clientMatchPct: aadhaarBackFile ? state.ncAddressMatchPct : null
+      // v-fix: the client-side OCR address-match that used to compute
+      // this was removed (BRO: "lengthy text vastundi, remove chei") —
+      // always null now; the backend's own independent OCR re-check in
+      // loyaltySubmitCardAPI is unaffected and still the real check.
+      clientMatchPct: null
     };
     window.__loyaltyPendingPayload = payload;
     loyaltyShowPreview(payload);
@@ -14076,11 +14032,11 @@ const EMP_FEATURE_ELEMENTS = {
   outletIssue: ['empQAOutletIssue'],
   rdr: ['empQARdr'],
   stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
-  walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins'],
-  // v-add (BRO: "anni kanipinchali, kani strict ga undali" — Customer 360°, default OFF-like
-  // every other sub-option here unless MIS explicitly ticks it per employee in Settings →
-  // Employee Access → Detailed Sub-Option Access).
-  customer360: ['empQACustomer360']
+  walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins']
+  // v-fix (BRO: "360 no toggle. andariki kanipinchali" — Customer 360°
+  // used to be gated here (per-employee ON/OFF), now removed from this
+  // map entirely so it's NEVER hidden — every employee sees it, same as
+  // DSR/Stock Entry/Walk-in above (no permission gate at all).
 };
 
 // Fetches this specific employee's granular sub-option permissions and
