@@ -2130,23 +2130,23 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">➕ New Card Entry</span>
       </div>
       <div class="card" style="padding:14px 16px;">
-        <div class="form-row"><label>Customer Full Name (As per Document) *</label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
-        <div class="form-row"><label>Occupation *</label><input type="text" id="ncOccupation" placeholder="e.g. Business, Student, Govt Employee"></div>
+        <div class="form-row"><label>Customer Full Name (As per Document) <span id="frqStarNcCustName">*</span></label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
+        <div class="form-row"><label>Occupation <span id="frqStarNcOccupation">*</span></label><input type="text" id="ncOccupation" placeholder="e.g. Business, Student, Govt Employee"></div>
         <div class="form-row"><label>Organization Name</label><input type="text" id="ncOrgName" placeholder="Optional"></div>
-        <div class="form-row"><label>Phone Number *</label><input type="tel" id="ncPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
-        <div class="form-row"><label>Address *</label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
+        <div class="form-row"><label>Phone Number <span id="frqStarNcPhone">*</span></label><input type="tel" id="ncPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+        <div class="form-row"><label>Address <span id="frqStarNcAddress">*</span></label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
 
-        <div class="form-row"><label>Customer Signature Photo *</label>
+        <div class="form-row"><label>Customer Signature Photo <span id="frqStarNcSigPhoto">*</span></label>
           <input type="file" id="ncSigPhoto" accept="image/*" onchange="ncPhotoChanged('ncSigPhoto')">
           <div id="ncSigPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
-        <div class="form-row"><label>Customer Photo *</label>
+        <div class="form-row"><label>Customer Photo <span id="frqStarNcCustPhoto">*</span></label>
           <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
           <div style="font-size:10.5px;color:var(--text3);margin-top:3px;">📌 Upload the actual photo file directly — avoid taking a photo of a photo displayed on another screen/phone, as that captures screen glare and UI icons along with it.</div>
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
-        <div class="form-row"><label>Aadhaar No *</label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
-        <div class="form-row"><label>Aadhaar Card Front Photo *</label>
+        <div class="form-row"><label>Aadhaar No <span id="frqStarNcAadhaarNo">*</span></label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
+        <div class="form-row"><label>Aadhaar Card Front Photo <span id="frqStarNcAadhaarFront">*</span></label>
           <input type="file" id="ncAadhaarFront" accept="image/*" onchange="ncPhotoChanged('ncAadhaarFront')">
           <div id="ncAadhaarFront-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
@@ -2160,7 +2160,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div id="ncPanPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
 
-        <div class="form-row"><label>Loyalty Card Type *</label>
+        <div class="form-row"><label>Loyalty Card Type <span id="frqStarNcCardType">*</span></label>
           <select id="ncCardType">
             <option value="">-- Select Card Type --</option>
             <option value="Sparkle">Sparkle</option>
@@ -2168,8 +2168,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <option value="Sparkle Premium">Sparkle Premium</option>
           </select>
         </div>
-        <div class="form-row"><label>Loyalty Card Number *</label><input type="text" id="ncCardNo" placeholder="Card number as printed on the card"></div>
-        <div class="form-row"><label>Card Issued Date *</label><input type="date" lang="en-GB" id="ncCardDate"></div>
+        <div class="form-row"><label>Loyalty Card Number <span id="frqStarNcCardNo">*</span></label><input type="text" id="ncCardNo" placeholder="Card number as printed on the card"></div>
+        <div class="form-row"><label>Card Issued Date <span id="frqStarNcCardDate">*</span></label><input type="date" lang="en-GB" id="ncCardDate"></div>
 
         <div id="ncErrorMsg" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;padding:8px 10px;background:var(--red-bg,#fdecea);border-radius:8px;"></div>
         <div class="btn-row">
@@ -3297,6 +3297,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <button class="btn-sm btn-view" style="width:100%;" onclick="openThemePickerModal()">🎨 Choose Theme (24 options)</button>
         </div>
 
+        <!-- v-add (BRO: "anni tiki kalipi okati setting lo pettu, no in stock entry
+             form kinda" — ★ Required Fields Settings used to be a button tucked under
+             the Stock Entry form only; moved here as ONE place for every entry form's
+             compulsory (★) fields — Stock Entry/Transfer, DSR, Outlet Issue, RDR,
+             Leave, New Loyalty Card, Golden Aura, Lead Call Log — all in one modal,
+             grouped by form. -->
+        <div class="card">
+          <div class="card-title">⚙️ Required Fields Settings</div>
+          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Switch the ★ (compulsory) flag on/off for any field in any entry form — Stock Entry/Transfer, DSR, Outlet Issue, RDR, Leave, New Loyalty Card, Golden Aura, Lead Call Log. Off = that field is no longer blocked at Submit.</p>
+          <button class="btn-sm btn-view" style="width:100%;" onclick="frqOpenModal()">⚙️ Open Required Fields Settings</button>
+        </div>
+
         <!-- v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite autunda" —
              instead of hardcoding the auto-logout minutes in code every time, let
              MIS/Director pick it here. Applies to every Employee + Admin login. -->
@@ -4382,10 +4394,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 </div>
 
 <!-- v-add (BRO: "all new entry form lo star unte, compulsary annaru kada, daniki edaina
-     toggle pettu" — Admin-only. Lists every toggleable field (FIELD_REQ_REGISTRY — Stock
-     Entry/Transfer for now, DSR + Leave to follow) with an ON/OFF switch for whether that
-     field's ★ is actually enforced on submit. Saves to PortalBackend.gs via
-     saveFieldRequiredSettings, which every form's frqRefresh() then picks up. -->
+     toggle pettu" ... "anni tiki kalipi okati setting lo pettu" — Admin-only. Lists every
+     toggleable field (FIELD_REQ_REGISTRY — Stock Entry/Transfer, DSR, Outlet Issue, RDR,
+     Leave, New Loyalty Card, Golden Aura, Lead Call Log) with an ON/OFF switch for whether
+     that field's ★ is actually enforced on submit. Saves to PortalBackend.gs via
+     saveFieldRequiredSettings, which every form's frqRefresh() then picks up. Opened only
+     from Settings → ⚙️ Required Fields Settings — one place, not a button per form. -->
 <div class="modal-overlay" id="fieldReqModal">
   <div class="modal-box" style="max-width:440px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="frqCloseModal()" title="Close">✕</button>
@@ -12539,23 +12553,44 @@ async function submitNewLoyaltyCard() {
   const cardNo     = document.getElementById('ncCardNo').value.trim();
   const cardDate   = document.getElementById('ncCardDate').value;
 
-  if (!custName || !occupation || !phone || !address || !aadhaarNo || !cardType || !cardNo || !cardDate) {
-    errBox.textContent = 'Please fill all required fields marked *';
-    errBox.style.display = 'block';
-    return;
+  // v-fix (BRO: "star unte compulsory kosam toggle pettu" — each field's
+  // own ★ now checks the Settings → Required Fields overrides instead of
+  // always being mandatory, same frqIsRequired() system as Stock/DSR/Leave.
+  const ncReqChecks = [
+    ['loyalty.custName', custName, 'Customer Full Name'],
+    ['loyalty.occupation', occupation, 'Occupation'],
+    ['loyalty.phone', phone, 'Phone Number'],
+    ['loyalty.address', address, 'Address'],
+    ['loyalty.aadhaarNo', aadhaarNo, 'Aadhaar No'],
+    ['loyalty.cardType', cardType, 'Loyalty Card Type'],
+    ['loyalty.cardNo', cardNo, 'Loyalty Card Number'],
+    ['loyalty.cardDate', cardDate, 'Card Issued Date']
+  ];
+  for (const [ncKey, ncVal, ncLabel] of ncReqChecks) {
+    if (frqIsRequired(ncKey) && !ncVal) {
+      errBox.textContent = 'Please fill: ' + ncLabel;
+      errBox.style.display = 'block';
+      return;
+    }
   }
 
-  // v-fix (Items 3 & 4): strict format validation, not just "not empty".
-  const mobileErr = validateMobileNo(phone);
+  // v-fix (Items 3 & 4): strict format validation, not just "not empty" —
+  // only runs when something was actually typed, so turning a field OFF
+  // above doesn't then get blocked here on an empty string.
+  const mobileErr = phone ? validateMobileNo(phone) : null;
   if (mobileErr) { errBox.textContent = mobileErr; errBox.style.display = 'block'; return; }
-  const aadhaarErr = validateAadhaarNo(aadhaarNo);
+  const aadhaarErr = aadhaarNo ? validateAadhaarNo(aadhaarNo) : null;
   if (aadhaarErr) { errBox.textContent = aadhaarErr; errBox.style.display = 'block'; return; }
 
   const sigFile = document.getElementById('ncSigPhoto').files[0];
   const custFile = document.getElementById('ncCustPhoto').files[0];
   const aadhaarFrontFile = document.getElementById('ncAadhaarFront').files[0];
-  if (!sigFile || !custFile || !aadhaarFrontFile) {
-    errBox.textContent = 'Customer Signature Photo, Customer Photo, and Aadhaar Card Front Photo are required';
+  const ncMissingPhotos = [];
+  if (frqIsRequired('loyalty.sigPhoto') && !sigFile) ncMissingPhotos.push('Customer Signature Photo');
+  if (frqIsRequired('loyalty.custPhoto') && !custFile) ncMissingPhotos.push('Customer Photo');
+  if (frqIsRequired('loyalty.aadhaarFront') && !aadhaarFrontFile) ncMissingPhotos.push('Aadhaar Card Front Photo');
+  if (ncMissingPhotos.length) {
+    errBox.textContent = ncMissingPhotos.join(', ') + (ncMissingPhotos.length > 1 ? ' are required' : ' is required');
     errBox.style.display = 'block';
     return;
   }
@@ -16421,10 +16456,13 @@ async function slEnsureMeta() {
 // kada, daniki edaina toggle pettu" — Admin can now switch OFF the
 // "required" (★) flag on individual form fields from a Settings
 // screen, per-field, instead of it being hard-coded in the HTML.
-// Stage 1 (this round): wired into Stock Entry / Transfer only —
-// DSR and Leave forms still have their stars hard-coded and will
-// get the same treatment in a follow-up round (said this to BRO
-// directly, not silently half-done).
+// Covers every entry form in the app now: Stock Entry/Transfer, DSR
+// Entry (which Outlet Issue and RDR/Return-Damage-Repair also reuse —
+// same renderDsrEntryForm() engine, same dsr.* keys, just a different
+// "who" scope, so they're automatically covered too), Leave
+// Application, New Loyalty Card, Golden Aura, and Lead Call Log.
+// One single access point for all of them — Settings → Required
+// Fields Settings (not scattered per-form buttons, see BRO's call).
 //
 // Storage: PortalBackend.gs keeps a small JSON object in
 // PropertiesService — only fields explicitly turned OFF are stored
@@ -16474,7 +16512,26 @@ const FIELD_REQ_REGISTRY = [
   { form: 'Leave Application', key: 'leave.leaveType', label: 'Leave Type' },
   { form: 'Leave Application', key: 'leave.purpose', label: 'Purpose / Reason' },
   { form: 'Leave Application', key: 'leave.authorityMet', label: 'Authority Met (Emergency/Special Permission)' },
-  { form: 'Leave Application', key: 'leave.reason', label: 'Reason for Modification' }
+  { form: 'Leave Application', key: 'leave.reason', label: 'Reason for Modification' },
+  { form: 'New Loyalty Card', key: 'loyalty.custName', label: 'Customer Full Name' },
+  { form: 'New Loyalty Card', key: 'loyalty.occupation', label: 'Occupation' },
+  { form: 'New Loyalty Card', key: 'loyalty.phone', label: 'Phone Number' },
+  { form: 'New Loyalty Card', key: 'loyalty.address', label: 'Address' },
+  { form: 'New Loyalty Card', key: 'loyalty.sigPhoto', label: 'Customer Signature Photo' },
+  { form: 'New Loyalty Card', key: 'loyalty.custPhoto', label: 'Customer Photo' },
+  { form: 'New Loyalty Card', key: 'loyalty.aadhaarNo', label: 'Aadhaar No' },
+  { form: 'New Loyalty Card', key: 'loyalty.aadhaarFront', label: 'Aadhaar Card Front Photo' },
+  { form: 'New Loyalty Card', key: 'loyalty.cardType', label: 'Loyalty Card Type' },
+  { form: 'New Loyalty Card', key: 'loyalty.cardNo', label: 'Loyalty Card Number' },
+  { form: 'New Loyalty Card', key: 'loyalty.cardDate', label: 'Card Issued Date' },
+  { form: 'Golden Aura', key: 'goldenaura.enrollDate', label: 'Enroll Date' },
+  { form: 'Golden Aura', key: 'goldenaura.planType', label: 'Plan Type' },
+  { form: 'Golden Aura', key: 'goldenaura.planNo', label: 'Plan Number' },
+  { form: 'Golden Aura', key: 'goldenaura.amount', label: 'Amount' },
+  { form: 'Golden Aura', key: 'goldenaura.custName', label: 'Customer Name' },
+  { form: 'Golden Aura', key: 'goldenaura.mobile', label: 'Mobile Number' },
+  { form: 'Golden Aura', key: 'goldenaura.town', label: 'Town' },
+  { form: 'Lead Call Log', key: 'lead.status', label: 'Status' }
 ];
 function frqLoadCache_() {
   try { FIELD_REQ_OVERRIDES = JSON.parse(localStorage.getItem(FIELD_REQ_LS_KEY) || '{}') || {}; } catch (e) { FIELD_REQ_OVERRIDES = {}; }
@@ -16488,13 +16545,20 @@ async function frqRefresh() {
 }
 function frqIsRequired(key) { return FIELD_REQ_OVERRIDES[key] !== false; } // default: required, unless explicitly switched off
 function frqStar(key) { return frqIsRequired(key) ? '<span class="req">★</span>' : ''; }
-// Leave Application's star markers live in plain static HTML (not a JS template literal
-// rebuilt on demand like Stock Entry/DSR are), so they can't use frqStar() inline — each one
-// got a stable id instead, and this just shows/hides that id's "*" after the overrides are
-// known (on load from cache, and again once frqRefresh()'s network call lands).
+// Leave Application + New Loyalty Card + Lead Call's star markers live in plain static
+// HTML (not a JS template literal rebuilt on demand like Stock Entry/DSR/Golden Aura
+// are), so they can't use frqStar() inline — each one got a stable id instead, and this
+// just shows/hides that id's "*" after the overrides are known (on load from cache, and
+// again once frqRefresh()'s network call lands).
 const FRQ_STATIC_STAR_MAP = {
   frqStarAckNotices: 'leave.ackNotices', frqStarLeaveType: 'leave.leaveType',
-  frqStarPurpose: 'leave.purpose', frqStarAuthMet: 'leave.authorityMet', frqStarModifyReason: 'leave.reason'
+  frqStarPurpose: 'leave.purpose', frqStarAuthMet: 'leave.authorityMet', frqStarModifyReason: 'leave.reason',
+  frqStarNcCustName: 'loyalty.custName', frqStarNcOccupation: 'loyalty.occupation',
+  frqStarNcPhone: 'loyalty.phone', frqStarNcAddress: 'loyalty.address',
+  frqStarNcSigPhoto: 'loyalty.sigPhoto', frqStarNcCustPhoto: 'loyalty.custPhoto',
+  frqStarNcAadhaarNo: 'loyalty.aadhaarNo', frqStarNcAadhaarFront: 'loyalty.aadhaarFront',
+  frqStarNcCardType: 'loyalty.cardType', frqStarNcCardNo: 'loyalty.cardNo', frqStarNcCardDate: 'loyalty.cardDate',
+  frqStarLeadStatus: 'lead.status'
 };
 function frqApplyStaticStars_() {
   Object.keys(FRQ_STATIC_STAR_MAP).forEach(id => {
@@ -17767,7 +17831,6 @@ function seFormHtml(scope) {
     <button class="se-add" type="button" id="${seId(scope,'addItem')}">＋ &nbsp;Add Another Item</button>
     <div class="se-banner" id="${seId(scope,'resultBanner')}"></div>
     <button class="se-save" type="button" id="${seId(scope,'saveBtn')}">★ &nbsp;Save Stock &nbsp;★</button>
-    ${scope==='admin' ? `<button type="button" class="btn-secondary" style="width:100%;margin-top:8px;" onclick="frqOpenModal()">⚙️ Required Fields Settings</button>` : ''}
   </div>`;
 }
 
@@ -18390,27 +18453,27 @@ function renderGoldenAuraForm(who, force) {
   box.innerHTML = `
     <div class="card">
       <div class="card-title">📆 Enroll Date</div>
-      <div class="form-row"><label>Enroll Date *</label><input type="date" lang="en-GB" id="gaEnrollDate-${who}"></div>
+      <div class="form-row"><label>Enroll Date ${frqStar('goldenaura.enrollDate')}</label><input type="date" lang="en-GB" id="gaEnrollDate-${who}"></div>
     </div>
 
     <div class="card">
       <div class="card-title">💎 Select the Plan</div>
-      <div class="form-row"><label>Plan Type *</label>
+      <div class="form-row"><label>Plan Type ${frqStar('goldenaura.planType')}</label>
         <select id="gaPlanType-${who}">
           <option value="">-- Select --</option>
           <option value="Golden Prosperity">1. Golden Prosperity</option>
           <option value="Golden Reward">2. Golden Reward</option>
         </select>
       </div>
-      <div class="form-row"><label>Plan Number *</label><input type="text" inputmode="numeric" id="gaPlanNo-${who}" placeholder="e.g. 29" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
-      <div class="form-row"><label>Amount *</label><input type="number" id="gaAmount-${who}" placeholder="e.g. 10000"></div>
-      <div class="form-row"><label>Customer Name (As per Document) *</label><input type="text" id="gaCustName-${who}"></div>
-      <div class="form-row"><label>Mobile Number *</label><input type="tel" id="gaMobile-${who}" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+      <div class="form-row"><label>Plan Number ${frqStar('goldenaura.planNo')}</label><input type="text" inputmode="numeric" id="gaPlanNo-${who}" placeholder="e.g. 29" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+      <div class="form-row"><label>Amount ${frqStar('goldenaura.amount')}</label><input type="number" id="gaAmount-${who}" placeholder="e.g. 10000"></div>
+      <div class="form-row"><label>Customer Name (As per Document) ${frqStar('goldenaura.custName')}</label><input type="text" id="gaCustName-${who}"></div>
+      <div class="form-row"><label>Mobile Number ${frqStar('goldenaura.mobile')}</label><input type="tel" id="gaMobile-${who}" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
       <div class="form-row"><label>C/O, D/O, W/O, S/O</label><input type="text" id="gaCoDoWoSo-${who}"></div>
       <div class="form-row"><label>Street</label><input type="text" id="gaStreet-${who}"></div>
       <div class="form-row"><label>Area</label><input type="text" id="gaArea-${who}"></div>
       <div class="form-row"><label>Landmark</label><input type="text" id="gaLandmark-${who}"></div>
-      <div class="form-row"><label>Town *</label><input type="text" id="gaTown-${who}"></div>
+      <div class="form-row"><label>Town ${frqStar('goldenaura.town')}</label><input type="text" id="gaTown-${who}"></div>
       <div class="form-row"><label>District</label><input type="text" id="gaDistrict-${who}"></div>
       <div class="form-row"><label>State</label><select id="gaState-${who}"><option value="">-- Select State --</option>${stateOptions}</select></div>
       <div class="form-row"><label>Pin</label><input type="text" id="gaPin-${who}" maxlength="6"></div>
@@ -18483,14 +18546,24 @@ async function submitGoldenAura(who) {
   const amount = g('gaAmount').value.trim();
   const town = g('gaTown').value.trim().toUpperCase();
 
-  if (!custName || !mobile || !planType || !planNo || !amount || !town) { toast('Please fill all required fields (*)', 'error'); return; }
-  if (!/^\d+$/.test(planNo)) { toast('Plan Number must be numbers only', 'error'); return; }
+  // v-fix (BRO: "star unte compulsory kosam toggle pettu" — per-field,
+  // same frqIsRequired() system as Stock/DSR/Leave/Loyalty now.
+  const gaReqChecks = [
+    ['goldenaura.planType', planType, 'Plan Type'],
+    ['goldenaura.planNo', planNo, 'Plan Number'],
+    ['goldenaura.amount', amount, 'Amount'],
+    ['goldenaura.custName', custName, 'Customer Name'],
+    ['goldenaura.mobile', mobile, 'Mobile Number'],
+    ['goldenaura.town', town, 'Town']
+  ];
+  for (const [gaKey, gaVal, gaLabel] of gaReqChecks) {
+    if (frqIsRequired(gaKey) && !gaVal) { toast('Please fill: ' + gaLabel, 'error'); return; }
+  }
+  if (planNo && !/^\d+$/.test(planNo)) { toast('Plan Number must be numbers only', 'error'); return; }
 
-  // v-fix (Items 3 & 4): strict format validation, not just "10 digits".
-  // Mobile Number is required, so always checked; the other 3 fields
-  // (Aadhaar, Nominee Mobile, Nominee Aadhaar) are optional on this form
-  // — only validated if the person actually typed something in them.
-  const mobileErr = validateMobileNo(mobile);
+  // v-fix (Items 3 & 4): strict format validation, not just "10 digits" —
+  // only runs when Mobile actually has a value (it may be switched OFF above).
+  const mobileErr = mobile ? validateMobileNo(mobile) : null;
   if (mobileErr) { toast(mobileErr, 'error'); return; }
 
   const aadhaarNo = g('gaAadhaarNo').value.trim();
@@ -19513,7 +19586,7 @@ function openLeadCallPanel(lead) {
       <input type="text" id="leadDurationInput" value="00:00" placeholder="mm:ss">
     </div>
 
-    <div class="form-row"><label>Status *</label>
+    <div class="form-row"><label>Status <span id="frqStarLeadStatus">*</span></label>
       <select id="leadStatusSel" class="uniform-select" onchange="onLeadStatusChange()">
         <option value="">Choose...</option>
         <option>Answered</option>
@@ -19568,6 +19641,7 @@ function openLeadCallPanel(lead) {
     </div>
   </div>`;
   document.body.appendChild(div);
+  frqApplyStaticStars_(); // this modal's Status ★ is rebuilt fresh each open, so re-sync it against the current overrides
   _applyLeadDurationLock();
 }
 
@@ -19729,7 +19803,7 @@ async function submitLeadCall() {
   const errBox = document.getElementById('leadSubmitErr');
   errBox.style.display = 'none';
   let status = document.getElementById('leadStatusSel').value;
-  if (!status) { errBox.textContent = 'Please choose a call status.'; errBox.style.display = 'block'; return; }
+  if (frqIsRequired('lead.status') && !status) { errBox.textContent = 'Please choose a call status.'; errBox.style.display = 'block'; return; }
   if (status === 'Flag This Number') {
     const reason = document.getElementById('leadFlagReasonInput').value.trim();
     if (!reason) { errBox.textContent = 'Please give a reason for flagging this number.'; errBox.style.display = 'block'; return; }
