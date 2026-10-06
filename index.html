@@ -590,89 +590,16 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 /* Page Content */
 .page-content { padding: 16px 14px 90px; max-width: 800px; margin: 0 auto; }
 
-/* Persistent left sidebar — DESKTOP ONLY. Mobile is completely
-   untouched (this stays display:none there); the existing
-   modulepicker/section-page navigation keeps working exactly as
-   before on phones. This is purely an additional, always-visible
-   navigation aid for wider screens, not a replacement for anything —
-   every item calls the exact same showAdminPage()/showEmpPage()
-   functions the modulepicker buttons already use. */
+/* v-fix (BRO: "side bar feture remove chei. mobile and desktop lo ela chusina
+   oke laga ravali. desktop lo sidebar valla chala features రావడం లేదు" — the
+   persistent desktop-only left sidebar duplicated only a partial list of the
+   full modulepicker/footer-nav links, so several features were effectively
+   missing on desktop. Removed entirely: .vsr-sidebar now stays display:none
+   at every width, and every desktop-only override that existed purely to make
+   room for it (hiding the footer nav / modulepicker, shifting page-content
+   right) is removed too, so desktop now renders exactly the same
+   modulepicker + footer-nav navigation as mobile, just at a wider viewport. */
 .vsr-sidebar { display: none; }
-@media (min-width: 1024px) {
-  .vsr-sidebar {
-    display: flex; flex-direction: column; gap: 2px;
-    position: fixed; left: 0; top: var(--header-h, 60px); bottom: 0;
-    width: 216px; padding: 18px 10px;
-    /* v-fix: was hardcoded dark-green regardless of selected theme —
-       now uses the same --purple-dark/--purple variables every theme
-       preset already defines, so changing theme in Settings recolors
-       the sidebar exactly like every other themed area. */
-    background: linear-gradient(180deg, var(--purple-dark, #123524) 0%, var(--purple-mid, #0b2417) 140%);
-    border-right: 2px solid var(--gold, #d4af37);
-    box-shadow: 3px 0 14px rgba(0,0,0,0.18);
-    overflow-y: auto; z-index: 85;
-  }
-  .vsr-sidebar-brand {
-    font-family: 'Spectral', serif; font-size: 19px; font-weight: 800;
-    color: var(--gold, #d4af37); letter-spacing: 1.5px;
-    padding: 4px 12px 18px; display: flex; align-items: center; gap: 8px;
-    border-bottom: 1px solid rgba(212,175,55,0.25); margin-bottom: 10px;
-  }
-  .vsr-sidebar-divider { height: 1px; background: rgba(212,175,55,0.2); margin: 8px 10px; }
-  .vsr-sidebar-caret { margin-left: auto; font-size: 11px; transition: transform 0.2s; }
-  .vsr-sidebar-caret.open { transform: rotate(180deg); }
-  .vsr-sidebar-submenu { padding-left: 14px; }
-  .vsr-sidebar-subitem {
-    display: flex; align-items: center; gap: 8px;
-    padding: 9px 13px; border-radius: 8px;
-    color: rgba(233,228,216,0.85); font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .vsr-sidebar-subitem:hover { background: rgba(212,175,55,0.12); color: var(--gold, #d4af37); }
-  .vsr-sidebar-item {
-    display: flex; align-items: center; gap: 11px;
-    padding: 13px 13px; border-radius: 9px;
-    color: #e9e4d8; font-size: 16px; font-weight: 600;
-    cursor: pointer; transition: background 0.15s, color 0.15s, padding-left 0.15s;
-    border-left: 3px solid transparent;
-  }
-  .vsr-sidebar-item:hover { background: rgba(212,175,55,0.14); }
-  .vsr-sidebar-item.active {
-    background: linear-gradient(90deg, rgba(212,175,55,0.28), rgba(212,175,55,0.04));
-    color: var(--gold, #d4af37); border-left-color: var(--gold, #d4af37);
-    padding-left: 15px; font-weight: 800;
-  }
-  .vsr-sidebar-icon { font-size: 19px; width: 23px; text-align: center; flex-shrink: 0; }
-
-  /* Desktop only: hide the mobile footer nav bar entirely — the
-     sidebar is now the primary desktop navigation, the footer was
-     redundant and duplicated every link already in the sidebar. */
-  #adminApp .footer-nav, #empApp .footer-nav { display: none !important; }
-  /* Section/modulepicker page is desktop-only hidden — the sidebar is
-     the primary desktop navigation now, so this page (and the buttons
-     that lead to it) would just be an empty dead-end on desktop.
-     Mobile is untouched — this page stays the main landing screen there. */
-  #admin-modulepicker, #emp-modulepicker,
-  #adminSectionsFab, #empSectionsFab,
-  #adminSectionBackFab, #empSectionBackFab { display: none !important; }
-  /* The single "← Back" fab is desktop-visible too now (JS toggles it
-     with .show — see updateBackFabs) so there's always exactly one way
-     back, one step at a time, even on desktop. */
-
-  /* Shift main content right of the sidebar instead of centering under
-     it — max-width widened too, since desktop has the room now. */
-  #adminApp .page-content, #empApp .page-content {
-    margin-left: 216px; margin-right: 0; max-width: 900px; padding-left: 24px;
-  }
-  /* Wide-data pages (KPI report especially — see .kpi-fit-wrap) opt out
-     of the 900px cap so "fit to screen" scaling has the real screen
-     width to work with, instead of squeezing a 1400px table down to
-     fit an already-narrow 900px box (which made every column tiny and
-     left empty space on the right — not what "fit to screen" meant). */
-  #adminApp .page-content.page-content-wide, #empApp .page-content.page-content-wide {
-    max-width: calc(100vw - 216px - 48px);
-  }
-}
 
 /* Bottom footer tab bar — mirrors the primary destinations that used to be
    top nav tabs, now duplicated at the bottom for quick thumb-reach access. */
@@ -939,11 +866,11 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .dh-chart-col { flex: 1 1 220px; min-width: 200px; }
 .dh-chart-col-title { font-size: 11px; font-weight: 800; color: var(--text2); margin-bottom: 6px; text-align: center; }
 
-/* ── Desktop (≥1024px) — richer multi-column dashboard, per the
-   Desktop/Mobile spec: sidebar stays as-is (unchanged app chrome), but
-   inside the Dashboard Hub itself the KPI row widens and the detail
-   panels below arrange into a real grid instead of one long mobile
-   column, exactly like the reference layout's desktop view. ── */
+/* ── Desktop (≥1024px) — richer multi-column dashboard: inside the
+   Dashboard Hub itself the KPI row widens and the detail panels below
+   arrange into a real grid instead of one long mobile column. (The
+   sidebar this comment used to reference has been removed — see the
+   v-fix note near .vsr-sidebar — so nothing here assumes it exists.) ── */
 @media (min-width: 1024px) {
   /* v-fix: a button placed directly in a .page-section (not wrapped in
      a .card/.modal-box/.form-row) used to stretch to the full ~900px
@@ -965,20 +892,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
   #admin-dashboard-hub .dh-panel { margin-bottom: 0; }
   #admin-dashboard-hub .dh-stat-grid6 { grid-template-columns: repeat(6,1fr); }
 
-  /* v-fix: this used to turn the quick-access row into a second,
-     duplicate left-hand navigation column at desktop widths — now
-     genuinely redundant since the persistent .vsr-sidebar already
-     provides the exact same Leave/Leads/Checklist/etc links, always
-     visible on desktop regardless of which page is open. Simply
-     hidden here now; mobile (outside this media query) still renders
-     it normally as its own row, where it's still needed. */
   .dh-fixed-top-inner { display: block; }
-  .dh-quick-row { display: none !important; }
-
-  /* Scrollable panels below start under the same right-hand column so
-     the whole desktop dashboard reads as one aligned 2-column layout
-     (sidebar | content), not just the frozen strip on its own. */
-  #admin-dashboard-hub .dh-scroll-body, #emp-dashboard-hub .dh-scroll-body { margin-left: 184px; }
 }
 
 /* Stats Grid */
@@ -1327,6 +1241,16 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
 @keyframes newEntryPopIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes newEntryPopOut { from { transform: translateX(0); opacity: 1; max-height: 200px; } to { transform: translateX(40px); opacity: 0; max-height: 0; margin: 0; padding: 0; } }
 .new-entry-popup-card .new-entry-popup-hdr { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--purple, #4A0E8F); padding: 6px 10px 0; text-transform: uppercase; }
+/* v-fix (BRO: "notification box worst ga undi, table laga ravali" — the mail-digest
+   mini-table (_misDigestRowTable_*) that's dropped into this card is built for a
+   ~520px-wide email, so at this popup's narrower width its own inline font-size/
+   padding made it look cramped and lost its table shape. These rules only target
+   markup actually generated by that table builder (not any other popup content),
+   with !important since the builder sets its sizes inline. */
+.new-entry-popup-card { overflow: hidden; }
+.new-entry-popup-card table { width: 100% !important; table-layout: fixed !important; margin: 6px 0 2px !important; font-size: 11px !important; }
+.new-entry-popup-card table td, .new-entry-popup-card table th { padding: 5px 8px !important; font-size: 11px !important; word-break: break-word; }
+.new-entry-popup-card table td:first-child { width: 34% !important; }
 
 /* Modal */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
@@ -1382,8 +1306,13 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
    8. Settings — Employee Access / Admin Access
    9. Shared Today/Running Month/Custom Date bar (dateScopeBarHtml) — used by
       KPI Till Date, Walk-in Track, Leads Report, and anywhere else it's mounted */
+/* v-fix (BRO: "status filter line scroll avvatledu, modata option sagam vastundi" — justify-content:
+   center on a horizontally-scrolling flex row clips/hides the start of the content behind the left
+   edge with no way to scroll back to it (classic flex-center + overflow bug). flex-start keeps every
+   button reachable and the first one never starts half cut off; when all buttons fit on screen there's
+   no visible difference since there's nothing left to scroll to anyway. */
 .filter-bar {
-  display: flex; gap: 6px; margin-bottom: 13px; justify-content: center;
+  display: flex; gap: 6px; margin-bottom: 13px; justify-content: flex-start;
   flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .filter-bar::-webkit-scrollbar { display: none; }
@@ -2359,6 +2288,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">📜 KPI Rules &amp; Grading</span></div>
       <div class="card" id="kpiRulesBox-emp"></div>
     </div>
+    <!-- v-fix (BRO: "notification option lo alane unchu. pop up laga vaddu. full page lagaravali.
+         dantlo table laga data undali. section wise separate ga undali. only last 7days data
+         mtarme undali" — full-page Notifications (was a popup/modal). See renderNotifHistoryPage_()
+         in JS: groups entries by type into separate bordered tables, each with Time/Icon/Message
+         columns, Message carrying the full detail (same fields as the MIS digest mail for that
+         entry). 7-day retention unchanged. -->
+    <div class="page-section" id="emp-notifications">
+      <div class="section-hdr"><span class="section-title2">🔔 Notifications</span>
+        <button class="btn-sm btn-view" onclick="clearNotifHistory_()">🗑️ Clear</button>
+      </div>
+      <div class="modal-sub" style="margin:-6px 0 10px;">Last 7 days, this device only.</div>
+      <div id="notifHistoryPage-emp"></div>
+    </div>
     <div class="page-section" id="emp-kpi-target">
       <div class="section-hdr"><span class="section-title2">🎯 My Target</span></div>
       <button class="export-icon-btn" id="exportBtn-kpiTargetBox-emp" style="display:none;" onclick="openBoxExportModal('kpiTargetBox-emp','My Target')" title="Export">📥</button>
@@ -3151,12 +3093,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         </div>
         <div class="card">
           <div class="card-title">⚡ Outcome</div>
-          <div class="quick-actions-grid" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="quick-actions-grid" style="grid-template-columns:1fr 1fr;">
             <button class="btn-sm btn-approve" id="directApproveBtn" style="height:40px;white-space:nowrap;" onclick="submitDirectAction('Approved', event)">✅ Approve</button>
             <button class="btn-sm btn-absent" id="directAbsentBtn" style="height:40px;white-space:nowrap;" onclick="submitDirectAction('Absent', event)">🚫 Mark Absent</button>
-            <button class="btn-sm btn-reject" id="directRejectBtn" style="height:40px;white-space:nowrap;" onclick="submitDirectAction('Rejected', event)">❌ Reject</button>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;">This directly writes an entry (no pending request needed) — same as the Sheets-side "Direct Approve / Reject / Absent" tool. A rejection reason is required for Reject.</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;">This directly writes an entry (no pending request needed) — same as the Sheets-side "Direct Approve / Absent" tool.</div>
         </div>
       </div>
     </div>
@@ -3250,6 +3191,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="card-title">👁 Live Preview</div>
         <div class="notice-render" id="noticesPreviewBox"></div>
       </div>
+    </div>
+
+    <!-- v-fix (BRO: "notification option lo alane unchu. pop up laga vaddu. full page lagaravali.
+         dantlo table laga data undali. section wise separate ga undali. only last 7days data
+         mtarme undali" — full-page Notifications (was a popup/modal). See renderNotifHistoryPage_()
+         in JS: groups entries by type into separate bordered tables, each with Time/Icon/Message
+         columns, Message carrying the full detail (same fields as the MIS digest mail for that
+         entry). 7-day retention unchanged. -->
+    <div class="page-section" id="admin-notifications">
+      <div class="section-hdr"><span class="section-title2">🔔 Notifications</span>
+        <button class="btn-sm btn-view" onclick="clearNotifHistory_()">🗑️ Clear</button>
+      </div>
+      <div class="modal-sub" style="margin:-6px 0 10px;">Last 7 days, this device only.</div>
+      <div id="notifHistoryPage-admin"></div>
     </div>
 
     <!-- BLOCKED DATES & DAYS (MIS/Director only) -->
@@ -4456,21 +4411,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
-<!-- v-add (BRO: "popup vastundi, tarvata epudaina chudadaniki vilu untundi, 7 days data matrame
-     unchali" — reopenable history of the new-entry "go check it" popups + error popups, kept
-     device-local in localStorage, auto-pruned to the last 7 days. See notifHistory_* in JS. -->
-<div class="modal-overlay" id="notifHistoryModal">
-  <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;">
-    <button class="modal-close-x" onclick="closeModal('notifHistoryModal')" title="Close">✕</button>
-    <div class="modal-title">🔔 Notifications</div>
-    <div class="modal-sub">Last 7 days, this device only.</div>
-    <div id="notifHistoryList" style="margin-top:10px;"></div>
-    <div class="modal-btns">
-      <button class="btn-modal-cancel" style="flex:1;" onclick="clearNotifHistory_()">🗑️ Clear</button>
-      <button class="btn-modal-confirm" style="flex:1;background:var(--blue);" onclick="closeModal('notifHistoryModal')">Close</button>
-    </div>
-  </div>
-</div>
+<!-- v-fix (BRO: "notification option lo alane unchu. pop up laga vaddu. full page lagaravali.
+     dantlo table laga data undali. section wise separate ga undali. only last 7days data
+     mtarme undali" — the popup/modal history is gone; 🔔 Notifications now opens a full PAGE
+     (see #emp-notifications / #admin-notifications below) instead of this modal. Kept here only
+     as a dead, never-opened element so nothing else that still references the old modal id
+     breaks — see renderNotifHistoryPage_() in JS for the real page content. -->
+<div class="modal-overlay" id="notifHistoryModal" style="display:none;"></div>
 
 <div class="modal-overlay" id="leaveResultModal">
   <div class="modal-box" style="max-width:400px;text-align:center;">
@@ -9088,12 +9035,6 @@ async function submitDirectAction(outcome, evt) {
     segments.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
 
-  if (outcome === 'Rejected' && !reason) {
-    reason = prompt('Rejection reason (required):') || '';
-    if (!reason.trim()) { toast('Rejection reason is required', 'error'); return; }
-    reason = reason.trim();
-  }
-
   const emp = directEmpCache.find(e => e.empId === empId);
   const empName = emp ? emp.name : empId;
   window.__directPending = { outcome, empId, empName, leaveType, reason, purpose, leaveAddress, authMet, authWho, segments };
@@ -9108,7 +9049,7 @@ function directShowPreview() {
     `<div class="dsr-meta-row">📅 ${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${segDays(s)} day(s)</div>`
   ).join('');
   const totalDays = c.segments.reduce((sum, s) => sum + segDays(s), 0);
-  const outLbl = c.outcome === 'Approved' ? '✅ Approve' : c.outcome === 'Absent' ? '🚫 Mark Absent' : '❌ Reject';
+  const outLbl = c.outcome === 'Approved' ? '✅ Approve' : '🚫 Mark Absent';
 
   const existing = document.getElementById('directPreviewModal');
   if (existing) existing.remove();
@@ -9150,7 +9091,7 @@ async function confirmDirectAction() {
   // Lock all three outcome buttons together so a double-click can't submit twice
   const btns = document.querySelectorAll('#admin-direct .btn-approve, #admin-direct .btn-absent, #admin-direct .btn-reject');
   btns.forEach(b => { b.disabled = true; b.style.pointerEvents = 'none'; });
-  const btnId = outcome === 'Approved' ? 'directApproveBtn' : outcome === 'Absent' ? 'directAbsentBtn' : 'directRejectBtn';
+  const btnId = outcome === 'Approved' ? 'directApproveBtn' : 'directAbsentBtn';
   const clicked = document.getElementById(btnId);
   const originalText = clicked ? clicked.textContent : '';
 
@@ -17889,6 +17830,7 @@ async function seCheckTag(scope, b) {
       seSetTagMsg(b,'warn','Sold in DSR ' + (r.sold.dsrId||'') + (r.sold.soldDate ? ' on ' + r.sold.soldDate : '') + '.');
       seR(b,'retWrap').classList.remove('se-hide'); b._tagState='sold';
       stockTagCacheMarkSold(tagN, { dsrId: r.sold.dsrId||'', soldDate: r.sold.soldDate||'' });
+      seApplyExistingPhoto(b, r.item && r.item.photo);
     } else {
       seSetTagMsg(b,'ok','New tag — OK.');
       stockTagCacheRemove(tagN);   // confirmed genuinely free — drop any stale cache entry
@@ -17931,6 +17873,20 @@ function seRemovePhoto(b) {
   seR(b,'phRemove').style.display = 'none';
   seR(b,'fileCam').value = '';
   seR(b,'fileGal').value = '';
+}
+// v-add (BRO: "already unna tag ki photo already backend sheet lo undi, malli save avalsina
+// avasaram ledu, backend automatic ga copy avali. leni data ki matrame upload ravali" — a Return
+// (tag coming back from a sold DSR) used to always ask for a fresh photo even when that exact tag's
+// photo is already sitting in the Sold sheet. The live tag lookup already returns item.photo (the
+// existing Drive URL, same direct-link pattern used for DSR items — see dsrfSetPhotoData above), so
+// reuse it here instead of making the employee re-take/re-upload it. Only a tag with NO existing
+// photo on file still shows the normal Upload Photo prompt.
+function seApplyExistingPhoto(b, url) {
+  if (!url || b._photo) return;   // never overwrite a photo the person already picked
+  b._photo = url;
+  seR(b,'phTxt').textContent = 'Photo from stock (already on file — no re-upload needed)';
+  const pv = seR(b,'prev'); pv.src = url; pv.classList.add('show');
+  seR(b,'phRemove').style.display = 'inline-block';
 }
 function seItemError(b, msg) {
   const e = b.querySelector('[data-role="itemerr"]'); b.classList.toggle('se-err', !!msg);
