@@ -1876,7 +1876,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="empQAGoldenAuraModule" onclick="showEmpPage('golden-aura')"><span class="quick-action-icon">🥇</span><div class="quick-action-label">Golden Aura</div><div class="quick-action-sub">Enroll &amp; my schemes</div></div>
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQACustomer360" onclick="showEmpPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR</div></div>
-          <div class="quick-action-btn" id="empQAWindowShop" onclick="showEmpPage('windowshop')"><span class="quick-action-icon">🚩</span><div class="quick-action-label">Window Shop</div><div class="quick-action-sub">Visited, no purchase yet</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
           <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
@@ -2257,16 +2256,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <p style="font-size:11px;color:var(--text3);margin:0 0 10px;">Some details (address, Aadhaar, PAN, photos, full mobile) are restricted to Admin.</p>
       <div id="customer360Box-emp"><div class="empty-state"><p>Search by mobile number, customer name, Loyalty Card No, Golden Plan No, or DSR ID to see every visit, Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
-    </div>
-
-    <!-- v-add (BRO: "window shop customer ki oka option ekkadaina unda" →
-         "emp and admin rendu login lo pettu" — dedicated list of EVERY Window
-         Shop Customer at once, visible to both logins, same table-with-borders
-         look as everywhere else in this portal. -->
-    <div class="page-section" id="emp-windowshop">
-      <div class="section-hdr"><span class="section-title2">🚩 Window Shop Customers</span></div>
-      <p style="font-size:11px;color:var(--text3);margin:0 0 10px;">Customers who visited (Customer Type = Store) more than 3 times with no purchase yet.</p>
-      <div id="windowShopBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <div class="page-section" id="emp-profile">
@@ -2760,7 +2749,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <!-- v-fix (BRO: "side bar lo 360 ekada undi" — Customer 360° was only
          reachable via the "More" flyout; now a direct top-level item. -->
     <div class="vsr-sidebar-item" data-page="customer-360" id="adminSidebarCustomer360" onclick="showAdminPage('customer-360')"><span class="vsr-sidebar-icon">🔍</span>Customer 360°</div>
-    <div class="vsr-sidebar-item" data-page="windowshop" id="adminSidebarWindowShop" onclick="showAdminPage('windowshop')"><span class="vsr-sidebar-icon">🚩</span>Window Shop</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
     <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
@@ -3427,15 +3415,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadCustomer360()">🔍 Search</button>
       </div>
       <div id="customer360Box"><div class="empty-state"><p>Search by mobile number, customer name, Loyalty Card No, Golden Plan No, or DSR ID to see every visit, Loyalty Card, Golden Aura plan, Lead call, and DSR purchase on record for them.</p></div></div>
-    </div>
-
-    <!-- v-add (BRO: "window shop customer ki oka option ekkadaina unda" →
-         "emp and admin rendu login lo pettu" — dedicated list of EVERY Window
-         Shop Customer at once, visible to both logins. -->
-    <div class="page-section" id="admin-windowshop">
-      <div class="section-hdr"><span class="section-title2">🚩 Window Shop Customers</span></div>
-      <p style="font-size:11px;color:var(--text3);margin:0 0 10px;">Customers who visited (Customer Type = Store) more than 3 times with no purchase yet.</p>
-      <div id="windowShopBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
     <!-- v-add (BRO's "Extra DSR" discrepancy feature) -->
@@ -4122,12 +4101,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
-        <!-- v-fix (BRO: "sidebar option remove chesi 2 days aindi" — .vsr-sidebar
-             is display:none now, so the Window Shop item added there earlier was
-             never actually reachable. Admin navigation really runs through this
-             "More" quick-actions grid (and the 🔍 Quick Search index below) now,
-             same place Customer 360° itself lives — added here instead. -->
-        <div class="quick-action-btn" onclick="showAdminPage('windowshop')"><span class="quick-action-icon">🚩</span><div class="quick-action-label">Window Shop</div><div class="quick-action-sub">Visited, no purchase yet</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Apply-Leave page message &amp; rules</div></div>
@@ -6705,7 +6678,6 @@ function showEmpPage(page, opts) {
   if(page==='profile') renderEmpProfile();
   if(page==='blocked') renderEmpBlockedDates();
   if(page==='notifications') renderNotifHistoryPage_('emp');
-  if(page==='windowshop') loadWindowShopCustomers('emp');
   if(page==='myleaves') renderMyLeaves();
   if(page==='apply') {
     loadNoticesForEmployee();
@@ -8529,6 +8501,34 @@ function submitDsrOffline(rows, idemKey, who, reason) {
 // item is removed from the persisted queue the moment it's *claimed*
 // for sending (not only after success), so even a flush that somehow
 // still overlaps this one no longer sees an already-claimed item.
+// v-add (BRO: "fail ainavi notification lo ravali" — a DSR/Outlet Issue/
+// Return-Damage-Repair item stuck in the offline queue used to retry
+// completely silently forever, with zero visibility if it kept failing
+// (bad data, duplicate, server rejecting it, etc). This never removes the
+// item from the queue on failure (BRO: "backend ki cherinanta varaku...
+// data remove cheyoddu" — data must never be dropped until the backend
+// actually confirms it) — it just logs ONE Notifications entry the first
+// time a given item fails, so it doesn't keep spamming the same alert on
+// every retry cycle, while the item itself keeps quietly retrying in the
+// background for as long as it takes.
+function _dsrNotifyOfflineFail_(item, reasonMsg) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  try {
+    const r0 = (item.rows && item.rows[0]) || {};
+    const label = item.action === 'saveOutletIssue' ? 'Outlet Issue' : item.action === 'saveReturnDamageRepair' ? 'Return/Damage/Repair' : 'DSR Entry';
+    const tbl = _notifMiniTable_('#dc2626', '⚠️ Offline ' + label + ' — Sync Failed (still retrying, data NOT lost)', [
+      ['Employee', r0.employeeName || '—'],
+      ['Customer', r0.customerName || '—'],
+      ['Bill Date', r0.billDate || '—'],
+      ['Items', String((item.rows || []).length)],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_('⚠️', tbl, 'dsr');
+  } catch (e) {}
+}
+
 let __dsrFlushInFlight = false;
 async function flushDsrOfflineQueue() {
   if (!navigator.onLine) return;
@@ -8567,12 +8567,16 @@ async function flushDsrOfflineQueue() {
         }
         if (!(result && result.status === 'success')) {
           console.error('[DSR Sync] Item NOT marked success by server. Parsed response:', result);
+          item.attempts = (item.attempts || 0) + 1;
+          _dsrNotifyOfflineFail_(item, (result && result.message) || 'Server did not confirm save');
           remaining.push(item);
         } else {
           console.log('[DSR Sync] Item synced OK. DSR ID:', result.dsrId);
         }
       } catch (e) {
         console.error('[DSR Sync] Request itself threw (network/CORS/timeout):', e.name, e.message);
+        item.attempts = (item.attempts || 0) + 1;
+        _dsrNotifyOfflineFail_(item, 'Connection error — ' + ((e && e.message) || e));
         remaining.push(item);
       }
     }
@@ -10727,7 +10731,6 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '🗄️', label: 'Backend Sheets', page: 'backend-sheets' },
   { icon: '📋', label: 'Monthly Absent Report', page: 'monthly-absent' },
   { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
-  { icon: '🚩', label: 'Window Shop Customers', page: 'windowshop' },
   { icon: '🪪', label: 'Profile', page: 'profile' },
   { icon: '🔐', label: 'Login Activity', page: 'login-activity' }
 ];
@@ -10829,8 +10832,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '🚫', label: 'Blocked Dates (Leave)', page: 'blocked' },
   { icon: '📈', label: 'My Trends (Leave)', page: 'trend' },
   { icon: '📆', label: 'Events (Leave)', page: 'events' },
-  { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
-  { icon: '🚩', label: 'Window Shop Customers', page: 'windowshop' }
+  { icon: '🔍', label: 'Customer 360°', page: 'customer-360' }
 ];
 
 function openEmpQuickSearch() {
@@ -11113,53 +11115,6 @@ async function loadCustomer360(who) {
     dsErr && !ds ? (ds === null && dsErr.indexOf('Search by') === 0 ? dsErr : ('Could not load this section right now. (' + dsErr + ')')) : null);
   html += `</div>`;
   box.innerHTML = html;
-}
-
-// v-add (BRO: "window shop customer ki oka option ekkadaina unda" → "emp and
-// admin rendu login lo pettu" — the full list of every Window Shop Customer
-// at once (not just the per-search red tag in Customer 360° above), shown to
-// both logins, as a bordered table like everywhere else in this portal.
-async function loadWindowShopCustomers(who) {
-  who = who || 'admin';
-  const box = document.getElementById('windowShopBox-' + who);
-  if (!box) return;
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  const role = who === 'emp' ? 'EMPLOYEE' : (state.adminRole || 'ADMIN');
-  const isAdminView = role.toUpperCase().indexOf('ADMIN') !== -1 || role.toUpperCase().indexOf('MIS') !== -1;
-  try {
-    const res = await leadsApiGet({ action: 'WINDOW_SHOP_CUSTOMERS' });
-    if (!res || !res.ok) {
-      box.innerHTML = `<div class="empty-state"><p>Could not load. ${(res && res.error) || ''}</p></div>`;
-      return;
-    }
-    if (!res.customers || !res.customers.length) {
-      box.innerHTML = '<div class="empty-state"><p>✅ No Window Shop Customers right now.</p></div>';
-      return;
-    }
-    const cellStyle = 'border:1px solid var(--border);padding:7px 9px;vertical-align:top;';
-    let html = `<div class="card" style="padding:0;overflow:hidden;"><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-      <tr>
-        <th style="${cellStyle}background:var(--bg2);text-align:left;">Customer</th>
-        <th style="${cellStyle}background:var(--bg2);text-align:left;">Mobile</th>
-        <th style="${cellStyle}background:var(--bg2);text-align:center;">Non-Purchase Store Visits</th>
-        <th style="${cellStyle}background:var(--bg2);text-align:left;">Last Visit</th>
-        <th style="${cellStyle}background:var(--bg2);text-align:left;">Last Handled By</th>
-      </tr>`;
-    res.customers.forEach(c => {
-      const shownPhone = isAdminView ? c.phone : c360MaskMobile_(c.phone);
-      html += `<tr>
-        <td style="${cellStyle}">${properCase(c.name) || '—'}</td>
-        <td style="${cellStyle}">${shownPhone || '—'}</td>
-        <td style="${cellStyle}text-align:center;"><b style="color:#dc2626;">${c.visits}</b></td>
-        <td style="${cellStyle}">${c.lastVisit || '—'}</td>
-        <td style="${cellStyle}">${c.lastEmployee ? properCase(c.lastEmployee) : '—'}</td>
-      </tr>`;
-    });
-    html += '</table></div></div>';
-    box.innerHTML = html;
-  } catch (e) {
-    box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
-  }
 }
 
 async function loadMonthlyAbsentReport() {
@@ -11698,7 +11653,6 @@ function showAdminPage(page, opts) {
   if(page==='direct') loadDirectActionPage();
   if(page==='blocked') loadBlockedDatesPage();
   if(page==='notifications') renderNotifHistoryPage_('admin');
-  if(page==='windowshop') loadWindowShopCustomers('admin');
   if(page==='settings') loadSettingsPage();
   if(page==='backend-sheets') loadBackendSheetsPage();
   if(page==='monthly-absent') loadMonthlyAbsentReport();
@@ -22474,18 +22428,18 @@ function dsrfConfirmSubmit(who, evt) {
   // is even removed.
   if (isDuplicateSubmission(idemKey)) { toast('Already submitting, please wait...', 'info'); return; }
 
-  // v-fix (BRO: "dsr entry kuda online lo untene save avali. cache lo save
-  // vaddu. every data entry only in online. stock sensitive matter" — DSR
-  // data is sensitive the same way Stock is, so this now follows the exact
-  // same rule seSave already follows for Stock Entry: no offline queue, no
-  // "saved" message unless the server actually confirmed it. A queued
-  // "saved" that silently never reaches the sheet is worse than a clear,
-  // visible failure the person can act on immediately.
+  // v-fix (BRO: reversing the earlier "online-only, no offline queue" rule —
+  // BRO now explicitly wants DSR/Outlet Issue/Return-Damage-Repair saved
+  // offline (cache) when there's no connection, auto-syncing once back
+  // online or via the Sync button, with any sync FAILURE surfaced in
+  // Notifications rather than silently retried forever with no visibility.
+  // See submitDsrOffline() + flushDsrOfflineQueue() below — same
+  // infrastructure Leave/Loyalty/Stock/Golden Aura/Leads already use.
   updateConnStatus();
   if (!navigator.onLine) {
     const modalOff = document.getElementById('dsrPreviewModal');
     if (modalOff) modalOff.remove();
-    toast('📴 No internet connection — nothing saved. Reconnect and submit again.', 'error');
+    submitDsrOffline(rows, idemKey, who);
     return;
   }
 
@@ -22590,18 +22544,15 @@ function dsrfConfirmSubmit(who, evt) {
       clearInterval(progInt);
       document.getElementById('dsrfProgress-' + who).classList.remove('show');
       btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who);
-      // v-fix (BRO: "dsr entry kuda online lo untene save avali. cache lo
-      // save vaddu. stock sensitive matter" — DSR, like Stock, no longer
-      // queues offline on a network failure here (timeout, connection
-      // dropped, "Failed to fetch" on a WiFi-but-no-internet connection,
-      // etc). Nothing is saved until the server confirms it — tell the
-      // person plainly via the center error popup so they see it and
-      // resubmit, instead of silently trusting a local queue that may or
-      // may not actually be synced later.
-      msg.style.color = 'var(--red)';
-      msg.textContent = '📴 No internet connection — nothing was saved. Please try again.';
-      toast('📴 No internet connection — nothing was saved. Please try again.', 'error');
-      _reportSubmitError_(isRDR ? 'Return/Damage/Repair' : isOutlet ? 'Outlet Issue' : 'DSR Entry', 'submit', String((err && err.message) || err || 'Network/connection error'));
+      // v-fix (BRO: reversing the earlier online-only rule — a network
+      // failure here (timeout, connection dropped, "Failed to fetch" on a
+      // WiFi-but-no-internet connection, etc) now queues offline instead of
+      // erroring out, same as the !navigator.onLine check above. The data
+      // is never lost — it sits in the offline queue and auto-syncs once
+      // back online (or via the Sync button); any FAILURE once it actually
+      // tries to sync shows up in Notifications (see
+      // _dsrNotifyOfflineFail_ in flushDsrOfflineQueue below).
+      submitDsrOffline(rows, idemKey, who, '📴 Connection lost mid-submit');
     });
 }
 
