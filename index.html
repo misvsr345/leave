@@ -4122,6 +4122,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
+        <!-- v-fix (BRO: "sidebar option remove chesi 2 days aindi" — .vsr-sidebar
+             is display:none now, so the Window Shop item added there earlier was
+             never actually reachable. Admin navigation really runs through this
+             "More" quick-actions grid (and the 🔍 Quick Search index below) now,
+             same place Customer 360° itself lives — added here instead. -->
+        <div class="quick-action-btn" onclick="showAdminPage('windowshop')"><span class="quick-action-icon">🚩</span><div class="quick-action-label">Window Shop</div><div class="quick-action-sub">Visited, no purchase yet</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Apply-Leave page message &amp; rules</div></div>
@@ -10721,6 +10727,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '🗄️', label: 'Backend Sheets', page: 'backend-sheets' },
   { icon: '📋', label: 'Monthly Absent Report', page: 'monthly-absent' },
   { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
+  { icon: '🚩', label: 'Window Shop Customers', page: 'windowshop' },
   { icon: '🪪', label: 'Profile', page: 'profile' },
   { icon: '🔐', label: 'Login Activity', page: 'login-activity' }
 ];
@@ -10822,7 +10829,8 @@ const EMP_SEARCH_INDEX = [
   { icon: '🚫', label: 'Blocked Dates (Leave)', page: 'blocked' },
   { icon: '📈', label: 'My Trends (Leave)', page: 'trend' },
   { icon: '📆', label: 'Events (Leave)', page: 'events' },
-  { icon: '🔍', label: 'Customer 360°', page: 'customer-360' }
+  { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
+  { icon: '🚩', label: 'Window Shop Customers', page: 'windowshop' }
 ];
 
 function openEmpQuickSearch() {
