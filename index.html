@@ -8439,11 +8439,71 @@ function saveQueueGeneric(key, q) {
   try { localStorage.setItem(key, JSON.stringify(q)); return true; } catch(e) { return false; }
 }
 
+// v-add (BRO: "fail aina data miss avakunda, oka image laga download avali, re-enter
+// cheyadaniki. every offline kavali" — every single offline save (not just ones that
+// later fail to sync) now also drops a plain PNG snapshot of the entered data onto the
+// device right at the moment it's queued. Pure <canvas> → PNG — no library, no
+// network — so this works exactly when it's needed most (no connection at all), and
+// gives a human-readable backup even in the one scenario localStorage itself could
+// somehow be lost (device storage wiped, browser data cleared, etc).
+function _dsrOfflineBackupImage_(rows, who, action, savedAt) {
+  try {
+    const label = action === 'saveOutletIssue' ? 'OUTLET ISSUE' : action === 'saveReturnDamageRepair' ? 'RETURN / DAMAGE / REPAIR' : 'DSR ENTRY';
+    const r0 = rows[0] || {};
+    const lines = [];
+    lines.push('VSR GOLD — OFFLINE ' + label + ' BACKUP');
+    lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
+    lines.push('');
+    lines.push('Employee: ' + (r0.employeeName || '—'));
+    if (r0.billDate) lines.push('Bill Date: ' + r0.billDate);
+    if (r0.customerName) lines.push('Customer: ' + r0.customerName);
+    if (r0.mobileNumber) lines.push('Mobile: ' + r0.mobileNumber);
+    if (r0.address) lines.push('Address: ' + r0.address);
+    if (r0.billNo) lines.push('Bill No: ' + r0.billNo);
+    if (r0.paymentStatus) lines.push('Payment Status: ' + r0.paymentStatus);
+    if (r0.reason) lines.push('Reason: ' + r0.reason);
+    lines.push('');
+    lines.push('ITEMS (' + rows.length + '):');
+    rows.forEach((r, i) => {
+      let parts;
+      if (r.type === 'Silver') parts = ['#' + (i + 1), r.type, r.silverItemName, r.silverItemWeight ? r.silverItemWeight + 'g' : '', r.silverQuality];
+      else if (r.type === 'Diamond') parts = ['#' + (i + 1), r.type, r.diamondProductName, r.diamondTagNo ? 'Tag:' + r.diamondTagNo : '', r.diamondGrossWt ? 'Gr:' + r.diamondGrossWt : '', r.diamondNetWt ? 'Net:' + r.diamondNetWt : ''];
+      else parts = ['#' + (i + 1), r.type, r.productName, r.design, r.tunch ? r.tunch + ' tunch' : '', r.weight ? r.weight + 'g' : '', r.tagNo ? 'Tag:' + r.tagNo : ''];
+      lines.push(parts.filter(Boolean).join('  |  '));
+    });
+
+    const padX = 20, lineH = 22, titleH = 40;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = '13px Arial';
+    let maxW = 620;
+    lines.forEach(l => { const w = ctx.measureText(l).width + padX * 2; if (w > maxW) maxW = w; });
+    canvas.width = Math.min(maxW, 1000);
+    canvas.height = titleH + lines.length * lineH + 20;
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#4A0E8F'; ctx.fillRect(0, 0, canvas.width, titleH);
+    ctx.fillStyle = '#D4AF37'; ctx.font = 'bold 15px Arial';
+    ctx.fillText(lines[0], padX, 26);
+    ctx.fillStyle = '#222222'; ctx.font = '13px Arial';
+    lines.slice(1).forEach((l, i) => ctx.fillText(l, padX, titleH + 18 + i * lineH));
+
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    const safeName = (r0.customerName || r0.employeeName || 'entry').replace(/[^a-zA-Z0-9]+/g, '_').substring(0, 30);
+    a.download = 'VSR_Offline_' + label.replace(/\s+/g, '') + '_' + safeName + '_' + savedAt + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch (e) { /* backup image is a best-effort safety net — must never block the actual offline save */ }
+}
+
 function submitDsrOffline(rows, idemKey, who, reason) {
+  const dsrOfflineAction = dsrfIsOutlet(who) ? 'saveOutletIssue' : dsrfIsRDR(who) ? 'saveReturnDamageRepair' : undefined;
+  const dsrOfflineSavedAt = Date.now();
+  _dsrOfflineBackupImage_(rows, who, dsrOfflineAction, dsrOfflineSavedAt);
   const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
   // Outlet Issue / Return-Damage-Repair queue the same way DSR does, just tagged so the sync-back
   // call (flushDsrOfflineQueue) routes to their own backend action instead of a normal DSR save.
-  q.push({ rows, idemKey, savedAt: Date.now(), action: dsrfIsOutlet(who) ? 'saveOutletIssue' : dsrfIsRDR(who) ? 'saveReturnDamageRepair' : undefined });
+  q.push({ rows, idemKey, savedAt: dsrOfflineSavedAt, action: dsrOfflineAction });
   const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('dsrfStatusMsg-' + who);
@@ -8511,13 +8571,25 @@ function submitDsrOffline(rows, idemKey, who, reason) {
 // time a given item fails, so it doesn't keep spamming the same alert on
 // every retry cycle, while the item itself keeps quietly retrying in the
 // background for as long as it takes.
-function _dsrNotifyOfflineFail_(item, reasonMsg) {
+// v-fix (BRO: "perment fail aithe, daniki tag name ivali. perment mail kavali" —
+// distinguishes a genuine PERMANENT fail (the server actually responded, and said
+// "not success" — the data reached the backend and was rejected) from a plain
+// transient one (network/timeout — the server never even replied, worth quietly
+// retrying without alarming anyone yet). A permanent fail gets its own distinct
+// 🛑 tag here AND mails MIS directly (mis@vsrgold.com) via alertPermanentDsrFail_
+// on the backend — a transient one only gets the quieter ⚠️ "still retrying" entry.
+// Either way the item itself is NEVER dropped from the queue (see flushDsrOfflineQueue).
+function _dsrNotifyOfflineFail_(item, reasonMsg, isPermanent) {
   if (item.notifiedFail) return;
   item.notifiedFail = true;
+  item.permanentFail = !!isPermanent;
   try {
     const r0 = (item.rows && item.rows[0]) || {};
     const label = item.action === 'saveOutletIssue' ? 'Outlet Issue' : item.action === 'saveReturnDamageRepair' ? 'Return/Damage/Repair' : 'DSR Entry';
-    const tbl = _notifMiniTable_('#dc2626', '⚠️ Offline ' + label + ' — Sync Failed (still retrying, data NOT lost)', [
+    const headerTxt = isPermanent
+      ? '🛑 PERMANENT FAIL — Offline ' + label + ' rejected by server (mailed to MIS, data kept &amp; still retrying)'
+      : '⚠️ Offline ' + label + ' — Sync Failed (still retrying, data NOT lost)';
+    const tbl = _notifMiniTable_('#dc2626', headerTxt, [
       ['Employee', r0.employeeName || '—'],
       ['Customer', r0.customerName || '—'],
       ['Bill Date', r0.billDate || '—'],
@@ -8525,7 +8597,24 @@ function _dsrNotifyOfflineFail_(item, reasonMsg) {
       ['Reason', reasonMsg || 'Unknown'],
       ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
     ]);
-    logNotifHistory_('⚠️', tbl, 'dsr');
+    logNotifHistory_(isPermanent ? '🛑' : '⚠️', tbl, 'dsr');
+    if (isPermanent) _dsrMailMisPermanentFail_(item, reasonMsg, label);
+  } catch (e) {}
+}
+
+function _dsrMailMisPermanentFail_(item, reasonMsg, label) {
+  try {
+    const r0 = (item.rows && item.rows[0]) || {};
+    fetch(DSR_GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'alertPermanentDsrFail',
+        formLabel: label, reason: reasonMsg || 'Unknown',
+        employeeName: r0.employeeName || '', customerName: r0.customerName || '', mobileNumber: r0.mobileNumber || '',
+        billDate: r0.billDate || '', billNo: r0.billNo || '', itemCount: (item.rows || []).length,
+        savedAt: item.savedAt, rows: item.rows
+      })
+    }).catch(() => {}); // fire-and-forget — a failed alert-mail must never surface as a second error
   } catch (e) {}
 }
 
@@ -8568,7 +8657,12 @@ async function flushDsrOfflineQueue() {
         if (!(result && result.status === 'success')) {
           console.error('[DSR Sync] Item NOT marked success by server. Parsed response:', result);
           item.attempts = (item.attempts || 0) + 1;
-          _dsrNotifyOfflineFail_(item, (result && result.message) || 'Server did not confirm save');
+          // result !== null means the server actually sent back a clean, valid reply
+          // that just wasn't "success" — a genuine rejection (PERMANENT fail). A null
+          // result here means the response itself was garbled/truncated (more likely a
+          // mid-transfer connection problem, not the server consciously saying no) —
+          // treated as transient, same as a network exception below.
+          _dsrNotifyOfflineFail_(item, (result && result.message) || 'Server did not confirm save', !!result);
           remaining.push(item);
         } else {
           console.log('[DSR Sync] Item synced OK. DSR ID:', result.dsrId);
