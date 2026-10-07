@@ -1236,7 +1236,7 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
    new entry while they're on the portal, a small auto-dismissing card appears here saying who did
    what. Stacks (several can show at once), tap to dismiss early. See pollNewEntryPopups() JS. */
 .new-entry-popup-stack { position: fixed; top: calc(var(--navbar-h, 0px) + 12px); right: 12px; z-index: 10500; display: flex; flex-direction: column; gap: 8px; max-width: min(340px, calc(100vw - 24px)); pointer-events: none; }
-.new-entry-popup-card { background: #fff; border: 1.5px solid var(--gold, #B8860B); border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 2px; pointer-events: auto; cursor: pointer; animation: newEntryPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.new-entry-popup-card { background: #fff; border: 1.5px solid var(--gold, #B8860B); border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 2px; pointer-events: auto; cursor: pointer; animation: newEntryPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transition: transform 0.2s ease, opacity 0.2s ease; touch-action: pan-y; }
 .new-entry-popup-card.closing { animation: newEntryPopOut 0.25s ease-in forwards; }
 @keyframes newEntryPopIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes newEntryPopOut { from { transform: translateX(0); opacity: 1; max-height: 200px; } to { transform: translateX(40px); opacity: 0; max-height: 0; margin: 0; padding: 0; } }
@@ -1845,6 +1845,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
     <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
     <div class="vsr-sidebar-item" data-page="stockentry" id="empSidebarStockEntry" onclick="showEmpPage('stockentry')"><span class="vsr-sidebar-icon">📦</span>Stock Entry</div>
+    <div class="vsr-sidebar-item" data-page="mystocktransfer" id="empSidebarStockTransfer" onclick="showEmpPage('mystocktransfer')"><span class="vsr-sidebar-icon">🔄</span>Stock Transfer</div>
     <div class="vsr-sidebar-item" data-page="walkins" id="empSidebarWalkins" onclick="showEmpPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
     <div class="vsr-sidebar-divider"></div>
     <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('emp')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="empMoreCaret">▾</span></div>
@@ -1879,6 +1880,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
           <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Entry</div><div class="quick-action-sub">Add counter stock</div></div>
+          <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
           <div class="quick-action-btn" id="empQAWalkinsModule" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Events, theme, password</div></div>
         </div>
@@ -2469,6 +2471,33 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-stockentry">
       <div class="section-hdr"><span class="section-title2">📦 Stock Entry</span></div>
       <div id="stockEntryMount-emp"></div>
+    </div>
+
+    <!-- ══════════════ STOCK TRANSFER (employee) — v-add (BRO: "emp ki kotha Stock
+         Transfer screen build chei" — same Hub↔Counter / Counter↔Counter move as
+         Admin's Stock Transfer, just its own scoped ids (stId('emp',...)) so both
+         page-sections can sit in the DOM together. Logic lives in the shared
+         stClearTag/stFindTag/stDoTransfer/stLoadHistory functions (see stId() in
+         the JS, "who" scope). Recent Transfers below only shows THIS employee's
+         own transfers, not everyone's. ══════════════ -->
+    <div class="page-section" id="emp-mystocktransfer">
+      <div class="section-hdr"><span class="section-title2">🔄 Stock Transfer</span></div>
+      <div class="card">
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Move a tagged item between Main Hub and any counter, or from one counter to another. Enter the Tag No to find it, then pick where it should go.</p>
+        <div class="form-row">
+          <label>Tag No <span class="req">★</span></label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="stTagInput-emp" placeholder="e.g. BOM2154" style="flex:1 1 auto;min-width:0;" onkeydown="if(event.key==='Enter'){stFindTag('emp');}">
+            <button class="btn-secondary" onclick="stClearTag('emp')" title="Clear" style="white-space:nowrap;width:auto;flex:0 0 auto;padding:12px 16px;">✕</button>
+            <button class="btn-secondary" style="white-space:nowrap;width:auto;flex:0 0 auto;padding:12px 16px;" onclick="stFindTag('emp')">🔍 Find</button>
+          </div>
+        </div>
+        <div id="stFoundBox-emp"></div>
+      </div>
+      <div class="card">
+        <div class="section-hdr" style="margin-bottom:6px;"><span class="section-title2" style="font-size:14px;">🕑 My Recent Transfers</span></div>
+        <div id="stHistBox-emp"><div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">Open this page to load recent transfers.</div></div>
+      </div>
     </div>
 
     <!-- ══════════════ GOLDEN AURA SECTION (employee) ══════════════ -->
@@ -6381,6 +6410,12 @@ const SECTION_LABEL_MAP = {
   stocktransfer: 'Stock Level',
   stockalerts: 'Stock Level',
   stockentry: 'Stock Entry',
+  // v-add (BRO: "emp ki kotha Stock Transfer screen build chei" — a DIFFERENT page
+  // key from admin's 'stocktransfer' above on purpose: the employee screen is its
+  // own standalone top-level item (like Stock Entry), not nested inside anything
+  // (employee has no "Stock Level" hub at all), so it needs its own section here
+  // rather than reusing admin's nested-in-Stock-Level one.
+  mystocktransfer: 'Stock Transfer',
   profile: 'Emp Details'
 };
 // Each section's own "dashboard" page (its landing page after clicking
@@ -6395,6 +6430,7 @@ const SECTION_DASHBOARD_PAGE = {
   'Stock Check List': { emp: 'stock', admin: 'stock' },
   'Stock Level':    { emp: 'stocklevel', admin: 'stocklevel' },
   'Stock Entry':    { emp: 'stockentry', admin: 'stockentry' },
+  'Stock Transfer': { emp: 'mystocktransfer', admin: 'mystocktransfer' },
   Leads:            { emp: 'leads',   admin: 'leads' }
 };
 function getSectionDashboardPage(who, page) {
@@ -6586,6 +6622,7 @@ function showEmpPage(page, opts) {
   if(page==='rdr') { renderDsrEntryForm('emp-rdr'); rdrSwitchTab('emp', RDR_TAB.emp || 'new'); }
   if(page==='dsr-advorder') loadAdvanceOrderList('emp');
   if(page==='stockentry') mountStockEntryForm('emp');
+  if(page==='mystocktransfer') stLoadHistory('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
   if(page==='stock') loadStockDashboard('emp');
@@ -7585,6 +7622,12 @@ function showCongratsPopup_(opts) {
   // mini-table used server-side for the MIS digest mail, not a flattened one-line summary.
   const _notifTbl = _notifMiniTable_('#b8860b', opts.title || 'Congratulations!', rows);
   logNotifHistory_(opts.icon || '🎉', (opts.msg || '') + '<div style="margin-top:6px;">' + _notifTbl + '</div>', opts.type || 'other');
+  // v-add (BRO: "emp ki kuda valla own notification velali" — this person's own just-saved
+  // entry also pops up as the SAME swipe-to-dismiss card MIS gets for other people's entries,
+  // right away (not just the big modal above, which needs a tap to close) — works for both
+  // Employee and Admin logins since this function is shared by every entry type's Save path.
+  // No extra logNotifHistory_ call here — already logged with fuller content just above.
+  _renderPopupCard_((opts.icon || '🎉') + ' Saved', _notifTbl);
 }
 
 // Called only when the submit request itself timed out (no response
@@ -7688,6 +7731,7 @@ async function confirmSubmitLeave() {
           loadEmpData();
         } else {
           toast(res.reason || 'Submission failed', 'error');
+          _reportSubmitError_('Leave Application', 'backend-reject', res.reason || 'Submission failed');
         }
         return;
       }
@@ -7699,6 +7743,7 @@ async function confirmSubmitLeave() {
         loadEmpData(); // background — refreshes My Leaves once data arrives
       } else {
         toast(res.reason || 'Submission failed', 'error');
+        _reportSubmitError_('Leave Application', 'backend-reject', res.reason || 'Submission failed');
       }
     } catch(e) {
       if (!navigator.onLine) {
@@ -7706,6 +7751,7 @@ async function confirmSubmitLeave() {
         // dropped mid-request; nothing queues any more, say so plainly so
         // the employee knows to resubmit once back online.
         toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+        _reportSubmitError_('Leave Application', 'submit', 'No internet connection');
       } else {
         // We WERE online — the request likely already reached and was
         // processed by the server; the client just didn't get the response
@@ -7718,6 +7764,7 @@ async function confirmSubmitLeave() {
         if (!found) {
           toast('⚠️ No confirmation from server — check "My Leaves" before submitting again. Do NOT resubmit if it already appears there.', 'error');
           loadEmpData(); // refresh in background so "My Leaves" reflects reality
+          _reportSubmitError_('Leave Application', 'submit', 'No confirmation from server after submit');
         }
       }
     }
@@ -10690,6 +10737,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '📝', label: 'Checklist', page: 'stock' },
   { icon: '🚶', label: 'Walk-in Track', page: 'walkins' },
   { icon: '📦', label: 'Stock Entry', page: 'stockentry' },
+  { icon: '🔄', label: 'Stock Transfer', page: 'mystocktransfer' },
   { icon: '➕', label: 'New Card Entry (Loyalty)', page: 'loyalty-newcard' },
   { icon: '🔍', label: 'Search (Loyalty Card)', page: 'loyalty-search' },
   { icon: '📊', label: 'My Incentive (Loyalty)', page: 'loyalty-stats' },
@@ -11763,7 +11811,11 @@ const MIS_POPUP_SOURCES = [
   { key: 'dsr',    url: since => DSR_GAS_URL   + '?action=getMisDigestQueue&since=' + since },
   { key: 'stock',  url: since => STOCK_GAS_URL + '?action=getMisDigestQueue&since=' + since },
   { key: 'portal', url: since => WEB_APP_URL   + '?action=getMisDigestQueue&since=' + since },
-  { key: 'walkin', url: since => WEB_APP_URL   + '?page=walkinNewEntriesAPI&since=' + since }
+  { key: 'walkin', url: since => WEB_APP_URL   + '?page=walkinNewEntriesAPI&since=' + since },
+  // v-add (BRO: "anni submitted notification mis ki ravali" — Lead Call Log now queues too
+  // (LeadsBackend.gs's own local MIS_Digest_Queue sheet, its own getMisDigestQueue action,
+  // since Leads is a separate Apps Script project/URL from Portal/DSR/Stock).
+  { key: 'leads',  url: since => LEADS_WEB_APP_URL + '?action=getMisDigestQueue&since=' + since }
 ];
 let misPopupPollTimer_ = null;
 
@@ -11797,21 +11849,132 @@ async function pollNewEntryPopups() {
   }
 }
 
-function showNewEntryPopup(html, srcKey) {
+// v-fix (BRO: "emp ki kuda valla own notification velali" — the actual card-building/
+// swipe-dismiss/auto-close/stack-cap logic is now its own shared piece (_renderPopupCard_),
+// so BOTH the admin MIS live-popup poll (showNewEntryPopup, below) AND the employee/admin's
+// own just-submitted entry (showCongratsPopup_, see its own call to this) use the exact same
+// card UI — one person's own submission popping up looks identical to MIS's "someone else
+// submitted" popup, just with its own header text and without re-logging into Notification
+// History a second time (showCongratsPopup_ already logs the richer version itself).
+function _renderPopupCard_(headerHtml, bodyHtml) {
   const stack = document.getElementById('newEntryPopupStack');
-  if (!stack) return;
+  if (!stack) return null;
   const card = document.createElement('div');
   card.className = 'new-entry-popup-card';
-  card.innerHTML = '<div class="new-entry-popup-hdr">🔔 New Entry</div>' + html;
-  card.onclick = () => _closeNewEntryPopup(card);
+  card.innerHTML = '<div class="new-entry-popup-hdr">' + headerHtml + '</div>' + bodyHtml;
+  card.onclick = () => { if (card.dataset.justDragged) return; _closeNewEntryPopup(card); };
+  _wireSwipeToClose_(card); // v-add (BRO: "right ki slide cheste, close avali" — swipe-right-to-dismiss)
   stack.appendChild(card);
   setTimeout(() => _closeNewEntryPopup(card), 8000);
   // Keep at most 5 stacked at once so a burst of entries can't fill the screen.
   while (stack.children.length > 5) stack.removeChild(stack.firstChild);
-  // v-fix — srcKey ('dsr'/'stock'/'portal'/'walkin', from MIS_POPUP_SOURCES) tags this
+  return card;
+}
+function showNewEntryPopup(html, srcKey) {
+  _renderPopupCard_('🔔 New Entry', html);
+  // v-fix — srcKey ('dsr'/'stock'/'portal'/'walkin'/'leads', from MIS_POPUP_SOURCES) tags this
   // entry for the full Notifications page (renderNotifHistoryPage_) so it groups into
   // its own type-wise table instead of one flat "Other" bucket.
   logNotifHistory_('🔔', html, srcKey || 'other'); // v-add — see notifHistory_* below
+}
+
+// v-add (BRO: "emp ki edaina eror vachina, mis and emp ki kalipi notification vellali" —
+// Task #23, "Anni types (save + photo + anything backend reject chేసింది)"). Shared helper
+// every submit flow's catch/failure branch calls, whoever hit it (employee or admin), for
+// ANY failure kind: a save/submit exception, a photo-upload failure, or a backend response
+// that came back rejected (e.g. {ok:false}/duplicate/validation-failed from the server).
+// It does two things: (1) shows the SAME live swipe-dismiss popup card immediately on the
+// screen of whoever hit the error, using the exact same _renderPopupCard_ UI as a normal
+// "Saved" notification, just red/⚠️ accented; (2) fire-and-forget POSTs to PortalBackend.gs's
+// logClientErrorAPI action so MIS also sees it — queued into the SAME 'portal' MIS digest
+// queue MIS_POPUP_SOURCES already polls, so no new frontend polling source was needed. Never
+// throws and never awaited by the caller — a failed error-REPORT must never itself block or
+// surface as a second error on top of the original one.
+function _reportSubmitError_(formLabel, stage, message) {
+  try {
+    const who = (state.__loginKind === 'emp' ? state.empName : state.adminName) || 'Unknown';
+    const tbl = '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0;font-size:12px;">' +
+      '<tr><td style="padding:4px 0;font-weight:700;color:#dc2626;width:36%;">Form</td><td style="padding:4px 0;">' + formLabel + '</td></tr>' +
+      '<tr><td style="padding:4px 0;font-weight:700;color:#dc2626;">Stage</td><td style="padding:4px 0;">' + (stage || 'submit') + '</td></tr>' +
+      '<tr><td style="padding:4px 0;font-weight:700;color:#dc2626;">Error</td><td style="padding:4px 0;">' + (message || 'Unknown error') + '</td></tr>' +
+      '</table>';
+    _renderPopupCard_('⚠️ Error — ' + formLabel, tbl);
+  } catch (e) { /* UI popup must never throw back to the caller */ }
+  try {
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        page: 'logClientErrorAPI',
+        who: (state.__loginKind === 'emp' ? state.empName : state.adminName) || 'Unknown',
+        formLabel: formLabel,
+        stage: stage || 'submit',
+        message: String(message || 'Unknown error')
+      })
+    }).catch(() => {}); // fire-and-forget — never surfaces a second error
+  } catch (e) { /* never throw */ }
+}
+
+// v-add (BRO: "right ki slide cheste, close avali" — swipe the card to the right (touch or
+// mouse-drag) to dismiss it early, same as tapping it. Below the drag threshold it snaps back
+// to place; past it, it flies out and closes. The stack below/above it reflows on its own via
+// the existing flex-column layout + newEntryPopOut's max-height collapse — no extra "move up/
+// down" code needed for that part, removing one card already repositions the rest.
+function _wireSwipeToClose_(card) {
+  let startX = 0, startY = 0, dx = 0, dragging = false, decided = false, isHorizontal = false;
+  const THRESHOLD = 70;
+  function onStart(x, y) {
+    if (card.classList.contains('closing')) return;
+    startX = x; startY = y; dx = 0; dragging = true; decided = false; isHorizontal = false;
+    card.style.transition = 'none';
+  }
+  function onMove(x, y) {
+    if (!dragging) return;
+    dx = x - startX;
+    const dy = y - startY;
+    if (!decided) {
+      // Wait for a clear direction before committing — a mostly-vertical drag (e.g. the page
+      // itself scrolling under a touch that started on the card) should not hijack the card.
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      decided = true;
+      isHorizontal = Math.abs(dx) > Math.abs(dy);
+    }
+    if (!isHorizontal) return;
+    if (dx < 0) dx = 0; // only rightward drag moves the card — leftward just resists
+    card.style.transform = `translateX(${dx}px)`;
+    card.style.opacity = String(Math.max(0.2, 1 - dx / 220));
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    card.style.transition = '';
+    const wasRealDrag = isHorizontal && Math.abs(dx) > 4;
+    if (wasRealDrag) {
+      // A real drag happened — stop the click handler above from ALSO firing right after
+      // mouseup/touchend treats this as a plain tap, which would otherwise instantly re-close
+      // a card that just snapped back (or double-close one that's already closing).
+      card.dataset.justDragged = '1';
+      setTimeout(() => { delete card.dataset.justDragged; }, 50);
+    }
+    if (isHorizontal && dx > THRESHOLD) {
+      card.style.transform = '';
+      card.style.opacity = '';
+      _closeNewEntryPopup(card);
+    } else {
+      card.style.transform = '';
+      card.style.opacity = '';
+    }
+  }
+  card.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  card.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  card.addEventListener('touchend', onEnd);
+  card.addEventListener('touchcancel', onEnd);
+  // Mouse-drag too, for desktop/mouse use — doesn't interfere with the plain-click-to-dismiss
+  // handler above since a click has dx===0 the whole time.
+  card.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); e.preventDefault(); });
+  card.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  card.addEventListener('mouseup', onEnd);
+  card.addEventListener('mouseleave', () => { if (dragging) onEnd(); });
 }
 function _closeNewEntryPopup(card) {
   if (!card || !card.parentNode || card.classList.contains('closing')) return;
@@ -12653,6 +12816,7 @@ async function submitNewLoyaltyCard() {
   } catch (err) {
     errBox.textContent = 'Could not prepare preview: ' + err.message;
     errBox.style.display = 'block';
+    _reportSubmitError_('New Loyalty Card', 'photo', err.message || 'Could not prepare photo preview');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
   }
@@ -12760,6 +12924,7 @@ async function confirmSubmitLoyaltyCard(evt) {
     } else {
       errBox.textContent = (result && result.error) || 'Submission failed — please try again';
       errBox.style.display = 'block';
+      _reportSubmitError_('New Loyalty Card', 'backend-reject', (result && result.error) || 'Submission failed');
     }
   } catch (err) {
     // v-fix (BRO: "existing entry forms anni offline vadu" — no more
@@ -12769,6 +12934,7 @@ async function confirmSubmitLoyaltyCard(evt) {
     errBox.textContent = '📴 No internet connection — nothing submitted. Please try again.';
     errBox.style.display = 'block';
     toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
+    _reportSubmitError_('New Loyalty Card', 'submit', String((err && err.message) || err || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
   }
@@ -14427,6 +14593,11 @@ const EMP_FEATURE_ELEMENTS = {
   outletIssue: ['empQAOutletIssue'],
   rdr: ['empQARdr'],
   stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
+  // v-add (BRO: "emp ki kotha Stock Transfer screen build chei" — now that there's a
+  // real employee-side screen for it, this permission key (already existed in
+  // SM_PERM_FEATURES, was excluded for employees — see EMP_EXCLUDED_PERM_KEYS in
+  // PortalBackend.gs) actually gates something again.
+  stockTransfer: ['empQAStockTransferModule', 'empSidebarStockTransfer'],
   walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins']
   // v-fix (BRO: "360 no toggle. andariki kanipinchali" — Customer 360°
   // used to be gated here (per-employee ON/OFF), now removed from this
@@ -14476,10 +14647,11 @@ function applyEmpGranularRestrictionsFromPerms(perms) {
     const isDsrFeature = key.indexOf('dsr') === 0;
     const isLoyaltyFeature = key === 'loyalty' || key.indexOf('loy') === 0;
     const isGoldenAuraFeature = key === 'goldenAura' || key.indexOf('ga') === 0;
-    // v-fix: 'stockEntry' (employee's own counter-stock-entry module) is
-    // NOT part of the "Stock Check List" section — must not get swept up
-    // by this prefix match (same fix as the admin side's 'stockLevel').
-    const isStockFeature = key.indexOf('stock') === 0 && key !== 'stockEntry';
+    // v-fix: 'stockEntry' (employee's own counter-stock-entry module) and
+    // 'stockTransfer' (employee's own Stock Transfer screen) are NOT part
+    // of the "Stock Check List" section — must not get swept up by this
+    // prefix match (same fix as the admin side's 'stockLevel').
+    const isStockFeature = key.indexOf('stock') === 0 && key !== 'stockEntry' && key !== 'stockTransfer';
     const isDailyShopFeature = key.indexOf('dailyShop') === 0;
     const sectionOn = isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : true;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
@@ -15919,7 +16091,8 @@ function dsrTagValid(s) { return /^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+$/.test(
 // Refresh tap.)
 var PORTAL_STOCKDSR_LIVE_PAGES = ['dsr', 'dsr-today', 'dsr-status', 'dsr-missing', 'dsr-tilldate', 'dsr-newentry',
   'dsr-advorder', 'outletissue', 'rdr', 'stockentry', 'stocklevel', 'stocklevel-overview', 'stocklevel-counter',
-  'stocklevel-sales', 'stocklevel-tag', 'stocklevel-photos', 'stocklevel-manage', 'stocklevel-today', 'stocklevel-failed'];
+  'stocklevel-sales', 'stocklevel-tag', 'stocklevel-photos', 'stocklevel-manage', 'stocklevel-today', 'stocklevel-failed',
+  'stocktransfer', 'mystocktransfer'];
 var PORTAL_LAST_SEEN_STOCK_TS = 0, PORTAL_LAST_SEEN_DSR_TS = 0;
 async function pollForStockDsrChanges_() {
   if (!navigator.onLine) return;
@@ -16379,7 +16552,12 @@ function slApi(params) {
   return _fetchWithTimeout(STOCK_GAS_URL + '?' + qs, {}, 45000).then(r => r.json());
 }
 function slPost(payload) {
-  payload.by = state.adminName || 'Admin';
+  // v-fix: this used to always stamp payload.by as the ADMIN name, even when an
+  // employee login called it (rdrReceiveBack already computed the correct 'by'
+  // itself, only to have it silently overwritten here) — now it only fills in a
+  // default when the caller didn't already set one, and picks the right name
+  // based on who's actually logged in.
+  if (!payload.by) payload.by = (state.__loginKind === 'emp' ? state.empName : state.adminName) || 'Admin';
   return _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(payload) }, 60000).then(r => r.json());
 }
 // BRO: "all weight data ni decimall chupinchu. for example 4grm, 4.000 ani chupinchu" — always 3
@@ -16623,20 +16801,29 @@ async function frqSave() {
 // through Stock Level's ✏️ Manage/Edit screen. Find by Tag No, pick destination, Transfer.
 // Backend: StockBackend.gs transferStock_ / transferLog_ (action: transferStock / transferLog).
 // ══════════════════════════════════════
-let ST_FOUND = null; // the currently-found stock item {stockId, tagNo, productName, productFrom, counter}
+// v-fix (BRO: "emp ki kotha Stock Transfer screen build chei" — these 4 functions now
+// take a "who" scope ('admin' or 'emp') and share one engine for both, same idea as
+// renderDsrEntryForm's "who". who==='admin' keeps the ORIGINAL unscoped ids (stTagInput,
+// stFoundBox, stDestSelect, stHistBox) so nothing about the existing admin markup/behavior
+// changes; who==='emp' uses '-emp' suffixed ids on the new employee page so both page-
+// sections can coexist in the DOM without collisions. See stId() just below.
+function stId(who, name) { return who === 'admin' ? ('st' + name) : ('st' + name + '-' + who); }
+let ST_FOUND = { admin: null, emp: null }; // the currently-found stock item per scope {stockId, tagNo, productName, productFrom, counter}
 // v-add (BRO: "tag no dagara x mark pettu, click cheste remove avali" — one tap clears the Tag No
 // box and whatever was found for it, instead of backspacing character by character).
-function stClearTag() {
-  const inp = document.getElementById('stTagInput');
+function stClearTag(who) {
+  who = who || 'admin';
+  const inp = document.getElementById(stId(who, 'TagInput'));
   if (inp) { inp.value = ''; inp.focus(); }
-  const box = document.getElementById('stFoundBox'); if (box) box.innerHTML = '';
-  ST_FOUND = null;
+  const box = document.getElementById(stId(who, 'FoundBox')); if (box) box.innerHTML = '';
+  ST_FOUND[who] = null;
 }
-async function stFindTag() {
-  const inp = document.getElementById('stTagInput');
+async function stFindTag(who) {
+  who = who || 'admin';
+  const inp = document.getElementById(stId(who, 'TagInput'));
   const raw = (inp.value || '').trim();
-  const box = document.getElementById('stFoundBox');
-  ST_FOUND = null;
+  const box = document.getElementById(stId(who, 'FoundBox'));
+  ST_FOUND[who] = null;
   if (!raw) { box.innerHTML = ''; return; }
   if (stockTagHasSep(raw)) { box.innerHTML = '<div class="empty-state" style="padding:10px;color:var(--red);">⚠ Space, - or / not allowed. Enter like BOM2154.</div>'; return; }
 
@@ -16659,27 +16846,31 @@ async function stFindTag() {
     if (res.status === 'notfound') { box.innerHTML = '<div class="empty-state" style="padding:10px;">Tag not found in stock. Check spelling, or it may already be sold.</div>'; return; }
     if (res.status === 'sold') { box.innerHTML = '<div class="empty-state" style="padding:10px;color:var(--orange);">⚠ This tag is sold (DSR ' + escHtml(res.sold.dsrId || '') + ', ' + escHtml(res.sold.soldDate || '') + ') — nothing to transfer.</div>'; return; }
     const it = res.item;
-    ST_FOUND = it;
+    ST_FOUND[who] = it;
     const fromLabel = it.productFrom === 'Main' ? (SL.mainHub || 'Main Hub') : it.counter;
     const destOptions = [SL.mainHub || 'Main Hub'].concat(SL.counters || []).filter(c => c !== fromLabel);
     box.innerHTML = `
       <div class="st-loc"><span>📍 ${escHtml(it.productName || it.tagNo)} (${escHtml(it.tagNo)})</span></div>
       <div class="st-loc"><span>${escHtml(fromLabel)}</span><span class="arrow">➜</span>
-        <select id="stDestSelect" class="uniform-select" style="flex:1;">
+        <select id="${stId(who, 'DestSelect')}" class="uniform-select" style="flex:1;">
           ${destOptions.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('')}
         </select>
       </div>
-      <button class="btn-primary" style="width:100%;" onclick="stDoTransfer()">🔄 Transfer</button>`;
+      <button class="btn-primary" style="width:100%;" onclick="stDoTransfer('${who}')">🔄 Transfer</button>`;
   } catch (e) {
     box.innerHTML = '<div class="empty-state" style="padding:10px;color:var(--red);">Network error. Try again.</div>';
   }
 }
-async function stDoTransfer() {
-  if (!ST_FOUND) return;
-  const dest = document.getElementById('stDestSelect').value;
+async function stDoTransfer(who) {
+  who = who || 'admin';
+  if (!ST_FOUND[who]) return;
+  const dest = document.getElementById(stId(who, 'DestSelect')).value;
   const toMain = dest === (SL.mainHub || 'Main Hub');
   try {
-    const res = await slPost({ action: 'transferStock', tagNo: ST_FOUND.tagNo, toProductFrom: toMain ? 'Main' : 'Retail', toCounter: toMain ? '' : dest });
+    // v-fix: 'by' is now set explicitly here (employee's own name when who==='emp'), instead of
+    // relying on slPost's old always-admin default — see slPost's own fix note above it.
+    const byName = who === 'emp' ? (state.empName || 'Employee') : (state.adminName || 'Admin');
+    const res = await slPost({ action: 'transferStock', tagNo: ST_FOUND[who].tagNo, toProductFrom: toMain ? 'Main' : 'Retail', toCounter: toMain ? '' : dest, by: byName });
     if (res && res.ok) {
       toast('✅ ' + res.tagNo + ' moved: ' + res.from + ' → ' + res.to, 'success');
       // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this transfer's own fields.
@@ -16694,24 +16885,32 @@ async function stDoTransfer() {
           ['To', res.to]
         ]
       });
-      document.getElementById('stTagInput').value = '';
-      document.getElementById('stFoundBox').innerHTML = '';
-      ST_FOUND = null;
-      stLoadHistory();
+      document.getElementById(stId(who, 'TagInput')).value = '';
+      document.getElementById(stId(who, 'FoundBox')).innerHTML = '';
+      ST_FOUND[who] = null;
+      stLoadHistory(who);
     } else {
       toast((res && res.error) || 'Transfer failed', 'error');
+      _reportSubmitError_('Stock Transfer', 'backend-reject', (res && res.error) || 'Transfer failed');
     }
   } catch (e) {
     toast('Network error — transfer not saved. Try again.', 'error');
+    _reportSubmitError_('Stock Transfer', 'submit', String((e && e.message) || e || 'Network/connection error'));
   }
 }
-async function stLoadHistory() {
-  const box = document.getElementById('stHistBox');
+async function stLoadHistory(who) {
+  who = who || 'admin';
+  const box = document.getElementById(stId(who, 'HistBox'));
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   try {
     const res = await slApi({ action: 'transferLog', limit: 30 });
-    if (!res || !res.ok || !res.rows || !res.rows.length) { box.innerHTML = '<div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">No transfers yet.</div>'; return; }
-    box.innerHTML = res.rows.map(r => `
+    // v-add: Employee's Recent Transfers only ever shows THEIR OWN transfers (filtered
+    // client-side by name, same "own submissions" scope as everywhere else for emp login) —
+    // Admin keeps seeing every transfer, unchanged.
+    let rows = (res && res.rows) || [];
+    if (who === 'emp') rows = rows.filter(r => (r.by || '') === (state.empName || ''));
+    if (!res || !res.ok || !rows.length) { box.innerHTML = '<div class="empty-state" style="padding:14px;text-align:center;color:var(--text3);">No transfers yet.</div>'; return; }
+    box.innerHTML = rows.map(r => `
       <div class="st-hist">
         <b>${escHtml(r.tagNo)}</b> — ${escHtml(r.productName || '')}<br>
         ${escHtml(r.from)} ➜ ${escHtml(r.to)}
@@ -18363,14 +18562,17 @@ async function seSave(scope) {
       res.errors.forEach(er => { const b = c.rows[er.index] && c.rows[er.index].b; if (b) seItemError(b, er.message); });
       seShowBanner(scope,'err','Nothing was saved. Fix the highlighted item(s) and save again.');
       const first = c.rows[res.errors[0].index]; if (first) first.b.scrollIntoView({block:'center', behavior:'smooth'});
+      _reportSubmitError_('Stock Entry', 'backend-reject', res.errors.map(er=>er.message).join('; '));
     } else {
       seShowBanner(scope,'err', res.error || 'Save failed. Nothing was saved.');
+      _reportSubmitError_('Stock Entry', 'backend-reject', res.error || 'Save failed');
     }
   } catch (e) {
     // Real network failure mid-request (timeout, connection dropped) — same as above: tell the person
     // plainly that nothing was saved, rather than silently queuing something that might already have
     // reached the server, or might never reach it, with no clear way for them to tell which.
     seShowBanner(scope,'err','📴 No internet connection');
+    _reportSubmitError_('Stock Entry', 'submit', String((e && e.message) || e || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '★  Save Stock  ★';
   }
@@ -18628,6 +18830,7 @@ async function submitGoldenAura(who) {
     gaShowPreview(payload, who);
   } catch (err) {
     toast('Could not prepare preview: ' + err.message, 'error');
+    _reportSubmitError_('Golden Aura', 'photo', err.message || 'Could not prepare photo preview');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
   }
@@ -18730,6 +18933,7 @@ async function confirmSubmitGoldenAura(who, evt) {
     } else {
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ ' + ((res && res.error) || 'Failed to save');
+      _reportSubmitError_('Golden Aura', 'backend-reject', (res && res.error) || 'Failed to save');
     }
   } catch (e) {
     // v-fix (BRO: "existing entry forms anni offline vadu" — no more
@@ -18738,6 +18942,7 @@ async function confirmSubmitGoldenAura(who, evt) {
     msg.style.color = 'var(--red)';
     msg.textContent = '📴 No internet connection — nothing submitted. Please try again.';
     toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
+    _reportSubmitError_('Golden Aura', 'submit', String((e && e.message) || e || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
   }
@@ -19896,6 +20101,7 @@ async function submitLeadCall() {
       errBox.textContent = '❌ ' + ((res && res.error) || 'Failed to save') + ' — nothing was saved. Please try again.';
       errBox.style.display = 'block';
       toast('❌ Failed to save — nothing was saved. Please try again.', 'error');
+      _reportSubmitError_('Lead Call Log', 'backend-reject', (res && res.error) || 'Failed to save');
     }
   } catch (e) {
     // v-fix (BRO: "existing entry forms anni offline vadu" — a genuine
@@ -19904,6 +20110,7 @@ async function submitLeadCall() {
     errBox.textContent = '📴 No internet connection — nothing submitted. Please try again.';
     errBox.style.display = 'block';
     toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
+    _reportSubmitError_('Lead Call Log', 'submit', String((e && e.message) || e || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit';
   }
@@ -22192,6 +22399,7 @@ function dsrfConfirmSubmit(who, evt) {
         // connection; idemKey still protects against an accidental double-
         // save if the original request actually did partially land.
         toast('❌ ' + (result.message || 'Failed to save') + ' — nothing was saved. Please try again.', 'error');
+        _reportSubmitError_(isRDR ? 'Return/Damage/Repair' : isOutlet ? 'Outlet Issue' : 'DSR Entry', 'backend-reject', result.message || 'Failed to save');
         return;
       }
     })
@@ -22210,6 +22418,7 @@ function dsrfConfirmSubmit(who, evt) {
       msg.style.color = 'var(--red)';
       msg.textContent = '📴 No internet connection — nothing was saved. Please try again.';
       toast('📴 No internet connection — nothing was saved. Please try again.', 'error');
+      _reportSubmitError_(isRDR ? 'Return/Damage/Repair' : isOutlet ? 'Outlet Issue' : 'DSR Entry', 'submit', String((err && err.message) || err || 'Network/connection error'));
     });
 }
 
