@@ -4446,11 +4446,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 <div class="modal-overlay" id="congratsModal">
   <div class="modal-box" style="max-width:380px;text-align:center;">
     <button class="modal-close-x" onclick="closeModal('congratsModal')" title="Close">✕</button>
-    <div id="congratsIcon" style="font-size:50px;margin-bottom:8px;line-height:1;">🎉</div>
-    <div class="modal-title" id="congratsTitle" style="margin-bottom:4px;">Congratulations!</div>
+    <div id="congratsIcon" style="font-size:50px;margin-bottom:8px;line-height:1;">✅</div>
+    <div class="modal-title" id="congratsTitle" style="margin-bottom:4px;">Submitted Successfully</div>
     <div class="modal-sub" id="congratsMsg" style="font-size:13px;line-height:1.6;margin-bottom:14px;"></div>
     <div id="congratsDetails" style="text-align:left;border:1px solid var(--border);border-radius:10px;overflow:hidden;"></div>
-    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeModal('congratsModal')">🙏 Thank You</button>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeModal('congratsModal')">✅ OK</button>
   </div>
 </div>
 
@@ -5107,7 +5107,12 @@ function _notifHistorySave_(list) {
 function logNotifHistory_(icon, html, type) {
   try {
     const list = _notifHistoryLoad_();
-    list.unshift({ ts: Date.now(), icon: icon || '🔔', html: html || '', type: type || 'other' });
+    // v-add (BRO: "cache lo save avali kani aa login ki related data matrame chupinchali" —
+    // NOTIF_HISTORY_KEY is ONE shared localStorage list for the whole device/browser (admin and
+    // employee both write into it on the same device), so every entry is now tagged with which
+    // login wrote it, and renderNotifHistoryPage_ below filters by it on top of its old type-based
+    // filtering, so the OTHER login's notifications never show up on this one.
+    list.unshift({ ts: Date.now(), icon: icon || '🔔', html: html || '', type: type || 'other', who: state.__loginKind || '' });
     _notifHistorySave_(list);
   } catch (e) {}
 }
@@ -5159,11 +5164,33 @@ function _notifMiniTable_(accentColor, headerHtml, pairs) {
 // the last 7 days shows up, not just ones logged on this device after this page existed. Those
 // backend-sourced types are dropped from the local list first so nothing shows twice.
 const NOTIF_EMP_BACKEND_TYPES_ = ['loyalty', 'goldenaura', 'sttransfer', 'stentry', 'dsr', 'leadcall'];
+// v-add — see logNotifHistory_'s `who` tag above. These two lists cover the OLDER entries already
+// sitting in a device's cache from before that tag existed: 'stock'/'portal'/'walkin' only ever
+// come from the admin-side MIS-digest popup poller (never from an employee's own submissions), and
+// the 5 "My Submissions" types only ever come from an employee's own Congrats popup (never admin's)
+// — so these are excluded by type alone, with no need for the `who` tag to be present.
+const NOTIF_ADMIN_ONLY_TYPES_ = ['stock', 'portal', 'walkin'];
+const NOTIF_EMP_OWN_TYPES_ = ['loyalty', 'goldenaura', 'sttransfer', 'stentry', 'leadcall'];
 
 async function renderNotifHistoryPage_(who) {
   const box = document.getElementById('notifHistoryPage-' + who);
   if (!box) return;
   let list = _notifHistoryLoad_();
+  // v-fix (BRO: "na lap top emp login ayyanu, kani naku vachina all notification lu danto
+  // kanipistundi" — this one laptop's cached Notifications list was carrying over admin/MIS-only
+  // entries into the employee's own Notifications page because the list was never scoped by
+  // which login actually saw/generated each entry. Scope it now: drop whatever can only belong to
+  // the OTHER login, by type for old entries and by the `who` tag for anything saved from now on.
+  list = list.filter(n => {
+    if (who === 'emp') {
+      if (NOTIF_ADMIN_ONLY_TYPES_.indexOf(n.type) > -1) return false;
+      if (n.who && n.who !== 'emp') return false;
+    } else {
+      if (NOTIF_EMP_OWN_TYPES_.indexOf(n.type) > -1) return false;
+      if (n.who && n.who !== 'admin') return false;
+    }
+    return true;
+  });
   if (who === 'emp') {
     box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
     list = list.filter(n => NOTIF_EMP_BACKEND_TYPES_.indexOf(n.type) === -1);
@@ -5239,7 +5266,7 @@ async function _notifFetchHistoricalEmp_() {
       const tbl = _notifMiniTable_('#b8860b', '💳 Loyalty Card #' + (c.cardNo || '') + ' — ' + empName, [
         ['Card Type', c.cardType || '—'], ['Customer', properCase(c.custName || '')], ['Phone', c.phone || '—'], ['Issued', c.cardDate || '—']
       ]);
-      out.push({ ts: t, icon: '💳🎉', html: tbl, type: 'loyalty' });
+      out.push({ ts: t, icon: '💳', html: tbl, type: 'loyalty' });
     });
   }).catch(() => {}));
 
@@ -5251,7 +5278,7 @@ async function _notifFetchHistoricalEmp_() {
       const tbl = _notifMiniTable_('#b8860b', '🥇 Golden Aura #' + (r.planNo || '') + ' — ' + empName, [
         ['Plan Type', r.planType || '—'], ['Customer', properCase(r.custName || '')], ['Amount', 'Rs ' + (r.amount || '0')], ['Enrolled', r.enrollDate || '—']
       ]);
-      out.push({ ts: t, icon: '🥇🎉', html: tbl, type: 'goldenaura' });
+      out.push({ ts: t, icon: '🥇', html: tbl, type: 'goldenaura' });
     });
   }).catch(() => {}));
 
@@ -5265,7 +5292,7 @@ async function _notifFetchHistoricalEmp_() {
       const tbl = _notifMiniTable_('#1d4ed8', '🔁 Stock Transfer — ' + (r.by || empName), [
         ['Tag No', r.tagNo || '—'], ['Product', r.productName || '—'], ['From', r.from || '—'], ['To', r.to || '—']
       ]);
-      out.push({ ts: t, icon: '🔁🎉', html: tbl, type: 'sttransfer' });
+      out.push({ ts: t, icon: '🔁', html: tbl, type: 'sttransfer' });
     });
   }).catch(() => {}));
 
@@ -5278,7 +5305,7 @@ async function _notifFetchHistoricalEmp_() {
         ['Counter', r.productFrom === 'Main' ? 'Main Hub' : (r.counter || '—')],
         ['Tag No', r.tagNo || '—'], ['Item', r.productName || r.type || '—'], ['Entry Type', r.entryType || '—']
       ]);
-      out.push({ ts: t, icon: '📦🎉', html: tbl, type: 'stentry' });
+      out.push({ ts: t, icon: '📦', html: tbl, type: 'stentry' });
     });
   }).catch(() => {}));
 
@@ -5291,7 +5318,7 @@ async function _notifFetchHistoricalEmp_() {
         const tbl = _notifMiniTable_('#4A0E8F', '🧾 DSR ' + (r.dsrId || '') + ' — ' + (r.employeeName || empName), [
           ['Customer', properCase(r.customerName || '')], ['Items', String(r.itemCount || '')], ['Status', r.paymentStatus || '—']
         ]);
-        out.push({ ts: t, icon: '🧾🎉', html: tbl, type: 'dsr' });
+        out.push({ ts: t, icon: '🧾', html: tbl, type: 'dsr' });
       });
     }).catch(() => {}));
 
@@ -5303,7 +5330,7 @@ async function _notifFetchHistoricalEmp_() {
       const tbl = _notifMiniTable_('#1d4ed8', '📞 Lead Call — ' + (r.empName || empName), [
         ['Customer', properCase(r.custName || '—')], ['Mobile', r.phone || '—'], ['Status', r.status || '—']
       ]);
-      out.push({ ts: t, icon: '📞🎉', html: tbl, type: 'leadcall' });
+      out.push({ ts: t, icon: '📞', html: tbl, type: 'leadcall' });
     });
   }).catch(() => {}));
 
@@ -7600,8 +7627,8 @@ function showLeaveResultPopup(res) {
 // fields from that one submission (never pulled from any list/search of other records), so it
 // can never show anyone else's data.
 function showCongratsPopup_(opts) {
-  document.getElementById('congratsIcon').textContent = opts.icon || '🎉';
-  document.getElementById('congratsTitle').textContent = opts.title || 'Congratulations!';
+  document.getElementById('congratsIcon').textContent = opts.icon || '✅';
+  document.getElementById('congratsTitle').textContent = opts.title || 'Submitted Successfully';
   document.getElementById('congratsMsg').innerHTML = opts.msg || '';
   const rows = opts.details || [];
   document.getElementById('congratsDetails').innerHTML = rows.map(([label, val], i) => {
@@ -7620,14 +7647,14 @@ function showCongratsPopup_(opts) {
   // v-fix (BRO: "total details undali, mail lo evaithe vastundo aa details undali... table
   // laga undali, every cell ki boarder tho" — now logs the FULL details as the same bordered
   // mini-table used server-side for the MIS digest mail, not a flattened one-line summary.
-  const _notifTbl = _notifMiniTable_('#b8860b', opts.title || 'Congratulations!', rows);
-  logNotifHistory_(opts.icon || '🎉', (opts.msg || '') + '<div style="margin-top:6px;">' + _notifTbl + '</div>', opts.type || 'other');
+  const _notifTbl = _notifMiniTable_('#b8860b', opts.title || 'Submitted Successfully', rows);
+  logNotifHistory_(opts.icon || '✅', (opts.msg || '') + '<div style="margin-top:6px;">' + _notifTbl + '</div>', opts.type || 'other');
   // v-add (BRO: "emp ki kuda valla own notification velali" — this person's own just-saved
   // entry also pops up as the SAME swipe-to-dismiss card MIS gets for other people's entries,
   // right away (not just the big modal above, which needs a tap to close) — works for both
   // Employee and Admin logins since this function is shared by every entry type's Save path.
   // No extra logNotifHistory_ call here — already logged with fuller content just above.
-  _renderPopupCard_((opts.icon || '🎉') + ' Saved', _notifTbl);
+  _renderPopupCard_((opts.icon || '✅') + ' Saved', _notifTbl);
 }
 
 // Called only when the submit request itself timed out (no response
@@ -10851,6 +10878,27 @@ function c360BiodataHtml_(c) {
   </div>`;
 }
 
+// Parses a date string from either the feedback-row resolver (en-GB
+// dd/mm/yyyy) or the Loyalty/Golden-Aura APIs (dd-MMM-yyyy, same pattern
+// used elsewhere in this file via the "-" → " " swap) into a sortable ms
+// value, so c360SyntheticEnrollVisits_ entries can be merged into one
+// chronological Visits list alongside real feedback-form rows.
+function c360DateToMs_(s) {
+  if (!s || s === '—' || s === '-') return 0;
+  const str = String(s).trim();
+  // dd/mm/yyyy or dd-mm-yyyy (numeric month — c360ResolveVisitDate_'s en-GB output)
+  let m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+  // dd/MMM/yyyy or dd-MMM-yyyy (month name — Loyalty/Golden-Aura cardDate/enrollDate)
+  m = str.match(/^(\d{1,2})[\/\-]([A-Za-z]{3,})[\/\-](\d{4})/);
+  if (m) {
+    const t = new Date(m[1] + ' ' + m[2] + ' ' + m[3]).getTime();
+    if (!isNaN(t)) return t;
+  }
+  const t2 = new Date(str).getTime(); // fallback — e.g. an ISO timestamp
+  return isNaN(t2) ? 0 : t2;
+}
+
 function c360MaskMobile_(m) {
   const d = String(m || '').replace(/\D/g, '');
   if (!d) return '';
@@ -10858,20 +10906,15 @@ function c360MaskMobile_(m) {
   return 'X'.repeat(d.length - 5) + d.slice(-5);
 }
 
-// Resolves the real visit date for one "Customer Data" (feedback form)
-// row: BRO's rule is "first check Loyalty Card / Golden Plan entry date
-// for that row's card/plan number; if there isn't one, the feedback
-// timestamp minus one day IS the visit date" (feedback often gets typed
-// in late/the next day, not necessarily same-day).
-function c360ResolveVisitDate_(visit, loy, ga) {
-  if (visit.loyaltyCardNo && loy && loy.cards) {
-    const m = loy.cards.find(c => String(c.cardNo || '').trim().toLowerCase() === visit.loyaltyCardNo.trim().toLowerCase());
-    if (m && m.cardDate) return { date: m.cardDate, via: 'Loyalty Card #' + m.cardNo };
-  }
-  if (visit.goldenPlanNo && ga && ga.plans) {
-    const m = ga.plans.find(p => String(p.planNo || '').trim().toLowerCase() === visit.goldenPlanNo.trim().toLowerCase());
-    if (m && m.enrollDate) return { date: m.enrollDate, via: 'Golden Aura #' + m.planNo };
-  }
+// Resolves the real visit date for one "Customer Data" (feedback form) row.
+// v-fix (BRO: "customer visit, loyalty enrol date count vaddu. only feed back
+// form lo timestamp ki mundu roju date matrame" — a feedback-form row's own
+// visit date is ALWAYS its timestamp minus one day, full stop. The
+// Loyalty/Golden-Aura enrollment date is never substituted in here anymore —
+// see c360SyntheticEnrollVisits_ below for the one case BRO DOES want it
+// used: a loyalty/golden-aura enrollment that never got its own feedback-form
+// row at all.
+function c360ResolveVisitDate_(visit) {
   if (visit.timestamp) {
     const d = new Date(visit.timestamp.replace(/-/g, ' '));
     if (!isNaN(d.getTime())) {
@@ -10880,6 +10923,33 @@ function c360ResolveVisitDate_(visit, loy, ga) {
     }
   }
   return { date: '—', via: '' };
+}
+
+// v-add (BRO: "incase loyalti card custoemr mobile no and card no feedback lo
+// find avakapote, aa cuosemr yokka loyalti card enroll date ni visit kinda
+// tisukuntaru... loyalti card purchase aindi, enroll date enter aindi, kani,
+// feed back lo enter cheyadam marchipoyaru" — when staff issues a Loyalty
+// Card/Golden Aura plan but forgets to also log a separate feedback-form row
+// for that same visit, that visit would otherwise vanish entirely from this
+// list. So: only when NO feedback-form row references a given card/plan
+// number at all, add one synthetic visit for it, dated on its enrollment
+// date — never when a feedback row already exists for it (that row's own
+// timestamp−1day already covers it, per c360ResolveVisitDate_ above).
+function c360SyntheticEnrollVisits_(visits, loy, ga) {
+  const out = [];
+  const loggedCard = new Set((visits || []).map(v => (v.loyaltyCardNo || '').trim().toLowerCase()).filter(Boolean));
+  const loggedPlan = new Set((visits || []).map(v => (v.goldenPlanNo || '').trim().toLowerCase()).filter(Boolean));
+  (loy && loy.cards || []).forEach(c => {
+    const key = String(c.cardNo || '').trim().toLowerCase();
+    if (!key || loggedCard.has(key) || !c.cardDate) return;
+    out.push({ _syntheticDate: c.cardDate, customerName: c.custName, phone: '', status: '', feedback: '📇 Loyalty Card #' + c.cardNo + ' enrollment — not separately logged in feedback form', salesPerson: '', employeeName: c.empName, product: '' });
+  });
+  (ga && ga.plans || []).forEach(p => {
+    const key = String(p.planNo || '').trim().toLowerCase();
+    if (!key || loggedPlan.has(key) || !p.enrollDate) return;
+    out.push({ _syntheticDate: p.enrollDate, customerName: p.custName, phone: '', status: '', feedback: '🏆 Golden Aura #' + p.planNo + ' enrollment — not separately logged in feedback form', salesPerson: '', employeeName: p.empName, product: '' });
+  });
+  return out;
 }
 
 // BRO: "Customer Name/Mobile/loyalty card no/golden plan/dsr id edaina
@@ -10961,14 +11031,30 @@ async function loadCustomer360(who) {
   };
 
   let html = `<div style="display:grid;gap:10px;">`;
-  html += section('Visits', '🚶', visitsRes ? visitsRes.visits : null, v => {
-    const r = c360ResolveVisitDate_(v, loy, ga);
+  // v-add (BRO's "Window Shop Customer" feature: "mobile no search lo red mark
+  // lo window shop customer ani tag ravali" — visible on both admin's and the
+  // employee's Customer 360 search alike, since this one function serves both.
+  if (visitsRes && visitsRes.windowShopCustomer) {
+    html += `<div style="background:#fee2e2;border:1.5px solid #dc2626;color:#991b1b;padding:9px 12px;border-radius:8px;font-weight:700;font-size:12.5px;">🚩 Window Shop Customer — visited ${visitsRes.nonPurchaseStoreVisits} times, no purchase yet</div>`;
+  }
+  // v-fix (BRO: "customer visit, loyalty enrol date count vaddu. only feed
+  // back form lo timestamp ki mundu roju date matrame, and incase loyalti
+  // card customer mobile no and card no feedback lo find avakapote, aa
+  // customer yokka loyalti card enroll date ni visit kinda tisukuntaru" —
+  // every real feedback-form row dates itself (timestamp−1day, always); a
+  // loyalty/golden-aura enrollment only ever contributes a date when it has
+  // NO feedback-form row of its own at all (c360SyntheticEnrollVisits_).
+  const realVisits = (visitsRes ? visitsRes.visits : []).map(v => {
+    const r = c360ResolveVisitDate_(v);
+    return Object.assign({}, v, { _displayDate: r.date, _sortMs: c360DateToMs_(r.date) });
+  });
+  const syntheticVisits = c360SyntheticEnrollVisits_(visitsRes ? visitsRes.visits : [], loy, ga).map(v =>
+    Object.assign({}, v, { _displayDate: v._syntheticDate, _sortMs: c360DateToMs_(v._syntheticDate) })
+  );
+  const combinedVisits = realVisits.concat(syntheticVisits).sort((a, b) => b._sortMs - a._sortMs);
+  html += section('Visits', '🚶', combinedVisits, v => {
     const shownPhone = isAdminView ? v.phone : c360MaskMobile_(v.phone);
-    // v-fix (BRO: "ilanti lines, and quotation no need. backend lo
-    // pettuko, kani frontend ki vaddu" — r.via (how the date was worked
-    // out — card date / plan date / feedback−1day) stays computed, just
-    // not shown to the user anymore.
-    return `<div class="kd-note" style="margin:4px 0;">📅 ${r.date} — ${properCase(v.customerName)}${shownPhone ? ' — ' + shownPhone : ''}${v.status ? ' — <b>' + v.status + '</b>' : ''}${v.product ? ' — interested: ' + properCase(v.product) : ''}${v.feedback ? ' — ' + v.feedback : ''} ${v.employeeName ? '<span style="opacity:.6;">(by ' + properCase(v.employeeName) + ')</span>' : ''}</div>`;
+    return `<div class="kd-note" style="margin:4px 0;">📅 ${v._displayDate} — ${properCase(v.customerName)}${shownPhone ? ' — ' + shownPhone : ''}${v.status ? ' — <b>' + v.status + '</b>' : ''}${v.product ? ' — interested: ' + properCase(v.product) : ''}${v.feedback ? ' — ' + v.feedback : ''} ${v.employeeName ? '<span style="opacity:.6;">(by ' + properCase(v.employeeName) + ')</span>' : ''}</div>`;
   }, visitsErr);
   html += section('Loyalty Card', '💳', loy ? loy.cards : null, c =>
     `<div class="kd-note" style="margin:4px 0;">#${c.cardNo} — ${c.cardType} — ${properCase(c.custName)} — issued ${c.cardDate} by ${properCase(c.empName)}</div>${c360BiodataHtml_(c)}`,
@@ -11832,10 +11918,16 @@ async function pollNewEntryPopups() {
     try {
       let since = _misPopupLastTs_(src.key);
       if (!since) {
-        // First time this source has ever been checked on this device — start counting from NOW,
-        // same reasoning as setupMisDigestTrigger_ server-side (don't flood with old history).
-        _misPopupSetLastTs_(src.key, Date.now());
-        continue;
+        // v-fix (BRO: "okkasari kuda rani notification marame login aina ventane ravali" — this
+        // used to silently set the bookmark to NOW and skip on a device's first-ever check,
+        // meaning anything that happened before this device's first login was permanently never
+        // shown here (even though it's sitting right there in the shared queue). Now: catch up
+        // on the last 24 hours instead of skipping, so a fresh device/browser (or one that just
+        // had its storage cleared) still sees whatever it missed, right at login — same as a
+        // regular device that was simply closed for a while already does via its own saved
+        // bookmark. Deliberately capped at 24h (not the full queue history) so a device that has
+        // literally never opened this portal doesn't flood with weeks of old entries.
+        since = Date.now() - (24 * 60 * 60 * 1000);
       }
       const res = await _fetchWithTimeout(src.url(since), {}, 15000).then(r => r.json());
       if (!res || !res.ok || !res.rows || !res.rows.length) continue;
@@ -12907,8 +12999,8 @@ async function confirmSubmitLoyaltyCard(evt) {
     if (result && result.ok) {
       toast('✅ Card ' + result.cardNo + ' enrolled successfully', 'success');
       showCongratsPopup_({
-        icon: '💳🎉',
-        title: 'Congratulations!',
+        icon: '💳',
+        title: 'Submitted Successfully',
         type: 'loyalty',
         msg: 'Loyalty Card enrolled successfully for <b>' + properCase(payload.custName) + '</b>.',
         details: [
@@ -16875,8 +16967,8 @@ async function stDoTransfer(who) {
       toast('✅ ' + res.tagNo + ' moved: ' + res.from + ' → ' + res.to, 'success');
       // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this transfer's own fields.
       showCongratsPopup_({
-        icon: '🔁🎉',
-        title: 'Congratulations!',
+        icon: '🔁',
+        title: 'Submitted Successfully',
         type: 'sttransfer',
         msg: 'Stock Transfer saved successfully.',
         details: [
@@ -18549,8 +18641,8 @@ async function seSave(scope) {
       seShowBanner(scope,'ok', msg);
       // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this save's own fields.
       showCongratsPopup_({
-        icon: '📦🎉',
-        title: 'Congratulations!',
+        icon: '📦',
+        title: 'Submitted Successfully',
         type: 'stentry',
         msg: 'Stock Entry saved successfully.',
         details: [
@@ -18917,8 +19009,8 @@ async function confirmSubmitGoldenAura(who, evt) {
       msg.innerHTML = `✅ Saved! Plan No: <b>${res.planNo}</b>`;
       toast('Golden Aura enrollment saved!', 'success');
       showCongratsPopup_({
-        icon: '🥇🎉',
-        title: 'Congratulations!',
+        icon: '🥇',
+        title: 'Submitted Successfully',
         type: 'goldenaura',
         msg: 'Golden Aura enrollment saved successfully for <b>' + properCase(payload.custName) + '</b>.',
         details: [
@@ -20051,8 +20143,8 @@ async function submitLeadCall() {
       toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
       // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this call-log's own fields.
       showCongratsPopup_({
-        icon: '📞🎉',
-        title: 'Congratulations!',
+        icon: '📞',
+        title: 'Submitted Successfully',
         type: 'leadcall',
         msg: 'Call logged successfully for <b>' + properCase(__leadCallCurrent.name || __leadCallCurrent.phone) + '</b>.',
         details: [
@@ -22359,8 +22451,8 @@ function dsrfConfirmSubmit(who, evt) {
         // v-add (BRO: "all new entrys ivali" — same Congratulations popup as Loyalty
         // Card/Golden Aura, filled with ONLY this one just-saved submission's own fields.
         showCongratsPopup_({
-          icon: isRDR ? '🔄🎉' : isOutlet ? '🏬🎉' : '🧾🎉',
-          title: 'Congratulations!',
+          icon: isRDR ? '🔄' : isOutlet ? '🏬' : '🧾',
+          title: 'Submitted Successfully',
           type: 'dsr',
           msg: (isRDR ? 'Return / Damage / Repair' : isOutlet ? 'Outlet Issue' : 'DSR entry') + ' saved successfully.',
           details: [
