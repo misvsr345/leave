@@ -18090,8 +18090,56 @@ function slEditRow(i) {
   else f += slField('weight', 'Weight (gm)', r.weight);
   if (!tag) f += slField('qty', 'Quantity', r.qty, 'number');
   f += slField('billNo', 'Bill No', r.billNo);
+  // v-add (BRO: "Edit Stock Entry lo photo kuda re-upload cheyagalagali" — Manage's Edit screen
+  // could edit every field except the Photo; add the same Take Photo/Gallery capture used by the
+  // Stock Entry form, so admin can add/replace a photo for any existing tag.
+  SL.editPhoto = ''; SL._editIdx = i;
+  f += `<div class="form-row"><label>Photo</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;border:1.5px dashed #D4AF37;border-radius:10px;background:var(--purple-bg,#F5EEFB);color:#6B5A80;padding:12px 14px;cursor:pointer;font-size:12.5px;font-weight:600;position:relative;">
+        <span>📷</span><span>Take Photo</span><input type="file" accept="image/*" capture="environment" onchange="slEditPhotoChanged(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;"></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1.5px dashed #D4AF37;border-radius:10px;background:var(--purple-bg,#F5EEFB);color:#6B5A80;padding:12px 14px;cursor:pointer;font-size:12.5px;font-weight:600;position:relative;">
+        <span>🖼️</span><span>Gallery</span><input type="file" accept="image/*" onchange="slEditPhotoChanged(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;"></div>
+    </div>
+    <div id="slF-phTxt" style="font-size:12px;margin-top:6px;color:#7D6E8C;">${r.photo ? 'Current photo on file (pick a new one above to replace it)' : 'No photo on file'}</div>
+    <img id="slF-prev" alt="" src="${r.photo ? escHtml(r.photo) : ''}" style="max-width:100%;max-height:130px;border-radius:8px;margin-top:8px;${r.photo ? 'display:block;' : 'display:none;'}">
+    <a href="#" id="slF-phRemoveNew" onclick="slEditPhotoRemoveNew();return false;" style="display:none;color:var(--red);font-size:11px;font-weight:700;margin-top:4px;">✕ Remove new photo</a>
+  </div>`;
   f += `<button class="btn-primary" style="width:100%;margin-top:6px;" onclick="slSaveEdit(${i})">Save changes</button>`;
   slOpenModal(f);
+}
+function slEditPhotoChanged(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const txtEl = document.getElementById('slF-phTxt');
+  if (txtEl) txtEl.textContent = 'Processing…';
+  const rd = new FileReader();
+  rd.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const M = 800; let w = img.width, h = img.height;
+      if (w > M) { h = Math.round(h * M / w); w = M; } if (h > M) { w = Math.round(w * M / h); h = M; }
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.65, b64 = cv.toDataURL('image/jpeg', q);
+      let kb = Math.round(b64.length * 0.75 / 1024);
+      if (kb > 200) { q = Math.max(0.3, q * (200 / kb) * 0.9); b64 = cv.toDataURL('image/jpeg', q); kb = Math.round(b64.length * 0.75 / 1024); }
+      SL.editPhoto = b64;
+      if (txtEl) txtEl.textContent = f.name + ' (' + kb + ' KB) — will replace existing photo on save';
+      const pv = document.getElementById('slF-prev'); if (pv) { pv.src = b64; pv.style.display = 'block'; }
+      const rm = document.getElementById('slF-phRemoveNew'); if (rm) rm.style.display = 'inline-block';
+    };
+    img.src = ev.target.result;
+  };
+  rd.readAsDataURL(f);
+}
+function slEditPhotoRemoveNew() {
+  SL.editPhoto = '';
+  const r = SL.rows[SL._editIdx];
+  const txtEl = document.getElementById('slF-phTxt');
+  if (txtEl) txtEl.textContent = (r && r.photo) ? 'Current photo on file (pick a new one above to replace it)' : 'No photo on file';
+  const pv = document.getElementById('slF-prev');
+  if (pv) { if (r && r.photo) { pv.src = r.photo; pv.style.display = 'block'; } else { pv.src = ''; pv.style.display = 'none'; } }
+  const rm = document.getElementById('slF-phRemoveNew'); if (rm) rm.style.display = 'none';
 }
 async function slSaveEdit(i) {
   const r = SL.rows[i]; if (!r) return;
@@ -18105,9 +18153,10 @@ async function slSaveEdit(i) {
     if (!(parseFloat(fields.gross) > 0) || !(parseFloat(fields.net) > 0) || parseFloat(fields.net) > parseFloat(fields.gross)) { toast('Check Gross / Net weight', 'error'); return; } }
   else { fields.design = g('design'); fields.weight = g('weight'); if (!(parseFloat(fields.weight) > 0)) { toast('Weight is required', 'error'); return; } }
   if (!tag) { fields.qty = g('qty'); if (!(parseInt(fields.qty, 10) >= 1)) { toast('Quantity must be 1 or more', 'error'); return; } }
+  if (SL.editPhoto) fields.photo = SL.editPhoto;
   try {
     const res = await slPost({ action: 'adminUpdate', stockId: r.stockId, fields: fields });
-    if (res && res.ok) { toast('Stock entry updated', 'success'); document.getElementById('slModal').remove(); slLoadManage(); }
+    if (res && res.ok) { toast('Stock entry updated', 'success'); SL.editPhoto = ''; document.getElementById('slModal').remove(); slLoadManage(); }
     else toast((res && res.error) || 'Update failed', 'error');
   } catch (e) { toast('Network error — not saved', 'error'); }
 }
