@@ -92,7 +92,7 @@
    animation at all (.btn-primary, .btn-sm, .btn-view, .filter-btn's own
    :active, and every other *btn* class in the file, present or future). */
 button, [class*="btn"] {
-  transition: transform 5s ease, box-shadow 5s ease, opacity 5s ease;
+  transition: transform 0.5s ease, box-shadow 0.5s ease, opacity 0.5s ease;
 }
 button:active:not(:disabled), [class*="btn"]:active:not(.disabled) {
   transform: scale(0.95);
@@ -397,7 +397,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   box-shadow: 0 4px 15px rgba(107,33,168,0.4);
 }
 .btn-primary:hover:not(:disabled) { opacity: 0.9; }
-.btn-primary:active:not(:disabled) { animation: btnPrimaryPress 5s ease; }
+.btn-primary:active:not(:disabled) { animation: btnPrimaryPress 0.5s ease; }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-report {
@@ -417,7 +417,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   box-shadow: 0 2px 8px rgba(107,33,168,0.1);
 }
 .btn-secondary:hover { background: var(--purple-bg); transform: translateY(-1px); }
-.btn-secondary:active { animation: btnSecondaryPress 5s ease; }
+.btn-secondary:active { animation: btnSecondaryPress 0.5s ease; }
 .walkins-quickbtn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .dh-actfilter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -429,7 +429,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   cursor: pointer; box-shadow: 0 3px 10px rgba(13,71,161,0.3); transition: all 0.15s;
 }
 .export-icon-btn:hover { transform: scale(1.08); }
-.export-icon-btn:active { animation: iconWiggle 5s ease; }
+.export-icon-btn:active { animation: iconWiggle 0.5s ease; }
 
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
 
@@ -673,12 +673,12 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    aina ravali" — the SAME bouncy zoom-from-center style as the welcome
    popup's open animation, now applied on EVERY page open, every time,
    guaranteed (see pptPageTransitionIn_ below — no longer random). */
-.pt-popin { animation: pptPopIn 2s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center top; }
+.pt-popin { animation: pptPopIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center top; }
 @keyframes pptPopIn { 0% { transform: scale(0.85); opacity: 0; } 70% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 /* v-fix (BRO: "side nundi page slide ainattu chei" — page now slides in from
    the side instead of popping in from the center; see pptPageTransitionIn_
    below, switched from pt-popin to this. */
-.pt-slidein { animation: pptSlideIn 2s cubic-bezier(0.22, 0.68, 0.36, 1); }
+.pt-slidein { animation: pptSlideIn 0.2s cubic-bezier(0.22, 0.68, 0.36, 1); }
 @keyframes pptSlideIn { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 /* v-add (BRO: "powerpoint lo chala animation lu unnai — fly, split, flip,
    wheel, appear... konni alanti vadachu" — a handful of PowerPoint-style
@@ -686,13 +686,13 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    used by default (pptPageTransitionIn_ now always uses pt-popin above per
    the newer request). */
 .pt-zoom, .pt-appear, .pt-floatup, .pt-flyin, .pt-split, .pt-flip, .pt-wheel { transform-origin: center top; }
-.pt-zoom { animation: pageZoomPop 5s ease-out; }
-.pt-appear { animation: pptAppear 5s ease-out; }
-.pt-floatup { animation: pptFloatUp 5s ease-out; }
-.pt-flyin { animation: pptFlyIn 5s cubic-bezier(0.22,0.68,0.36,1); }
-.pt-split { animation: pptSplit 5s ease-out; }
-.pt-flip { animation: pptFlip 5s ease-out; perspective: 900px; }
-.pt-wheel { animation: pptWheel 5s ease-out; }
+.pt-zoom { animation: pageZoomPop 0.5s ease-out; }
+.pt-appear { animation: pptAppear 0.5s ease-out; }
+.pt-floatup { animation: pptFloatUp 0.5s ease-out; }
+.pt-flyin { animation: pptFlyIn 0.5s cubic-bezier(0.22,0.68,0.36,1); }
+.pt-split { animation: pptSplit 0.5s ease-out; }
+.pt-flip { animation: pptFlip 0.5s ease-out; perspective: 900px; }
+.pt-wheel { animation: pptWheel 0.5s ease-out; }
 @keyframes pptAppear { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pptFloatUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pptFlyIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
@@ -953,7 +953,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .btn-absent:hover:not(:disabled) { background: var(--orange); color: #fff; }
 .btn-view { background: #f0f0f0; color: #555; border-color: #ddd; }
 .btn-view:hover:not(:disabled) { background: #555; color: #fff; }
-.btn-view:active:not(:disabled) { animation: viewBtnPress 5s ease; }
+.btn-view:active:not(:disabled) { animation: viewBtnPress 0.5s ease; }
 
 /* Form Styles */
 .form-row { margin-bottom: 14px; }
@@ -1199,16 +1199,21 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
 
 /* Toast */
 /* v-fix (BRO: "error place page chivara avutundi, dani valla hide ai sariga
-   kanapadam ledu" — the earlier fix below just nudged it up by 14px above
-   the footer nav, which still wasn't enough — BRO's own screenshot shows it
-   still rendering right at the very bottom edge, barely visible, cut off by
-   the OS taskbar on a real device. Moved OFF the bottom entirely this time —
-   anchored near the TOP instead, right under the topbar, the same reliable
-   spot .new-entry-popup-stack already uses successfully — so it can never
-   again collide with the footer nav / taskbar area. Hidden state slides
-   UP off-screen now (negative translateY) instead of down, to match. */
-.toast { position: fixed; top: calc(var(--topbar-h) + 10px); left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s; max-width: 90vw; max-height: 140px; overflow-y: auto; word-break: break-word; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-.toast.show { transform: translateX(-50%) translateY(0); }
+   kanapadam ledu" — first fix just nudged it up 14px above the footer nav,
+   not enough. Second fix moved it to the top using a hardcoded --topbar-h
+   guess (52px) — still wrong, because the real topbar can be 1 or 2 rows
+   plus the scrolling birthday/event banner on top of it, taller than that
+   guess, so the toast still overlapped/hid behind it (BRO's screenshot:
+   "ippudu kuda wrong place lo icharu, sagam kanipistundi").
+   FIX: use --header-h instead — a variable already live-measured off the
+   ACTUAL rendered header-group height (syncHeaderHeight(), see bottom of
+   file) and kept in sync on resize, which is exactly what the rest of the
+   page already uses for its own top padding (.app{padding-top:var(--header-h)}).
+   Riding the same real measurement the page itself relies on means this
+   can never again drift out of sync with whatever the header actually
+   renders as (1-row vs 2-row topbar, banner on/off, zoom, device, etc). */
+.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); opacity: 0; pointer-events: none; background: var(--text); color: #fff; padding: 16px 22px; border-radius: 12px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.25s, opacity 0.25s; max-width: 90vw; max-height: 60vh; overflow-y: auto; word-break: break-word; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+.toast.show { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
 .toast.success { background: var(--green); }
 .toast.error { background: var(--red); }
 .toast.info { background: var(--purple); }
@@ -1261,9 +1266,9 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
 /* v-add (BRO: "welcome board animationlo... center nundi pedda size avali, konni
    second lo tanaloga chinnaga ai close avali" — welcome popup zooms in from the
    center, holds briefly, then shrinks back down and closes on its own.) */
-#wbWelcomeModal .modal-box { animation: wbPopIn 5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
-#wbWelcomeModal.wb-closing .modal-box { animation: wbPopOut 5s ease-in forwards; }
-#wbWelcomeModal.wb-closing { animation: wbOverlayFadeOut 5s ease-in forwards; }
+#wbWelcomeModal .modal-box { animation: wbPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
+#wbWelcomeModal.wb-closing .modal-box { animation: wbPopOut 0.5s ease-in forwards; }
+#wbWelcomeModal.wb-closing { animation: wbOverlayFadeOut 0.5s ease-in forwards; }
 @keyframes wbPopIn { 0% { transform: scale(0.25); opacity: 0; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes wbPopOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.25); opacity: 0; } }
 @keyframes wbOverlayFadeOut { from { opacity: 1; } to { opacity: 0; } }
@@ -1326,7 +1331,7 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
   box-shadow: 0 1px 3px rgba(0,0,0,0.06); flex: 0 1 auto; white-space: nowrap;
 }
 .filter-btn:hover { border-color: var(--purple-mid); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(107,33,168,0.15); }
-.filter-btn:active { animation: filterPillPress 5s ease; }
+.filter-btn:active { animation: filterPillPress 0.5s ease; }
 .filter-btn.active { background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink)); color: #fff; border-color: var(--gold); box-shadow: 0 3px 10px rgba(107,33,168,0.35); transform: translateY(-1px); }
 @media (max-width: 420px) {
   .filter-btn { font-size: 11px; height: 32px; padding: 0 12px; }
@@ -1437,7 +1442,7 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
 .quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .quick-action-btn { background: #fff; border: 1.5px solid #ddd0ee; border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(107,33,168,0.06); }
 .quick-action-btn:hover { border-color: var(--gold); background: #faf5ff; box-shadow: 0 4px 16px rgba(107,33,168,0.18); transform: translateY(-2px); }
-.quick-action-btn:active { animation: tilePress 5s ease; }
+.quick-action-btn:active { animation: tilePress 0.5s ease; }
 .quick-action-icon { font-size: 26px; margin-bottom: 5px; display: block; }
 .quick-action-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
 .quick-action-sub { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
@@ -4695,7 +4700,7 @@ function wbCloseWelcomePopup_() {
   const modal = document.getElementById('wbWelcomeModal');
   if (!modal.classList.contains('show')) return;
   modal.classList.add('wb-closing');
-  setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 5000); // matches wbPopOut duration
+  setTimeout(() => { closeModal('wbWelcomeModal'); modal.classList.remove('wb-closing'); }, 500); // matches wbPopOut duration
 }
 function todayYMD() { return toYMD(new Date()); }
 
