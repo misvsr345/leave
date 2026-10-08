@@ -16870,6 +16870,49 @@ async function slEnsureMeta() {
   if (m && m.ok) { SL.counters = m.counters || []; SL.mainHub = m.mainHub || 'Main Hub'; slSaveMetaCache_(); }
 }
 
+// v-add (BRO: "manage option lo kuda dropdown lu ravali, manual enter cheste data wrong
+// vastundi" — the Manage/Edit screen's Product Name, Design, Bangle Size, Ring Size, Length,
+// Clarity, Color were plain free-text boxes, so a re-typed value could easily drift from the
+// canonical spelling used everywhere else (Stock Entry form, filters, reports). Loads the same
+// Products list (gold/diamond/length/bangleSize/ringSize/diamondClarity/diamondColor/
+// counterDesigns) the Stock Entry form already uses, from the SAME source (DSR backend), cached
+// the same way as the counters list above so Manage doesn't wait on the network every time.
+const SL_PRODUCT_META_CACHE_KEY = 'vsrStockProductMetaCache';
+SL.gold = []; SL.diamond = []; SL.length = []; SL.bangleSize = []; SL.ringSize = [];
+SL.diamondClarity = []; SL.diamondColor = []; SL.counterDesigns = {};
+function slLoadProductMetaCache_() {
+  try {
+    const c = JSON.parse(localStorage.getItem(SL_PRODUCT_META_CACHE_KEY) || 'null');
+    if (c && (c.gold || c.diamond)) {
+      SL.gold = c.gold || []; SL.diamond = c.diamond || []; SL.length = c.length || [];
+      SL.bangleSize = c.bangleSize || []; SL.ringSize = c.ringSize || [];
+      SL.diamondClarity = c.diamondClarity || []; SL.diamondColor = c.diamondColor || [];
+      SL.counterDesigns = c.counterDesigns || {};
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+function slSaveProductMetaCache_() {
+  try { localStorage.setItem(SL_PRODUCT_META_CACHE_KEY, JSON.stringify({ gold: SL.gold, diamond: SL.diamond, length: SL.length, bangleSize: SL.bangleSize, ringSize: SL.ringSize, diamondClarity: SL.diamondClarity, diamondColor: SL.diamondColor, counterDesigns: SL.counterDesigns })); } catch (e) {}
+}
+async function slFetchProductMeta_() {
+  try {
+    const d = await _fetchWithTimeout(DSR_GAS_URL + '?action=getData', {}, 25000).then(r => r.json());
+    const p = (d && d.products) || {};
+    SL.gold = p.gold || []; SL.diamond = p.diamond || []; SL.length = p.length || [];
+    SL.bangleSize = p.bangleSize || []; SL.ringSize = p.ringSize || [];
+    SL.diamondClarity = p.diamondClarity || []; SL.diamondColor = p.diamondColor || [];
+    SL.counterDesigns = p.counterDesigns || {};
+    slSaveProductMetaCache_();
+  } catch (e) {}
+}
+async function slEnsureProductMeta() {
+  if (SL.gold.length || SL.diamond.length) return;
+  if (slLoadProductMetaCache_()) { slFetchProductMeta_(); return; } // quiet background refresh
+  await slFetchProductMeta_();
+}
+
 // ══════════════════════════════════════════════════════════════
 // v-add (BRO: "all new entry form lo star unte, compulsary annaru
 // kada, daniki edaina toggle pettu" — Admin can now switch OFF the
@@ -18036,6 +18079,7 @@ async function slRenderManage(box) {
   slLoading(box);
   try {
     await slEnsureMeta();
+    slEnsureProductMeta(); // don't block the list render on this — only needed once Edit opens
     const names = SL.counters.concat([SL.mainHub]);
     box.innerHTML = `<div class="form-2col">
         <div class="form-row"><label>Counter</label><select class="uniform-select" id="slMgCounter"><option value="">All</option>${names.map(n => `<option>${escHtml(n)}</option>`).join('')}</select></div>
@@ -18071,22 +18115,57 @@ function slOpenModal(inner) {
 function slField(id, label, val, type) {
   return `<div class="form-row"><label>${label}</label><input type="${type || 'text'}" id="slF-${id}" value="${escHtml(val == null ? '' : val)}"></div>`;
 }
-function slEditRow(i) {
+// v-add (BRO: "manage option lo kuda dropdown lu ravali, manual enter cheste data wrong
+// vastundi" — same canonical-list dropdown the Stock Entry form uses, with an "Other (type
+// manually)" fallback input that only shows up when that option is picked (or when the
+// existing saved value isn't in the list at all, e.g. an old free-typed entry).
+function slSelectField(id, label, list, val, allowOther) {
+  const v = val == null ? '' : String(val);
+  const inList = list.indexOf(v) > -1;
+  const isOther = allowOther && v && !inList;
+  const opts = '<option value="">-- Select --</option>' +
+    list.map(x => `<option ${x === v ? 'selected' : ''}>${escHtml(x)}</option>`).join('') +
+    (allowOther ? `<option value="__other" ${isOther ? 'selected' : ''}>Other (type manually)</option>` : '');
+  return `<div class="form-row"><label>${label}</label>
+    <select id="slF-${id}" class="uniform-select" ${allowOther ? `onchange="document.getElementById('slF-${id}-other').style.display=this.value==='__other'?'block':'none';"` : ''}>${opts}</select>
+    ${allowOther ? `<input type="text" id="slF-${id}-other" placeholder="Type ${label}" value="${isOther ? escHtml(v) : ''}" style="margin-top:6px;${isOther ? 'display:block;' : 'display:none;'}">` : ''}
+  </div>`;
+}
+function slEditDesignOptions_() {
+  const counterSel = document.getElementById('slF-counter');
+  const c = counterSel ? counterSel.value : '';
+  const seen = {}, out = [];
+  if (c && SL.counterDesigns[c]) { (SL.counterDesigns[c] || []).forEach(d => { if (!seen[d]) { seen[d] = 1; out.push(d); } }); }
+  else { Object.keys(SL.counterDesigns).forEach(cc => (SL.counterDesigns[cc] || []).forEach(d => { if (!seen[d]) { seen[d] = 1; out.push(d); } })); }
+  return out;
+}
+function slEditRefreshDesign_(keepVal) {
+  const sel = document.getElementById('slF-design'); if (!sel) return;
+  const prev = keepVal == null ? sel.value : keepVal;
+  const list = slEditDesignOptions_();
+  const inList = list.indexOf(prev) > -1;
+  sel.innerHTML = '<option value="">-- Select --</option>' + list.map(x => `<option ${x === prev ? 'selected' : ''}>${escHtml(x)}</option>`).join('') +
+    `<option value="__other" ${(prev && !inList) ? 'selected' : ''}>Other (type manually)</option>`;
+  const o = document.getElementById('slF-design-other');
+  if (o) { const isOther = prev && !inList; o.style.display = isOther ? 'block' : 'none'; if (isOther) o.value = prev; }
+}
+async function slEditRow(i) {
   const r = SL.rows[i]; if (!r) return;
+  await slEnsureProductMeta();
   const dia = r.type === 'Diamond', tag = r.tagStatus !== 'Non Tag';
   const names = SL.counters;
   let f = `<div class="modal-title">✏️ Edit ${escHtml(r.stockId)} — ${escHtml(r.type)}</div>
     <div class="form-2col">
       <div class="form-row"><label>Product From</label><select id="slF-productFrom" class="uniform-select" onchange="document.getElementById('slF-counter').disabled=this.value==='Main'">
         <option ${r.productFrom === 'Retail' ? 'selected' : ''}>Retail</option><option ${r.productFrom === 'Main' ? 'selected' : ''}>Main</option></select></div>
-      <div class="form-row"><label>Counter</label><select id="slF-counter" class="uniform-select" ${r.productFrom === 'Main' ? 'disabled' : ''}>${names.map(n => `<option ${n === r.counter ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Counter</label><select id="slF-counter" class="uniform-select" onchange="slEditRefreshDesign_()" ${r.productFrom === 'Main' ? 'disabled' : ''}>${names.map(n => `<option ${n === r.counter ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}</select></div>
     </div>`;
   if (tag) f += slField('tagNo', 'Tag No', r.tagNo);
-  f += slField('productName', 'Product Name', r.productName);
-  if (!dia) f += slField('design', 'Design', r.design);
-  f += `<div class="form-2col">${slField('bangleSize', 'Bangle Size', r.bangleSize)}${slField('ringSize', 'Ring Size', r.ringSize)}</div>${slField('length', 'Length', r.length)}`;
-  f += slField('tunch', dia ? 'Gold Tunch' : 'Tunch', r.tunch);
-  if (dia) f += `<div class="form-2col">${slField('gross', 'Gross Wt (gm)', r.gross)}${slField('net', 'Net Wt (gm)', r.net)}</div>${slField('carat', 'Carat', r.carat)}<div class="form-2col">${slField('clarity', 'Clarity', r.clarity)}${slField('color', 'Color', r.color)}</div>${slField('certNo', 'Certificate No', r.certNo)}`;
+  f += slSelectField('productName', 'Product Name', dia ? SL.diamond : SL.gold, r.productName, true);
+  if (!dia) f += slSelectField('design', 'Design', slEditDesignOptions_(), r.design, true);
+  f += `<div class="form-2col">${slSelectField('bangleSize', 'Bangle Size', SL.bangleSize, r.bangleSize, true)}${slSelectField('ringSize', 'Ring Size', SL.ringSize, r.ringSize, true)}</div>${slSelectField('length', 'Length', SL.length, r.length, true)}`;
+  f += `<div class="form-row"><label>${dia ? 'Gold Tunch' : 'Tunch'}</label><select id="slF-tunch" class="uniform-select"><option value="">-- Select --</option>${SE_TUNCHS.map(t => `<option ${t === String(r.tunch || '') ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`;
+  if (dia) f += `<div class="form-2col">${slField('gross', 'Gross Wt (gm)', r.gross)}${slField('net', 'Net Wt (gm)', r.net)}</div>${slField('carat', 'Carat', r.carat)}<div class="form-2col">${slSelectField('clarity', 'Clarity', SL.diamondClarity, r.clarity, false)}${slSelectField('color', 'Color', SL.diamondColor, r.color, false)}</div>${slField('certNo', 'Certificate No', r.certNo)}`;
   else f += slField('weight', 'Weight (gm)', r.weight);
   if (!tag) f += slField('qty', 'Quantity', r.qty, 'number');
   f += slField('billNo', 'Bill No', r.billNo);
@@ -18145,20 +18224,35 @@ async function slSaveEdit(i) {
   const r = SL.rows[i]; if (!r) return;
   const dia = r.type === 'Diamond', tag = r.tagStatus !== 'Non Tag';
   const g = id => { const e = document.getElementById('slF-' + id); return e ? e.value.trim() : undefined; };
-  const fields = { productFrom: g('productFrom'), productName: g('productName'), bangleSize: g('bangleSize'), ringSize: g('ringSize'), length: g('length'), tunch: g('tunch'), billNo: g('billNo') };
+  // v-add: for a dropdown with an "Other (type manually)" fallback, read the paired free-text
+  // box instead whenever "__other" is selected — same pattern the Stock Entry form uses.
+  const gSel = id => { const v = g(id); if (v !== '__other') return v; const o = document.getElementById('slF-' + id + '-other'); return o ? o.value.trim() : ''; };
+  const fields = { productFrom: g('productFrom'), productName: gSel('productName'), bangleSize: gSel('bangleSize'), ringSize: gSel('ringSize'), length: gSel('length'), tunch: g('tunch'), billNo: g('billNo') };
   if (fields.productFrom === 'Retail') fields.counter = g('counter');
   if (tag) { fields.tagNo = g('tagNo'); if (!fields.tagNo) { toast('Tag No is required', 'error'); return; } if (stockTagHasSep(fields.tagNo)) { toast('Tag No: space, - or / not allowed', 'error'); return; } if (!dsrTagValid(fields.tagNo)) { toast('Tag No needs both letters and numbers', 'error'); return; } }
   if (!fields.productName) { toast('Product Name is required', 'error'); return; }
   if (dia) { fields.gross = g('gross'); fields.net = g('net'); fields.weight = fields.net; fields.carat = g('carat'); fields.clarity = g('clarity'); fields.color = g('color'); fields.certNo = g('certNo');
     if (!(parseFloat(fields.gross) > 0) || !(parseFloat(fields.net) > 0) || parseFloat(fields.net) > parseFloat(fields.gross)) { toast('Check Gross / Net weight', 'error'); return; } }
-  else { fields.design = g('design'); fields.weight = g('weight'); if (!(parseFloat(fields.weight) > 0)) { toast('Weight is required', 'error'); return; } }
+  else { fields.design = gSel('design'); fields.weight = g('weight'); if (!(parseFloat(fields.weight) > 0)) { toast('Weight is required', 'error'); return; } }
   if (!tag) { fields.qty = g('qty'); if (!(parseInt(fields.qty, 10) >= 1)) { toast('Quantity must be 1 or more', 'error'); return; } }
   if (SL.editPhoto) fields.photo = SL.editPhoto;
+  // v-fix (BRO: "photo upload chesaka save click cheste response ledu" — a photo upload can
+  // genuinely take several seconds (Drive write, not just the sheet edit), and with no visible
+  // "Saving…" state the button looked dead, so it seemed like nothing happened. Button now shows
+  // Saving… and disables itself for the duration, and the timeout matches the 90s the Stock Entry
+  // form already uses for a photo-carrying save (60s was fine for a plain edit, not always enough
+  // once a photo is attached).
+  const saveBtn = document.querySelector('#slModal .btn-primary');
+  const saveBtnTxt = saveBtn ? saveBtn.textContent : '';
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
   try {
-    const res = await slPost({ action: 'adminUpdate', stockId: r.stockId, fields: fields });
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action: 'adminUpdate', stockId: r.stockId, fields: fields }, { by: (state.__loginKind === 'emp' ? state.empName : state.adminName) || 'Admin' })) }, fields.photo ? 90000 : 60000).then(x => x.json());
     if (res && res.ok) { toast('Stock entry updated', 'success'); SL.editPhoto = ''; document.getElementById('slModal').remove(); slLoadManage(); }
-    else toast((res && res.error) || 'Update failed', 'error');
-  } catch (e) { toast('Network error — not saved', 'error'); }
+    else { toast((res && res.error) || 'Update failed', 'error'); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtnTxt; } }
+  } catch (e) {
+    toast(e && e.name === 'AbortError' ? 'Server did not respond in time — please check Manage before retrying (it may still have saved).' : 'Network error — not saved', 'error');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtnTxt; }
+  }
 }
 async function slDeleteRow(i) {
   const r = SL.rows[i]; if (!r) return;
