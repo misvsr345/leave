@@ -1199,12 +1199,15 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
 
 /* Toast */
 /* v-fix (BRO: "error place page chivara avutundi, dani valla hide ai sariga
-   kanapadam ledu, chala lenthy ga untunnai" — moved up clear of the footer
-   nav bar (was sitting at a flat 22px, low enough to overlap it on mobile),
-   given a hard max-height + scroll + word-wrap so even an unusually long
-   message can never grow tall enough to cover other content, instead of
-   relying only on the JS-side truncation above. */
-.toast { position: fixed; bottom: calc(var(--navbar-h) + 14px); left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s; max-width: 90vw; max-height: 140px; overflow-y: auto; word-break: break-word; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+   kanapadam ledu" — the earlier fix below just nudged it up by 14px above
+   the footer nav, which still wasn't enough — BRO's own screenshot shows it
+   still rendering right at the very bottom edge, barely visible, cut off by
+   the OS taskbar on a real device. Moved OFF the bottom entirely this time —
+   anchored near the TOP instead, right under the topbar, the same reliable
+   spot .new-entry-popup-stack already uses successfully — so it can never
+   again collide with the footer nav / taskbar area. Hidden state slides
+   UP off-screen now (negative translateY) instead of down, to match. */
+.toast { position: fixed; top: calc(var(--topbar-h) + 10px); left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s; max-width: 90vw; max-height: 140px; overflow-y: auto; word-break: break-word; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.success { background: var(--green); }
 .toast.error { background: var(--red); }
