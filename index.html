@@ -6012,7 +6012,8 @@ async function empLogin() {
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
         checkEmpMissingDsrPopup();
-        toast('Welcome, ' + state.empName + '!', 'success');
+        // v-fix (BRO: "madhyana vastunna welcome mis executive green color lo vastundi kada, adi vaddu" —
+        // removed the duplicate green "Welcome, ..." toast here; the wbWelcomeModal popup already shows it.
         // v-fix (BRO: "if Malleswara has a pending DSR queued on a device, does it sync when Liza logs in on that same device?" — answer was no, login wasn't one of
         // the trigger points): a shared device passing between employees
         // is exactly when a leftover pending item from the PREVIOUS
@@ -6095,7 +6096,8 @@ async function adminLogin() {
         // Never shown to Store Manager or any other admin role.
         if (roleUp.indexOf('MIS') > -1) checkMISPendingLeavePopup();
         startNewEntryPopupPolling();
-        toast('Welcome, ' + state.adminRole + '!', 'success');
+        // v-fix (BRO: "madhyana vastunna welcome mis executive green color lo vastundi kada, adi vaddu" —
+        // removed the duplicate green "Welcome, ..." toast here; the wbWelcomeModal popup already shows it.
         // v-fix: same reasoning as empLogin above — a fresh admin login is
         // also a good moment to sweep up anything left pending on this
         // device from a previous employee's or admin's session.
