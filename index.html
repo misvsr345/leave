@@ -1800,7 +1800,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
        than one screen and needed scrolling to see all of it. This layer is pinned to the actual
        viewport (position:fixed, full width/height) instead, so it always covers exactly one
        screen — desktop or mobile — never more, never less, with nothing to scroll. -->
-  <div id="loginBgLayer" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background-size:cover;background-position:center center;background-repeat:no-repeat;"></div>
+  <div id="loginBgLayer" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;overflow:hidden;">
+    <img id="loginBgImg" style="display:none;width:100%;height:100%;object-fit:contain;" alt="">
+  </div>
   <!-- v-add: BRO — "image lo corner lo chinna hide/show button pettu, click cheste front box
        hide avutundi, malli click chesthe malli show avutundi" — only shown when a background
        image is actually set (toggleLoginFrontBox_ / applyLoginBgImage_). -->
@@ -3442,6 +3444,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <input type="date" id="storeBgExpiryInput" class="uniform-select" style="width:100%;margin-bottom:10px;">
           <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
           <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeBgFileInput').click()">📤 Upload Background Image</button>
+          <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
+               take it off immediately, same as what auto-happens once the expiry date passes. -->
+          <button class="btn-sm" style="width:100%;margin-top:8px;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">🗑️ Remove Background Image</button>
           <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
           <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
         </div>
@@ -6163,25 +6168,17 @@ function applyLoginBgImage_(s) {
   const bgLayer = document.getElementById('loginBgLayer');
   const toggleBtn = document.getElementById('loginBgToggleBtn');
   if (!bgLayer) return;
-  if (s.bgImageUrl) {
-    // v-fix (BRO: "desktop height ki automatic fit avali, chutu gap icharu ante border hide
-    // avvadu" — "cover" was cropping the photo's own edges/border off the sides to fill the
-    // screen exactly. Switched to "contain" so the WHOLE photo is always visible, letterboxed —
-    // the small gap on the sides/top/bottom (whichever the screen's aspect ratio needs) is filled
-    // by the purple theme gradient as its own background layer, not empty/white space. Two
-    // comma-separated layers: the gradient layer always "cover"s the full screen, the photo layer
-    // "contain"s within it — matched by position in the image/size/position lists below.
-    bgLayer.style.backgroundImage =
-      'linear-gradient(135deg, #3b1f78 0%, #6b21a8 50%, #4a1880 100%), url("' + s.bgImageUrl + '")';
-    bgLayer.style.backgroundSize = 'cover, contain';
-    bgLayer.style.backgroundPosition = 'center, center';
-    bgLayer.style.backgroundRepeat = 'no-repeat, no-repeat';
+  // v-fix (BRO: "mali image ravadam ledu" — switched from CSS multi-layer background trickery
+  // to a plain <img> with object-fit:contain, which is simpler and far less fragile. The purple
+  // gradient lives on #loginBgLayer's own CSS background (see stylesheet), so it always shows
+  // through wherever the photo's own aspect ratio leaves a gap — never empty/white space.
+  const img = document.getElementById('loginBgImg');
+  if (s.bgImageUrl && img) {
+    img.src = s.bgImageUrl;
+    img.style.display = 'block';
     if (toggleBtn) toggleBtn.style.display = 'flex';
   } else {
-    bgLayer.style.backgroundImage = '';
-    bgLayer.style.backgroundSize = '';
-    bgLayer.style.backgroundPosition = '';
-    bgLayer.style.backgroundRepeat = '';
+    if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
     if (toggleBtn) toggleBtn.style.display = 'none';
   }
 }
@@ -6287,6 +6284,29 @@ function onStoreBgFileChosen(inputEl) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+async function onRemoveStoreBg_() {
+  const statusEl = document.getElementById('storeBgUploadStatus');
+  if (statusEl) { statusEl.textContent = 'Removing...'; statusEl.style.color = 'var(--text3)'; }
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveStoreSettings', removeBgImage: true })
+    }, 25000).then(r => r.json());
+    if (res && res.ok) {
+      applyStoreSettingsToUI_(res.settings);
+      try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+      if (statusEl) { statusEl.textContent = '✅ Background removed — back to the default purple theme.'; statusEl.style.color = 'var(--green)'; }
+      toast('Background image removed', 'success');
+    } else {
+      throw new Error((res && res.error) || 'Remove failed');
+    }
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = '❌ Remove failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+    toast('Could not remove background', 'error');
+  }
 }
 
 function todayYmd_() {
