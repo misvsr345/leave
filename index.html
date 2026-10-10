@@ -350,10 +350,10 @@ body {
   color: var(--gold); box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
 .login-store-info {
-  text-align: center; margin-top: 18px; font-size: 11px; line-height: 1.7;
-  color: #fff; opacity: 0.88; max-width: 420px;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.65);
+  text-align: center; margin: -6px 0 22px; font-size: 10.5px; line-height: 1.6;
+  color: var(--text3); max-width: 100%;
 }
+.login-store-info b { color: var(--purple-dark, var(--purple)); }
 .login-store-info b { letter-spacing: 1.5px; }
 
 .form-group { margin-bottom: 15px; }
@@ -1790,6 +1790,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      LOGIN PAGE
 ══════════════════════════════════════ -->
 <div class="login-page" id="loginPage">
+  <!-- v-fix (BRO: "screen fit avaledu" — background image was painted on #loginPage itself,
+       whose height grows with its content (card + address text), so the image stretched taller
+       than one screen and needed scrolling to see all of it. This layer is pinned to the actual
+       viewport (position:fixed, full width/height) instead, so it always covers exactly one
+       screen — desktop or mobile — never more, never less, with nothing to scroll. -->
+  <div id="loginBgLayer" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background-size:cover;background-position:center center;background-repeat:no-repeat;"></div>
   <!-- v-add: BRO — "image lo corner lo chinna hide/show button pettu, click cheste front box
        hide avutundi, malli click chesthe malli show avutundi" — only shown when a background
        image is actually set (toggleLoginFrontBox_ / applyLoginBgImage_). -->
@@ -1815,6 +1821,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         </button>
       </div>
     </div>
+
+    <!-- v-fix (BRO: "employee/admin login button kinda address pettu, bayata undi" — moved
+         below the choice buttons). Fetched from the backend's "Store Settings" sheet, never
+         hardcoded. Only shown on the choice screen (same as the buttons above it) — not repeated
+         again once a role's ID/Password form is open. -->
+    <div class="login-store-info" id="loginStoreInfo"></div>
 
     <div id="loginFormsWrap" style="display:none;position:relative;padding-top:18px;">
       <button type="button" id="loginBackBtn" onclick="backToLoginChoice()" title="Close" style="position:absolute;top:0;right:0;width:28px;height:28px;border-radius:50%;background:none;border:1.5px solid var(--gold);color:var(--purple-mid,var(--purple));font-weight:700;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
@@ -1864,9 +1876,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
     </div>
   </div>
-  <!-- v-add: store name/address/contact/website/email — fetched from the backend's
-       "Store Settings" sheet via storeSettings action, never hardcoded here. -->
-  <div class="login-store-info" id="loginStoreInfo"></div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -6063,6 +6072,7 @@ function switchLoginTab(tab) {
 function pickLoginRole(role) {
   document.getElementById('loginLogoWrap').style.display = 'none';
   document.getElementById('loginChoiceWrap').style.display = 'none';
+  document.getElementById('loginStoreInfo').style.display = 'none';
   document.getElementById('loginFormsWrap').style.display = '';
   switchLoginTab(role);
 }
@@ -6071,6 +6081,7 @@ function backToLoginChoice() {
   document.getElementById('loginFormsWrap').style.display = 'none';
   document.getElementById('loginLogoWrap').style.display = '';
   document.getElementById('loginChoiceWrap').style.display = '';
+  document.getElementById('loginStoreInfo').style.display = '';
   document.getElementById('empLoginErr').style.display = 'none';
   document.getElementById('adminLoginErr').style.display = 'none';
 }
@@ -6143,25 +6154,23 @@ function applyStoreSettingsToUI_(s) {
 // on every storeSettings read), so this function just reflects whatever it's told — image if
 // given one, the existing CSS gradient (untouched) if not.
 function applyLoginBgImage_(s) {
-  const page = document.getElementById('loginPage');
+  const bgLayer = document.getElementById('loginBgLayer');
   const toggleBtn = document.getElementById('loginBgToggleBtn');
-  if (!page) return;
+  if (!bgLayer) return;
   if (s.bgImageUrl) {
     // v-fix (BRO: "blur laga kakunda, full clear ga undali" — the earlier 0.72-opacity purple
     // overlay washed the photo out badly). Image now shows clean; just a faint edge-darkening
     // so the small bits of text (address line, eye button) stay readable, not a tint over the
     // whole photo. "cover" + "center" fills and centers on any screen size, desktop or mobile,
     // cropping edges rather than stretching — the closest CSS equivalent of "zoomed to fit".
-    page.style.backgroundImage =
+    // This layer is position:fixed to the real viewport (see its own style), so "screen fit
+    // avaledu" is fixed too — it's always exactly one screen, never taller, nothing to scroll.
+    bgLayer.style.backgroundImage =
       'radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%), ' +
       'url("' + s.bgImageUrl + '")';
-    page.style.backgroundSize = 'cover';
-    page.style.backgroundPosition = 'center center';
-    page.style.backgroundRepeat = 'no-repeat';
-    page.style.backgroundAttachment = 'scroll';
     if (toggleBtn) toggleBtn.style.display = 'flex';
   } else {
-    page.style.backgroundImage = '';
+    bgLayer.style.backgroundImage = '';
     if (toggleBtn) toggleBtn.style.display = 'none';
   }
 }
