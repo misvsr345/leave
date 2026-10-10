@@ -288,6 +288,11 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  background: transparent; /* v-fix: the default purple now lives on #loginBgLayer behind it (see below) — this was an opaque gradient painted OVER that fixed layer, which is why the uploaded background photo never showed through. */
+}
+/* Default purple theme — shows whenever no background image is set (or after one expires);
+   an uploaded photo overrides it via inline style on this same element, nothing else to toggle. */
+#loginBgLayer {
   background: linear-gradient(135deg, #3b1f78 0%, #6b21a8 50%, #4a1880 100%);
 }
 
