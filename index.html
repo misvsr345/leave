@@ -6164,19 +6164,24 @@ function applyLoginBgImage_(s) {
   const toggleBtn = document.getElementById('loginBgToggleBtn');
   if (!bgLayer) return;
   if (s.bgImageUrl) {
-    // v-fix (BRO: "blur laga kakunda, full clear ga undali" — the earlier 0.72-opacity purple
-    // overlay washed the photo out badly). Image now shows clean; just a faint edge-darkening
-    // so the small bits of text (address line, eye button) stay readable, not a tint over the
-    // whole photo. "cover" + "center" fills and centers on any screen size, desktop or mobile,
-    // cropping edges rather than stretching — the closest CSS equivalent of "zoomed to fit".
-    // This layer is position:fixed to the real viewport (see its own style), so "screen fit
-    // avaledu" is fixed too — it's always exactly one screen, never taller, nothing to scroll.
+    // v-fix (BRO: "desktop height ki automatic fit avali, chutu gap icharu ante border hide
+    // avvadu" — "cover" was cropping the photo's own edges/border off the sides to fill the
+    // screen exactly. Switched to "contain" so the WHOLE photo is always visible, letterboxed —
+    // the small gap on the sides/top/bottom (whichever the screen's aspect ratio needs) is filled
+    // by the purple theme gradient as its own background layer, not empty/white space. Two
+    // comma-separated layers: the gradient layer always "cover"s the full screen, the photo layer
+    // "contain"s within it — matched by position in the image/size/position lists below.
     bgLayer.style.backgroundImage =
-      'radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%), ' +
-      'url("' + s.bgImageUrl + '")';
+      'linear-gradient(135deg, #3b1f78 0%, #6b21a8 50%, #4a1880 100%), url("' + s.bgImageUrl + '")';
+    bgLayer.style.backgroundSize = 'cover, contain';
+    bgLayer.style.backgroundPosition = 'center, center';
+    bgLayer.style.backgroundRepeat = 'no-repeat, no-repeat';
     if (toggleBtn) toggleBtn.style.display = 'flex';
   } else {
     bgLayer.style.backgroundImage = '';
+    bgLayer.style.backgroundSize = '';
+    bgLayer.style.backgroundPosition = '';
+    bgLayer.style.backgroundRepeat = '';
     if (toggleBtn) toggleBtn.style.display = 'none';
   }
 }
