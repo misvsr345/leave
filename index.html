@@ -17428,7 +17428,7 @@ async function slRenderOverview(box) {
     const retail = res.counters.filter(c => c.counter !== 'Main Hub');
     let rp = 0, rw = 0, rg = 0, rd = 0;
     retail.forEach(c => { rp += c.total.pcs; rw += c.total.wt; rg += c.gold.pcs; rd += c.diamond.pcs; });
-    const card = c => `<div class="sl-card" onclick="slOpenCounter('${escJs(c.counter)}')">
+    const card = c => `<div class="sl-card" data-counter="${escHtml(c.counter)}" onclick="slOpenCounter('${escJs(c.counter)}')">
         <div class="sl-ct">${escHtml(c.counter)}</div>
         <div class="sl-big">${c.total.pcs} <small>pcs</small> &nbsp;·&nbsp; ${slFmtWt(c.total.wt)} <small>gm</small></div>
         <div class="sl-row"><span>Gold</span><b>${c.gold.pcs} pcs · ${slFmtWt(c.gold.wt)} gm</b></div>
@@ -17443,7 +17443,26 @@ async function slRenderOverview(box) {
       </div>
       <div class="sl-grid">${retail.map(card).join('')}${hub ? card(hub) : ''}</div>
       <div class="kd-note" style="margin-top:8px;">Tap a counter to see product-wise quantity and weight. Weight = Gold weight / Diamond net weight.</div>`;
+    // v-add (BRO: "eroju 100pc unna, repu change vachina — enduku different vachindo alert ravali, aa
+    // tab lopala hilite color tho hilite avali" — same daily counter-total mismatch highlight as Stock
+    // Photos' Overview tab, fetched live from the 1 PM backend check.
+    slApplyMismatchHighlights();
   } catch (e) { slError(box, null); }
+}
+async function slApplyMismatchHighlights() {
+  let res;
+  try { res = await slApi({ action: 'stockMismatchFlags' }); } catch (e) { return; }
+  if (!res || !res.ok || !res.flags) return;
+  Object.keys(res.flags).forEach(c => {
+    const f = res.flags[c];
+    if (!f.mismatch) return;
+    const card = document.querySelector(`.sl-card[data-counter="${CSS.escape(c)}"]`);
+    if (!card) return;
+    card.style.background = '#d9362b';
+    card.style.boxShadow = '0 0 0 2px #ffb3ab inset';
+    card.title = f.note || 'Mismatch — please cross-check this counter.';
+    card.innerHTML += `<div style="font-size:10px;color:#fff;font-weight:800;margin-top:4px;">⚠ CHECK: ${escHtml(String(f.actual))} vs expected ${escHtml(String(f.expected))}</div>`;
+  });
 }
 
 function slOpenCounter(name) { SL.sel = name; showAdminPage('stocklevel-counter'); }
@@ -17543,20 +17562,49 @@ async function slLoadCounterDetail() {
     let tp = 0, tw = 0;
     res.rows.forEach(r => { tp += r.pcs; tw += r.wt; });
     const showDesign = !!res.byDesign;
+    // v-add (BRO: "every product ki oka check box ivu. adi click cheste, dani qty lu total avali.
+    // default ga all selected ga undali. evi select chesthe, dani total count oka hilite box lo color
+    // change chei" — same checkbox + live Selected-Total feature as Stock Photos' Overview page.
     body.innerHTML = `<div class="kd-note">${res.rows.length} ${showDesign ? 'design(s)' : 'product(s)'} · ${tp} pcs · ${slFmtWt(tw)} gm</div>
-      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Product</th>${showDesign ? '<th>Design</th>' : ''}<th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
-      res.rows.map(r => `<tr><td><b>${escHtml(properCase(r.product))}</b></td>${showDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
-      `<tr><td><b>Total</b></td>${showDesign ? '<td></td>' : ''}<td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>`;
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th style="width:30px;"><input type="checkbox" id="slCounterSelectAllChk" checked onchange="slCounterToggleAllChk(this.checked)"></th><th>Product</th>${showDesign ? '<th>Design</th>' : ''}<th>Type</th><th>Pcs</th><th>Weight (gm)</th><th>Tag</th><th>Non Tag</th></tr></thead><tbody>` +
+      res.rows.map(r => `<tr><td><input type="checkbox" class="slCounterRowChk" data-pcs="${r.pcs}" data-wt="${r.wt}" checked onchange="slCounterUpdateSelectedTotal()"></td><td><b>${escHtml(properCase(r.product))}</b></td>${showDesign ? `<td>${escHtml(properCase(r.design) || '—')}</td>` : ''}<td>${escHtml(r.type)}</td><td style="text-align:center;"><b>${r.pcs}</b></td><td style="text-align:right;">${slFmtWt(r.wt)}</td><td style="text-align:center;">${r.tagPcs || '—'}</td><td style="text-align:center;">${r.nonTagPcs || '—'}</td></tr>`).join('') +
+      `<tr><td></td><td><b>Total</b></td>${showDesign ? '<td></td>' : ''}<td></td><td style="text-align:center;"><b>${tp}</b></td><td style="text-align:right;"><b>${slFmtWt(tw)}</b></td><td></td><td></td></tr></tbody></table></div>
+      <div id="slCounterSelectedTotalBox" class="kd-note" style="text-align:right;padding:8px 10px;margin-top:6px;border-radius:8px;font-weight:700;"></div>`;
+    slCounterUpdateSelectedTotal();
     showExportBtn(slBox().id);
   } catch (e) { slError(body, null); }
 }
 
-function slRenderSales(box) {
+function slCounterToggleAllChk(checked) {
+  document.querySelectorAll('.slCounterRowChk').forEach(cb => { cb.checked = checked; });
+  slCounterUpdateSelectedTotal();
+}
+function slCounterUpdateSelectedTotal() {
+  const box = document.getElementById('slCounterSelectedTotalBox');
+  if (!box) return;
+  const all = Array.from(document.querySelectorAll('.slCounterRowChk'));
+  const checked = all.filter(cb => cb.checked);
+  const pcs = checked.reduce((s, cb) => s + (parseFloat(cb.dataset.pcs) || 0), 0);
+  const wt = checked.reduce((s, cb) => s + (parseFloat(cb.dataset.wt) || 0), 0);
+  const selectAllChk = document.getElementById('slCounterSelectAllChk');
+  if (selectAllChk) selectAllChk.checked = (checked.length === all.length);
+  const isPartial = checked.length < all.length;
+  box.style.background = isPartial ? '#e6d9fb' : '#fff3cd';
+  box.style.color = isPartial ? '#4a2a8a' : '#8a5a00';
+  box.textContent = isPartial ? `Selected Pcs: ${pcs} · ${slFmtWt(wt)} gm` : `Total Pcs: ${pcs} · ${slFmtWt(wt)} gm`;
+}
+
+async function slRenderSales(box) {
   const today = toYMD(new Date());
+  await slEnsureMeta();
+  const counterOpts = ['<option value="">All Counters</option>'].concat(
+    SL.counters.concat([SL.mainHub]).map(n => `<option>${escHtml(n)}</option>`)
+  ).join('');
   box.innerHTML = `<div class="form-2col">
       <div class="form-row"><label>From</label><input type="date" lang="en-GB" id="slSalesStart" value="${today}"></div>
       <div class="form-row"><label>To</label><input type="date" lang="en-GB" id="slSalesEnd" value="${today}"></div>
     </div>
+    <div class="form-row"><label>Counter</label><select class="uniform-select" id="slSalesCounter">${counterOpts}</select></div>
     <button class="btn-primary" style="width:100%;" onclick="slLoadSales()">🔍 Show Sales</button>
     <div id="slSalesBody" style="margin-top:12px;"></div>`;
   slLoadSales();
@@ -17579,6 +17627,26 @@ async function slLoadSales() {
   try {
     const res = await slApi({ action: 'dailySales', start: s, end: e });
     if (!res || !res.ok) { slError(body, res); return; }
+    const counterFilter = (document.getElementById('slSalesCounter') || {}).value || '';
+    let rows = res.rows || [];
+    if (counterFilter) rows = rows.filter(r => (r.counter || '').trim() === counterFilter);
+    // v-fix (BRO: "date ni sort chei" — newest first, same as Stock Photos' Sold Data tab.
+    rows = rows.slice().sort((a, b) => new Date(b.soldDate || 0) - new Date(a.soldDate || 0));
+    // v-fix (BRO: "duplicate tag no vachinapudu danni 2 pcs luga ela count chestaru, one pc matrame
+    // kada" — same Tag-No dedupe as Stock Photos' Sold Data tab: a Tag No appearing more than once here
+    // (e.g. the DSR duplicate-entry bug) is still physically ONE item, kept once (newest-dated copy).
+    const seenTags = new Set();
+    rows = rows.filter(r => {
+      const t = stockNormTag(r.tagNo || '');
+      if (!t) return true;
+      if (seenTags.has(t)) return false;
+      seenTags.add(t);
+      return true;
+    });
+    let pcsShown = 0, wtShown = 0;
+    rows.forEach(r => { pcsShown += (parseFloat(r.qty) || 1); wtShown += (parseFloat(r.weight) || 0); });
+    res.pcs = pcsShown; res.wt = Math.round(wtShown * 1000) / 1000;
+    res.rows = rows;
     SL_SALES_ROWS_RENDERED = res.rows || [];
     const typeBadge = r => /^OI\d{6}$/.test(String(r.dsrId || ''))
       ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:#fff3cd;color:#8a5a00;border:1px solid #e0b34d;white-space:nowrap;">Outlet Issue</span>`
@@ -19794,7 +19862,13 @@ const LEADS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwkWTEzOcKVqt
 function _fetchWithTimeout(url, opts, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs || 15000);
-  return fetch(url, Object.assign({}, opts, { signal: controller.signal }))
+  // v-fix (BRO: "sync chesina ravadam ledu... automatic ga jaragali" — the browser's own HTTP cache
+  // could silently serve a stale response for a repeated identical-URL GET (Apps Script responses carry
+  // no Cache-Control: no-store header), so a Sync tap or a poll could look like it did nothing until the
+  // cache happened to expire. This one shared fetch helper is used by every GAS call in this portal (DSR,
+  // Loyalty, Leads, Stock, Golden Aura...), so fixing it here fixes the same stale-data symptom everywhere
+  // at once, not just Stock. POST calls are unaffected either way (never cached by browsers).
+  return fetch(url, Object.assign({ cache: 'no-store' }, opts, { signal: controller.signal }))
     .finally(() => clearTimeout(timer));
 }
 
