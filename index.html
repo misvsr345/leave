@@ -1789,7 +1789,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      LOGIN PAGE
 ══════════════════════════════════════ -->
 <div class="login-page" id="loginPage">
-  <div class="login-box">
+  <!-- v-add: BRO — "image lo corner lo chinna hide/show button pettu, click cheste front box
+       hide avutundi, malli click chesthe malli show avutundi" — only shown when a background
+       image is actually set (toggleLoginFrontBox_ / applyLoginBgImage_). -->
+  <button type="button" id="loginBgToggleBtn" onclick="toggleLoginFrontBox_()" title="Hide/show login box" style="display:none;position:fixed;top:14px;right:14px;z-index:50;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);border:1.5px solid var(--gold);color:#fff;font-size:15px;cursor:pointer;align-items:center;justify-content:center;">👁</button>
+  <div class="login-box" id="loginFrontBox">
     <div class="login-logo" id="loginLogoWrap">
       <div class="login-logo-mark vsr-logo-mark"></div>
       <h1>VSR GOLD</h1>
@@ -3409,6 +3413,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <input type="file" accept="image/*" id="storeLogoFileInput" onchange="onStoreLogoFileChosen(this)" style="display:none;">
           <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeLogoFileInput').click()">📤 Upload Logo</button>
           <div id="storeLogoUploadStatus" style="font-size:11px;margin-top:8px;"></div>
+        </div>
+
+        <!-- v-add: Login page background image — BRO: "purple color unna place lo manaki nachina
+             image ni pettocha, kani expiry date ivu, expiry avagane automatic ga remove avali,
+             purple/theme color ravali". Expiry is required — the upload button stays off without
+             one, and the backend won't save a background without an expiry either. -->
+        <div class="card">
+          <div class="card-title">🖼️ Login Background Image</div>
+          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Pick an expiry date; once it passes, this is removed automatically and the login page goes back to the default purple theme on its own.</p>
+          <img id="storeBgPreview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Current background">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Expiry Date</label>
+          <input type="date" id="storeBgExpiryInput" class="uniform-select" style="width:100%;margin-bottom:10px;">
+          <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
+          <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeBgFileInput').click()">📤 Upload Background Image</button>
+          <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
+          <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
         </div>
 
         <!-- v-add (BRO: "anni tiki kalipi okati setting lo pettu, no in stock entry
@@ -6099,9 +6119,57 @@ function applyStoreSettingsToUI_(s) {
   storeSettingsCache = s;
   if (s.logoUrl) applyStoreLogo_(s.logoUrl);
   renderLoginStoreInfo_(s);
+  applyLoginBgImage_(s);
   // Settings page preview (admin), if that panel is open/rendered.
   const preview = document.getElementById('storeLogoPreview');
   if (preview && s.logoUrl) { preview.src = s.logoUrl; preview.style.display = ''; }
+  const bgPreview = document.getElementById('storeBgPreview');
+  const bgStatus = document.getElementById('storeBgExpiryStatus');
+  if (bgPreview) {
+    if (s.bgImageUrl) { bgPreview.src = s.bgImageUrl; bgPreview.style.display = ''; }
+    else bgPreview.style.display = 'none';
+  }
+  if (bgStatus) {
+    bgStatus.textContent = s.bgImageUrl && s.bgImageExpiry
+      ? ('Active — auto-removes after ' + s.bgImageExpiry)
+      : 'No background image set (login page shows the default purple theme).';
+  }
+}
+
+// v-add: login page background — BRO: "purple color unna place lo manaki nachina image ni
+// pettocha... expiry date ivu, expiry avagane automatic ga remove avali, purple/theme color
+// ravali". The backend itself stops returning bgImageUrl once the expiry date passes (checked
+// on every storeSettings read), so this function just reflects whatever it's told — image if
+// given one, the existing CSS gradient (untouched) if not.
+function applyLoginBgImage_(s) {
+  const page = document.getElementById('loginPage');
+  const toggleBtn = document.getElementById('loginBgToggleBtn');
+  if (!page) return;
+  if (s.bgImageUrl) {
+    page.style.backgroundImage =
+      'linear-gradient(135deg, rgba(59,31,120,0.72) 0%, rgba(107,33,168,0.72) 50%, rgba(74,24,128,0.72) 100%), ' +
+      'url("' + s.bgImageUrl + '")';
+    page.style.backgroundSize = 'cover';
+    page.style.backgroundPosition = 'center';
+    if (toggleBtn) toggleBtn.style.display = 'flex';
+  } else {
+    page.style.backgroundImage = '';
+    if (toggleBtn) toggleBtn.style.display = 'none';
+  }
+}
+
+// BRO: "corner lo chinna hide/show button, click cheste front box hide avutundi, malli click
+// chesthe malli show avutundi" — toggles the login card + address text so the full background
+// image can be seen; the eye button itself always stays visible to bring it back.
+let loginFrontBoxHidden_ = false;
+function toggleLoginFrontBox_() {
+  loginFrontBoxHidden_ = !loginFrontBoxHidden_;
+  const box = document.getElementById('loginFrontBox');
+  const info = document.getElementById('loginStoreInfo');
+  const btn = document.getElementById('loginBgToggleBtn');
+  if (box) box.style.display = loginFrontBoxHidden_ ? 'none' : '';
+  if (info) info.style.display = loginFrontBoxHidden_ ? 'none' : '';
+  if (btn) btn.textContent = loginFrontBoxHidden_ ? '🙈' : '👁';
 }
 
 function initStoreSettings_() {
@@ -6153,6 +6221,49 @@ function onStoreLogoFileChosen(inputEl) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+// Settings page → "Upload Background Image". Expiry date is REQUIRED — BRO: "expiry date ivu,
+// expiry avagane automatic ga remove avali, purple/theme color ravali" — so this won't even send
+// the upload unless a future date is picked; the backend also refuses to save one without it.
+function onStoreBgFileChosen(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  const expiryEl = document.getElementById('storeBgExpiryInput');
+  const expiry = expiryEl ? expiryEl.value : '';
+  if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
+  if (!expiry) { toast('Pick an expiry date first', 'error'); inputEl.value = ''; return; }
+  if (expiry <= todayYmd_()) { toast('Expiry date must be in the future', 'error'); inputEl.value = ''; return; }
+  const statusEl = document.getElementById('storeBgUploadStatus');
+  if (statusEl) { statusEl.textContent = 'Uploading...'; statusEl.style.color = 'var(--text3)'; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const base64 = String(reader.result).split(',')[1];
+      const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveStoreSettings', bgImageBase64: base64, bgImageMimeType: file.type, bgImageExpiry: expiry })
+      }, 25000).then(r => r.json());
+      if (res && res.ok) {
+        applyStoreSettingsToUI_(res.settings);
+        try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+        if (statusEl) { statusEl.textContent = '✅ Background updated — auto-removes after ' + expiry + '.'; statusEl.style.color = 'var(--green)'; }
+        toast('Background image updated', 'success');
+      } else {
+        throw new Error((res && res.error) || 'Upload failed');
+      }
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = '❌ Upload failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+      toast('Background upload failed', 'error');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function todayYmd_() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
 async function empLogin() {
@@ -6366,6 +6477,7 @@ function logout(who, reason) {
   // logout only re-showed the login page shell; whichever role form was last open stayed
   // open underneath it. Explicitly reset back to the Employee/Admin choice screen.
   backToLoginChoice();
+  if (loginFrontBoxHidden_) toggleLoginFrontBox_(); // also undo a hidden front box, if left that way
   // v-fix (BRO: "login page lo back or home button deniki useless" — updateBackFabs()
   // only ever runs inside showEmpPage/showAdminPage, so on logout the floating Back/Home
   // fabs (and the topbar Home chips) stayed visible from whatever page was open right
