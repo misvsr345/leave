@@ -328,6 +328,32 @@ body {
 }
 .login-tab-btn.active { background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink)); color: #fff; box-shadow: 0 2px 10px rgba(107,33,168,0.3); }
 
+/* v-add: button-first login — Employee/Admin choice cards, side by side, rich look
+   (gradient + gold frame), same existing color tokens only. */
+.login-choice-grid { display: flex; gap: 12px; }
+.login-choice-btn {
+  flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center;
+  gap: 8px; padding: 12px 8px; border-radius: var(--r2); border: 1.5px solid var(--gold);
+  cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: 'Spectral', serif; font-weight: 800; font-size: 13px; letter-spacing: .3px;
+  white-space: nowrap;
+}
+.login-choice-btn:hover { transform: translateY(-3px); }
+.login-choice-btn .lcb-icon { font-size: 18px; line-height: 1; }
+.login-choice-emp {
+  background: linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));
+  color: #fff; box-shadow: 0 6px 16px rgba(107,33,168,0.35);
+}
+.login-choice-admin {
+  background: linear-gradient(135deg, #1a1512 0%, #2a2018 60%, #1a1512 100%);
+  color: var(--gold); box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+.login-store-info {
+  text-align: center; margin-top: 18px; font-size: 11px; line-height: 1.7;
+  color: #fff; opacity: 0.88; max-width: 420px;
+}
+.login-store-info b { letter-spacing: 1.5px; }
+
 .form-group { margin-bottom: 15px; }
 .form-group label {
   display: block; font-size: 11px; font-weight: 700; color: var(--text3);
@@ -479,6 +505,15 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
 .login-logo-mark::before { font-size: 68px; }
 .topbar-logo .mark::before { font-size: 26px; }
 .bday-poster-logo::before { font-size: 56px; }
+
+/* v-add: real uploaded logo (Settings → Upload Logo) replaces the ✦ mark here,
+   wherever it appears — no box/background/border around the image itself. */
+.vsr-logo-mark.has-logo::before { content: none; }
+.vsr-logo-img { display: inline-block; vertical-align: middle; object-fit: contain; background: transparent; border: none; box-shadow: none; }
+.login-logo-mark .vsr-logo-img { width: 68px; height: 68px; }
+.topbar-logo .mark .vsr-logo-img { width: 26px; height: 26px; }
+.bday-poster-logo .vsr-logo-img { width: 56px; height: 56px; }
+.vsr-sidebar-brand .vsr-logo-img { width: 18px; height: 18px; }
 
 .topbar-logo {
   font-family: 'Spectral', serif; font-size: 23px; font-weight: 900;
@@ -1760,45 +1795,67 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <p>VSR Connect — All in One Place.</p>
     </div>
 
-    <div class="login-tab-btns">
-      <button class="login-tab-btn active" id="empTabBtn" onclick="switchLoginTab('emp')">👤 Employee</button>
-      <button class="login-tab-btn" id="adminTabBtn" onclick="switchLoginTab('admin')">🔐 Admin</button>
+    <!-- v-add (BRO: "login avvadaniki veeluga modata button lu ravali. button click chestene
+         Emp ID PW or Admin login ID PW adagali" — the ID/Password fields used to show immediately
+         (Employee's by default), with only the tab row to switch roles. Now neither form shows until
+         the person picks a role here first; same existing colors/classes throughout, no style change. -->
+    <div id="loginChoiceWrap">
+      <div class="login-choice-grid">
+        <button class="login-choice-btn login-choice-emp" id="empChoiceBtn" onclick="pickLoginRole('emp')">
+          <span class="lcb-icon">👤</span><span>Employee Login</span>
+        </button>
+        <button class="login-choice-btn login-choice-admin" id="adminChoiceBtn" onclick="pickLoginRole('admin')">
+          <span class="lcb-icon">🔐</span><span>Admin Login</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Employee Login -->
-    <div id="empLoginForm">
-      <div class="form-group">
-        <label>Employee ID</label>
-        <input type="text" id="empIdInput" placeholder="Enter your Employee ID" autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <div class="pw-input-wrap">
-          <input type="password" id="empPassInput" placeholder="Enter your password" autocomplete="off">
-          <button type="button" class="pw-toggle" onclick="togglePw('empPassInput', this)">👁</button>
-        </div>
-      </div>
-      <button class="btn-primary" id="empLoginBtn" onclick="empLogin()">🔓 Login</button>
-      <div class="err-msg" id="empLoginErr">Employee ID not found. Please check.</div>
-    </div>
+    <div id="loginFormsWrap" style="display:none;">
+      <button type="button" id="loginBackBtn" onclick="backToLoginChoice()" style="background:none;border:none;color:var(--purple-mid,var(--purple));font-weight:700;font-size:13px;cursor:pointer;padding:0 0 14px;">← Back</button>
 
-    <!-- Admin Login -->
-    <div id="adminLoginForm" style="display:none;">
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="adminEmailInput" placeholder="admin@vsrgold.com" autocomplete="off">
+      <div class="login-tab-btns">
+        <button class="login-tab-btn active" id="empTabBtn" onclick="switchLoginTab('emp')">👤 Employee</button>
+        <button class="login-tab-btn" id="adminTabBtn" onclick="switchLoginTab('admin')">🔐 Admin</button>
       </div>
-      <div class="form-group">
-        <label>Password</label>
-        <div class="pw-input-wrap">
-          <input type="password" id="adminPassInput" placeholder="Enter password">
-          <button type="button" class="pw-toggle" onclick="togglePw('adminPassInput', this)">👁</button>
+
+      <!-- Employee Login -->
+      <div id="empLoginForm">
+        <div class="form-group">
+          <label>Employee ID</label>
+          <input type="text" id="empIdInput" placeholder="Enter your Employee ID" autocomplete="off">
         </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="pw-input-wrap">
+            <input type="password" id="empPassInput" placeholder="Enter your password" autocomplete="off">
+            <button type="button" class="pw-toggle" onclick="togglePw('empPassInput', this)">👁</button>
+          </div>
+        </div>
+        <button class="btn-primary" id="empLoginBtn" onclick="empLogin()">🔓 Login</button>
+        <div class="err-msg" id="empLoginErr">Employee ID not found. Please check.</div>
       </div>
-      <button class="btn-primary" id="adminLoginBtn" onclick="adminLogin()">🔐 Admin Login</button>
-      <div class="err-msg" id="adminLoginErr">Invalid credentials. Please try again.</div>
+
+      <!-- Admin Login -->
+      <div id="adminLoginForm" style="display:none;">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="adminEmailInput" placeholder="admin@vsrgold.com" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="pw-input-wrap">
+            <input type="password" id="adminPassInput" placeholder="Enter password">
+            <button type="button" class="pw-toggle" onclick="togglePw('adminPassInput', this)">👁</button>
+          </div>
+        </div>
+        <button class="btn-primary" id="adminLoginBtn" onclick="adminLogin()">🔐 Admin Login</button>
+        <div class="err-msg" id="adminLoginErr">Invalid credentials. Please try again.</div>
+      </div>
     </div>
   </div>
+  <!-- v-add: store name/address/contact/website/email — fetched from the backend's
+       "Store Settings" sheet via storeSettings action, never hardcoded here. -->
+  <div class="login-store-info" id="loginStoreInfo"></div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -3332,6 +3389,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="card-title">🎨 Theme</div>
           <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick a color theme for your own login (saved on this device).</p>
           <button class="btn-sm btn-view" style="width:100%;" onclick="openThemePickerModal()">🎨 Choose Theme (24 options)</button>
+        </div>
+
+        <!-- v-add: Store Logo upload — BRO: "settings lo upload option ivu, akkada
+             upload chesina photo anni dagara (login page, topbar, sidebar) logo ravali,
+             bg lekunda". Saved to Drive by StockBackend.gs; shows everywhere instantly. -->
+        <div class="card">
+          <div class="card-title">🖼️ Store Logo</div>
+          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Upload once — this logo replaces the ✦ mark on the login page, topbar and sidebar everywhere, with no background box around it.</p>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+            <img id="storeLogoPreview" style="width:56px;height:56px;object-fit:contain;display:none;" alt="Current logo">
+          </div>
+          <input type="file" accept="image/*" id="storeLogoFileInput" onchange="onStoreLogoFileChosen(this)" style="display:none;">
+          <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeLogoFileInput').click()">📤 Upload Logo</button>
+          <div id="storeLogoUploadStatus" style="font-size:11px;margin-top:8px;"></div>
         </div>
 
         <!-- v-add (BRO: "anni tiki kalipi okati setting lo pettu, no in stock entry
@@ -5766,6 +5837,7 @@ const THEME_REGISTRY = [
   { key: 'rose',      name: 'Rose',          c1: '#9d174d', c2: '#ec4899' },
   { key: 'forest',    name: 'Forest',        c1: '#14532d', c2: '#22c55e' },
   { key: 'gold',      name: 'Gold Luxury',   c1: '#1a1512', c2: '#ffd700' },
+  { key: 'blackgold', name: 'Black & Gold',  c1: '#000000', c2: '#ffd700' },
   { key: 'crimson',   name: 'Crimson',       c1: '#7f1d1d', c2: '#f87171' },
   { key: 'teal',      name: 'Teal',          c1: '#115e59', c2: '#2dd4bf' },
   { key: 'amber',     name: 'Amber',         c1: '#78350f', c2: '#f59e0b' },
@@ -5959,6 +6031,120 @@ function switchLoginTab(tab) {
   document.getElementById('adminLoginForm').style.display = tab==='admin' ? 'block' : 'none';
   document.getElementById('empLoginErr').style.display = 'none';
   document.getElementById('adminLoginErr').style.display = 'none';
+}
+
+function pickLoginRole(role) {
+  document.getElementById('loginChoiceWrap').style.display = 'none';
+  document.getElementById('loginFormsWrap').style.display = '';
+  switchLoginTab(role);
+}
+
+function backToLoginChoice() {
+  document.getElementById('loginFormsWrap').style.display = 'none';
+  document.getElementById('loginChoiceWrap').style.display = '';
+  document.getElementById('empLoginErr').style.display = 'none';
+  document.getElementById('adminLoginErr').style.display = 'none';
+}
+
+// ══════════════════════════════════════
+// STORE SETTINGS (logo + address/contact/website/email)
+// v-add: BRO — "ee data anta direct code lo hardcode avutundi, ala kakunda
+// backend sheet lo update chesthe ikada ravali." Nothing here is hardcoded:
+// login page logo + the address/contact/website/email line both come from
+// StockBackend.gs's "Store Settings" sheet (?action=storeSettings), cached
+// in localStorage so it still shows something if opened offline.
+// ══════════════════════════════════════
+const STORE_SETTINGS_CACHE_KEY = 'vsrGoldStoreSettings';
+let storeSettingsCache = null;
+
+function applyStoreLogo_(url) {
+  if (!url) return;
+  document.querySelectorAll('.vsr-logo-mark').forEach(el => {
+    let img = el.querySelector('.vsr-logo-img');
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'vsr-logo-img';
+      img.alt = 'VSR GOLD';
+      el.appendChild(img);
+    }
+    img.src = url;
+    el.classList.add('has-logo');
+  });
+}
+
+function renderLoginStoreInfo_(s) {
+  const box = document.getElementById('loginStoreInfo');
+  if (!box) return;
+  const lines = [];
+  lines.push('<b>' + escHtml(String(s.storeName || 'VSR GOLD').toUpperCase()) + '</b>');
+  if (s.address) lines.push(escHtml(s.address));
+  const row = [];
+  if (s.contact) row.push('📞 ' + escHtml(s.contact));
+  if (s.website) row.push('🌐 ' + escHtml(s.website));
+  if (s.email) row.push('✉️ ' + escHtml(s.email));
+  if (row.length) lines.push(row.join('&nbsp;&nbsp;·&nbsp;&nbsp;'));
+  box.innerHTML = lines.join('<br>');
+}
+
+function applyStoreSettingsToUI_(s) {
+  if (!s) return;
+  storeSettingsCache = s;
+  if (s.logoUrl) applyStoreLogo_(s.logoUrl);
+  renderLoginStoreInfo_(s);
+  // Settings page preview (admin), if that panel is open/rendered.
+  const preview = document.getElementById('storeLogoPreview');
+  if (preview && s.logoUrl) { preview.src = s.logoUrl; preview.style.display = ''; }
+}
+
+function initStoreSettings_() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(STORE_SETTINGS_CACHE_KEY) || 'null');
+    if (cached) applyStoreSettingsToUI_(cached);
+  } catch (e) {}
+  _fetchWithTimeout(STOCK_GAS_URL + '?action=storeSettings', {}, 12000)
+    .then(r => r.json())
+    .then(res => {
+      if (res && res.ok && res.settings) {
+        applyStoreSettingsToUI_(res.settings);
+        try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+      }
+    })
+    .catch(() => { /* offline — whatever was cached above (if anything) stays showing */ });
+}
+
+// Settings page → "Upload Logo". Reads the chosen file, converts to base64,
+// sends it to StockBackend.gs (saveStoreSettings) which stores it in Drive
+// and saves the resulting view-URL in the Store Settings sheet. Every screen
+// with the VSR GOLD mark (login page, topbar, sidebar) updates immediately.
+function onStoreLogoFileChosen(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
+  const statusEl = document.getElementById('storeLogoUploadStatus');
+  if (statusEl) { statusEl.textContent = 'Uploading...'; statusEl.style.color = 'var(--text3)'; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const base64 = String(reader.result).split(',')[1];
+      const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveStoreSettings', logoBase64: base64, logoMimeType: file.type })
+      }, 25000).then(r => r.json());
+      if (res && res.ok) {
+        applyStoreSettingsToUI_(res.settings);
+        try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+        if (statusEl) { statusEl.textContent = '✅ Logo updated everywhere.'; statusEl.style.color = 'var(--green)'; }
+        toast('Logo updated', 'success');
+      } else {
+        throw new Error((res && res.error) || 'Upload failed');
+      }
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = '❌ Upload failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+      toast('Logo upload failed', 'error');
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 async function empLogin() {
@@ -25649,6 +25835,7 @@ if (!restoreSession()) {
 }
 flushAllOfflineQueues();
 syncHeaderHeight();
+initStoreSettings_();
 </script>
 </body>
 </html>
