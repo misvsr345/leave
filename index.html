@@ -352,6 +352,7 @@ body {
 .login-store-info {
   text-align: center; margin-top: 18px; font-size: 11px; line-height: 1.7;
   color: #fff; opacity: 0.88; max-width: 420px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.65);
 }
 .login-store-info b { letter-spacing: 1.5px; }
 
@@ -6146,11 +6147,18 @@ function applyLoginBgImage_(s) {
   const toggleBtn = document.getElementById('loginBgToggleBtn');
   if (!page) return;
   if (s.bgImageUrl) {
+    // v-fix (BRO: "blur laga kakunda, full clear ga undali" — the earlier 0.72-opacity purple
+    // overlay washed the photo out badly). Image now shows clean; just a faint edge-darkening
+    // so the small bits of text (address line, eye button) stay readable, not a tint over the
+    // whole photo. "cover" + "center" fills and centers on any screen size, desktop or mobile,
+    // cropping edges rather than stretching — the closest CSS equivalent of "zoomed to fit".
     page.style.backgroundImage =
-      'linear-gradient(135deg, rgba(59,31,120,0.72) 0%, rgba(107,33,168,0.72) 50%, rgba(74,24,128,0.72) 100%), ' +
+      'radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%), ' +
       'url("' + s.bgImageUrl + '")';
     page.style.backgroundSize = 'cover';
-    page.style.backgroundPosition = 'center';
+    page.style.backgroundPosition = 'center center';
+    page.style.backgroundRepeat = 'no-repeat';
+    page.style.backgroundAttachment = 'scroll';
     if (toggleBtn) toggleBtn.style.display = 'flex';
   } else {
     page.style.backgroundImage = '';
