@@ -6362,8 +6362,10 @@ function logout(who, reason) {
   clearSession();
   stopIdleTimer();
   document.getElementById('loginPage').style.display = 'flex';
-  document.getElementById('empLoginErr').style.display = 'none';
-  document.getElementById('adminLoginErr').style.display = 'none';
+  // v-fix (BRO: "logout chesaka modati page ki ravali, emp id pw page ki vastundi" —
+  // logout only re-showed the login page shell; whichever role form was last open stayed
+  // open underneath it. Explicitly reset back to the Employee/Admin choice screen.
+  backToLoginChoice();
   // v-fix (BRO: "login page lo back or home button deniki useless" — updateBackFabs()
   // only ever runs inside showEmpPage/showAdminPage, so on logout the floating Back/Home
   // fabs (and the topbar Home chips) stayed visible from whatever page was open right
