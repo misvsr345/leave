@@ -2235,7 +2235,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         </div>
         <div class="form-row"><label>Customer Photo <span id="frqStarNcCustPhoto">*</span></label>
           <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px;"></div>
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar No <span id="frqStarNcAadhaarNo">*</span></label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
@@ -22633,8 +22632,6 @@ function renderWalkinTrackTable(who, rows) {
     <td style="padding:5px 8px;white-space:nowrap;">${r.date}</td>
     ${isAdmin ? `<td style="padding:5px 8px;font-weight:600;white-space:nowrap;">${properCase(r.employee)}</td>` : ''}
     <td class="wt-cell" data-k="deals" style="padding:5px 8px;text-align:center;">${r.deals}</td>
-    <td class="wt-cell" data-k="goldenPlans" style="padding:5px 8px;text-align:center;">${r.goldenPlans}</td>
-    <td class="wt-cell" data-k="loyaltyCards" style="padding:5px 8px;text-align:center;">${r.loyaltyCards}</td>
     <td class="wt-cell" data-k="purchased" style="padding:5px 8px;text-align:center;">${r.purchased}</td>
     <td class="wt-cell" data-k="nonPurchased" style="padding:5px 8px;text-align:center;">${r.nonPurchased}</td>
     <td class="wt-cell" data-k="googleReview" style="padding:5px 8px;text-align:center;">${r.googleReview}</td>
@@ -22648,7 +22645,7 @@ function renderWalkinTrackTable(who, rows) {
 
   // Grand Total row — sums every numeric column across whatever's
   // currently shown (all employees, or just the ones matching search).
-  const numKeys = ['deals','goldenPlans','loyaltyCards','purchased','nonPurchased','googleReview','instagram','facebook','whatsapp'];
+  const numKeys = ['deals','purchased','nonPurchased','googleReview','instagram','facebook','whatsapp'];
   const totals = {};
   numKeys.forEach(k => { totals[k] = rows.reduce((sum, r) => sum + (Number(r[k]) || 0), 0); });
   const totalHtml = `<tr style="border-top:2px solid var(--purple);background:var(--purple-bg);font-weight:800;">
@@ -22663,7 +22660,7 @@ function renderWalkinTrackTable(who, rows) {
     <thead><tr style="background:var(--purple-bg);">
       <th style="padding:6px 10px;text-align:left;">Date</th>
       ${isAdmin ? '<th style="padding:6px 10px;text-align:left;">Employee</th>' : ''}
-      <th style="padding:6px 10px;">Deals</th><th style="padding:6px 10px;">Golden Plans</th><th style="padding:6px 10px;">Loyalty Cards</th>
+      <th style="padding:6px 10px;">Deals</th>
       <th style="padding:6px 10px;">Purchased</th><th style="padding:6px 10px;">Non-Purchased</th><th style="padding:6px 10px;">Google Review</th>
       <th style="padding:6px 10px;">Instagram</th><th style="padding:6px 10px;">Facebook</th><th style="padding:6px 10px;">Whatsapp</th>
       ${isAdmin ? '<th style="padding:6px 10px;"></th>' : ''}
@@ -22691,7 +22688,7 @@ function renderWalkinTrackTable(who, rows) {
 // Turns one row's editable cells into number inputs in place, with a
 // Save/Cancel pair replacing the Edit button — writes back to the
 // actual Walkintrack sheet on Save (updateWalkinTrackRow).
-const WT_EDIT_KEYS = ['deals','goldenPlans','loyaltyCards','purchased','nonPurchased','googleReview','instagram','facebook','whatsapp'];
+const WT_EDIT_KEYS = ['deals','purchased','nonPurchased','googleReview','instagram','facebook','whatsapp'];
 function startWalkinRowEdit(rowNum) {
   const tr = document.getElementById('wtRow-' + rowNum);
   if (!tr) return;
