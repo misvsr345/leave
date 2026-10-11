@@ -1970,10 +1970,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="empQACustomer360" onclick="showEmpPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
           <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
-          <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Entry</div><div class="quick-action-sub">Add counter stock</div></div>
-          <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
+          <div class="quick-action-btn" id="empQAStockLevelModule" onclick="showEmpPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Entry form &amp; transfer</div></div>
           <div class="quick-action-btn" id="empQAWalkinsModule" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
-          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Daily Shop &amp; more</div></div>
+          <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
+          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Profile, theme &amp; password</div></div>
         </div>
       </div>
     </div>
@@ -2559,6 +2559,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </div>
 
     <!-- ══════════════ STOCK ENTRY (employee) ══════════════ -->
+    <!-- ══════════════ STOCK LEVEL (employee) — v-add (BRO: "emp login lo
+         stock level section button add chei, dani lopala entry form and
+         transfer add chei" — a new hub tile grouping the employee's
+         existing Stock Entry + Stock Transfer screens under one section
+         button, same pattern as Admin's Stock Level hub (which nests its
+         own Stock Entry/Stock Transfer the same way). ══════════════ -->
+    <div class="page-section" id="emp-stocklevel">
+      <div class="section-hdr"><span class="section-title2">📦 Stock Level</span></div>
+      <div class="card">
+        <div class="quick-actions-grid">
+          <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Entry Form</div><div class="quick-action-sub">Add counter stock</div></div>
+          <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="page-section" id="emp-stockentry">
       <div class="section-hdr"><span class="section-title2">📦 Stock Entry</span></div>
       <div id="stockEntryMount-emp"></div>
@@ -2779,7 +2795,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('emp')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
@@ -6863,13 +6878,14 @@ const SECTION_LABEL_MAP = {
   // Level hub (not all the way to the main Home page).
   stocktransfer: 'Stock Level',
   stockalerts: 'Stock Level',
-  stockentry: 'Stock Entry',
-  // v-add (BRO: "emp ki kotha Stock Transfer screen build chei" — a DIFFERENT page
-  // key from admin's 'stocktransfer' above on purpose: the employee screen is its
-  // own standalone top-level item (like Stock Entry), not nested inside anything
-  // (employee has no "Stock Level" hub at all), so it needs its own section here
-  // rather than reusing admin's nested-in-Stock-Level one.
-  mystocktransfer: 'Stock Transfer',
+  // v-fix (BRO: "emp login lo stock level section button add chei, dani
+  // lopala entry form and transfer add chei" — the employee's Stock Entry
+  // and Stock Transfer screens are now nested inside their own "Stock
+  // Level" hub (emp-stocklevel), same pattern as Admin's Stock Level hub,
+  // so "← Back" from either one returns to that hub, not all the way to
+  // the main Home page.
+  stockentry: 'Stock Level',
+  mystocktransfer: 'Stock Level',
   profile: 'Emp Details'
 };
 // Each section's own "dashboard" page (its landing page after clicking
@@ -6883,8 +6899,6 @@ const SECTION_DASHBOARD_PAGE = {
   'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' },
   'Stock Check List': { emp: 'stock', admin: 'stock' },
   'Stock Level':    { emp: 'stocklevel', admin: 'stocklevel' },
-  'Stock Entry':    { emp: 'stockentry', admin: 'stockentry' },
-  'Stock Transfer': { emp: 'mystocktransfer', admin: 'mystocktransfer' },
   Leads:            { emp: 'leads',   admin: 'leads' }
 };
 function getSectionDashboardPage(who, page) {
@@ -10494,7 +10508,13 @@ async function loadSettingsEmpList() {
       () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
       (employees) => {
         window.__settingsEmpList = employees;
+        // v-add (BRO: "emp drop down lo all emp ani kuda oka option ivu, click
+        // cheste andariki vartistai, tarvata okkarki marustu change chestanu" —
+        // bulk-apply used to be a separate buried collapsed card below; now it's
+        // a normal dropdown choice like any employee, so it's reachable the same
+        // way, and admin can still come back and fine-tune one person afterward.
         sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+          '<option value="__ALL__">🌐 All Employees</option>' +
           employees.map(e => `<option value="${escJs(e.empId)}">${e.name} (${e.empId})</option>`).join('');
         sel.dataset.loaded = '1';
       }
@@ -10526,7 +10546,7 @@ function renderSettingsEmpBody(emp) {
   // normal per-employee flow; and the huge Detailed list (buildPermAccordionHtml) now opens one
   // module at a time instead of dumping every checkbox on screen together.
   let html = `
-  <p style="font-size:11px;color:var(--text3);margin:0 0 12px;padding:8px 10px;background:var(--purple-bg,#F5EEFB);border:1px solid var(--border);border-radius:8px;">ℹ️ There are two layers below: <b>① Module Access</b> is a quick whole-page on/off switch. <b>④ Detailed Sub-Option Access</b> is finer — it can turn on a module but hide specific buttons inside it. When in doubt, use ④ — it always wins over ①.</p>
+  <p style="font-size:11px;color:var(--text3);margin:0 0 12px;padding:8px 10px;background:var(--purple-bg,#F5EEFB);border:1px solid var(--border);border-radius:8px;">ℹ️ There are two layers below: <b>① Module Access</b> is a quick whole-page on/off switch. <b>③ Detailed Sub-Option Access</b> is finer — it can turn on a module but hide specific buttons inside it. When in doubt, use ③ — it always wins over ①.</p>
   <div class="card">
     <div class="card-title">① ${nameLabel}</div>
     ${!emp ? '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Pick an employee above to enable editing — every box below is already visible, it just cannot be saved until someone is selected.</p>' : ''}
@@ -10559,7 +10579,7 @@ function renderSettingsEmpBody(emp) {
       <input type="checkbox" id="empGoldenAuraAccessCheck" ${emp && emp.goldenAuraAccess ? 'checked' : ''} ${disabled} style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
       <span style="font-size:13px;color:var(--text);font-weight:600;">🌟 Golden Aura Access</span>
     </label>
-    <p style="font-size:11px;color:var(--text3);margin:6px 0 0;padding:8px 10px;background:#fff8e1;border:1px solid var(--gold);border-radius:8px;">⚠️ DSR, Leads and Stock Checklist run on separate systems from this Portal, so turning these off here no longer hides that button — the employee could still reach the real form directly (bookmark, browser history). Still saved for future use, but use ④ Detailed Sub-Option Access below for these three instead.</p>
+    <p style="font-size:11px;color:var(--text3);margin:6px 0 0;padding:8px 10px;background:#fff8e1;border:1px solid var(--gold);border-radius:8px;">⚠️ DSR, Leads and Stock Checklist run on separate systems from this Portal, so turning these off here no longer hides that button — the employee could still reach the real form directly (bookmark, browser history). Still saved for future use, but use ③ Detailed Sub-Option Access below for these three instead.</p>
     <button class="btn-primary" id="settingsSaveEmpBtn" style="width:100%;margin-top:8px;" ${disabled} onclick="saveSettingsEmpAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Module Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
   <div class="card" style="margin-top:14px;">
@@ -10588,22 +10608,8 @@ function renderSettingsEmpBody(emp) {
     ${emp && emp.leaveTypeAccess && emp.leaveTypeAccess.specialPermissionLimit !== null && emp.leaveTypeAccess.specialPermissionLimit !== undefined ? `<p style="font-size:11px;color:var(--text3);margin:4px 0 0;">Used ${emp.leaveTypeAccess.specialPermissionUsed || 0} of ${emp.leaveTypeAccess.specialPermissionLimit} this month.</p>` : ''}
     <button class="btn-primary" id="settingsSaveEmpLtaBtn" style="width:100%;margin-top:10px;" ${disabled} onclick="saveSettingsEmpLeaveTypeAccess('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Leave Type Access${emp ? ' for ' + emp.name : ''}</button>
   </div>
-  <details class="card" style="margin-top:14px;border:1.5px dashed var(--purple);padding:0;overflow:hidden;">
-    <summary style="list-style:none;cursor:pointer;padding:12px 14px;"><span class="card-title" style="display:inline;">③ 👥 Apply to All Employees</span> <span style="font-size:11px;color:var(--text3);">(tap to open — rarely needed)</span></summary>
-    <div style="padding:0 14px 14px;">
-    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save — this overwrites ① Module Access above for every employee in one go. Doesn't touch anyone's ④ Detailed Sub-Option Access.</p>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeaveAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📋 Leave Access</span></label>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLoyaltyAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">💳 Loyalty Card Access</span></label>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpKpiAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📊 KPI Access</span></label>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpDsrAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🧾 DSR Access</span></label>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeadsAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📞 Leads Access</span></label>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpStockAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📦 Stock Checklist Access</span></label>
-    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpGoldenAuraAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🌟 Golden Aura Access</span></label>
-    <button class="btn-primary" id="settingsSaveAllEmpBtn" style="width:100%;margin-top:8px;background:var(--red);" onclick="saveSettingsAllEmpAccess()">💾 Save For ALL Employees</button>
-    </div>
-  </details>
   <div id="settingsEmpGranularBody" style="margin-top:14px;">
-    <div class="section-hdr" style="margin-bottom:4px;"><span class="section-title2" style="font-size:13px;">④ 🔎 Detailed Sub-Option Access</span></div>
+    <div class="section-hdr" style="margin-bottom:4px;"><span class="section-title2" style="font-size:13px;">③ 🔎 Detailed Sub-Option Access</span></div>
     <p style="font-size:11px;color:var(--text3);margin:0 0 8px;">Fine control, button by button. Tap a module below to open it — its own "whole module" switch is the checkbox in its title row, with individual buttons underneath once opened.</p>
     ${buildPermAccordionHtml(features, perms, 'settings-perm-check-emp', 'emp', 'onSettingsCheckChangeEmp')}
     <button class="btn-secondary" id="settingsResetEmpBtn" style="width:100%;margin-top:6px;margin-bottom:8px;" ${disabled} onclick="resetSettingsEmpChecks()">🔄 Reset (Select All / Deselect All)</button>
@@ -10612,9 +10618,36 @@ function renderSettingsEmpBody(emp) {
   body.innerHTML = html;
 }
 
+// v-add (BRO: "emp drop down lo all emp option ivu, click cheste andariki
+// vartistai" — the bulk "apply to everyone" tool used to be a separate
+// buried collapsed card under every single employee's own panel. Now it's
+// a normal choice in the SAME dropdown ("🌐 All Employees"), so picking it
+// shows just this — Module Access only, since Leave Type Access and
+// Detailed Sub-Option Access are saved per-person and have no bulk
+// endpoint — and after saving, the admin can switch the dropdown back to
+// one specific employee to fine-tune just them, same checkboxes reused.
+function renderSettingsAllEmpBody() {
+  const body = document.getElementById('settingsEmpPermBody');
+  body.innerHTML = `
+  <p style="font-size:11px;color:var(--text3);margin:0 0 12px;padding:8px 10px;background:#fff8e1;border:1px solid var(--gold);border-radius:8px;">🌐 This sets <b>Module Access</b> for <b>every employee at once</b> — it overwrites whatever each person had individually here. Leave Type Access and Detailed Sub-Option Access are per-person only; pick someone by name above to set those.</p>
+  <div class="card">
+    <div class="card-title">👥 All Employees — Module Access</div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tick the modules you want ON (leave a box unticked to turn that module OFF for everyone), then Save.</p>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeaveAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📋 Leave Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLoyaltyAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">💳 Loyalty Card Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpKpiAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📊 KPI Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpDsrAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🧾 DSR Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpLeadsAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📞 Leads Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpStockAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">📦 Stock Checklist Access</span></label>
+    <label style="display:flex;align-items:center;gap:9px;padding:8px 2px;cursor:pointer;"><input type="checkbox" id="allEmpGoldenAuraAccessCheck" checked style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;"><span style="font-size:12.5px;color:var(--text2);">🌟 Golden Aura Access</span></label>
+    <button class="btn-primary" id="settingsSaveAllEmpBtn" style="width:100%;margin-top:8px;background:var(--red);" onclick="saveSettingsAllEmpAccess()">💾 Save For ALL Employees</button>
+  </div>`;
+}
+
 function onSettingsEmpSelected() {
   const empId = document.getElementById('settingsEmpSelect').value;
   if (!empId) { renderSettingsEmpBody(null); return; }
+  if (empId === '__ALL__') { renderSettingsAllEmpBody(); return; }
   const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
   if (!emp) { renderSettingsEmpBody(null); return; }
 
