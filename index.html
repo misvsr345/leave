@@ -3388,100 +3388,141 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="empty-state"><span class="emoji">🔒</span><p>This page is for MIS/Director only.</p></div>
       </div>
       <div id="settingsWrap">
-        <div class="filter-bar" style="margin-bottom:12px;">
-          <button class="filter-btn active" id="settingsTab-emp" onclick="switchSettingsTab('emp')">👤 Employee Access</button>
-          <button class="filter-btn" id="settingsTab-admin" onclick="switchSettingsTab('admin')">🔑 Admin Access</button>
+
+        <!-- v-add (BRO: "all setting structure ippudu ela undi marchu... every option ki
+             related button ni aa section button lopala pettu" — Settings used to be one
+             long scroll of every card at once; now it's a landing menu of 6 buttons, each
+             opening just its own piece. Access/Store Data/Auto-Logout open as a sub-view
+             INSIDE this same page (so nothing about their existing IDs/JS changes, only
+             where they're shown); Theme/Star Mark/Change Password already open as their
+             own modal, so those buttons just call the same existing opener functions
+             directly — no sub-view needed for those three. -->
+        <div id="settingsHomeView">
+          <div class="quick-actions-grid">
+            <div class="quick-action-btn" onclick="showSettingsSection('access')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Access</div><div class="quick-action-sub">Employee &amp; Admin feature access</div></div>
+            <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub">Pick a color theme</div></div>
+            <div class="quick-action-btn" onclick="showSettingsSection('storedata')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Store Data</div><div class="quick-action-sub">Logo, background, name, address, contact</div></div>
+            <div class="quick-action-btn" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
+            <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
+            <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
+          </div>
         </div>
 
-        <!-- EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off -->
-        <div id="settingsEmpPane">
+        <!-- ACCESS sub-view (unchanged Employee/Admin Access tabs — just gated behind
+             a click now instead of always rendered) -->
+        <div id="settingsAccessView" style="display:none;">
+          <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-bottom:14px;" onclick="showSettingsSection('home')">← Back to Settings</button>
+
+          <div class="filter-bar" style="margin-bottom:12px;">
+            <button class="filter-btn active" id="settingsTab-emp" onclick="switchSettingsTab('emp')">👤 Employee Access</button>
+            <button class="filter-btn" id="settingsTab-admin" onclick="switchSettingsTab('admin')">🔑 Admin Access</button>
+          </div>
+
+          <!-- EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off -->
+          <div id="settingsEmpPane">
+            <div class="card">
+              <div class="card-title">👤 Select Employee</div>
+              <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick an employee here to tick the boxes that already apply to them — everything else stays unticked. Tick/untick whatever you need, then save.</p>
+              <select id="settingsEmpSelect" class="uniform-select" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
+            </div>
+            <div id="settingsEmpPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+          </div>
+
+          <!-- ADMIN ACCESS PANEL — per-person, full feature accordion -->
+          <div id="settingsAdminPane" style="display:none;">
+            <div class="card">
+              <div class="card-title">🔑 Select Admin</div>
+              <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick a non-MIS/Director admin here to tick the boxes that already apply to them — everything else stays unticked (Director shown separately as always-full-access; Director/EA/Manager/Store Manager/Asst Manager etc. all appear here individually — access is set per PERSON, not per job title).</p>
+              <select id="settingsAdminSelect" class="uniform-select" onchange="onSettingsAdminSelected()"><option value="">-- Loading admins... --</option></select>
+            </div>
+            <div id="settingsAdminPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- STORE DATA sub-view — v-add (BRO: "ikada manual ga enter cheste, autundi. but
+             images portal nundi upload avutundi. same data kuda portal nundi upload avali" —
+             storeName/address/contact/website/email were only ever hand-typed directly into
+             the "Store Settings" sheet; the backend (StockBackend.gs saveStoreSettings_)
+             already accepts all five as plain text, only the portal never sent them. Logo +
+             Background upload are unchanged, just moved in here alongside the new fields —
+             one Store Data screen instead of the data living in two different places. -->
+        <div id="settingsStoreDataView" style="display:none;">
+          <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-bottom:14px;" onclick="showSettingsSection('home')">← Back to Settings</button>
+
           <div class="card">
-            <div class="card-title">👤 Select Employee</div>
-            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick an employee here to tick the boxes that already apply to them — everything else stays unticked. Tick/untick whatever you need, then save.</p>
-            <select id="settingsEmpSelect" class="uniform-select" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
+            <div class="card-title">🏪 Store Details</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Shows on the login page and everywhere else the store's own details appear. Saved directly to the same "Store Settings" sheet used for the logo/background below — no more hand-editing the sheet.</p>
+            <div class="form-row"><label>Store Name</label><input type="text" id="storeNameInput" placeholder="VSR GOLD"></div>
+            <div class="form-row"><label>Address</label><input type="text" id="storeAddressInput" placeholder="Shop address"></div>
+            <div class="form-row"><label>Contact</label><input type="text" id="storeContactInput" placeholder="Phone number"></div>
+            <div class="form-row"><label>Website</label><input type="text" id="storeWebsiteInput" placeholder="www.example.com"></div>
+            <div class="form-row"><label>Email</label><input type="text" id="storeEmailInput" placeholder="store@example.com"></div>
+            <button class="btn-primary" style="width:100%;" onclick="saveStoreDetailsText_()">💾 Save Store Details</button>
+            <div id="storeDetailsSaveStatus" style="font-size:11px;margin-top:8px;"></div>
           </div>
-          <div id="settingsEmpPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-        </div>
 
-        <!-- ADMIN ACCESS PANEL — per-person, full feature accordion -->
-        <div id="settingsAdminPane" style="display:none;">
+          <!-- v-add: Store Logo upload — BRO: "settings lo upload option ivu, akkada
+               upload chesina photo anni dagara (login page, topbar, sidebar) logo ravali,
+               bg lekunda". Saved to Drive by StockBackend.gs; shows everywhere instantly. -->
           <div class="card">
-            <div class="card-title">🔑 Select Admin</div>
-            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">All access sections are always shown below. Pick a non-MIS/Director admin here to tick the boxes that already apply to them — everything else stays unticked (Director shown separately as always-full-access; Director/EA/Manager/Store Manager/Asst Manager etc. all appear here individually — access is set per PERSON, not per job title).</p>
-            <select id="settingsAdminSelect" class="uniform-select" onchange="onSettingsAdminSelected()"><option value="">-- Loading admins... --</option></select>
+            <div class="card-title">🖼️ Store Logo</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Upload once — this logo replaces the ✦ mark on the login page, topbar and sidebar everywhere, with no background box around it.</p>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+              <img id="storeLogoPreview" style="width:56px;height:56px;object-fit:contain;display:none;" alt="Current logo">
+            </div>
+            <input type="file" accept="image/*" id="storeLogoFileInput" onchange="onStoreLogoFileChosen(this)" style="display:none;">
+            <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeLogoFileInput').click()">📤 Upload Logo</button>
+            <div id="storeLogoUploadStatus" style="font-size:11px;margin-top:8px;"></div>
           </div>
-          <div id="settingsAdminPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-        </div>
 
-        <div class="card">
-          <div class="card-title">🎨 Theme</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pick a color theme for your own login (saved on this device).</p>
-          <button class="btn-sm btn-view" style="width:100%;" onclick="openThemePickerModal()">🎨 Choose Theme (24 options)</button>
-        </div>
-
-        <!-- v-add: Store Logo upload — BRO: "settings lo upload option ivu, akkada
-             upload chesina photo anni dagara (login page, topbar, sidebar) logo ravali,
-             bg lekunda". Saved to Drive by StockBackend.gs; shows everywhere instantly. -->
-        <div class="card">
-          <div class="card-title">🖼️ Store Logo</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Upload once — this logo replaces the ✦ mark on the login page, topbar and sidebar everywhere, with no background box around it.</p>
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-            <img id="storeLogoPreview" style="width:56px;height:56px;object-fit:contain;display:none;" alt="Current logo">
+          <!-- v-add: Login page background image — BRO: "purple color unna place lo manaki nachina
+               image ni pettocha, kani expiry date ivu, expiry avagane automatic ga remove avali,
+               purple/theme color ravali". Expiry is required — the upload button stays off without
+               one, and the backend won't save a background without an expiry either. -->
+          <div class="card">
+            <div class="card-title">🖼️ Login Background Image</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Pick an expiry date; once it passes, this is removed automatically and the login page goes back to the default purple theme on its own.</p>
+            <img id="storeBgPreview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Current background">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Expiry Date</label>
+            <input type="date" id="storeBgExpiryInput" class="uniform-select" style="width:100%;margin-bottom:10px;">
+            <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
+            <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeBgFileInput').click()">📤 Upload Background Image</button>
+            <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
+                 take it off immediately, same as what auto-happens once the expiry date passes. -->
+            <button class="btn-sm" style="width:100%;margin-top:8px;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">🗑️ Remove Background Image</button>
+            <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
+            <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
           </div>
-          <input type="file" accept="image/*" id="storeLogoFileInput" onchange="onStoreLogoFileChosen(this)" style="display:none;">
-          <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeLogoFileInput').click()">📤 Upload Logo</button>
-          <div id="storeLogoUploadStatus" style="font-size:11px;margin-top:8px;"></div>
         </div>
 
-        <!-- v-add: Login page background image — BRO: "purple color unna place lo manaki nachina
-             image ni pettocha, kani expiry date ivu, expiry avagane automatic ga remove avali,
-             purple/theme color ravali". Expiry is required — the upload button stays off without
-             one, and the backend won't save a background without an expiry either. -->
-        <div class="card">
-          <div class="card-title">🖼️ Login Background Image</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Pick an expiry date; once it passes, this is removed automatically and the login page goes back to the default purple theme on its own.</p>
-          <img id="storeBgPreview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Current background">
-          <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Expiry Date</label>
-          <input type="date" id="storeBgExpiryInput" class="uniform-select" style="width:100%;margin-bottom:10px;">
-          <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
-          <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeBgFileInput').click()">📤 Upload Background Image</button>
-          <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
-               take it off immediately, same as what auto-happens once the expiry date passes. -->
-          <button class="btn-sm" style="width:100%;margin-top:8px;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">🗑️ Remove Background Image</button>
-          <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
-          <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
+        <!-- AUTO-LOGOUT sub-view — v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite
+             autunda" — instead of hardcoding the auto-logout minutes in code every time, let
+             MIS/Director pick it here. Applies to every Employee + Admin login. -->
+        <div id="settingsAutoLogoutView" style="display:none;">
+          <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-bottom:14px;" onclick="showSettingsSection('home')">← Back to Settings</button>
+          <div class="card">
+            <div class="card-title">⏱️ Auto-Logout Timer</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No activity (mouse/touch/keyboard) for this long auto-logs-out any Employee or Admin login on the portal.</p>
+            <select id="idleTimeoutSelect" class="uniform-select" style="margin-bottom:10px;">
+              <option value="1">1 minute</option>
+              <option value="2">2 minutes</option>
+              <option value="3">3 minutes</option>
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+            </select>
+            <button class="btn-primary" style="width:100%;" onclick="saveIdleTimeoutSetting()">💾 Save Auto-Logout Timer</button>
+          </div>
         </div>
 
         <!-- v-add (BRO: "anni tiki kalipi okati setting lo pettu, no in stock entry
              form kinda" — ★ Required Fields Settings used to be a button tucked under
-             the Stock Entry form only; moved here as ONE place for every entry form's
-             compulsory (★) fields — Stock Entry/Transfer, DSR, Outlet Issue, RDR,
-             Leave, New Loyalty Card, Golden Aura, Lead Call Log — all in one modal,
-             grouped by form. -->
-        <div class="card">
-          <div class="card-title">⚙️ Required Fields Settings</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Switch the ★ (compulsory) flag on/off for any field in any entry form — Stock Entry/Transfer, DSR, Outlet Issue, RDR, Leave, New Loyalty Card, Golden Aura, Lead Call Log. Off = that field is no longer blocked at Submit.</p>
-          <button class="btn-sm btn-view" style="width:100%;" onclick="frqOpenModal()">⚙️ Open Required Fields Settings</button>
-        </div>
-
-        <!-- v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite autunda" —
-             instead of hardcoding the auto-logout minutes in code every time, let
-             MIS/Director pick it here. Applies to every Employee + Admin login. -->
-        <div class="card">
-          <div class="card-title">⏱️ Auto-Logout Timer</div>
-          <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">No activity (mouse/touch/keyboard) for this long auto-logs-out any Employee or Admin login on the portal.</p>
-          <select id="idleTimeoutSelect" class="uniform-select" style="margin-bottom:10px;">
-            <option value="1">1 minute</option>
-            <option value="2">2 minutes</option>
-            <option value="3">3 minutes</option>
-            <option value="5">5 minutes</option>
-            <option value="10">10 minutes</option>
-            <option value="15">15 minutes</option>
-            <option value="30">30 minutes</option>
-            <option value="60">1 hour</option>
-          </select>
-          <button class="btn-primary" style="width:100%;" onclick="saveIdleTimeoutSetting()">💾 Save Auto-Logout Timer</button>
-        </div>
+             the Stock Entry form only; now opens directly as its own modal from the
+             "Star Mark (Field Settings)" button above — no sub-view needed here since
+             frqOpenModal() already is a self-contained modal, same as Theme/Change
+             Password. -->
       </div>
     </div>
 
@@ -10161,9 +10202,92 @@ async function loadSettingsPage() {
   document.getElementById('settingsAccessDenied').style.display = allowed ? 'none' : 'block';
   document.getElementById('settingsWrap').style.display = allowed ? '' : 'none';
   if (!allowed) return;
-  switchSettingsTab('emp');
+  showSettingsSection('home');
   const sel = document.getElementById('idleTimeoutSelect');
   if (sel) sel.value = String(Math.round(IDLE_TIMEOUT_MS / 60000));
+}
+
+// v-add: Settings landing menu — More → Settings now opens on a 6-button
+// menu (Access/Theme/Store Data/Star Mark/Auto-Logout/Change Password)
+// instead of dropping straight into the Access tabs. Theme/Star Mark/Change
+// Password stay as direct modal triggers (openThemePickerModal/frqOpenModal/
+// openChangePassword) since they're already self-contained; Access, Store
+// Data and Auto-Logout get their own sub-views here, each with a "← Back"
+// button that returns to this same home view.
+function showSettingsSection(which) {
+  const views = {
+    home: 'settingsHomeView',
+    access: 'settingsAccessView',
+    storedata: 'settingsStoreDataView',
+    autologout: 'settingsAutoLogoutView'
+  };
+  Object.keys(views).forEach(key => {
+    const el = document.getElementById(views[key]);
+    if (el) el.style.display = (key === which) ? '' : 'none';
+  });
+  if (which === 'access') {
+    switchSettingsTab('emp');
+  } else if (which === 'storedata') {
+    prefillStoreDetailsForm_();
+  } else if (which === 'autologout') {
+    const sel = document.getElementById('idleTimeoutSelect');
+    if (sel) sel.value = String(Math.round(IDLE_TIMEOUT_MS / 60000));
+  }
+}
+
+// Pre-fills the Store Data text fields with whatever's already saved
+// (storeSettingsCache, populated by initStoreSettings_/applyStoreSettingsToUI_)
+// so the admin sees current values instead of blank inputs.
+function prefillStoreDetailsForm_() {
+  const s = storeSettingsCache || {};
+  const map = {
+    storeNameInput: s.storeName || '',
+    storeAddressInput: s.address || '',
+    storeContactInput: s.contact || '',
+    storeWebsiteInput: s.website || '',
+    storeEmailInput: s.email || ''
+  };
+  Object.keys(map).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = map[id];
+  });
+  const status = document.getElementById('storeDetailsSaveStatus');
+  if (status) status.textContent = '';
+}
+
+// Settings → Store Data → "Save Store Details". Sends the plain-text store
+// fields to StockBackend.gs (saveStoreSettings action, same one the logo/bg
+// uploads already use) so the login page and every "VSR GOLD" header pick
+// up the change immediately, same as the image uploads already do.
+async function saveStoreDetailsText_() {
+  const statusEl = document.getElementById('storeDetailsSaveStatus');
+  const vals = {
+    storeName: (document.getElementById('storeNameInput') || {}).value || '',
+    address: (document.getElementById('storeAddressInput') || {}).value || '',
+    contact: (document.getElementById('storeContactInput') || {}).value || '',
+    website: (document.getElementById('storeWebsiteInput') || {}).value || '',
+    email: (document.getElementById('storeEmailInput') || {}).value || ''
+  };
+  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = 'var(--text3)'; }
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: 'saveStoreSettings' }, vals))
+    }, 20000).then(r => r.json());
+    if (res && res.ok) {
+      applyStoreSettingsToUI_(res.settings);
+      try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+      if (statusEl) { statusEl.textContent = '✅ Saved'; statusEl.style.color = 'var(--green)'; }
+      toast('✅ Store details saved', 'success');
+    } else {
+      if (statusEl) { statusEl.textContent = '❌ Could not save. Try again.'; statusEl.style.color = 'var(--red)'; }
+      toast('❌ Could not save. Try again.', 'error');
+    }
+  } catch (e) {
+    if (statusEl) { statusEl.textContent = '❌ Could not save. Try again.'; statusEl.style.color = 'var(--red)'; }
+    toast('❌ Could not save. Try again.', 'error');
+  }
 }
 
 // v-add (BRO: "direct 5 or 10 kakunda toggle systme pedite autunda") — MIS/Director
