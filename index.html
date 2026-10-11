@@ -2855,6 +2855,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('monthly-absent')">📋 Monthly Absent Report</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('notices')">📢 Notices</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('extra-dsr')">⚠️ Extra DSR Check</div>
+      <div class="vsr-sidebar-subitem" onclick="showAdminPage('dup-tagno')">🔁 Duplicate Tag No</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('settings')">⚙️ Settings</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
@@ -3557,6 +3558,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="extraDsrBox"><div class="empty-state"><p>Pick a date range and tap Check.</p></div></div>
     </div>
 
+    <!-- v-add (BRO: "same tag no unte row color change chei... naku duplicate enter aindi alert
+         ivu chealu. delete chesaka color change chei.") -->
+    <div class="page-section" id="admin-dup-tagno">
+      <div class="section-hdr"><span class="section-title2">🔁 Duplicate Tag No</span></div>
+      <p style="font-size:12px;color:var(--text3);margin:0 0 12px;">Same Tag No (Gold or Diamond) entered under two different DSR Nos — usually an accidental re-entry of an already-billed piece. Delete the wrong entry below; it drops off this list automatically once resolved.</p>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="loadDuplicateTagNoCheck()">🔍 Check</button>
+      </div>
+      <div id="dupTagNoBox"><div class="empty-state"><p>Tap Check to scan for duplicate Tag Nos.</p></div></div>
+    </div>
+
     <!-- ══════════════ KPI SECTION (admin) ══════════════ -->
     <div class="page-section" id="admin-kpi">
       <div class="section-hdr"><span class="section-title2">📊 KPI</span></div>
@@ -3632,6 +3644,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
         <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
+        <div class="quick-action-btn" id="adminQADupTagNo" onclick="showAdminPage('dup-tagno')"><span class="quick-action-icon">🔁</span><div class="quick-action-label">Duplicate Tag No</div><div class="quick-action-sub">Same tag billed under 2 DSRs</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-dsr-today">
@@ -4233,6 +4246,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" onclick="showAdminPage('monthly-absent')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Monthly Absent Report</div><div class="quick-action-sub">Who, when — for salary deduction</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('notices')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Notices</div><div class="quick-action-sub">Apply-Leave page message &amp; rules</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('dup-tagno')"><span class="quick-action-icon">🔁</span><div class="quick-action-label">Duplicate Tag No</div><div class="quick-action-sub">Same tag billed under 2 DSRs</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
@@ -11182,6 +11196,166 @@ async function extraDsrDeleteEntry(i) {
 }
 
 // ============================================================
+// v-add (BRO: "same tag no unte row color change chei. and nenu manual
+// ga delete chestanu. just naku duplicate enter aindi alert ivu chealu.
+// delete cehsaka color change chei." — a STRICTER duplicate signal than
+// Extra DSR Check's own possibleDuplicate: this fires only when the
+// exact same Tag No is billed under two different DSR Nos. Grouped by
+// Tag No; each group is a red card listing every colliding DSR entry.
+// Delete the wrong one (Edit/Delete reuse the SAME dsrUpdateEntryAPI/
+// dsrDeleteEntryAPI as Extra DSR Check) — a fresh re-fetch after every
+// delete means a resolved tag just drops out of the list on its own,
+// which IS the "color reverts to normal" BRO asked for.
+// ============================================================
+let __dupTagGroups = [];
+let __dupTagActiveEntries = []; // flat entries of whichever group's detail modal is currently open
+
+async function loadDuplicateTagNoCheck() {
+  const box = document.getElementById('dupTagNoBox');
+  if (!box) return;
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Scanning Main file for duplicate Tag Nos...</div>';
+  try {
+    const res = await jsonp({ page: 'duplicateTagNoJSON' });
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    __dupTagGroups = res.groups || [];
+    renderDupTagNoResults();
+    maybeShowDupTagAlert_();
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
+  }
+}
+
+function renderDupTagNoResults() {
+  const box = document.getElementById('dupTagNoBox');
+  if (!__dupTagGroups.length) {
+    box.innerHTML = '<div class="empty-state"><p>✅ No duplicate Tag Nos found — every Tag No appears under just one DSR.</p></div>';
+    return;
+  }
+  let html = `<div style="display:grid;gap:8px;">`;
+  __dupTagGroups.forEach((g) => {
+    const dsrList = [...new Set(g.entries.map(en => en.dsrNo))].join(', ');
+    html += `<div class="kd-card" style="border-left:3px solid var(--red);cursor:pointer;" onclick="showDupTagDetail('${escJs(g.tagNo)}')">
+      <div class="kd-head"><span class="kd-name">🏷️ Tag No: ${escHtml(g.tagNo)}</span><span class="kd-pill red">${g.entries.length} entries</span></div>
+      <div class="kd-note">DSR Nos: <b>${escHtml(dsrList)}</b></div>
+      <div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:4px;font-weight:600;">Tap to see the entries →</div>
+    </div>`;
+  });
+  html += `</div>`;
+  box.innerHTML = html;
+}
+
+async function showDupTagDetail(tagNo) {
+  const existing = document.getElementById('dupTagDetailModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'dupTagDetailModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="document.getElementById('dupTagDetailModal').remove()" title="Close">✕</button>
+    <div class="modal-title">🏷️ Tag No: ${escHtml(tagNo)}</div>
+    <div id="dupTagDetailBody" style="margin-top:10px;" data-tagno="${escJs(tagNo)}"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+  </div>`;
+  document.body.appendChild(div);
+  loadDupTagDetailBody(tagNo);
+}
+
+function loadDupTagDetailBody(tagNo) {
+  const body = document.getElementById('dupTagDetailBody');
+  const g = __dupTagGroups.find(x => x.tagNo === tagNo);
+  if (!g) { body.innerHTML = '<p>This duplicate has already been resolved.</p>'; return; }
+  __dupTagActiveEntries = g.entries;
+  let html = `<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">${g.entries.length} DSR entries carry this Tag No. Check which one is the genuine sale and delete the mistaken re-entry.</p>`;
+  g.entries.forEach((en, i) => {
+    html += `<div class="dsr-receipt-card" style="margin-bottom:8px;border:1.5px solid var(--red);">
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${escHtml(en.dsrNo)}</span>
+        <span class="kd-pill gold">${escHtml(en.paymentStatus || '—')}</span>
+      </div>
+      <div class="dsr-receipt-body">
+        <div class="dsr-cust-name">${escHtml(properCase(en.customerName) || '—')}</div>
+        <div class="dsr-meta-row">${en.mobileNumber ? fmtPhone(en.mobileNumber) : '—'} &nbsp;·&nbsp; 👤 ${escHtml(properCase(en.employee) || '—')} &nbsp;·&nbsp; 🕐 ${escHtml(en.timestamp || '—')}</div>
+        <div class="dsr-meta-row" style="border-bottom:none;">💍 ${escHtml(en.type || '—')} — ${escHtml(properCase(en.itemName) || '—')} &nbsp;·&nbsp; 📅 ${fmtDMY(en.date)}</div>
+      </div>
+      <div class="btn-row" style="padding:0 14px 12px;">
+        <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;color:var(--red);border-color:var(--red);" onclick="dupTagConfirmDelete(${i})">🗑️ Delete</button>
+      </div>
+    </div>`;
+  });
+  body.innerHTML = html;
+}
+
+function dupTagConfirmDelete(i) {
+  const en = __dupTagActiveEntries[i];
+  if (!en) return;
+  const existing = document.getElementById('dupTagDeleteConfirm');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'dupTagDeleteConfirm';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:360px;"><button class="modal-close-x" onclick="document.getElementById('dupTagDeleteConfirm').remove()" title="Close">✕</button>
+    <div class="modal-title">🗑️ Delete DSR Entry?</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">This permanently removes <b>${escHtml(en.itemName || 'this item')}</b> for <b>${escHtml(en.customerName || 'this customer')}</b> (DSR ${escHtml(en.dsrNo)}, Tag ${escHtml(en.tagNo)}). This cannot be undone.</p>
+    <div class="btn-row">
+      <button class="btn-primary" style="margin-bottom:10px;background:linear-gradient(135deg,#c0392b,#e74c3c);" onclick="dupTagDeleteEntry(${i})">🗑️ Yes, Delete Permanently</button>
+      <button class="btn-secondary" style="" onclick="document.getElementById('dupTagDeleteConfirm').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function dupTagDeleteEntry(i) {
+  const en = __dupTagActiveEntries[i];
+  const modal = document.getElementById('dupTagDeleteConfirm');
+  if (modal) modal.remove();
+  if (!en) return;
+  try {
+    const res = await jsonpReliable({
+      page: 'dsrDeleteEntryAPI', role: 'ADMIN', callerEmail: state.adminEmail,
+      sheetName: en.sheetName, rowNum: en.rowNum
+    });
+    if (res && res.ok) {
+      toast('🗑️ DSR entry deleted', 'success');
+      // Re-fetch the whole duplicate-tag list — rowNum references shift
+      // after any row delete, so every group (not just this tag) must be
+      // rebuilt fresh. If this tag is now resolved, the detail modal
+      // reflects that; otherwise it shows the tag's remaining entries.
+      await loadDuplicateTagNoCheck();
+      const tagNo = document.getElementById('dupTagDetailBody') ? document.getElementById('dupTagDetailBody').dataset.tagno : null;
+      if (tagNo) loadDupTagDetailBody(tagNo);
+    } else {
+      toast((res && res.error) || 'Delete failed', 'error');
+    }
+  } catch (e) {
+    toast('Network error deleting entry', 'error');
+  }
+}
+
+// Alert popup — reuses the existing (previously dead, since it called a
+// non-existent DSR_GAS_URL action) dupAlertModal markup, now wired to
+// this portal's own, real duplicateTagNoJSON data. Only pops up when the
+// CURRENT set of duplicate-tag groups differs from what was already
+// shown/dismissed (remembered in localStorage), so the same unresolved
+// duplicate doesn't nag on every single dashboard visit, but a genuinely
+// NEW duplicate (or the same tag colliding with yet another DSR) does.
+function maybeShowDupTagAlert_() {
+  try {
+    if (!__dupTagGroups.length) return;
+    const sig = __dupTagGroups.map(g => g.tagNo + ':' + g.entries.map(en => en.dsrNo).sort().join(',')).sort().join('|');
+    const lastSig = localStorage.getItem('vsrDupTagAlertLastSig') || '';
+    if (sig === lastSig) return;
+    const body = document.getElementById('dupAlertModalBody');
+    if (!body) return;
+    body.innerHTML = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Employee</th><th>Date</th><th>DSR Nos</th></tr></thead><tbody>` +
+      __dupTagGroups.map(g => {
+        const first = g.entries[0];
+        const dsrList = [...new Set(g.entries.map(en => en.dsrNo))].join(', ');
+        return `<tr><td><b>${escHtml(g.tagNo)}</b></td><td>${escHtml(properCase(first.employee) || '—')}</td><td>${escHtml(fmtDMY(first.date))}</td><td>${escHtml(dsrList)}</td></tr>`;
+      }).join('') + '</tbody></table></div>';
+    openModal('dupAlertModal');
+    try { localStorage.setItem('vsrDupTagAlertLastSig', sig); } catch (e2) {}
+  } catch (e) {}
+}
+
+// ============================================================
 // v-add (BRO: "chinna emoji ivu search kosam, adi click chesi option
 // names click cheste, aa section and option ki direct velli" — a
 // quick command-palette-style search over every admin page, so
@@ -11234,6 +11408,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
   { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
   { icon: '⚠️', label: 'Extra DSR Check', page: 'extra-dsr' },
+  { icon: '🔁', label: 'Duplicate Tag No', page: 'dup-tagno' },
   { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
   { icon: '🔍', label: 'All Schemes (Golden Aura)', page: 'golden-aura-list' },
   { icon: '🏪', label: 'Retail Checklist', page: 'stock-retail' },
@@ -12186,6 +12361,7 @@ function showAdminPage(page, opts) {
   if(page==='notices') loadNoticesForAdmin();
   if(page==='leads') loadAdminLeadsHome();
   if(page==='extra-dsr') initExtraDsrCheck();
+  if(page==='dup-tagno') loadDuplicateTagNoCheck();
   if(page==='leads-overview') loadAdminLeadsOverview();
   if(page==='leads-submitted') loadAdminLeadsSubmitted();
   if(page==='leads-report') initAdminLeadsReportPage();
@@ -24839,28 +25015,20 @@ async function loadAdminDashboardHub(force) {
 }
 
 // v-add (BRO: "duplicate tag entry elert in dsr or other area, alert mail ravlia mis ki and portal lo
-// kuda pop ravali... tag no and emp name date tho ravali." — DSRBackend.gs already logs + emails MIS the
-// moment a duplicate Tag No entry is caught at Stock sync time; this just pops it up here too, for the
-// admin opening the dashboard. Only alerts newer than the last one already shown (remembered in
-// localStorage) trigger the popup, so the same alert never shows twice.
-let DUP_ALERTS_PORTAL_CACHE = [];
+// kuda pop ravali... tag no and emp name date tho ravali." then later, narrowed scope: "same tag no unte
+// row color change chei... naku duplicate enter aindi alert ivu chealu" — this used to call a
+// DSR_GAS_URL action that was never actually implemented backend-side (dead code, silently failed every
+// time). Now wired to the real duplicateTagNoJSON scan (see loadDuplicateTagNoCheck/maybeShowDupTagAlert_
+// above) the moment the admin opens the dashboard, so the popup actually works.
 async function checkDuplicateAlertsPortal_() {
   try {
-    const lastSeen = parseInt(localStorage.getItem('vsrDupAlertLastSeenTs') || '0', 10) || 0;
-    const res = await _fetchWithTimeout(DSR_GAS_URL + '?action=duplicateAlerts&sinceTs=' + lastSeen + '&limit=50', {}, 20000).then(r => r.json());
-    if (!res || !res.ok || !res.alerts || !res.alerts.length) return;
-    DUP_ALERTS_PORTAL_CACHE = res.alerts;
-    const body = document.getElementById('dupAlertModalBody');
-    if (!body) return;
-    body.innerHTML = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Tag No</th><th>Employee</th><th>Date</th><th>New DSR</th><th>Already Sold In</th></tr></thead><tbody>` +
-      DUP_ALERTS_PORTAL_CACHE.map(a => `<tr><td><b>${escHtml(a.tagNo || '—')}</b></td><td>${escHtml(properCase(a.employee) || '—')}</td><td>${escHtml(fmtDMY(a.billDate))}</td><td>${escHtml(a.newDsrId || '—')}</td><td>${escHtml(a.collidingDsrId || '—')}</td></tr>`).join('') +
-      '</tbody></table></div>';
-    openModal('dupAlertModal');
+    const res = await jsonp({ page: 'duplicateTagNoJSON' });
+    if (!res || !res.ok) return;
+    __dupTagGroups = res.groups || [];
+    maybeShowDupTagAlert_();
   } catch (e) {}
 }
 function dismissDupAlertModal() {
-  const maxTs = DUP_ALERTS_PORTAL_CACHE.reduce((m, a) => Math.max(m, a.ts || 0), 0);
-  if (maxTs) { try { localStorage.setItem('vsrDupAlertLastSeenTs', String(maxTs)); } catch (e) {} }
   closeModal('dupAlertModal');
 }
 
