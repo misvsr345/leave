@@ -3546,6 +3546,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-extra-dsr">
       <div class="section-hdr"><span class="section-title2">⚠️ Extra DSR Check</span></div>
       <p style="font-size:12px;color:var(--text3);margin:0 0 12px;">Compares each employee's own reported Walk-in purchase count against actual DSR entries for the same date. More DSR entries than reported purchases usually means an old, unbilled sale got entered under today's date by mistake. Informational only — this never affects KPI scoring.</p>
+      <select id="extraDsrEmpFilter" class="uniform-select" style="width:100%;margin-bottom:10px;" onchange="renderExtraDsrResults()">
+        <option value="">All Employees</option>
+      </select>
       <div style="display:flex;gap:8px;margin-bottom:14px;">
         <input type="date" id="extraDsrFrom" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;">
         <input type="date" id="extraDsrTo" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;">
@@ -10911,8 +10914,39 @@ function setAbsentReportMode(mode) {
 function initExtraDsrCheck() {
   const fromEl = document.getElementById('extraDsrFrom'), toEl = document.getElementById('extraDsrTo');
   if (!fromEl.value) { const t = todayYMD(); fromEl.value = t; toEl.value = t; }
+  populateExtraDsrEmpFilter_();
   loadExtraDsrCheck();
 }
+
+// v-add (BRO: "emp wise sort avali. and emp dropdown ravali"): reuses
+// the SAME shared employee-name cache/dropdown pattern already used
+// elsewhere (Direct Action, DSR form — directEmpCache/loadEmpListWithCache)
+// instead of adding a brand-new backend call just for this page.
+async function populateExtraDsrEmpFilter_() {
+  const sel = document.getElementById('extraDsrEmpFilter');
+  if (!sel) return;
+  const buildOptions = () => {
+    const prevVal = sel.value;
+    let html = '<option value="">All Employees</option>';
+    directEmpCache.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(emp => {
+      html += `<option value="${escJs(emp.name)}">${emp.name}</option>`;
+    });
+    sel.innerHTML = html;
+    if (prevVal) sel.value = prevVal;
+  };
+  if (directEmpCache.length > 0) {
+    buildOptions();
+  } else {
+    try {
+      await loadEmpListWithCache('directEmpList',
+        () => jsonpReliable({ page: 'directEmpListAPI' }),
+        (employees) => { directEmpCache = employees; buildOptions(); }
+      );
+    } catch (e) { /* dropdown just stays "All Employees" if this fails */ }
+  }
+}
+
+let __extraDsrAllFlagged = []; // raw backend result for the loaded date range — re-filtered/re-sorted client-side on every dropdown change, no re-fetch needed
 
 async function loadExtraDsrCheck() {
   const box = document.getElementById('extraDsrBox');
@@ -10923,27 +10957,56 @@ async function loadExtraDsrCheck() {
   try {
     const res = await jsonp({ page: 'extraDsrDiscrepancyJSON', dateFrom, dateTo });
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
-    if (!res.flagged || !res.flagged.length) {
-      box.innerHTML = '<div class="empty-state"><p>✅ No discrepancies found for this date range — every DSR entry has a matching Walk-in purchase.</p></div>';
-      return;
-    }
-    let html = `<div style="display:grid;gap:8px;">`;
-    res.flagged.forEach((f, i) => {
-      // v-add (BRO: "click chesthe e date lo ala jarigindo, aa detail
-      // kuda ravali" — tap any flagged card to see the actual DSR
-      // entries behind it, so a wrong date/duplicate/whatever can
-      // actually be found and fixed, not just known to exist).
-      html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">
-        <div class="kd-head"><span class="kd-name">${properCase(f.employee)}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
-        <div class="kd-note">📅 ${fmtDMY(f.date)} — DSR entries: <b>${f.dsrEntries}</b> vs Walk-in purchases reported: <b>${f.walkinPurchased}</b></div>
-        <div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:4px;font-weight:600;">Tap to see the entries →</div>
-      </div>`;
-    });
-    html += `</div>`;
-    box.innerHTML = html;
+    __extraDsrAllFlagged = res.flagged || [];
+    renderExtraDsrResults();
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
   }
+}
+
+// v-add (BRO: "idi emp wise sort avali. and emp dropdown ravali" —
+// groups + sorts the already-loaded discrepancy list by employee
+// (alphabetical), newest date first within each employee, and narrows
+// it to one employee when the dropdown above is set. Pure client-side
+// re-render off __extraDsrAllFlagged — no re-fetch on every dropdown change.
+function renderExtraDsrResults() {
+  const box = document.getElementById('extraDsrBox');
+  const empSel = document.getElementById('extraDsrEmpFilter');
+  const empFilter = (empSel && empSel.value || '').toLowerCase();
+  let rows = __extraDsrAllFlagged.slice();
+  if (empFilter) rows = rows.filter(f => String(f.employee).toLowerCase() === empFilter);
+
+  if (!rows.length) {
+    box.innerHTML = empFilter
+      ? '<div class="empty-state"><p>✅ No discrepancies for this employee in this date range.</p></div>'
+      : '<div class="empty-state"><p>✅ No discrepancies found for this date range — every DSR entry has a matching Walk-in purchase.</p></div>';
+    return;
+  }
+
+  rows.sort((a, b) => properCase(a.employee).localeCompare(properCase(b.employee)) || b.date.localeCompare(a.date));
+
+  let html = `<div style="display:grid;gap:8px;">`;
+  let lastEmp = null;
+  rows.forEach((f) => {
+    // v-add: employee-wise group heading, so multiple flagged dates for
+    // the same employee visually sit together instead of a flat list.
+    if (f.employee !== lastEmp) {
+      const empTotal = rows.filter(r => r.employee === f.employee).length;
+      html += `<div style="font-size:11.5px;font-weight:800;color:var(--purple,#6b21a8);margin:${lastEmp ? '10px' : '0'} 0 2px;">👤 ${properCase(f.employee)} <span style="font-weight:600;color:var(--text3);">(${empTotal} flagged)</span></div>`;
+      lastEmp = f.employee;
+    }
+    // v-add (BRO: "click chesthe e date lo ala jarigindo, aa detail
+    // kuda ravali" — tap any flagged card to see the actual DSR
+    // entries behind it, so a wrong date/duplicate/whatever can
+    // actually be found and fixed, not just known to exist).
+    html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">
+      <div class="kd-head"><span class="kd-name">${properCase(f.employee)}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
+      <div class="kd-note">📅 ${fmtDMY(f.date)} — DSR entries: <b>${f.dsrEntries}</b> vs Walk-in purchases reported: <b>${f.walkinPurchased}</b></div>
+      <div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:4px;font-weight:600;">Tap to see the entries →</div>
+    </div>`;
+  });
+  html += `</div>`;
+  box.innerHTML = html;
 }
 
 // Modal showing every DSR entry for this employee on this date — the
