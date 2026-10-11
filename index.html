@@ -11060,6 +11060,21 @@ async function loadExtraDsrDetailBody(employee, date) {
     // possibleDuplicate comes from the backend, same customer + same
     // item name appearing more than once on this date).
     let html = `<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">${__extraDsrEntries.length} DSR entr${__extraDsrEntries.length === 1 ? 'y' : 'ies'} on this date. Check the timestamps and customer names below — an old sale re-entered under today's date, or a genuine duplicate, is usually easy to spot once you see them side by side.</p>`;
+
+    // v-add (BRO: "aa date lo unna walkintrack purchase details and dsr
+    // lo unna dsr entry details oka table laga kanipinchali" — a direct
+    // side-by-side table of exactly what both sources say for this
+    // employee+date, so the mismatch is obvious at a glance before
+    // scrolling into the individual DSR entry cards below).
+    const wk = res.walkin;
+    html += `<div class="kd-table-wrap" style="margin-bottom:6px;"><table class="kd-table"><thead><tr><th>Source</th><th>Deals</th><th>Golden</th><th>Loyalty</th><th>Purchased</th><th>Non-Purchased</th></tr></thead><tbody>
+      <tr><td><b>Walk-in Track</b></td><td>${wk ? wk.deals : '—'}</td><td>${wk ? wk.golden : '—'}</td><td>${wk ? wk.loyalty : '—'}</td><td>${wk ? wk.purchased : '—'}</td><td>${wk ? wk.nonPurchased : '—'}</td></tr>
+      <tr><td><b>DSR Entries</b></td><td colspan="5">${__extraDsrEntries.length} entr${__extraDsrEntries.length === 1 ? 'y' : 'ies'} — DSR No${__extraDsrEntries.length === 1 ? '' : 's'}: ${[...new Set(__extraDsrEntries.map(en => en.dsrNo))].join(', ')}</td></tr>
+      </tbody></table></div>`;
+    html += `<div class="kd-table-wrap" style="margin-bottom:12px;"><table class="kd-table"><thead><tr><th>DSR No</th><th>Customer</th><th>Item</th><th>Tag No</th><th>Time</th></tr></thead><tbody>` +
+      __extraDsrEntries.map(en => `<tr${en.possibleDuplicate ? ' style="background:#ffebee;"' : ''}><td>${en.dsrNo}</td><td>${properCase(en.customerName) || '—'}</td><td>${properCase(en.itemName) || '—'}</td><td>${en.tagNo || '—'}</td><td>${en.timestamp || '—'}</td></tr>`).join('') +
+      `</tbody></table></div>`;
+
     __extraDsrEntries.forEach((en, i) => {
       html += `<div class="dsr-receipt-card" style="margin-bottom:8px;${en.possibleDuplicate ? 'border:1.5px solid var(--red);' : ''}">
         <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${en.dsrNo}</span>
