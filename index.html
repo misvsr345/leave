@@ -6909,6 +6909,13 @@ function goToSectionDashboard(who) {
 // instead. This is what's now wired up.
 function goBackOneStep(who) {
   const current = state['_currentPage_' + who];
+  // v-fix: Settings' own sub-views (Access/Store Data/Auto-Logout) aren't
+  // separate pages — they're all still page 'settings' — so step back into
+  // the Settings landing menu first instead of jumping straight to main Home.
+  if (who === 'admin' && current === 'settings' && window.__settingsSubView && window.__settingsSubView !== 'home') {
+    showSettingsSection('home');
+    return;
+  }
   const dash = getSectionDashboardPage(who, current);
   if (dash && dash !== current) {
     (who === 'admin' ? showAdminPage : showEmpPage)(dash);
@@ -10216,7 +10223,18 @@ async function loadSettingsPage() {
 // openChangePassword) since they're already self-contained; Access, Store
 // Data and Auto-Logout get their own sub-views here, each with a "← Back"
 // button that returns to this same home view.
+// v-fix (BRO: "settings -> access lopala unnapudu, back cheste 1 step venakki
+// (settings home) ravali, kani direct main Home ki vellipotundi" — the Settings
+// page's sub-views (access/storedata/autologout) are all still the SAME
+// top-level page ('settings') as far as showAdminPage/state._currentPage_admin
+// is concerned, so the floating "← Back" fab (goBackOneStep) had no idea which
+// sub-view was open and always treated 'settings' as if it were already Home.
+// window.__settingsSubView tracks that extra layer so the floating Back fab can
+// step back into Settings' own landing menu first, same as the inline "← Back
+// to Settings" buttons already do, before it ever falls through to the main Home.
+window.__settingsSubView = 'home';
 function showSettingsSection(which) {
+  window.__settingsSubView = which;
   const views = {
     home: 'settingsHomeView',
     access: 'settingsAccessView',
