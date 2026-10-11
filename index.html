@@ -49,12 +49,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root {
-  --gold: #d4a843;
-  --gold2: #f0c96a;
-  --gold-dark: #b8922e;
-  --bg: #f5f0fa;
+  /* v-fix (BRO: "defult color black and gold pettu" — portal's default
+     look, before any theme is picked from the More menu, now matches the
+     "gold" theme preset below (same luxury black + gold accent family)
+     instead of the old purple default). */
+  --gold: #ffd700;
+  --gold2: #ffe680;
+  --gold-dark: #c9a600;
+  --bg: #faf6ec;
   --card: #ffffff;
-  --border: #ddd0ee;
+  --border: #e8d9a8;
   --text: #1a0f2e;
   --text2: #4a3870;
   --text3: #8a78a8;
@@ -66,14 +70,14 @@
   --orange-bg: #fef5e7;
   --blue: #1a5fa8;
   --blue-bg: #e8f0fb;
-  --purple: #6b21a8;
-  --purple-bg: #f3e8ff;
-  --purple-dark: #4a1880;
-  --purple-mid: #7c3aed;
-  --pink: #d6389a;
-  --pink2: #ec4899;
-  --pink-bg: #fce7f3;
-  --shadow2: 0 4px 24px rgba(107,33,168,0.18);
+  --purple: #1a1512;
+  --purple-bg: #f5e9c8;
+  --purple-dark: #0d0a08;
+  --purple-mid: #3d3327;
+  --pink: #b8860b;
+  --pink2: #d4af37;
+  --pink-bg: #fdf6e3;
+  --shadow2: 0 4px 24px rgba(26,21,18,0.18);
   --r: 14px;
   --r2: 10px;
   --topbar-h: 52px;
@@ -4466,6 +4470,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="modal-btns">
       <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('themePickerModal')">Close</button>
     </div>
+    <!-- v-add (BRO: "admin defult color ni eppudaina manual change chese
+         option ivu" — admin-only; saves whichever theme is currently
+         selected above as the portal-wide default for everyone who
+         hasn't picked their own personal theme. Hidden for employees. -->
+    <button class="btn-secondary" id="themeSetDefaultBtn" style="display:none;width:100%;margin-top:8px;" onclick="savePortalDefaultTheme_()">⭐ Set as Portal Default (Everyone)</button>
   </div>
 </div>
 
@@ -4534,6 +4543,40 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div id="dupAlertModalBody"></div>
     <div class="modal-btns">
       <button class="btn-modal-cancel" style="flex:1;" onclick="dismissDupAlertModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Walk-in Track Deal Mismatch Alert — BRO: "deal 2 undi, purchage 1,non purchse 0 unte, adi
+     wrong kada... customer deal aindi ante purchase or non purchase edo okati vali. so aa rendukalipite
+     deal ki saripovali... edaina diff unte pop up ravali... nenu manual ga close cheste povali." —
+     daily 4 PM scan (walkinDealMismatchDailyCheck_ in PortalBackend.gs) flags Walkintrack rows where
+     Deals != Purchased + Non Purchased; manual-close-only, same pattern as dupAlertModal. -->
+<div class="modal-overlay" id="walkinMismatchModal">
+  <div class="modal-box" style="max-width:560px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="dismissWalkinMismatchModal()" title="Close">✕</button>
+    <div class="modal-title" style="color:var(--red);">⚠️ Walk-in Track: Deal Count Mismatch</div>
+    <div class="modal-sub">Customer Deals should equal Purchased + Non Purchased for that row. These rows don't add up — check and correct the entry.</div>
+    <div id="walkinMismatchModalBody"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="dismissWalkinMismatchModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Leads 9 PM Performance — BRO: "leads lo every submit ki notificaton vasdu. only eror
+     vastene notification ravali. night 9pm ki tgriger perttu. perfomace ravali. means enni enter
+     aindi, enni pending, enni void aindi. reson tho oka pop ravali. nenu manual ga close cheste
+     povali." — today's entered/pending/void counts (void rows carry their reason), from the
+     9:15 PM leadsPerformanceSnapshotNightly trigger in LeadsBackend.gs. Manual-close-only. -->
+<div class="modal-overlay" id="leadsPerfModal">
+  <div class="modal-box" style="max-width:560px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="dismissLeadsPerfModal()" title="Close">✕</button>
+    <div class="modal-title">📊 Leads Performance — Tonight</div>
+    <div class="modal-sub">Today's calling status: how many got entered, how many are still pending, and how many were voided (with reason).</div>
+    <div id="leadsPerfModalBody"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="dismissLeadsPerfModal()">Close</button>
     </div>
   </div>
 </div>
@@ -5939,7 +5982,7 @@ async function manualRefresh(who) {
 // Theme picker — swaps a data-theme attribute on <html>, which the CSS
 // preset rules key off. Persisted in localStorage so it survives reloads.
 const THEME_REGISTRY = [
-  { key: 'default',   name: 'Purple & Pink', c1: '#6b21a8', c2: '#d6389a' },
+  { key: 'default',   name: 'Black & Gold',  c1: '#1a1512', c2: '#ffd700' },
   { key: 'ocean',     name: 'Ocean',         c1: '#0f5c8a', c2: '#06b6d4' },
   { key: 'emerald',   name: 'Emerald',       c1: '#0f6b42', c2: '#10b981' },
   { key: 'maroon',    name: 'Maroon',        c1: '#8a1c2e', c2: '#ef4460' },
@@ -5970,13 +6013,18 @@ function getThemeInfo(key) {
   return THEME_REGISTRY.find(t => t.key === key) || THEME_REGISTRY[0];
 }
 
-function setTheme(name) {
+function setTheme(name, persist) {
+  if (persist === undefined) persist = true;
   if (name === 'default') {
     document.documentElement.removeAttribute('data-theme');
   } else {
     document.documentElement.setAttribute('data-theme', name);
   }
-  try { localStorage.setItem('vsrTheme', name); } catch(e) {}
+  // persist=false is used when applying the admin-configured portal
+  // default (restoreTheme/fetchPortalDefaultTheme_) — that must NOT be
+  // written as the person's own personal pick, or it would permanently
+  // stick even after the admin later changes the portal default again.
+  if (persist) { try { localStorage.setItem('vsrTheme', name); } catch(e) {} }
 
   const info = getThemeInfo(name);
   const swatchBg = `linear-gradient(135deg, ${info.c1}, ${info.c2})`;
@@ -6004,11 +6052,53 @@ function setTheme(name) {
 }
 
 function restoreTheme() {
-  let saved = 'default';
-  try { saved = localStorage.getItem('vsrTheme') || 'default'; } catch(e) {}
-  setTheme(saved);
+  let saved = null;
+  try { saved = localStorage.getItem('vsrTheme'); } catch(e) {}
+  if (saved) { setTheme(saved); return; } // person's own pick always wins
+
+  // No personal pick yet — apply the last-known portal default instantly
+  // (cached locally, so there's no color flash), then quietly refresh it
+  // from the server in case admin changed it since the cache was saved.
+  let cachedDefault = '';
+  try { cachedDefault = localStorage.getItem('vsrPortalDefaultThemeCache') || ''; } catch(e) {}
+  setTheme(cachedDefault || 'default', false);
+  fetchPortalDefaultTheme_();
 }
 restoreTheme();
+
+// v-add (BRO: "admin defult color ni eppudaina manual change chese option
+// ivu" — fetches the admin-configured portal-wide default theme and
+// applies it, but only for someone who hasn't picked their own personal
+// theme (checked again here, not just in restoreTheme, in case they pick
+// one in the brief window while this request is in flight).
+async function fetchPortalDefaultTheme_() {
+  try {
+    const res = await jsonp({ page: 'getPortalDefaultThemeJSON' });
+    if (res && res.ok && res.theme) {
+      try { localStorage.setItem('vsrPortalDefaultThemeCache', res.theme); } catch(e) {}
+      let personal = null;
+      try { personal = localStorage.getItem('vsrTheme'); } catch(e) {}
+      if (!personal) setTheme(res.theme, false);
+    }
+  } catch (e) {}
+}
+
+// Admin-only — saves whichever theme is currently applied as the portal
+// default for everyone who hasn't picked their own.
+async function savePortalDefaultTheme_() {
+  const current = document.documentElement.getAttribute('data-theme') || 'default';
+  try {
+    const res = await jsonp({ page: 'savePortalDefaultThemeAPI', role: state.adminRole, theme: current });
+    if (res && res.ok) {
+      try { localStorage.setItem('vsrPortalDefaultThemeCache', current); } catch(e) {}
+      toast('⭐ Portal default theme updated to ' + getThemeInfo(current).name, 'success');
+    } else {
+      toast('❌ ' + ((res && res.error) || 'Could not save portal default'), 'error');
+    }
+  } catch (e) {
+    toast('❌ Network error saving portal default', 'error');
+  }
+}
 
 // v-fix (BRO: "desktop and mobile rendu veru veru petti confuse avutunna,
 // desktop mode remove chei" — the manual Mobile/Desktop view toggle was
@@ -6028,7 +6118,9 @@ function openThemePickerModal() {
     </div>`;
   });
   grid.innerHTML = html;
-  setTheme(current); // refresh banner/labels to match what's currently active
+  setTheme(current, false); // refresh banner/labels only — don't lock this in as a personal pick
+  const defaultBtn = document.getElementById('themeSetDefaultBtn');
+  if (defaultBtn) defaultBtn.style.display = state.adminRole ? '' : 'none';
   openModal('themePickerModal');
 }
 
@@ -11544,6 +11636,85 @@ function maybeShowDupTagAlert_() {
     openModal('dupAlertModal');
     try { localStorage.setItem('vsrDupTagAlertLastSig', sig); } catch (e2) {}
   } catch (e) {}
+}
+
+// Walk-in Track deal-mismatch alert — reads today's cached scan result from
+// walkinMismatchAlertJSON (PortalBackend.gs runs the actual scan once daily
+// at 4 PM via walkinDealMismatchDailyCheck_; this just polls the cache on
+// dashboard load). Same signature-dedup + manual-close-only pattern as
+// maybeShowDupTagAlert_ above, so it doesn't re-pop on every visit once
+// seen, but a freshly-changed mismatch set (or the next day's new scan)
+// does pop again.
+let __walkinMismatches = [];
+function maybeShowWalkinMismatchAlert_() {
+  try {
+    if (!__walkinMismatches.length) return;
+    const sig = __walkinMismatches.map(m => m.rowNum + ':' + m.deals + ':' + m.purchased + ':' + m.nonPurchased).sort().join('|');
+    const lastSig = localStorage.getItem('vsrWalkinMismatchLastSig') || '';
+    if (sig === lastSig) return;
+    const body = document.getElementById('walkinMismatchModalBody');
+    if (!body) return;
+    body.innerHTML = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>Employee</th><th>Deals</th><th>Purchased</th><th>Non Purchased</th><th>Diff</th></tr></thead><tbody>` +
+      __walkinMismatches.map(m => {
+        return `<tr><td>${escHtml(m.date)}</td><td>${escHtml(properCase(m.employee) || '—')}</td><td>${m.deals}</td><td>${m.purchased}</td><td>${m.nonPurchased}</td><td><b style="color:var(--red);">${m.diff > 0 ? '+' : ''}${m.diff}</b></td></tr>`;
+      }).join('') + '</tbody></table></div>';
+    openModal('walkinMismatchModal');
+    try { localStorage.setItem('vsrWalkinMismatchLastSig', sig); } catch (e2) {}
+  } catch (e) {}
+}
+async function checkWalkinMismatchAlertPortal_() {
+  try {
+    const res = await jsonp({ page: 'walkinMismatchAlertJSON' });
+    if (!res || !res.ok) return;
+    __walkinMismatches = res.mismatches || [];
+    maybeShowWalkinMismatchAlert_();
+  } catch (e) {}
+}
+function dismissWalkinMismatchModal() {
+  closeModal('walkinMismatchModal');
+}
+
+// Leads 9 PM Performance popup — polls the cached snapshot from
+// LeadsBackend.gs's leadsPerformanceSnapshotNightly (GET_LEADS_PERFORMANCE_SNAPSHOT
+// action), via the existing leadsApiGet() helper used elsewhere for this
+// project. Same signature-dedup + manual-close-only pattern as the other
+// two alerts above, keyed by date so it pops again each new night's
+// snapshot (even if the actual numbers happen to repeat).
+let __leadsPerfSnapshot = null;
+function maybeShowLeadsPerfAlert_() {
+  try {
+    if (!__leadsPerfSnapshot) return;
+    const s = __leadsPerfSnapshot;
+    const sig = s.generatedFor + ':' + s.entered + ':' + s.pending + ':' + s.voidCount;
+    const lastSig = localStorage.getItem('vsrLeadsPerfLastSig') || '';
+    if (sig === lastSig) return;
+    const body = document.getElementById('leadsPerfModalBody');
+    if (!body) return;
+    let html = `<div style="display:flex;gap:10px;margin-bottom:14px;">
+      <div style="flex:1;text-align:center;background:var(--green-bg);border-radius:var(--r2);padding:12px;"><div style="font-size:22px;font-weight:800;color:var(--green);">${s.entered}</div><div style="font-size:11px;color:var(--text2);">Entered</div></div>
+      <div style="flex:1;text-align:center;background:var(--orange-bg);border-radius:var(--r2);padding:12px;"><div style="font-size:22px;font-weight:800;color:var(--orange);">${s.pending}</div><div style="font-size:11px;color:var(--text2);">Pending</div></div>
+      <div style="flex:1;text-align:center;background:var(--red-bg);border-radius:var(--r2);padding:12px;"><div style="font-size:22px;font-weight:800;color:var(--red);">${s.voidCount}</div><div style="font-size:11px;color:var(--text2);">Void</div></div>
+    </div>`;
+    if (s.voidReasons && s.voidReasons.length) {
+      html += `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Customer</th><th>Reason</th></tr></thead><tbody>` +
+        s.voidReasons.map(v => `<tr><td>${escHtml(properCase(v.employee) || '—')}</td><td>${escHtml(v.custName || '—')}</td><td>${escHtml(v.reason)}</td></tr>`).join('') +
+        '</tbody></table></div>';
+    }
+    body.innerHTML = html;
+    openModal('leadsPerfModal');
+    try { localStorage.setItem('vsrLeadsPerfLastSig', sig); } catch (e2) {}
+  } catch (e) {}
+}
+async function checkLeadsPerformancePopupPortal_() {
+  try {
+    const res = await leadsApiGet({ action: 'GET_LEADS_PERFORMANCE_SNAPSHOT' });
+    if (!res || !res.ok || !res.snapshot) return;
+    __leadsPerfSnapshot = res.snapshot;
+    maybeShowLeadsPerfAlert_();
+  } catch (e) {}
+}
+function dismissLeadsPerfModal() {
+  closeModal('leadsPerfModal');
 }
 
 // ============================================================
@@ -25220,6 +25391,8 @@ async function loadAdminDashboardHub(force) {
   fetchDashSection('sheets', force);
   fetchDashSection('leads', force);
   checkDuplicateAlertsPortal_();
+  checkWalkinMismatchAlertPortal_();
+  checkLeadsPerformancePopupPortal_();
 }
 
 // v-add (BRO: "duplicate tag entry elert in dsr or other area, alert mail ravlia mis ki and portal lo
