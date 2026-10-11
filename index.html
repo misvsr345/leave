@@ -1969,7 +1969,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="empQADsrModule" onclick="showEmpPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="empQACustomer360" onclick="showEmpPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR</div></div>
           <div class="quick-action-btn" id="empQAKpiModule" onclick="showEmpPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Score, target &amp; trend</div></div>
-          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Checklist, Stock, Walk-in &amp; more</div></div>
+          <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
+          <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Entry</div><div class="quick-action-sub">Add counter stock</div></div>
+          <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
+          <div class="quick-action-btn" id="empQAWalkinsModule" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
+          <div class="quick-action-btn" onclick="openEmpMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Daily Shop &amp; more</div></div>
         </div>
       </div>
     </div>
@@ -2775,11 +2779,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" id="empQAStockChecklist" onclick="showEmpPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">Entry form</div></div>
         <div class="quick-action-btn" id="empQADailyShopModule" onclick="showEmpPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
-        <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Entry</div><div class="quick-action-sub">Add counter stock</div></div>
-        <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
-        <div class="quick-action-btn" id="empQAWalkinsModule" onclick="showEmpPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
         <div class="quick-action-btn" onclick="openChangePassword('emp')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
         <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="empMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
@@ -2889,7 +2889,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="adminQADsr" onclick="showAdminPage('dsr')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">DSR</div><div class="quick-action-sub">Entries, status &amp; missing</div></div>
           <div class="quick-action-btn" id="adminQAKpi" onclick="showAdminPage('kpi')"><span class="quick-action-icon">📊</span><div class="quick-action-label">KPI</div><div class="quick-action-sub">Target, score &amp; comparison</div></div>
           <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">All options</div></div>
-          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Daily Shop, Walk-in, Stock Level &amp; more</div></div>
+          <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
+          <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
+          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Daily Shop, Settings &amp; more</div></div>
         </div>
       </div>
     </div>
@@ -4277,14 +4279,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
-        <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
-        <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
-        <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Lock/unlock features</div></div>
+        <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Access, Theme, Store Data, Password &amp; more</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
-        <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Update login</div></div>
-        <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub" id="adminMoreThemeLabel">Purple &amp; Pink</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
         <div class="quick-action-btn" onclick="openSyncOfflineModal()"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync Offline Data</div><div class="quick-action-sub" id="adminMoreSyncLabel">Checking...</div></div>
         <!-- v-add (BRO: "popup vastundi, tarvata epudaina chudadaniki vilu untundi, 7 days data
@@ -6824,7 +6822,14 @@ const SECTION_LABEL_MAP = {
   overview: 'Leave', apply: 'Leave', myleaves: 'Leave', calendar: 'Leave',
   dashboard: 'Leave', pending: 'Leave', allleaves: 'Leave', acalendar: 'Leave',
   balance: 'Leave', empwise: 'Leave', events: 'Leave', availability: 'Leave',
-  direct: 'Leave', notices: 'Leave', blocked: 'Leave', settings: 'Leave',
+  direct: 'Leave', notices: 'Leave', blocked: 'Leave',
+  // v-fix (BRO: "back button sariga wiring ledu, check chei" — these tiles
+  // live INSIDE a section's own grid (DSR: Extra DSR Check/Duplicate Tag No/
+  // Outlet Issue/Return-Damage-Repair/Tag Search; KPI: KPI Trend; Leave:
+  // Monthly Absent Report; Leads: Customer Events/Flagged Numbers) but had
+  // no entry here, so "← Back" skipped their section's home page entirely
+  // and jumped straight to the main Home instead.
+  'monthly-absent': 'Leave',
   loyalty: 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-upcoming': 'Loyalty Card',
@@ -6834,10 +6839,13 @@ const SECTION_LABEL_MAP = {
   'stock': 'Stock Check List', 'stock-retail': 'Stock Check List', 'stock-wholesale': 'Stock Check List', 'stock-report': 'Stock Check List',
   'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
+  'kpi-trend': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
+  'dsr-tagsearch': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
+  'customer-events': 'Leads', 'flagged-numbers': 'Leads',
   stocklevel: 'Stock Level',
   'stocklevel-overview': 'Stock Level',
   'stocklevel-counter': 'Stock Level',
