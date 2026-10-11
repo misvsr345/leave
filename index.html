@@ -2235,7 +2235,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         </div>
         <div class="form-row"><label>Customer Photo <span id="frqStarNcCustPhoto">*</span></label>
           <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px;">📌 Upload the actual photo file directly — avoid taking a photo of a photo displayed on another screen/phone, as that captures screen glare and UI icons along with it.</div>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:3px;"></div>
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar No <span id="frqStarNcAadhaarNo">*</span></label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
