@@ -13715,15 +13715,34 @@ function ncPhotoClear(inputId) {
   if (fb) fb.innerHTML = '';
 }
 
-function fileToBase64(inputEl) {
+// v-fix (BRO: "image lo unnatu, every time kuda ilane vastundi. mali image
+// ni remove chesi, re upload cheste autundi" — "Could not prepare preview:
+// Could not read X.jpg" on Submit, but removing and re-choosing the SAME
+// photo immediately works). This is a known mobile-browser quirk, not a
+// real unreadable file: right after the camera app hands a freshly-taken
+// photo back to the browser, the File object it gives JS can occasionally
+// still be "settling" (disk write, thumbnail generation) for a moment, so
+// the very first FileReader.readAsDataURL() on it fails — removing and
+// re-picking the same photo gives JS a File object that's no longer fresh,
+// so the SAME read now succeeds. Instead of making the employee do that
+// dance by hand every time, retry the read a couple of times with a short
+// pause before actually failing.
+function _readFileOnce(file) {
   return new Promise((resolve, reject) => {
-    const file = inputEl.files && inputEl.files[0];
-    if (!file) { resolve(''); return; }
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(new Error('Could not read ' + file.name));
     reader.readAsDataURL(file);
   });
+}
+function fileToBase64(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return Promise.resolve('');
+  const attempt = (triesLeft) => _readFileOnce(file).catch(err => {
+    if (triesLeft <= 0) throw err;
+    return new Promise(res => setTimeout(res, 400)).then(() => attempt(triesLeft - 1));
+  });
+  return attempt(2);
 }
 
 async function submitNewLoyaltyCard() {
