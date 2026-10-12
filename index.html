@@ -312,7 +312,7 @@ body {
 
 .login-logo { text-align: center; margin-bottom: 28px; }
 .login-logo-mark {
-  width: 84px; height: 84px;
+  width: 168px; height: 168px;
   background: transparent; border: none; box-shadow: none;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 10px;
@@ -325,6 +325,34 @@ body {
   text-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 .login-logo p { font-size: 11px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+/* v-add (BRO: "vsr connect ani portal chala dagara chupincahli. with hilite ga" — the portal's
+   own name, "VSR Connect", highlighted everywhere it appears: login page, topbar, sidebar, and
+   the home/module-picker header — distinct from "VSR GOLD" (the store name) sitting right next
+   to it in each spot. */
+/* v-fix (BRO: "vsr gold kinda vsr connect ani only pettu. danni kinda all in one place ani font
+   style change chei. lucida hand writing font style ni use chesi" — login page now stacks three
+   separate lines: VSR GOLD, then VSR Connect on its own line, then "All in One Place" in a
+   handwriting-style font, instead of the earlier single combined tagline. */
+.login-logo .login-connect-row { margin-top: 14px; text-transform: none; letter-spacing: 0; }
+/* v-fix (BRO: "login page lo logo size penchu. vsr gold ani undi kada adi kuda removehi. logo lo
+   already vsr gold ani undi. so adi remove hei.onlly login page ki matrame" — the uploaded logo
+   image already has "VSR GOLD" lettering baked into it, so the separate text heading was dropped
+   (login page only — every other "VSR GOLD" text elsewhere in the app is untouched), and the logo
+   itself made noticeably bigger. Less gap needed above "VSR Connect" now that there's no heading
+   directly above it, just the bigger logo image. */
+.login-logo .login-connect-row-nologo { margin-top: 6px; }
+.login-logo .login-handwritten-tagline {
+  font-family: 'Lucida Handwriting', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 17px; font-weight: 400; color: var(--purple); letter-spacing: 0.3px;
+  text-transform: none; margin-top: 12px;
+}
+.vsr-connect-tag {
+  display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.6px;
+  padding: 2px 9px; margin-left: 7px; border-radius: 999px; vertical-align: middle;
+  background: linear-gradient(135deg, var(--gold2), var(--gold) 55%, #B8860B);
+  color: #3a2a00; text-shadow: none; text-transform: none; white-space: nowrap;
+}
+.login-logo .vsr-connect-tag { margin-left: 0; font-size: 11px; padding: 3px 12px; }
 
 
 .login-tab-btns {
@@ -513,7 +541,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
   font-size: 1em; line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,0.15);
   filter: drop-shadow(0 1px 3px rgba(212,168,67,0.5));
 }
-.login-logo-mark::before { font-size: 68px; }
+.login-logo-mark::before { font-size: 136px; }
 .topbar-logo .mark::before { font-size: 26px; }
 .bday-poster-logo::before { font-size: 56px; }
 
@@ -521,7 +549,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
    wherever it appears — no box/background/border around the image itself. */
 .vsr-logo-mark.has-logo::before { content: none; }
 .vsr-logo-img { display: inline-block; vertical-align: middle; object-fit: contain; background: transparent; border: none; box-shadow: none; mix-blend-mode: multiply; }
-.login-logo-mark .vsr-logo-img { width: 68px; height: 68px; }
+.login-logo-mark .vsr-logo-img { width: 150px; height: 150px; }
 .topbar-logo .mark .vsr-logo-img { width: 26px; height: 26px; }
 .bday-poster-logo .vsr-logo-img { width: 56px; height: 56px; }
 .vsr-sidebar-brand .vsr-logo-img { width: 18px; height: 18px; }
@@ -1814,8 +1842,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <div class="login-box" id="loginFrontBox">
     <div class="login-logo" id="loginLogoWrap">
       <div class="login-logo-mark vsr-logo-mark"></div>
-      <h1>VSR GOLD</h1>
-      <p>VSR Connect — All in One Place.</p>
+      <p class="login-connect-row login-connect-row-nologo"><span class="vsr-connect-tag">VSR Connect</span></p>
+      <p class="login-handwritten-tagline">All in One Place</p>
     </div>
 
     <!-- v-add (BRO: "login avvadaniki veeluga modata button lu ravali. button click chestene
@@ -1896,7 +1924,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <div class="header-group">
     <div class="topbar">
       <div class="topbar-row1">
-        <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+        <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
         <span class="tb-chip tb-badge" style="background:#e8f5e9; color:var(--green); border-color:#a5d6a7;font-size:10px;padding:4px 9px;" id="empNameBadge">👤 Employee</span>
       </div>
       <div class="topbar-row2">
@@ -1929,7 +1957,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 
   <nav class="vsr-sidebar" id="empSidebar">
-    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD</div>
+    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
     <div class="vsr-sidebar-item" data-page="profile" onclick="showEmpPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
     <div class="vsr-sidebar-item" data-page="overview" id="empSidebarLeave" onclick="showEmpPage('overview')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
     <div class="vsr-sidebar-item" data-page="leads" id="empSidebarLeads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
@@ -1959,7 +1987,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <!-- MODULE PICKER (the true landing page right after login) -->
     <div class="page-section active" id="emp-modulepicker">
       <div class="home-header">
-        <div class="home-header-title">VSR GOLD</div>
+        <div class="home-header-title">VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
         <div class="home-header-name" id="empModulePickerName">Employee</div>
         <div class="home-header-sub" id="empModulePickerMeta"></div>
       </div>
@@ -2821,7 +2849,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <div class="header-group">
     <div class="topbar">
       <div class="topbar-row1">
-        <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD</div>
+        <div class="topbar-logo" title="VSR GOLD"><span class="mark vsr-logo-mark"></span> VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
         <span class="tb-chip tb-badge" style="background:#e8f0fb; color:var(--blue); border-color:#b8d0f5;font-size:10px;padding:4px 9px;" id="adminRoleBadge">Admin</span>
       </div>
       <div class="topbar-row2">
@@ -2843,7 +2871,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 
   <nav class="vsr-sidebar" id="adminSidebar">
-    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD</div>
+    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
     <div class="vsr-sidebar-item" data-page="profile" onclick="showAdminPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
     <div class="vsr-sidebar-item" data-page="dashboard" onclick="showAdminPage('dashboard')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
     <div class="vsr-sidebar-item" data-page="leads" id="adminSidebarLeads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
@@ -2893,7 +2921,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
          someone actually opens it. -->
     <div class="page-section active" id="admin-modulepicker">
       <div class="home-header">
-        <div class="home-header-title">VSR GOLD</div>
+        <div class="home-header-title">VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
         <div class="home-header-name" id="adminModulePickerName">Admin</div>
         <div class="home-header-sub" id="adminModulePickerMeta"></div>
       </div>
@@ -7329,7 +7357,7 @@ function renderEmpOverview() {
 
   document.getElementById('empBalanceCard').innerHTML = `
     <div class="home-header">
-      <div class="home-header-title">VSR GOLD</div>
+      <div class="home-header-title">VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
       <div class="home-header-name">${properCase(state.empName)}</div>
       <div class="home-header-sub">${empMeta}</div>
       <div class="home-balance-row">
@@ -15535,7 +15563,7 @@ function sectionHeaderCardHtml(who, tiles) {
     : [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
   const tilesHtml = tiles.map(t => `<div class="home-bal-box"><div class="home-bal-val" style="color:${t.color || '#fff'}">${t.val}</div><div class="home-bal-lbl">${t.lbl}</div></div>`).join('');
   return `<div class="home-header">
-    <div class="home-header-title">VSR GOLD</div>
+    <div class="home-header-title">VSR GOLD<span class="vsr-connect-tag">VSR Connect</span></div>
     <div class="home-header-name">${name}</div>
     <div class="home-header-sub">${meta}</div>
     <div class="home-balance-row">${tilesHtml}</div>
