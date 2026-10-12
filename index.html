@@ -357,7 +357,21 @@ body {
   background: linear-gradient(135deg, var(--gold2), var(--gold) 55%, #B8860B);
   color: #3a2a00; text-shadow: none; text-transform: none; white-space: nowrap;
 }
-.login-logo .vsr-connect-tag { margin-left: 0; font-size: 22px; padding: 5px 18px; }
+/* v-fix (BRO: "3 sample bagundi kani vsr conect ki oka curved una box lo pettu" → "yelow board
+   vaddu... other edo okati oppostite ga pettu" → "lopala color fill cheyaku" — login page's
+   "VSR Connect" moved off the small gold-pill badge style onto a curved (rounded) outline box:
+   no fill color inside (sits on the login card's own white background), just a gold border,
+   with the text itself in the dark purple/gold gradient heading style for contrast. Picked from
+   5 sample options shown to BRO as an artifact. */
+.login-logo .vsr-connect-tag {
+  display: inline-block; margin-left: 0; vertical-align: baseline;
+  font-family: 'Georgia', serif; font-size: 27px; font-weight: 800; letter-spacing: 1px;
+  padding: 9px 28px; border-radius: 16px; border: 2px solid #6b21a8;
+  background: none;
+  background-image: linear-gradient(135deg, var(--purple-dark), var(--purple) 55%, var(--pink));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none;
+}
 
 
 .login-tab-btns {
@@ -1847,7 +1861,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <div class="login-box" id="loginFrontBox">
     <div class="login-logo" id="loginLogoWrap">
       <div class="login-logo-mark vsr-logo-mark"></div>
-      <p class="login-connect-row login-connect-row-nologo"><span class="vsr-connect-tag">VSR Connect</span></p>
+      <p class="login-connect-row login-connect-row-nologo"><span class="vsr-connect-tag">VSR CONNECT</span></p>
       <p class="login-handwritten-tagline">All in One Place</p>
     </div>
 
