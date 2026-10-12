@@ -5679,7 +5679,18 @@ async function _parseMainApiResponse(resp) {
 // show it instead of the bare OS name. iOS does not expose a model number
 // to the browser at all (Apple blocks this), so iPhone/iPad stays as-is —
 // that's a browser limitation, not something fixable from here.
-function getDeviceInfo() {
+// v-fix (BRO: "android store ani kakunda, mobile company and model em set
+// cheyagalama" — plain navigator.userAgent no longer carries the real phone
+// model on modern Chrome (110+): Google's "User-Agent Reduction" privacy
+// change strips it out, which is why Login Activity was showing a bare
+// "Chrome on Android" for most rows with no way to tell two phones apart.
+// Client Hints (navigator.userAgentData.getHighEntropyValues) can still be
+// asked for the real brand+model on Android Chrome even with UA Reduction
+// on, so that's tried first now; falls back to the old UA-string parsing
+// when Client Hints isn't available (older Chrome, other browsers). iOS
+// still can't give a model at all — Apple blocks that from the browser,
+// that's a platform limitation, not fixable from here.
+async function getDeviceInfo() {
   try {
     var ua = navigator.userAgent || '';
     var os = 'Unknown OS';
@@ -5697,11 +5708,20 @@ function getDeviceInfo() {
     else if (/Firefox\//i.test(ua)) browser = 'Firefox';
 
     var isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-
-    // Android: "...; SM-G991B Build/..." or "...; Pixel 7)" — model sits between
-    // the last ";" before "Build/" (or the closing paren) and that marker.
     var osLabel = os;
-    if (os === 'Android') {
+
+    // Preferred path: Client Hints — gives the real "Samsung SM-M135F" /
+    // "Pixel 7" style model even when the plain UA string has been reduced.
+    if (os === 'Android' && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+      try {
+        var hints = await navigator.userAgentData.getHighEntropyValues(['model']);
+        if (hints && hints.model) osLabel = hints.model;
+      } catch (ce) { /* Client Hints blocked/unsupported — fall through below */ }
+    }
+
+    // Fallback: old UA-string parsing — "...; SM-G991B Build/..." or "...; Pixel 7)".
+    // Only runs if Client Hints didn't already give us a model above.
+    if (os === 'Android' && osLabel === os) {
       var m = ua.match(/Android[^;]*;\s*([^;)]+?)\s*(?:Build\/|\))/i);
       var model = m && m[1] ? m[1].trim() : '';
       if (model && !/^(K|unknown)$/i.test(model)) osLabel = model; // fall back to "Android" if nothing usable
@@ -6543,7 +6563,7 @@ async function empLogin() {
   if(!pass)  { toast('Please enter your password', 'error'); return; }
   await withButtonLock(document.getElementById('empLoginBtn'), '⏳ Checking...', async () => {
     try {
-      const res = await jsonpReliable({ page:'empLoginAPI', empId, password: pass, device: getDeviceInfo(), loginAt: new Date().toISOString() });
+      const res = await jsonpReliable({ page:'empLoginAPI', empId, password: pass, device: await getDeviceInfo(), loginAt: new Date().toISOString() });
       if(res.ok) {
         const clean = v => (!v || v === '—') ? '' : v;
         state.empId = empId;
@@ -6616,7 +6636,7 @@ async function adminLogin() {
   if(!email || !pass) { toast('Please enter email & password', 'error'); return; }
   await withButtonLock(document.getElementById('adminLoginBtn'), '⏳ Verifying...', async () => {
     try {
-      const res = await jsonpReliable({ page:'validateAdminAPI', email, password: pass, device: getDeviceInfo(), loginAt: new Date().toISOString() });
+      const res = await jsonpReliable({ page:'validateAdminAPI', email, password: pass, device: await getDeviceInfo(), loginAt: new Date().toISOString() });
       if(res.ok) {
         state.adminEmail = res.email || email;
         state.adminRole = res.role || 'Admin';
