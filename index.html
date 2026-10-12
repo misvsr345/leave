@@ -4581,6 +4581,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
+<!-- Modal: CRM Customer Event Popup — (BRO: "regular ga aa opiton open cheyadam marchipothunnaru,
+     so emaina event unte, crm ki popup ravali... aa event close ainanata varaku chupinchali.
+     customer ki call chesara, event programe kosam cheppara, store ki invite chesara ani adagali.
+     yes ante ne close cheyali idi only for crms, evariki mobile no assign avutundo vallku matrame
+     ravli.") — shown to the assigned CRM employee on every login until each event is checked off.
+     "Later" just hides it for now (comes back next login); only the 3-checkbox "Mark Done" per
+     event actually closes it. -->
+<div class="modal-overlay" id="crmEventPopupModal">
+  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">🎉 Customer Events — Pending</div>
+    <div class="modal-sub">Your assigned customers with a birthday/anniversary in the next 7 days. Confirm all three for each one to clear it.</div>
+    <div id="crmEventPopupBody"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="dismissCrmEventPopupLater_()">Later</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Loyalty Employee Detail — tap a row on "All Employees" to see
      that employee's full card timeline + stats (merges what used to be
      the separate "Employee Timeline" screen). -->
@@ -7275,6 +7293,7 @@ async function loadEmpData() {
     try { renderMyLeaves(); } catch(e3) { console.error('renderMyLeaves failed:', e3); }
     try { renderCalendar(); } catch(e4) { console.error('renderCalendar failed:', e4); }
     try { renderTrend(); } catch(e5) { console.error('renderTrend failed:', e5); }
+    try { checkCrmEventPopup_(); } catch(e6) { console.error('crm event popup failed:', e6); }
   } catch(e) {
     toast('Data load error: ' + e.message, 'error');
   }
@@ -11715,6 +11734,68 @@ async function checkLeadsPerformancePopupPortal_() {
 }
 function dismissLeadsPerfModal() {
   closeModal('leadsPerfModal');
+}
+
+// CRM Customer-Event popup — shows this CRM employee's own open (not-yet-closed)
+// birthday/anniversary events on every login, until each is checked off via its
+// 3-box confirmation (Called / Told About Event / Invited To Store). "Later"
+// just hides the modal for this session — it comes back on the next login as
+// long as any event under it is still unclosed, per BRO's "aa event close
+// ainanata varaku chupinchali... yes ante ne close cheyali".
+let __crmOpenEvents = [];
+async function checkCrmEventPopup_() {
+  try {
+    if (!state.empName) return;
+    const res = await leadsApiGet({ action: 'GET_CRM_OPEN_EVENTS', empName: state.empName });
+    if (!res || !res.ok) return;
+    __crmOpenEvents = res.events || [];
+    if (__crmOpenEvents.length) renderCrmEventPopup_();
+  } catch (e) {}
+}
+function renderCrmEventPopup_() {
+  const body = document.getElementById('crmEventPopupBody');
+  if (!body) return;
+  if (!__crmOpenEvents.length) { closeModal('crmEventPopupModal'); return; }
+  body.innerHTML = __crmOpenEvents.map((ev, i) => {
+    const isBday = ev.eventType === 'Birthday';
+    const icon = isBday ? '🎂' : '💑';
+    const color = isBday ? '#e91e63' : '#7b1fa2';
+    const whenLabel = ev.daysAway === 0 ? 'Today' : ev.daysAway === 1 ? 'Tomorrow' : `In ${ev.daysAway} days`;
+    return `<div class="card" style="padding:12px;margin-bottom:10px;border-left:4px solid ${color};">
+      <div style="font-weight:700;font-size:13.5px;">${icon} ${escHtml(properCase(ev.name))}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">${ev.phone || ''} · 📅 ${ev.date} — ${whenLabel}</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:4px 0;"><input type="checkbox" id="crmEvCalled-${i}" onchange="crmEventCheckUpdate_(${i})"> Called the customer</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:4px 0;"><input type="checkbox" id="crmEvTold-${i}" onchange="crmEventCheckUpdate_(${i})"> Told them about the occasion</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:4px 0;"><input type="checkbox" id="crmEvInvited-${i}" onchange="crmEventCheckUpdate_(${i})"> Invited them to the store</label>
+      <button class="btn-primary" id="crmEvDoneBtn-${i}" style="width:100%;margin-top:6px;opacity:0.5;pointer-events:none;" onclick="markCrmEventDone_(${i})">✅ Mark Done</button>
+    </div>`;
+  }).join('');
+  openModal('crmEventPopupModal');
+}
+function crmEventCheckUpdate_(i) {
+  const all = ['crmEvCalled-' + i, 'crmEvTold-' + i, 'crmEvInvited-' + i]
+    .every(id => { const el = document.getElementById(id); return el && el.checked; });
+  const btn = document.getElementById('crmEvDoneBtn-' + i);
+  if (!btn) return;
+  btn.style.opacity = all ? '1' : '0.5';
+  btn.style.pointerEvents = all ? 'auto' : 'none';
+}
+async function markCrmEventDone_(i) {
+  const ev = __crmOpenEvents[i];
+  if (!ev) return;
+  try {
+    const res = await leadsApiPost({
+      action: 'CLOSE_CRM_EVENT', empName: state.empName, phone: ev.phone, custName: ev.name,
+      eventType: ev.eventType, eventDateIso: ev.eventDateIso, called: true, told: true, invited: true
+    });
+    if (!res || !res.ok) { toast('❌ ' + ((res && res.error) || 'Could not close this'), 'error'); return; }
+    __crmOpenEvents.splice(i, 1);
+    renderCrmEventPopup_();
+    toast('✅ Marked done', 'success');
+  } catch (e) { toast('❌ Network error: ' + e.message, 'error'); }
+}
+function dismissCrmEventPopupLater_() {
+  closeModal('crmEventPopupModal');
 }
 
 // ============================================================
