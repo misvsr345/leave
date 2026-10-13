@@ -4530,11 +4530,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <button class="bday-poster-close" onclick="closeModal('bdayPosterModal')">✕</button>
     <div class="bday-poster-emoji">🎉🎂🎉</div>
     <div class="bday-poster-logo vsr-logo-mark"></div>
-    <div class="bday-poster-title">VSR GOLD</div>
+    <div class="bday-poster-title" id="bdayPosterTitle">VSR GOLD</div>
     <div class="bday-poster-wish">Happy Birthday</div>
     <div class="bday-poster-name" id="bdayPosterName">—</div>
     <div class="bday-poster-msg">Wishing you a wonderful year ahead, filled with happiness, success, and prosperity.</div>
-    <div class="bday-poster-regards">With Best Wishes,<br><b>VSR GOLD Family</b> 💛</div>
+    <div class="bday-poster-regards">With Best Wishes,<br><b id="bdayPosterFamily">VSR GOLD Family</b> 💛</div>
   </div>
 </div>
 
@@ -4544,7 +4544,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <button class="bday-poster-close" onclick="closeModal('festivalPosterModal')">✕</button>
     <div class="bday-poster-emoji">🎊✨🎊</div>
     <div class="bday-poster-logo vsr-logo-mark"></div>
-    <div class="bday-poster-title">VSR GOLD</div>
+    <div class="bday-poster-title" id="festivalPosterTitle">VSR GOLD</div>
     <div class="bday-poster-wish">Happy</div>
     <div class="bday-poster-name" id="festivalPosterName" style="font-size:24px;">—</div>
     <div class="bday-poster-msg" id="festivalPosterQuote" style="font-style:italic;"></div>
@@ -6348,6 +6348,23 @@ function backToLoginChoice() {
 // ══════════════════════════════════════
 const STORE_SETTINGS_CACHE_KEY = 'vsrGoldStoreSettings';
 let storeSettingsCache = null;
+// v-add (BRO: "company name hard code vadu, ee file vere vallaku ichthe vallu
+// update chese laga design chei" — every place that used to hard-print
+// "VSR GOLD" now reads this instead. Source: Store Settings sheet's
+// "Store Name" field (same sheet/action the logo+address already use;
+// admin sets it from Settings → Store Data → Store Name). Falls back to
+// "VSR GOLD" only until that field is ever filled in, so today's behavior
+// doesn't change for this store.
+let COMPANY_NAME = 'VSR GOLD';
+function companyName() { return COMPANY_NAME; }
+function applyCompanyNameToStaticText_() {
+  document.querySelectorAll('.vsr-logo-mark .vsr-logo-img').forEach(el => el.alt = COMPANY_NAME);
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('bdayPosterTitle', COMPANY_NAME);
+  setTxt('bdayPosterFamily', COMPANY_NAME + ' Family');
+  setTxt('festivalPosterTitle', COMPANY_NAME);
+  setTxt('loyCardBrand', COMPANY_NAME);
+}
 
 function applyStoreLogo_(url) {
   if (!url) return;
@@ -6356,7 +6373,7 @@ function applyStoreLogo_(url) {
     if (!img) {
       img = document.createElement('img');
       img.className = 'vsr-logo-img';
-      img.alt = 'VSR GOLD';
+      img.alt = COMPANY_NAME;
       el.appendChild(img);
     }
     img.src = url;
@@ -6382,6 +6399,8 @@ function renderLoginStoreInfo_(s) {
 function applyStoreSettingsToUI_(s) {
   if (!s) return;
   storeSettingsCache = s;
+  COMPANY_NAME = (s.storeName && s.storeName.trim()) ? s.storeName.trim() : 'VSR GOLD';
+  applyCompanyNameToStaticText_();
   if (s.logoUrl) applyStoreLogo_(s.logoUrl);
   renderLoginStoreInfo_(s);
   applyLoginBgImage_(s);
@@ -9075,7 +9094,7 @@ function _dsrOfflineBackupImage_(rows, who, action, savedAt) {
     const label = action === 'saveOutletIssue' ? 'OUTLET ISSUE' : action === 'saveReturnDamageRepair' ? 'RETURN / DAMAGE / REPAIR' : 'DSR ENTRY';
     const r0 = rows[0] || {};
     const lines = [];
-    lines.push('VSR GOLD — OFFLINE ' + label + ' BACKUP');
+    lines.push(COMPANY_NAME + ' — OFFLINE ' + label + ' BACKUP');
     lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
     lines.push('');
     lines.push('Employee: ' + (r0.employeeName || '—'));
@@ -13015,7 +13034,7 @@ async function checkAndShowFestivalPoster(afterCallback) {
       document.getElementById('festivalPosterName').textContent = f.name || '—';
       document.getElementById('festivalPosterQuote').textContent = f.quote ? '"' + f.quote + '"' : '';
       document.getElementById('festivalPosterMsg1').textContent = f.message1 || '';
-      document.getElementById('festivalPosterMsg2').innerHTML = f.message2 ? f.message2 : 'With Best Wishes,<br><b>VSR GOLD Family</b> 💛';
+      document.getElementById('festivalPosterMsg2').innerHTML = f.message2 ? f.message2 : 'With Best Wishes,<br><b>' + COMPANY_NAME + ' Family</b> 💛';
       const modal = document.getElementById('festivalPosterModal');
       modal.classList.add('show');
       festivalPosterShownThisSession = true;
@@ -14614,7 +14633,7 @@ function showLoyaltyCardView(i) {
   const qrHolder = document.getElementById('loyQrHolder');
   qrHolder.innerHTML = '';
   new QRCode(qrHolder, {
-    text: 'VSR GOLD | Card:' + item.cardNo + ' | ' + properCase(item.custName),
+    text: COMPANY_NAME + ' | Card:' + item.cardNo + ' | ' + properCase(item.custName),
     width: 44, height: 44, colorDark: '#000000', colorLight: '#ffffff'
   });
 
@@ -14634,7 +14653,7 @@ function shareLoyaltyCard() {
     canvas.toBlob(blob => {
       const file = new File([blob], 'VSR_GOLD_Loyalty_Card.png', { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: 'VSR GOLD Loyalty Card', text: 'My VSR GOLD Loyalty Card' }).catch(() => {});
+        navigator.share({ files: [file], title: COMPANY_NAME + ' Loyalty Card', text: 'My ' + COMPANY_NAME + ' Loyalty Card' }).catch(() => {});
       } else {
         const link = document.createElement('a');
         link.download = 'VSR_GOLD_Loyalty_Card.png';
@@ -14866,7 +14885,7 @@ function mailLoyaltyAllCards() {
       <tbody>${rowsHtml}</tbody>
     </table>
   </div>`;
-  mailLoyaltyReport('VSR GOLD — All Cards Report' + (empFilter ? ' — ' + empFilter : ''), bodyHtml, 'admin', empFilter);
+  mailLoyaltyReport(COMPANY_NAME + ' — All Cards Report' + (empFilter ? ' — ' + empFilter : ''), bodyHtml, 'admin', empFilter);
 }
 
 function downloadLoyaltyMyStatsPDF() {
@@ -14877,7 +14896,7 @@ function downloadLoyaltyMyStatsPDF() {
   const doc = new jsPDF();
   let y = 18;
   doc.setFontSize(16); doc.setTextColor(107, 33, 168);
-  doc.text('VSR GOLD — My Loyalty Incentive', 14, y); y += 6;
+  doc.text(COMPANY_NAME + ' — My Loyalty Incentive', 14, y); y += 6;
   doc.setFontSize(10); doc.setTextColor(120, 120, 120);
   doc.text(state.empName + ' · Generated ' + fmtDMY(todayYMD()), 14, y); y += 10;
 
@@ -14920,14 +14939,14 @@ function mailLoyaltyMyStats() {
   const o = res.overall;
   const rowsHtml = res.rangeCards.map(c => `<tr><td>${c.cardDate}</td><td>${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — My Loyalty Incentive</h2>
+    <h2 style="color:#6b21a8;">${COMPANY_NAME} — My Loyalty Incentive</h2>
     <p>Total: ${o.totalCards} · Approved: ${o.approvedCards} · Balance: ${o.balanceCards} · Total Incentive ₹${fmtNum(o.totalIncentive)} · Pending ₹${fmtNum(o.pendingIncentive)}</p>
     <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
       <tr style="background:#6b21a8;color:#fff;"><th>Date</th><th>Card No</th><th>Type</th><th>Customer</th></tr>
       ${rowsHtml}
     </table>
   </div>`;
-  mailLoyaltyReport('VSR GOLD — My Loyalty Incentive', bodyHtml, 'emp');
+  mailLoyaltyReport(COMPANY_NAME + ' — My Loyalty Incentive', bodyHtml, 'emp');
 }
 
 // ── Admin: all-employees incentive summary ──
@@ -14992,13 +15011,13 @@ function mailLoyaltyAdminStats() {
   if (!res) { toast('Load the report first', 'error'); return; }
   const rowsHtml = res.rows.map(r => `<tr><td>${properCase(r.empName)}</td><td>${r.totalCards}</td><td>${r.approvedCards}</td><td>${r.balanceCards}</td><td>${r.status}</td><td>₹${fmtNum(r.pendingIncentive)}</td><td>₹${fmtNum(r.totalIncentive)}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:700px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — All Employees Incentive Summary</h2>
+    <h2 style="color:#6b21a8;">${COMPANY_NAME} — All Employees Incentive Summary</h2>
     <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
       <tr style="background:#6b21a8;color:#fff;"><th>Employee</th><th>Total</th><th>Approved</th><th>Balance</th><th>Status</th><th>Pending ₹</th><th>Total ₹</th></tr>
       ${rowsHtml}
     </table>
   </div>`;
-  mailLoyaltyReport('VSR GOLD — All Employees Incentive Summary', bodyHtml, 'admin');
+  mailLoyaltyReport(COMPANY_NAME + ' — All Employees Incentive Summary', bodyHtml, 'admin');
 }
 
 // ── Mail helper — shared by every report below. Sends the report's own
@@ -15706,7 +15725,7 @@ function runBoxExport(boxId, title, format) {
       .kpi-fit-wrap,.dh-table-wrap{overflow:visible;}
       .wt-table th{position:static;}
       @media print{ button{display:none;} }</style></head><body>
-      <h2>VSR GOLD — ${title}</h2>${box.innerHTML}
+      <h2>${COMPANY_NAME} — ${title}</h2>${box.innerHTML}
       <script>window.onload=()=>{window.print();}<\/script></body></html>`);
     win.document.close();
     return;
@@ -18521,7 +18540,7 @@ async function slPrintReport() {
       tr{page-break-inside:avoid;}
       @media print{ .sec-hd{page-break-after:avoid;} }
     </style></head><body>
-    <h1>VSR GOLD — Stock Report</h1>
+    <h1>${COMPANY_NAME} — Stock Report</h1>
     <div class="sub">Printed: ${escHtml(new Date().toLocaleString())} · In-stock items only (sold items excluded)</div>
     <div class="totals">Total: ${totalPcs} pcs across ${res.counters.length} counter(s)</div>
     ${sectionsHtml || '<p>No stock found.</p>'}
@@ -19198,7 +19217,7 @@ function slPhotoZoomBy(delta) { if (window.__slPhotoZoomBy) window.__slPhotoZoom
 // where available; falls back to copying the link, then to opening it in a new tab. ----
 async function slSharePhoto() {
   const r = SLPHOTO.items[SLPHOTO.openIdx]; if (!r || !r.photo) return;
-  const title = (r.tagNo || properCase(r.productName) || 'Photo') + ' — VSR GOLD';
+  const title = (r.tagNo || properCase(r.productName) || 'Photo') + ' — ' + COMPANY_NAME;
   const url = r.photo;
   if (navigator.share) {
     try { await navigator.share({ title, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
@@ -22697,8 +22716,8 @@ function renderCustomerEventsList(box, events) {
     const yearsTxt = (!isBday && ev.years) ? ` (${ev.years} yrs)` : '';
     const whenLabel = ev.daysAway === 0 ? 'Today' : ev.daysAway === 1 ? 'Tomorrow' : `In ${ev.daysAway} days`;
     const waMsg = encodeURIComponent(isBday
-      ? `🎂 Happy Birthday ${ev.name}! 💛 Team VSR GOLD`
-      : `💑 Happy Anniversary ${ev.name}${yearsTxt}! 💛 Team VSR GOLD`);
+      ? `🎂 Happy Birthday ${ev.name}! 💛 Team ${COMPANY_NAME}`
+      : `💑 Happy Anniversary ${ev.name}${yearsTxt}! 💛 Team ${COMPANY_NAME}`);
     const waLink = ev.phone ? `https://wa.me/91${String(ev.phone).replace(/\D/g, '')}?text=${waMsg}` : '';
     const wishUrl = LEADS_WEB_APP_URL + '?action=WISHES&customer=' + encodeURIComponent(ev.name || '') +
       '&type=' + encodeURIComponent((ev.eventType || '').toLowerCase()) +
@@ -24486,14 +24505,14 @@ function mailLoyaltyDashboard(who) {
   const k = res.kpi;
   let rowsHtml = res.empRows.map(r => `<tr><td>${properCase(r.empName)}</td><td>${r.totalCards}</td><td>${r.approved}</td><td>${r.pending}</td><td>₹${fmtNum(r.pendingAmount)}</td></tr>`).join('');
   const bodyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;">
-    <h2 style="color:#6b21a8;">VSR GOLD — Loyalty ${res.isAdmin ? 'Store' : 'My'} Dashboard</h2>
+    <h2 style="color:#6b21a8;">${COMPANY_NAME} — Loyalty ${res.isAdmin ? 'Store' : 'My'} Dashboard</h2>
     <p>Total: ${k.totalCards} · Approved: ${k.approvedCards} · Pending: ${k.pendingCards} · Pending ₹${fmtNum(k.pendingIncentive)}</p>
     <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:13px;">
       <tr style="background:#6b21a8;color:#fff;"><th>Employee</th><th>Total</th><th>Approved</th><th>Pending</th><th>Pending ₹</th></tr>
       ${rowsHtml}
     </table>
   </div>`;
-  mailLoyaltyReport('VSR GOLD — Loyalty Dashboard', bodyHtml, who);
+  mailLoyaltyReport(COMPANY_NAME + ' — Loyalty Dashboard', bodyHtml, who);
 }
 
 // ── Employee Card Timeline drilldown — opened by tapping a row on "All
@@ -24582,7 +24601,7 @@ function mailLoyaltyTimeline() {
       <tbody>${rowsHtml}</tbody>
     </table>
   </div>`;
-  mailLoyaltyReport("VSR GOLD — " + empName + "'s Card Timeline", bodyHtml, 'admin', empName);
+  mailLoyaltyReport(COMPANY_NAME + " — " + empName + "'s Card Timeline", bodyHtml, 'admin', empName);
 }
 
 // ── Upcoming Card Approvals — who has a full ready-to-pay set right now ──
@@ -25286,7 +25305,7 @@ function printCurrentView(title) {
   if (!activeSection) { toast('Nothing to print', 'error'); return; }
   const printWin = window.open('', '_blank');
   const dateStr = fmtDMY(todayYMD());
-  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — VSR GOLD</title>
+  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — ${COMPANY_NAME}</title>
     <style>
       @page{size:landscape;}
       body{font-family:Arial,sans-serif;padding:20px;color:#1a0f2e;}
@@ -25306,7 +25325,7 @@ function printCurrentView(title) {
       .kpi-fit-wrap,.dh-table-wrap{overflow:visible;}
       .wt-table{font-size:9px;} .wt-table th{position:static;}
     </style></head><body>
-    <h1>${title} — VSR GOLD</h1>
+    <h1>${title} — ${COMPANY_NAME}</h1>
     <div class="print-meta">Generated: ${dateStr}</div>
     ${activeSection.innerHTML}
     </body></html>`);
