@@ -8356,13 +8356,21 @@ async function confirmSubmitLeave() {
 
   updateConnStatus();
   if(!navigator.onLine) {
-    // v-fix (BRO: "existing entry forms anni offline vadu, only data
-    // matrame sync avali" — Leave now follows the exact same rule as
-    // Stock/DSR: no offline submit queue, nothing saved until the server
-    // confirms it. Reference data (employee list, balances, etc.) can
-    // still be cached and used offline for display — only the actual
-    // submit requires a live connection.
-    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+    // v-fix (BRO: "all form ki apply chei — offline lo local cache ga save
+    // avali, online vachinappudu auto sync avali, image kuda kavali" —
+    // reverses the earlier online-only decision: Leave Apply now queues
+    // offline (same pattern as DSR) and auto-syncs via flushOfflineQueue
+    // once back online, plus drops an image backup. Mixed/multi-date
+    // leave still needs a live connection — each date is its own separate
+    // submission (submitLeaveSegmentsSeparately) with its own
+    // findSubmittedLeaveQuiet reconnect-recovery logic that isn't safe to
+    // replay blind from an offline queue, so only that one case still
+    // asks the employee to wait for a connection.
+    if (data.isMultiSegment) {
+      toast('📴 No internet connection — Mixed/Multiple-date leave needs a live connection (each date is its own submission). Reconnect and submit again.', 'error');
+      return;
+    }
+    submitLeaveOffline(data);
     return;
   }
 
@@ -8417,10 +8425,15 @@ async function confirmSubmitLeave() {
       }
     } catch(e) {
       if (!navigator.onLine) {
-        // v-fix (BRO: "existing entry forms anni offline vadu" — connection
-        // dropped mid-request; nothing queues any more, say so plainly so
-        // the employee knows to resubmit once back online.
-        toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+        // v-fix (BRO: "all form ki apply chei" — connection dropped mid-
+        // request; queue it offline (same as the pre-submit check above)
+        // instead of just erroring out, unless it's a Mixed/multi-date
+        // leave (not safe to blind-replay from a queue — see comment above).
+        if (data.isMultiSegment) {
+          toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+        } else {
+          submitLeaveOffline(data);
+        }
         _reportSubmitError_('Leave Application', 'submit', 'No internet connection');
       } else {
         // We WERE online — the request likely already reached and was
@@ -8541,9 +8554,12 @@ function showMultiSegmentResultPopup(res) {
   }).join('');
 
   const allOk = res.failCount === 0;
-  const headline = allOk
-    ? `✅ All ${res.successCount} date(s) submitted`
-    : `⚠️ ${res.successCount} of ${segs.length} date(s) submitted — ${res.failCount} failed`;
+  const namePrefix = res.empName ? (res.empName + ' — ') : '';
+  const headline = segs.length === 1
+    ? (allOk ? `✅ ${namePrefix}marked ${segs[0].status}` : `❌ ${namePrefix}action failed`)
+    : allOk
+      ? `✅ ${namePrefix}all ${res.successCount} date(s) submitted`
+      : `⚠️ ${namePrefix}${res.successCount} of ${segs.length} date(s) submitted — ${res.failCount} failed`;
 
   const existing = document.getElementById('multiSegResultModal');
   if (existing) existing.remove();
@@ -9002,11 +9018,14 @@ function saveOfflineQueue(q) {
   try { localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q)); } catch(e) {}
 }
 function submitLeaveOffline(data) {
+  const savedAt = Date.now();
+  const backupImg = _leaveOfflineBackupImage_(data, savedAt);
   const q = getOfflineQueue();
-  q.push({ data, savedAt: Date.now() });
+  q.push({ data, savedAt, backupImg });
   saveOfflineQueue(q);
   updateConnStatus();
-  toast('📴 Saved offline on this device — will auto-sync when you\'re back online', 'info');
+  _notifyMisOfflineSave_('Leave Application', (data.employeeName || data.employeeNumber || '—') + ' — ' + (data.startDate || '—') + (data.endDate && data.endDate !== data.startDate ? ' to ' + data.endDate : ''));
+  toast('📴 No network — Leave application saved offline on this device. It will auto-upload once you\'re back online. Do NOT re-apply.', 'info');
   draftClear('leaveApply');
   resetApplyForm();
 }
@@ -9032,8 +9051,22 @@ async function flushOfflineQueue() {
     for(const item of q) {
       try {
         const res = await jsonp(Object.assign({}, item.data));
-        if(!(res && res.status && res.status !== 'Error')) remaining.push(item);
+        if(!(res && res.status && res.status !== 'Error')) {
+          // v-add (BRO: "fail aina ventane notification mis ki ravali" —
+          // same permanent-vs-transient split as DSR's flush: the server
+          // actually answered and said no (res is truthy, status 'Error')
+          // → genuine rejection, notify MIS right away (live popup, ~25s
+          // poll) instead of retrying silently forever. A falsy res here
+          // means the request itself never got a reply (handled in catch
+          // below) — stays quiet and keeps retrying.
+          if (res) _leaveNotifyOfflineFail_(item, res.reason || 'Rejected by server', true);
+          remaining.push(item);
+        } else {
+          const d = item.data || {};
+          _mailOfflineBackupImageToMis_('Leave Application', d.employeeName || d.employeeNumber, (d.startDate || '—') + (d.endDate && d.endDate !== d.startDate ? ' to ' + d.endDate : ''), item.backupImg, item.savedAt);
+        }
       } catch(e) {
+        _leaveNotifyOfflineFail_(item, String((e && e.message) || e || 'Connection error'), false);
         remaining.push(item);
       }
     }
@@ -9089,6 +9122,43 @@ function saveQueueGeneric(key, q) {
 // network — so this works exactly when it's needed most (no connection at all), and
 // gives a human-readable backup even in the one scenario localStorage itself could
 // somehow be lost (device storage wiped, browser data cleared, etc).
+// v-add (BRO: "all form ki apply chei" — generalized the DSR-only canvas
+// renderer above into one shared helper every offline form now calls, so
+// Loyalty/Golden Aura/Leave/Stock get the exact same "download a PNG
+// receipt the moment it's saved offline" safety net DSR already had,
+// without duplicating the drawing code per form. Each form just builds its
+// own `lines` array (its own fields) and a short filename label, and this
+// draws + downloads it identically for all of them.
+function _renderOfflineBackupPng_(lines, labelForFilename, nameHintForFilename, savedAt) {
+  try {
+    const padX = 20, lineH = 22, titleH = 40;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = '13px Arial';
+    let maxW = 620;
+    lines.forEach(l => { const w = ctx.measureText(l).width + padX * 2; if (w > maxW) maxW = w; });
+    canvas.width = Math.min(maxW, 1000);
+    canvas.height = titleH + lines.length * lineH + 20;
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#4A0E8F'; ctx.fillRect(0, 0, canvas.width, titleH);
+    ctx.fillStyle = '#D4AF37'; ctx.font = 'bold 15px Arial';
+    ctx.fillText(lines[0], padX, 26);
+    ctx.fillStyle = '#222222'; ctx.font = '13px Arial';
+    lines.slice(1).forEach((l, i) => ctx.fillText(l, padX, titleH + 18 + i * lineH));
+
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    const safeName = (nameHintForFilename || 'entry').replace(/[^a-zA-Z0-9]+/g, '_').substring(0, 30);
+    a.download = 'VSR_Offline_' + labelForFilename.replace(/\s+/g, '') + '_' + safeName + '_' + savedAt + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    // v-add: return the same dataUrl so the caller can also mail it to MIS
+    // once back online (see _mailOfflineBackupImageToMis_) — no second
+    // canvas render needed, this is the exact image already downloaded here.
+    return dataUrl;
+  } catch (e) { /* backup image is a best-effort safety net — must never block the actual offline save */ return ''; }
+}
+
 function _dsrOfflineBackupImage_(rows, who, action, savedAt) {
   try {
     const label = action === 'saveOutletIssue' ? 'OUTLET ISSUE' : action === 'saveReturnDamageRepair' ? 'RETURN / DAMAGE / REPAIR' : 'DSR ENTRY';
@@ -9114,39 +9184,125 @@ function _dsrOfflineBackupImage_(rows, who, action, savedAt) {
       else parts = ['#' + (i + 1), r.type, r.productName, r.design, r.tunch ? r.tunch + ' tunch' : '', r.weight ? r.weight + 'g' : '', r.tagNo ? 'Tag:' + r.tagNo : ''];
       lines.push(parts.filter(Boolean).join('  |  '));
     });
+    return _renderOfflineBackupPng_(lines, label, r0.customerName || r0.employeeName, savedAt);
+  } catch (e) { /* backup image is a best-effort safety net — must never block the actual offline save */ return ''; }
+}
 
-    const padX = 20, lineH = 22, titleH = 40;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.font = '13px Arial';
-    let maxW = 620;
-    lines.forEach(l => { const w = ctx.measureText(l).width + padX * 2; if (w > maxW) maxW = w; });
-    canvas.width = Math.min(maxW, 1000);
-    canvas.height = titleH + lines.length * lineH + 20;
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#4A0E8F'; ctx.fillRect(0, 0, canvas.width, titleH);
-    ctx.fillStyle = '#D4AF37'; ctx.font = 'bold 15px Arial';
-    ctx.fillText(lines[0], padX, 26);
-    ctx.fillStyle = '#222222'; ctx.font = '13px Arial';
-    lines.slice(1).forEach((l, i) => ctx.fillText(l, padX, titleH + 18 + i * lineH));
+// v-add (BRO: "all form ki apply chei" — Leave Apply's offline backup receipt.
+function _leaveOfflineBackupImage_(data, savedAt) {
+  try {
+    const lines = [];
+    lines.push(COMPANY_NAME + ' — OFFLINE LEAVE APPLICATION BACKUP');
+    lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
+    lines.push('');
+    lines.push('Employee: ' + (data.employeeName || data.employeeNumber || '—'));
+    if (data.leaveType) lines.push('Leave Type: ' + data.leaveType);
+    if (data.isMultiSegment) {
+      lines.push('Multiple Dates (Mixed Leave) — see My Leaves after sync for the exact split.');
+      try {
+        const segs = JSON.parse(data.segments || '[]');
+        segs.forEach((s, i) => lines.push('  #' + (i + 1) + '  ' + s.startDate + ' to ' + s.endDate + '  (' + s.leaveMode + (s.halfDay ? ' — ' + s.halfDay : '') + ')'));
+      } catch (e) {}
+    } else {
+      lines.push('From: ' + (data.startDate || '—') + '   To: ' + (data.endDate || '—'));
+      lines.push('Mode: ' + (data.leaveMode || '—') + (data.halfDay ? ' (' + data.halfDay + ')' : ''));
+    }
+    if (data.reason) lines.push('Reason: ' + data.reason);
+    if (data.purpose) lines.push('Purpose: ' + data.purpose);
+    if (data.leaveAddress) lines.push('Address While on Leave: ' + data.leaveAddress);
+    return _renderOfflineBackupPng_(lines, 'LEAVE APPLICATION', data.employeeName || data.employeeNumber, savedAt);
+  } catch (e) { return ''; }
+}
 
-    const dataUrl = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    const safeName = (r0.customerName || r0.employeeName || 'entry').replace(/[^a-zA-Z0-9]+/g, '_').substring(0, 30);
-    a.download = 'VSR_Offline_' + label.replace(/\s+/g, '') + '_' + safeName + '_' + savedAt + '.png';
-    document.body.appendChild(a); a.click(); a.remove();
-  } catch (e) { /* backup image is a best-effort safety net — must never block the actual offline save */ }
+// v-add (BRO: "all form ki apply chei" — Loyalty Card's offline backup receipt.
+// Photos themselves aren't drawn into the image (they're already safe inside
+// the queued payload itself) — this is just the human-readable text fallback
+// for the one scenario that payload could somehow be lost too.
+function _loyaltyOfflineBackupImage_(payload, savedAt) {
+  try {
+    const lines = [];
+    lines.push(COMPANY_NAME + ' — OFFLINE LOYALTY CARD BACKUP');
+    lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
+    lines.push('');
+    lines.push('Employee: ' + (payload.empName || state.empName || '—'));
+    lines.push('Customer: ' + (payload.custName || '—'));
+    if (payload.phone) lines.push('Phone: ' + payload.phone);
+    if (payload.address) lines.push('Address: ' + payload.address);
+    if (payload.cardType) lines.push('Card Type: ' + payload.cardType);
+    if (payload.cardNo) lines.push('Card No: ' + payload.cardNo);
+    if (payload.cardDate) lines.push('Card Date: ' + payload.cardDate);
+    if (payload.aadhaarNo) lines.push('Aadhaar No: ' + payload.aadhaarNo);
+    if (payload.panNo) lines.push('PAN No: ' + payload.panNo);
+    return _renderOfflineBackupPng_(lines, 'LOYALTY CARD', payload.custName || payload.empName, savedAt);
+  } catch (e) { return ''; }
+}
+
+// v-add (BRO: "all form ki apply chei" — Golden Aura's offline backup receipt.
+function _goldenAuraOfflineBackupImage_(payload, who, savedAt) {
+  try {
+    const lines = [];
+    lines.push(COMPANY_NAME + ' — OFFLINE GOLDEN AURA BACKUP');
+    lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
+    lines.push('');
+    lines.push('Employee: ' + (payload.empName || state.empName || '—'));
+    lines.push('Customer: ' + (payload.custName || '—'));
+    if (payload.mobile) lines.push('Mobile: ' + payload.mobile);
+    if (payload.planType) lines.push('Plan Type: ' + payload.planType);
+    if (payload.planNo) lines.push('Plan No: ' + payload.planNo);
+    if (payload.amount) lines.push('Amount: ' + payload.amount);
+    return _renderOfflineBackupPng_(lines, 'GOLDEN AURA', payload.custName || payload.empName, savedAt);
+  } catch (e) { return ''; }
+}
+
+// v-add (BRO: "all form ki apply chei" — Lead Call Log's offline backup receipt.
+function _leadCallOfflineBackupImage_(payload, savedAt) {
+  try {
+    const lines = [];
+    lines.push(COMPANY_NAME + ' — OFFLINE LEAD CALL LOG BACKUP');
+    lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
+    lines.push('');
+    lines.push('Called By: ' + (payload.callingDoneBy || state.empName || '—'));
+    lines.push('Customer: ' + (payload.customerName || '—'));
+    if (payload.mobileNumber) lines.push('Mobile: ' + payload.mobileNumber);
+    if (payload.status) lines.push('Status: ' + payload.status);
+    if (payload.callingType) lines.push('Calling Type: ' + payload.callingType);
+    if (payload.purpose) lines.push('Purpose: ' + payload.purpose);
+    if (payload.feedback) lines.push('Feedback: ' + payload.feedback);
+    return _renderOfflineBackupPng_(lines, 'LEAD CALL LOG', payload.customerName || payload.callingDoneBy, savedAt);
+  } catch (e) { return ''; }
+}
+
+// v-add (BRO: "all form ki apply chei" — Stock Entry's offline backup receipt.
+function _stockOfflineBackupImage_(payload, header, savedAt) {
+  try {
+    const rows = (payload && payload.rows) || [];
+    const h = header || {};
+    const lines = [];
+    lines.push(COMPANY_NAME + ' — OFFLINE STOCK ENTRY BACKUP');
+    lines.push('Saved: ' + new Date(savedAt).toLocaleString('en-GB'));
+    lines.push('');
+    lines.push('Entered By: ' + (h.enteredBy || '—'));
+    if (h.entryType) lines.push('Entry Type: ' + h.entryType);
+    if (h.counter) lines.push('Counter: ' + h.counter);
+    if (h.entryDate) lines.push('Entry Date: ' + h.entryDate);
+    lines.push('');
+    lines.push('ITEMS (' + rows.length + '):');
+    rows.forEach((r, i) => {
+      const parts = ['#' + (i + 1), r.type, r.productName, r.design, r.weight ? r.weight + 'g' : '', r.tagNo ? 'Tag:' + r.tagNo : ''];
+      lines.push(parts.filter(Boolean).join('  |  '));
+    });
+    return _renderOfflineBackupPng_(lines, 'STOCK ENTRY', h.enteredBy, savedAt);
+  } catch (e) { return ''; }
 }
 
 function submitDsrOffline(rows, idemKey, who, reason) {
   const dsrOfflineAction = dsrfIsOutlet(who) ? 'saveOutletIssue' : dsrfIsRDR(who) ? 'saveReturnDamageRepair' : undefined;
   const dsrOfflineSavedAt = Date.now();
-  _dsrOfflineBackupImage_(rows, who, dsrOfflineAction, dsrOfflineSavedAt);
+  const dsrBackupImg = _dsrOfflineBackupImage_(rows, who, dsrOfflineAction, dsrOfflineSavedAt);
   const q = getQueueGeneric(DSR_OFFLINE_QUEUE_KEY);
   // Outlet Issue / Return-Damage-Repair queue the same way DSR does, just tagged so the sync-back
   // call (flushDsrOfflineQueue) routes to their own backend action instead of a normal DSR save.
-  q.push({ rows, idemKey, savedAt: dsrOfflineSavedAt, action: dsrOfflineAction });
+  q.push({ rows, idemKey, savedAt: dsrOfflineSavedAt, action: dsrOfflineAction, backupImg: dsrBackupImg });
   const saved = saveQueueGeneric(DSR_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('dsrfStatusMsg-' + who);
@@ -9166,6 +9322,9 @@ function submitDsrOffline(rows, idemKey, who, reason) {
   // queued entry actually reaches the server. Return/Damage/Repair isn't a sale (see
   // stockTagCacheRemoveFromRdrRows above), so it must not land in the Sold cache either.
   if (dsrfIsRDR(who)) stockTagCacheRemoveFromRdrRows(rows); else stockTagCacheRemoveFromRows(rows);
+  const dsrNotifyLabel = dsrOfflineAction === 'saveOutletIssue' ? 'Outlet Issue' : dsrOfflineAction === 'saveReturnDamageRepair' ? 'Return/Damage/Repair' : 'DSR Entry';
+  const dsrR0 = rows[0] || {};
+  _notifyMisOfflineSave_(dsrNotifyLabel, (dsrR0.employeeName || '—') + ' — ' + (dsrR0.customerName || rows.length + ' item(s)'));
   toast(label + ' — DSR saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
   if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = label + ' — saved offline on this device — will auto-sync automatically. Do not re-enter this DSR.'; }
   draftClear('dsr-' + who);
@@ -9261,6 +9420,118 @@ function _dsrMailMisPermanentFail_(item, reasonMsg, label) {
   } catch (e) {}
 }
 
+// v-add (BRO: "all form ki apply chei... fail aina ventane notification mis
+// ki ravali" — same permanent-vs-transient notify pattern as DSR's
+// _dsrNotifyOfflineFail_ above, generalized for Leave/Loyalty/Golden Aura/
+// Stock. Each dedupes per item (notifiedFail flag — never spams the same
+// alert on every retry), logs it into this device's own Notification
+// History either way, and on a genuine PERMANENT fail (server actually
+// responded and rejected it) also fires _reportSubmitError_ — which both
+// pops a live card on whoever's screen is open right now AND queues into
+// the same MIS digest queue the admin's Notifications poll already checks
+// every ~25s, so MIS finds out close to immediately without a dedicated
+// per-form mail action. The item itself is NEVER dropped from its queue on
+// failure (see each flush function) — it keeps quietly retrying.
+function _leaveNotifyOfflineFail_(item, reasonMsg, isPermanent) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  item.permanentFail = !!isPermanent;
+  try {
+    const d = item.data || {};
+    const headerTxt = isPermanent
+      ? '🛑 PERMANENT FAIL — Offline Leave Application rejected by server (MIS notified, data kept &amp; still retrying)'
+      : '⚠️ Offline Leave Application — Sync Failed (still retrying, data NOT lost)';
+    const tbl = _notifMiniTable_('#dc2626', headerTxt, [
+      ['Employee', d.employeeName || d.employeeNumber || '—'],
+      ['Dates', (d.startDate || '—') + ' to ' + (d.endDate || d.startDate || '—')],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_(isPermanent ? '🛑' : '⚠️', tbl, 'portal');
+    if (isPermanent) _reportSubmitError_('Leave Application', 'offline-sync-permanent-fail', (d.employeeName || d.employeeNumber || 'Unknown') + ' — ' + (reasonMsg || 'Rejected by server'));
+  } catch (e) {}
+}
+function _loyaltyNotifyOfflineFail_(item, reasonMsg, isPermanent) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  item.permanentFail = !!isPermanent;
+  try {
+    const p = item.payload || {};
+    const headerTxt = isPermanent
+      ? '🛑 PERMANENT FAIL — Offline Loyalty Card rejected by server (MIS notified, data kept &amp; still retrying)'
+      : '⚠️ Offline Loyalty Card — Sync Failed (still retrying, data NOT lost)';
+    const tbl = _notifMiniTable_('#dc2626', headerTxt, [
+      ['Employee', p.empName || '—'],
+      ['Customer', p.custName || '—'],
+      ['Card No', p.cardNo || '—'],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_(isPermanent ? '🛑' : '⚠️', tbl, 'portal');
+    if (isPermanent) _reportSubmitError_('New Loyalty Card', 'offline-sync-permanent-fail', (p.empName || 'Unknown') + ' — ' + (reasonMsg || 'Rejected by server'));
+  } catch (e) {}
+}
+function _goldenAuraNotifyOfflineFail_(item, reasonMsg, isPermanent) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  item.permanentFail = !!isPermanent;
+  try {
+    const p = item.payload || {};
+    const headerTxt = isPermanent
+      ? '🛑 PERMANENT FAIL — Offline Golden Aura rejected by server (MIS notified, data kept &amp; still retrying)'
+      : '⚠️ Offline Golden Aura — Sync Failed (still retrying, data NOT lost)';
+    const tbl = _notifMiniTable_('#dc2626', headerTxt, [
+      ['Employee', p.empName || '—'],
+      ['Customer', p.custName || '—'],
+      ['Plan No', p.planNo || '—'],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_(isPermanent ? '🛑' : '⚠️', tbl, 'portal');
+    if (isPermanent) _reportSubmitError_('Golden Aura', 'offline-sync-permanent-fail', (p.empName || 'Unknown') + ' — ' + (reasonMsg || 'Rejected by server'));
+  } catch (e) {}
+}
+function _stockNotifyOfflineFail_(item, reasonMsg, isPermanent) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  item.permanentFail = !!isPermanent;
+  try {
+    const h = item.header || {};
+    const headerTxt = isPermanent
+      ? '🛑 PERMANENT FAIL — Offline Stock Entry rejected by server (MIS notified, data kept &amp; still retrying)'
+      : '⚠️ Offline Stock Entry — Sync Failed (still retrying, data NOT lost)';
+    const tbl = _notifMiniTable_('#dc2626', headerTxt, [
+      ['Entered By', h.enteredBy || '—'],
+      ['Counter', h.productFrom === 'Main' ? 'Main Hub' : (h.counter || '—')],
+      ['Items', String((item.payload && item.payload.rows || []).length)],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_(isPermanent ? '🛑' : '⚠️', tbl, 'stock');
+    if (isPermanent) _reportSubmitError_('Stock Entry', 'offline-sync-permanent-fail', (h.enteredBy || 'Unknown') + ' — ' + (reasonMsg || 'Rejected by server'));
+  } catch (e) {}
+}
+
+function _leadCallNotifyOfflineFail_(item, reasonMsg, isPermanent) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  item.permanentFail = !!isPermanent;
+  try {
+    const p = item.payload || {};
+    const headerTxt = isPermanent
+      ? '🛑 PERMANENT FAIL — Offline Lead Call Log rejected by server (MIS notified, data kept &amp; still retrying)'
+      : '⚠️ Offline Lead Call Log — Sync Failed (still retrying, data NOT lost)';
+    const tbl = _notifMiniTable_('#dc2626', headerTxt, [
+      ['Called By', p.callingDoneBy || '—'],
+      ['Customer', p.customerName || '—'],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_(isPermanent ? '🛑' : '⚠️', tbl, 'leads');
+    if (isPermanent) _reportSubmitError_('Lead Call Log', 'offline-sync-permanent-fail', (p.callingDoneBy || 'Unknown') + ' — ' + (reasonMsg || 'Rejected by server'));
+  } catch (e) {}
+}
+
 let __dsrFlushInFlight = false;
 async function flushDsrOfflineQueue() {
   if (!navigator.onLine) return;
@@ -9309,6 +9580,9 @@ async function flushDsrOfflineQueue() {
           remaining.push(item);
         } else {
           console.log('[DSR Sync] Item synced OK. DSR ID:', result.dsrId);
+          const dsrNotifyLabel2 = item.action === 'saveOutletIssue' ? 'Outlet Issue' : item.action === 'saveReturnDamageRepair' ? 'Return/Damage/Repair' : 'DSR Entry';
+          const dsrR0b = (item.rows && item.rows[0]) || {};
+          _mailOfflineBackupImageToMis_(dsrNotifyLabel2, dsrR0b.employeeName, dsrR0b.customerName || (item.rows || []).length + ' item(s)', item.backupImg, item.savedAt);
         }
       } catch (e) {
         console.error('[DSR Sync] Request itself threw (network/CORS/timeout):', e.name, e.message);
@@ -9351,8 +9625,10 @@ async function flushDsrOfflineQueue() {
 }
 
 function submitLoyaltyOffline(payload) {
+  const savedAt = Date.now();
+  const backupImg = _loyaltyOfflineBackupImage_(payload, savedAt);
   const q = getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY);
-  q.push({ payload, savedAt: Date.now() });
+  q.push({ payload, savedAt, backupImg });
   const saved = saveQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   if (!saved) {
@@ -9361,6 +9637,7 @@ function submitLoyaltyOffline(payload) {
     if (errBox) { errBox.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; errBox.style.display = 'block'; }
     return;
   }
+  _notifyMisOfflineSave_('New Loyalty Card', (payload.empName || state.empName || '—') + ' — ' + (payload.custName || '—'));
   toast('📴 No network — Loyalty Card saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
   draftClear('loyaltyNewCard');
   resetNewLoyaltyCardForm();
@@ -9382,8 +9659,15 @@ async function flushLoyaltyOfflineQueue() {
       try {
         const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 60000);
         const result = await _parseMainApiResponse(resp);
-        if (!(result && result.ok)) remaining.push(item);
+        if (!(result && result.ok)) {
+          if (result) _loyaltyNotifyOfflineFail_(item, result.error || 'Rejected by server', true);
+          remaining.push(item);
+        } else {
+          const p = item.payload || {};
+          _mailOfflineBackupImageToMis_('New Loyalty Card', p.empName, p.custName, item.backupImg, item.savedAt);
+        }
       } catch (e) {
+        _loyaltyNotifyOfflineFail_(item, String((e && e.message) || e || 'Connection error'), false);
         remaining.push(item);
       }
     }
@@ -9406,8 +9690,10 @@ async function flushLoyaltyOfflineQueue() {
 // its own queue key since it POSTs to the Stock backend (a different Google account/URL) with its own
 // idemKey-based duplicate-safety already built into the payload.
 function submitStockOffline(scope, payload, header) {
+  const savedAt = Date.now();
+  const backupImg = _stockOfflineBackupImage_(payload, header, savedAt);
   const q = getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY);
-  q.push({ payload, header, savedAt: Date.now() });
+  q.push({ payload, header, savedAt, backupImg });
   const saved = saveQueueGeneric(STOCK_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   if (!saved) {
@@ -9417,6 +9703,7 @@ function submitStockOffline(scope, payload, header) {
   const st = SE_STATE[scope];
   st.submitToken = Math.random().toString(36).slice(2,8);
   SE(scope,'items').innerHTML=''; seAddItem(scope);
+  _notifyMisOfflineSave_('Stock Entry', (header.enteredBy || '—') + ' — ' + header.entryType + ', ' + (header.productFrom==='Main'?'Main Hub':header.counter));
   seShowBanner(scope, 'info', '📴 No network — saved on this device (' + header.entryType + ', ' + (header.productFrom==='Main'?'Main Hub':header.counter) + '). It will sync automatically once online, or use Sync Offline Data.');
   return true;
 }
@@ -9453,15 +9740,20 @@ async function flushStockOfflineQueue() {
         const result = await resp.json();
         if (result && result.ok) {
           // synced
+          const h2 = item.header || {};
+          _mailOfflineBackupImageToMis_('Stock Entry', h2.enteredBy, h2.entryType + ', ' + (h2.productFrom === 'Main' ? 'Main Hub' : h2.counter), item.backupImg, item.savedAt);
         } else if (result && /^Duplicate/.test(String(result.error || ''))) {
           // A duplicate/already-sold rejection will never succeed by retrying — log it for any admin to
           // see and clear, instead of silently retrying it forever with no visible reason why it's stuck.
           await stockLogFailedFromItem_(item, result.error);
+          _stockNotifyOfflineFail_(item, result.error, true);
           failedPermanently++;
         } else {
+          if (result) _stockNotifyOfflineFail_(item, (result && result.error) || 'Rejected by server', true);
           remaining.push(item);
         }
       } catch (e) {
+        _stockNotifyOfflineFail_(item, String((e && e.message) || e || 'Connection error'), false);
         remaining.push(item);
       }
     }
@@ -9485,8 +9777,10 @@ async function flushStockOfflineQueue() {
 // three — so it's the one most likely to actually hit a storage limit.
 // Same offline-queue treatment as DSR/Loyalty above.
 function submitGoldenAuraOffline(payload, who) {
+  const savedAt = Date.now();
+  const backupImg = _goldenAuraOfflineBackupImage_(payload, who, savedAt);
   const q = getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY);
-  q.push({ payload, savedAt: Date.now() });
+  q.push({ payload, savedAt, backupImg });
   const saved = saveQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   const msg = document.getElementById('gaStatusMsg-' + who);
@@ -9495,6 +9789,7 @@ function submitGoldenAuraOffline(payload, who) {
     if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Offline save failed (storage full) — data NOT saved. Keep this screen open and try again once connected, or Sync first.'; }
     return;
   }
+  _notifyMisOfflineSave_('Golden Aura', (payload.empName || state.empName || '—') + ' — ' + (payload.custName || '—'));
   toast('📴 No network — Golden Aura enrollment saved offline on this device (with photos). It will auto-upload once you\'re back online. Do NOT re-enter it.', 'info');
   if (msg) { msg.style.color = 'var(--gold)'; msg.textContent = '📴 Saved offline on this device — will auto-sync when back online. Do not re-enter this enrollment.'; }
   draftClear('goldenAura-' + who);
@@ -9516,8 +9811,15 @@ async function flushGoldenAuraOfflineQueue() {
       try {
         const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 90000);
         const result = await _parseMainApiResponse(resp);
-        if (!(result && result.ok)) remaining.push(item);
+        if (!(result && result.ok)) {
+          if (result) _goldenAuraNotifyOfflineFail_(item, result.error || 'Rejected by server', true);
+          remaining.push(item);
+        } else {
+          const p = item.payload || {};
+          _mailOfflineBackupImageToMis_('Golden Aura', p.empName, p.custName, item.backupImg, item.savedAt);
+        }
       } catch (e) {
+        _goldenAuraNotifyOfflineFail_(item, String((e && e.message) || e || 'Connection error'), false);
         remaining.push(item);
       }
     }
@@ -9560,8 +9862,15 @@ async function flushLeadsOfflineQueue() {
       try {
         const resp = await _fetchWithTimeout(LEADS_WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) }, 30000);
         const result = await _parseLeadsApiResponse(resp);
-        if (!(result && result.ok)) remaining.push(item);
+        if (!(result && result.ok)) {
+          if (result) _leadCallNotifyOfflineFail_(item, result.error || 'Rejected by server', true);
+          remaining.push(item);
+        } else {
+          const p = item.payload || {};
+          _mailOfflineBackupImageToMis_('Lead Call Log', p.callingDoneBy, p.customerName, item.backupImg, item.savedAt);
+        }
       } catch (e) {
+        _leadCallNotifyOfflineFail_(item, String((e && e.message) || e || 'Connection error'), false);
         remaining.push(item);
       }
     }
@@ -10206,8 +10515,14 @@ async function confirmDirectAction() {
       return;
     }
 
-    if (segments.length === 1) toast(`✅ ${empName} marked ${outcome}`, 'success');
-    else showMultiSegmentResultPopup({ status: failCount ? 'Partial' : 'Success', groupId, segments: results, successCount, failCount });
+    // v-add (BRO: "direct action lo leave approve/absent chesaka, confirmation
+    // popup ravali" — a toast alone (old single-date behavior below) disappears
+    // too fast / can be missed, especially on mobile. Every Direct Action
+    // submission — single date or multiple — now shows the same proper popup
+    // with employee, date(s), outcome and Leave ID, that stays open until MIS
+    // taps OK.
+    toast(`✅ ${empName} marked ${outcome}`, 'success');
+    showMultiSegmentResultPopup({ status: failCount ? 'Partial' : 'Success', groupId, segments: results, successCount, failCount, empName });
 
     // reset the form for the next entry
     document.getElementById('directReason').value = '';
@@ -13280,6 +13595,63 @@ function _reportSubmitError_(formLabel, stage, message) {
   } catch (e) { /* never throw */ }
 }
 
+// v-add (BRO: "every offline save aina annitiki admin ki notification ravali" —
+// unlike _reportSubmitError_ above (which fires on a FAILURE), this fires the
+// moment ANY form (DSR, Leave, Loyalty, Golden Aura, Stock, Lead Call) is
+// first saved OFFLINE, whoever's login did it (employee or admin) — so MIS
+// finds out right away that something is sitting queued on a device, not
+// only if it later fails to sync. Deliberately does NOT pop a card on the
+// submitting person's own screen (they already see their own "saved
+// offline" toast; nothing has gone wrong for them) — this only reports to
+// MIS, via the SAME shared digest queue/endpoint _reportSubmitError_ uses
+// (no new backend action needed), so it shows up in MIS's live popup
+// (~25s poll) and Notifications page like every other portal event.
+function _notifyMisOfflineSave_(formLabel, summary) {
+  try {
+    const who = (state.__loginKind === 'emp' ? state.empName : state.adminName) || 'Unknown';
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        page: 'logClientErrorAPI',
+        who: who,
+        formLabel: formLabel,
+        stage: '📴 Offline Save',
+        message: String(summary || 'Saved offline on device — pending sync') + ' (by ' + who + ', ' + (state.__loginKind === 'emp' ? 'Employee' : 'Admin') + ' login)'
+      })
+    }).catch(() => {}); // fire-and-forget — never surfaces as an error on the submitting person's screen
+  } catch (e) { /* never throw */ }
+}
+
+// v-add (BRO: "evaridi emi offline lo cache ga vellina, valla name tho image
+// download avundi kada, ade image mis@vsrgold.com ki ... mail chei" — the same
+// backup PNG that already auto-downloads on the submitting device, also mailed
+// to MIS. Deliberately fired from each flush function's SUCCESS branch (once the
+// device is actually back online and the item syncs) rather than at save time —
+// an offline device has no network to send mail with either, so an attempt at
+// save time would just silently fail (same reasoning BRO agreed to for the
+// sync-time notify). Fire-and-forget — must never block or affect the real data
+// sync either way. Backend: mailOfflineBackupImageAPI_ in LeaveBackend.gs
+// (WEB_APP_URL) — one shared channel for all 6 forms, so no change was needed in
+// the separate DSR/Stock backends.
+function _mailOfflineBackupImageToMis_(formLabel, who, summary, imageDataUrl, savedAt) {
+  try {
+    if (!imageDataUrl) return; // backup image generation is best-effort — nothing to mail if it failed
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        page: 'mailOfflineBackupImageAPI',
+        formLabel: formLabel,
+        who: who || 'Unknown',
+        summary: summary || '',
+        imageDataUrl: imageDataUrl,
+        savedAt: savedAt
+      })
+    }).catch(() => {}); // fire-and-forget — a failed backup-mail must never surface as a second error
+  } catch (e) { /* never throw */ }
+}
+
 // v-add (BRO: "right ki slide cheste, close avali" — swipe the card to the right (touch or
 // mouse-drag) to dismiss it early, same as tapping it. Below the drag threshold it snaps back
 // to place; past it, it flies out and closes. The stack below/above it reflows on its own via
@@ -14257,14 +14629,16 @@ async function confirmSubmitLoyaltyCard(evt) {
   // the same way DSR's idemKey already does.
   payload.idemKey = loyIdemKey;
 
-  // v-fix (BRO: "existing entry forms anni offline vadu, only data matrame
-  // sync avali" — Loyalty Card is now online-only too, same as Stock/DSR/
-  // Leave: no offline queue, nothing saved until the server confirms it.
+  // v-fix (BRO: "all form ki apply chei — offline lo local cache ga save
+  // avali, online vachinappudu auto sync avali, image kuda kavali" —
+  // reverses the earlier online-only decision: Loyalty Card now queues
+  // offline (same pattern as DSR) and auto-syncs via
+  // flushLoyaltyOfflineQueue once back online, plus drops an image backup.
   updateConnStatus();
   if (!navigator.onLine) {
     const modalOff = document.getElementById('loyPreviewModal');
     if (modalOff) modalOff.remove();
-    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+    submitLoyaltyOffline(payload);
     return;
   }
 
@@ -14311,13 +14685,10 @@ async function confirmSubmitLoyaltyCard(evt) {
       _reportSubmitError_('New Loyalty Card', 'backend-reject', (result && result.error) || 'Submission failed');
     }
   } catch (err) {
-    // v-fix (BRO: "existing entry forms anni offline vadu" — no more
-    // offline queue on any failure here (dropped connection, timeout, a
-    // "Failed to fetch" on WiFi-but-no-internet). Nothing was saved —
-    // say so plainly instead of silently trusting a local queue.
-    errBox.textContent = '📴 No internet connection — nothing submitted. Please try again.';
-    errBox.style.display = 'block';
-    toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
+    // v-fix (BRO: "all form ki apply chei" — connection dropped mid-
+    // request; queue it offline (same as the pre-submit check above)
+    // instead of just erroring out.
+    submitLoyaltyOffline(payload);
     _reportSubmitError_('New Loyalty Card', 'submit', String((err && err.message) || err || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit New Card Entry';
@@ -20090,12 +20461,13 @@ async function seSave(scope) {
   const btn = SE(scope,'saveBtn'); btn.disabled = true; btn.textContent = 'Saving…';
   const base = Object.assign({ action:'saveStock', rows: c.rows.map(x=>x.row), confirmReturn: c.confirmReturn }, c.header);
   const payload = Object.assign({ idemKey: 'k' + st.submitToken + seHashStr(JSON.stringify(base)) }, base);
-  // v-fix (BRO: "online lo matrame cheste better" — only from the portal). No offline queue here anymore:
-  // a queued "saved" that turns out not to have actually reached the sheet is worse than a clear failure
-  // the person can see and act on immediately. If there's no connection (or the request fails mid-way),
-  // say so plainly — nothing is saved until the server confirms it.
+  // v-fix (BRO: "all form ki apply chei — offline lo local cache ga save
+  // avali, online vachinappudu auto sync avali, image kuda kavali" —
+  // reverses the earlier online-only decision: Stock Entry now queues
+  // offline (same pattern as DSR) and auto-syncs via
+  // flushStockOfflineQueue once back online, plus drops an image backup.
   if (!navigator.onLine) {
-    seShowBanner(scope,'err','📴 No internet connection');
+    submitStockOffline(scope, payload, c.header);
     btn.disabled = false; btn.textContent = '★  Save Stock  ★';
     return;
   }
@@ -20152,10 +20524,14 @@ async function seSave(scope) {
       _reportSubmitError_('Stock Entry', 'backend-reject', res.error || 'Save failed');
     }
   } catch (e) {
-    // Real network failure mid-request (timeout, connection dropped) — same as above: tell the person
-    // plainly that nothing was saved, rather than silently queuing something that might already have
-    // reached the server, or might never reach it, with no clear way for them to tell which.
-    seShowBanner(scope,'err','📴 No internet connection');
+    // v-fix (BRO: "all form ki apply chei" — connection dropped mid-
+    // request; queue it offline (same as the pre-save check above) instead
+    // of just erroring out. Safe to retry blind on reconnect: payload
+    // carries its own idemKey, same dedupe the backend already uses for
+    // DSR, so a genuine double-send (original attempt actually landed,
+    // this is a retry of it) is caught and ignored server-side rather than
+    // creating a duplicate stock row.
+    submitStockOffline(scope, payload, c.header);
     _reportSubmitError_('Stock Entry', 'submit', String((e && e.message) || e || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '★  Save Stock  ★';
@@ -20460,15 +20836,16 @@ async function confirmSubmitGoldenAura(who, evt) {
   // reconnect-and-resubmit) the same way DSR/Loyalty already do.
   payload.idemKey = gaIdemKey;
 
-  // v-fix (BRO: "existing entry forms anni offline vadu, only data matrame
-  // sync avali" — Golden Aura is now online-only too, same as Stock/DSR/
-  // Leave/Loyalty: no offline queue, nothing saved until the server
-  // confirms it.
+  // v-fix (BRO: "all form ki apply chei — offline lo local cache ga save
+  // avali, online vachinappudu auto sync avali, image kuda kavali" —
+  // reverses the earlier online-only decision: Golden Aura now queues
+  // offline (same pattern as DSR) and auto-syncs via
+  // flushGoldenAuraOfflineQueue once back online, plus drops an image backup.
   updateConnStatus();
   if (!navigator.onLine) {
     const modalOff = document.getElementById('gaPreviewModal');
     if (modalOff) modalOff.remove();
-    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+    submitGoldenAuraOffline(payload, who);
     return;
   }
 
@@ -20520,12 +20897,10 @@ async function confirmSubmitGoldenAura(who, evt) {
       _reportSubmitError_('Golden Aura', 'backend-reject', (res && res.error) || 'Failed to save');
     }
   } catch (e) {
-    // v-fix (BRO: "existing entry forms anni offline vadu" — no more
-    // offline queue on any failure here. Nothing was saved — say so
-    // plainly instead of silently trusting a local queue.
-    msg.style.color = 'var(--red)';
-    msg.textContent = '📴 No internet connection — nothing submitted. Please try again.';
-    toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
+    // v-fix (BRO: "all form ki apply chei" — connection dropped mid-
+    // request; queue it offline (same as the pre-submit check above)
+    // instead of just erroring out.
+    submitGoldenAuraOffline(payload, who);
     _reportSubmitError_('Golden Aura', 'submit', String((e && e.message) || e || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit Enrollment';
@@ -21607,35 +21982,35 @@ async function submitLeadCall() {
   const duration = document.getElementById('leadDurationInput').value || '00:00';
   const star = v => v ? (v + ' Star') : '';
 
-  // v-fix (BRO: "existing entry forms anni offline vadu, only data matrame
-  // sync avali" — Leads call-log entry is now online-only too, same as
-  // Stock/DSR/Leave/Loyalty/Golden Aura: no offline queue, nothing saved
-  // until the server confirms it.
+  const payload = {
+    action: 'CRM_ENTRY', timestamp: new Date().toISOString(),
+    callingDoneBy: state.empName, customerName: __leadCallCurrent.name || '', mobileNumber: __leadCallCurrent.phone,
+    status: status, callingType: document.getElementById('leadCallTypeSel').value,
+    behaviorRating: star(document.getElementById('leadRateBehavior').value),
+    serviceRating:  star(document.getElementById('leadRateService').value),
+    designRating:   star(document.getElementById('leadRateDesign').value),
+    suggestions:    document.getElementById('leadSuggestionsTxt').value,
+    overallRating:  star(document.getElementById('leadRateOverall').value),
+    teamRating:     star(document.getElementById('leadRateTeam').value),
+    purpose:        document.getElementById('leadPurposeSel').value,
+    feedback:       document.getElementById('leadFeedbackTxt').value,
+    duration:       duration
+  };
+
+  // v-fix (BRO: "all form ki apply chei — offline lo local cache ga save
+  // avali, online vachinappudu auto sync avali, image kuda kavali" —
+  // reverses the earlier online-only decision: Lead Call Log now queues
+  // offline (same pattern as DSR) and auto-syncs via
+  // flushLeadsOfflineQueue once back online, plus drops an image backup.
   updateConnStatus();
   if (!navigator.onLine) {
-    errBox.textContent = '📴 No internet connection — nothing submitted. Reconnect and submit again.';
-    errBox.style.display = 'block';
-    toast('📴 No internet connection — nothing submitted. Reconnect and submit again.', 'error');
+    submitLeadCallOffline(payload);
     return;
   }
 
   const btn = document.getElementById('leadSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Saving...';
   try {
-    const payload = {
-      action: 'CRM_ENTRY', timestamp: new Date().toISOString(),
-      callingDoneBy: state.empName, customerName: __leadCallCurrent.name || '', mobileNumber: __leadCallCurrent.phone,
-      status: status, callingType: document.getElementById('leadCallTypeSel').value,
-      behaviorRating: star(document.getElementById('leadRateBehavior').value),
-      serviceRating:  star(document.getElementById('leadRateService').value),
-      designRating:   star(document.getElementById('leadRateDesign').value),
-      suggestions:    document.getElementById('leadSuggestionsTxt').value,
-      overallRating:  star(document.getElementById('leadRateOverall').value),
-      teamRating:     star(document.getElementById('leadRateTeam').value),
-      purpose:        document.getElementById('leadPurposeSel').value,
-      feedback:       document.getElementById('leadFeedbackTxt').value,
-      duration:       duration
-    };
     const res = await leadsApiPost(payload);
     if (res && res.ok) {
       toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
@@ -21694,12 +22069,10 @@ async function submitLeadCall() {
       _reportSubmitError_('Lead Call Log', 'backend-reject', (res && res.error) || 'Failed to save');
     }
   } catch (e) {
-    // v-fix (BRO: "existing entry forms anni offline vadu" — a genuine
-    // network failure (offline, timeout, DNS, CORS) no longer queues
-    // offline either. Nothing was saved — say so plainly.
-    errBox.textContent = '📴 No internet connection — nothing submitted. Please try again.';
-    errBox.style.display = 'block';
-    toast('📴 No internet connection — nothing submitted. Please try again.', 'error');
+    // v-fix (BRO: "all form ki apply chei" — connection dropped mid-
+    // request; queue it offline (same as the pre-submit check above)
+    // instead of just erroring out.
+    submitLeadCallOffline(payload);
     _reportSubmitError_('Lead Call Log', 'submit', String((e && e.message) || e || 'Network/connection error'));
   } finally {
     btn.disabled = false; btn.textContent = '💾 Submit';
@@ -21707,14 +22080,23 @@ async function submitLeadCall() {
 }
 
 function submitLeadCallOffline(payload) {
+  // v-fix (BRO: "leads offline lo save aina parledu, kani image download
+  // vaddu" — Lead Call Log keeps its offline queue + auto-sync + MIS text
+  // notify exactly as every other form, it just never generates/downloads a
+  // backup image (no _leadCallOfflineBackupImage_ call here, unlike DSR/
+  // Leave/Loyalty/Golden Aura/Stock). No backupImg field on this queue item
+  // means the sync-time Drive-upload+mail step (_mailOfflineBackupImageToMis_)
+  // naturally no-ops for Leads too — nothing to mail if there's no image.
+  const savedAt = Date.now();
   const q = getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY);
-  q.push({ payload, savedAt: Date.now() });
+  q.push({ payload, savedAt });
   const saved = saveQueueGeneric(LEADS_OFFLINE_QUEUE_KEY, q);
   updateConnStatus();
   if (!saved) {
     toast('❌ Could not save offline — this device\'s storage is full. Please connect to the internet and tap Submit again now.', 'error');
     return;
   }
+  _notifyMisOfflineSave_('Lead Call Log', (payload.callingDoneBy || state.empName || '—') + ' — ' + (payload.customerName || '—'));
   toast('📴 Saved offline on this device — will auto-sync once back online. Do not re-enter this call log.', 'info');
   closeLeadCallPanel();
   // Mark it completed on-screen right away, same as a live success —
