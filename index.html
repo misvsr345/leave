@@ -15468,15 +15468,10 @@ function loadKpiTillDate(who) {
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No KPI data yet. Ask MIS to generate the KPI report.</p></div>'; return; }
     let html = staleBannerHtml(res.title);
     html += res.title ? `<div class="kd-note">${res.title}</div>` : '';
-    // Employees only get their own row back (their individual figures
-    // stay private from co-workers) — but they can still see who's
-    // currently #1 in the store via this lightweight name+score summary.
-    if (who === 'emp' && res.topPerformer) {
-      const isMe = (res.topPerformer.name || '').toLowerCase() === (state.empName || '').toLowerCase();
-      html += `<div class="kd-note" style="background:linear-gradient(135deg,#C9A84C22,#E8C76622);border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin-bottom:10px;">
-        🏆 Currently #1 this month: <b>${isMe ? 'You!' : res.topPerformer.name}</b> — Score ${res.topPerformer.score} (${res.topPerformer.grade})
-      </div>`;
-    }
+    // Employees only get their own row back AND no store-wide leaderboard
+    // info — the "who's #1" banner was removed per owner instruction so
+    // nothing about other employees' performance is visible from an
+    // employee login.
     if (who === 'admin' && res.rows.length > 1) {
       html += kpiTableHtml(res.rows, res.storeTotal);
     } else {
@@ -15525,12 +15520,6 @@ function loadKpiMonthly(who) {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiMonthly(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
     if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No monthly KPI data yet.</p></div>'; return; }
     let html = res.title ? `<div class="kd-note">${res.title}</div>` : '';
-    if (who === 'emp' && res.topPerformer) {
-      const isMe = (res.topPerformer.name || '').toLowerCase() === (state.empName || '').toLowerCase();
-      html += `<div class="kd-note" style="background:linear-gradient(135deg,#C9A84C22,#E8C76622);border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px;margin-bottom:10px;">
-        🏆 #1 last month: <b>${isMe ? 'You!' : res.topPerformer.name}</b> — Score ${res.topPerformer.score} (${res.topPerformer.grade})
-      </div>`;
-    }
     if (who === 'admin' && res.rows.length > 1) {
       html += kpiTableHtml(res.rows, res.storeTotal);
     } else {
