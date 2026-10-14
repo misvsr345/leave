@@ -2255,7 +2255,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="empQALoySearch" onclick="showEmpPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="empQALoyStats" onclick="showEmpPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Incentive</div><div class="quick-action-sub">Cards, rank &amp; earnings</div></div>
         <div class="quick-action-btn" id="empQALoyMyCards" onclick="showEmpPage('loyalty-mycards')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">My Cards</div><div class="quick-action-sub">Cards I've issued</div></div>
-        <div class="quick-action-btn" id="empQALoyLeaderboard" onclick="showEmpPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
     </div>
 
@@ -2432,8 +2431,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="empQAKpiTarget" onclick="showEmpPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">My Target</div><div class="quick-action-sub">Loyalty &amp; Golden target</div></div>
         <div class="quick-action-btn" id="empQAKpiTillDate" onclick="showEmpPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="empQAKpiLastMonth" onclick="showEmpPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('kpi-trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My KPI Trend</div><div class="quick-action-sub">Score over the last few months</div></div>
-        <div class="quick-action-btn" id="empQAKpiCompare" onclick="showEmpPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
         <div class="quick-action-btn" id="empQAKpiRules" onclick="showEmpPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
     </div>
@@ -2512,8 +2509,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="empQADsrToday" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
         <div class="quick-action-btn" id="empQADsrStatus" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
-        <div class="quick-action-btn" id="empQADsrTillDate" onclick="showEmpPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
-        <div class="quick-action-btn" id="empQADsrDateRange" onclick="showEmpPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
         <div class="quick-action-btn" id="empQADsrAdvOrder" onclick="showEmpPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — update &amp; close</div></div>
         <div class="quick-action-btn" id="empQADsrTagSearch" onclick="showEmpPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
       </div>
@@ -12371,12 +12366,9 @@ const EMP_SEARCH_INDEX = [
   { icon: '🔍', label: 'Search (Loyalty Card)', page: 'loyalty-search' },
   { icon: '📊', label: 'My Incentive (Loyalty)', page: 'loyalty-stats' },
   { icon: '🪪', label: 'My Cards (Loyalty)', page: 'loyalty-mycards' },
-  { icon: '🏆', label: 'Leaderboard (Loyalty)', page: 'loyalty-leaderboard' },
   { icon: '🎯', label: 'My Target (KPI)', page: 'kpi-target' },
   { icon: '📅', label: 'Running Month / Till Date (KPI)', page: 'kpi-tilldate' },
   { icon: '🏁', label: 'Last Month KPI', page: 'kpi-monthly' },
-  { icon: '📈', label: 'My KPI Trend', page: 'kpi-trend' },
-  { icon: '📈', label: 'Month Comparison (KPI)', page: 'kpi-compare' },
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
@@ -12384,8 +12376,6 @@ const EMP_SEARCH_INDEX = [
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
-  { icon: '📅', label: 'Till Date DSR', page: 'dsr-tilldate' },
-  { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
   { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
   { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
@@ -15144,13 +15134,10 @@ function loadLoyaltyMyStatsTrend() {
   jsonpReliable({ page: 'loyaltyDashboardAPI', role: 'EMP', empName: state.empName })
     .then(res => {
       if (!res || !res.ok) { box.innerHTML = ''; return; }
-      let html = `<div class="card"><div class="card-title">📊 Monthly Trend (last 3 months)</div>
-        <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Month</th><th>Cards</th></tr></thead><tbody>`;
-      res.monthlyTrend.forEach(m => {
-        html += `<tr><td>${m.label}</td><td><b>${m.count}</b></td></tr>`;
-      });
-      html += `</tbody></table></div></div>
-      <button class="btn-loy-card" onclick="mailLoyaltyDashboard('emp')">📧 Mail This Overview</button>`;
+      // v-fix (BRO: "ee part emp login lo remove chei" — the Monthly Trend
+      // table removed from the employee's Loyalty "My Incentive" page; the
+      // Mail This Overview button stays, it's a separate action.
+      let html = `<button class="btn-loy-card" onclick="mailLoyaltyDashboard('emp')">📧 Mail This Overview</button>`;
       box.innerHTML = html;
       window.__loyDashData_emp = res; // stashed for the Mail button
     })
@@ -15170,18 +15157,23 @@ function loadLoyaltyMyCards() {
         content.innerHTML = '<div class="empty-state"><span class="emoji">🪪</span><p>No cards issued yet</p></div>';
         return;
       }
-      let html = '';
-      res.cards.forEach(c => {
-        html += `<div class="card" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;">
-          ${c.custPhotoUrl ? `<img src="${c.custPhotoUrl}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);" onerror="this.style.display='none'">` : `<div style="width:56px;height:56px;border-radius:8px;background:var(--purple-bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🪪</div>`}
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:13.5px;color:var(--text);">${properCase(c.custName)} <span style="font-weight:400;color:var(--text3);font-size:11.5px;">#${c.cardNo} · ${c.cardType}</span></div>
-            <div style="font-size:12px;color:var(--text2);margin-top:4px;">📍 ${properCase(c.address)}</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:2px;">📱 ${c.phone} &nbsp;·&nbsp; 🪪 ${c.aadhaarNo}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Issued: ${c.cardDate}</div>
-          </div>
-        </div>`;
+      // v-fix (BRO: "ee data text laga undi. ala kakunda, table laga ivu" —
+      // this was one stacked card per customer; now a scrollable table,
+      // same fields, same masked phone/Aadhaar as before.
+      let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
+          <th>#</th><th>Customer</th><th>Card No / Type</th><th>Address</th><th>Phone · Aadhaar</th><th>Issued</th>
+        </tr></thead><tbody>`;
+      res.cards.forEach((c, idx) => {
+        html += `<tr>
+          <td>${idx + 1}</td>
+          <td>${properCase(c.custName)}</td>
+          <td>#${c.cardNo}<br><span style="color:var(--text3);font-size:11px;">${c.cardType}</span></td>
+          <td>${properCase(c.address)}</td>
+          <td>${c.phone}<br><span style="color:var(--text3);font-size:11px;">${c.aadhaarNo}</span></td>
+          <td>${c.cardDate}</td>
+        </tr>`;
       });
+      html += `</tbody></table></div>`;
       content.innerHTML = html;
     })
     .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
