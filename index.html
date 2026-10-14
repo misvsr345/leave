@@ -1213,6 +1213,16 @@ select:disabled, input[type="date"]:disabled, input[type="month"]:disabled { opa
   flex: 0 1 auto; min-width: 0; white-space: nowrap;
   font-size: 12.5px; padding: 9px 12px;
 }
+/* v-fix (BRO: "buttns oke size lo pettu. hight and width oke laga undali" —
+   on the lead call-submit modal, Submit/Cancel/Flag this Number sized by
+   their own text (the general .btn-row rule above) came out very
+   different widths. Scoped to just this one row (not the global .btn-row
+   rule, which other screens rely on) so all three buttons split the row
+   evenly instead — same width, same height. Text wraps to 2 lines
+   instead of clipping if a button's own text doesn't fit at that width. */
+.lead-submit-btn-row > button {
+  flex: 1 1 0; width: auto; white-space: normal; text-align: center; line-height: 1.25;
+}
 @media (max-width: 380px) {
   .btn-row { flex-wrap: wrap; }
   .btn-row > button { flex: 1 1 45%; }
@@ -13262,7 +13272,10 @@ async function loadAdminData() {
     try { renderPending(); } catch(e3) { console.error('renderPending failed:', e3); }
     try { renderAdminLeaves(); } catch(e4) { console.error('renderAdminLeaves failed:', e4); }
     try { renderAdminCalendar(); } catch(e5) { console.error('renderAdminCalendar failed:', e5); }
-    try { checkLeaveLeadsConflictsPopup(); } catch(e6) { console.error('leave+leads popup check failed:', e6); }
+    // v-fix (BRO: "review and dismiss ani popup vastundi. ala naku vaddu. in any stage" —
+    // removed entirely. Approved leave already auto-voids remaining leads instantly via
+    // voidRemainingLeadsCrossProject_ (LeaveBackend.gs, on approve) — no popup needed for
+    // that. Pending/Absent leads are left exactly as pending; no popup for those either now.)
   } catch(e) {
     toast('Admin data load error', 'error');
   }
@@ -21863,7 +21876,7 @@ function openLeadCallPanel(lead) {
     </details>
 
     <div id="leadSubmitErr" style="display:none;color:var(--red-t,#c0392b);font-size:12px;margin-bottom:8px;"></div>
-    <div class="btn-row">
+    <div class="btn-row lead-submit-btn-row">
       <button class="btn-primary" style="margin-bottom:8px;" id="leadSubmitBtn" onclick="submitLeadCall()">💾 Submit</button>
       <button class="btn-secondary" style="margin-bottom:8px;" onclick="closeLeadCallPanel()">Cancel</button>
       <button class="btn-secondary" style="color:#c0392b;border-color:#c0392b;" onclick="openFlagNumberPanel()">🚫 Flag this Number</button>
