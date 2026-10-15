@@ -6770,6 +6770,7 @@ async function loadLoginActivity(who) {
 function logout(who, reason) {
   if (who === 'admin' && misPopupPollTimer_) { clearInterval(misPopupPollTimer_); misPopupPollTimer_ = null; }
   if(who==='emp') {
+    if (typeof _stopEmpLeadsAutoRefresh_ === 'function') _stopEmpLeadsAutoRefresh_();
     document.getElementById('empApp').classList.remove('active');
     state.empId = ''; state.empName = '';
     document.getElementById('empIdInput').value = '';
@@ -7344,7 +7345,8 @@ function showEmpPage(page, opts) {
     }
   }
   if(page==='leads') loadEmpLeadsHome();
-  if(page==='leads-pending') loadEmpLeadsPending();
+  if(page==='leads-pending') { loadEmpLeadsPending(); _startEmpLeadsAutoRefresh_(); }
+  else { _stopEmpLeadsAutoRefresh_(); }
   if(page==='leads-submitted') loadEmpLeadsSubmitted();
   if(page==='leads-report') initEmpLeadsReportPage();
   if(page==='leads-conversions') initLeadConversionsPage('emp');
@@ -21576,6 +21578,29 @@ function tryRenderEmpLeadsFromCache(box, errMsg) {
 // on the very first load of the day, exactly like BRO asked.
 let __empLeadsBgFetchInFlight = false;
 
+// v-add (BRO: "valid responce, lead received, submited leads anni kuda data
+// automatic ga intime lo update avali" — Received/Submitted/Valid/Pending
+// numbers used to only refresh on a Submit or on re-opening this page; if
+// nothing was touched here (another employee's top-up, admin changing the
+// quota, etc.) the numbers sat stale until the employee did something.
+// Now, while this page is the one on screen, it silently re-pulls from the
+// server every 20s — same no-spinner background-refresh loadEmpLeadsPending()
+// already uses on a revisit, so there's no visible "reload" jolt. Stops the
+// moment the employee navigates away (see showEmpPage), and pauses itself
+// (skips the fetch, timer keeps ticking) while the browser tab isn't
+// visible, so it doesn't burn data/battery in the background.
+let __empLeadsAutoRefreshTimer = null;
+function _startEmpLeadsAutoRefresh_() {
+  _stopEmpLeadsAutoRefresh_(); // never let two timers stack
+  __empLeadsAutoRefreshTimer = setInterval(() => {
+    if (state._currentPage_emp !== 'leads-pending' || document.hidden) return;
+    loadEmpLeadsPending();
+  }, 20000);
+}
+function _stopEmpLeadsAutoRefresh_() {
+  if (__empLeadsAutoRefreshTimer) { clearInterval(__empLeadsAutoRefreshTimer); __empLeadsAutoRefreshTimer = null; }
+}
+
 async function loadEmpLeadsPending() {
   const box = document.getElementById('empLeadsPendingBox');
   let cached = null;
@@ -21708,6 +21733,22 @@ function renderEmpLeadsPendingTable() {
   const validResp = __empPendingSummary ? (__empPendingSummary.validResponses || 0) : 0;
   const quota = __empPendingSummary ? (__empPendingSummary.quota || 30) : 30;
   const pendingNow = __empPendingLeadsAll.length - completedNow;
+  // v-fix (BRO: "backend sheet lo data immediate ga update avutundi, kani
+  // portal data ventane correct ga ravadam ledu... valid aina invalid aina
+  // total receive undali, pending = total received - (valid+invalid)
+  // undali" — this line used to count the LOCAL leads array (leads.length /
+  // pendingNow), a different source than the "Received/Submitted/Pending"
+  // badges above (which come from the server's GET_LEADS_REPORT summary).
+  // Right after a Submit, the local array is patched instantly in JS while
+  // the server-matching background refresh is still a moment behind (or,
+  // rarely, silently fails on a weak connection) — so the two lines could
+  // show different numbers for a bit. Now this line uses the SAME
+  // Received−Submitted maths as the badges above, so it can never drift
+  // out of sync with them. Only the search-filtered case (term set) still
+  // shows the filtered local count, since that's a different, deliberate
+  // number (how many match the search), not a sync issue.
+  const todayCount = term ? leads.length : totalReceived;
+  const stillToCallCount = term ? pendingNow : Math.max(0, totalReceived - completedTotal);
   const summaryLine = `<div class="kd-note" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
         <span class="kd-pill" style="background:var(--purple-bg,#F5EEFB);color:var(--purple);font-weight:700;font-size:12px;">📥 Calls Received: ${totalReceived}</span>
         <span class="kd-pill" style="background:var(--purple-bg,#F5EEFB);color:var(--purple);font-weight:700;font-size:12px;">📞 Calls Submitted: ${completedTotal}</span>
@@ -21718,7 +21759,7 @@ function renderEmpLeadsPendingTable() {
       </div>`;
 
   const searchBar = summaryLine + `<div class="kd-note" style="display:flex;align-items:center;gap:8px;">
-      <span style="flex:1;">${leads.length} lead(s)${term ? ' matching "' + escHtml(term) + '"' : ' today'} — ${pendingNow} still to call</span>
+      <span style="flex:1;">${todayCount} lead(s)${term ? ' matching "' + escHtml(term) + '"' : ' today'} — ${stillToCallCount} still to call</span>
       <span onclick="toggleLeadSearch('emp')" style="cursor:pointer;font-size:15px;" title="Search leads">🔎</span>
       <input id="empLeadsSearchInput" type="text" placeholder="Name or phone..." value="${escHtml(term)}" oninput="filterEmpLeadsPending(this.value)"
         style="display:${term ? 'inline-block' : 'none'};width:140px;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:8px;">
