@@ -21423,7 +21423,13 @@ async function leadsApiGet(params) {
   const qs = Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v == null ? '' : v)).join('&');
   let resp;
   try {
-    resp = await _fetchWithTimeout(LEADS_WEB_APP_URL + '?' + qs, {}, 15000);
+    // v-fix (BRO: "api call enduku fail avutundi, fail avakunda cheyalera"
+    // — GET_LEADS_REPORT in particular scans the full Dispatch Log +
+    // Calling Log sheets every call, so it's the slowest of the Leads
+    // actions; 15s was occasionally too tight on a slow connection or a
+    // busy Apps Script. Bumped to 25s for every Leads GET call (cheap,
+    // uniform — only a genuinely stuck request is affected).
+    resp = await _fetchWithTimeout(LEADS_WEB_APP_URL + '?' + qs, {}, 25000);
   } catch (e) {
     if (e.name === 'AbortError') {
       throw new Error('CRM server did not respond in time. It may need to be redeployed — please tell admin.');
@@ -21431,6 +21437,19 @@ async function leadsApiGet(params) {
     throw e;
   }
   return await _parseLeadsApiResponse(resp);
+}
+
+// v-add (BRO: same fix) — one silent, immediate retry for a Leads GET that
+// failed (timeout or network blip). Most failures here are a one-off blip,
+// not a real outage, so a single retry clears the great majority of them
+// without the caller needing any special handling — it just gets a normal
+// successful response a few hundred ms later instead of an error.
+async function leadsApiGetRetry_(params) {
+  try {
+    return await leadsApiGet(params);
+  } catch (e) {
+    try { return await leadsApiGet(params); } catch (e2) { throw e2; }
+  }
 }
 
 async function leadsApiPost(payload) {
@@ -21624,7 +21643,7 @@ async function loadEmpLeadsPending() {
   try {
     const [res, reportRes, submittedRes] = await Promise.all([
       leadsApiGet({ action: 'GET_LEADS', empId: state.empId, name: state.empName, email: state.empEmail, date: todayISO() }),
-      leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() }).catch(() => null),
+      leadsApiGetRetry_({ action: 'GET_LEADS_REPORT', scope: 'employee', employee: state.empName, date: todayISO() }).catch(() => null),
       leadsApiGet({ action: 'GET_DAILY_REPORT', employee: state.empName, role: 'employee', date: todayISO() }).catch(() => null)
     ]);
     if (res.error) {
