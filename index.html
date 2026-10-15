@@ -21683,7 +21683,21 @@ async function loadEmpLeadsPending() {
 
     window.__empLeadsData = {};
     __empPendingLeadsAll.forEach(l => { window.__empLeadsData[l.phone] = l; });
-    __empPendingSummary = (reportRes && reportRes.ok && reportRes.rows && reportRes.rows[0]) ? reportRes.rows[0] : null;
+    // v-fix (BRO: "data okasari correct vastundi, malli refresh or logout
+    // login cheste, malli data wrong vastundi" — root cause: GET_LEADS
+    // above can succeed while this SEPARATE GET_LEADS_REPORT call (the
+    // one that carries Received/Submitted/Valid) fails on its own, just
+    // a transient network blip — the three calls run in parallel and
+    // each can fail independently. This used to blank __empPendingSummary
+    // to null the moment THAT ONE call failed, and then cache that null
+    // to localStorage too — wiping out a perfectly good, already-correct
+    // summary that was on screen a second earlier, until the next fetch
+    // happened to succeed. Now a failed/empty report fetch leaves
+    // __empPendingSummary exactly as it already was (last good fetch, or
+    // cache) instead of blanking it — one flaky call can no longer erase
+    // correct numbers already showing.
+    const newSummary = (reportRes && reportRes.ok && reportRes.rows && reportRes.rows[0]) ? reportRes.rows[0] : null;
+    if (newSummary) __empPendingSummary = newSummary;
     renderEmpLeadsPendingTable();
     saveEmpLeadsCache();
   } catch (e) {
