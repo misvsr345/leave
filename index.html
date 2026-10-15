@@ -8299,12 +8299,15 @@ function showCongratsPopup_(opts) {
   // mini-table used server-side for the MIS digest mail, not a flattened one-line summary.
   const _notifTbl = _notifMiniTable_('#b8860b', opts.title || 'Submitted Successfully', rows);
   logNotifHistory_(opts.icon || '✅', (opts.msg || '') + '<div style="margin-top:6px;">' + _notifTbl + '</div>', opts.type || 'other');
-  // v-add (BRO: "emp ki kuda valla own notification velali" — this person's own just-saved
-  // entry also pops up as the SAME swipe-to-dismiss card MIS gets for other people's entries,
-  // right away (not just the big modal above, which needs a tap to close) — works for both
-  // Employee and Admin logins since this function is shared by every entry type's Save path.
-  // No extra logNotifHistory_ call here — already logged with fuller content just above.
-  _renderPopupCard_((opts.icon || '✅') + ' Saved', _notifTbl);
+  // v-fix (BRO: "submit chesaka 3 dagara undi, popup chalu, remaining
+  // remove chei. notification emp ki no need, only notification option
+  // lopala pettu" — this used to ALSO pop up the same swipe-to-dismiss
+  // "SAVED" card on screen immediately, on top of the big modal above —
+  // same info shown 3 times at once (toast + this card + the modal).
+  // The entry still goes into Notification History via logNotifHistory_
+  // just above, so it's there if the person checks 🔔 Notifications later
+  // — it just doesn't also interrupt the screen right away anymore.
+  // _renderPopupCard_((opts.icon || '✅') + ' Saved', _notifTbl);
 }
 
 // Called only when the submit request itself timed out (no response
@@ -21975,7 +21978,11 @@ let __leadDurationLockedForMe = false;
 
 async function _applyLeadDurationLock() {
   try {
-    const res = await leadsApiGet({ action: 'GET_MY_DURATION_LOCK', email: state.empEmail || '' });
+    // v-fix (BRO: "name ki and mail id ki match cheyaku... emp id ye
+    // permanent" — this now looks up the lock by Employee ID only, not
+    // email (the employee's login email can differ from the email typed
+    // into the Leads "crm email" sheet, which silently broke this check).
+    const res = await leadsApiGet({ action: 'GET_MY_DURATION_LOCK', empId: state.empId || '' });
     __leadDurationLockedForMe = !!(res && res.ok && res.locked);
     _updateDurationLockUI();
   } catch (e) { /* lock check failing silently just leaves the field editable, same as today */ }
@@ -22169,7 +22176,11 @@ async function submitLeadCall() {
   try {
     const res = await leadsApiPost(payload);
     if (res && res.ok) {
-      toast('✅ Call logged for ' + (__leadCallCurrent.name || __leadCallCurrent.phone), 'success');
+      // v-fix (BRO: "submit chesaka 3 dagara undi, popup chalu, remaining
+      // remove chei" — the toast ("Call logged for...") used to fire
+      // alongside the Congrats modal and the top-right SAVED card below,
+      // all three showing the exact same info at once. Only the modal
+      // stays now.
       // v-add (BRO: "all new entrys ivali" — same Congratulations popup, only this call-log's own fields.
       showCongratsPopup_({
         icon: '📞',
