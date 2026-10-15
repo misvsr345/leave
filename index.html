@@ -3552,12 +3552,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Pick an expiry date; once it passes, this is removed automatically and the login page goes back to the default purple theme on its own.</p>
             <img id="storeBgPreview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Current background">
             <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Expiry Date</label>
-            <input type="date" id="storeBgExpiryInput" class="uniform-select" style="width:100%;margin-bottom:10px;">
-            <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
-            <button class="btn-sm btn-view" style="width:100%;" onclick="document.getElementById('storeBgFileInput').click()">📤 Upload Background Image</button>
-            <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
-                 take it off immediately, same as what auto-happens once the expiry date passes. -->
-            <button class="btn-sm" style="width:100%;margin-top:8px;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">🗑️ Remove Background Image</button>
+            <!-- v-fix (BRO: "oke line lo pettu, mudu kuda" — expiry date + the two
+                 buttons, genuinely all 3 visible on one row with no scrolling needed —
+                 date takes the space it needs, both buttons shrink to icon-only
+                 squares (title= gives the label on long-press/hover). -->
+            <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:10px;flex-wrap:nowrap;">
+              <input type="date" id="storeBgExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
+              <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
+              <button class="btn-sm btn-view" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;" title="Upload Background Image" onclick="document.getElementById('storeBgFileInput').click()">📤</button>
+              <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
+                   take it off immediately, same as what auto-happens once the expiry date passes. -->
+              <button class="btn-sm" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;color:var(--red);border-color:var(--red);" title="Remove Background Image" onclick="onRemoveStoreBg_()">🗑️</button>
+            </div>
             <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
             <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
           </div>
