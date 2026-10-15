@@ -6524,7 +6524,13 @@ function onStoreBgFileChosen(inputEl) {
   const expiry = expiryEl ? expiryEl.value : '';
   if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
   if (!expiry) { toast('Pick an expiry date first', 'error'); inputEl.value = ''; return; }
-  if (expiry <= todayYmd_()) { toast('Expiry date must be in the future', 'error'); inputEl.value = ''; return; }
+  // v-fix (BRO: "today date enter cheste avadam ledu... birthday ki one
+  // day kosam upload chesamu" — this used to reject expiry === today too
+  // (<=), so a same-day "show only today" background could never be
+  // saved. Backend already keeps the image live through 23:59:59 of the
+  // expiry date and only removes it starting the next day, so today is a
+  // genuinely valid expiry — only a date already in the past is rejected.
+  if (expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); inputEl.value = ''; return; }
   const statusEl = document.getElementById('storeBgUploadStatus');
   if (statusEl) { statusEl.textContent = 'Uploading...'; statusEl.style.color = 'var(--text3)'; }
   const reader = new FileReader();
