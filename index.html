@@ -22130,7 +22130,17 @@ async function submitLeadCall() {
 
   const payload = {
     action: 'CRM_ENTRY', timestamp: new Date().toISOString(),
-    callingDoneBy: state.empName, customerName: __leadCallCurrent.name || '', mobileNumber: __leadCallCurrent.phone,
+    // v-add (BRO: "nehalata ki top up avaledu" — root-caused to the
+    // auto-top-up's quota-sheet lookup matching by NAME TEXT only; any
+    // spelling drift between the login name and the quota sheet's name
+    // silently breaks it, no error, no log the employee ever sees.
+    // v-add (BRO: "emp id or emp code or emp number edaina okate" —
+    // Employee ID is the most reliable of all, so it's sent too. Backend
+    // now tries id → email → name, each only as a fallback for the one
+    // before it, so a name-spelling or even an email difference can
+    // never again silently block someone's top-up.
+    callingDoneBy: state.empName, callingDoneByEmail: state.empEmail || '', callingDoneByEmpId: state.empId || '',
+    customerName: __leadCallCurrent.name || '', mobileNumber: __leadCallCurrent.phone,
     status: status, callingType: document.getElementById('leadCallTypeSel').value,
     behaviorRating: star(document.getElementById('leadRateBehavior').value),
     serviceRating:  star(document.getElementById('leadRateService').value),
