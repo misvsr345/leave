@@ -21883,11 +21883,11 @@ function renderEmpLeadsPendingTable() {
 }
 
 // ── EMPLOYEE: Call panel (modal) ────────────────────────────
-let __leadCallTimer = null, __leadCallSeconds = 0, __leadCallRunning = false, __leadCallCurrent = null;
+let __leadCallTimer = null, __leadCallSeconds = 0, __leadCallRunning = false, __leadCallCurrent = null, __leadCallStartTs = 0;
 
 function openLeadCallPanel(lead) {
   __leadCallCurrent = lead;
-  __leadCallSeconds = 0; __leadCallRunning = false;
+  __leadCallSeconds = 0; __leadCallRunning = false; __leadCallStartTs = 0;
   const existing = document.getElementById('leadCallModal');
   if (existing) existing.remove();
   const div = document.createElement('div');
@@ -22098,19 +22098,33 @@ function fmtLeadDuration(sec) {
   return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
 }
 
+// v-fix (BRO: "call run ayyaka, call duration actual call kanna takuva
+// untundi" — tapping 📲 Call opens the phone's own dialer, which pushes
+// this browser tab into the background for the whole real call; mobile
+// browsers throttle/pause setInterval on a backgrounded tab to save
+// battery, so the old "just add 1 every tick" counter silently missed
+// ticks and came back short once the employee returned to the tab.
+// Timing off a real Date.now() start timestamp instead fixes this —
+// even if ticks are skipped while backgrounded, each tick (and the
+// final Stop) recomputes the TRUE elapsed wall-clock time, not a count
+// of how many ticks actually fired.
 function startLeadCallTimer() {
   if (__leadCallRunning) return;
   __leadCallRunning = true;
+  __leadCallStartTs = Date.now() - (__leadCallSeconds * 1000); // resume-safe: keeps any seconds already on the clock
   const btn = document.getElementById('leadTimerBtn');
   if (btn) btn.textContent = '⏹ Stop Timer';
   __leadCallTimer = setInterval(() => {
-    __leadCallSeconds++;
+    __leadCallSeconds = Math.round((Date.now() - __leadCallStartTs) / 1000);
     const inp = document.getElementById('leadDurationInput');
     if (inp) inp.value = fmtLeadDuration(__leadCallSeconds);
   }, 1000);
 }
 function stopLeadCallTimer() {
+  if (__leadCallRunning) __leadCallSeconds = Math.round((Date.now() - __leadCallStartTs) / 1000); // final true-up in case backgrounded ticks were missed
   clearInterval(__leadCallTimer); __leadCallRunning = false;
+  const inp = document.getElementById('leadDurationInput');
+  if (inp) inp.value = fmtLeadDuration(__leadCallSeconds);
   const btn = document.getElementById('leadTimerBtn');
   if (btn) btn.textContent = '▶ Start Timer';
 }
