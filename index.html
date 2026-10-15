@@ -21749,10 +21749,18 @@ function renderEmpLeadsPendingTable() {
   // number (how many match the search), not a sync issue.
   const todayCount = term ? leads.length : totalReceived;
   const stillToCallCount = term ? pendingNow : Math.max(0, totalReceived - completedTotal);
+  // v-add (BRO: "valid count ravali. invalid count ravali" — Valid
+  // Responses pill already existed; Invalid (submitted but not one of the
+  // 4 quota-counting statuses — No Answer/Not Connected/Converted/Busy/
+  // Flag etc.) had no pill of its own, only implicit as Submitted−Valid.
+  // Now shown explicitly, same source (server summary), so it's always
+  // in sync with the other three.
+  const invalidResp = Math.max(0, completedTotal - validResp);
   const summaryLine = `<div class="kd-note" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
         <span class="kd-pill" style="background:var(--purple-bg,#F5EEFB);color:var(--purple);font-weight:700;font-size:12px;">📥 Calls Received: ${totalReceived}</span>
         <span class="kd-pill" style="background:var(--purple-bg,#F5EEFB);color:var(--purple);font-weight:700;font-size:12px;">📞 Calls Submitted: ${completedTotal}</span>
         <span class="kd-pill" style="background:${validResp >= quota ? 'var(--green)' : '#fff8e1'};color:${validResp >= quota ? '#fff' : 'var(--gold-dark,#92400e)'};font-weight:700;font-size:12px;border:1px solid var(--gold);">✅ Valid Responses: ${validResp}/${quota}</span>
+        <span class="kd-pill" style="background:#fdecea;color:#b3261e;font-weight:700;font-size:12px;">❌ Invalid: ${invalidResp}</span>
       </div>
       <div class="kd-note" style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text3);">
         <span>Pending: <b style="color:var(--orange,#c97a10);">${Math.max(0, totalReceived - completedTotal)}</b></span>
