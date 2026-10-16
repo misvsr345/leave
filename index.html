@@ -14602,9 +14602,15 @@ async function submitNewLoyaltyCard() {
 
   // v-fix: now checks BOTH the Camera and Gallery input for each field
   // (see _ncFile above), since the photo could have come from either one.
-  const sigFile = _ncFile('ncSigPhoto');
-  const custFile = _ncFile('ncCustPhoto');
-  const aadhaarFrontFile = _ncFile('ncAadhaarFront');
+  // ALSO checks state.confirmedPhotos — a photo restored from a saved
+  // draft (draftRestore above) only ever lands in confirmedPhotos, never
+  // in an actual file input (a File input can't be set programmatically),
+  // so a draft-restored photo was failing this required check and
+  // blocking submit even though "✓ Photo restored from draft" was shown
+  // right there on screen.
+  const sigFile = _ncFile('ncSigPhoto') || state.confirmedPhotos['ncSigPhoto'];
+  const custFile = _ncFile('ncCustPhoto') || state.confirmedPhotos['ncCustPhoto'];
+  const aadhaarFrontFile = _ncFile('ncAadhaarFront') || state.confirmedPhotos['ncAadhaarFront'];
   const ncMissingPhotos = [];
   if (frqIsRequired('loyalty.sigPhoto') && !sigFile) ncMissingPhotos.push('Customer Signature Photo');
   if (frqIsRequired('loyalty.custPhoto') && !custFile) ncMissingPhotos.push('Customer Photo');
