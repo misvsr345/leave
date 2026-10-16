@@ -1050,6 +1050,14 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 
 /* Form Styles */
 .form-row { margin-bottom: 14px; }
+/* v-add (BRO: "camera open avadam ledu, gallery nundi vastundi, so camera
+   kuda open avali... koddiga buttons chinanga pettu, mari pedavi vadu" —
+   small Camera/Gallery button pair for Loyalty Card's photo fields, kept
+   deliberately compact per BRO's request, not the larger dashed-box style
+   used elsewhere in the portal. */
+.nc-ph2col { display: flex; gap: 6px; }
+.nc-ph-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; border: 1px dashed var(--gold); border-radius: 6px; padding: 5px 6px; font-size: 10.5px; font-weight: 600; color: var(--text2); cursor: pointer; position: relative; background: var(--card-bg, transparent); }
+.nc-ph-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .form-row label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
 .form-row select, .form-row input, .form-row textarea {
   width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r2);
@@ -2290,25 +2298,40 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="form-row"><label>Address <span id="frqStarNcAddress">*</span></label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
 
         <div class="form-row"><label>Customer Signature Photo <span id="frqStarNcSigPhoto">*</span></label>
-          <input type="file" id="ncSigPhoto" accept="image/*" onchange="ncPhotoChanged('ncSigPhoto')">
+          <div class="nc-ph2col">
+            <label class="nc-ph-btn">📷 Camera<input type="file" id="ncSigPhotoCam" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncSigPhoto','ncSigPhotoCam')"></label>
+            <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="ncSigPhoto" accept="image/*" onchange="ncPhotoChanged('ncSigPhoto')"></label>
+          </div>
           <div id="ncSigPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Customer Photo <span id="frqStarNcCustPhoto">*</span></label>
-          <input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')">
+          <div class="nc-ph2col">
+            <label class="nc-ph-btn">📷 Camera<input type="file" id="ncCustPhotoCam" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncCustPhoto','ncCustPhotoCam')"></label>
+            <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="ncCustPhoto" accept="image/*" onchange="ncPhotoChanged('ncCustPhoto')"></label>
+          </div>
           <div id="ncCustPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar No <span id="frqStarNcAadhaarNo">*</span></label><input type="text" id="ncAadhaarNo" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
         <div class="form-row"><label>Aadhaar Card Front Photo <span id="frqStarNcAadhaarFront">*</span></label>
-          <input type="file" id="ncAadhaarFront" accept="image/*" onchange="ncPhotoChanged('ncAadhaarFront')">
+          <div class="nc-ph2col">
+            <label class="nc-ph-btn">📷 Camera<input type="file" id="ncAadhaarFrontCam" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncAadhaarFront','ncAadhaarFrontCam')"></label>
+            <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="ncAadhaarFront" accept="image/*" onchange="ncPhotoChanged('ncAadhaarFront')"></label>
+          </div>
           <div id="ncAadhaarFront-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Aadhaar Card Back Photo</label>
-          <input type="file" id="ncAadhaarBack" accept="image/*" onchange="ncPhotoChanged('ncAadhaarBack')">
+          <div class="nc-ph2col">
+            <label class="nc-ph-btn">📷 Camera<input type="file" id="ncAadhaarBackCam" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncAadhaarBack','ncAadhaarBackCam')"></label>
+            <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="ncAadhaarBack" accept="image/*" onchange="ncPhotoChanged('ncAadhaarBack')"></label>
+          </div>
           <div id="ncAadhaarBack-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="form-row"><label>Pan No</label><input type="text" id="ncPanNo" placeholder="Optional" maxlength="10"></div>
         <div class="form-row"><label>Pan Card Photo</label>
-          <input type="file" id="ncPanPhoto" accept="image/*" onchange="ncPhotoChanged('ncPanPhoto')">
+          <div class="nc-ph2col">
+            <label class="nc-ph-btn">📷 Camera<input type="file" id="ncPanPhotoCam" accept="image/*" capture="environment" onchange="ncPhotoChanged('ncPanPhoto','ncPanPhotoCam')"></label>
+            <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="ncPanPhoto" accept="image/*" onchange="ncPhotoChanged('ncPanPhoto')"></label>
+          </div>
           <div id="ncPanPhoto-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
 
@@ -14397,8 +14420,18 @@ function _showPhotoConfirmModal(title, originalUrl, processProm, onDone, inputId
   });
 }
 
-function ncPhotoChanged(inputId) {
-  const inp = document.getElementById(inputId);
+// v-fix (BRO: "camera open avadam ledu, gallery nundi vastundi, so camera
+// kuda open avali" — the single plain file input used to leave it to the
+// phone's own chooser whether Camera showed up as an option, and on this
+// phone it didn't. Now each of the 5 Loyalty Card photo fields has two
+// small buttons — "📷 Camera" (capture="environment", opens the camera
+// directly) and "🖼️ Gallery" (unchanged) — as two separate file inputs
+// sharing one logical field id. srcId tells this which actual input fired;
+// everything downstream (confirmedPhotos, the -fb indicator, required
+// checks) still keys off the one logical inputId, so no other code needed
+// to change.
+function ncPhotoChanged(inputId, srcId) {
+  const inp = document.getElementById(srcId || inputId);
   const fb = document.getElementById(inputId + '-fb');
   if (!fb) return;
   const f = inp.files && inp.files[0];
@@ -14460,11 +14493,34 @@ function ncPhotoChanged(inputId) {
 // submit-time gate. The backend's own independent OCR re-check inside
 // loyaltySubmitCardAPI_ is untouched and keeps doing this server-side.
 function ncPhotoClear(inputId) {
+  // v-fix: clears BOTH the Camera and Gallery inputs for this field now
+  // (see ncPhotoChanged above) — only one of the two ever actually has a
+  // file, but clearing both is harmless and keeps "Remove" working no
+  // matter which one was used.
   const inp = document.getElementById(inputId);
-  inp.value = '';
+  if (inp) inp.value = '';
+  const camInp = document.getElementById(inputId + 'Cam');
+  if (camInp) camInp.value = '';
   delete state.confirmedPhotos[inputId];
   const fb = document.getElementById(inputId + '-fb');
   if (fb) fb.innerHTML = '';
+}
+
+// v-add: companions to the Camera/Gallery dual-input fields above. Submit
+// needs to know "did the person pick a file in EITHER input" and "which of
+// the two actual inputs has the file" — these two helpers centralize that
+// so submitNewLoyaltyCard() doesn't need its own per-field logic.
+function _ncFile(inputId) {
+  const gal = document.getElementById(inputId);
+  const cam = document.getElementById(inputId + 'Cam');
+  return (gal && gal.files && gal.files[0]) || (cam && cam.files && cam.files[0]) || null;
+}
+function _ncFileInput(inputId) {
+  const gal = document.getElementById(inputId);
+  const cam = document.getElementById(inputId + 'Cam');
+  if (gal && gal.files && gal.files[0]) return gal;
+  if (cam && cam.files && cam.files[0]) return cam;
+  return gal;
 }
 
 // v-fix (BRO: "image lo unnatu, every time kuda ilane vastundi. mali image
@@ -14492,9 +14548,9 @@ function fileToBase64(inputEl) {
   if (!file) return Promise.resolve('');
   const attempt = (triesLeft) => _readFileOnce(file).catch(err => {
     if (triesLeft <= 0) throw err;
-    return new Promise(res => setTimeout(res, 400)).then(() => attempt(triesLeft - 1));
+    return new Promise(res => setTimeout(res, 600)).then(() => attempt(triesLeft - 1));
   });
-  return attempt(2);
+  return attempt(4);
 }
 
 async function submitNewLoyaltyCard() {
@@ -14544,9 +14600,11 @@ async function submitNewLoyaltyCard() {
   const aadhaarErr = aadhaarNo ? validateAadhaarNo(aadhaarNo) : null;
   if (aadhaarErr) { errBox.textContent = aadhaarErr; errBox.style.display = 'block'; return; }
 
-  const sigFile = document.getElementById('ncSigPhoto').files[0];
-  const custFile = document.getElementById('ncCustPhoto').files[0];
-  const aadhaarFrontFile = document.getElementById('ncAadhaarFront').files[0];
+  // v-fix: now checks BOTH the Camera and Gallery input for each field
+  // (see _ncFile above), since the photo could have come from either one.
+  const sigFile = _ncFile('ncSigPhoto');
+  const custFile = _ncFile('ncCustPhoto');
+  const aadhaarFrontFile = _ncFile('ncAadhaarFront');
   const ncMissingPhotos = [];
   if (frqIsRequired('loyalty.sigPhoto') && !sigFile) ncMissingPhotos.push('Customer Signature Photo');
   if (frqIsRequired('loyalty.custPhoto') && !custFile) ncMissingPhotos.push('Customer Photo');
@@ -14562,7 +14620,7 @@ async function submitNewLoyaltyCard() {
   // address-vs-Aadhaar OCR match (and the submit-blocking gate it fed)
   // is removed entirely. The backend's own independent OCR re-check
   // inside loyaltySubmitCardAPI_ is the only place this is verified now.
-  const aadhaarBackFile = document.getElementById('ncAadhaarBack').files[0];
+  const aadhaarBackFile = _ncFile('ncAadhaarBack');
 
   const btn = document.getElementById('ncSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Preparing preview...';
@@ -14585,13 +14643,15 @@ async function submitNewLoyaltyCard() {
     // can actually complete with — the same kind of transparent
     // resizing virtually every photo-upload feature anywhere does
     // before sending.
+    // v-fix: reads from whichever of Camera/Gallery actually has the file
+    // (see _ncFileInput above), instead of always the Gallery input.
     const [sigPhoto, panPhoto] = await Promise.all([
-      fileToBase64(document.getElementById('ncSigPhoto')).then(_silentCompressForUpload),
-      fileToBase64(document.getElementById('ncPanPhoto')).then(_silentCompressForUpload)
+      fileToBase64(_ncFileInput('ncSigPhoto')).then(_silentCompressForUpload),
+      fileToBase64(_ncFileInput('ncPanPhoto')).then(_silentCompressForUpload)
     ]);
-    const custPhotoRaw    = state.confirmedPhotos['ncCustPhoto']    || await fileToBase64(document.getElementById('ncCustPhoto'));
-    const aadhaarFrontRaw = state.confirmedPhotos['ncAadhaarFront'] || await fileToBase64(document.getElementById('ncAadhaarFront'));
-    const aadhaarBackRaw  = state.confirmedPhotos['ncAadhaarBack']  || (aadhaarBackFile ? await fileToBase64(document.getElementById('ncAadhaarBack')) : '');
+    const custPhotoRaw    = state.confirmedPhotos['ncCustPhoto']    || await fileToBase64(_ncFileInput('ncCustPhoto'));
+    const aadhaarFrontRaw = state.confirmedPhotos['ncAadhaarFront'] || await fileToBase64(_ncFileInput('ncAadhaarFront'));
+    const aadhaarBackRaw  = state.confirmedPhotos['ncAadhaarBack']  || (aadhaarBackFile ? await fileToBase64(_ncFileInput('ncAadhaarBack')) : '');
     const [custPhoto, aadhaarFront, aadhaarBack] = await Promise.all([
       _silentCompressForUpload(custPhotoRaw),
       _silentCompressForUpload(aadhaarFrontRaw),
