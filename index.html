@@ -7516,6 +7516,7 @@ async function loadEmpData() {
     try { renderTrend(); } catch(e5) { console.error('renderTrend failed:', e5); }
     try { checkCrmEventPopup_(); } catch(e6) { console.error('crm event popup failed:', e6); }
     try { checkMyActiveAlerts_(); } catch(e7) { console.error('emp alert check failed:', e7); } // v-add — see checkMyActiveAlerts_ below
+    try { checkMyLoyaltyEditGrants_(); } catch(e8) { console.error('loyalty edit grant check failed:', e8); } // v-add — see checkMyLoyaltyEditGrants_ below
   } catch(e) {
     toast('Data load error: ' + e.message, 'error');
   }
@@ -8891,6 +8892,7 @@ setInterval(pollForPortalChanges_, 10000);
 // happens right after login inside loadEmpData(), this just keeps bringing
 // the popup back for as long as Admin leaves the alert turned on.
 setInterval(() => { try { checkMyActiveAlerts_(); } catch (e) {} }, 180000);
+setInterval(() => { try { checkMyLoyaltyEditGrants_(); } catch (e) {} }, 180000);
 
 // ══════════════════════════════════════════════════════════════════
 // v-add (BRO: "admin oka new feture kavali, edaina issue ni aa
@@ -8988,6 +8990,40 @@ function showEmpAlertPopup_(alerts) {
         <div style="font-size:13px;margin-top:6px;">${escHtml(a.message)}</div>
       </div>`).join('')}
     <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="document.getElementById('empAlertPopupModal').remove()">OK, Got It</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+// v-add (BRO: "emp ki edit opiotn open unte pop ravali" — admin turning
+// on "Edit Allowed" for one of this employee's cards should pop up on
+// its own, not wait for the employee to happen to open Search or My
+// Cards). Same recurring-popup pattern as checkMyActiveAlerts_ above:
+// polled on login + every 3 minutes; dismissing it only removes this DOM
+// instance, it comes right back next poll as long as the grant is still
+// live — only using the card (→ "Edited Once") or admin revoking it
+// makes it stop on its own, no separate "turn off" needed since it's a
+// one-time-use grant, not a standing alert.
+function checkMyLoyaltyEditGrants_() {
+  if (state.__loginKind !== 'emp' || !state.empName || !navigator.onLine) return;
+  jsonpReliable({ page: 'loyaltyGetMyEditGrantsAPI', empName: state.empName }).then(res => {
+    if (res && res.ok && Array.isArray(res.cards) && res.cards.length) showLoyEditGrantPopup_(res.cards);
+  }).catch(() => {});
+}
+function showLoyEditGrantPopup_(cards) {
+  const existing = document.getElementById('loyEditGrantPopupModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'loyEditGrantPopupModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">✏️ Loyalty Card Edit Open</div>
+    <div style="font-size:12.5px;color:var(--text3);margin-bottom:4px;">Admin allowed you to edit ${cards.length > 1 ? 'these cards' : 'this card'} — one time only:</div>
+    ${cards.map(c => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px solid var(--gold);border-radius:8px;padding:8px 10px;margin:8px 0;background:var(--purple-bg);">
+        <div style="font-size:12.5px;"><b>#${escHtml(c.cardNo)}</b><br><span style="color:var(--text3);">${escHtml(properCase(c.custName))}</span></div>
+        <button class="btn-sm btn-view" style="font-size:11px;flex-shrink:0;" onclick="document.getElementById('loyEditGrantPopupModal').remove();loyOpenEditForm('${escJs(c.cardNo)}','${escJs(c.cardType)}','emp')">✏️ Edit Now</button>
+      </div>`).join('')}
+    <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="document.getElementById('loyEditGrantPopupModal').remove()">OK, Later</button>
   </div>`;
   document.body.appendChild(div);
 }
@@ -15669,8 +15705,12 @@ function loadLoyaltyMyCards() {
       // v-fix (BRO: "ee data text laga undi. ala kakunda, table laga ivu" —
       // this was one stacked card per customer; now a scrollable table,
       // same fields, same masked phone/Aadhaar as before.
-      let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
-          <th>#</th><th>Customer</th><th>Card No / Type</th><th>Address</th><th>Phone · Aadhaar</th><th>Issued</th>
+      // v-add (BRO: "emp ki my card and search lo rendititi lo kanipinchali"
+      // — the one-time Edit button used to only show up in Search results;
+      // now it's a trailing column here too, same canEdit gate the backend
+      // now returns for this endpoint, same loyOpenEditForm('emp') target.
+      let html = `<div class="kd-table-wrap" style="-webkit-overflow-scrolling:touch;"><table class="kd-table"><thead><tr>
+          <th>#</th><th>Customer</th><th>Card No / Type</th><th>Address</th><th>Phone · Aadhaar</th><th>Issued</th><th>Edit</th>
         </tr></thead><tbody>`;
       res.cards.forEach((c, idx) => {
         html += `<tr>
@@ -15680,6 +15720,7 @@ function loadLoyaltyMyCards() {
           <td>${properCase(c.address)}</td>
           <td>${c.phone}<br><span style="color:var(--text3);font-size:11px;">${c.aadhaarNo}</span></td>
           <td>${c.cardDate}</td>
+          <td>${c.canEdit ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="loyOpenEditForm('${escJs(c.cardNo)}','${escJs(c.cardType)}','emp')">✏️ Edit</button>` : ''}</td>
         </tr>`;
       });
       html += `</tbody></table></div>`;
