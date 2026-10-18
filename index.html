@@ -3582,10 +3582,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:10px;flex-wrap:nowrap;">
               <input type="date" id="storeBgExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
               <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
-              <button class="btn-sm btn-view" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;" title="Upload Background Image" onclick="document.getElementById('storeBgFileInput').click()">📤</button>
+              <button class="btn-sm btn-view" style="flex:0 0 auto;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;" title="Upload Background Image" onclick="document.getElementById('storeBgFileInput').click()">Upload</button>
               <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
                    take it off immediately, same as what auto-happens once the expiry date passes. -->
-              <button class="btn-sm" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;color:var(--red);border-color:var(--red);" title="Remove Background Image" onclick="onRemoveStoreBg_()">🗑️</button>
+              <button class="btn-sm" style="flex:0 0 auto;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;color:var(--red);border-color:var(--red);" title="Remove Background Image" onclick="onRemoveStoreBg_()">Remove</button>
             </div>
             <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
             <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
@@ -6561,16 +6561,19 @@ function onStoreBgFileChosen(inputEl) {
   // genuinely valid expiry — only a date already in the past is rejected.
   if (expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); inputEl.value = ''; return; }
   const statusEl = document.getElementById('storeBgUploadStatus');
-  if (statusEl) { statusEl.textContent = 'Uploading...'; statusEl.style.color = 'var(--text3)'; }
-  const reader = new FileReader();
-  reader.onload = async () => {
+  if (statusEl) { statusEl.textContent = 'Preparing image...'; statusEl.style.color = 'var(--text3)'; }
+  // v-fix (BRO: "background photo upload avvadam ledu") — phone photos are 3-10 MB; sent as raw
+  // base64 to Apps Script that is slow/too big and hit the timeout. Shrink + compress in the browser
+  // first (max 1920px, JPEG) so the upload is a few hundred KB and goes through reliably.
+  (async () => {
     try {
-      const base64 = String(reader.result).split(',')[1];
+      const packed = await compressBgImage_(file);
+      if (statusEl) statusEl.textContent = 'Uploading...';
       const res = await _fetchWithTimeout(STOCK_GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'saveStoreSettings', bgImageBase64: base64, bgImageMimeType: file.type, bgImageExpiry: expiry })
-      }, 25000).then(r => r.json());
+        body: JSON.stringify({ action: 'saveStoreSettings', bgImageBase64: packed.base64, bgImageMimeType: packed.mime, bgImageExpiry: expiry })
+      }, 60000).then(r => r.json());
       if (res && res.ok) {
         applyStoreSettingsToUI_(res.settings);
         try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
@@ -6580,11 +6583,46 @@ function onStoreBgFileChosen(inputEl) {
         throw new Error((res && res.error) || 'Upload failed');
       }
     } catch (err) {
-      if (statusEl) { statusEl.textContent = '❌ Upload failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+      const msg = (err && err.name === 'AbortError') ? 'timed out — check internet and try again' : (err.message || err);
+      if (statusEl) { statusEl.textContent = '❌ Upload failed — ' + msg; statusEl.style.color = 'var(--red)'; }
       toast('Background upload failed', 'error');
+    } finally {
+      inputEl.value = ''; // so choosing the same photo again still triggers the upload
     }
-  };
-  reader.readAsDataURL(file);
+  })();
+}
+
+// Resize (max 1920px) + re-encode as JPEG. Falls back to the original file if the browser
+// can't decode it (e.g. HEIC on non-Safari browsers).
+function compressBgImage_(file) {
+  return new Promise((resolve, reject) => {
+    const fallback = () => {
+      const r = new FileReader();
+      r.onload = () => resolve({ base64: String(r.result).split(',')[1], mime: file.type });
+      r.onerror = () => reject(new Error('Could not read the image'));
+      r.readAsDataURL(file);
+    };
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const MAX = 1920;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const k = Math.min(1, MAX / Math.max(w, h));
+        w = Math.max(1, Math.round(w * k)); h = Math.max(1, Math.round(h * k));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = c.toDataURL('image/jpeg', 0.82);
+        URL.revokeObjectURL(url);
+        resolve({ base64: dataUrl.split(',')[1], mime: 'image/jpeg' });
+      } catch (e) { URL.revokeObjectURL(url); fallback(); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); fallback(); };
+    img.src = url;
+  });
 }
 
 async function onRemoveStoreBg_() {
