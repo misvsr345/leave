@@ -15265,19 +15265,27 @@ function loyEditButtonHtml_(r, i, who) {
   return editBtn;
 }
 
-// v-add (BRO: "emp name dropdown eivu" fix) — lazy-loads the employee
-// dropdown the first time it's focused, same list Settings → Access
-// already uses (listEmployeesForPermsAPI), cached after the first load.
+// v-fix (BRO: "drop down local cache lo save avadam ledu" — this only
+// used sel.dataset.loaded, an in-memory DOM flag that's gone the moment
+// the page reloads, so the dropdown re-fetched over the network every
+// single time. Now uses the SAME loadEmpListWithCache helper Settings →
+// Access already uses: instant-fill from localStorage on open, then a
+// network call confirms/refreshes it in the background — list survives
+// reloads and works offline-first, same as every other employee dropdown
+// in this portal.
 function loyBulkEditEmpListEnsure_() {
   const sel = document.getElementById('loyEditAccessEmpName');
   if (sel.dataset.loaded === '1') return;
-  jsonpReliable({ page: 'listEmployeesForPermsAPI' }).then(res => {
-    if (res && res.ok && Array.isArray(res.employees)) {
+  loadEmpListWithCache('loyEditAccessEmpList',
+    () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
+    (employees) => {
+      const current = sel.value;
       sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-        res.employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+        employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+      if (current) sel.value = current;
       sel.dataset.loaded = '1';
     }
-  }).catch(() => {});
+  ).catch(() => {});
 }
 
 // Shows/hides the Card Number box depending on which scope radio is picked.
