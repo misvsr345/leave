@@ -3084,6 +3084,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQALoySearch" onclick="showAdminPage('loyalty-search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">Find any customer</div></div>
         <div class="quick-action-btn" id="adminQALoyStats" onclick="showAdminPage('loyalty-stats')"><span class="quick-action-icon">📊</span><div class="quick-action-label">All Employees</div><div class="quick-action-sub">Tap a row for full timeline</div></div>
         <div class="quick-action-btn" id="adminQALoyMyCards" onclick="showAdminPage('loyalty-mycards')"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">All Cards</div><div class="quick-action-sub">Browse / search / filter</div></div>
+        <!-- v-add (BRO: "emp enter chesina data verify chesaka matrame valid
+             chestanu" — the Loyalty Card validation feature's review queue:
+             every card still at "Pending" (entered, never yet checked) —
+             Valid/Invalid is decided here, which gates incentive/card-count
+             everywhere EXCEPT Search/My Cards/All Cards, which keep showing
+             every card regardless (BRO: "search lo sambandham ledu"). -->
+        <div class="quick-action-btn" id="adminQALoyPendingValidation" onclick="showAdminPage('loyalty-pending-validation')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Pending Validation</div><div class="quick-action-sub">Review new card data</div></div>
         <div class="quick-action-btn" id="adminQALoyUpcoming" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
         <div class="quick-action-btn" id="adminQALoyIncenthist" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
@@ -3122,6 +3129,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <div class="card" id="loyAllCardsSummary-admin" style="padding:12px 14px;"></div>
       <div id="loyAllCardsContent-admin"></div>
+    </div>
+
+    <!-- LOYALTY: Pending Validation (admin) — v-add (BRO's validation
+         feature): every card still at "Pending" review, full details,
+         Valid/Invalid decided right here. -->
+    <div class="page-section" id="admin-loyalty-pending-validation">
+      <div class="section-hdr"><span class="section-title2">✅ Pending Validation</span></div>
+      <div class="card" id="loyPendingValSummary" style="padding:12px 14px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div id="loyPendingValContent"></div>
     </div>
 
     <!-- LOYALTY: Leaderboard (admin) -->
@@ -7122,7 +7138,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'dsr-missing', icon:'🚫', label:'Missing' }
     ], more: 'openAdminMoreModal()' },
     loyalty: { pages: ['loyalty','loyalty-newcard','loyalty-leaderboard','loyalty-search','loyalty-stats',
-      'loyalty-upcoming','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards'], items: [
+      'loyalty-upcoming','loyalty-incenthist','loyalty-kyc','loyalty-issues','loyalty-mycards','loyalty-pending-validation'], items: [
       { page:'loyalty', icon:'🏠', label:'Home' },
       { page:'loyalty-search', icon:'🔍', label:'Search' },
       { page:'loyalty-stats', icon:'📊', label:'Employees' },
@@ -7187,7 +7203,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-upcoming': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
-  'loyalty-mycards': 'Loyalty Card',
+  'loyalty-mycards': 'Loyalty Card', 'loyalty-pending-validation': 'Loyalty Card',
   'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
   'stock': 'Stock Check List', 'stock-retail': 'Stock Check List', 'stock-wholesale': 'Stock Check List', 'stock-report': 'Stock Check List',
   'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
@@ -12545,6 +12561,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '🔍', label: 'Search (Loyalty Card)', page: 'loyalty-search' },
   { icon: '📊', label: 'All Employees (Loyalty)', page: 'loyalty-stats' },
   { icon: '🗂️', label: 'All Cards (Loyalty)', page: 'loyalty-mycards' },
+  { icon: '✅', label: 'Pending Validation (Loyalty)', page: 'loyalty-pending-validation' },
   { icon: '🔔', label: 'Upcoming Approvals (Loyalty)', page: 'loyalty-upcoming' },
   { icon: '💰', label: 'Incentive History (Loyalty)', page: 'loyalty-incenthist' },
   { icon: '🚨', label: 'Card Issues (Loyalty)', page: 'loyalty-issues' },
@@ -13501,6 +13518,7 @@ function showAdminPage(page, opts) {
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
   if(page==='loyalty-mycards') initLoyaltyAllCardsAdminPage();
+  if(page==='loyalty-pending-validation') loadLoyaltyPendingValidation();
   if(page==='loyalty-upcoming') loadLoyaltyUpcomingApprovals();
   if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
   if(page==='loyalty-issues') loadLoyaltyCardIssues();
@@ -15760,6 +15778,78 @@ function loadLoyaltyMyCards() {
       content.innerHTML = html;
     })
     .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// v-add (BRO's Loyalty Card validation feature — "emp enter chesina data
+// verify chesaka matrame valid chestanu"): the "Pending Validation" admin
+// page — every card still awaiting review, full details, Valid/Invalid
+// decided here. This is the ONLY gate on incentive/total-card-count;
+// Search/My Cards/All Cards keep showing every card regardless of status
+// (BRO: "search lo sambandham ledu, invalid unna kuda kanipinchali").
+function loadLoyaltyPendingValidation() {
+  const summary = document.getElementById('loyPendingValSummary');
+  const content = document.getElementById('loyPendingValContent');
+  summary.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  content.innerHTML = '';
+  jsonpReliable({ page: 'loyaltyPendingValidationAPI', role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail })
+    .then(res => {
+      if (!res || !res.ok) { summary.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Failed to load') + '</p></div>'; return; }
+      summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${res.total} card(s) awaiting validation</div>`;
+      if (res.cards.length === 0) {
+        content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>Nothing pending — all caught up</p></div>';
+        return;
+      }
+      content.innerHTML = res.cards.map((c, i) => `
+        <div class="loy-result">
+          <div class="loy-result-hdr"><span>${properCase(c.custName)}</span><span class="loy-badge">#${c.cardNo}</span></div>
+          <div class="loy-result-body">
+            <table class="loy-detail">
+              <tr><td>Entered By</td><td>${properCase(c.empName)}</td></tr>
+              <tr><td>Customer Name</td><td class="loy-hl-val">${properCase(c.custName)}</td></tr>
+              <tr><td>Occupation</td><td>${properCase(c.occupation)}</td></tr>
+              <tr><td>Organization</td><td>${properCase(c.orgName)}</td></tr>
+              <tr><td>Address</td><td>${properCase(c.address)}</td></tr>
+              <tr><td>Mobile Number</td><td>${c.phone}</td></tr>
+              <tr><td>Aadhaar No</td><td>${c.aadhaarNo}</td></tr>
+              <tr><td>PAN No</td><td>${c.panNo}</td></tr>
+              <tr><td>Card Type</td><td>${c.cardType}</td></tr>
+              <tr><td>Card Number</td><td class="loy-hl-val">${c.cardNo}</td></tr>
+              <tr><td>Card Issued Date</td><td>${c.cardDate}</td></tr>
+            </table>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              ${c.custPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.custPhotoUrl)}')">📷 Customer Photo</button>` : ''}
+              ${c.sigPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.sigPhotoUrl)}')">✍️ Signature</button>` : ''}
+              ${c.aadhaarFrontUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.aadhaarFrontUrl)}')">🪪 Aadhaar Front</button>` : ''}
+              ${c.aadhaarBackUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.aadhaarBackUrl)}')">🪪 Aadhaar Back</button>` : ''}
+              ${c.panPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.panPhotoUrl)}')">🪪 PAN</button>` : ''}
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn-sm" style="flex:1;font-size:11px;color:var(--green);border-color:var(--green);" onclick="loySetValidation_('${escJs(c.cardNo)}','${escJs(c.cardType)}','Valid',this)">✅ Valid</button>
+              <button class="btn-sm" style="flex:1;font-size:11px;color:var(--red);border-color:var(--red);" onclick="loySetValidation_('${escJs(c.cardNo)}','${escJs(c.cardType)}','Invalid',this)">❌ Invalid</button>
+            </div>
+          </div>
+        </div>`).join('');
+    })
+    .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+function loySetValidation_(cardNo, cardType, status, btnEl) {
+  const card = btnEl.closest('.loy-result');
+  jsonpReliable({
+    page: 'loyaltySetValidationStatusAPI', cardNo: cardNo, cardType: cardType, status: status,
+    role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail
+  }).then(res => {
+    if (res && res.ok) {
+      toast('Card ' + cardNo + ' marked ' + status, 'success');
+      if (card) card.remove();
+      const summary = document.getElementById('loyPendingValSummary');
+      const remaining = document.querySelectorAll('#loyPendingValContent .loy-result').length;
+      if (summary) summary.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--text);">${remaining} card(s) awaiting validation</div>`;
+      if (remaining === 0) document.getElementById('loyPendingValContent').innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>Nothing pending — all caught up</p></div>';
+    } else {
+      toast((res && res.error) || 'Could not update validation status', 'error');
+    }
+  }).catch(err => toast('Network error: ' + err.message, 'error'));
 }
 
 // ── "My Cards" — admin equivalent (item B4): every employee's issued
