@@ -3166,9 +3166,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="card" style="padding:12px 14px;margin-top:8px;">
         <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Allow Edit — All Cards By One Employee</label>
         <div style="display:flex;gap:8px;">
-          <input type="text" id="loyBulkEditEmpName" placeholder="Employee's full name (as it appears on their cards)" autocomplete="off"
+          <!-- v-fix (BRO: "emp name dropdown eivu, and allow button
+               chinanga ivu" — free-typed names risked a spelling mismatch
+               against what's actually stored on the cards, same root-cause
+               class as every other name-matching bug in this portal; a
+               dropdown (same employee list Settings → Access already
+               uses) removes that risk entirely. Button shrunk to match. -->
+          <select id="loyBulkEditEmpName" class="uniform-select" onfocus="loyBulkEditEmpListEnsure_()"
             style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:13px;background:var(--bg);outline:none;">
-          <button class="btn-secondary" style="flex-shrink:0;font-size:11.5px;padding:0 12px;" onclick="loyBulkAllowEditForEmployee()">🔓 Allow</button>
+            <option value="">-- Select Employee --</option>
+          </select>
+          <button class="btn-sm btn-view" style="flex-shrink:0;font-size:11px;padding:0 10px;white-space:nowrap;" onclick="loyBulkAllowEditForEmployee()">🔓 Allow</button>
         </div>
         <div id="loyBulkEditMsg" style="font-size:11px;color:var(--text3);margin-top:6px;"></div>
       </div>
@@ -15223,12 +15231,27 @@ function loyToggleCardEditAllowed(cardNo, cardType, enable) {
   }).catch(err => toast('Network error: ' + err.message, 'error'));
 }
 
+// v-add (BRO: "emp name dropdown eivu" fix) — lazy-loads the employee
+// dropdown the first time it's focused, same list Settings → Access
+// already uses (listEmployeesForPermsAPI), cached after the first load.
+function loyBulkEditEmpListEnsure_() {
+  const sel = document.getElementById('loyBulkEditEmpName');
+  if (sel.dataset.loaded === '1') return;
+  jsonpReliable({ page: 'listEmployeesForPermsAPI' }).then(res => {
+    if (res && res.ok && Array.isArray(res.employees)) {
+      sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+        res.employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+      sel.dataset.loaded = '1';
+    }
+  }).catch(() => {});
+}
+
 // Admin grants edit access for EVERY card one employee has issued, in one
 // tap — the bulk alternative to toggling each card individually above.
 function loyBulkAllowEditForEmployee() {
-  const empName = document.getElementById('loyBulkEditEmpName').value.trim();
+  const empName = document.getElementById('loyBulkEditEmpName').value;
   const msgEl = document.getElementById('loyBulkEditMsg');
-  if (!empName) { toast('Type the employee\'s name first', 'error'); return; }
+  if (!empName) { toast('Select an employee first', 'error'); return; }
   msgEl.textContent = 'Working...';
   jsonpReliable({
     page: 'loyaltySetCardEditAllowedAPI', empName: empName, enabled: 'true',
