@@ -3156,6 +3156,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <button onclick="runLoyaltySearch('admin')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
         </div>
       </div>
+      <!-- v-add (BRO: "emp admin ki manual ga adugutadu, edit request chei...
+           aa particular no ki or all emp chesina all cards ki" — the bulk
+           half of the one-time Loyalty Card edit feature: grants edit
+           access to EVERY card one employee has issued, in one tap,
+           instead of toggling each card one-by-one in the search results
+           below (that per-card toggle still exists too — see the "Allow
+           Edit"/"Revoke Edit" button on each result). -->
+      <div class="card" style="padding:12px 14px;margin-top:8px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Allow Edit — All Cards By One Employee</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="loyBulkEditEmpName" placeholder="Employee's full name (as it appears on their cards)" autocomplete="off"
+            style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:13px;background:var(--bg);outline:none;">
+          <button class="btn-secondary" style="flex-shrink:0;font-size:11.5px;padding:0 12px;" onclick="loyBulkAllowEditForEmployee()">🔓 Allow</button>
+        </div>
+        <div id="loyBulkEditMsg" style="font-size:11px;color:var(--text3);margin-top:6px;"></div>
+      </div>
       <div id="loyAdminSearchResults" style="margin-top:10px;"></div>
     </div>
 
@@ -3582,10 +3598,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:10px;flex-wrap:nowrap;">
               <input type="date" id="storeBgExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
               <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
-              <button class="btn-sm btn-view" style="flex:0 0 auto;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;" title="Upload Background Image" onclick="document.getElementById('storeBgFileInput').click()">Upload</button>
+              <button class="btn-sm btn-view" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;" title="Upload Background Image" onclick="document.getElementById('storeBgFileInput').click()">📤</button>
               <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
                    take it off immediately, same as what auto-happens once the expiry date passes. -->
-              <button class="btn-sm" style="flex:0 0 auto;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;color:var(--red);border-color:var(--red);" title="Remove Background Image" onclick="onRemoveStoreBg_()">Remove</button>
+              <button class="btn-sm" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;color:var(--red);border-color:var(--red);" title="Remove Background Image" onclick="onRemoveStoreBg_()">🗑️</button>
             </div>
             <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
             <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
@@ -14940,7 +14956,7 @@ function runLoyaltySearch(who) {
   // corrects it a moment later — same reasoning as the Stock Tag Cache's dsrfTagLookup.
   const cachedResults = loyaltyCacheSearch(who, query);
   if (cachedResults.length) {
-    renderLoyaltyResults({ ok: true, results: cachedResults }, resultsEl);
+    renderLoyaltyResults({ ok: true, results: cachedResults }, resultsEl, who);
     resultsEl.insertAdjacentHTML('afterbegin', '<div class="kd-note" style="opacity:.7;">⏳ Showing cached results — confirming…</div>');
   }
 
@@ -14966,7 +14982,7 @@ function runLoyaltySearch(who) {
 
   jsonpReliable({ page: 'loyaltySearchAPI', query: query, role: role, fullData: fullData ? '1' : '0', adminEmail: who === 'admin' ? state.adminEmail : '', adminRole: who === 'admin' ? state.adminRole : '' })
     .then(res => {
-      renderLoyaltyResults(res, resultsEl);
+      renderLoyaltyResults(res, resultsEl, who);
       loyaltyCacheRefresh(who); // fire-and-forget — keeps the cache warm for next time, same pattern as the Stock Tag Cache
     })
     .catch(err => {
@@ -14974,7 +14990,7 @@ function runLoyaltySearch(who) {
     });
 }
 
-function renderLoyaltyResults(res, resultsEl) {
+function renderLoyaltyResults(res, resultsEl, who) {
   loyLastResults = (res && res.results) || [];
   if (!res || !res.ok) {
     resultsEl.innerHTML = '<div class="empty-state"><p>' + ((res && res.error) || 'Search failed') + '</p></div>';
@@ -15022,10 +15038,217 @@ function renderLoyaltyResults(res, resultsEl) {
           <tr><td>Card Issued Date</td><td>${r.cardDate}</td></tr>
         </table>
         ${docsHtml}
-        <button class="btn-loy-card" onclick="showLoyaltyCardView(${i})">🪪 Card View</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+          <button class="btn-loy-card" onclick="showLoyaltyCardView(${i})">🪪 Card View</button>
+          ${loyEditButtonHtml_(r, i, who)}
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// v-add (BRO's one-time Loyalty Card edit feature): Admin always gets an
+// Edit button, plus a per-card "Allow Edit"/"Revoke Edit" toggle for the
+// EMPLOYEE-facing grant (that toggle doesn't affect admin's own ability
+// to edit, which is unconditional). Employee only gets an Edit button
+// when the backend said canEdit — i.e. MIS already turned the toggle on
+// for this specific card (or bulk-allowed it for this employee) and it
+// hasn't already been used.
+function loyEditButtonHtml_(r, i, who) {
+  const editBtn = `<button class="btn-sm btn-view" style="font-size:11px;" onclick="loyOpenEditForm('${escJs(r.cardNo)}','${escJs(r.cardType)}','${who}')">✏️ Edit</button>`;
+  if (who !== 'admin') {
+    return r.canEdit ? editBtn : '';
+  }
+  const allowed = !!r.employeeEditAllowed;
+  const toggleBtn = allowed
+    ? `<button class="btn-sm" style="font-size:11px;color:var(--red);border-color:var(--red);" onclick="loyToggleCardEditAllowed('${escJs(r.cardNo)}','${escJs(r.cardType)}',false)">🔒 Revoke Edit</button>`
+    : `<button class="btn-sm" style="font-size:11px;" onclick="loyToggleCardEditAllowed('${escJs(r.cardNo)}','${escJs(r.cardType)}',true)">🔓 Allow Edit</button>`;
+  return editBtn + toggleBtn;
+}
+
+// Admin toggles edit access for ONE specific card (employee-facing grant
+// — admin's own edit access is never affected either way).
+function loyToggleCardEditAllowed(cardNo, cardType, enable) {
+  jsonpReliable({
+    page: 'loyaltySetCardEditAllowedAPI', cardNo: cardNo, cardType: cardType, enabled: enable ? 'true' : 'false',
+    role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail
+  }).then(res => {
+    if (res && res.ok) {
+      toast((enable ? 'Edit access granted for card ' : 'Edit access revoked for card ') + cardNo, 'success');
+      runLoyaltySearch('admin');
+    } else {
+      toast((res && res.error) || 'Could not update edit access', 'error');
+    }
+  }).catch(err => toast('Network error: ' + err.message, 'error'));
+}
+
+// Admin grants edit access for EVERY card one employee has issued, in one
+// tap — the bulk alternative to toggling each card individually above.
+function loyBulkAllowEditForEmployee() {
+  const empName = document.getElementById('loyBulkEditEmpName').value.trim();
+  const msgEl = document.getElementById('loyBulkEditMsg');
+  if (!empName) { toast('Type the employee\'s name first', 'error'); return; }
+  msgEl.textContent = 'Working...';
+  jsonpReliable({
+    page: 'loyaltySetCardEditAllowedAPI', empName: empName, enabled: 'true',
+    role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail
+  }).then(res => {
+    if (res && res.ok) {
+      msgEl.textContent = '✓ Edit access granted on ' + res.updated + ' card(s) for ' + empName;
+      toast('Edit access granted on ' + res.updated + ' card(s)', 'success');
+    } else {
+      msgEl.textContent = '';
+      toast((res && res.error) || 'Could not grant edit access', 'error');
+    }
+  }).catch(err => { msgEl.textContent = ''; toast('Network error: ' + err.message, 'error'); });
+}
+
+// Opens the Edit form for one card — fetches the full, unmasked row from
+// loyaltyGetCardForEditAPI (re-checks permission server-side; the Edit
+// button only ever appearing when allowed is just a UI convenience, not
+// the real gate) and builds a modal with every field pre-filled,
+// including photos. Card No/Type are shown but not editable — see
+// loyaltyEditCardAPI_'s own comment on why.
+async function loyOpenEditForm(cardNo, cardType, who) {
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  let res;
+  try {
+    res = await jsonpReliable({
+      page: 'loyaltyGetCardForEditAPI', cardNo: cardNo, cardType: cardType, role: role,
+      adminEmail: who === 'admin' ? state.adminEmail : '', adminRole: who === 'admin' ? state.adminRole : ''
+    });
+  } catch (err) { toast('Network error: ' + err.message, 'error'); return; }
+  if (!res || !res.ok) { toast((res && res.error) || 'Could not open this card for edit', 'error'); return; }
+  const c = res.card;
+  state.loyEditWho = who;
+
+  // Pre-seed confirmedPhotos with the EXISTING photo URLs — ncPhotoChanged
+  // (the SAME function the New Card form's Camera/Gallery buttons use)
+  // only overwrites a key when the person actually picks a new file, so
+  // an untouched field here submits this original URL unchanged, exactly
+  // matching the backend's keepOrUpload_ in loyaltyEditCardAPI_.
+  state.confirmedPhotos = state.confirmedPhotos || {};
+  state.confirmedPhotos['ecSigPhoto']     = c.sigPhotoUrl     || '';
+  state.confirmedPhotos['ecCustPhoto']    = c.custPhotoUrl    || '';
+  state.confirmedPhotos['ecAadhaarFront'] = c.aadhaarFrontUrl || '';
+  state.confirmedPhotos['ecAadhaarBack']  = c.aadhaarBackUrl  || '';
+  state.confirmedPhotos['ecPanPhoto']     = c.panPhotoUrl     || '';
+
+  const existing = document.getElementById('loyEditModal');
+  if (existing) existing.remove();
+
+  const photoField = (label, id, url, required) => `
+    <div class="form-row"><label>${label} ${required ? '<span style="color:var(--red);">*</span>' : ''}</label>
+      ${url ? `<div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;"><img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${url}','_blank')"><span style="font-size:10.5px;color:var(--text3);">Current photo — choose below only to replace it</span></div>` : ''}
+      <div class="nc-ph2col">
+        <label class="nc-ph-btn">📷 Camera<input type="file" id="${id}Cam" accept="image/*" capture="environment" onchange="ncPhotoChanged('${id}','${id}Cam')"></label>
+        <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="${id}" accept="image/*" onchange="ncPhotoChanged('${id}')"></label>
+      </div>
+      <div id="${id}-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+    </div>`;
+
+  const div = document.createElement('div');
+  div.id = 'loyEditModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:90vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="document.getElementById('loyEditModal').remove()" title="Close">✕</button>
+    <div class="modal-title">✏️ Edit Loyalty Card</div>
+    <div style="font-size:11px;color:var(--text3);margin:4px 0 12px;">Card Type: <b>${escHtml(c.cardType)}</b> &nbsp;·&nbsp; Card No: <b>${escHtml(c.cardNo)}</b> (cannot be changed)</div>
+
+    <div class="form-row"><label>Customer Full Name <span style="color:var(--red);">*</span></label><input type="text" id="ecCustName" value="${escHtml(properCase(c.custName))}"></div>
+    <div class="form-row"><label>Occupation <span style="color:var(--red);">*</span></label><input type="text" id="ecOccupation" value="${escHtml(c.occupation)}"></div>
+    <div class="form-row"><label>Organization Name</label><input type="text" id="ecOrgName" value="${escHtml(c.orgName)}"></div>
+    <div class="form-row"><label>Phone Number <span style="color:var(--red);">*</span></label><input type="tel" id="ecPhone" inputmode="numeric" maxlength="10" value="${escHtml(c.phone)}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+    <div class="form-row"><label>Address <span style="color:var(--red);">*</span></label><textarea id="ecAddress" rows="2">${escHtml(c.address)}</textarea></div>
+
+    ${photoField('Customer Signature Photo', 'ecSigPhoto', c.sigPhotoUrl, true)}
+    ${photoField('Customer Photo', 'ecCustPhoto', c.custPhotoUrl, true)}
+
+    <div class="form-row"><label>Aadhaar No <span style="color:var(--red);">*</span></label><input type="text" id="ecAadhaarNo" inputmode="numeric" maxlength="12" value="${escHtml(c.aadhaarNo)}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
+    ${photoField('Aadhaar Card Front Photo', 'ecAadhaarFront', c.aadhaarFrontUrl, true)}
+    ${photoField('Aadhaar Card Back Photo', 'ecAadhaarBack', c.aadhaarBackUrl, false)}
+
+    <div class="form-row"><label>Pan No</label><input type="text" id="ecPanNo" maxlength="10" value="${escHtml(c.panNo)}"></div>
+    ${photoField('Pan Card Photo', 'ecPanPhoto', c.panPhotoUrl, false)}
+
+    <div class="form-row"><label>Card Issued Date <span style="color:var(--red);">*</span></label><input type="date" id="ecCardDate" value="${escHtml(c.cardDateISO)}"></div>
+
+    <div id="ecErrorMsg" style="display:none;color:var(--red);font-size:12px;margin:8px 0;"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn-primary" id="ecSubmitBtn" onclick="submitLoyaltyCardEdit('${escJs(c.cardNo)}','${escJs(c.cardType)}')">💾 Save Changes</button>
+      <button class="btn-secondary" onclick="document.getElementById('loyEditModal').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+async function submitLoyaltyCardEdit(cardNo, cardType) {
+  const errBox = document.getElementById('ecErrorMsg');
+  errBox.style.display = 'none';
+
+  const custName   = document.getElementById('ecCustName').value.trim().toUpperCase();
+  const occupation = document.getElementById('ecOccupation').value.trim();
+  const orgName    = document.getElementById('ecOrgName').value.trim();
+  const phone      = document.getElementById('ecPhone').value.trim();
+  const address    = document.getElementById('ecAddress').value.trim().toUpperCase();
+  const aadhaarNo  = document.getElementById('ecAadhaarNo').value.trim();
+  const panNo      = document.getElementById('ecPanNo').value.trim();
+  const cardDate   = document.getElementById('ecCardDate').value;
+
+  if (!custName || !occupation || !phone || !address || !aadhaarNo || !cardDate) {
+    errBox.textContent = 'Please fill all required fields'; errBox.style.display = 'block'; return;
+  }
+  const mobileErr = validateMobileNo(phone);
+  if (mobileErr) { errBox.textContent = mobileErr; errBox.style.display = 'block'; return; }
+  const aadhaarErr = validateAadhaarNo(aadhaarNo);
+  if (aadhaarErr) { errBox.textContent = aadhaarErr; errBox.style.display = 'block'; return; }
+
+  const who = state.loyEditWho;
+  const editIdemKey = makeIdemKey(['loyaltyedit', cardNo, custName, phone, cardDate]);
+  if (isDuplicateSubmission(editIdemKey)) { toast('Already saving, please wait...', 'info'); return; }
+
+  const btn = document.getElementById('ecSubmitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+
+  try {
+    const payload = {
+      page: 'loyaltyEditCardAPI',
+      empName: who === 'admin' ? state.adminName : state.empName,
+      empEmail: who === 'admin' ? state.adminEmail : state.empEmail,
+      empId: who === 'admin' ? '' : state.empId,
+      role: who === 'admin' ? 'ADMIN' : 'EMP',
+      adminRole: who === 'admin' ? state.adminRole : '', adminEmail: who === 'admin' ? state.adminEmail : '',
+      cardNo: cardNo, cardType: cardType,
+      custName, occupation, orgName, phone, address, aadhaarNo, panNo, cardIssuedDate: cardDate,
+      sigPhoto: state.confirmedPhotos['ecSigPhoto'] || '',
+      custPhoto: state.confirmedPhotos['ecCustPhoto'] || '',
+      aadhaarFront: state.confirmedPhotos['ecAadhaarFront'] || '',
+      aadhaarBack: state.confirmedPhotos['ecAadhaarBack'] || '',
+      panPhoto: state.confirmedPhotos['ecPanPhoto'] || '',
+      idemKey: editIdemKey
+    };
+    const resp = await _fetchWithTimeout(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }, 90000);
+    const result = await _parseMainApiResponse(resp);
+
+    if (result && result.ok) {
+      const modal = document.getElementById('loyEditModal');
+      if (modal) modal.remove();
+      toast('✅ Card ' + result.cardNo + ' updated successfully', 'success');
+      showCongratsPopup_({ icon: '✏️', title: 'Card Updated', type: 'loyaltyedit', msg: 'Loyalty Card <b>#' + escHtml(result.cardNo) + '</b> updated successfully.' });
+      if (who === 'admin') runLoyaltySearch('admin'); else runLoyaltySearch('emp');
+    } else {
+      errBox.textContent = (result && result.error) || 'Could not save changes'; errBox.style.display = 'block';
+    }
+  } catch (err) {
+    errBox.textContent = 'Network/connection error: ' + err.message; errBox.style.display = 'block';
+    _reportSubmitError_('Loyalty Card Edit', 'submit', String((err && err.message) || err));
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Save Changes';
+  }
 }
 
 // Loads exactly one customer photo on demand (called when its "Tap to
