@@ -15260,6 +15260,7 @@ function loyBulkAllowEditForEmployee() {
     if (res && res.ok) {
       msgEl.textContent = '✓ Edit access granted on ' + res.updated + ' card(s) for ' + empName;
       toast('Edit access granted on ' + res.updated + ' card(s)', 'success');
+      document.getElementById('loyBulkEditEmpName').value = '';
     } else {
       msgEl.textContent = '';
       toast((res && res.error) || 'Could not grant edit access', 'error');
