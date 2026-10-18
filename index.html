@@ -3533,6 +3533,37 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
               <select id="settingsEmpSelect" class="uniform-select" onchange="onSettingsEmpSelected()"><option value="">-- Loading employees... --</option></select>
             </div>
             <div id="settingsEmpPermBody"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+
+            <!-- v-add (BRO: "edaina issue ni aa particular emp ki chepali ante,
+                 means edaina section # chesi, aa particaular emp ki msg cheyali.
+                 ... notification pop laga ravali, adi malli admin off chesthe
+                 agali, ledante adi off chesinanta vataku ala vastune undali" —
+                 a nagging alert: admin tags a section and writes a message for
+                 ONE employee (the one picked above); it pops up on that
+                 employee's screen repeatedly (on login/app open, and again
+                 every few minutes while they're in the app) for as long as it
+                 stays ON — dismissing the popup does NOT stop it coming back,
+                 only Admin turning it off here does. -->
+            <div class="card" style="margin-top:10px;">
+              <div class="card-title">📢 Send Alert to This Employee</div>
+              <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pops up on their screen repeatedly until you turn it off below — not a one-time notification.</p>
+              <div class="form-row"><label>Section</label>
+                <select id="empAlertSection" class="uniform-select">
+                  <option value="General">General</option>
+                  <option value="DSR">DSR</option>
+                  <option value="Loyalty Card">Loyalty Card</option>
+                  <option value="Leads">Leads</option>
+                  <option value="Stock Checklist">Stock Checklist</option>
+                  <option value="Golden Aura">Golden Aura</option>
+                  <option value="Leave">Leave</option>
+                  <option value="KPI">KPI</option>
+                </select>
+              </div>
+              <div class="form-row"><label>Message</label><textarea id="empAlertMsg" rows="3" placeholder="What should they fix/know..."></textarea></div>
+              <button class="btn-primary" onclick="sendEmpAlert_()">📢 Send Alert</button>
+              <div id="empAlertSendMsg" style="font-size:11px;color:var(--text3);margin-top:6px;"></div>
+              <div id="empAlertActiveList" style="margin-top:12px;"></div>
+            </div>
           </div>
 
           <!-- ADMIN ACCESS PANEL — per-person, full feature accordion -->
@@ -7476,6 +7507,7 @@ async function loadEmpData() {
     try { renderCalendar(); } catch(e4) { console.error('renderCalendar failed:', e4); }
     try { renderTrend(); } catch(e5) { console.error('renderTrend failed:', e5); }
     try { checkCrmEventPopup_(); } catch(e6) { console.error('crm event popup failed:', e6); }
+    try { checkMyActiveAlerts_(); } catch(e7) { console.error('emp alert check failed:', e7); } // v-add — see checkMyActiveAlerts_ below
   } catch(e) {
     toast('Data load error: ' + e.message, 'error');
   }
@@ -8845,6 +8877,112 @@ async function pollForPortalChanges_() {
   } catch (e) {}
 }
 setInterval(pollForPortalChanges_, 10000);
+// v-add (BRO's admin-to-employee nagging alert feature): re-checks every 3
+// minutes while an employee session is open (checkMyActiveAlerts_ itself is
+// a no-op for admin sessions and when offline) — the first check already
+// happens right after login inside loadEmpData(), this just keeps bringing
+// the popup back for as long as Admin leaves the alert turned on.
+setInterval(() => { try { checkMyActiveAlerts_(); } catch (e) {} }, 180000);
+
+// ══════════════════════════════════════════════════════════════════
+// v-add (BRO: "admin oka new feture kavali, edaina issue ni aa
+// particular emp ki chepali ante, means edaina section # chesi, aa
+// particular emp ki msg cheyali. aa notification pop laga ravali, adi
+// malli admin off chesthe agali, ledante adi off chesinanta vataku ala
+// vastune undali" — a nagging, admin-controlled alert for ONE employee:
+// Admin picks the employee (Settings → Access → Employee Access, the
+// same dropdown already used for module permissions), tags a section,
+// writes a message, and sends it. It then pops up on that employee's
+// screen right after login and again every 3 minutes while it's open
+// (see loadEmpData's checkMyActiveAlerts_ call + the setInterval just
+// above) — dismissing the popup only hides THAT instance, it keeps
+// coming back on the next check. Only Admin's own "Turn Off" ends it.
+// ══════════════════════════════════════════════════════════════════
+
+// ADMIN SIDE — sends a new alert for whichever employee is currently
+// selected in the Employee Access dropdown.
+function sendEmpAlert_() {
+  const empId = document.getElementById('settingsEmpSelect').value;
+  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
+  const msgEl = document.getElementById('empAlertSendMsg');
+  if (!empId || empId === '__ALL__' || !emp) { toast('Select one employee first (not "All Employees")', 'error'); return; }
+  const section = document.getElementById('empAlertSection').value;
+  const message = document.getElementById('empAlertMsg').value.trim();
+  if (!message) { toast('Type a message first', 'error'); return; }
+  msgEl.textContent = 'Sending...';
+  jsonpReliable({
+    page: 'sendEmpAlertAPI', empId: empId, empName: emp.name, section: section, message: message,
+    adminRole: state.adminRole, adminEmail: state.adminEmail
+  }).then(res => {
+    if (res && res.ok) {
+      document.getElementById('empAlertMsg').value = '';
+      msgEl.textContent = '✓ Sent — will keep popping up for them until you turn it off below.';
+      toast('Alert sent to ' + emp.name, 'success');
+      loadEmpActiveAlerts_(empId);
+    } else {
+      msgEl.textContent = '';
+      toast((res && res.error) || 'Could not send alert', 'error');
+    }
+  }).catch(err => { msgEl.textContent = ''; toast('Network error: ' + err.message, 'error'); });
+}
+
+// ADMIN SIDE — loads + renders the currently-active alerts for the
+// selected employee, each with its own "Turn Off" button.
+function loadEmpActiveAlerts_(empId) {
+  const listEl = document.getElementById('empAlertActiveList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="font-size:11px;color:var(--text3);">Loading active alerts...</div>';
+  jsonpReliable({ page: 'getMyActiveAlertsAPI', empId: empId }).then(res => {
+    if (!res || !res.ok) { listEl.innerHTML = ''; return; }
+    renderEmpActiveAlerts_(res.alerts || [], empId, listEl);
+  }).catch(() => { listEl.innerHTML = ''; });
+}
+function renderEmpActiveAlerts_(alerts, empId, listEl) {
+  if (!alerts.length) { listEl.innerHTML = '<div style="font-size:11px;color:var(--text3);">No active alerts for this employee.</div>'; return; }
+  listEl.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Currently Active — Still Popping Up</div>' +
+    alerts.map(a => `
+      <div style="border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;">
+          <span class="kd-pill gold" style="font-size:9.5px;">${escHtml(a.section)}</span>
+          <div style="font-size:12.5px;margin-top:4px;">${escHtml(a.message)}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">${escHtml(a.createdAt)}</div>
+        </div>
+        <button class="btn-sm" style="flex-shrink:0;font-size:11px;color:var(--red);border-color:var(--red);" onclick="turnOffEmpAlert_('${escJs(a.alertId)}','${escJs(empId)}')">🔕 Turn Off</button>
+      </div>`).join('');
+}
+function turnOffEmpAlert_(alertId, empId) {
+  jsonpReliable({ page: 'turnOffEmpAlertAPI', alertId: alertId, adminRole: state.adminRole, adminEmail: state.adminEmail }).then(res => {
+    if (res && res.ok) { toast('Alert turned off', 'success'); loadEmpActiveAlerts_(empId); }
+    else toast((res && res.error) || 'Could not turn off alert', 'error');
+  }).catch(err => toast('Network error: ' + err.message, 'error'));
+}
+
+// EMPLOYEE SIDE — checks for any alerts Admin has sent and still left ON
+// for THIS employee, and pops them up if any are found. Called once right
+// after login (loadEmpData) and again every 3 minutes (setInterval above).
+function checkMyActiveAlerts_() {
+  if (state.__loginKind !== 'emp' || !state.empId || !navigator.onLine) return;
+  jsonpReliable({ page: 'getMyActiveAlertsAPI', empId: state.empId }).then(res => {
+    if (res && res.ok && Array.isArray(res.alerts) && res.alerts.length) showEmpAlertPopup_(res.alerts);
+  }).catch(() => {});
+}
+function showEmpAlertPopup_(alerts) {
+  const existing = document.getElementById('empAlertPopupModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'empAlertPopupModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">📢 Message From Admin</div>
+    ${alerts.map(a => `
+      <div style="border:1.5px solid var(--gold);border-radius:8px;padding:10px 12px;margin:10px 0;background:var(--purple-bg);">
+        <span class="kd-pill gold" style="font-size:9.5px;">${escHtml(a.section)}</span>
+        <div style="font-size:13px;margin-top:6px;">${escHtml(a.message)}</div>
+      </div>`).join('')}
+    <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="document.getElementById('empAlertPopupModal').remove()">OK, Got It</button>
+  </div>`;
+  document.body.appendChild(div);
+}
 
 // v-fix (BRO: "back button paina unna row lo remove chei. and danni floating
 // button laga ivu. adi manual ga ekkadiki chetto move chesina move avali" —
@@ -11276,6 +11414,8 @@ function renderSettingsAllEmpBody() {
 
 function onSettingsEmpSelected() {
   const empId = document.getElementById('settingsEmpSelect').value;
+  const alertListEl = document.getElementById('empAlertActiveList');
+  if (alertListEl) alertListEl.innerHTML = ''; // cleared on every switch — re-filled below only for a real single employee
   if (!empId) { renderSettingsEmpBody(null); return; }
   if (empId === '__ALL__') { renderSettingsAllEmpBody(); return; }
   const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
@@ -11287,6 +11427,7 @@ function onSettingsEmpSelected() {
   renderSettingsEmpBody(emp);
   loadSettingsEmpGranular(empId, emp.name);
   loadSettingsEmpLeaveTypeAccess(empId);
+  loadEmpActiveAlerts_(empId); // v-add — see sendEmpAlert_ below
 }
 
 // Fetches this employee's current Leave Type Access + Special
