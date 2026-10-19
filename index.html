@@ -8952,20 +8952,21 @@ setInterval(() => { try { checkMyLoyaltyEditGrants_(); } catch (e) {} }, 180000)
 // ADMIN SIDE — the alert card's own employee dropdown (independent of the
 // Access panel's "Select Employee" above). Caches like every other
 // employee dropdown in Settings (loadEmpListWithCache).
+// v-fix (BRO: "chala dagara dropdown lo local cache use cheyadam ledu") —
+// shares directEmpCache instead of its own 'empAlertTargetEmpList' cache key.
 function empAlertEmpListEnsure_() {
   const sel = document.getElementById('empAlertTargetEmp');
   if (sel.dataset.loaded === '1') return;
-  loadEmpListWithCache('empAlertTargetEmpList',
-    () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
-    (employees) => {
-      window.__empAlertEmpList = employees;
-      const current = sel.value;
-      sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-        employees.map(e => `<option value="${escJs(e.empId)}">${e.name}</option>`).join('');
-      if (current) sel.value = current;
-      sel.dataset.loaded = '1';
-    }
-  ).catch(() => {});
+  const build = () => {
+    window.__empAlertEmpList = directEmpCache;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+      directEmpCache.map(e => `<option value="${escJs(e.empId)}">${e.name}</option>`).join('');
+    if (current) sel.value = current;
+    sel.dataset.loaded = '1';
+  };
+  if (directEmpCache.length > 0) build();
+  ensureDirectEmpCache_().then(build).catch(() => {});
 }
 function empAlertTargetModeToggle_() {
   const mode = document.querySelector('input[name="empAlertTargetMode"]:checked').value;
@@ -10574,6 +10575,30 @@ function loadEmpListWithCache(cacheKey, fetchFn, renderFn) {
 
 let directEmpCache = [];
 
+// v-fix (BRO: "chala dagara dropdown lo local cache use cheyadam ledu" —
+// Direct Action, Settings Access, Loyalty Edit Access, Loyalty All Cards
+// filter, View Employee, Extra DSR filter, and Send Alert each used to
+// fetch + cache the SAME basic employee list (empId/name) under their
+// OWN separate localStorage key and their own in-memory variable. Opening
+// any ONE of those pages for the first time in a session still paid a
+// fresh network wait, even if a different page had already loaded the
+// exact same list seconds earlier — that's what read as "cache not
+// working" even though each individual dropdown WAS already caching
+// across reloads. directEmpCache (richest shape: empId/name/dept/
+// counter/designation/email, server-cached 5 min via directEmpListAPI)
+// is now the ONE shared source for every one of them — load it once,
+// anywhere, and it's instantly available everywhere else too.
+let __directEmpCachePromise = null;
+function ensureDirectEmpCache_() {
+  if (directEmpCache.length > 0) return Promise.resolve(directEmpCache);
+  if (__directEmpCachePromise) return __directEmpCachePromise;
+  __directEmpCachePromise = loadEmpListWithCache('directEmpList',
+    () => jsonpReliable({ page: 'directEmpListAPI' }),
+    (employees) => { directEmpCache = employees; }
+  ).then(() => directEmpCache).catch((err) => { __directEmpCachePromise = null; throw err; });
+  return __directEmpCachePromise;
+}
+
 async function loadDirectActionPage() {
   const roleUp = (state.adminRole || '').toUpperCase();
   const isMisOrDirector = roleUp.indexOf('MIS') > -1;
@@ -10605,10 +10630,8 @@ async function loadDirectActionPage() {
 
   if (directEmpCache.length > 0) { populateDirectEmpSelect(); return; }
   try {
-    await loadEmpListWithCache('directEmpList',
-      () => jsonpReliable({ page: 'directEmpListAPI' }),
-      (employees) => { directEmpCache = employees; populateDirectEmpSelect(); }
-    );
+    await ensureDirectEmpCache_();
+    populateDirectEmpSelect();
   } catch(e) {
     if (directEmpCache.length === 0) toast('Connection error loading employees — showing manual entry only', 'error');
   }
@@ -11429,25 +11452,27 @@ function _sectionMasterCascade_(sectionName, checked) {
 }
 
 // ── EMPLOYEE ACCESS PANEL — per-person Loyalty Card on/off + detailed sub-options ──
+// v-fix (BRO: "chala dagara dropdown lo local cache use cheyadam ledu") —
+// now shares directEmpCache/ensureDirectEmpCache_ with every other
+// employee dropdown instead of its own 'settingsEmpList' cache key.
 async function loadSettingsEmpList() {
   const sel = document.getElementById('settingsEmpSelect');
   if (sel.dataset.loaded === '1') return;
+  const build = () => {
+    window.__settingsEmpList = directEmpCache;
+    // v-add (BRO: "emp drop down lo all emp ani kuda oka option ivu, click
+    // cheste andariki vartistai, tarvata okkarki marustu change chestanu" —
+    // bulk-apply used to be a separate buried collapsed card below; now it's
+    // a normal dropdown choice like any employee, so it's reachable the same
+    // way, and admin can still come back and fine-tune one person afterward.
+    sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+      '<option value="__ALL__">🌐 All Employees</option>' +
+      directEmpCache.map(e => `<option value="${escJs(e.empId)}">${e.name} (${e.empId})</option>`).join('');
+    sel.dataset.loaded = '1';
+  };
   try {
-    await loadEmpListWithCache('settingsEmpList',
-      () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
-      (employees) => {
-        window.__settingsEmpList = employees;
-        // v-add (BRO: "emp drop down lo all emp ani kuda oka option ivu, click
-        // cheste andariki vartistai, tarvata okkarki marustu change chestanu" —
-        // bulk-apply used to be a separate buried collapsed card below; now it's
-        // a normal dropdown choice like any employee, so it's reachable the same
-        // way, and admin can still come back and fine-tune one person afterward.
-        sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-          '<option value="__ALL__">🌐 All Employees</option>' +
-          employees.map(e => `<option value="${escJs(e.empId)}">${e.name} (${e.empId})</option>`).join('');
-        sel.dataset.loaded = '1';
-      }
-    );
+    await ensureDirectEmpCache_();
+    build();
   } catch(e) {
     if (sel.dataset.loaded !== '1') sel.innerHTML = '<option value="">Could not load employees</option>';
   }
@@ -12033,10 +12058,8 @@ async function populateExtraDsrEmpFilter_() {
     buildOptions();
   } else {
     try {
-      await loadEmpListWithCache('directEmpList',
-        () => jsonpReliable({ page: 'directEmpListAPI' }),
-        (employees) => { directEmpCache = employees; buildOptions(); }
-      );
+      await ensureDirectEmpCache_();
+      buildOptions();
     } catch (e) { /* dropdown just stays "All Employees" if this fails */ }
   }
 }
@@ -13155,26 +13178,22 @@ function renderAdminProfile() {
 }
 
 // v-add: dropdown population + selection handler for Admin's "View
-// Employee Details" box — reuses the same directEmpListAPI + caching
-// pattern already used elsewhere (Direct Approve/Reject), so this adds
-// no new list-loading code path, just a new consumer of an existing one.
-let viewEmpCache = [];
+// Employee Details" box — shares directEmpCache (ensureDirectEmpCache_)
+// with every other employee dropdown now, instead of its own cache key.
 function populateViewEmpDropdown() {
-  loadEmpListWithCache('viewEmpList',
-    () => jsonpReliable({ page: 'directEmpListAPI' }),
-    (employees) => {
-      viewEmpCache = employees;
-      const sel = document.getElementById('viewEmpSelect');
-      if (!sel) return;
-      const prevVal = sel.value;
-      let html = '<option value="">-- Select an Employee --</option>';
-      employees.forEach(emp => {
-        html += `<option value="${emp.empId}">${emp.name} (${emp.empId})${emp.dept ? ' — ' + emp.dept : ''}</option>`;
-      });
-      sel.innerHTML = html;
-      if (prevVal) sel.value = prevVal;
-    }
-  ).catch(() => {});
+  const sel = document.getElementById('viewEmpSelect');
+  if (!sel) return;
+  const buildOptions = () => {
+    const prevVal = sel.value;
+    let html = '<option value="">-- Select an Employee --</option>';
+    directEmpCache.forEach(emp => {
+      html += `<option value="${emp.empId}">${emp.name} (${emp.empId})${emp.dept ? ' — ' + emp.dept : ''}</option>`;
+    });
+    sel.innerHTML = html;
+    if (prevVal) sel.value = prevVal;
+  };
+  if (directEmpCache.length > 0) buildOptions();
+  ensureDirectEmpCache_().then(buildOptions).catch(() => {});
 }
 
 async function onViewEmpSelectChange() {
@@ -15401,19 +15420,22 @@ function loyEditButtonHtml_(r, i, who) {
 // network call confirms/refreshes it in the background — list survives
 // reloads and works offline-first, same as every other employee dropdown
 // in this portal.
+// v-fix (BRO: "chala dagara dropdown lo local cache use cheyadam ledu") —
+// shares directEmpCache with every other employee dropdown. Value stays
+// the employee NAME (not empId) — the Loyalty Card sheet only stores
+// names, so loyaltySetCardEditAllowedAPI's empName param needs it as-is.
 function loyBulkEditEmpListEnsure_() {
   const sel = document.getElementById('loyEditAccessEmpName');
   if (sel.dataset.loaded === '1') return;
-  loadEmpListWithCache('loyEditAccessEmpList',
-    () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
-    (employees) => {
-      const current = sel.value;
-      sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-        employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
-      if (current) sel.value = current;
-      sel.dataset.loaded = '1';
-    }
-  ).catch(() => {});
+  const build = () => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+      directEmpCache.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+    if (current) sel.value = current;
+    sel.dataset.loaded = '1';
+  };
+  if (directEmpCache.length > 0) build();
+  ensureDirectEmpCache_().then(build).catch(() => {});
 }
 
 // Shows/hides the Card Number box depending on which scope radio is picked.
@@ -15964,19 +15986,20 @@ function loySetValidation_(cardNo, cardType, status, btnEl) {
 
 // ── "My Cards" — admin equivalent (item B4): every employee's issued
 // cards, same fields, unmasked, with an optional employee filter ──
+// v-fix (BRO: "chala dagara dropdown lo local cache use cheyadam ledu") —
+// shares directEmpCache instead of its own 'loyaltyAllCardsFilter' cache key.
 function initLoyaltyAllCardsAdminPage() {
   const sel = document.getElementById('loyMyCardsEmpFilter');
   if (sel && sel.dataset.loaded !== '1') {
-    loadEmpListWithCache('loyaltyAllCardsFilter',
-      () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
-      (employees) => {
-        const current = sel.value;
-        sel.innerHTML = '<option value="">-- All Employees --</option>' +
-          employees.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
-        sel.value = current;
-        sel.dataset.loaded = '1';
-      }
-    ).catch(() => {});
+    const build = () => {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">-- All Employees --</option>' +
+        directEmpCache.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
+      sel.value = current;
+      sel.dataset.loaded = '1';
+    };
+    if (directEmpCache.length > 0) build();
+    ensureDirectEmpCache_().then(build).catch(() => {});
   }
   loadLoyaltyAllCardsAdmin();
 }
@@ -18005,10 +18028,8 @@ async function dsrfPopulateAdminEmpSelect(who) {
     buildOptions();
   } else {
     try {
-      await loadEmpListWithCache('directEmpList',
-        () => jsonpReliable({ page: 'directEmpListAPI' }),
-        (employees) => { directEmpCache = employees; buildOptions(); }
-      );
+      await ensureDirectEmpCache_();
+      buildOptions();
     } catch (e) { /* dropdown just stays empty if this fails — dsrfSubmit already blocks submission when no employee is identified */ }
   }
 }
@@ -27471,10 +27492,8 @@ async function loadEmployeeWisePage() {
       buildEmpWiseOptions();
     } else {
       try {
-        await loadEmpListWithCache('directEmpList',
-          () => jsonpReliable({ page: 'directEmpListAPI' }),
-          (employees) => { directEmpCache = employees; buildEmpWiseOptions(); }
-        );
+        await ensureDirectEmpCache_();
+        buildEmpWiseOptions();
       } catch(e) { buildEmpWiseOptions(); /* still show whatever allLeaves alone can provide */ }
     }
   }
