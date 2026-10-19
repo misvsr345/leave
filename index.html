@@ -3578,8 +3578,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
                  stays ON — dismissing the popup does NOT stop it coming back,
                  only Admin turning it off here does. -->
             <div class="card" style="margin-top:10px;">
-              <div class="card-title">📢 Send Alert to This Employee</div>
-              <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pops up on their screen repeatedly until you turn it off below — not a one-time notification.</p>
+              <div class="card-title">📢 Send Alert</div>
+              <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Pops up repeatedly until you turn it off below — not a one-time notification.</p>
+              <!-- v-add (BRO: "particular emp ki pampali, konni time lo andariki
+                   pampali. so all and individual ivu" — this used to be tied to
+                   whichever employee was picked in the Access panel above, with
+                   no way to broadcast to everyone. Own target control now, same
+                   Individual/All radio pattern as Loyalty Edit Access. -->
+              <div class="form-row"><label>Send To</label>
+                <div style="display:flex;gap:14px;font-size:12.5px;margin-bottom:8px;">
+                  <label><input type="radio" name="empAlertTargetMode" value="individual" checked onchange="empAlertTargetModeToggle_()"> Individual Employee</label>
+                  <label><input type="radio" name="empAlertTargetMode" value="all" onchange="empAlertTargetModeToggle_()"> All Employees</label>
+                </div>
+                <select id="empAlertTargetEmp" class="uniform-select" onfocus="empAlertEmpListEnsure_()" onchange="onEmpAlertTargetEmpChange_()">
+                  <option value="">-- Select Employee --</option>
+                </select>
+              </div>
               <div class="form-row"><label>Section</label>
                 <select id="empAlertSection" class="uniform-select">
                   <option value="General">General</option>
@@ -6863,6 +6877,7 @@ async function adminLogin() {
         loadAdminData();
         checkLoyaltyAlerts('admin');
         checkWalkinMissingAlert();
+        checkPendingLeavePopup_();
         // MIS-only: check for Pending leaves (today) that still have
         // active/uncalled leads assigned — see checkPendingLeaveWithLeadsAPI.
         // Never shown to Store Manager or any other admin role.
@@ -8934,25 +8949,70 @@ setInterval(() => { try { checkMyLoyaltyEditGrants_(); } catch (e) {} }, 180000)
 // coming back on the next check. Only Admin's own "Turn Off" ends it.
 // ══════════════════════════════════════════════════════════════════
 
-// ADMIN SIDE — sends a new alert for whichever employee is currently
-// selected in the Employee Access dropdown.
+// ADMIN SIDE — the alert card's own employee dropdown (independent of the
+// Access panel's "Select Employee" above). Caches like every other
+// employee dropdown in Settings (loadEmpListWithCache).
+function empAlertEmpListEnsure_() {
+  const sel = document.getElementById('empAlertTargetEmp');
+  if (sel.dataset.loaded === '1') return;
+  loadEmpListWithCache('empAlertTargetEmpList',
+    () => jsonpReliable({ page: 'listEmployeesForPermsAPI' }),
+    (employees) => {
+      window.__empAlertEmpList = employees;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+        employees.map(e => `<option value="${escJs(e.empId)}">${e.name}</option>`).join('');
+      if (current) sel.value = current;
+      sel.dataset.loaded = '1';
+    }
+  ).catch(() => {});
+}
+function empAlertTargetModeToggle_() {
+  const mode = document.querySelector('input[name="empAlertTargetMode"]:checked').value;
+  document.getElementById('empAlertTargetEmp').style.display = mode === 'individual' ? '' : 'none';
+  const listEl = document.getElementById('empAlertActiveList');
+  if (listEl) listEl.innerHTML = '';
+  if (mode === 'all') {
+    loadEmpActiveAlerts_('__ALL__');
+  } else {
+    const empId = document.getElementById('empAlertTargetEmp').value;
+    if (empId) loadEmpActiveAlerts_(empId);
+  }
+}
+function onEmpAlertTargetEmpChange_() {
+  const empId = document.getElementById('empAlertTargetEmp').value;
+  const listEl = document.getElementById('empAlertActiveList');
+  if (listEl) listEl.innerHTML = '';
+  if (empId) loadEmpActiveAlerts_(empId);
+}
+
+// ADMIN SIDE — sends a new alert, either to one employee or to everyone
+// (empId "__ALL__" — same sentinel already used for bulk access settings),
+// per the Individual/All radio above.
 function sendEmpAlert_() {
-  const empId = document.getElementById('settingsEmpSelect').value;
-  const emp = (window.__settingsEmpList || []).find(e => e.empId === empId);
+  const mode = (document.querySelector('input[name="empAlertTargetMode"]:checked') || {}).value || 'individual';
   const msgEl = document.getElementById('empAlertSendMsg');
-  if (!empId || empId === '__ALL__' || !emp) { toast('Select one employee first (not "All Employees")', 'error'); return; }
+  let empId, empName;
+  if (mode === 'all') {
+    empId = '__ALL__'; empName = 'All Employees';
+  } else {
+    empId = document.getElementById('empAlertTargetEmp').value;
+    const emp = (window.__empAlertEmpList || []).find(e => e.empId === empId);
+    if (!empId || !emp) { toast('Select an employee first', 'error'); return; }
+    empName = emp.name;
+  }
   const section = document.getElementById('empAlertSection').value;
   const message = document.getElementById('empAlertMsg').value.trim();
   if (!message) { toast('Type a message first', 'error'); return; }
   msgEl.textContent = 'Sending...';
   jsonpReliable({
-    page: 'sendEmpAlertAPI', empId: empId, empName: emp.name, section: section, message: message,
+    page: 'sendEmpAlertAPI', empId: empId, empName: empName, section: section, message: message,
     adminRole: state.adminRole, adminEmail: state.adminEmail
   }).then(res => {
     if (res && res.ok) {
       document.getElementById('empAlertMsg').value = '';
-      msgEl.textContent = '✓ Sent — will keep popping up for them until you turn it off below.';
-      toast('Alert sent to ' + emp.name, 'success');
+      msgEl.textContent = '✓ Sent — will keep popping up for ' + (mode === 'all' ? 'everyone' : empName) + ' until you turn it off below.';
+      toast('Alert sent to ' + empName, 'success');
       loadEmpActiveAlerts_(empId);
     } else {
       msgEl.textContent = '';
@@ -8973,12 +9033,13 @@ function loadEmpActiveAlerts_(empId) {
   }).catch(() => { listEl.innerHTML = ''; });
 }
 function renderEmpActiveAlerts_(alerts, empId, listEl) {
-  if (!alerts.length) { listEl.innerHTML = '<div style="font-size:11px;color:var(--text3);">No active alerts for this employee.</div>'; return; }
+  if (!alerts.length) { listEl.innerHTML = '<div style="font-size:11px;color:var(--text3);">No active alerts' + (empId === '__ALL__' ? ' broadcast to everyone' : ' for this employee') + '.</div>'; return; }
   listEl.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Currently Active — Still Popping Up</div>' +
     alerts.map(a => `
       <div style="border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div style="flex:1;">
           <span class="kd-pill gold" style="font-size:9.5px;">${escHtml(a.section)}</span>
+          ${a.scope === 'all' ? '<span class="kd-pill" style="font-size:9.5px;background:var(--purple-bg);color:var(--purple-dark);margin-left:4px;">🌐 All Employees</span>' : ''}
           <div style="font-size:12.5px;margin-top:4px;">${escHtml(a.message)}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:2px;">${escHtml(a.createdAt)}</div>
         </div>
@@ -11499,7 +11560,9 @@ function onSettingsEmpSelected() {
   renderSettingsEmpBody(emp);
   loadSettingsEmpGranular(empId, emp.name);
   loadSettingsEmpLeaveTypeAccess(empId);
-  loadEmpActiveAlerts_(empId); // v-add — see sendEmpAlert_ below
+  // v-fix (BRO: "particular emp ki pampali, konni time lo andariki pampali" —
+  // Send Alert now has its OWN employee dropdown, independent of this Access
+  // panel selector, so it no longer piggybacks on this onchange.
 }
 
 // Fetches this employee's current Leave Type Access + Special
@@ -14180,6 +14243,13 @@ function closeLoyaltyAlertModal() {
 // the same "yesterday had zero rows" check as a popup right when admin
 // logs in, instead of only finding out via email later.
 function checkWalkinMissingAlert() {
+  // v-fix (BRO: "date marina ventane vastundi. ala vaddu. ninnati data eroju
+  // 12pm lo enter chestaru, so daniki popup vaddu. 2pm varaku enter avakapote
+  // popup ravali" — this used to fire the instant the date rolled over
+  // (effectively midnight), well before the floor team even has a chance to
+  // enter yesterday's walk-ins. Staff enters it by ~12 PM, so only check
+  // from 2 PM onward — before that, skip silently every time.
+  if (new Date().getHours() < 14) return;
   jsonpReliable({ page: 'walkinMissingCheckAPI' })
     .then(res => {
       if (!res || !res.ok || !res.missing) return;
@@ -14192,6 +14262,46 @@ function checkWalkinMissingAlert() {
 }
 function closeWalkinAlertModal() {
   document.getElementById('walkinAlertModal').classList.remove('open');
+}
+
+// v-add (BRO: "pending mail vaddu... portal open chesina ventane leave
+// pending unte popup ravali, no name, only pending leave number, akkadinunde
+// redirect avali" — replaces the every-4-hours "PENDING LEAVE REMINDER"
+// email entirely with a plain in-portal popup on login: just the count,
+// tap to go straight to the Pending Approvals page). Reuses allLeavesAPI
+// (same data the Pending page itself renders from) instead of a new
+// backend endpoint, and the SAME Pending/MIS_Approved + Store-Manager
+// department filter renderPending() uses, so the number shown here always
+// matches what's on that page a tap later.
+function checkPendingLeavePopup_() {
+  jsonpReliable({ page: 'allLeavesAPI', role: 'ADMIN' }).then(res => {
+    if (!res || !res.ok) return;
+    let pending = (res.leaves || []).filter(l => l.status === 'Pending' || l.status === 'MIS_Approved');
+    if (state.isStoreManager) {
+      pending = pending.filter(l => l.status === 'MIS_Approved');
+      if (state.adminDepartment) {
+        pending = pending.filter(l => (l.department || '').trim().toLowerCase() === state.adminDepartment.trim().toLowerCase());
+      }
+    }
+    if (!pending.length) return;
+    showPendingLeavePopup_(pending.length);
+  }).catch(() => { /* silent — background check, never block login */ });
+}
+function showPendingLeavePopup_(count) {
+  const existing = document.getElementById('pendingLeavePopupModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'pendingLeavePopupModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:360px;">
+    <div class="modal-title">⏳ Pending Leave(s)</div>
+    <div style="font-size:15px;color:var(--text2);margin:10px 0;"><b style="font-size:22px;color:var(--purple);">${count}</b> leave request(s) awaiting action.</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('pendingLeavePopupModal').remove()">Later</button>
+      <button class="btn-primary" style="flex:1;" onclick="document.getElementById('pendingLeavePopupModal').remove();showAdminPage('pending')">⏳ View</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
 }
 
 // Hides the Leave / Loyalty Card / KPI / DSR / Leads / Stock Checklist
@@ -22841,6 +22951,22 @@ async function submitLeadCall() {
     feedback:       document.getElementById('leadFeedbackTxt').value,
     duration:       duration
   };
+
+  // v-fix (BRO: "submit aina leads kuda konni double entry lu unnai" —
+  // this submit had NO idempotency key at all, unlike Loyalty/DSR/every
+  // other form in this portal. Root cause of the duplicates: the catch
+  // block below queues this SAME payload offline on any network error —
+  // including the case where the backend actually already saved the
+  // entry and only the response never made it back (slow/dropped
+  // connection on the way back). The offline queue then retries it later
+  // and a second identical row lands in Calling Log. Computed once here,
+  // BEFORE the request ever goes out, so it rides along through every
+  // retry path (live send, offline queue, flush-on-reconnect) unchanged —
+  // the backend (_saveCRMEntry) now checks this key and returns the
+  // original result instead of writing a second row for a genuine retry.
+  const leadCallIdemKey = makeIdemKey(['leadcall', state.empId || state.empName, __leadCallCurrent.phone, payload.timestamp]);
+  if (isDuplicateSubmission(leadCallIdemKey)) { toast('Already submitting, please wait...', 'info'); return; }
+  payload.idemKey = leadCallIdemKey;
 
   // v-fix (BRO: "all form ki apply chei — offline lo local cache ga save
   // avali, online vachinappudu auto sync avali, image kuda kavali" —
