@@ -3871,8 +3871,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
-        <div class="quick-action-btn" id="adminQADsrTillDate" onclick="showAdminPage('dsr-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Till Date DSR</div><div class="quick-action-sub">This month so far</div></div>
-        <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">Custom range</div></div>
+        <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">This month so far — or pick your own range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
         <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
@@ -3917,13 +3916,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <button class="export-icon-btn" id="exportBtn-dsrMissingBox-admin" style="display:none;" onclick="openBoxExportModal('dsrMissingBox-admin','Missing DSR')" title="Export">📥</button>
       <div class="card"><div id="dsrMissingBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
-    <div class="page-section" id="admin-dsr-tilldate">
-      <div class="section-hdr"><span class="section-title2">📅 Till Date DSR — All Employees</span></div>
-      <button class="export-icon-btn" id="exportBtn-dsrTillDateBox-admin" style="display:none;" onclick="openBoxExportModal('dsrTillDateBox-admin','Till Date DSR')" title="Export">📥</button>
-      <div class="card"><div id="dsrTillDateBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
-    </div>
     <div class="page-section" id="admin-dsr-daterange">
-      <div class="section-hdr"><span class="section-title2">🗓️ DSR — Date to Date</span></div>
+      <div class="section-hdr"><span class="section-title2">🗓️ DSR — Date to Date — All Employees</span></div>
+      <!-- v-fix (BRO: "Till Date DSR" and "Date to Date" same pani -
+           merge chesei" — these were two separate tiles/pages both
+           calling the exact same backend (dsrDateRangeJSON) and
+           rendering with the exact same dsrRangeResultHtml(); "Till
+           Date" was just this page pre-filled to month-start→today.
+           Merged into one: this page now opens already showing the
+           current month (same as Till Date used to), and the date
+           fields below are pre-filled with that same range so the
+           user can just change them for a custom range instead of
+           a separate tile/page. -->
       <div class="card">
         <button class="btn-sm" style="margin-bottom:8px;" onclick="toggleCustomDateGroup('dsrRange-admin', this)">🔍 Custom Date</button>
         <div id="dsrRange-admin-wrap" style="display:none;">
@@ -7108,7 +7112,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openEmpMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -7146,7 +7150,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openAdminMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-tilldate','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -7224,7 +7228,7 @@ const SECTION_LABEL_MAP = {
   'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   'kpi-trend': 'KPI',
-  dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-tilldate': 'DSR',
+  dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
   'dsr-tagsearch': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
@@ -7460,7 +7464,7 @@ function showEmpPage(page, opts) {
   if(page==='dsr-today') loadDsrToday('emp');
   if(page==='dsr-status') loadDsrStatus('emp');
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-emp']){ SEC_LOADED['dsr-missing-emp']=true; loadDsrMissing('emp'); } }
-  if(page==='dsr-tilldate') loadDsrTillDate('emp');
+  if(page==='dsr-daterange') { if(!SEC_LOADED['dsr-daterange-emp']){ SEC_LOADED['dsr-daterange-emp']=true; initDsrDateRangeDefaults('emp'); } }
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
   if(page==='outletissue') renderDsrEntryForm('emp-oi');
   if(page==='rdr') { renderDsrEntryForm('emp-rdr'); rdrSwitchTab('emp', RDR_TAB.emp || 'new'); }
@@ -12664,7 +12668,6 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
-  { icon: '📅', label: 'Till Date DSR', page: 'dsr-tilldate' },
   { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
   { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
@@ -13570,7 +13573,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr-today') loadDsrToday('admin');
   if(page==='dsr-status') loadDsrStatus('admin');
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-admin']){ SEC_LOADED['dsr-missing-admin']=true; loadDsrMissing('admin'); } }
-  if(page==='dsr-tilldate') loadDsrTillDate('admin');
+  if(page==='dsr-daterange') { if(!SEC_LOADED['dsr-daterange-admin']){ SEC_LOADED['dsr-daterange-admin']=true; initDsrDateRangeDefaults('admin'); } }
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='outletissue') renderDsrEntryForm('admin-oi');
   if(page==='rdr') { renderDsrEntryForm('admin-rdr'); rdrSwitchTab('admin', RDR_TAB.admin || 'new'); }
@@ -17928,18 +17931,25 @@ function loadDsrMissingCustom(who) {
   loadDsrMissing(who, s, e);
 }
 
-function loadDsrTillDate(who) {
-  const box = document.getElementById('dsrTillDateBox-' + who);
-  hideExportBtn(box.id);
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+// v-fix (BRO: "Till Date DSR" and "Date to Date" same pani — merge
+// chesei" — both tiles called the exact same backend
+// (dsrDateRangeJSON) and rendered with the exact same
+// dsrRangeResultHtml(); "Till Date" was only ever this page
+// pre-filled to month-start→today. initDsrDateRangeDefaults() runs
+// once per page-visit (see SEC_LOADED guard at the showAdminPage/
+// showEmpPage dispatch) and reproduces that old "Till Date" default —
+// pre-fills the (initially collapsed) custom-date inputs with the
+// current month's range and loads it immediately — while
+// loadDsrDateRange() itself still works exactly as "Date to Date"
+// always did for a custom range.
+function initDsrDateRangeDefaults(who) {
   const today = new Date();
   const first = new Date(today.getFullYear(), today.getMonth(), 1);
-  const iso = d => toYMD(d);
-  jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: iso(first), end: iso(today) })).then(res => {
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrTillDate(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
-    box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
-    showExportBtn(box.id);
-  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrTillDate(\'" + who + "\')" title="Retry">🔄</button></div>'; });
+  const sEl = document.getElementById('dsrRangeStart-' + who);
+  const eEl = document.getElementById('dsrRangeEnd-' + who);
+  if (sEl) sEl.value = toYMD(first);
+  if (eEl) eEl.value = toYMD(today);
+  loadDsrDateRange(who);
 }
 
 function loadDsrDateRange(who) {
@@ -17951,7 +17961,7 @@ function loadDsrDateRange(who) {
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: start, end: end })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrDateRange(\'\" + who + \"\')\" title=\"Retry\">🔄</button></div>'; return; }
-    box.innerHTML = dsrRangeResultHtml(res);
+    box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + dsrRangeResultHtml(res);
     showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrDateRange(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
@@ -18675,7 +18685,7 @@ function dsrTagValid(s) { return /^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+$/.test(
 // paid push service — this polling is the closest practical equivalent, and in practice means a change
 // made on one device shows up elsewhere within a handful of seconds instead of only on next manual
 // Refresh tap.)
-var PORTAL_STOCKDSR_LIVE_PAGES = ['dsr', 'dsr-today', 'dsr-status', 'dsr-missing', 'dsr-tilldate', 'dsr-newentry',
+var PORTAL_STOCKDSR_LIVE_PAGES = ['dsr', 'dsr-today', 'dsr-status', 'dsr-missing', 'dsr-daterange', 'dsr-newentry',
   'dsr-advorder', 'outletissue', 'rdr', 'stockentry', 'stocklevel', 'stocklevel-overview', 'stocklevel-counter',
   'stocklevel-sales', 'stocklevel-tag', 'stocklevel-photos', 'stocklevel-manage', 'stocklevel-today', 'stocklevel-failed',
   'stocktransfer', 'mystocktransfer'];
