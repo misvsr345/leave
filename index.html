@@ -13760,20 +13760,44 @@ async function populateBlockedScroller(wrapId, trackId, forceRefresh) {
   }
 
   const nowYM = todayYMD().substring(0, 7); // yyyy-MM — only show THIS running month's blocked dates
-  const dates = (blockedDatesCache.blockedDates || [])
+  const monthDates = (blockedDatesCache.blockedDates || [])
     .filter(d => normalizeDateStr(d.date).substring(0, 7) === nowYM)
-    .slice(0, 10); // cap for readability
+    .map(d => ({ date: normalizeDateStr(d.date), reason: d.reason || '' }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // v-fix (BRO: "10 july nundi 15 july varaku block cheste, venta venta oka
+  // okka date ga vastundi — bulk lo cheste start date nundi end date varaku
+  // ani ravali, single date lo cheste single date ravali" — a bulk-blocked
+  // range is stored as one row per day (so removing a single day out of the
+  // middle of a range still works), but that made this scroller read as 6
+  // separate lines for one range block. Groups consecutive calendar days
+  // with the same reason into one "start to end" entry here, display-only —
+  // a date blocked on its own (no adjacent day, or a different reason next
+  // to it) still shows as just that one date, unchanged.
+  const groups = [];
+  monthDates.forEach(d => {
+    const last = groups[groups.length - 1];
+    const isNextDay = last && (new Date(d.date) - new Date(last.end)) === 86400000;
+    if (last && isNextDay && last.reason === d.reason) {
+      last.end = d.date;
+    } else {
+      groups.push({ start: d.date, end: d.date, reason: d.reason });
+    }
+  });
+  const dateGroups = groups.slice(0, 10); // cap for readability
   const days = blockedDatesCache.blockedDays || [];
 
-  if (dates.length === 0 && days.length === 0) {
+  if (dateGroups.length === 0 && days.length === 0) {
     wrap.classList.remove('show');
     track.innerHTML = '';
     return;
   }
 
   const parts = [];
-  dates.forEach(d => {
-    parts.push(`🚫 ${fmtDMY(d.date)}${d.reason ? ' — ' + d.reason : ''} is a Blocked Date`);
+  dateGroups.forEach(g => {
+    const isRange = g.start !== g.end;
+    const label = isRange ? (fmtDMY(g.start) + ' to ' + fmtDMY(g.end)) : fmtDMY(g.start);
+    parts.push(`🚫 ${label}${g.reason ? ' — ' + g.reason : ''} ${isRange ? 'are Blocked Dates' : 'is a Blocked Date'}`);
   });
   if (days.length > 0) {
     parts.push(`🚫 Every ${days.join(', ')} ${days.length>1?'are':'is a'} Blocked Day`);
