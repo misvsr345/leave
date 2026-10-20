@@ -3662,27 +3662,29 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
           <!-- v-add: Login page background image — BRO: "purple color unna place lo manaki nachina
                image ni pettocha, kani expiry date ivu, expiry avagane automatic ga remove avali,
-               purple/theme color ravali". Expiry is required — the upload button stays off without
-               one, and the backend won't save a background without an expiry either. -->
+               purple/theme color ravali". v-fix (BRO: "emoji lu vadu, upload image and remove image
+               button lu pettu, photo upload ayyaka expiry date fix chese laga undali" — no emoji
+               anywhere here now; plain-text Upload Image / Remove Image buttons; and upload no
+               longer forces an expiry date up front — you can upload the photo first and set/fix
+               the expiry separately, any time, with its own Save Expiry button below. The manual
+               Remove Image button is always there too, so you're never stuck waiting on the
+               expiry — you can take it down yourself the moment you want to. -->
           <div class="card">
-            <div class="card-title">🖼️ Login Background Image</div>
-            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Pick an expiry date; once it passes, this is removed automatically and the login page goes back to the default purple theme on its own.</p>
+            <div class="card-title">Login Background Image</div>
+            <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Upload a photo any time; set its expiry date separately below, whenever you want — once it passes, this is removed automatically and the login page goes back to the default purple theme on its own. You can also remove it yourself any time with the Remove Image button, no need to wait for the expiry.</p>
             <img id="storeBgPreview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Current background">
+            <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <button class="btn-sm btn-view" style="flex:1;" onclick="document.getElementById('storeBgFileInput').click()">Upload Image</button>
+              <button class="btn-sm" style="flex:1;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">Remove Image</button>
+            </div>
+            <div id="storeBgUploadStatus" style="font-size:11px;margin-bottom:10px;"></div>
             <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Expiry Date</label>
-            <!-- v-fix (BRO: "oke line lo pettu, mudu kuda" — expiry date + the two
-                 buttons, genuinely all 3 visible on one row with no scrolling needed —
-                 date takes the space it needs, both buttons shrink to icon-only
-                 squares (title= gives the label on long-press/hover). -->
-            <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:10px;flex-wrap:nowrap;">
+            <div style="display:flex;gap:6px;align-items:stretch;flex-wrap:nowrap;">
               <input type="date" id="storeBgExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
-              <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
-              <button class="btn-sm btn-view" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;" title="Upload Background Image" onclick="document.getElementById('storeBgFileInput').click()">📤</button>
-              <!-- v-add: BRO — "remove option kuda pettu, image need ledu ante remove chesthanu" —
-                   take it off immediately, same as what auto-happens once the expiry date passes. -->
-              <button class="btn-sm" style="flex:0 0 auto;width:38px;padding:0;font-size:15px;color:var(--red);border-color:var(--red);" title="Remove Background Image" onclick="onRemoveStoreBg_()">🗑️</button>
+              <button class="btn-sm btn-view" style="flex:0 0 auto;width:auto;padding:0 12px;font-size:11.5px;" onclick="onSaveBgExpiry_()">Save Expiry</button>
             </div>
             <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
-            <div id="storeBgUploadStatus" style="font-size:11px;margin-top:4px;"></div>
           </div>
         </div>
 
@@ -6546,9 +6548,11 @@ function applyStoreSettingsToUI_(s) {
     else bgPreview.style.display = 'none';
   }
   if (bgStatus) {
-    bgStatus.textContent = s.bgImageUrl && s.bgImageExpiry
-      ? ('Active — auto-removes after ' + s.bgImageExpiry)
-      : 'No background image set (login page shows the default purple theme).';
+    bgStatus.textContent = !s.bgImageUrl
+      ? 'No background image set (login page shows the default purple theme).'
+      : s.bgImageExpiry
+        ? ('Active — auto-removes after ' + s.bgImageExpiry)
+        : 'Active — no expiry date set yet. Pick one above and tap Save Expiry, or remove it yourself any time with Remove Image.';
   }
 }
 
@@ -6641,23 +6645,18 @@ function onStoreLogoFileChosen(inputEl) {
   reader.readAsDataURL(file);
 }
 
-// Settings page → "Upload Background Image". Expiry date is REQUIRED — BRO: "expiry date ivu,
-// expiry avagane automatic ga remove avali, purple/theme color ravali" — so this won't even send
-// the upload unless a future date is picked; the backend also refuses to save one without it.
+// Settings page → "Upload Image" (login background). v-fix (BRO: "photo upload ayyaka, expiry
+// date fix chese laga undali" — expiry is no longer required to upload: the photo goes up on
+// its own, and the expiry date is set separately, any time, with onSaveBgExpiry_() below. If an
+// expiry date already happens to be picked in the field when you upload, it's saved along with
+// the photo as a convenience, but it's optional either way.
 function onStoreBgFileChosen(inputEl) {
   const file = inputEl.files && inputEl.files[0];
   if (!file) return;
+  if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
   const expiryEl = document.getElementById('storeBgExpiryInput');
   const expiry = expiryEl ? expiryEl.value : '';
-  if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
-  if (!expiry) { toast('Pick an expiry date first', 'error'); inputEl.value = ''; return; }
-  // v-fix (BRO: "today date enter cheste avadam ledu... birthday ki one
-  // day kosam upload chesamu" — this used to reject expiry === today too
-  // (<=), so a same-day "show only today" background could never be
-  // saved. Backend already keeps the image live through 23:59:59 of the
-  // expiry date and only removes it starting the next day, so today is a
-  // genuinely valid expiry — only a date already in the past is rejected.
-  if (expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); inputEl.value = ''; return; }
+  if (expiry && expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); inputEl.value = ''; return; }
   const statusEl = document.getElementById('storeBgUploadStatus');
   if (statusEl) { statusEl.textContent = 'Preparing image...'; statusEl.style.color = 'var(--text3)'; }
   // v-fix (BRO: "background photo upload avvadam ledu") — phone photos are 3-10 MB; sent as raw
@@ -6667,27 +6666,58 @@ function onStoreBgFileChosen(inputEl) {
     try {
       const packed = await compressBgImage_(file);
       if (statusEl) statusEl.textContent = 'Uploading...';
+      const body = { action: 'saveStoreSettings', bgImageBase64: packed.base64, bgImageMimeType: packed.mime };
+      if (expiry) body.bgImageExpiry = expiry;
       const res = await _fetchWithTimeout(STOCK_GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'saveStoreSettings', bgImageBase64: packed.base64, bgImageMimeType: packed.mime, bgImageExpiry: expiry })
+        body: JSON.stringify(body)
       }, 60000).then(r => r.json());
       if (res && res.ok) {
         applyStoreSettingsToUI_(res.settings);
         try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
-        if (statusEl) { statusEl.textContent = '✅ Background updated — auto-removes after ' + expiry + '.'; statusEl.style.color = 'var(--green)'; }
+        if (statusEl) { statusEl.textContent = expiry ? ('Background updated — auto-removes after ' + expiry + '.') : 'Background updated. Set an expiry date below if you want it to auto-remove.'; statusEl.style.color = 'var(--green)'; }
         toast('Background image updated', 'success');
       } else {
         throw new Error((res && res.error) || 'Upload failed');
       }
     } catch (err) {
       const msg = (err && err.name === 'AbortError') ? 'timed out — check internet and try again' : (err.message || err);
-      if (statusEl) { statusEl.textContent = '❌ Upload failed — ' + msg; statusEl.style.color = 'var(--red)'; }
+      if (statusEl) { statusEl.textContent = 'Upload failed — ' + msg; statusEl.style.color = 'var(--red)'; }
       toast('Background upload failed', 'error');
     } finally {
       inputEl.value = ''; // so choosing the same photo again still triggers the upload
     }
   })();
+}
+
+// v-add (BRO: "photo upload ayyaka, expiry date fix chese laga undali") — sets/changes the
+// expiry date for the CURRENT background image on its own, without needing to re-upload the
+// photo. Works any time there's an image saved — right after upload, or days later.
+async function onSaveBgExpiry_() {
+  const expiryEl = document.getElementById('storeBgExpiryInput');
+  const expiry = expiryEl ? expiryEl.value : '';
+  const statusEl = document.getElementById('storeBgExpiryStatus');
+  if (!expiry) { toast('Pick an expiry date first', 'error'); return; }
+  if (expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); return; }
+  if (statusEl) { statusEl.textContent = 'Saving expiry date...'; statusEl.style.color = 'var(--text3)'; }
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveStoreSettings', setBgExpiryOnly: true, bgImageExpiry: expiry })
+    }, 25000).then(r => r.json());
+    if (res && res.ok) {
+      applyStoreSettingsToUI_(res.settings);
+      try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+      toast('Expiry date saved', 'success');
+    } else {
+      throw new Error((res && res.error) || 'Save failed');
+    }
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = 'Could not save expiry date — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+    toast('Could not save expiry date', 'error');
+  }
 }
 
 // Resize (max 1920px) + re-encode as JPEG. Falls back to the original file if the browser
@@ -6735,13 +6765,13 @@ async function onRemoveStoreBg_() {
     if (res && res.ok) {
       applyStoreSettingsToUI_(res.settings);
       try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
-      if (statusEl) { statusEl.textContent = '✅ Background removed — back to the default purple theme.'; statusEl.style.color = 'var(--green)'; }
+      if (statusEl) { statusEl.textContent = 'Background removed — back to the default purple theme.'; statusEl.style.color = 'var(--green)'; }
       toast('Background image removed', 'success');
     } else {
       throw new Error((res && res.error) || 'Remove failed');
     }
   } catch (err) {
-    if (statusEl) { statusEl.textContent = '❌ Remove failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+    if (statusEl) { statusEl.textContent = 'Remove failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
     toast('Could not remove background', 'error');
   }
 }
