@@ -6912,6 +6912,7 @@ async function adminLogin() {
         checkLoyaltyAlerts('admin');
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
+        checkLoyaltyPendingValidationPopup_();
         // MIS-only: check for Pending leaves (today) that still have
         // active/uncalled leads assigned — see checkPendingLeaveWithLeadsAPI.
         // Never shown to Store Manager or any other admin role.
@@ -14375,6 +14376,38 @@ function showPendingLeavePopup_(count) {
     <div style="display:flex;gap:8px;">
       <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('pendingLeavePopupModal').remove()">Later</button>
       <button class="btn-primary" style="flex:1;" onclick="document.getElementById('pendingLeavePopupModal').remove();showAdminPage('pending')">⏳ View</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+// v-add (BRO: "portal lo new card enter aina ventane, approval ki pop
+// ravali" — admin should see this the moment they log in, not have to
+// remember to open "Pending Validation" themselves. Same pattern as
+// checkPendingLeavePopup_ above. Deliberately named/worded "Validation",
+// not "Approval" — validation (Valid/Invalid) is the step that happens
+// right after a card is entered; incentive approval only happens later,
+// once 10 validated cards build up into a set, and already has its own
+// screen — this popup is about the step that actually blocks a card
+// from reaching that approval stage.
+function checkLoyaltyPendingValidationPopup_() {
+  jsonpReliable({ page: 'loyaltyPendingValidationAPI', role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail }).then(res => {
+    if (!res || !res.ok || !res.total) return;
+    showLoyaltyPendingValidationPopup_(res.total);
+  }).catch(() => { /* silent — background check, never block login */ });
+}
+function showLoyaltyPendingValidationPopup_(count) {
+  const existing = document.getElementById('loyPendingValidationPopupModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'loyPendingValidationPopupModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:360px;">
+    <div class="modal-title">🪪 Loyalty Card(s) Awaiting Validation</div>
+    <div style="font-size:15px;color:var(--text2);margin:10px 0;"><b style="font-size:22px;color:var(--purple);">${count}</b> new card(s) not yet reviewed — won't count toward incentive until validated.</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('loyPendingValidationPopupModal').remove()">Later</button>
+      <button class="btn-primary" style="flex:1;" onclick="document.getElementById('loyPendingValidationPopupModal').remove();showAdminPage('loyalty-pending-validation')">✅ Review</button>
     </div>
   </div>`;
   document.body.appendChild(div);
