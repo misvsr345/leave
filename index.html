@@ -6795,7 +6795,19 @@ async function empLogin() {
         state.empName = res.name || empId;
         state.empDept = clean(res.department);
         try {
-          const detail = await jsonp({ page:'getEmployeeDetailAPI', empId });
+          // v-fix (BRO: "Not logged in — employee name/email missing" on
+          // Loyalty Card submit even though the email WAS present in the
+          // sheet, and the name DID show correctly — root cause was this
+          // call using jsonp() (ONE attempt, 25s timeout, no retry) instead
+          // of jsonpReliable() (retries up to 3x). A single slow-network
+          // hiccup right here silently left state.empEmail/empCounter/
+          // empDesig blank — the catch below is "non-fatal" by design, so
+          // nothing ever surfaced the failure — and saveSession() right
+          // after login then persisted that blank email into localStorage,
+          // where it stayed until the next successful fresh login. This is
+          // a read-only lookup, so retrying is safe (same class as
+          // balanceJSON/leavesJSON per jsonpReliable's own comment).
+          const detail = await jsonpReliable({ page:'getEmployeeDetailAPI', empId });
           if(detail.ok) {
             state.empCounter = clean(detail.counter);
             state.empEmail = clean(detail.email);
