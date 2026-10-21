@@ -5045,6 +5045,16 @@ const LOYALTY_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLoyaltyQueue';
 const GOLDEN_AURA_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineGoldenAuraQueue';
 const LEADS_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineLeadsQueue';
 const STOCK_OFFLINE_QUEUE_KEY = 'vsrGoldOfflineStockQueue';
+// v-add (BRO: "photos upload avadam ledu. network issue unte local lo save avali.
+// then network vachaka, photo upload avali" — DSR row data already saves fine even on
+// a flaky connection; it's the SEPARATE photo-upload step right after that can fail on
+// its own (Drive hiccup), leaving a saved row with "No Photo" and nothing the employee
+// can do about it from here except wait for the old manual-resubmit email. BRO: "warning
+// email vaddu, remove chei" — that email is gone now; instead, each failed photo (full
+// base64 data, already on this device from the just-submitted rows) is queued here the
+// moment the save response reports it, and auto-retried via flushDsrPhotoRetryQueue the
+// same way every other offline queue above is — on the 'online' event and the Sync button.
+const DSR_PHOTO_RETRY_QUEUE_KEY = 'vsrGoldDsrPhotoRetryQueue';
 const CHECKLIST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScJlwiKENuFw0Z08O4JPEPk51JCT9OVmijiBIwzQfvzVWFD9Q/viewform';
 const DAILY_SHOP_FORM_URL = 'https://forms.gle/SV2RbxC6uKNaNM1j8';
 
@@ -8903,7 +8913,7 @@ function updateConnStatus() {
   // so "did my data actually save?" never has to be a guess again:
   //   pending > 0 → gold "📤 Sync (N)" — tap to upload now
   //   pending = 0 → green "✅ Synced"  — confirms nothing is waiting
-  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).length + getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY).length;
+  const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).length + getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY).length;
   ['empMoreSyncLabel', 'adminMoreSyncLabel', 'empSidebarSyncLabel', 'adminSidebarSyncLabel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = pendingCount > 0 ? pendingCount + ' item(s) pending' : 'All synced';
@@ -8935,7 +8945,7 @@ function updateConnStatus() {
 }
 var __syncProgress = null; // {done, total} while the Sync modal's progress ring is active, else null
 async function flushAllOfflineQueues() {
-  const fns = [flushOfflineQueue, flushDsrOfflineQueue, flushStockOfflineQueue, flushLoyaltyOfflineQueue, flushGoldenAuraOfflineQueue, flushLeadsOfflineQueue];
+  const fns = [flushOfflineQueue, flushDsrOfflineQueue, flushDsrPhotoRetryQueue, flushStockOfflineQueue, flushLoyaltyOfflineQueue, flushGoldenAuraOfflineQueue, flushLeadsOfflineQueue];
   if (__syncProgress) { __syncProgress.total = fns.length; __syncProgress.done = 0; seUpdateSyncRing(); }
   for (const fn of fns) {
     await fn();
@@ -10071,6 +10081,104 @@ async function flushDsrOfflineQueue() {
   } finally {
     __dsrFlushInFlight = false;
   }
+}
+
+// v-add (BRO: "photos upload avadam ledu. network issue unte local lo save avali. then
+// network vachaka, photo upload avali" — this is the actual fix. The DSR row saved fine
+// (finalResult.failedPhotos only ever lists photos, never rows), so there's nothing to
+// re-submit as a DSR — just the specific photo(s) that failed, pulled straight back out
+// of the rows array this device already just sent (the base64 data is still right here,
+// no re-prompting the employee, no re-opening a camera). "warning email vaddu" — so no
+// email is sent here either; this queue + flushDsrPhotoRetryQueue below is the entire fix.
+function queueDsrPhotoRetries_(failedPhotos, rows, dsrId) {
+  try {
+    const q = getQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY);
+    let queuedCount = 0;
+    failedPhotos.forEach(fp => {
+      const r = rows[fp.idx];
+      if (!r) return;
+      const photo = fp.kind === 'silver' ? r.silverItemPhoto : fp.kind === 'diamond' ? r.diamondPhoto : r.photo;
+      if (!photo) return; // nothing to retry — this item never had a photo attached at all
+      q.push({
+        dsrId: fp.dsrId || dsrId || '', rowNum: fp.rowNum, kind: fp.kind, label: fp.label || '',
+        photo, savedAt: Date.now(), attempts: 0, notifiedFail: false
+      });
+      queuedCount++;
+    });
+    if (!queuedCount) return;
+    const saved = saveQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY, q);
+    updateConnStatus();
+    toast(
+      saved
+        ? '📷 ' + queuedCount + ' photo(s) will auto-upload once the network is stable — DSR itself is already saved'
+        : '⚠️ ' + queuedCount + ' photo(s) failed to upload and could not be queued for retry (device storage full) — please re-upload manually from Today\'s DSR',
+      saved ? 'info' : 'error'
+    );
+  } catch (e) {}
+}
+
+let __dsrPhotoRetryFlushInFlight = false;
+async function flushDsrPhotoRetryQueue() {
+  if (!navigator.onLine) return;
+  if (__dsrPhotoRetryFlushInFlight) return;
+  __dsrPhotoRetryFlushInFlight = true;
+  let q = [];
+  try {
+    q = getQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY);
+    if (!q.length) { updateConnStatus(); return; }
+    saveQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY, []); // claim before sending — see flushDsrOfflineQueue's comment for the full race-condition explanation
+    const remaining = [];
+    let synced = 0;
+    for (const item of q) {
+      try {
+        // Reuses the existing savePhoto backend action (the one ResubmitPhotoPage's
+        // manual link already calls) — same endpoint, just invoked automatically now.
+        const resp = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'savePhoto', rowNum: item.rowNum, kind: item.kind, photo: item.photo, dsrId: item.dsrId }) }, 60000);
+        const result = await resp.json();
+        if (result && result.status === 'success') {
+          synced++;
+        } else {
+          item.attempts = (item.attempts || 0) + 1;
+          _dsrPhotoRetryNotifyFail_(item, (result && result.message) || 'Server did not confirm photo upload');
+          remaining.push(item);
+        }
+      } catch (e) {
+        item.attempts = (item.attempts || 0) + 1;
+        _dsrPhotoRetryNotifyFail_(item, 'Connection error — ' + ((e && e.message) || e));
+        remaining.push(item);
+      }
+    }
+    const stillQueued = getQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY);
+    saveQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY, remaining.concat(stillQueued));
+    updateConnStatus();
+    if (synced > 0) toast('✅ ' + synced + ' pending DSR photo(s) uploaded successfully', 'success');
+  } catch (outerErr) {
+    try {
+      const stillQueued = getQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY);
+      saveQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY, q.concat(stillQueued));
+    } catch (e2) {}
+  } finally {
+    __dsrPhotoRetryFlushInFlight = false;
+  }
+}
+
+// Same "log once, keep retrying quietly" pattern as _dsrNotifyOfflineFail_ above — a
+// stuck photo retry never disappears silently, but also never spams a fresh alert on
+// every retry cycle. No permanent-fail variant needed here: savePhotoForDsr only ever
+// returns "error" on a genuine upload problem, which is worth quietly retrying forever
+// (network/Drive flakiness), not a hard server-side rejection like a duplicate tag.
+function _dsrPhotoRetryNotifyFail_(item, reasonMsg) {
+  if (item.notifiedFail) return;
+  item.notifiedFail = true;
+  try {
+    const tbl = _notifMiniTable_('#dc2626', '⚠️ DSR Photo Re-upload — Sync Failed (still retrying, data NOT lost)', [
+      ['DSR ID', item.dsrId || '—'],
+      ['Item', item.label || '—'],
+      ['Reason', reasonMsg || 'Unknown'],
+      ['Saved Offline', item.savedAt ? new Date(item.savedAt).toLocaleString('en-GB') : '—']
+    ]);
+    logNotifHistory_('⚠️', tbl, 'dsr');
+  } catch (e) {}
 }
 
 function submitLoyaltyOffline(payload) {
@@ -25574,6 +25682,14 @@ function dsrfConfirmSubmit(who, evt) {
           ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
           : `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
         toast(isRDR ? 'Return/Damage/Repair saved!' : isOutlet ? 'Outlet Issue saved!' : 'DSR entry saved!', 'success');
+        // v-add (BRO: "photos upload avadam ledu...network vachaka photo upload avali" —
+        // the row itself is already saved at this point; this only queues the photo(s)
+        // that failed to reach Drive, for silent background auto-retry (see
+        // queueDsrPhotoRetries_ + flushDsrPhotoRetryQueue). Never blocks or delays the
+        // success flow below — just a background safety net.
+        if (result.failedPhotos && result.failedPhotos.length) {
+          queueDsrPhotoRetries_(result.failedPhotos, rows, result.dsrId);
+        }
         // v-add (BRO: "all new entrys ivali" — same Congratulations popup as Loyalty
         // Card/Golden Aura, filled with ONLY this one just-saved submission's own fields.
         showCongratsPopup_({
