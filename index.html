@@ -15611,9 +15611,23 @@ async function loyOpenEditForm(cardNo, cardType, who) {
   const existing = document.getElementById('loyEditModal');
   if (existing) existing.remove();
 
+  // v-fix (BRO: "image remove option ravadam ledu. and old image photo
+  // open avali" — the old <img src> used the uc?export=view Drive URL
+  // format directly, which Google frequently fails to serve to an <img>
+  // tag (same bug already fixed for Store Logo) — so the thumbnail just
+  // showed a broken-image icon and there was no way to tell if the old
+  // photo was right or wrong. Now runs the url through dsrPhotoViewUrl
+  // (the same reliable googleusercontent.com rewrite used elsewhere in
+  // this file) for the thumbnail, and adds a genuine "✕ Remove" link
+  // that clears the OLD photo (distinct from ncPhotoChanged's own
+  // "✕ Remove", which only undoes a newly-picked replacement file).
   const photoField = (label, id, url, required) => `
     <div class="form-row"><label>${label} ${required ? '<span style="color:var(--red);">*</span>' : ''}</label>
-      ${url ? `<div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;"><img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${url}','_blank')"><span style="font-size:10.5px;color:var(--text3);">Current photo — choose below only to replace it</span></div>` : ''}
+      ${url ? `<div id="${id}-oldwrap" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        <img src="${dsrPhotoViewUrl(url)}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${escJs(url)}','_blank')">
+        <span style="font-size:10.5px;color:var(--text3);">Current photo — tap to view</span>
+        <a href="#" onclick="ecRemoveOldPhoto('${id}');return false;" style="color:var(--red);font-size:11px;margin-left:auto;white-space:nowrap;">✕ Remove</a>
+      </div>` : ''}
       <div class="nc-ph2col">
         <label class="nc-ph-btn">📷 Camera<input type="file" id="${id}Cam" accept="image/*" capture="environment" onchange="ncPhotoChanged('${id}','${id}Cam')"></label>
         <label class="nc-ph-btn">🖼️ Gallery<input type="file" id="${id}" accept="image/*" onchange="ncPhotoChanged('${id}')"></label>
@@ -15656,6 +15670,21 @@ async function loyOpenEditForm(cardNo, cardType, who) {
   document.body.appendChild(div);
 }
 
+// v-add: companion to the new "✕ Remove" link on an OLD/existing photo in
+// the Edit modal (see photoField above). Marks that field's confirmedPhotos
+// entry explicitly empty (not just "untouched" — an untouched field still
+// carries the old URL, which is exactly what we don't want once removed)
+// and hides the old-photo preview block. If the person then picks a
+// replacement via Camera/Gallery, ncPhotoChanged overwrites confirmedPhotos
+// with the new photo as usual, so this never blocks a normal replace.
+function ecRemoveOldPhoto(id) {
+  state.confirmedPhotos[id] = '';
+  const wrap = document.getElementById(id + '-oldwrap');
+  if (wrap) wrap.remove();
+  const fb = document.getElementById(id + '-fb');
+  if (fb) fb.innerHTML = '<span style="color:var(--red);">Old photo removed — upload a new one below if needed</span>';
+}
+
 async function submitLoyaltyCardEdit(cardNo, cardType) {
   const errBox = document.getElementById('ecErrorMsg');
   errBox.style.display = 'none';
@@ -15671,6 +15700,20 @@ async function submitLoyaltyCardEdit(cardNo, cardType) {
 
   if (!custName || !occupation || !phone || !address || !aadhaarNo || !cardDate) {
     errBox.textContent = 'Please fill all required fields'; errBox.style.display = 'block'; return;
+  }
+  // v-add: a removed OLD required photo with no replacement chosen would
+  // otherwise silently submit as '' — block that explicitly instead of
+  // letting the backend reject it with a less helpful generic error.
+  const requiredPhotoChecks = [
+    ['ecSigPhoto', 'Customer Signature Photo'],
+    ['ecCustPhoto', 'Customer Photo'],
+    ['ecAadhaarFront', 'Aadhaar Card Front Photo']
+  ];
+  for (let rpi = 0; rpi < requiredPhotoChecks.length; rpi++) {
+    const pid = requiredPhotoChecks[rpi][0], plabel = requiredPhotoChecks[rpi][1];
+    if (!state.confirmedPhotos[pid]) {
+      errBox.textContent = plabel + ' is required — please upload it'; errBox.style.display = 'block'; return;
+    }
   }
   const mobileErr = validateMobileNo(phone);
   if (mobileErr) { errBox.textContent = mobileErr; errBox.style.display = 'block'; return; }
@@ -25630,6 +25673,142 @@ function aoeToggleOther(who, eid, kind) {
   }
 }
 
+// v-fix (BRO: "advance dsr form lo tag no enter cheste, tag details
+// ravadam ledu" — the Tag No fields in this Advance/Order Placed edit
+// screen (aoeTagNo-/aoeDiaTagNo-) were plain inputs with no lookup
+// wired to them at all — typing a tag here never checked stock or
+// filled anything, unlike the identical-looking field on the main New
+// DSR Entry form (dsrfTagNo-), which has always auto-filled from
+// dsrfTagLookup. This mirrors that exact same lookup for this form's
+// own aoe*-prefixed field ids, reusing every shared helper (stock
+// cache, _fetchWithTimeout, etc.) dsrfTagLookup already uses — nothing
+// about tag/stock lookup itself is new, only wiring it up here too.
+function aoeTagIds(who, eid, kind) {
+  const d = kind === 'd';
+  return { inp: (d ? 'aoeDiaTagNo-' : 'aoeTagNo-') + who + '-' + eid, msg: (d ? 'aoeDiaTagMsg-' : 'aoeTagMsg-') + who + '-' + eid };
+}
+function aoeTagTyping(who, eid, kind) {
+  const ids = aoeTagIds(who, eid, kind);
+  const inp = document.getElementById(ids.inp); if (!inp) return;
+  inp.__lk = (inp.__lk || 0) + 1;
+  const raw = inp.value.trim();
+  if (!raw) { inp.classList.remove('err-inp'); dsrfTagMsg(ids.msg, 'info', ''); }
+  else if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); }
+  else if (!dsrTagValid(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Tag No needs both letters and numbers — e.g. BOM2154'); }
+  else { inp.classList.remove('err-inp'); dsrfTagMsg(ids.msg, 'info', ''); }
+}
+function aoeSetProductSel(who, eid, kind, name) {
+  if (!name) return;
+  const selId = kind === 'diamond' ? `aoeDiaPn-${who}-${eid}` : `aoePn-${who}-${eid}`;
+  const customId = kind === 'diamond' ? `aoeDiaPnCustom-${who}-${eid}` : `aoePnCustom-${who}-${eid}`;
+  const sel = document.getElementById(selId); if (!sel) return;
+  const has = Array.from(sel.options).some(o => o.value === name);
+  if (has) sel.value = name;
+  else { sel.value = 'Other'; const c = document.getElementById(customId); if (c) c.value = name; }
+  aoeToggleOther(who, eid, kind);
+}
+function aoeClickTagToggle_(groupId, label, who, eid, setter) {
+  const g = document.getElementById(groupId); if (!g) return;
+  const b = Array.from(g.querySelectorAll('button')).find(x => x.textContent.trim() === label);
+  if (b) setter(who, eid, label, b);
+}
+// Fills the Gold / Diamond block of one Advance/Order item from a stock record — same fields
+// dsrfApplyStockItem fills on the main DSR form, just aimed at this form's own aoe* element ids.
+function aoeApplyStockItem(who, eid, it, tagN) {
+  const isDia = it.type === 'Diamond';
+  if (dsrfGv(`aoeTyp-${who}-${eid}`) !== (isDia ? 'Diamond' : 'Gold')) aoeClickTagToggle_(`aoeTglTyp-${who}-${eid}`, isDia ? 'Diamond' : 'Gold', who, eid, aoeSetType);
+  if (it.productFrom && dsrfGv(`aoePf-${who}-${eid}`) !== it.productFrom) dsrfClickToggle(`aoeTglPf-${who}-${eid}`, it.productFrom);
+  if (isDia) {
+    if (dsrfGv(`aoeDiaTagSt-${who}-${eid}`) !== 'Tag') aoeClickTagToggle_(`aoeDiaTglTag-${who}-${eid}`, 'Tag', who, eid, aoeSetDiaTagTgl);
+    dsrfSetV(`aoeDiaTagNo-${who}-${eid}`, tagN);
+    aoeSetProductSel(who, eid, 'diamond', it.productName);
+    dsrfSetV(`aoeDiaGrossWt-${who}-${eid}`, it.gross);
+    dsrfSetV(`aoeDiaNetWt-${who}-${eid}`, it.net || it.weight);
+    dsrfSetSelectLoose(`aoeDiaGoldTunch-${who}-${eid}`, it.tunch);
+    dsrfSetV(`aoeDiaCarat-${who}-${eid}`, it.carat);
+    dsrfSetSelectLoose(`aoeDiaClarity-${who}-${eid}`, it.clarity);
+    dsrfSetSelectLoose(`aoeDiaColor-${who}-${eid}`, it.color);
+    dsrfSetV(`aoeDiaCertNo-${who}-${eid}`, it.certNo);
+    dsrfSetPhotoData(who, 'aoe' + eid, 'dia', it.photo || it.photoData);
+  } else {
+    if (dsrfGv(`aoeTagSt-${who}-${eid}`) !== 'Tag') aoeClickTagToggle_(`aoeTglTag-${who}-${eid}`, 'Tag', who, eid, aoeSetTagTgl);
+    dsrfSetV(`aoeTagNo-${who}-${eid}`, tagN);
+    aoeSetProductSel(who, eid, 'gold', it.productName);
+    dsrfSetV(`aoeDes-${who}-${eid}`, it.design);
+    dsrfSetSelectLoose(`aoeTch-${who}-${eid}`, it.tunch);
+    dsrfSetV(`aoeWt-${who}-${eid}`, it.weight);
+    dsrfSetPhotoData(who, 'aoe' + eid, 'g', it.photo || it.photoData);
+  }
+}
+async function aoeTagLookup(who, eid, kind) {
+  const ids = aoeTagIds(who, eid, kind);
+  const inp = document.getElementById(ids.inp); if (!inp) return;
+  const raw = inp.value.trim();
+  if (!raw) { dsrfTagMsg(ids.msg, 'info', ''); return; }
+  if (stockTagHasSep(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ No spaces, - or / allowed — enter like BOM2154'); return; }
+  if (!dsrTagValid(raw)) { inp.classList.add('err-inp'); dsrfTagMsg(ids.msg, 'err', '⚠ Tag No needs both letters and numbers — e.g. BOM2154'); return; }
+  inp.classList.remove('err-inp');
+  inp.value = raw.toUpperCase();
+  if (!stockIsConfigured()) { dsrfTagMsg(ids.msg, 'info', ''); return; }
+  const tagN = stockNormTag(raw);
+  const my = inp.__lk = (inp.__lk || 0) + 1;
+
+  const applyFromCache = (cached) => {
+    aoeApplyStockItem(who, eid, {
+      type: cached.type, productName: cached.productName, design: cached.design, counter: cached.counter,
+      tunch: cached.tunch, weight: cached.weight, gross: cached.gross, net: cached.net,
+      carat: cached.carat, clarity: cached.clarity, color: cached.color, certNo: cached.certNo,
+      photo: cached.photo, photoData: cached.photoData
+    }, tagN);
+    const kNow = cached.type === 'Diamond' ? 'd' : 'g';
+    const nowIds = aoeTagIds(who, eid, kNow), otherIds = aoeTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
+    dsrfTagMsg(otherIds.msg, 'info', '');
+    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
+  };
+
+  const cachedNow = stockTagCacheGet(tagN);
+  const cachedSold = !cachedNow ? soldTagCacheGet(tagN) : null;
+  if (cachedNow) applyFromCache(cachedNow);
+  else if (cachedSold) dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
+
+  if (!navigator.onLine) {
+    if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Offline — not in the last synced stock list. It will be checked again on save.');
+    return;
+  }
+
+  if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', '🔎 Checking stock...');
+  let res;
+  try {
+    res = await _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&withPhoto=1&tag=' + encodeURIComponent(tagN), {}, 30000).then(r => r.json());
+  } catch (e) {
+    if (inp.__lk === my && !cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Could not check stock (internet?) — enter manually.');
+    return;
+  }
+  if (inp.__lk !== my) return;
+  if (!res || !res.ok) { if (!cachedNow && !cachedSold) dsrfTagMsg(ids.msg, 'info', 'Could not check stock — enter manually.'); return; }
+  if (res.status === 'instock') {
+    const it = res.item || {};
+    aoeApplyStockItem(who, eid, it, tagN);
+    stockTagCacheAdd(tagN, {
+      counter: it.productFrom === 'Main' ? (it.counter || 'Main Hub') : it.counter, productName: it.productName, design: it.design, type: it.type,
+      tunch: it.tunch || '', weight: it.weight || '', gross: it.gross || '', net: it.net || '',
+      carat: it.carat || '', clarity: it.clarity || '', color: it.color || '', certNo: it.certNo || '',
+      photo: it.photo || '', photoData: it.photoData || ''
+    });
+    const kNow = it.type === 'Diamond' ? 'd' : 'g';
+    const nowIds = aoeTagIds(who, eid, kNow), otherIds = aoeTagIds(who, eid, kNow === 'd' ? 'g' : 'd');
+    dsrfTagMsg(otherIds.msg, 'info', '');
+    dsrfTagMsg(nowIds.msg, 'ok', '✅ Found in stock');
+  } else if (res.status === 'sold') {
+    dsrfTagMsg(ids.msg, 'err', '❌ Not in stock — already sold');
+    const sd = res.sold || {};
+    stockTagCacheMarkSold(tagN, { dsrId: sd.dsrId || '', soldDate: sd.soldDate || '' });
+  } else {
+    dsrfTagMsg(ids.msg, 'warn', '❌ Not found in stock');
+    stockTagCacheRemove(tagN);
+  }
+}
+
 // One editable item block, pre-filled from an existing DSR item.
 function aoeItemBlockHtml(who, eid, num, it) {
   const st = DSR_ST[who];
@@ -25670,7 +25849,9 @@ function aoeItemBlockHtml(who, eid, num, it) {
                   <button class="${it.tagStatus==='No Tag'?'on':''}" onclick="aoeSetTagTgl('${who}','${eid}','No Tag',this)">Non Tag</button>
                 </div><input type="hidden" id="aoeTagSt-${who}-${eid}" value="${it.tagStatus || 'Tag'}"></div>
               <div id="aoeTagNoWrap-${who}-${eid}" style="${it.tagStatus==='No Tag'?'display:none;':''}"><label>Tag No <span class="req">★</span></label>
-                <input type="text" id="aoeTagNo-${who}-${eid}" value="${it.tagNo || ''}" placeholder="e.g. C498, R749"></div>
+                <input type="text" id="aoeTagNo-${who}-${eid}" value="${it.tagNo || ''}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
+                  oninput="aoeTagTyping('${who}',${eid},'g')" onblur="aoeTagLookup('${who}',${eid},'g')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                <div id="aoeTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
             </div>
             <div class="g2 mb12">
               <div><label>Product Name <span class="req">★</span></label>
@@ -25698,7 +25879,9 @@ function aoeItemBlockHtml(who, eid, num, it) {
                   <button class="${it.diamondTagStatus==='No Tag'?'on':''}" onclick="aoeSetDiaTagTgl('${who}','${eid}','No Tag',this)">Non Tag</button>
                 </div><input type="hidden" id="aoeDiaTagSt-${who}-${eid}" value="${it.diamondTagStatus || 'Tag'}"></div>
               <div id="aoeDiaTagNoWrap-${who}-${eid}" style="${it.diamondTagStatus==='No Tag'?'display:none;':''}"><label>Tag No <span class="req">★</span></label>
-                <input type="text" id="aoeDiaTagNo-${who}-${eid}" value="${it.diamondTagNo || ''}" placeholder="e.g. C498, R749"></div>
+                <input type="text" id="aoeDiaTagNo-${who}-${eid}" value="${it.diamondTagNo || ''}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
+                  oninput="aoeTagTyping('${who}',${eid},'d')" onblur="aoeTagLookup('${who}',${eid},'d')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                <div id="aoeDiaTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
             </div>
             <div class="mb12">
               <label>Product Name <span class="req">★</span></label>
