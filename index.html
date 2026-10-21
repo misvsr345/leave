@@ -1780,6 +1780,16 @@ table td, table th{border:1px solid var(--border,#E2D9EE);}
 .dsr-photo-btn{flex-shrink:0;padding:5px 12px;font-size:11px;font-weight:700;border:1.5px solid var(--purple-mid);border-radius:16px;background:var(--purple-bg);color:var(--purple);cursor:pointer;}
 .dsr-photo-btn:active{transform:scale(0.95);}
 
+/* v-add (BRO: "all popup lu table laga ravali" — label/value table used
+   inside every "Review Before Submitting" preview popup; see pvRows()).
+   Same visual language as .dsr-items-table above (purple-bordered,
+   zebra-striped) so every popup in the app now reads consistently. */
+.pv-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:2px;border:1.5px solid var(--purple-mid);}
+.pv-table td{padding:6px 8px;border:1px solid var(--border);vertical-align:top;}
+.pv-table tr:nth-child(even) td{background:var(--bg);}
+.pv-table td:first-child{color:var(--purple);font-weight:700;width:38%;white-space:nowrap;background:var(--purple-bg);}
+.pv-table td:last-child{color:var(--text);font-weight:600;}
+
 /* Upcoming Card Approvals — register-style table (Employee / Balance /
    First Card / Last Card / Approve Card / Status), one row per employee,
    with a working Approve Card button per row (was missing under each
@@ -5403,6 +5413,21 @@ function fmtNum(n) {
   return (Math.round(v * 100) / 100).toString();
 }
 
+// v-add (BRO: "all popup lu table laga ravali. text laga vadu" — every
+// "Review Before Submitting" preview popup (Leave, Admin Direct Leave,
+// Loyalty Card, Golden Aura, DSR) used to lay its details out as flowing
+// prose lines (icon + inline text wrapped in a sentence) — now built as a
+// proper label/value table instead, same visual language as the existing
+// .dsr-items-table used elsewhere in this app. Pass an array of
+// [label, value] pairs; a pair whose value is empty/null/undefined is
+// silently skipped so optional fields don't leave a blank row.
+function pvRows(pairs) {
+  return pairs
+    .filter(p => p[1] !== undefined && p[1] !== null && p[1] !== '')
+    .map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td></tr>`)
+    .join('');
+}
+
 function fmtDMY(s) {
   // Converts any yyyy-MM-dd (or yyyy-MM-dd HH:mm) string to dd/MM/yyyy for
   // display. All user-facing date text in the portal must be dd/MM/yyyy.
@@ -8402,19 +8427,29 @@ function leaveShowPreview(d) {
   // when "Add Another Date" produced more than one, so a normal
   // single-segment application's preview is completely unchanged.
   const segsForPreview = d.isMultiSegment ? JSON.parse(d.segments) : [{ startDate: d.startDate, endDate: d.endDate, leaveMode: d.leaveMode, halfDay: d.halfDay }];
-  const segRows = segsForPreview.map((s, i) => {
-    const days = s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1);
-    return `<div class="dsr-meta-row">📅 ${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${days} day(s)</div>`;
-  }).join('');
   const totalDays = segsForPreview.reduce((sum, s) => sum + (s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1)), 0);
+  // v-fix (BRO: "all popup lu table laga ravali") — table rows instead of
+  // the old prose lines; each date segment gets its own "Dates" row so a
+  // Multi-Segment leave still shows every range, just as table rows now.
+  const segTableRows = segsForPreview.map((s, i) => {
+    const days = s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1);
+    const lbl = segsForPreview.length > 1 ? ('Dates ' + (i + 1)) : 'Dates';
+    return [lbl, `${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${days} day(s)`];
+  });
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('leavePreviewModal').remove()" title="Close">✕</button>
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${d.leaveType}</span><span class="kd-pill gold">${totalDays} day(s) total${segsForPreview.length > 1 ? ' — ' + segsForPreview.length + ' dates' : ''}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${d.name}</div>
-        ${segRows}
-        <div class="dsr-meta-row" style="border-bottom:none;">📝 <b>${d.purpose}</b>${d.leaveAddress ? '<br>📍 ' + d.leaveAddress : ''}${d.authorityMet === 'Yes' ? '<br>✅ Authority Met: ' + d.authorityName : ''}</div>
+        <table class="pv-table"><tbody>
+          ${pvRows([
+            ['Employee', d.name],
+            ...segTableRows,
+            ['Purpose', d.purpose],
+            ['Address', d.leaveAddress],
+            ['Authority Met', d.authorityMet === 'Yes' ? d.authorityName : '']
+          ])}
+        </tbody></table>
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
@@ -8476,13 +8511,9 @@ function showLeaveResultPopup(res) {
     ['Days', res.days != null ? fmtNum(res.days) : '—'],
     ['Balance', res.balance != null ? fmtNum(res.balance) : '—']
   ];
-  document.getElementById('leaveResultDetails').innerHTML = rows.map(([label, val], i) => {
-    const bg = i % 2 === 0 ? '#fdfcff' : '#ffffff';
-    return `<div style="background:${bg};padding:9px 12px;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);">
-      <span style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">${label}</span>
-      <span style="font-size:12.5px;color:var(--text);font-weight:700;text-align:right;">${val}</span>
-    </div>`;
-  }).join('');
+  // v-fix (BRO: "all popup lu table laga ravali") — real table instead of
+  // the old flex-row zebra list.
+  document.getElementById('leaveResultDetails').innerHTML = `<table class="pv-table"><tbody>${pvRows(rows)}</tbody></table>`;
 
   openModal('leaveResultModal');
 }
@@ -8498,13 +8529,11 @@ function showCongratsPopup_(opts) {
   document.getElementById('congratsTitle').textContent = opts.title || 'Submitted Successfully';
   document.getElementById('congratsMsg').innerHTML = opts.msg || '';
   const rows = opts.details || [];
-  document.getElementById('congratsDetails').innerHTML = rows.map(([label, val], i) => {
-    const bg = i % 2 === 0 ? '#fdfcff' : '#ffffff';
-    return `<div style="background:${bg};padding:9px 12px;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);">
-      <span style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">${label}</span>
-      <span style="font-size:12.5px;color:var(--text);font-weight:700;text-align:right;">${val}</span>
-    </div>`;
-  }).join('');
+  // v-fix (BRO: "all popup lu table laga ravali") — real table instead of
+  // the old flex-row zebra list (this is the shared success popup for
+  // DSR/Loyalty/Golden Aura/Leave/etc, so this one change covers all of
+  // them at once).
+  document.getElementById('congratsDetails').innerHTML = `<table class="pv-table"><tbody>${pvRows(rows)}</tbody></table>`;
   openModal('congratsModal');
   // v-add (BRO: "emp ki kuda notification option undali, vala data kuda check cheyadaniki
   // velu avutundi" — every entry's own Congrats popup now also logs into that same person's
@@ -8772,12 +8801,14 @@ async function findSubmittedLeaveQuiet(segData, attemptsLeft) {
 // message or having to go check the sheet.
 function showMultiSegmentResultPopup(res) {
   const segs = res.segments || [];
+  // v-fix (BRO: "all popup lu table laga ravali") — table rows instead of
+  // the old prose lines.
   const rows = segs.map(s => {
     const dateLabel = fmtDMY(s.startDate) + (s.halfDay ? ' (' + s.leaveMode + ' — ' + s.halfDay + ')' : ' — ' + s.leaveMode);
     if (s.ok) {
-      return `<div class="dsr-meta-row">✅ ${dateLabel} — <b>${s.status}</b>${s.leaveId ? ' · ' + s.leaveId : ''}</div>`;
+      return `<tr><td>${dateLabel}</td><td>✅ <b>${s.status}</b>${s.leaveId ? ' · ' + s.leaveId : ''}</td></tr>`;
     }
-    return `<div class="dsr-meta-row" style="color:var(--red);">❌ ${dateLabel} — failed<br><span style="font-size:11px;">${s.reason || 'Unknown error'}</span></div>`;
+    return `<tr><td>${dateLabel}</td><td style="color:var(--red);">❌ Failed — ${s.reason || 'Unknown error'}</td></tr>`;
   }).join('');
 
   const allOk = res.failCount === 0;
@@ -8796,7 +8827,7 @@ function showMultiSegmentResultPopup(res) {
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:88vh;overflow-y:auto;">
     <div class="modal-title" style="${allOk ? '' : 'color:var(--orange);'}">${headline}</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
-      <div class="dsr-receipt-body">${rows}</div>
+      <div class="dsr-receipt-body"><table class="pv-table"><tbody>${rows}</tbody></table></div>
     </div>
     ${!allOk ? '<p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Failed date(s) were not confirmed as saved — check the leave list first, then re-apply only those dates if they are not there.</p>' : ''}
     <div class="btn-row">
@@ -10871,9 +10902,12 @@ function directShowPreview() {
   const c = window.__directPending;
   if (!c) return;
   const segDays = s => s.leaveMode === 'Half Day' ? 0.5 : (Math.round((new Date(s.endDate) - new Date(s.startDate)) / 86400000) + 1);
-  const segRows = c.segments.map(s =>
-    `<div class="dsr-meta-row">📅 ${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${segDays(s)} day(s)</div>`
-  ).join('');
+  // v-fix (BRO: "all popup lu table laga ravali") — table rows instead of
+  // the old prose lines.
+  const segTableRows = c.segments.map((s, i) => {
+    const lbl = c.segments.length > 1 ? ('Dates ' + (i + 1)) : 'Dates';
+    return [lbl, `${fmtDMY(s.startDate)}${s.startDate !== s.endDate ? ' → ' + fmtDMY(s.endDate) : ''} — <b>${s.leaveMode}${s.halfDay ? ' (' + s.halfDay + ')' : ''}</b> — ${segDays(s)} day(s)`];
+  });
   const totalDays = c.segments.reduce((sum, s) => sum + segDays(s), 0);
   const outLbl = c.outcome === 'Approved' ? '✅ Approve' : '🚫 Mark Absent';
 
@@ -10887,10 +10921,17 @@ function directShowPreview() {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">📋 ${escHtml(c.leaveType)}</span><span class="kd-pill gold">${totalDays} day(s) total${c.segments.length > 1 ? ' — ' + c.segments.length + ' separate leaves' : ''}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${escHtml(properCase(c.empName))}</div>
-        <div class="dsr-meta-row"><b>${outLbl}</b></div>
-        ${segRows}
-        <div class="dsr-meta-row" style="border-bottom:none;">${c.purpose ? '📝 <b>' + escHtml(c.purpose) + '</b>' : ''}${c.leaveAddress ? '<br>📍 ' + escHtml(c.leaveAddress) : ''}${c.reason ? '<br>🗒️ ' + escHtml(c.reason) : ''}${c.authMet === 'Yes' ? '<br>✅ Authority Met: ' + escHtml(c.authWho) : ''}</div>
+        <table class="pv-table"><tbody>
+          ${pvRows([
+            ['Employee', escHtml(properCase(c.empName))],
+            ['Action', outLbl],
+            ...segTableRows,
+            ['Purpose', c.purpose ? escHtml(c.purpose) : ''],
+            ['Address', c.leaveAddress ? escHtml(c.leaveAddress) : ''],
+            ['Reason', c.reason ? escHtml(c.reason) : ''],
+            ['Authority Met', c.authMet === 'Yes' ? escHtml(c.authWho) : '']
+          ])}
+        </tbody></table>
       </div>
     </div>
     ${c.segments.length > 1 ? '<p style="font-size:11.5px;color:var(--text3);margin:10px 0 0;">Each date is saved as its own separate leave — own row, own Leave ID and own mail.</p>' : ''}
@@ -12236,8 +12277,11 @@ async function loadExtraDsrDetailBody(employee, date) {
         </div>
         <div class="dsr-receipt-body">
           <div class="dsr-cust-name">${properCase(en.customerName) || '—'}</div>
-          <div class="dsr-meta-row">${en.mobileNumber ? fmtPhone(en.mobileNumber) : '—'} &nbsp;·&nbsp; 🕐 ${en.timestamp || '—'}</div>
-          <div class="dsr-meta-row" style="border-bottom:none;">💍 ${en.type || '—'} — ${properCase(en.itemName) || '—'}${en.weight ? ' — ' + en.weight + 'g' : ''}</div>
+          <table class="pv-table"><tbody>${pvRows([
+            ['Mobile', en.mobileNumber ? fmtPhone(en.mobileNumber) : ''],
+            ['Time', en.timestamp],
+            ['Item', (en.type || '—') + ' — ' + (properCase(en.itemName) || '—') + (en.weight ? ' — ' + en.weight + 'g' : '')]
+          ])}</tbody></table>
         </div>
         <div class="btn-row" style="padding:0 14px 12px;">
           <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;" onclick="extraDsrEditEntry(${i})">✏️ Edit</button>
@@ -12438,8 +12482,13 @@ function loadDupTagDetailBody(tagNo) {
       </div>
       <div class="dsr-receipt-body">
         <div class="dsr-cust-name">${escHtml(properCase(en.customerName) || '—')}</div>
-        <div class="dsr-meta-row">${en.mobileNumber ? fmtPhone(en.mobileNumber) : '—'} &nbsp;·&nbsp; 👤 ${escHtml(properCase(en.employee) || '—')} &nbsp;·&nbsp; 🕐 ${escHtml(en.timestamp || '—')}</div>
-        <div class="dsr-meta-row" style="border-bottom:none;">💍 ${escHtml(en.type || '—')} — ${escHtml(properCase(en.itemName) || '—')} &nbsp;·&nbsp; 📅 ${fmtDMY(en.date)}</div>
+        <table class="pv-table"><tbody>${pvRows([
+          ['Mobile', en.mobileNumber ? fmtPhone(en.mobileNumber) : ''],
+          ['Employee', escHtml(properCase(en.employee) || '')],
+          ['Time', escHtml(en.timestamp || '')],
+          ['Item', escHtml(en.type || '—') + ' — ' + escHtml(properCase(en.itemName) || '—')],
+          ['Date', fmtDMY(en.date)]
+        ])}</tbody></table>
       </div>
       <div class="btn-row" style="padding:0 14px 12px;">
         <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;color:var(--red);border-color:var(--red);" onclick="dupTagConfirmDelete(${i})">🗑️ Delete</button>
@@ -13723,15 +13772,14 @@ async function checkLeaveLeadsConflictsPopup() {
     const existing = document.getElementById('leaveLeadsAlertModal');
     if (existing) existing.remove();
 
-    const rowsHtml = conflicts.rows.map(r => {
-      const statusColor = r.leaveStatus.toLowerCase() === 'approved' ? '#065f46' : r.leaveStatus.toLowerCase() === 'absent' ? '#991b1b' : '#92400e';
-      const statusBg = r.leaveStatus.toLowerCase() === 'approved' ? '#d1fae5' : r.leaveStatus.toLowerCase() === 'absent' ? '#fee2e2' : '#fef3c7';
-      return `<div class="dsr-receipt-card" style="margin-bottom:8px;">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">👤 ${properCase(r.empName)}</span>
-        <span class="kd-pill" style="background:${statusBg};color:${statusColor};">${r.leaveStatus}</span></div>
-        <div class="dsr-receipt-body"><div class="dsr-meta-row" style="border-bottom:none;">📞 <b>${r.leadCount}</b> lead(s) assigned today</div></div>
-      </div>`;
-    }).join('');
+    // v-fix (BRO: "all popup lu table laga ravali") — one table instead
+    // of a stacked card per employee.
+    const rowsHtml = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Leave Status</th><th>Leads Today</th></tr></thead><tbody>` +
+      conflicts.rows.map(r => {
+        const statusColor = r.leaveStatus.toLowerCase() === 'approved' ? '#065f46' : r.leaveStatus.toLowerCase() === 'absent' ? '#991b1b' : '#92400e';
+        const statusBg = r.leaveStatus.toLowerCase() === 'approved' ? '#d1fae5' : r.leaveStatus.toLowerCase() === 'absent' ? '#fee2e2' : '#fef3c7';
+        return `<tr><td>${properCase(r.empName)}</td><td><span class="kd-pill" style="background:${statusBg};color:${statusColor};">${r.leaveStatus}</span></td><td>${r.leadCount}</td></tr>`;
+      }).join('') + `</tbody></table></div>`;
 
     const div = document.createElement('div');
     div.id = 'leaveLeadsAlertModal';
@@ -15191,6 +15239,9 @@ async function submitNewLoyaltyCard() {
 // saved. "Edit" goes back to the form (nothing lost); "Confirm & Submit"
 // is the only thing that actually sends data to the server.
 function loyaltyShowPreview(p) {
+  // v-fix (BRO: "all popup lu table laga ravali") — every text field now a
+  // table row; the 5 photos stay as a thumbnail strip below the table
+  // (a photo doesn't fit a table cell usefully), unchanged from before.
   const photoRow = (label, src) => src ? `<div style="text-align:center;"><img src="${src}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${src}','_blank')"><div style="font-size:9.5px;color:var(--text3);margin-top:2px;">${label}</div></div>` : '';
   const existing = document.getElementById('loyPreviewModal');
   if (existing) existing.remove();
@@ -15202,10 +15253,17 @@ function loyaltyShowPreview(p) {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">💳 ${p.cardType}</span><span class="kd-pill gold">${p.cardNo}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${properCase(p.custName)}</div>
-        <div class="dsr-cust-addr"><b>📍 ${properCase(p.address)}</b></div>
-        <div class="dsr-meta-row">📱 ${p.phone} &nbsp;·&nbsp; 💼 ${properCase(p.occupation)}${p.orgName ? ' — ' + properCase(p.orgName) : ''} &nbsp;·&nbsp; 📅 Issued: ${fmtDMY(p.cardIssuedDate)}</div>
-        <div class="dsr-meta-row" style="border-bottom:none;">🆔 Aadhaar: ${p.aadhaarNo}${p.panNo ? ' &nbsp;·&nbsp; PAN: ' + p.panNo : ''}</div>
+        <table class="pv-table"><tbody>
+          ${pvRows([
+            ['Customer', properCase(p.custName)],
+            ['Address', properCase(p.address)],
+            ['Phone', p.phone],
+            ['Occupation', properCase(p.occupation) + (p.orgName ? ' — ' + properCase(p.orgName) : '')],
+            ['Issued', fmtDMY(p.cardIssuedDate)],
+            ['Aadhaar', p.aadhaarNo],
+            ['PAN', p.panNo]
+          ])}
+        </tbody></table>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
           ${photoRow('Signature', p.sigPhoto)}${photoRow('Customer', p.custPhoto)}${photoRow('Aadhaar Front', p.aadhaarFront)}${photoRow('Aadhaar Back', p.aadhaarBack)}${photoRow('PAN', p.panPhoto)}
         </div>
@@ -18027,12 +18085,12 @@ function showDsrMissingDetail(idx) {
   if (!missEntries.length) {
     bodyHtml = '<p style="font-size:13px;color:var(--text2);">No specific missing dates found in this date range — the total-missing count may fall outside the currently selected range. Try widening the date range above.</p>';
   } else {
-    bodyHtml = missEntries.sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => {
+    // v-fix (BRO: "all popup lu table laga ravali") — table rows instead
+    // of stacked cards.
+    bodyHtml = `<table class="pv-table"><tbody>` + missEntries.sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => {
       const missCount = String(v).replace('M:', '');
-      return `<div class="kd-card" style="border-left:3px solid var(--red);margin-bottom:8px;">
-        <div class="kd-head"><span class="kd-name">📅 ${fmtDMY(d)}</span><span class="kd-pill red">${missCount} missing</span></div>
-      </div>`;
-    }).join('');
+      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing</td></tr>`;
+    }).join('') + `</tbody></table>`;
   }
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="document.getElementById('dsrMissingDetailModal').remove()" title="Close">✕</button>
@@ -21796,15 +21854,23 @@ function gaShowPreview(p, who) {
   const div = document.createElement('div');
   div.id = 'gaPreviewModal';
   div.className = 'modal-overlay show';
+  // v-fix (BRO: "all popup lu table laga ravali") — table rows instead of
+  // the old prose lines.
   div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('gaPreviewModal').remove()" title="Close">✕</button>
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 ${p.planType} #${p.planNo}</span><span class="kd-pill gold">₹${p.amount}</span></div>
       <div class="dsr-receipt-body">
-        <div class="dsr-cust-name">${properCase(p.custName)}</div>
-        <div class="dsr-cust-addr"><b>📍 ${[p.street,p.area,p.town,p.district,p.state,p.pin].filter(Boolean).join(', ')}</b></div>
-        <div class="dsr-meta-row">📱 ${p.mobile} &nbsp;·&nbsp; 📅 Enroll: ${fmtDMY(p.enrollDate)}</div>
-        <div class="dsr-meta-row" style="border-bottom:none;">🆔 Aadhaar: ${p.aadhaarNo || '—'} &nbsp;·&nbsp; PAN: ${p.panNo || '—'}</div>
+        <table class="pv-table"><tbody>
+          ${pvRows([
+            ['Customer', properCase(p.custName)],
+            ['Address', [p.street,p.area,p.town,p.district,p.state,p.pin].filter(Boolean).join(', ')],
+            ['Mobile', p.mobile],
+            ['Enroll Date', fmtDMY(p.enrollDate)],
+            ['Aadhaar', p.aadhaarNo || '—'],
+            ['PAN', p.panNo || '—']
+          ])}
+        </tbody></table>
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
@@ -25356,8 +25422,12 @@ function dsrSearchViewPhoto(who, idx) {
 // & Submit" is the only thing that actually sends data to the server.
 function dsrfShowPreview(who, rows) {
   const r0 = rows[0];
-  let itemsHtml = '';
-  rows.forEach((r, i) => {
+  // v-fix (BRO: "all popup lu table laga ravali") — items now a real
+  // table (Product/Design-Cent/Tunch-Quality/Weight/Tag/Photo columns),
+  // same visual language as the existing .dsr-items-table used in "DSR
+  // Full Detail", instead of the old stacked name+photo rows.
+  let itemRowsHtml = '';
+  rows.forEach((r) => {
     const isSilver = r.type === 'Silver';
     const isDiamond = r.type === 'Diamond';
     // v-fix (BRO: Diamond now has its own genuinely separate fields —
@@ -25368,15 +25438,25 @@ function dsrfShowPreview(who, rows) {
     const itemName = isSilver ? r.silverItemName : isDiamond ? r.diamondProductName : r.productName;
     const itemWeight = isSilver ? r.silverItemWeight : isDiamond ? '' : r.weight;
     const itemTagNo = isDiamond ? r.diamondTagNo : r.tagNo;
-    itemsHtml += `<div class="dsr-item-row" style="align-items:flex-start;">
-      <div>
-        <b>${properCase(itemName) || '—'}</b>
-        <span class="dsr-item-sub">${isDiamond && r.diamondCent ? ' · Cent ' + r.diamondCent : ''}${isDiamond && r.diamondQuality ? ' · Quality ' + r.diamondQuality : ''}${!isSilver && !isDiamond && r.design ? ' · ' + properCase(r.design) : ''}${!isSilver && !isDiamond && r.tunch ? ' · Tunch ' + r.tunch : ''}
-          ${itemWeight ? ' · ' + itemWeight + 'g' : ''}${isDiamond && r.diamondGrossWt ? ' · Gross ' + r.diamondGrossWt + 'g' : ''}${isDiamond && r.diamondNetWt ? ' · Net ' + r.diamondNetWt + 'g' : ''}${!isSilver && itemTagNo ? ' · Tag ' + itemTagNo : ''}</span>
-      </div>
-      ${photo ? `<img src="${photo}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${photo}','_blank')">` : '<span class="kd-pill red" style="font-size:9.5px;">No Photo</span>'}
-    </div>`;
+    const designCent = isDiamond ? (r.diamondCent || '—') : (!isSilver && r.design ? properCase(r.design) : '—');
+    const tunchQuality = isDiamond ? (r.diamondQuality || '—') : (!isSilver && r.tunch ? r.tunch : '—');
+    const weightDisp = itemWeight ? (itemWeight + 'g') : (isDiamond && r.diamondNetWt ? r.diamondNetWt + 'g' : '—');
+    const photoBtn = photo ? `<img src="${photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${photo}','_blank')">` : '<span class="kd-pill red" style="font-size:9px;white-space:nowrap;">No Photo</span>';
+    itemRowsHtml += `<tr>
+      <td>${properCase(itemName) || '—'}</td>
+      <td>${designCent}</td>
+      <td>${tunchQuality}</td>
+      <td>${weightDisp}</td>
+      <td>${!isSilver && itemTagNo ? itemTagNo : '—'}</td>
+      <td>${photoBtn}</td>
+    </tr>`;
   });
+  const itemsHtml = `<div class="dsr-items-wrap" style="border:1.5px solid var(--border);border-radius:8px;overflow-x:auto;">
+    <table class="dsr-items-table" style="white-space:nowrap;">
+      <thead><tr><th>Product</th><th>Design/Cent</th><th>Tunch/Quality</th><th>Weight</th><th>Tag No</th><th>Photo</th></tr></thead>
+      <tbody>${itemRowsHtml}</tbody>
+    </table>
+  </div>`;
 
   const isOutlet = dsrfIsOutlet(who);
   const isRDR = dsrfIsRDR(who);
@@ -25390,12 +25470,18 @@ function dsrfShowPreview(who, rows) {
     <div class="dsr-receipt-card" style="margin-top:10px;">
       <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isRDR ? '↩️ New Return / Damage / Repair' : isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
       <div class="dsr-receipt-body">
-        ${isRDR ? (r0.remarks ? `<div class="dsr-cust-addr"><b>📝 ${properCase(r0.remarks)}</b></div>` : '') : `
-        <div class="dsr-cust-name">${properCase(r0.customerName)}</div>
-        <div class="dsr-cust-addr"><b>📍 ${properCase(r0.address)}</b></div>`}
-        <div class="dsr-meta-row">👤 ${properCase(r0.employeeName)}${r0.mobileNumber ? (isOutlet ? ' &nbsp;·&nbsp; 👤 Contact: ' + r0.mobileNumber : ' &nbsp;·&nbsp; 📱 ' + r0.mobileNumber) : ''} &nbsp;·&nbsp; 📅 ${(isOutlet || isRDR) ? 'Date' : 'Bill'}: ${fmtDMY(r0.billDate)}</div>
-        ${isRDR ? `<div class="dsr-meta-row">${rows.map(r => r.reason).filter((v,i,a)=>a.indexOf(v)===i).join(' / ')}</div>` : ''}
-        <div class="dsr-items-wrap">${itemsHtml}</div>
+        <table class="pv-table"><tbody>
+          ${pvRows([
+            ['Employee', properCase(r0.employeeName)],
+            [isOutlet ? 'Contact' : 'Mobile', r0.mobileNumber],
+            [(isOutlet || isRDR) ? 'Date' : 'Bill Date', fmtDMY(r0.billDate)],
+            ['Customer', isRDR ? '' : properCase(r0.customerName)],
+            ['Address', isRDR ? '' : properCase(r0.address)],
+            ['Remarks', isRDR ? properCase(r0.remarks) : ''],
+            ['Reason', isRDR ? rows.map(r => r.reason).filter((v,i,a)=>a.indexOf(v)===i).join(' / ') : '']
+          ])}
+        </tbody></table>
+        <div style="margin-top:10px;">${itemsHtml}</div>
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--text3);margin:10px 0;">Check every detail and photo above. Once you tap Confirm &amp; Submit this cannot be edited from here.</p>
