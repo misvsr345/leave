@@ -3119,7 +3119,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <div class="card" style="padding:12px 14px;">
         <div class="form-row"><label>Filter by Employee (optional)</label>
-          <select id="loyMyCardsEmpFilter"><option value="">-- All Employees --</option></select>
+          <select id="loyMyCardsEmpFilter" onchange="loyBulkEditRowSync_()"><option value="">-- All Employees --</option></select>
+        </div>
+        <!-- v-add (BRO: "all cards opiotn lo emp select chesi edit opiton ivu. adi
+             tick cheste, ani cards open avali" — brings back an employee-wide bulk
+             grant now that the old separate panel is gone: pick an employee above,
+             then this ONE tick box grants/revokes edit access for every card that
+             employee has issued, in one call (loyaltySetCardEditAllowedAPI already
+             accepts empName). Same one-shot behavior as the per-card tick in search
+             results — it doesn't try to reflect a mixed per-card state, it just
+             fires the grant/revoke for all of them. -->
+        <div class="form-row" id="loyBulkEditRow-admin" style="display:none;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--text2);cursor:pointer;">
+            <input type="checkbox" id="loyBulkEditCheckbox-admin" onchange="loyBulkEditToggle_(this)" style="width:17px;height:17px;cursor:pointer;accent-color:var(--purple);">
+            ✏️ Edit access for ALL of <span id="loyBulkEditEmpName-admin" style="color:var(--purple);"></span>'s cards
+          </label>
+          <div id="loyBulkEditMsg-admin" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="filter-bar" id="loyAllCards-admin-bar">
           <button class="filter-btn active" onclick="setLoyAllCardsScope('all', this)">🏁 All Time</button>
@@ -15614,17 +15629,29 @@ function renderLoyaltyResults(res, resultsEl, who) {
     // ability to edit this one card) now sits right next to the card number
     // badge itself. It's admin-only and separate from loyEditButtonHtml_'s own
     // ✏️ Edit button below (that one opens the actual edit form and is
-    // untouched, exactly as it already was). Checkbox starts reflecting
-    // r.canEdit (the card's current real state, already returned by
-    // loyaltySearchAPI) instead of always starting blank.
+    // untouched, exactly as it already was).
+    // v-fix (BRO: "edit button overlap avutundi... emi cheyali" — two bugs:
+    // (1) it read r.canEdit, which loyaltySearchAPI always sends back as TRUE
+    // for an admin's own search (admin can always edit — that flag was never
+    // about the EMPLOYEE's grant at all), so the box showed checked for
+    // EVERY card regardless of the real access state, and could never show
+    // itself auto-unticked after an employee used a one-time grant (the
+    // backend already flips "Edit Allowed" off the moment the employee
+    // submits their edit — see loyaltyEditCardAPI_ — this just wasn't
+    // reading that). Switched to r.employeeEditAllowed, the raw per-card
+    // toggle state loyaltySearchAPI already returns for exactly this. (2) the
+    // label/badge span wasn't its own flex row, so on a long customer name
+    // (squeezing the header) the two could overlap instead of sitting
+    // cleanly side by side — made it inline-flex with its own gap so it
+    // never overlaps regardless of name length.
     const editAccessTick = who === 'admin'
-      ? `<label class="loy-edit-access-tick" title="Grant/revoke this card's edit access for ${escJs(properCase(r.empName))}" style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:var(--text3);cursor:pointer;margin-left:8px;">
-           <input type="checkbox" ${r.canEdit ? 'checked' : ''} onchange="loyToggleCardEditAccess_(this,'${escJs(r.cardNo)}',${i})" style="width:15px;height:15px;cursor:pointer;accent-color:var(--purple);"> Edit
+      ? `<label class="loy-edit-access-tick" title="Grant/revoke this card's edit access for ${escJs(properCase(r.empName))}" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--gold);white-space:nowrap;cursor:pointer;">
+           <input type="checkbox" ${r.employeeEditAllowed ? 'checked' : ''} onchange="loyToggleCardEditAccess_(this,'${escJs(r.cardNo)}',${i})" style="width:14px;height:14px;cursor:pointer;accent-color:var(--gold);flex-shrink:0;"> Edit
          </label>`
       : '';
 
     return `<div class="loy-result">
-      <div class="loy-result-hdr"><span>${properCase(r.custName)}</span><span>${editAccessTick}<span class="loy-badge">#${r.cardNo}</span></span></div>
+      <div class="loy-result-hdr"><span>${properCase(r.custName)}</span><span style="display:inline-flex;align-items:center;gap:8px;flex-shrink:0;">${editAccessTick}<span class="loy-badge">#${r.cardNo}</span></span></div>
       <div class="loy-result-body">
         ${photoHtml}
         <table class="loy-detail">
@@ -15689,7 +15716,8 @@ function loyToggleCardEditAccess_(cbEl, cardNo, i) {
   }).then(res => {
     cbEl.disabled = false;
     if (res && res.ok) {
-      r.canEdit = enable; // keeps loyLastResults in sync in case anything else reads it
+      r.employeeEditAllowed = enable; // keeps loyLastResults in sync with what the tick box now shows
+      r.canEdit = enable;
       toast('Edit access ' + (enable ? 'granted' : 'revoked') + ' — card ' + cardNo + (r.empName ? ' (' + properCase(r.empName) + ')' : ''), 'success');
     } else {
       cbEl.checked = !enable;
@@ -15698,6 +15726,53 @@ function loyToggleCardEditAccess_(cbEl, cardNo, i) {
   }).catch(err => {
     cbEl.disabled = false;
     cbEl.checked = !enable;
+    toast('Network error: ' + err.message, 'error');
+  });
+}
+
+// Shows/hides the "All Cards" page's bulk Edit-Access row depending on
+// whether an employee is picked in the Filter-by-Employee dropdown — "All
+// Employees" (blank) has no single employee to grant access for, so the
+// row stays hidden then. Always starts unchecked on a selection change
+// (one-shot action, see loyBulkEditToggle_ below — not a live reflection
+// of whether this employee's cards already have mixed access states).
+function loyBulkEditRowSync_() {
+  const emp = document.getElementById('loyMyCardsEmpFilter').value;
+  const row = document.getElementById('loyBulkEditRow-admin');
+  document.getElementById('loyBulkEditEmpName-admin').textContent = emp ? properCase(emp) : '';
+  document.getElementById('loyBulkEditCheckbox-admin').checked = false;
+  document.getElementById('loyBulkEditMsg-admin').textContent = '';
+  row.style.display = emp ? '' : 'none';
+}
+
+// v-add (BRO: "all cards opiotn lo emp select chesi edit opiton ivu. adi
+// tick cheste, ani cards open avali" — grants/revokes edit access for every
+// card the selected employee has issued, in one call
+// (loyaltySetCardEditAllowedAPI already accepts empName for exactly this).
+function loyBulkEditToggle_(cbEl) {
+  const enable = cbEl.checked;
+  const empName = document.getElementById('loyMyCardsEmpFilter').value;
+  const msgEl = document.getElementById('loyBulkEditMsg-admin');
+  if (!empName) { cbEl.checked = !enable; return; }
+  cbEl.disabled = true;
+  msgEl.textContent = 'Working...';
+  jsonpReliable({
+    page: 'loyaltySetCardEditAllowedAPI', enabled: enable ? 'true' : 'false', empName: empName,
+    role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail
+  }).then(res => {
+    cbEl.disabled = false;
+    if (res && res.ok) {
+      msgEl.textContent = '✓ Edit access ' + (enable ? 'granted' : 'revoked') + ' for ' + (res.updated || 0) + ' card(s)';
+      toast('Edit access ' + (enable ? 'granted' : 'revoked') + ' for all of ' + properCase(empName) + '\'s cards (' + (res.updated || 0) + ')', 'success');
+    } else {
+      cbEl.checked = !enable;
+      msgEl.textContent = '';
+      toast((res && res.error) || 'Could not update edit access', 'error');
+    }
+  }).catch(err => {
+    cbEl.disabled = false;
+    cbEl.checked = !enable;
+    msgEl.textContent = '';
     toast('Network error: ' + err.message, 'error');
   });
 }
@@ -16310,7 +16385,17 @@ function loadLoyaltyAllCardsAdmin() {
         </tr></thead><tbody>`;
       res.cards.forEach(c => {
         html += `<tr>
-          <td>${c.custPhotoUrl ? `<img src="${c.custPhotoUrl}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">` : '—'}</td>
+          <!-- v-fix (BRO: "ikada photo ani undi kani photo ravali kada, option
+               ledu... direct photo kakunda, chinna view ane opiton ivu" — a raw
+               Drive URL dropped straight into <img src> often fails to render at
+               all (Drive blocks/redirects the ?export=view link for direct
+               embedding — the same issue already fixed elsewhere with
+               dsrPhotoViewUrl), and the onerror above just silently hid the
+               broken image, leaving the whole cell blank with nothing to click.
+               A small "View" button using the same lazy-fetch openLoyaltyImage
+               modal already used by the search results' own document buttons is
+               reliable regardless of URL format, and never shows blank. -->
+          <td>${c.custPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:10.5px;padding:3px 8px;" onclick="openLoyaltyImage(event,'${escJs(c.custPhotoUrl)}')">👁 View</button>` : '—'}</td>
           <td>#${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td><td>${properCase(c.address)}</td>
           <td>${c.phone}</td><td>${c.aadhaarNo}</td><td>${properCase(c.empName)}</td><td>${c.cardDate}</td>
         </tr>`;
