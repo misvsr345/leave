@@ -3182,39 +3182,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <button onclick="runLoyaltySearch('admin')" style="flex-shrink:0;width:42px;height:42px;border:none;border-radius:var(--r2);background:linear-gradient(135deg, var(--purple), var(--purple-mid), var(--pink));color:#fff;font-size:16px;cursor:pointer;">🔍</button>
         </div>
       </div>
-      <!-- v-fix (BRO: "inta confuse enduku. admin ki oka option ivu. akkade
-           emp list ichi, edit by card no ani ivu — adi only selected no,
-           and all card ani kuda okati pettu — adi all cards koasm" — the
-           old design split this across two places (a separate bulk-by-
-           employee box here, plus a per-card Allow/Revoke toggle buried
-           inside each search result below). Replaced with ONE panel:
-           pick the employee, then pick the scope — "This Card Only"
-           (type the card no) or "All Cards" (every card that employee
-           has issued) — then Allow or Revoke. Same two backend params
-           either way (loyaltySetCardEditAllowedAPI already accepts
-           cardNo OR empName), just one clear control surface now. -->
-      <div class="card" style="padding:12px 14px;margin-top:8px;">
-        <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Loyalty Card Edit Access</label>
-        <select id="loyEditAccessEmpName" class="uniform-select" onfocus="loyBulkEditEmpListEnsure_()"
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:13px;background:var(--bg);outline:none;margin-bottom:8px;">
-          <option value="">-- Select Employee --</option>
-        </select>
-        <div style="display:flex;gap:14px;font-size:12.5px;margin-bottom:8px;">
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="radio" name="loyEditAccessMode" value="card" checked onchange="loyEditAccessModeToggle_()"> This Card Only
-          </label>
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="radio" name="loyEditAccessMode" value="all" onchange="loyEditAccessModeToggle_()"> All Cards
-          </label>
-        </div>
-        <input type="text" id="loyEditAccessCardNo" placeholder="Card Number" autocomplete="off"
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:'Spectral',serif;font-size:13px;background:var(--bg);outline:none;margin-bottom:8px;box-sizing:border-box;">
-        <div style="display:flex;gap:8px;">
-          <button class="btn-sm btn-view" style="flex:1;font-size:11px;" onclick="loyEditAccessApply_(true)">🔓 Allow</button>
-          <button class="btn-sm" style="flex:1;font-size:11px;color:var(--red);border-color:var(--red);" onclick="loyEditAccessApply_(false)">🔒 Revoke</button>
-        </div>
-        <div id="loyBulkEditMsg" style="font-size:11px;color:var(--text3);margin-top:6px;"></div>
-      </div>
+      <!-- v-fix (BRO: "ila dual search box lu iste, naku confuse ga undi" — the
+           separate "Loyalty Card Edit Access" panel (employee dropdown + This
+           Card Only/All Cards + its own Card Number box) is gone — it looked
+           like a second search box. BRO: "no search chesi, aa no pakana, edit
+           ani tick box pettu, adi tick cheste access to emp velipovali" —
+           access is now granted right inside each search result, next to that
+           card's own #number (see renderLoyaltyResults' loy-result-hdr below
+           and loyToggleCardEditAccess_), so there's only ever ONE box on this
+           whole page that looks like search: the real one at the top. -->
       <div id="loyAdminSearchResults" style="margin-top:10px;"></div>
     </div>
 
@@ -15632,8 +15608,23 @@ function renderLoyaltyResults(res, resultsEl, who) {
       ).join('') + '</div>';
     }
 
+    // v-fix (BRO: "no search chesi, aa no pakana, edit ani tick box pettu, adi
+    // tick cheste access to emp velipovali. aa edit button ipudu ela undo alane
+    // pettu" — the per-card edit-ACCESS toggle (grants/revokes the employee's
+    // ability to edit this one card) now sits right next to the card number
+    // badge itself. It's admin-only and separate from loyEditButtonHtml_'s own
+    // ✏️ Edit button below (that one opens the actual edit form and is
+    // untouched, exactly as it already was). Checkbox starts reflecting
+    // r.canEdit (the card's current real state, already returned by
+    // loyaltySearchAPI) instead of always starting blank.
+    const editAccessTick = who === 'admin'
+      ? `<label class="loy-edit-access-tick" title="Grant/revoke this card's edit access for ${escJs(properCase(r.empName))}" style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:var(--text3);cursor:pointer;margin-left:8px;">
+           <input type="checkbox" ${r.canEdit ? 'checked' : ''} onchange="loyToggleCardEditAccess_(this,'${escJs(r.cardNo)}',${i})" style="width:15px;height:15px;cursor:pointer;accent-color:var(--purple);"> Edit
+         </label>`
+      : '';
+
     return `<div class="loy-result">
-      <div class="loy-result-hdr"><span>${properCase(r.custName)}</span><span class="loy-badge">#${r.cardNo}</span></div>
+      <div class="loy-result-hdr"><span>${properCase(r.custName)}</span><span>${editAccessTick}<span class="loy-badge">#${r.cardNo}</span></span></div>
       <div class="loy-result-body">
         ${photoHtml}
         <table class="loy-detail">
@@ -15666,12 +15657,11 @@ function renderLoyaltyResults(res, resultsEl, who) {
 // when the backend said canEdit — i.e. MIS already turned the toggle on
 // for this specific card (or bulk-allowed it for this employee) and it
 // hasn't already been used.
-// v-fix (BRO: "inta confuse enduku, admin ki oka option ivu" — the
-// per-card Allow/Revoke toggle that used to live on every single search
-// result is gone; that control now lives in ONE place, the "Loyalty
-// Card Edit Access" panel above the search box (loyEditAccessApply_).
-// Admin still gets the plain Edit button here (admin can always edit,
-// no toggle needed for that).
+// v-note (BRO: "aa edit button ipudu ela undo alane pettu" — left exactly as
+// it already was, untouched): opens the actual edit FORM. This is unrelated
+// to loyToggleCardEditAccess_ below, which only grants/revokes whether the
+// employee is ALLOWED to see this button in the first place — admin always
+// gets it regardless.
 function loyEditButtonHtml_(r, i, who) {
   const editBtn = `<button class="btn-sm btn-view" style="font-size:11px;" onclick="loyOpenEditForm('${escJs(r.cardNo)}','${escJs(r.cardType)}','${who}')">✏️ Edit</button>`;
   if (who !== 'admin') {
@@ -15680,79 +15670,36 @@ function loyEditButtonHtml_(r, i, who) {
   return editBtn;
 }
 
-// v-fix (BRO: "drop down local cache lo save avadam ledu" — this only
-// used sel.dataset.loaded, an in-memory DOM flag that's gone the moment
-// the page reloads, so the dropdown re-fetched over the network every
-// single time. Now uses the SAME loadEmpListWithCache helper Settings →
-// Access already uses: instant-fill from localStorage on open, then a
-// network call confirms/refreshes it in the background — list survives
-// reloads and works offline-first, same as every other employee dropdown
-// in this portal.
-// v-fix (BRO: "chala dagara dropdown lo local cache use cheyadam ledu") —
-// shares directEmpCache with every other employee dropdown. Value stays
-// the employee NAME (not empId) — the Loyalty Card sheet only stores
-// names, so loyaltySetCardEditAllowedAPI's empName param needs it as-is.
-function loyBulkEditEmpListEnsure_() {
-  const sel = document.getElementById('loyEditAccessEmpName');
-  if (sel.dataset.loaded === '1') return;
-  const build = () => {
-    const current = sel.value;
-    sel.innerHTML = '<option value="">-- Select Employee --</option>' +
-      directEmpCache.map(e => `<option value="${escJs(e.name)}">${e.name}</option>`).join('');
-    if (current) sel.value = current;
-    sel.dataset.loaded = '1';
-  };
-  if (directEmpCache.length > 0) build();
-  ensureDirectEmpCache_().then(build).catch(() => {});
-}
-
-// Shows/hides the Card Number box depending on which scope radio is picked.
-function loyEditAccessModeToggle_() {
-  const mode = document.querySelector('input[name="loyEditAccessMode"]:checked').value;
-  document.getElementById('loyEditAccessCardNo').style.display = mode === 'card' ? '' : 'none';
-}
-
-// v-fix (BRO: "inta confuse enduku, admin ki oka option ivu — akkade emp
-// list ichi, edit by card no ani ivu, adi only selected no, and all card
-// ani kuda okati pettu" — ONE panel now covers every case that used to be
-// split across the per-card search-result toggle and the separate bulk
-// box: pick scope (one card, by its number — or every card this employee
-// issued) and Allow or Revoke. Same backend endpoint either way
-// (loyaltySetCardEditAllowedAPI accepts cardNo OR empName).
-function loyEditAccessApply_(enable) {
-  const mode = document.querySelector('input[name="loyEditAccessMode"]:checked').value;
-  const msgEl = document.getElementById('loyBulkEditMsg');
-  const params = {
-    page: 'loyaltySetCardEditAllowedAPI', enabled: enable ? 'true' : 'false',
+// v-fix (BRO: "no search chesi, aa no pakana, edit ani tick box pettu, adi
+// tick cheste access to emp velipovali" — replaces the old separate "Loyalty
+// Card Edit Access" panel entirely: that panel's own Card Number box looked
+// like a second search box ("ila dual search box lu iste, naku confuse ga
+// undi"). Now admin just searches once (the one real search box at the top),
+// and each result's own tick box — right next to its #cardNo — grants
+// (checked) or revokes (unchecked) THAT employee's ability to edit THAT one
+// card. cbEl is passed so a failed call reverts the tick rather than leaving
+// it showing a state that never actually saved.
+function loyToggleCardEditAccess_(cbEl, cardNo, i) {
+  const enable = cbEl.checked;
+  const r = loyLastResults[i] || {};
+  cbEl.disabled = true;
+  jsonpReliable({
+    page: 'loyaltySetCardEditAllowedAPI', enabled: enable ? 'true' : 'false', cardNo: cardNo,
     role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail
-  };
-  if (mode === 'card') {
-    const cardNo = document.getElementById('loyEditAccessCardNo').value.trim();
-    if (!cardNo) { toast('Enter the card number first', 'error'); return; }
-    params.cardNo = cardNo;
-  } else {
-    const empName = document.getElementById('loyEditAccessEmpName').value;
-    if (!empName) { toast('Select an employee first', 'error'); return; }
-    params.empName = empName;
-  }
-  msgEl.textContent = 'Working...';
-  jsonpReliable(params).then(res => {
+  }).then(res => {
+    cbEl.disabled = false;
     if (res && res.ok) {
-      const who = mode === 'card' ? ('card ' + params.cardNo) : (res.updated + ' card(s) for ' + params.empName);
-      msgEl.textContent = '✓ Edit access ' + (enable ? 'granted' : 'revoked') + ' — ' + who;
-      toast('Edit access ' + (enable ? 'granted' : 'revoked') + ' — ' + who, 'success');
-      if (mode === 'card') document.getElementById('loyEditAccessCardNo').value = '';
-      else document.getElementById('loyEditAccessEmpName').value = '';
-      // Only refresh an already-open search (e.g. admin had this same
-      // card pulled up) — don't fire runLoyaltySearch on an empty box,
-      // that would just pop its own "type something" error toast.
-      const box = document.getElementById('loyAdminSearchBox');
-      if (box && box.value.trim()) runLoyaltySearch('admin');
+      r.canEdit = enable; // keeps loyLastResults in sync in case anything else reads it
+      toast('Edit access ' + (enable ? 'granted' : 'revoked') + ' — card ' + cardNo + (r.empName ? ' (' + properCase(r.empName) + ')' : ''), 'success');
     } else {
-      msgEl.textContent = '';
+      cbEl.checked = !enable;
       toast((res && res.error) || 'Could not update edit access', 'error');
     }
-  }).catch(err => { msgEl.textContent = ''; toast('Network error: ' + err.message, 'error'); });
+  }).catch(err => {
+    cbEl.disabled = false;
+    cbEl.checked = !enable;
+    toast('Network error: ' + err.message, 'error');
+  });
 }
 
 // Opens the Edit form for one card — fetches the full, unmasked row from
