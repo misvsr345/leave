@@ -25626,9 +25626,22 @@ function dsrfConfirmSubmit(who, evt) {
         msg.innerHTML = isRDR
           ? `✅ Saved! ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
           : isOutlet
-          ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.`
+          ? `✅ Saved! Outlet Issue ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Not counted as DSR.` +
+            (result.failedItems && result.failedItems.length ? `<br><span style="color:var(--red);">⚠️ ${result.failedItems.length} item(s) FAILED — see alert above, re-add those separately.</span>` : '')
           : `✅ Saved! DSR ID: <b>${result.dsrId || '—'}</b> — ${result.savedCount || rows.length} item(s) saved. Email sent.`;
         toast(isRDR ? 'Return/Damage/Repair saved!' : isOutlet ? 'Outlet Issue saved!' : 'DSR entry saved!', 'success');
+        // v-add (BRO: "4 items ki 2 itms vachai, megatavi raledu... mali cheyalisi
+        // vachindi" — Outlet Issue now saves every item independently (see
+        // saveOutletIssue_ in DSRBackend.gs), so a rare per-item Sheets hiccup
+        // only drops THAT item, never the whole submission, and the response
+        // now says exactly which ones (if any) failed — the already-saved
+        // items must NEVER be re-typed (that would duplicate them in the
+        // sheet), so this names only the ones that actually need re-entry.
+        if (result.failedItems && result.failedItems.length) {
+          toast('⚠️ ' + result.failedItems.length + ' item(s) could NOT be saved — ' +
+            result.failedItems.map(f => f.label).join(', ') +
+            '. The other ' + result.savedCount + ' item(s) above ARE saved (do not re-enter them) — please add just these failed item(s) again as a new entry.', 'error');
+        }
         // v-add (BRO: "photos upload avadam ledu...network vachaka photo upload avali" —
         // the row itself is already saved at this point; this only queues the photo(s)
         // that failed to reach Drive, for silent background auto-retry (see
