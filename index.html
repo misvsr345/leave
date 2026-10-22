@@ -16380,10 +16380,31 @@ function loadLoyaltyAllCardsAdmin() {
         content.innerHTML = '<div class="empty-state"><span class="emoji">🪪</span><p>No cards found</p></div>';
         return;
       }
+      // v-add (BRO: "card no sort avali. and card type wise gropu avali" —
+      // group every card by its Type (Sparkle Plus, etc — insertion order,
+      // i.e. whichever type first appears in res.cards), then sort each
+      // group's own cards by Card No ascending. cardNo is usually numeric
+      // ("1001") but parseInt falls back to a plain string compare for
+      // anything non-numeric, so a stray alphanumeric card no never breaks
+      // the sort, it just sorts after every numeric one.
+      const cardsByType = new Map();
+      res.cards.forEach(c => {
+        const t = c.cardType || '—';
+        if (!cardsByType.has(t)) cardsByType.set(t, []);
+        cardsByType.get(t).push(c);
+      });
+      cardsByType.forEach(list => list.sort((a, b) => {
+        const na = parseInt(a.cardNo, 10), nb = parseInt(b.cardNo, 10);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return String(a.cardNo).localeCompare(String(b.cardNo));
+      }));
+
       let html = `<div class="kd-table-wrap"><table class="kd-table"><thead><tr>
           <th>Photo</th><th>Card No</th><th>Type</th><th>Customer</th><th>Address</th><th>Phone</th><th>Aadhaar</th><th>Employee</th><th>Date</th>
         </tr></thead><tbody>`;
-      res.cards.forEach(c => {
+      cardsByType.forEach((list, typeName) => {
+        html += `<tr><td colspan="9" style="background:var(--purple-bg);color:var(--purple);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:0.4px;padding:6px 10px;">${typeName} (${list.length})</td></tr>`;
+        list.forEach(c => {
         html += `<tr>
           <!-- v-fix (BRO: "ikada photo ani undi kani photo ravali kada, option
                ledu... direct photo kakunda, chinna view ane opiton ivu" — a raw
@@ -16399,6 +16420,7 @@ function loadLoyaltyAllCardsAdmin() {
           <td>#${c.cardNo}</td><td>${c.cardType}</td><td>${properCase(c.custName)}</td><td>${properCase(c.address)}</td>
           <td>${c.phone}</td><td>${c.aadhaarNo}</td><td>${properCase(c.empName)}</td><td>${c.cardDate}</td>
         </tr>`;
+        });
       });
       html += `</tbody></table></div><button class="btn-loy-card" onclick="mailLoyaltyAllCards()">📧 Mail This List</button>`;
       content.innerHTML = html;
