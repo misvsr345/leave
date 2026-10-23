@@ -9156,7 +9156,7 @@ function turnOffEmpAlert_(alertId, empId) {
 // server-side beyond the one read-only listing endpoint.
 // ══════════════════════════════════════════════════════════════════
 const ADMIN_ALERT_REMINDER_KEY = 'vsrGoldAdminAlertReminderLastShown';
-const ADMIN_ALERT_REMINDER_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const ADMIN_ALERT_REMINDER_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3 hours
 function checkAdminAlertReminder_() {
   if (state.__loginKind !== 'admin' || !navigator.onLine) return;
   const role = (state.adminRole || '').toUpperCase();
@@ -23210,7 +23210,7 @@ function openLeadCallPanel(lead) {
         <option>Answered</option>
         <option>No Answer</option>
         <option>Not Connected</option>
-        <option>Interested</option><option>Converted</option>
+        <option>Interested</option>
         <option>Will Visit</option><option>Busy</option>
         <option value="Flag This Number">🚩 Flag This Number</option>
       </select>
