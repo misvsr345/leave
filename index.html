@@ -1603,9 +1603,15 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
    extra JS needed (applyStoreLogo_ already queries every .vsr-logo-mark on
    the page). Before any logo is uploaded, the shared ✦ fallback mark shows
    instead, at this size. -->
-.vcard-logo-mark { width: 84px; }
-.vcard-logo-mark::before { font-size: 30px; }
-.vcard-logo-mark .vsr-logo-img { width: 84px; height: auto; }
+/* v-fix (BRO: "logo yellow color undali, ila dark aga vadud. ipudu unna size ki 50% tagginchu,
+   left upper corner lo undali" — card's own logo only (login page/sidebar/topbar logo untouched):
+   shrunk to half the previous size, and recolored gold/yellow via a CSS filter since the uploaded
+   logo image itself is dark green — filter forces it to a near-black silhouette first (brightness(0)
+   saturate(100%)) then tints that silhouette gold. Stays top-left via the existing .vcard-top flex
+   layout — no structural change needed there. */
+.vcard-logo-mark { width: 42px; }
+.vcard-logo-mark::before { font-size: 15px; color: #e8c766; }
+.vcard-logo-mark .vsr-logo-img { width: 42px; height: auto; filter: brightness(0) saturate(100%) invert(75%) sepia(66%) saturate(461%) hue-rotate(358deg) brightness(97%) contrast(93%); }
 .vcard-type-block { text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
 /* v-fix (BRO: "second image lo unnadata ni single line lo chei" — Card
    type was two stacked lines (e.g. "SPARKLE" / "PLUS"); now rendered as
