@@ -2955,15 +2955,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
            here at all. Every admin page now has a one-click route from
            this flyout too. -->
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('profile')">🪪 Profile</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('monthly-absent')">📋 Monthly Absent Report</div>
+      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_monthlyAbsent" onclick="showAdminPage('monthly-absent')">📋 Monthly Absent Report</div>
       <div class="vsr-sidebar-subitem" onclick="showAdminPage('notices')">📢 Notices</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('extra-dsr')">⚠️ Extra DSR Check</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('dup-tagno')">🔁 Duplicate Tag No</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('settings')">⚙️ Settings</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
+      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_dsrExtraCheck" onclick="showAdminPage('extra-dsr')">⚠️ Extra DSR Check</div>
+      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_dsrDupTagNo" onclick="showAdminPage('dup-tagno')">🔁 Duplicate Tag No</div>
+      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_settings" onclick="showAdminPage('settings')">⚙️ Settings</div>
+      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_backendSheets" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
-            <div class="vsr-sidebar-subitem" onclick="showAdminPage('login-activity')">🔐 Login Activity</div>
+            <div class="vsr-sidebar-subitem" id="adminMoreFlyout_loginActivity" onclick="showAdminPage('login-activity')">🔐 Login Activity</div>
       <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="adminSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
       <div class="vsr-sidebar-subitem" onclick="openNotifHistoryModal()">🔔 Notifications</div>
     </div>
@@ -3103,7 +3103,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQALoyPendingValidation" onclick="showAdminPage('loyalty-pending-validation')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Pending Validation</div><div class="quick-action-sub">Review new card data</div></div>
         <div class="quick-action-btn" id="adminQALoyUpcoming" onclick="showAdminPage('loyalty-upcoming')"><span class="quick-action-icon">🔔</span><div class="quick-action-label">Upcoming Approvals</div><div class="quick-action-sub">Ready-to-pay sets</div></div>
         <div class="quick-action-btn" id="adminQALoyIncenthist" onclick="showAdminPage('loyalty-incenthist')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Incentive History</div><div class="quick-action-sub">Every payment made</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
+        <div class="quick-action-btn" id="adminQALoyIssues" onclick="showAdminPage('loyalty-issues')"><span class="quick-action-icon">🚨</span><div class="quick-action-label">Card Issues</div><div class="quick-action-sub">Duplicate / missing numbers</div></div>
         <div class="quick-action-btn" id="adminQALoyLeaderboard" onclick="showAdminPage('loyalty-leaderboard')"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Leaderboard</div><div class="quick-action-sub">Top card sellers</div></div>
       </div>
     </div>
@@ -3813,7 +3813,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQAKpiTarget" onclick="showAdminPage('kpi-target')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Targets</div><div class="quick-action-sub">Loyalty &amp; Golden — all staff</div></div>
         <div class="quick-action-btn" id="adminQAKpiTillDate" onclick="showAdminPage('kpi-tilldate')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month (Till Date)</div><div class="quick-action-sub">This month so far</div></div>
         <div class="quick-action-btn" id="adminQAKpiLastMonth" onclick="showAdminPage('kpi-monthly')"><span class="quick-action-icon">🏁</span><div class="quick-action-label">Last Month KPI</div><div class="quick-action-sub">Final report — closed month</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('kpi-trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">KPI Trend</div><div class="quick-action-sub">Employee-wise score over months</div></div>
+        <div class="quick-action-btn" id="adminQAKpiTrend" onclick="showAdminPage('kpi-trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">KPI Trend</div><div class="quick-action-sub">Employee-wise score over months</div></div>
         <div class="quick-action-btn" id="adminQAKpiCompare" onclick="showAdminPage('kpi-compare')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Month Comparison</div><div class="quick-action-sub">Trend across months</div></div>
         <div class="quick-action-btn" id="adminQAKpiRules" onclick="showAdminPage('kpi-rules')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Rules &amp; Grading</div><div class="quick-action-sub">How scoring works</div></div>
       </div>
@@ -4009,18 +4009,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">📦 Stock Level</span></div>
       <div class="card">
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Stock Entry</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stockalerts')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Stock Alerts</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-photos')"><span class="quick-action-icon">📷</span><div class="quick-action-label">Photos</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-manage')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Manage</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-today')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Today's Entries</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-failed')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Failed Items <span id="slFailedBadge" style="display:none;"></span></div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('stocklevel-print')"><span class="quick-action-icon">🖨️</span><div class="quick-action-label">Print / Report</div></div>
+          <div class="quick-action-btn" id="adminQASlOverview" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
+          <div class="quick-action-btn" id="adminQASlEntry" onclick="showAdminPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Stock Entry</div></div>
+          <div class="quick-action-btn" id="adminQASlTransfer" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div></div>
+          <div class="quick-action-btn" id="adminQASlAlerts" onclick="showAdminPage('stockalerts')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Stock Alerts</div></div>
+          <div class="quick-action-btn" id="adminQASlCounter" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
+          <div class="quick-action-btn" id="adminQASlSales" onclick="showAdminPage('stocklevel-sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
+          <div class="quick-action-btn" id="adminQASlTag" onclick="showAdminPage('stocklevel-tag')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Tag Status</div></div>
+          <div class="quick-action-btn" id="adminQASlPhotos" onclick="showAdminPage('stocklevel-photos')"><span class="quick-action-icon">📷</span><div class="quick-action-label">Photos</div></div>
+          <div class="quick-action-btn" id="adminQASlManage" onclick="showAdminPage('stocklevel-manage')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Manage</div></div>
+          <div class="quick-action-btn" id="adminQASlToday" onclick="showAdminPage('stocklevel-today')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Today's Entries</div></div>
+          <div class="quick-action-btn" id="adminQASlFailed" onclick="showAdminPage('stocklevel-failed')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Failed Items <span id="slFailedBadge" style="display:none;"></span></div></div>
+          <div class="quick-action-btn" id="adminQASlPrint" onclick="showAdminPage('stocklevel-print')"><span class="quick-action-icon">🖨️</span><div class="quick-action-label">Print / Report</div></div>
         </div>
       </div>
     </div>
@@ -4357,14 +4357,14 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">📞 Leads</span></div>
       <div class="card" id="adminLeadsSummaryBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Employee names — tap for their leads</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">All employees — calls done</div></div>
+        <div class="quick-action-btn" id="adminQALeadsOverview" onclick="showAdminPage('leads-overview')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Assignment</div><div class="quick-action-sub">Employee names — tap for their leads</div></div>
+        <div class="quick-action-btn" id="adminQALeadsSubmitted" onclick="showAdminPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">All employees — calls done</div></div>
         <div class="quick-action-btn" id="adminQALeadsReport" onclick="showAdminPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Report</div><div class="quick-action-sub">%, status break-up — employee wise</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee, lock duration</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('leads-conversions')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Conversions</div><div class="quick-action-sub">Which calls brought customers to store</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
-        <div class="quick-action-btn" onclick="showAdminPage('flagged-numbers')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Flagged Numbers</div><div class="quick-action-sub">Review &amp; permanently delete</div></div>
+        <div class="quick-action-btn" id="adminQALeadsOverdue" onclick="showAdminPage('leads-overdue')"><span class="quick-action-icon">⏰</span><div class="quick-action-label">Overdue / Avoid</div><div class="quick-action-sub">Past-date, not submitted</div></div>
+        <div class="quick-action-btn" id="adminQALeadsQuota" onclick="showAdminPage('leads-quota')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Daily Quota</div><div class="quick-action-sub">Set leads/day per employee, lock duration</div></div>
+        <div class="quick-action-btn" id="adminQALeadsConversions" onclick="showAdminPage('leads-conversions')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Conversions</div><div class="quick-action-sub">Which calls brought customers to store</div></div>
+        <div class="quick-action-btn" id="adminQACustomerEvents" onclick="showAdminPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
+        <div class="quick-action-btn" id="adminQAFlaggedNumbers" onclick="showAdminPage('flagged-numbers')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Flagged Numbers</div><div class="quick-action-sub">Review &amp; permanently delete</div></div>
       </div>
       <div class="card" style="margin-top:14px;">
         <div class="card-title">🛠️ More Tools</div>
@@ -13678,10 +13678,26 @@ const SM_FEATURE_ELEMENTS = {
   loyDash:       ['adminQALoyDash'],
   loyUpcoming:   ['adminQALoyUpcoming'],
   loyIncenthist: ['adminQALoyIncenthist'],
+  // v-add (BRO: "flagged no, daily quota, upcoming approval cards lo approved
+  // card button, pending validation button, ilanti option lu ekkada unna anni
+  // access untene work cheyali" — audit found these had real buttons already
+  // but were never wired into this map at all, so a restricted admin ALWAYS
+  // saw them regardless of what MIS configured):
+  loyPendingValidation: ['adminQALoyPendingValidation'],
+  loyIssues: ['adminQALoyIssues'],
   leadsReport: ['adminQALeadsReport'],
+  leadsOverview: ['adminQALeadsOverview'], leadsSubmitted: ['adminQALeadsSubmitted'],
+  leadsOverdue: ['adminQALeadsOverdue'], leadsQuota: ['adminQALeadsQuota'],
+  leadsConversions: ['adminQALeadsConversions'], leadsEvents: ['adminQACustomerEvents'],
+  leadsFlagged: ['adminQAFlaggedNumbers'],
+  slOverview: ['adminQASlOverview'], slEntry: ['adminQASlEntry'], slTransfer: ['adminQASlTransfer'],
+  slAlerts: ['adminQASlAlerts'], slCounter: ['adminQASlCounter'], slSales: ['adminQASlSales'],
+  slTag: ['adminQASlTag'], slPhotos: ['adminQASlPhotos'], slManage: ['adminQASlManage'],
+  slToday: ['adminQASlToday'], slFailed: ['adminQASlFailed'], slPrint: ['adminQASlPrint'],
   kpi: ['adminQAKpi', 'adminSidebarKpi'],
   kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
+  kpiTrend: ['adminQAKpiTrend'],
   dsr: ['adminQADsr', 'adminSidebarDsr'],
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
@@ -13699,7 +13715,14 @@ const SM_FEATURE_ELEMENTS = {
   outletIssue: ['adminQAOutletIssue'],
   rdr: ['adminQARdr'],
   stockLevel: ['adminQAStockLevel', 'adminSidebarStockLevel'],
-  stockTransfer: ['adminQAStockTransfer', 'adminSidebarStockTransfer']
+  stockTransfer: ['adminQAStockTransfer', 'adminSidebarStockTransfer'],
+  // v-add (same audit, round 2 — the 4 flyout-only items that had NO
+  // permission key at all, not even on their own main tile, so they were
+  // visible to every admin unconditionally):
+  monthlyAbsent: ['adminQAMonthlyAbsent'],
+  dsrExtraCheck: ['adminQADsrExtraCheck'],
+  dsrDupTagNo: ['adminQADupTagNo'],
+  loginActivity: ['adminQALoginActivity']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -13717,8 +13740,9 @@ const FEATURE_SUBKEYS = {
   loySearch: ['loySearch','loySearch_fulldata'], loyStats: ['loyStats'],
   loyDash: ['loyDash'], loyUpcoming: ['loyUpcoming'],
   loyIncenthist: ['loyIncenthist'],
+  loyPendingValidation: ['loyPendingValidation'], loyIssues: ['loyIssues'],
   kpi: ['kpi'], kpiTarget: ['kpiTarget'], kpiTillDate: ['kpiTillDate'], kpiLastMonth: ['kpiLastMonth'],
-  kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'],
+  kpiCompare: ['kpiCompare'], kpiRules: ['kpiRules'], kpiTrend: ['kpiTrend'],
   dsr: ['dsr'], dsrNewEntry: ['dsrNewEntry'], dsrToday: ['dsrToday'], dsrStatus: ['dsrStatus'], dsrMissing: ['dsrMissing'],
   dsrTillDate: ['dsrTillDate'], dsrDateRange: ['dsrDateRange'], dsrAdvOrder: ['dsrAdvOrder'],
   goldenAura: ['goldenAura'], gaNew: ['gaNew'], gaList: ['gaList'],
@@ -13727,18 +13751,57 @@ const FEATURE_SUBKEYS = {
   backendSheets: ['backend_sheets'],
   walkins: ['walkins'],
   leads: ['leads'], leadsReport: ['leadsReport'],
+  leadsOverview: ['leadsOverview'], leadsSubmitted: ['leadsSubmitted'], leadsOverdue: ['leadsOverdue'],
+  leadsQuota: ['leadsQuota'], leadsConversions: ['leadsConversions'], leadsEvents: ['leadsEvents'],
+  leadsFlagged: ['leadsFlagged'],
   outletIssue: ['outletIssue'], rdr: ['rdr'], stockLevel: ['stockLevel'], stockTransfer: ['stockTransfer'],
+  slOverview: ['slOverview'], slEntry: ['slEntry'], slTransfer: ['slTransfer'], slAlerts: ['slAlerts'],
+  slCounter: ['slCounter'], slSales: ['slSales'], slTag: ['slTag'], slPhotos: ['slPhotos'],
+  slManage: ['slManage'], slToday: ['slToday'], slFailed: ['slFailed'], slPrint: ['slPrint'],
   // v-add: the employee dashboard's combined "Stock Level" button isn't
   // its own permission key — it's gated by EITHER of its two real
   // children being on (see stockLevelModule in EMP_FEATURE_ELEMENTS).
   stockEntry: ['stockEntry'], stockLevelModule: ['stockEntry', 'stockTransfer'],
-  customer360: ['customer360']
+  customer360: ['customer360'],
+  // v-add (same audit, round 2):
+  monthlyAbsent: ['monthlyAbsent'], dsrExtraCheck: ['dsrExtraCheck'],
+  dsrDupTagNo: ['dsrDupTagNo'], loginActivity: ['loginActivity']
 };
 
+// Sidebar "More ⋯" flyout shortcut id -> the main tile id it must mirror.
+// Shared by applyAdminRoleRestrictions (sets it per-admin) and
+// resetAdminRoleRestrictions (clears it back to visible for MIS/Director).
+const FLYOUT_MIRROR_MAP_ = {
+  adminMoreFlyout_settings: 'adminQASettings',
+  adminMoreFlyout_backendSheets: 'adminQABackendSheets',
+  adminMoreFlyout_monthlyAbsent: 'adminQAMonthlyAbsent',
+  adminMoreFlyout_dsrExtraCheck: 'adminQADsrExtraCheck',
+  adminMoreFlyout_dsrDupTagNo: 'adminQADupTagNo',
+  adminMoreFlyout_loginActivity: 'adminQALoginActivity'
+};
 async function applyAdminRoleRestrictions() {
   const restrict = state.isRestrictedAdmin;
   const settingsQA = document.getElementById('adminQASettings');
   if (settingsQA) settingsQA.style.display = restrict ? 'none' : '';
+  // v-fix (BRO: "More flyout lo nunchi permission check avakunda page ki
+  // vellipotunnaru" — hiding a tile isn't enough if the sidebar's "More ⋯"
+  // flyout has its own shortcut straight to the same page with no check at
+  // all. Every flyout shortcut that has a real, gated main tile now mirrors
+  // whatever that tile's own display just decided (see FLYOUT_MIRROR_MAP_
+  // below, shared with resetAdminRoleRestrictions). 'settings' is the one
+  // exception (its tile is hidden via the separate settingsQA line above,
+  // not the SM_FEATURE_ELEMENTS loop), handled the same way. Items with no
+  // gated main tile at all (Profile, Notices, Change Password, Theme, Sync
+  // Offline, Notifications) aren't in that map on purpose — nothing to
+  // mirror, they stay visible for everyone, same as before.
+  const mirrorMoreFlyout_ = () => {
+    Object.keys(FLYOUT_MIRROR_MAP_).forEach(flyId => {
+      const fly = document.getElementById(flyId);
+      if (!fly) return;
+      const tile = document.getElementById(FLYOUT_MIRROR_MAP_[flyId]);
+      fly.style.display = (tile && tile.style.display === 'none') ? 'none' : '';
+    });
+  };
 
   if (!restrict) {
     // MIS only — everything visible, no restrictions. Director now
@@ -13748,6 +13811,7 @@ async function applyAdminRoleRestrictions() {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
+    mirrorMoreFlyout_();
     state.loyaltyPerms = null; // null = unrestricted (full access everywhere)
     const pendingTitle = document.querySelector('#admin-pending .section-title2');
     if(pendingTitle) pendingTitle.textContent = '⏳ Pending Approvals';
@@ -13788,10 +13852,19 @@ async function applyAdminRoleRestrictions() {
     // isStockFeature.
     const isStockFeature = key.indexOf('stock') === 0 && key !== 'stockLevel' && key !== 'stockTransfer';
     const isDailyShopFeature = key.indexOf('dailyShop') === 0;
-    const isLeadsFeature = key === 'leads' || key === 'leadsReport';
+    // v-fix (BRO: "flagged no, daily quota... ilanti vi ekkada unna anni
+    // access untene work cheyali" — Leads sub-items (Daily Quota, Flagged
+    // Numbers, Customer Events, Overview/Submitted/Overdue/Conversions) are
+    // all named with a 'leads' prefix now, same as isKpiFeature/isDsrFeature
+    // etc. below, so they fall under the Leads section master too instead
+    // of being un-splittable from the blanket 'leads' key.
+    const isLeadsFeature = key === 'leads' || key.indexOf('leads') === 0;
     // Cross-cutting utilities with no section master of their own —
-    // controlled purely by their own individual sub-permission.
-    const isSectionless = key === 'backendSheets' || key === 'walkins' || key === 'outletIssue' || key === 'rdr' || key === 'stockLevel' || key === 'stockTransfer';
+    // controlled purely by their own individual sub-permission. Stock
+    // Level's own sub-tabs ('sl' prefix — Overview/Entry/Transfer/Alerts/
+    // Counter-wise/Sales/Tag/Photos/Manage/Today/Failed/Print) have no
+    // section master either, same as the top-level 'stockLevel' key itself.
+    const isSectionless = key === 'backendSheets' || key === 'walkins' || key === 'outletIssue' || key === 'rdr' || key === 'stockLevel' || key === 'stockTransfer' || key === 'loginActivity' || key.indexOf('sl') === 0;
     const sectionOn = isSectionless ? true : isKpiFeature ? sectionKpiOn : isDsrFeature ? sectionDsrOn : isLoyaltyFeature ? sectionLoyaltyOn : isGoldenAuraFeature ? sectionGoldenAuraOn : isStockFeature ? sectionStockOn : isDailyShopFeature ? sectionDailyShopOn : isLeadsFeature ? sectionLeadsOn : sectionLeaveOn;
     const enabled = sectionOn && subKeys.some(k => !!perms[k]);
     SM_FEATURE_ELEMENTS[key].forEach(id => {
@@ -13799,6 +13872,7 @@ async function applyAdminRoleRestrictions() {
       if (el) el.style.display = enabled ? '' : 'none';
     });
   });
+  mirrorMoreFlyout_();
 
   const pendingTitle = document.querySelector('#admin-pending .section-title2');
   if(pendingTitle) pendingTitle.textContent = '⏳ Leaves Awaiting Your Final Approval';
@@ -13820,6 +13894,10 @@ function resetAdminRoleRestrictions() {
   });
   const settingsQA = document.getElementById('adminQASettings');
   if (settingsQA) settingsQA.style.display = '';
+  Object.keys(FLYOUT_MIRROR_MAP_).forEach(flyId => {
+    const fly = document.getElementById(flyId);
+    if (fly) fly.style.display = '';
+  });
 }
 
 // ══════════════════════════════════════
