@@ -1592,20 +1592,35 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .loy-doc-item a { color:var(--purple); font-weight:700; text-decoration:none; }
 .btn-loy-card { width:100%; margin-top:10px; padding:11px; background:var(--purple); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; }
 
-.vcard { width: 340px; max-width: 100%; height: 214px; border-radius: 14px; position: relative; padding: 16px 18px; color: #fff; overflow: hidden; margin: 0 auto; font-family: Georgia, 'Times New Roman', serif; box-shadow: 0 10px 24px rgba(0,0,0,0.45); display: flex; flex-direction: column; justify-content: space-between; }
+.vcard { width: 340px; max-width: 100%; height: 214px; border-radius: 14px; position: relative; padding: 16px 18px; color: #fff; overflow: hidden; margin: 0 auto; font-family: 'Spectral', Georgia, 'Times New Roman', serif; box-shadow: 0 10px 24px rgba(0,0,0,0.45); display: flex; flex-direction: column; justify-content: space-between; }
 .vcard-top { display:flex; justify-content:space-between; align-items:flex-start; }
 .vcard-logo-block { display:flex; flex-direction:column; align-items:flex-start; }
-.vcard-icon { font-size:24px; line-height:1; margin-bottom:5px; }
-.vcard-brand { font-weight:bold; letter-spacing:1px; font-size:13px; }
+/* v-fix (BRO: "VSR GOLD undi kada, adi add chei. card pai VSR GOLD remove
+   chei, direct logo ivu. idi already login page lo vache logo ni add chei"
+   — the card's own "✦ VSR GOLD" text is gone; this reuses the SAME
+   .vsr-logo-mark convention the login page/sidebar/topbar already use, so
+   whatever logo is uploaded in Settings shows here too, automatically, no
+   extra JS needed (applyStoreLogo_ already queries every .vsr-logo-mark on
+   the page). Before any logo is uploaded, the shared ✦ fallback mark shows
+   instead, at this size. -->
+.vcard-logo-mark { width: 84px; }
+.vcard-logo-mark::before { font-size: 30px; }
+.vcard-logo-mark .vsr-logo-img { width: 84px; height: auto; }
 .vcard-type-block { text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
+/* v-fix (BRO: "second image lo unnadata ni single line lo chei" — Card
+   type was two stacked lines (e.g. "SPARKLE" / "PLUS"); now rendered as
+   one row instead, same two spans, just laid out side by side. */
+.vcard-type-line { display:flex; align-items:baseline; gap:4px; white-space:nowrap; }
 .vcard-type-line1 { font-size:14px; font-weight:bold; letter-spacing:0.5px; color:#f4ecd8; white-space:nowrap; }
-.vcard-type-line2 { font-size:17px; font-weight:bold; letter-spacing:0.5px; margin-top:2px; white-space:nowrap; }
+.vcard-type-line2 { font-size:17px; font-weight:bold; letter-spacing:0.5px; white-space:nowrap; }
 .vcard-qr { margin-top:8px; width:52px; height:52px; background:#fff; padding:3px; border-radius:4px; }
 .vcard-bottom { display:flex; flex-direction:column; }
 .vcard-number { font-size:17px; letter-spacing:3px; font-weight:bold; margin-bottom:8px; }
 .vcard-bottom-row { display:flex; justify-content:space-between; align-items:flex-end; }
 .vcard-name { font-size:13px; font-weight:bold; letter-spacing:0.5px; max-width:210px; }
-.vcard-expiry { font-size:9px; text-align:right; line-height:1.3; opacity:0.9; white-space:nowrap; }
+/* v-fix (BRO: "same valid thru kuda single line lo vache laga chie" —
+   was 3 stacked lines (VALID / THRU / 10/29); now one line. */
+.vcard-expiry { font-size:9px; text-align:right; opacity:0.9; white-space:nowrap; }
 .card-actions { display:flex; gap:8px; margin-top:16px; }
 .card-actions button { flex:1; padding:11px; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; }
 .btn-download { background:var(--purple-dark); color:var(--gold); }
@@ -4912,12 +4927,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="vcard" id="loyCardEl">
       <div class="vcard-top">
         <div class="vcard-logo-block">
-          <div class="vcard-icon">&#10022;</div>
-          <div class="vcard-brand" id="loyCardBrand">VSR GOLD</div>
+          <div class="vcard-logo-mark vsr-logo-mark" id="loyCardLogoMark"></div>
         </div>
         <div class="vcard-type-block">
-          <div class="vcard-type-line1" id="loyCardTypeLine1">SPARKLE</div>
-          <div class="vcard-type-line2" id="loyCardTypeLine2">PLUS</div>
+          <div class="vcard-type-line">
+            <span class="vcard-type-line1" id="loyCardTypeLine1">SPARKLE</span>
+            <span class="vcard-type-line2" id="loyCardTypeLine2">PLUS</span>
+          </div>
           <div class="vcard-qr" id="loyQrHolder"></div>
         </div>
       </div>
@@ -4925,7 +4941,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="vcard-number" id="loyCardNumberLbl">0000 0000 0000</div>
         <div class="vcard-bottom-row">
           <div class="vcard-name" id="loyCardNameLbl">CUSTOMER NAME</div>
-          <div class="vcard-expiry">VALID<br>THRU<br><span id="loyCardExpiryLbl">--/--</span></div>
+          <div class="vcard-expiry">VALID THRU <span id="loyCardExpiryLbl">--/--</span></div>
         </div>
       </div>
     </div>
@@ -6523,7 +6539,6 @@ function applyCompanyNameToStaticText_() {
   setTxt('bdayPosterTitle', COMPANY_NAME);
   setTxt('bdayPosterFamily', COMPANY_NAME + ' Family');
   setTxt('festivalPosterTitle', COMPANY_NAME);
-  setTxt('loyCardBrand', COMPANY_NAME);
 }
 
 function applyStoreLogo_(url) {
@@ -16269,7 +16284,6 @@ function showLoyaltyCardView(i) {
 
   const cardEl = document.getElementById('loyCardEl');
   cardEl.style.background = theme.bg;
-  document.getElementById('loyCardBrand').style.color = theme.brand;
   document.getElementById('loyCardTypeLine1').textContent = typeParts.line1.toUpperCase();
   const line2El = document.getElementById('loyCardTypeLine2');
   line2El.textContent = typeParts.line2.toUpperCase();
