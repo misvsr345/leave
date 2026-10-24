@@ -1635,7 +1635,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .vcard-name { font-size:13px; font-weight:bold; letter-spacing:0.5px; max-width:210px; }
 /* v-fix (BRO: "same valid thru kuda single line lo vache laga chie" —
    was 3 stacked lines (VALID / THRU / 10/29); now one line. */
-.vcard-expiry { font-size:9px; text-align:right; opacity:0.9; white-space:nowrap; }
+/* v-fix (BRO: "valid thru 2 lines chei, dani pakkana date veyyu" — "VALID"/"THRU" stacked on two
+   lines now, with the expiry date sitting beside that stacked label instead of after it inline. */
+.vcard-expiry { display:flex; align-items:center; gap:5px; font-size:9px; opacity:0.9; white-space:nowrap; }
+.vcard-expiry-label { text-align:right; line-height:1.15; }
 .card-actions { display:flex; gap:8px; margin-top:16px; }
 .card-actions button { flex:1; padding:11px; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; }
 .btn-download { background:var(--purple-dark); color:var(--gold); }
@@ -2574,6 +2577,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="empQADsrAdvOrder" onclick="showEmpPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — update &amp; close</div></div>
         <div class="quick-action-btn" id="empQADsrTagSearch" onclick="showEmpPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
+        <div class="quick-action-btn" id="empQADsrEmpSale" onclick="showEmpPage('dsr-empsale')"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">My Sale</div><div class="quick-action-sub">Your Gold/Silver weight sold</div></div>
       </div>
     </div>
     <div class="page-section" id="emp-dsr-today">
@@ -2633,6 +2637,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrRangeBox-emp" style="display:none;" onclick="openBoxExportModal('dsrRangeBox-emp','DSR Date Range')" title="Export">📥</button>
       <div class="card"><div id="dsrRangeBox-emp"></div></div>
+    </div>
+    <!-- v-add — see admin-dsr-empsale comment. Same page/function for the employee side;
+         the backend filters to this employee's own row only, by empId. -->
+    <div class="page-section" id="emp-dsr-empsale">
+      <div class="section-hdr"><span class="section-title2">⚖️ My Sale</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrEmpSaleStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrEmpSaleEnd-emp"></div>
+        </div>
+        <button class="btn-primary" onclick="loadEmployeeSaleReport('emp')" style="width:100%;">🔍 Show My Sale</button>
+      </div>
+      <div class="card"><div id="dsrEmpSaleBox-emp"></div></div>
     </div>
     <div class="page-section" id="emp-dsr-newentry">
       <div class="section-hdr"><span class="section-title2">➕ New DSR Entry</span></div>
@@ -3909,6 +3926,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
         <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
         <div class="quick-action-btn" id="adminQADupTagNo" onclick="showAdminPage('dup-tagno')"><span class="quick-action-icon">🔁</span><div class="quick-action-label">Duplicate Tag No</div><div class="quick-action-sub">Same tag billed under 2 DSRs</div></div>
+        <div class="quick-action-btn" id="adminQADsrEmpSale" onclick="showAdminPage('dsr-empsale')"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Employee-wise Sale</div><div class="quick-action-sub">Gold/Silver weight sold, per employee</div></div>
       </div>
     </div>
     <div class="page-section" id="admin-dsr-today">
@@ -3973,6 +3991,21 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrRangeBox-admin" style="display:none;" onclick="openBoxExportModal('dsrRangeBox-admin','DSR Date Range')" title="Export">📥</button>
       <div class="card"><div id="dsrRangeBox-admin"></div></div>
+    </div>
+    <!-- v-add (BRO: "DSR lo oka option ivu, emp wise sale chupinchu. emp ki valla own
+         data, admin ki all data ivu" — Gold/Silver weight actually SOLD, per employee,
+         over a date range. Admin sees every employee; the matching emp-dsr-empsale page
+         below shows the logged-in employee their own row only (server-side, by empId). -->
+    <div class="page-section" id="admin-dsr-empsale">
+      <div class="section-hdr"><span class="section-title2">⚖️ Employee-wise Sale</span></div>
+      <div class="card">
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="dsrEmpSaleStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="dsrEmpSaleEnd-admin"></div>
+        </div>
+        <button class="btn-primary" onclick="loadEmployeeSaleReport('admin')" style="width:100%;">🔍 Show Sale</button>
+      </div>
+      <div class="card"><div id="dsrEmpSaleBox-admin"></div></div>
     </div>
     <div class="page-section" id="admin-dsr-newentry">
       <div class="section-hdr"><span class="section-title2">➕ New DSR Entry</span></div>
@@ -4956,7 +4989,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="vcard-number" id="loyCardNumberLbl">0000 0000 0000</div>
         <div class="vcard-bottom-row">
           <div class="vcard-name" id="loyCardNameLbl">CUSTOMER NAME</div>
-          <div class="vcard-expiry">VALID THRU <span id="loyCardExpiryLbl">--/--</span></div>
+          <div class="vcard-expiry"><span class="vcard-expiry-label">VALID<br>THRU</span> <span id="loyCardExpiryLbl">--/--</span></div>
         </div>
       </div>
     </div>
@@ -7211,7 +7244,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openEmpMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder','dsr-empsale'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -7249,7 +7282,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openAdminMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder','dsr-empsale'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -7329,7 +7362,7 @@ const SECTION_LABEL_MAP = {
   'kpi-trend': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
-  'dsr-tagsearch': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR',
+  'dsr-tagsearch': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR', 'dsr-empsale': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
   'customer-events': 'Leads', 'flagged-numbers': 'Leads',
@@ -7564,6 +7597,7 @@ function showEmpPage(page, opts) {
   if(page==='dsr-status') loadDsrStatus('emp');
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-emp']){ SEC_LOADED['dsr-missing-emp']=true; loadDsrMissing('emp'); } }
   if(page==='dsr-daterange') { if(!SEC_LOADED['dsr-daterange-emp']){ SEC_LOADED['dsr-daterange-emp']=true; initDsrDateRangeDefaults('emp'); } }
+  if(page==='dsr-empsale') { if(!SEC_LOADED['dsr-empsale-emp']){ SEC_LOADED['dsr-empsale-emp']=true; initEmployeeSaleReportDefaults('emp'); } }
   if(page==='dsr-newentry') renderDsrEntryForm('emp');
   if(page==='outletissue') renderDsrEntryForm('emp-oi');
   if(page==='rdr') { renderDsrEntryForm('emp-rdr'); rdrSwitchTab('emp', RDR_TAB.emp || 'new'); }
@@ -13752,7 +13786,9 @@ const SM_FEATURE_ELEMENTS = {
   monthlyAbsent: ['adminQAMonthlyAbsent'],
   dsrExtraCheck: ['adminQADsrExtraCheck'],
   dsrDupTagNo: ['adminQADupTagNo'],
-  loginActivity: ['adminQALoginActivity']
+  loginActivity: ['adminQALoginActivity'],
+  // v-add (BRO: "DSR lo oka option ivu, emp wise sale chupinchu" — Employee-wise Sale):
+  dsrEmpSale: ['adminQADsrEmpSale']
 };
 
 // Which flat sub-permission keys back each top-level menu item — a menu
@@ -13795,7 +13831,8 @@ const FEATURE_SUBKEYS = {
   customer360: ['customer360'],
   // v-add (same audit, round 2):
   monthlyAbsent: ['monthlyAbsent'], dsrExtraCheck: ['dsrExtraCheck'],
-  dsrDupTagNo: ['dsrDupTagNo'], loginActivity: ['loginActivity']
+  dsrDupTagNo: ['dsrDupTagNo'], loginActivity: ['loginActivity'],
+  dsrEmpSale: ['dsrEmpSale']
 };
 
 // Sidebar "More ⋯" flyout shortcut id -> the main tile id it must mirror.
@@ -13984,6 +14021,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr-status') loadDsrStatus('admin');
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-admin']){ SEC_LOADED['dsr-missing-admin']=true; loadDsrMissing('admin'); } }
   if(page==='dsr-daterange') { if(!SEC_LOADED['dsr-daterange-admin']){ SEC_LOADED['dsr-daterange-admin']=true; initDsrDateRangeDefaults('admin'); } }
+  if(page==='dsr-empsale') { if(!SEC_LOADED['dsr-empsale-admin']){ SEC_LOADED['dsr-empsale-admin']=true; initEmployeeSaleReportDefaults('admin'); } }
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='outletissue') renderDsrEntryForm('admin-oi');
   if(page==='rdr') { renderDsrEntryForm('admin-rdr'); rdrSwitchTab('admin', RDR_TAB.admin || 'new'); }
@@ -18557,6 +18595,69 @@ function loadDsrDateRange(who) {
 }
 
 // ══════════════════════════════════════
+// DSR — EMPLOYEE-WISE SALE — BRO: "DSR lo oka option ivu, emp wise sale chupinchu.
+// emp ki valla own data, admin ki all data ivu" — Gold/Silver weight actually SOLD,
+// per employee, for a date range. Calls DSR_GAS_URL directly (not the PortalBackend
+// 'page' mechanism dsrDateRangeJSON uses) since the Weight/Silver Weight data lives in
+// DSR's own "Main file" spreadsheet, not the shared KPI spreadsheet. For who='emp',
+// state.empId is sent — the backend resolves that to the matching employee and returns
+// ONLY that one row; the server decides this, never the client, so there's nothing here
+// that could be tampered with to see someone else's numbers.
+// ══════════════════════════════════════
+function initEmployeeSaleReportDefaults(who) {
+  const today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  const sEl = document.getElementById('dsrEmpSaleStart-' + who);
+  const eEl = document.getElementById('dsrEmpSaleEnd-' + who);
+  if (sEl) sEl.value = toYMD(first);
+  if (eEl) eEl.value = toYMD(today);
+  loadEmployeeSaleReport(who);
+}
+
+function loadEmployeeSaleReport(who) {
+  const box = document.getElementById('dsrEmpSaleBox-' + who);
+  if (!box) return;
+  const start = document.getElementById('dsrEmpSaleStart-' + who).value;
+  const end = document.getElementById('dsrEmpSaleEnd-' + who).value;
+  if (!start || !end) { toast('Select both dates', 'error'); return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const role = who === 'admin' ? 'ADMIN' : 'EMP';
+  let url = DSR_GAS_URL + '?action=employeeSaleReport&startDate=' + encodeURIComponent(start) +
+    '&endDate=' + encodeURIComponent(end) + '&role=' + role;
+  if (who !== 'admin') url += '&empId=' + encodeURIComponent(state.empId || '');
+  _fetchWithTimeout(url, {}, 25000).then(r => r.json()).then(res => {
+    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmployeeSaleReport(\'' + who + '\')" title="Retry">🔄</button></div>'; return; }
+    box.innerHTML = `<div class="kd-note">${res.start} to ${res.end}</div>` + employeeSaleResultHtml(res.rows || []);
+  }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmployeeSaleReport(\'' + who + '\')" title="Retry">🔄</button></div>'; });
+}
+
+function employeeSaleResultHtml(rows) {
+  if (!rows.length) return '<div class="empty-state"><span class="emoji">⚖️</span><p>No sales found in this range.</p></div>';
+  let html = rows.map(r => `<div class="kd-card kd-ok">
+      <div class="kd-head"><span class="kd-name">${escHtml(r.empName)}</span></div>
+      <div class="kd-stats">
+        <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.items}</span><span class="kd-lbl">Items</span></div>
+        <div class="kd-box"><span class="kd-ic">🟡</span><span class="kd-val">${r.goldWt.toFixed(3)}</span><span class="kd-lbl">Gold (g)</span></div>
+        <div class="kd-box"><span class="kd-ic">⚪</span><span class="kd-val">${r.silverWt.toFixed(3)}</span><span class="kd-lbl">Silver (g)</span></div>
+      </div>
+    </div>`).join('');
+  if (rows.length > 1) {
+    const totItems = rows.reduce((s, r) => s + (r.items || 0), 0);
+    const totGold = rows.reduce((s, r) => s + (r.goldWt || 0), 0);
+    const totSilver = rows.reduce((s, r) => s + (r.silverWt || 0), 0);
+    html += `<div class="kd-card" style="background:var(--surface2,#f6f6f9);">
+      <div class="kd-head"><span class="kd-name">TOTAL (${rows.length} employees)</span></div>
+      <div class="kd-stats">
+        <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${totItems}</span><span class="kd-lbl">Items</span></div>
+        <div class="kd-box"><span class="kd-ic">🟡</span><span class="kd-val">${totGold.toFixed(3)}</span><span class="kd-lbl">Gold (g)</span></div>
+        <div class="kd-box"><span class="kd-ic">⚪</span><span class="kd-val">${totSilver.toFixed(3)}</span><span class="kd-lbl">Silver (g)</span></div>
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+// ══════════════════════════════════════
 // DSR — NEW ENTRY FORM (separate DSR web app — Main file spreadsheet)
 // ══════════════════════════════════════
 var DSR_GAS_URL = "https://script.google.com/macros/s/AKfycbw19KcGbJEee6EK4YnznC0xa9inkJl-GOPhywR8xzyzIPY0-SqBHFSEktS_z4tdLZKA/exec";
@@ -19029,7 +19130,7 @@ function dsrfAddEntry(who) {
           </div>
           <div class="g3">
             <div><label>Tunch ${!isOrder ? frqStar('dsr.tunch') : ''}</label><select id="dsrfTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
-            <div><label>Weight (gm) ${!isOrder ? frqStar('dsr.weight') : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37"></div>
+            <div><label>Weight (gm) ${!isOrder ? frqStar('dsr.weight') : ''}</label><input type="text" id="dsrfWt-${who}-${eid}" placeholder="e.g. 21.37" inputmode="decimal" oninput="dsrfWeightFilter_(this)"></div>
             <div><label>Photo</label>${dsrfPhotoWidget(who, eid, 'g')}</div>
           </div>
         </div>
@@ -19070,8 +19171,8 @@ function dsrfAddEntry(who) {
             <div id="dsrfDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div>
           </div>
           <div class="g2 mb12">
-            <div><label>Gross Wt (gm) ${!isOrder ? frqStar('dsr.diaGrossWt') : ''}</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10"></div>
-            <div><label>Net Wt (gm) ${!isOrder ? frqStar('dsr.diaNetWt') : ''}</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20"></div>
+            <div><label>Gross Wt (gm) ${!isOrder ? frqStar('dsr.diaGrossWt') : ''}</label><input type="text" id="dsrfDiaGrossWt-${who}-${eid}" placeholder="e.g. 6.10" inputmode="decimal" oninput="dsrfWeightFilter_(this)"></div>
+            <div><label>Net Wt (gm) ${!isOrder ? frqStar('dsr.diaNetWt') : ''}</label><input type="text" id="dsrfDiaNetWt-${who}-${eid}" placeholder="e.g. 5.20" inputmode="decimal" oninput="dsrfWeightFilter_(this)"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Gold Tunch</label><select id="dsrfDiaGoldTunch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
@@ -19097,7 +19198,7 @@ function dsrfAddEntry(who) {
             <div><label>Silver Item ${frqStar('dsr.silverItem')}</label>
               <select id="dsrfSn-${who}-${eid}" onchange="dsrfToggleOther('${who}',${eid},'silver')"><option value="">-- Select --</option></select>
               <div id="dsrfSnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="dsrfSnCustom-${who}-${eid}" placeholder="Enter silver item name"></div></div>
-            <div><label>Weight (gm) ${frqStar('dsr.silverWeight')}</label><input type="text" id="dsrfSw-${who}-${eid}" placeholder="e.g. 12.50"></div>
+            <div><label>Weight (gm) ${frqStar('dsr.silverWeight')}</label><input type="text" id="dsrfSw-${who}-${eid}" placeholder="e.g. 12.50" inputmode="decimal" oninput="dsrfWeightFilter_(this)"></div>
           </div>
           <div class="g2 mb12">
             <div><label>Quality</label><input type="text" id="dsrfSilverQuality-${who}-${eid}" placeholder="e.g. 925 Sterling"></div>
@@ -25161,6 +25262,34 @@ function loadStockChangeLog(who) {
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadStockChangeLog(\'' + who + '\')" title="Retry">🔄</button></div>'; });
 }
 
+// v-add (wrong-data-entry guard, BRO's request): keystroke-level filter on every
+// Weight input (Gold Weight, Silver Weight, Diamond Gross/Net Wt) — lets through
+// digits and a single dot only, and caps the decimal part at 3 digits. Runs on
+// every keystroke/paste via oninput, so a typo like "12,345" or "12.3456" is
+// corrected the instant it's typed rather than caught only at Submit.
+function dsrfWeightFilter_(el) {
+  let v = el.value.replace(/[^0-9.]/g, '');
+  const dot = v.indexOf('.');
+  if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+  const parts = v.split('.');
+  if (parts[1] && parts[1].length > 3) parts[1] = parts[1].slice(0, 3);
+  el.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+}
+
+// v-add (wrong-data-entry guard, BRO's request): a single item's weight almost
+// never realistically exceeds 100gm — this is a WARN-AND-CONFIRM, not a hard
+// block, since a few genuinely heavy items (long necklace sets, kada, etc.) do
+// exist. Lets the person catch a typo (e.g. 13855 instead of 13.855) before it
+// ever reaches the sheet, but still allows a confirmed real heavy item through.
+function dsrfWeightSanityOk_(label, val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return true;
+  if (n > 100) {
+    return confirm(label + ' ' + n + 'gm గా ఎంటర్ అయింది — ఇది 100గ్రా. కన్నా ఎక్కువ, typo అయ్యుండొచ్చు.\n\nఇది కరెక్టేనా?\n\n(సరైనదే అయితే OK, కాకపోతే Cancel నొక్కి సరిచేయండి.)');
+  }
+  return true;
+}
+
 function dsrfSubmit(who) {
   const empName = dsrfEmpDisplayName(who);
   const date = dsrfGv('dsrfBillDate-' + who), mob = dsrfGv('dsrfMobile-' + who),
@@ -25234,6 +25363,8 @@ function dsrfSubmit(who) {
       const sw = dsrfGv(`dsrfSw-${who}-${eid}`);
       if (frqIsRequired('dsr.silverItem') && !sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
       if (frqIsRequired('dsr.silverWeight') && !sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
+      if (sw && !/^\d+(\.\d{1,3})?$/.test(sw)) { ok = false; errMsg = 'Silver Weight must be a valid number, up to 3 decimal digits — e.g. 12.500'; return; }
+      if (sw && !dsrfWeightSanityOk_('Silver Weight', sw)) { ok = false; errMsg = 'Silver Weight not confirmed — please recheck and re-enter.'; return; }
       const sPhoto = dsrfGv(`dsrfPh-s-${who}-${eid}`);
       const sQuality = dsrfGv(`dsrfSilverQuality-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
@@ -25257,10 +25388,14 @@ function dsrfSubmit(who) {
       if (frqIsRequired('dsr.productName') && !dpn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
       if (!isOrder) {
         if (frqIsRequired('dsr.diaGrossWt') && !dGrossWt) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
+        if (dGrossWt && !/^\d+(\.\d{1,3})?$/.test(dGrossWt)) { ok = false; errMsg = 'Gross Wt must be a valid number, up to 3 decimal digits — e.g. 6.100'; return; }
         if (frqIsRequired('dsr.diaNetWt') && !dNetWt) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
+        if (dNetWt && !/^\d+(\.\d{1,3})?$/.test(dNetWt)) { ok = false; errMsg = 'Net Wt must be a valid number, up to 3 decimal digits — e.g. 5.200'; return; }
         if (dNetWt && dGrossWt && parseFloat(dNetWt) > parseFloat(dGrossWt)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
         if (dTs === 'Tag' && frqIsRequired('dsr.tagNo') && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
+      if (dGrossWt && !dsrfWeightSanityOk_('Gross Wt', dGrossWt)) { ok = false; errMsg = 'Gross Wt not confirmed — please recheck and re-enter.'; return; }
+      if (dNetWt && !dsrfWeightSanityOk_('Net Wt', dNetWt)) { ok = false; errMsg = 'Net Wt not confirmed — please recheck and re-enter.'; return; }
       if (dTs === 'Tag' && dTn && !dsrTagValid(dTn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const dPhoto = dsrfGv(`dsrfPh-dia-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
@@ -25281,8 +25416,10 @@ function dsrfSubmit(who) {
         if (frqIsRequired('dsr.design') && !des) { ok = false; errMsg = 'Please enter Design!'; return; }
         if (frqIsRequired('dsr.tunch') && !tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
         if (frqIsRequired('dsr.weight') && !wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+        if (wt && !/^\d+(\.\d{1,3})?$/.test(wt)) { ok = false; errMsg = 'Weight must be a valid number, up to 3 decimal digits — e.g. 21.370'; return; }
         if (ts === 'Tag' && frqIsRequired('dsr.tagNo') && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
+      if (wt && !dsrfWeightSanityOk_('Weight', wt)) { ok = false; errMsg = 'Weight not confirmed — please recheck and re-enter.'; return; }
       if (ts === 'Tag' && tn && !dsrTagValid(tn)) { ok = false; errMsg = 'Tag No must have letters and numbers only, no spaces, - or / — e.g. BOM2154.'; return; }
       const gPhoto = dsrfGv(`dsrfPh-g-${who}-${eid}`);
       rows.push({ employeeName: empName, billDate: date, customerName: cust, mobileNumber: mob, address: addr, paymentStatus: payStatus, reason: rdrReason, remarks: cust,
