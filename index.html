@@ -1594,7 +1594,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 
 .vcard { width: 340px; max-width: 100%; height: 214px; border-radius: 14px; position: relative; padding: 16px 18px; color: #fff; overflow: hidden; margin: 0 auto; font-family: 'Spectral', Georgia, 'Times New Roman', serif; box-shadow: 0 10px 24px rgba(0,0,0,0.45); display: flex; flex-direction: column; justify-content: space-between; }
 .vcard-top { display:flex; justify-content:space-between; align-items:flex-start; }
-.vcard-logo-block { display:flex; flex-direction:column; align-items:flex-start; }
+/* v-fix (BRO: "logo ni left edge nundi, logo varaku unna distance lo half distance ki left ki move
+   chei" — card's left padding is 18px, so the logo currently sits 18px from the card's left edge;
+   moved it halfway closer to the edge (now ~9px from the edge) via a negative margin. */
+.vcard-logo-block { display:flex; flex-direction:column; align-items:flex-start; margin-left: -9px; }
 /* v-fix (BRO: "VSR GOLD undi kada, adi add chei. card pai VSR GOLD remove
    chei, direct logo ivu. idi already login page lo vache logo ni add chei"
    — the card's own "✦ VSR GOLD" text is gone; this reuses the SAME
