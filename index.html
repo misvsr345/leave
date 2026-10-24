@@ -15451,11 +15451,16 @@ function _readFileOnce(file) {
 function fileToBase64(inputEl) {
   const file = inputEl.files && inputEl.files[0];
   if (!file) return Promise.resolve('');
+  // v-fix (BRO: "FIX THE EROR BUG" — "Could not prepare preview: Could not
+  // read X.jpg" still happening on some big modern-phone-camera photos even
+  // with the existing retry): widened from 4 tries @600ms (~2.4s total) to
+  // 7 tries @900ms (~6.3s total), since a large 12MP+ camera photo can take
+  // longer than 2.4s to finish settling on some devices.
   const attempt = (triesLeft) => _readFileOnce(file).catch(err => {
     if (triesLeft <= 0) throw err;
-    return new Promise(res => setTimeout(res, 600)).then(() => attempt(triesLeft - 1));
+    return new Promise(res => setTimeout(res, 900)).then(() => attempt(triesLeft - 1));
   });
-  return attempt(4);
+  return attempt(7);
 }
 
 async function submitNewLoyaltyCard() {
@@ -15584,7 +15589,13 @@ async function submitNewLoyaltyCard() {
     window.__loyaltyPendingPayload = payload;
     loyaltyShowPreview(payload);
   } catch (err) {
-    errBox.textContent = 'Could not prepare preview: ' + err.message;
+    // v-fix (BRO: "FIX THE EROR BUG" — same photo-not-settled-yet mobile
+    // quirk the retry above already targets; this is the manual fallback for
+    // the rare case even 7 retries aren't enough): a "🔄 Retry" button lets
+    // the person try again with one tap instead of having to remove and
+    // re-pick the photo or refill the whole form.
+    errBox.innerHTML = 'Could not prepare preview: ' + escHtml(err.message) +
+      '<br><button type="button" class="btn-secondary" style="margin-top:8px;" onclick="submitNewLoyaltyCard()">🔄 మళ్ళీ ప్రయత్నించు (Retry)</button>';
     errBox.style.display = 'block';
     _reportSubmitError_('New Loyalty Card', 'photo', err.message || 'Could not prepare photo preview');
   } finally {
