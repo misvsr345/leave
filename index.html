@@ -1612,9 +1612,10 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 /* v-fix (BRO: "logo raledu" — the global .vsr-logo-img rule sets mix-blend-mode:multiply, which
    works on the light login page but, multiplied onto this card's dark green background, renders the
    logo nearly invisible. Overridden to normal here only, so the gold-filtered logo actually shows. */
-.vcard-logo-mark { width: 42px; }
-.vcard-logo-mark::before { font-size: 15px; color: #e8c766; }
-.vcard-logo-mark .vsr-logo-img { width: 42px; height: auto; mix-blend-mode: normal; filter: brightness(0) saturate(100%) invert(75%) sepia(66%) saturate(461%) hue-rotate(358deg) brightness(97%) contrast(93%); }
+/* v-fix (BRO: "logo size 350% penchu" — 42px -> 147px, i.e. 350% of the previous size. */
+.vcard-logo-mark { width: 147px; }
+.vcard-logo-mark::before { font-size: 52px; color: #e8c766; }
+.vcard-logo-mark .vsr-logo-img { width: 147px; height: auto; mix-blend-mode: normal; filter: brightness(0) saturate(100%) invert(75%) sepia(66%) saturate(461%) hue-rotate(358deg) brightness(97%) contrast(93%); }
 .vcard-type-block { text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
 /* v-fix (BRO: "second image lo unnadata ni single line lo chei" — Card
    type was two stacked lines (e.g. "SPARKLE" / "PLUS"); now rendered as
@@ -1622,9 +1623,9 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .vcard-type-line { display:flex; align-items:baseline; gap:4px; white-space:nowrap; }
 .vcard-type-line1 { font-size:14px; font-weight:bold; letter-spacing:0.5px; color:#f4ecd8; white-space:nowrap; }
 .vcard-type-line2 { font-size:17px; font-weight:bold; letter-spacing:0.5px; white-space:nowrap; }
-/* v-fix (BRO: "qr ipudu unna size ki 150% chei" — holder box sized to the new (150%) QR pixel size
-   below + its padding, box-sizing:border-box so the padding doesn't push it any wider than that. */
-.vcard-qr { margin-top:8px; width:72px; height:72px; box-sizing:border-box; background:#fff; padding:3px; border-radius:4px; }
+/* v-fix (BRO: "qr kuda 130% penchu" — holder box sized to the new (130% of 66px -> 86px) QR pixel
+   size below + its padding, box-sizing:border-box so the padding doesn't push it any wider than that. */
+.vcard-qr { margin-top:8px; width:92px; height:92px; box-sizing:border-box; background:#fff; padding:3px; border-radius:4px; }
 .vcard-bottom { display:flex; flex-direction:column; }
 .vcard-number { font-size:17px; letter-spacing:3px; font-weight:bold; margin-bottom:8px; }
 .vcard-bottom-row { display:flex; justify-content:space-between; align-items:flex-end; }
@@ -16305,10 +16306,10 @@ function showLoyaltyCardView(i) {
 
   const qrHolder = document.getElementById('loyQrHolder');
   qrHolder.innerHTML = '';
-  // v-fix (BRO: "qr ipudu unna size ki 150% chei" — 44px -> 66px, i.e. 150% of the previous size.
+  // v-fix (BRO: "qr kuda 130% penchu" — 66px -> 86px, i.e. 130% of the previous size.
   new QRCode(qrHolder, {
     text: COMPANY_NAME + ' | Card:' + item.cardNo + ' | ' + properCase(item.custName),
-    width: 66, height: 66, colorDark: '#000000', colorLight: '#ffffff'
+    width: 86, height: 86, colorDark: '#000000', colorLight: '#ffffff'
   });
 
   document.getElementById('loyCardModal').classList.add('open');
