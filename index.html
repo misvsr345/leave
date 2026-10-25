@@ -15365,39 +15365,65 @@ function showCropModal_(dataUrl, onDone) {
   div.id = 'photoCropModal';
   div.className = 'modal-overlay show';
   div.style.zIndex = '99999';
-  div.innerHTML = `
-    <div class="modal-box" style="max-width:520px;width:94vw;padding:0;overflow:hidden;">
-      <div style="padding:14px 16px 10px;font-weight:800;font-size:15px;border-bottom:1px solid var(--border,#e3e8f0);">✂️ Crop Photo</div>
-      <div style="background:#111;max-height:60vh;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-        <img id="photoCropImg" src="${dataUrl}" style="max-width:100%;display:block;">
-      </div>
-      <div style="padding:12px 16px;font-size:12px;color:var(--text3,#888);">అవసరమైన భాగం మాత్రమే ఉండేలా బాక్స్ ని లాగి సర్దుకోండి — ఫుల్ ఫోటో కావాలంటే Skip నొక్కండి.</div>
-      <div style="display:flex;gap:10px;padding:0 16px 16px;">
-        <button type="button" class="btn-secondary" id="photoCropSkipBtn" style="flex:1;">⏭️ Skip — Use Full Photo</button>
-        <button type="button" class="btn-primary" id="photoCropUseBtn" style="flex:1;">✂️ Crop &amp; Use</button>
-      </div>
-    </div>`;
   document.body.appendChild(div);
 
-  const imgEl = document.getElementById('photoCropImg');
-  let cropper = null;
-  const finish = (resultUrl) => {
-    if (cropper) { try { cropper.destroy(); } catch (e) {} cropper = null; }
-    div.remove();
-    onDone(resultUrl);
-  };
-  imgEl.onload = () => {
-    try { cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.9, background: false, responsive: true }); }
-    catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
-  };
-  document.getElementById('photoCropSkipBtn').onclick = () => finish(dataUrl);
-  document.getElementById('photoCropUseBtn').onclick = () => {
-    if (!cropper) { finish(dataUrl); return; } // Cropper never initialized — use original rather than lose the photo
-    try {
-      const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000, imageSmoothingQuality: 'high' });
-      finish(canvas ? canvas.toDataURL('image/jpeg', 0.92) : dataUrl);
-    } catch (e) { finish(dataUrl); }
-  };
+  const finish = (resultUrl) => { div.remove(); onDone(resultUrl); };
+
+  // v-add (BRO: "crop chesaka ok cheste, view kanipinchali. malli danni ok chste, save avali" —
+  // crop step is now two screens: crop first, then a full preview of the cropped result with a
+  // final Save button (and a Back button to re-crop) before it's actually used.
+  function renderCropScreen() {
+    div.innerHTML = `
+      <div class="modal-box" style="max-width:520px;width:94vw;padding:0;overflow:hidden;">
+        <div style="padding:14px 16px 10px;font-weight:800;font-size:15px;border-bottom:1px solid var(--border,#e3e8f0);">✂️ Crop Photo</div>
+        <div style="background:#111;max-height:60vh;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <img id="photoCropImg" src="${dataUrl}" style="max-width:100%;display:block;">
+        </div>
+        <div style="padding:12px 16px;font-size:12px;color:var(--text3,#888);">Drag the box to keep only the part you need — tap Skip to keep the full photo.</div>
+        <div style="display:flex;gap:10px;padding:0 16px 16px;">
+          <button type="button" class="btn-secondary" id="photoCropSkipBtn" style="flex:1;">⏭️ Skip — Use Full Photo</button>
+          <button type="button" class="btn-primary" id="photoCropUseBtn" style="flex:1;">✂️ Crop &amp; Use</button>
+        </div>
+      </div>`;
+
+    const imgEl = document.getElementById('photoCropImg');
+    let cropper = null;
+    imgEl.onload = () => {
+      try { cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.9, background: false, responsive: true }); }
+      catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
+    };
+    document.getElementById('photoCropSkipBtn').onclick = () => finish(dataUrl);
+    document.getElementById('photoCropUseBtn').onclick = () => {
+      let resultUrl = dataUrl;
+      if (cropper) {
+        try {
+          const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000, imageSmoothingQuality: 'high' });
+          resultUrl = canvas ? canvas.toDataURL('image/jpeg', 0.92) : dataUrl;
+        } catch (e) { resultUrl = dataUrl; }
+      }
+      if (cropper) { try { cropper.destroy(); } catch (e) {} cropper = null; }
+      renderPreviewScreen(resultUrl);
+    };
+  }
+
+  function renderPreviewScreen(resultUrl) {
+    div.innerHTML = `
+      <div class="modal-box" style="max-width:520px;width:94vw;padding:0;overflow:hidden;">
+        <div style="padding:14px 16px 10px;font-weight:800;font-size:15px;border-bottom:1px solid var(--border,#e3e8f0);">✅ Preview</div>
+        <div style="background:#111;max-height:60vh;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <img src="${resultUrl}" style="max-width:100%;display:block;">
+        </div>
+        <div style="padding:12px 16px;font-size:12px;color:var(--text3,#888);">This is exactly what will be saved. Tap Back to crop again, or Save to continue.</div>
+        <div style="display:flex;gap:10px;padding:0 16px 16px;">
+          <button type="button" class="btn-secondary" id="photoCropBackBtn" style="flex:1;">⬅️ Back</button>
+          <button type="button" class="btn-primary" id="photoCropSaveBtn" style="flex:1;">✅ Save</button>
+        </div>
+      </div>`;
+    document.getElementById('photoCropBackBtn').onclick = () => renderCropScreen();
+    document.getElementById('photoCropSaveBtn').onclick = () => finish(resultUrl);
+  }
+
+  renderCropScreen();
 }
 // Small helper for the two handlers (store logo/background) that need a
 // Blob/File out of a cropped data: URL rather than the URL itself.
@@ -15681,7 +15707,7 @@ async function submitNewLoyaltyCard() {
     // the person try again with one tap instead of having to remove and
     // re-pick the photo or refill the whole form.
     errBox.innerHTML = 'Could not prepare preview: ' + escHtml(err.message) +
-      '<br><button type="button" class="btn-secondary" style="margin-top:8px;" onclick="submitNewLoyaltyCard()">🔄 మళ్ళీ ప్రయత్నించు (Retry)</button>';
+      '<br><button type="button" class="btn-secondary" style="margin-top:8px;" onclick="submitNewLoyaltyCard()">🔄 Retry</button>';
     errBox.style.display = 'block';
     _reportSubmitError_('New Loyalty Card', 'photo', err.message || 'Could not prepare photo preview');
   } finally {
@@ -25397,7 +25423,7 @@ function dsrfWeightSanityOk_(label, val) {
   const n = parseFloat(val);
   if (isNaN(n)) return true;
   if (n > 100) {
-    return confirm(label + ' ' + n + 'gm గా ఎంటర్ అయింది — ఇది 100గ్రా. కన్నా ఎక్కువ, typo అయ్యుండొచ్చు.\n\nఇది కరెక్టేనా?\n\n(సరైనదే అయితే OK, కాకపోతే Cancel నొక్కి సరిచేయండి.)');
+    return confirm(label + ' entered as ' + n + 'gm — this is over 100gm, could be a typo.\n\nIs this correct?\n\n(Press OK if correct, or Cancel to go back and fix it.)');
   }
   return true;
 }
