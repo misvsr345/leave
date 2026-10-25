@@ -6049,7 +6049,29 @@ function statusLabel(status) {
   return status;
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); _drainAutoPopupQueue_(); }
+
+// v-add (BRO: "popup lo ani section lu okesari vastundi... oka section chusinapudu inko
+// section related pop vachi potundi" — several background timers (Admin Alert Reminder,
+// Employee Alert, Loyalty Edit Grant) each independently show their own full-screen popup
+// with no idea whether another one is already open, so a later one would land right on top
+// of (and visually replace) whichever one the person was still reading. Shared queue: before
+// one of these auto popups shows itself, it calls _queueAutoPopup_ — if ANY modal-overlay is
+// currently open (that one's own, or any other, including an ordinary user-opened form), it
+// waits its turn instead of showing immediately. Whatever closes a modal (closeModal above,
+// or one of these three popups' own close button below) calls _drainAutoPopupQueue_ right
+// after, which shows the next queued one, a moment later so the screen doesn't flash.
+window.__autoPopupQueue_ = [];
+function _anyModalOpen_() { return !!document.querySelector('.modal-overlay.show'); }
+function _queueAutoPopup_(showFn) {
+  if (!_anyModalOpen_()) { showFn(); return; }
+  window.__autoPopupQueue_.push(showFn);
+}
+function _drainAutoPopupQueue_() {
+  if (_anyModalOpen_() || !window.__autoPopupQueue_.length) return;
+  const next = window.__autoPopupQueue_.shift();
+  setTimeout(() => { if (!_anyModalOpen_()) next(); else window.__autoPopupQueue_.unshift(next); }, 400);
+}
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 
 // ══════════════════════════════════════
@@ -9250,7 +9272,7 @@ function checkAdminAlertReminder_() {
   jsonpReliable({ page: 'getAllActiveAlertsAdminAPI', adminRole: state.adminRole, adminEmail: state.adminEmail }).then(res => {
     if (!res || !res.ok || !Array.isArray(res.alerts) || !res.alerts.length) return; // nothing active — quietly skip, don't burn the 6hr window on an empty check
     try { localStorage.setItem(ADMIN_ALERT_REMINDER_KEY, String(Date.now())); } catch (e) {}
-    showAdminAlertReminderPopup_(res.alerts);
+    _queueAutoPopup_(() => showAdminAlertReminderPopup_(res.alerts));
   }).catch(() => {}); // never let this block or error-toast over ordinary admin work
 }
 function showAdminAlertReminderPopup_(alerts) {
@@ -9263,7 +9285,7 @@ function showAdminAlertReminderPopup_(alerts) {
     <div class="modal-title">🔔 Still-Active Alerts — Work Done?</div>
     <p style="font-size:11.5px;color:var(--text3);margin:4px 0 10px;">These are still popping up for the employee(s) below. If the issue is already fixed, tap Yes to turn that one off now.</p>
     <div id="adminAlertReminderList"></div>
-    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById('adminAlertReminderModal').remove()">⏰ Remind Me Later</button>
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById('adminAlertReminderModal').remove();_drainAutoPopupQueue_();">⏰ Remind Me Later</button>
   </div>`;
   document.body.appendChild(div);
   renderAdminAlertReminderList_(alerts);
@@ -9271,7 +9293,7 @@ function showAdminAlertReminderPopup_(alerts) {
 function renderAdminAlertReminderList_(alerts) {
   const listEl = document.getElementById('adminAlertReminderList');
   if (!listEl) return;
-  if (!alerts.length) { document.getElementById('adminAlertReminderModal').remove(); toast('All active alerts cleared', 'success'); return; }
+  if (!alerts.length) { document.getElementById('adminAlertReminderModal').remove(); _drainAutoPopupQueue_(); toast('All active alerts cleared', 'success'); return; }
   listEl.innerHTML = alerts.map(a => `
     <div style="border:1.5px solid var(--gold);border-radius:8px;padding:9px 11px;margin-bottom:8px;background:var(--purple-bg);">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -9317,7 +9339,7 @@ function adminAlertReminderTurnOff_(alertId, btnEl) {
 function checkMyActiveAlerts_() {
   if (state.__loginKind !== 'emp' || !state.empId || !navigator.onLine) return;
   jsonpReliable({ page: 'getMyActiveAlertsAPI', empId: state.empId }).then(res => {
-    if (res && res.ok && Array.isArray(res.alerts) && res.alerts.length) showEmpAlertPopup_(res.alerts);
+    if (res && res.ok && Array.isArray(res.alerts) && res.alerts.length) _queueAutoPopup_(() => showEmpAlertPopup_(res.alerts));
   }).catch(() => {});
 }
 function showEmpAlertPopup_(alerts) {
@@ -9333,7 +9355,7 @@ function showEmpAlertPopup_(alerts) {
         <span class="kd-pill gold" style="font-size:9.5px;">${escHtml(a.section)}</span>
         <div style="font-size:13px;margin-top:6px;">${escHtml(a.message)}</div>
       </div>`).join('')}
-    <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="document.getElementById('empAlertPopupModal').remove()">OK, Got It</button>
+    <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="document.getElementById('empAlertPopupModal').remove();_drainAutoPopupQueue_();">OK, Got It</button>
   </div>`;
   document.body.appendChild(div);
 }
@@ -9350,7 +9372,7 @@ function showEmpAlertPopup_(alerts) {
 function checkMyLoyaltyEditGrants_() {
   if (state.__loginKind !== 'emp' || !state.empName || !navigator.onLine) return;
   jsonpReliable({ page: 'loyaltyGetMyEditGrantsAPI', empName: state.empName }).then(res => {
-    if (res && res.ok && Array.isArray(res.cards) && res.cards.length) showLoyEditGrantPopup_(res.cards);
+    if (res && res.ok && Array.isArray(res.cards) && res.cards.length) _queueAutoPopup_(() => showLoyEditGrantPopup_(res.cards));
   }).catch(() => {});
 }
 // v-fix (BRO: "edit alow chesaka, all no pop up vadu. just your loyalti
@@ -9368,8 +9390,8 @@ function showLoyEditGrantPopup_(cards) {
     <div class="modal-title">✏️ Loyalty Card Edit Opened</div>
     <div style="font-size:13px;color:var(--text2);margin:10px 0;">Your Loyalty Card edit has been opened by Admin. Go to My Cards to edit.</div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('loyEditGrantPopupModal').remove()">OK, Later</button>
-      <button class="btn-primary" style="flex:1;" onclick="document.getElementById('loyEditGrantPopupModal').remove();showEmpPage('loyalty-mycards')">🪪 Go to My Cards</button>
+      <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('loyEditGrantPopupModal').remove();_drainAutoPopupQueue_();">OK, Later</button>
+      <button class="btn-primary" style="flex:1;" onclick="document.getElementById('loyEditGrantPopupModal').remove();_drainAutoPopupQueue_();showEmpPage('loyalty-mycards')">🪪 Go to My Cards</button>
     </div>
   </div>`;
   document.body.appendChild(div);
