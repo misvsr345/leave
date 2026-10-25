@@ -47,6 +47,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- v-add (BRO: "photo upload chesaka crop option suggest cheyali" — shared crop step for
+     EVERY photo upload across the portal, so only the part of a photo actually needed
+     (e.g. just a signature, not the whole surrounding paper) gets saved). -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <style>
 :root {
   /* v-fix (BRO: "defult color black and gold pettu" — portal's default
@@ -6710,9 +6715,11 @@ function onStoreLogoFileChosen(inputEl) {
   const statusEl = document.getElementById('storeLogoUploadStatus');
   if (statusEl) { statusEl.textContent = 'Uploading...'; statusEl.style.color = 'var(--text3)'; }
   const reader = new FileReader();
-  reader.onload = async () => {
+  reader.onload = () => {
+    // v-add: crop step before upload (see showCropModal_).
+    showCropModal_(String(reader.result), async (croppedUrl) => {
     try {
-      const base64 = String(reader.result).split(',')[1];
+      const base64 = String(croppedUrl).split(',')[1];
       const res = await _fetchWithTimeout(STOCK_GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -6730,6 +6737,7 @@ function onStoreLogoFileChosen(inputEl) {
       if (statusEl) { statusEl.textContent = '❌ Upload failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
       toast('Logo upload failed', 'error');
     }
+    }); // end showCropModal_
   };
   reader.readAsDataURL(file);
 }
@@ -6753,7 +6761,18 @@ function onStoreBgFileChosen(inputEl) {
   // first (max 1920px, JPEG) so the upload is a few hundred KB and goes through reliably.
   (async () => {
     try {
-      const packed = await compressBgImage_(file);
+      // v-add: crop step before compress/upload — read the picked file as a dataURL, let the
+      // employee crop (or skip), then hand the result to compressBgImage_ as a Blob (it expects
+      // a File/Blob, not a raw dataURL — see _dataUrlToBlob_).
+      const rawDataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error || new Error('Could not read file'));
+        r.readAsDataURL(file);
+      });
+      const croppedDataUrl = await new Promise((resolve) => { showCropModal_(rawDataUrl, resolve); });
+      const croppedBlob = _dataUrlToBlob_(croppedDataUrl);
+      const packed = await compressBgImage_(croppedBlob);
       if (statusEl) statusEl.textContent = 'Uploading...';
       const body = { action: 'saveStoreSettings', bgImageBase64: packed.base64, bgImageMimeType: packed.mime };
       if (expiry) body.bgImageExpiry = expiry;
@@ -15327,6 +15346,70 @@ function _showPhotoConfirmModal(title, originalUrl, processProm, onDone, inputId
 
 // v-fix (BRO: "camera open avadam ledu, gallery nundi vastundi, so camera
 // kuda open avali" — the single plain file input used to leave it to the
+// ══════════════════════════════════════
+// SHARED PHOTO CROP MODAL (v-add, BRO: "photo upload chesaka crop option
+// suggest cheyali... tappani sari pettu, kani [skip] pettu" — the crop
+// screen ALWAYS appears right after any photo is picked anywhere in the
+// portal, but it's never a hard block: a "⏭️ Skip — Use Full Photo"
+// button lets the person save the photo as-is when no crop is needed).
+// Every photo-intake function in this file (Loyalty/Golden Aura photos,
+// DSR item photos, DSR edit photo, Stock Level edit photo, Stock Entry
+// item photo, store logo, login background) routes the freshly-read
+// data: URL through showCropModal_() before doing anything else with it
+// — same one shared modal, same Cropper.js instance, everywhere.
+// ══════════════════════════════════════
+function showCropModal_(dataUrl, onDone) {
+  const existing = document.getElementById('photoCropModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'photoCropModal';
+  div.className = 'modal-overlay show';
+  div.style.zIndex = '99999';
+  div.innerHTML = `
+    <div class="modal-box" style="max-width:520px;width:94vw;padding:0;overflow:hidden;">
+      <div style="padding:14px 16px 10px;font-weight:800;font-size:15px;border-bottom:1px solid var(--border,#e3e8f0);">✂️ Crop Photo</div>
+      <div style="background:#111;max-height:60vh;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <img id="photoCropImg" src="${dataUrl}" style="max-width:100%;display:block;">
+      </div>
+      <div style="padding:12px 16px;font-size:12px;color:var(--text3,#888);">అవసరమైన భాగం మాత్రమే ఉండేలా బాక్స్ ని లాగి సర్దుకోండి — ఫుల్ ఫోటో కావాలంటే Skip నొక్కండి.</div>
+      <div style="display:flex;gap:10px;padding:0 16px 16px;">
+        <button type="button" class="btn-secondary" id="photoCropSkipBtn" style="flex:1;">⏭️ Skip — Use Full Photo</button>
+        <button type="button" class="btn-primary" id="photoCropUseBtn" style="flex:1;">✂️ Crop &amp; Use</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+
+  const imgEl = document.getElementById('photoCropImg');
+  let cropper = null;
+  const finish = (resultUrl) => {
+    if (cropper) { try { cropper.destroy(); } catch (e) {} cropper = null; }
+    div.remove();
+    onDone(resultUrl);
+  };
+  imgEl.onload = () => {
+    try { cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.9, background: false, responsive: true }); }
+    catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
+  };
+  document.getElementById('photoCropSkipBtn').onclick = () => finish(dataUrl);
+  document.getElementById('photoCropUseBtn').onclick = () => {
+    if (!cropper) { finish(dataUrl); return; } // Cropper never initialized — use original rather than lose the photo
+    try {
+      const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000, imageSmoothingQuality: 'high' });
+      finish(canvas ? canvas.toDataURL('image/jpeg', 0.92) : dataUrl);
+    } catch (e) { finish(dataUrl); }
+  };
+}
+// Small helper for the two handlers (store logo/background) that need a
+// Blob/File out of a cropped data: URL rather than the URL itself.
+function _dataUrlToBlob_(dataUrl) {
+  const [meta, b64] = dataUrl.split(',');
+  const mime = (meta.match(/data:([^;]+);/) || [, 'image/jpeg'])[1];
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
 // phone's own chooser whether Camera showed up as an option, and on this
 // phone it didn't. Now each of the 5 Loyalty Card photo fields has two
 // small buttons — "📷 Camera" (capture="environment", opens the camera
@@ -15358,8 +15441,11 @@ function ncPhotoChanged(inputId, srcId) {
     fb.innerHTML = `<span class="spinner"></span> Reading photo...`;
     const plainReader = new FileReader();
     plainReader.onload = () => {
-      state.confirmedPhotos[inputId] = plainReader.result;
-      fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+      // v-add: crop step before the photo is accepted (see showCropModal_ above).
+      showCropModal_(plainReader.result, (finalUrl) => {
+        state.confirmedPhotos[inputId] = finalUrl;
+        fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`;
+      });
     };
     plainReader.onerror = () => { fb.innerHTML = `✓ ${f.name} <a href="#" onclick="ncPhotoClear('${inputId}');return false;" style="color:var(--red);margin-left:8px;">✕ Remove</a>`; };
     plainReader.readAsDataURL(f);
@@ -18183,6 +18269,8 @@ function dsrEditPhotoSelected(inp) {
   statusEl.textContent = 'Processing photo...';
   const reader = new FileReader();
   reader.onload = ev => {
+    // v-add: crop step before the resize/compress pipeline below (see showCropModal_).
+    showCropModal_(ev.target.result, (croppedUrl) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -18194,7 +18282,8 @@ function dsrEditPhotoSelected(inp) {
       __dsrEditNewPhotoBase64 = canvas.toDataURL('image/jpeg', DSR_PHOTO_QUALITY || 0.65);
       statusEl.textContent = '✓ New photo ready — will replace the current one on Save.';
     };
-    img.src = ev.target.result;
+    img.src = croppedUrl;
+    }); // end showCropModal_
   };
   reader.readAsDataURL(f);
 }
@@ -18642,30 +18731,33 @@ function loadEmployeeSaleReport(who) {
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmployeeSaleReport(\'' + who + '\')" title="Retry">🔄</button></div>'; });
 }
 
+// v-fix (BRO: "EMP WISE WT DATA TABLE LAGA RAVALI" — switched from the
+// per-employee kd-card/kd-box stack to a single table, same kd-table
+// convention already used by the other DSR/Leave reports in this file).
 function employeeSaleResultHtml(rows) {
   if (!rows.length) return '<div class="empty-state"><span class="emoji">⚖️</span><p>No sales found in this range.</p></div>';
-  let html = rows.map(r => `<div class="kd-card kd-ok">
-      <div class="kd-head"><span class="kd-name">${escHtml(r.empName)}</span></div>
-      <div class="kd-stats">
-        <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${r.items}</span><span class="kd-lbl">Items</span></div>
-        <div class="kd-box"><span class="kd-ic">🟡</span><span class="kd-val">${r.goldWt.toFixed(3)}</span><span class="kd-lbl">Gold (g)</span></div>
-        <div class="kd-box"><span class="kd-ic">⚪</span><span class="kd-val">${r.silverWt.toFixed(3)}</span><span class="kd-lbl">Silver (g)</span></div>
-      </div>
-    </div>`).join('');
+  const bodyRows = rows.map(r => `<tr>
+      <td>${escHtml(r.empName)}</td>
+      <td style="text-align:center;">${r.items}</td>
+      <td style="text-align:right;">${r.goldWt.toFixed(3)}</td>
+      <td style="text-align:right;">${r.silverWt.toFixed(3)}</td>
+    </tr>`).join('');
+  let totalRow = '';
   if (rows.length > 1) {
     const totItems = rows.reduce((s, r) => s + (r.items || 0), 0);
     const totGold = rows.reduce((s, r) => s + (r.goldWt || 0), 0);
     const totSilver = rows.reduce((s, r) => s + (r.silverWt || 0), 0);
-    html += `<div class="kd-card" style="background:var(--surface2,#f6f6f9);">
-      <div class="kd-head"><span class="kd-name">TOTAL (${rows.length} employees)</span></div>
-      <div class="kd-stats">
-        <div class="kd-box"><span class="kd-ic">🧾</span><span class="kd-val">${totItems}</span><span class="kd-lbl">Items</span></div>
-        <div class="kd-box"><span class="kd-ic">🟡</span><span class="kd-val">${totGold.toFixed(3)}</span><span class="kd-lbl">Gold (g)</span></div>
-        <div class="kd-box"><span class="kd-ic">⚪</span><span class="kd-val">${totSilver.toFixed(3)}</span><span class="kd-lbl">Silver (g)</span></div>
-      </div>
-    </div>`;
+    totalRow = `<tr style="font-weight:700;background:var(--surface2,#f6f6f9);">
+      <td>TOTAL (${rows.length} employees)</td>
+      <td style="text-align:center;">${totItems}</td>
+      <td style="text-align:right;">${totGold.toFixed(3)}</td>
+      <td style="text-align:right;">${totSilver.toFixed(3)}</td>
+    </tr>`;
   }
-  return html;
+  return `<div class="kd-table-wrap" style="margin-top:8px;"><table class="kd-table">
+    <thead><tr><th>Employee</th><th>Items</th><th>Gold (g)</th><th>Silver (g)</th></tr></thead>
+    <tbody>${bodyRows}${totalRow}</tbody>
+  </table></div>`;
 }
 
 // ══════════════════════════════════════
@@ -19305,6 +19397,8 @@ function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId, rmId) {
   if (tEl) { tEl.textContent = 'Processing...'; tEl.className = 'pht'; }
   const reader = new FileReader();
   reader.onload = ev => {
+    // v-add: crop step before the resize/compress pipeline below (see showCropModal_).
+    showCropModal_(ev.target.result, (croppedUrl) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -19337,7 +19431,8 @@ function dsrfLoadPhoto(inp, hidId, tidId, pidId, szId, warnId, rmId) {
       // item already filled in).
       if (rmId) { const rmEl = document.getElementById(rmId); if (rmEl) rmEl.style.display = 'inline-block'; }
     };
-    img.src = ev.target.result;
+    img.src = croppedUrl;
+    }); // end showCropModal_
   };
   reader.readAsDataURL(f);
 }
@@ -21318,6 +21413,8 @@ function slEditPhotoChanged(inp) {
   if (txtEl) txtEl.textContent = 'Processing…';
   const rd = new FileReader();
   rd.onload = ev => {
+    // v-add: crop step before the resize/compress pipeline below (see showCropModal_).
+    showCropModal_(ev.target.result, (croppedUrl) => {
     const img = new Image();
     img.onload = () => {
       const M = 800; let w = img.width, h = img.height;
@@ -21332,7 +21429,8 @@ function slEditPhotoChanged(inp) {
       const pv = document.getElementById('slF-prev'); if (pv) { pv.src = b64; pv.style.display = 'block'; }
       const rm = document.getElementById('slF-phRemoveNew'); if (rm) rm.style.display = 'inline-block';
     };
-    img.src = ev.target.result;
+    img.src = croppedUrl;
+    }); // end showCropModal_
   };
   rd.readAsDataURL(f);
 }
@@ -21874,6 +21972,8 @@ function seLoadPhoto(b, inp) {
   seR(b,'phTxt').textContent = 'Processing…';
   const rd = new FileReader();
   rd.onload = ev => {
+    // v-add: crop step before the resize/compress pipeline below (see showCropModal_).
+    showCropModal_(ev.target.result, (croppedUrl) => {
     const img = new Image();
     img.onload = () => {
       const M = 800; let w = img.width, h = img.height;
@@ -21888,7 +21988,8 @@ function seLoadPhoto(b, inp) {
       const pv = seR(b,'prev'); pv.src = b64; pv.classList.add('show');
       seR(b,'phRemove').style.display = 'inline-block';
     };
-    img.src = ev.target.result;
+    img.src = croppedUrl;
+    }); // end showCropModal_
   };
   rd.readAsDataURL(f);
 }
