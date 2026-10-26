@@ -14290,8 +14290,8 @@ async function populateBlockedScroller(wrapId, trackId, forceRefresh) {
 }
 
 // Shows the company festival poster (built from the Event sheet + Festival
-// Quotes sheet) once per session, to EVERY logged-in user on a festival
-// day — not personalized like the birthday poster. Runs first, then
+// Quotes sheet) ONLY THE FIRST TIME it's opened on this device for that
+// festival — not personalized like the birthday poster. Runs first, then
 // chains to the birthday poster check so the two never visually stack.
 let festivalPosterShownThisSession = false;
 let festivalCheckDone = false;
@@ -14302,6 +14302,18 @@ async function checkAndShowFestivalPoster(afterCallback) {
     const res = await jsonpReliable({ page: 'getTodayFestivalAPI' });
     if (res.ok && res.festival && !festivalPosterShownThisSession) {
       const f = res.festival;
+      // v-fix (BRO: "first time open chesinapudu matrame ravali. every
+      // login lo vastundi" — this used to show once PER SESSION, which in
+      // practice meant every single login/page-load, since the "session"
+      // flag is just a JS variable that resets on reload). Now a
+      // localStorage flag, keyed by today's date + the festival name, is
+      // checked first: if this device has already shown this exact
+      // festival's poster once, it's skipped silently from then on — it
+      // naturally shows again the next time a NEW festival date arrives.
+      const seenKey = 'vsrFestivalSeen_' + todayYMD() + '_' + (f.name || '');
+      let alreadySeen = false;
+      try { alreadySeen = localStorage.getItem(seenKey) === '1'; } catch(e) {}
+      if (alreadySeen) { if (afterCallback) afterCallback(); return; }
       document.getElementById('festivalPosterName').textContent = f.name || '—';
       document.getElementById('festivalPosterQuote').textContent = f.quote ? '"' + f.quote + '"' : '';
       document.getElementById('festivalPosterMsg1').textContent = f.message1 || '';
@@ -14309,6 +14321,7 @@ async function checkAndShowFestivalPoster(afterCallback) {
       const modal = document.getElementById('festivalPosterModal');
       modal.classList.add('show');
       festivalPosterShownThisSession = true;
+      try { localStorage.setItem(seenKey, '1'); } catch(e) {}
       // Chain to birthday poster only after the festival poster is closed,
       // so the two full-screen posters never overlap.
       const closeBtn = modal.querySelector('.bday-poster-close');
