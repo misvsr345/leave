@@ -18964,13 +18964,49 @@ function loadEmpPerformanceData(who) {
   if (!emp) { toast('Select an employee', 'error'); return; }
   if (!start || !end) { toast('Select both dates', 'error'); return; }
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable({ page: 'empPerformanceHistoryAPI', role: 'ADMIN', targetEmp: emp, start, end }).then(res => {
+  // v-fix (BRO: "emp perfomance load avutundi. elopu automatc ga logout avutundi" —
+  // this report scans large sheets and can take a while, especially in "All Employees"
+  // mode; the admin just watches it load without touching the screen, so the idle
+  // auto-logout timer was firing mid-load. Pause it for the duration of this fetch and
+  // resume it once the response (success or failure) comes back.
+  stopIdleTimer();
+  // v-add (BRO: "crm ki leads kuda untai kada, apdu leads data kuda ravali" + "kra
+  // score ki kuda count chesi" — Total Rating) — alongside the main DSR/Walkintrack
+  // report, also pull every employee's CRM Leads numbers (separate Leads Apps
+  // Script) and this month's KPI Score (TillDate_KPI), once each for the whole
+  // range (not per employee), looked up by name below. If either call fails, that
+  // section is simply left out — it never blocks the main report from showing.
+  const mainP = jsonpReliable({ page: 'empPerformanceHistoryAPI', role: 'ADMIN', targetEmp: emp, start, end });
+  const leadsP = leadsApiGet({ action: 'GET_LEADS_REPORT', scope: 'admin', startDate: start, endDate: end }).catch(() => null);
+  const kpiP = jsonpReliable({ page: 'kpiTillDateJSON', role: 'ADMIN' }).catch(() => null);
+  // v-add (BRO: "kra ki data ekkadinundi vastundo, same ee option ki kuda
+  // akkadinunde ravali" — "all backend sheets nundi data ravali") — also pull
+  // Last Month's KPI snapshot, so THIS report's "this month" and "last month"
+  // buckets can be overwritten with the exact numbers the KPI feature itself
+  // shows (same TillDate_KPI / Last Month KPI Report sheets), instead of this
+  // report's own Walkintrack-scan for those two months.
+  const kpiLastP = jsonpReliable({ page: 'kpiMonthlyJSON', role: 'ADMIN' }).catch(() => null);
+  Promise.all([mainP, leadsP, kpiP, kpiLastP]).then(([res, leadsRes, kpiRes, kpiLastRes]) => {
+    resetIdleTimer();
     if (!res || !res.ok) {
       box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpPerformanceData(\'' + who + '\')" title="Retry">🔄</button></div>';
       return;
     }
-    renderEmpPerformanceAll_(who, res);
+    const leadsMap = {};
+    if (leadsRes && leadsRes.ok && leadsRes.rows) {
+      leadsRes.rows.forEach(r => { leadsMap[String(r.employee || '').trim().toLowerCase()] = r; });
+    }
+    const kpiMap = {};
+    if (kpiRes && kpiRes.ok && kpiRes.rows) {
+      kpiRes.rows.forEach(r => { kpiMap[String(r.employee || '').trim().toLowerCase()] = r; });
+    }
+    const kpiLastMap = {};
+    if (kpiLastRes && kpiLastRes.ok && kpiLastRes.rows) {
+      kpiLastRes.rows.forEach(r => { kpiLastMap[String(r.employee || '').trim().toLowerCase()] = r; });
+    }
+    renderEmpPerformanceAll_(who, res, leadsMap, kpiMap, kpiLastMap);
   }).catch(() => {
+    resetIdleTimer();
     box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpPerformanceData(\'' + who + '\')" title="Retry">🔄</button></div>';
   });
 }
@@ -18979,24 +19015,89 @@ function loadEmpPerformanceData(who) {
 // one ravali") — renders every employee's block one after another
 // (same per-employee card+charts+table as before), so "All Employees"
 // scrolls through everyone instead of merging them into one aggregate.
-function renderEmpPerformanceAll_(who, res) {
+function renderEmpPerformanceAll_(who, res, leadsMap, kpiMap, kpiLastMap) {
   const box = document.getElementById('empPerfBox-' + who);
   const employees = res.employees || [];
   if (!employees.length) { box.innerHTML = '<div class="empty-state"><p>No data in this range.</p></div>'; return; }
   box.innerHTML = employees.map((_, idx) => `<div id="empPerfBlock-${who}-${idx}"></div>`).join('<div class="vsr-sidebar-divider" style="margin:16px 0;"></div>');
-  employees.forEach((empRes, idx) => renderEmpPerformanceOne_(who, idx, empRes));
+  employees.forEach((empRes, idx) => renderEmpPerformanceOne_(who, idx, empRes, leadsMap, kpiMap, kpiLastMap));
 }
 
-function renderEmpPerformanceOne_(who, idx, res) {
+function renderEmpPerformanceOne_(who, idx, res, leadsMap, kpiMap, kpiLastMap) {
   const block = document.getElementById('empPerfBlock-' + who + '-' + idx);
   if (!block) return;
   const uid = who + '-' + idx; // unique per-employee chart-id suffix for "All Employees" mode
-  const t = res.totals || {};
   const months = res.months || [];
   if (!months.length) { block.innerHTML = '<div class="empty-state"><p>No data for ' + escHtml(properCase(res.employee)) + '.</p></div>'; return; }
 
-  const cards = [
+  // v-add (BRO: "kra ki data ekkadinundi vastundo, same ee option ki kuda
+  // akkadinunde ravali" — for the CURRENT month and the LAST completed month,
+  // overwrite this report's own Walkintrack-scan numbers with the exact
+  // numbers the KPI feature already shows (TillDate_KPI / Last Month KPI
+  // Report), so the two pages never disagree for the same month. Earlier
+  // months have no saved month-wise KPI snapshot (no KPI history sheet
+  // exists), so those stay as this report's own computed figures.
+  const empKeyForKpi = String(res.employee || '').trim().toLowerCase();
+  const kpiThisData = (kpiMap || {})[empKeyForKpi] || null;
+  const kpiLastData = (kpiLastMap || {})[empKeyForKpi] || null;
+  const __now = new Date();
+  const thisMonthKey = __now.getFullYear() + '-' + String(__now.getMonth() + 1).padStart(2, '0');
+  const __lastMonthDate = new Date(__now.getFullYear(), __now.getMonth() - 1, 1);
+  const lastMonthKey = __lastMonthDate.getFullYear() + '-' + String(__lastMonthDate.getMonth() + 1).padStart(2, '0');
+  months.forEach(m => {
+    const src = (m.month === thisMonthKey && kpiThisData) ? kpiThisData
+              : (m.month === lastMonthKey && kpiLastData) ? kpiLastData : null;
+    if (!src) return;
+    m.deals = Number(src.deals) || 0;
+    m.purchased = Number(src.purchases) || 0;
+    m.loyalty = Number(src.loyaltyCards) || 0;
+    m.golden = Number(src.goldenAura) || 0;
+    m.dsrOnTime = Number(src.dsrOnTime) || 0;
+    m.dsrLate = Number(src.dsrLate) || 0;
+    m.dsrMissing = Number(src.dsrNoEntry) || 0;
+    const entered = m.dsrOnTime + m.dsrLate;
+    m.dsrPct = m.purchased > 0 ? Math.round((entered / m.purchased) * 100) : 0;
+    m._fromKpiSheet = true;
+  });
+
+  // Totals are now recomputed from `months` (not res.totals) so they stay
+  // consistent with whichever months were just overwritten from the KPI sheet.
+  const t = months.reduce((acc, m) => {
+    acc.deals += m.deals || 0; acc.purchased += m.purchased || 0; acc.nonPurchased += m.nonPurchased || 0;
+    acc.loyalty += m.loyalty || 0; acc.golden += m.golden || 0;
+    acc.googleReview += m.googleReview || 0; acc.instagram += m.instagram || 0; acc.facebook += m.facebook || 0; acc.whatsapp += m.whatsapp || 0;
+    acc.goldWt += m.goldWt || 0; acc.silverWt += m.silverWt || 0; acc.diamondNetWt += m.diamondNetWt || 0;
+    acc.dsrOnTime += m.dsrOnTime || 0; acc.dsrLate += m.dsrLate || 0; acc.dsrMissing += m.dsrMissing || 0;
+    return acc;
+  }, { deals: 0, purchased: 0, nonPurchased: 0, loyalty: 0, golden: 0, googleReview: 0, instagram: 0, facebook: 0, whatsapp: 0, goldWt: 0, silverWt: 0, diamondNetWt: 0, dsrOnTime: 0, dsrLate: 0, dsrMissing: 0 });
+  t.socialTotal = t.googleReview + t.instagram + t.facebook + t.whatsapp;
+  t.totalWt = t.goldWt + t.silverWt + t.diamondNetWt;
+  const __tEntered = t.dsrOnTime + t.dsrLate;
+  t.dsrPct = t.purchased > 0 ? Math.round((__tEntered / t.purchased) * 100) : 0;
+
+  // v-add (BRO: "perfomance lo total deals, converseion, non purchase ...kavali" —
+  // Deals and Non-Purchased were already being computed from Walkintrack and carried in
+  // `t`/`m`, just never shown; Conversion Rate = Purchased ÷ Total Deals.
+  const convPct = (t.deals || 0) > 0 ? Math.round(((t.purchased || 0) / t.deals) * 100) : 0;
+
+  // v-add (BRO: "crm ki leads kuda untai kada ... lenapuduu aa opotion kanapadakudadu" —
+  // Leads card ONLY shows for an employee who actually has a row in the Leads report
+  // for this date range; if they don't do Leads calling at all, the card is skipped.
+  const leadsData = (leadsMap || {})[empKeyForKpi] || null;
+  const kpiData = kpiThisData; // this month's KPI row (already looked up above)
+
+  // v-fix (BRO: "oka pani chei. score separate vadu. kpi ne continue cheddam" —
+  // dropped the separate composite "Total Rating" average — it double-counted
+  // Purchase/DSR performance that's already inside the KPI Score. The KPI Score
+  // card below (sourced straight from TillDate_KPI) IS the rating now, same as
+  // everywhere else in the portal — no second score invented here.
+  const ratingHtml = '';
+
+  const cardDefs = [
     ['🛍️', 'Purchases', t.purchased || 0],
+    ['🤝', 'Total Deals', t.deals || 0],
+    ['📈', 'Conversion Rate', convPct + '%'],
+    ['🙅', 'Non-Purchased', t.nonPurchased || 0],
     ['💳', 'Loyalty Cards', t.loyalty || 0],
     ['🌟', 'Golden Aura', t.golden || 0],
     ['✅', 'DSR On-Time', t.dsrOnTime || 0],
@@ -19004,22 +19105,40 @@ function renderEmpPerformanceOne_(who, idx, res) {
     ['🚫', 'DSR Missing', t.dsrMissing || 0],
     ['⚖️', 'Total Weight Sold (g)', (t.totalWt || 0).toFixed(2)],
     ['📢', 'Social Media Adds', t.socialTotal || 0]
-  ].map(c => `<div class="kd-box"><span class="kd-ic">${c[0]}</span><span class="kd-val">${c[2]}</span><span class="kd-lbl">${c[1]}</span></div>`).join('');
+  ];
+  if (leadsData) {
+    cardDefs.push(['☎️', 'Leads Assigned', leadsData.assigned || 0]);
+    cardDefs.push(['✅', 'Leads Submitted', leadsData.submitted || 0]);
+    cardDefs.push(['⏳', 'Leads Pending', leadsData.pending || 0]);
+    cardDefs.push(['📊', 'Leads Completion', (leadsData.completionPct || 0) + '%']);
+  }
+  if (kpiData) {
+    cardDefs.push(['⭐', 'KPI Score (This Month)', kpiData.overallScore + (kpiData.grade ? ' (' + kpiData.grade + ')' : '')]);
+  }
+  const cards = cardDefs.map(c => `<div class="kd-box"><span class="kd-ic">${c[0]}</span><span class="kd-val">${c[2]}</span><span class="kd-lbl">${c[1]}</span></div>`).join('');
 
   const labels = months.map(m => m.label);
-  const tableRows = months.map(m => `<tr>
-      <td>${m.label}</td>
+  const anyKpiSourced = months.some(m => m._fromKpiSheet);
+  const tableRows = months.map(m => {
+    const mConvPct = (m.deals || 0) > 0 ? Math.round(((m.purchased || 0) / m.deals) * 100) : 0;
+    return `<tr>
+      <td>${m.label}${m._fromKpiSheet ? ' *' : ''}</td>
+      <td style="text-align:center;">${m.deals || 0}</td>
       <td style="text-align:center;">${m.purchased}</td>
+      <td style="text-align:center;">${mConvPct}%</td>
+      <td style="text-align:center;">${m.nonPurchased || 0}</td>
       <td style="text-align:center;">${m.dsrOnTime}/${m.dsrLate}/${m.dsrMissing}</td>
       <td style="text-align:center;">${m.dsrPct}%</td>
       <td style="text-align:right;">${m.goldWt.toFixed(2)}</td>
       <td style="text-align:right;">${m.silverWt.toFixed(2)}</td>
       <td style="text-align:right;">${m.diamondNetWt.toFixed(2)}</td>
       <td style="text-align:center;">${m.socialTotal}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   block.innerHTML = `
     <div class="section-hdr" style="margin-top:4px;"><span class="section-title2">👤 ${properCase(res.employee)}</span></div>
+    ${ratingHtml}
     <div class="card"><div class="kd-stats" style="flex-wrap:wrap;">${cards}</div></div>
     <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">🛍️ Purchases Trend</div>
       <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartPurch-${uid}"></canvas></div></div>
@@ -19030,9 +19149,10 @@ function renderEmpPerformanceOne_(who, idx, res) {
     <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">📢 Social Media Adds Trend</div>
       <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartSocial-${uid}"></canvas></div></div>
     <div class="kd-table-wrap"><table class="kd-table">
-      <thead><tr><th>Month</th><th>Purchases</th><th>On/Late/Miss</th><th>DSR%</th><th>Gold(g)</th><th>Silver(g)</th><th>Diamond Net(g)</th><th>Social</th></tr></thead>
+      <thead><tr><th>Month</th><th>Deals</th><th>Purchases</th><th>Conv%</th><th>Non-Purch</th><th>On/Late/Miss</th><th>DSR%</th><th>Gold(g)</th><th>Silver(g)</th><th>Diamond Net(g)</th><th>Social</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table></div>
+    ${anyKpiSourced ? '<div style="font-size:10px;color:var(--text3);padding:4px 2px;">* Deals/Purchases/Loyalty/Golden/DSR for this month match the KPI page (from the KPI sheet)</div>' : ''}
   `;
 
   dhMakeLine('empPerfChartPurch-' + uid, labels, months.map(m => m.purchased), '#2E7D6B');
