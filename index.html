@@ -6616,20 +6616,38 @@ function applyCompanyNameToStaticText_() {
   setTxt('festivalPosterTitle', COMPANY_NAME);
 }
 
+let __lastAppliedLogoSrc_ = '';
 function applyStoreLogo_(url) {
   if (!url) return;
+  __lastAppliedLogoSrc_ = url;
   document.querySelectorAll('.vsr-logo-mark').forEach(el => {
     let img = el.querySelector('.vsr-logo-img');
     if (!img) {
       img = document.createElement('img');
       img.className = 'vsr-logo-img';
       img.alt = COMPANY_NAME;
+      // v-fix (BRO: "logo sariga radam ledu" — if this particular src ever still fails to load
+      // (a bad cached URL, a one-off network hiccup), fall back to the plain ✦ emblem instead of
+      // leaving a broken-image icon on screen.
+      img.onerror = () => { el.classList.remove('has-logo'); img.remove(); };
       el.appendChild(img);
     }
     img.src = url;
     el.classList.add('has-logo');
   });
 }
+// v-add: any .vsr-logo-mark created LATER (e.g. a modal built dynamically after this ran) picks
+// up the same already-known-good logo automatically, instead of showing the bare ✦ emblem.
+new MutationObserver(muts => {
+  if (!__lastAppliedLogoSrc_) return;
+  for (const m of muts) {
+    m.addedNodes.forEach(n => {
+      if (n.nodeType !== 1) return;
+      const marks = n.classList && n.classList.contains('vsr-logo-mark') ? [n] : (n.querySelectorAll ? Array.from(n.querySelectorAll('.vsr-logo-mark')) : []);
+      marks.forEach(el => { if (!el.classList.contains('has-logo')) applyStoreLogo_(__lastAppliedLogoSrc_); });
+    });
+  }
+}).observe(document.body, { childList: true, subtree: true });
 
 function renderLoginStoreInfo_(s) {
   const box = document.getElementById('loginStoreInfo');
@@ -6651,12 +6669,17 @@ function applyStoreSettingsToUI_(s) {
   storeSettingsCache = s;
   COMPANY_NAME = (s.storeName && s.storeName.trim()) ? s.storeName.trim() : 'VSR GOLD';
   applyCompanyNameToStaticText_();
-  if (s.logoUrl) applyStoreLogo_(s.logoUrl);
+  // v-fix (BRO: "logo sariga radam ledu, chala dagara" — prefer the backend's logoDataUri (the
+  // logo's actual bytes, read server-side, nothing hotlinked) over logoUrl (Drive's public
+  // thumbnail endpoint, which is what was flaky in the first place). logoUrl stays only as a
+  // last-resort fallback if logoDataUri isn't present (e.g. an older cached settings object).
+  const logoSrc = s.logoDataUri || s.logoUrl;
+  if (logoSrc) applyStoreLogo_(logoSrc);
   renderLoginStoreInfo_(s);
   applyLoginBgImage_(s);
   // Settings page preview (admin), if that panel is open/rendered.
   const preview = document.getElementById('storeLogoPreview');
-  if (preview && s.logoUrl) { preview.src = s.logoUrl; preview.style.display = ''; }
+  if (preview && logoSrc) { preview.src = logoSrc; preview.style.display = ''; }
   const bgPreview = document.getElementById('storeBgPreview');
   const bgStatus = document.getElementById('storeBgExpiryStatus');
   if (bgPreview) {
