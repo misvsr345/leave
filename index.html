@@ -15424,9 +15424,8 @@ function showCropModal_(dataUrl, onDone) {
         <div style="background:#111;max-height:60vh;display:flex;align-items:center;justify-content:center;overflow:hidden;">
           <img id="photoCropImg" src="${dataUrl}" style="max-width:100%;display:block;">
         </div>
-        <div style="padding:12px 16px;font-size:12px;color:var(--text3,#888);">Drag the box to keep only the part you need — tap Skip to keep the full photo.</div>
+        <div style="padding:12px 16px;font-size:12px;color:var(--text3,#888);">Drag the box to keep only the part you need, then tap Crop &amp; Use.</div>
         <div style="display:flex;gap:10px;padding:0 16px 16px;">
-          <button type="button" class="btn-secondary" id="photoCropSkipBtn" style="flex:1;">⏭️ Skip — Use Full Photo</button>
           <button type="button" class="btn-primary" id="photoCropUseBtn" style="flex:1;">✂️ Crop &amp; Use</button>
         </div>
       </div>`;
@@ -15437,7 +15436,8 @@ function showCropModal_(dataUrl, onDone) {
       try { cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.9, background: false, responsive: true }); }
       catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
     };
-    document.getElementById('photoCropSkipBtn').onclick = () => finish(dataUrl);
+    // v-fix (BRO: "crop cumpalsury, no skip" — the Skip button is gone; cropping is now
+    // mandatory every time a photo is picked, no way to keep the full uncropped photo.
     document.getElementById('photoCropUseBtn').onclick = () => {
       let resultUrl = dataUrl;
       if (cropper) {
@@ -18686,15 +18686,26 @@ function showDsrMissingDetail(idx) {
   } else {
     // v-fix (BRO: "all popup lu table laga ravali") — table rows instead
     // of stacked cards.
+    // v-fix (BRO: "24 na purchase and missing enni enni unnayo data
+    // kavali" — this table used to show only the missing-count per
+    // date, and the modal's header subtitle showed the whole MONTH's
+    // aggregate purchases/DSR-entered instead of that specific date's
+    // own figures. The sheet cell now carries "M:<n>|P:<purchased>|E:<entered>"
+    // for that exact date (see walkintrack.gs), so parse those out and
+    // show each date's own purchase/entered/missing numbers here —
+    // no more month-aggregate subtitle at all.
     bodyHtml = `<table class="pv-table"><tbody>` + missEntries.sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => {
-      const missCount = String(v).replace('M:', '');
-      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing</td></tr>`;
+      const parts = String(v).split('|');
+      const missCount = parts[0].replace('M:', '');
+      const pMatch = parts[1] ? parts[1].replace('P:', '') : '';
+      const eMatch = parts[2] ? parts[2].replace('E:', '') : '';
+      const extra = (pMatch !== '' || eMatch !== '') ? ` <span style="color:var(--text3);font-weight:400;">(🛍️ ${pMatch} · 🧾 ${eMatch})</span>` : '';
+      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing${extra}</td></tr>`;
     }).join('') + `</tbody></table>`;
   }
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="document.getElementById('dsrMissingDetailModal').remove()" title="Close">✕</button>
     <div class="modal-title">🧾 ${properCase(r.employee)} — Missing Dates</div>
-    <p style="font-size:11.5px;color:var(--text3);margin:8px 0 12px;">${r.totalPurchases} Purchases · ${r.dsrEntered} DSR Entered · ${r.totalMissing} Missing (in the currently selected date range)</p>
     ${bodyHtml}
   </div>`;
   document.body.appendChild(div);
