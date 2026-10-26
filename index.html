@@ -15470,13 +15470,36 @@ function showCropModal_(dataUrl, onDone) {
 
     const imgEl = document.getElementById('photoCropImg');
     let cropper = null;
+    let initialBoxData = null;
     imgEl.onload = () => {
-      try { cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.9, background: false, responsive: true }); }
-      catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
+      try {
+        cropper = new Cropper(imgEl, {
+          viewMode: 1, autoCropArea: 0.9, background: false, responsive: true,
+          // v-add (BRO: "image uploada chesaka, crop cheyaka pote ... save avakudadu" —
+          // remember the auto-placed box's position/size the moment Cropper is ready, so
+          // Crop & Use can tell whether the person actually moved/resized it at all.
+          ready: function () { initialBoxData = cropper.getCropBoxData(); }
+        });
+      } catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
     };
     // v-fix (BRO: "crop cumpalsury, no skip" — the Skip button is gone; cropping is now
     // mandatory every time a photo is picked, no way to keep the full uncropped photo.
     document.getElementById('photoCropUseBtn').onclick = () => {
+      // v-add (BRO: "crop kadilinchaka pote save avakudadu" — clicking Crop & Use without
+      // dragging/resizing the auto-placed box at all is treated as "didn't really crop",
+      // so it's blocked here with a toast instead of silently accepting the default box.
+      if (cropper && initialBoxData) {
+        const cur = cropper.getCropBoxData();
+        const TOL = 2; // px tolerance for rounding/re-layout jitter, not a real move
+        const moved = Math.abs(cur.left - initialBoxData.left) > TOL ||
+                      Math.abs(cur.top - initialBoxData.top) > TOL ||
+                      Math.abs(cur.width - initialBoxData.width) > TOL ||
+                      Math.abs(cur.height - initialBoxData.height) > TOL;
+        if (!moved) {
+          toast('Please drag or resize the crop box a little before using it', 'error');
+          return;
+        }
+      }
       let resultUrl = dataUrl;
       if (cropper) {
         try {
@@ -16247,7 +16270,7 @@ function loyBulkEditToggle_(cbEl) {
 // the real gate) and builds a modal with every field pre-filled,
 // including photos. Card No/Type are shown but not editable — see
 // loyaltyEditCardAPI_'s own comment on why.
-async function loyOpenEditForm(cardNo, cardType, who) {
+async function loyOpenEditForm(cardNo, cardType, who, context) {
   const role = who === 'admin' ? 'ADMIN' : 'EMP';
   let res;
   try {
@@ -16259,6 +16282,13 @@ async function loyOpenEditForm(cardNo, cardType, who) {
   if (!res || !res.ok) { toast((res && res.error) || 'Could not open this card for edit', 'error'); return; }
   const c = res.card;
   state.loyEditWho = who;
+  // v-add (BRO: "loyalti card validation ki vachinapudu, mis ki edit opiton
+  // kuda ravali" — Edit opened from the Pending Validation list remembers
+  // that here, so a successful save refreshes THAT list (loadLoyaltyPending
+  // Validation) instead of the Search/My Cards results box the edit form's
+  // other callers refresh. Undefined/omitted for every existing call site,
+  // so their behavior is unchanged.
+  state.loyEditContext = context || null;
 
   // Pre-seed confirmedPhotos with the EXISTING photo URLs — ncPhotoChanged
   // (the SAME function the New Card form's Camera/Gallery buttons use)
@@ -16420,7 +16450,11 @@ async function submitLoyaltyCardEdit(cardNo, cardType) {
       if (modal) modal.remove();
       toast('✅ Card ' + result.cardNo + ' updated successfully', 'success');
       showCongratsPopup_({ icon: '✏️', title: 'Card Updated', type: 'loyaltyedit', msg: 'Loyalty Card <b>#' + escHtml(result.cardNo) + '</b> updated successfully.' });
-      if (who === 'admin') runLoyaltySearch('admin'); else runLoyaltySearch('emp');
+      // v-add (BRO: "mis ki edit option kuda ravali" — Pending Validation list) — if this
+      // edit was opened from the Pending Validation page, refresh THAT list so the corrected
+      // details show immediately, instead of the Search/My Cards box the other callers refresh.
+      if (state.loyEditContext === 'pending-validation') { loadLoyaltyPendingValidation(); }
+      else if (who === 'admin') runLoyaltySearch('admin'); else runLoyaltySearch('emp');
     } else {
       errBox.textContent = (result && result.error) || 'Could not save changes'; errBox.style.display = 'block';
     }
@@ -16753,6 +16787,7 @@ function loadLoyaltyPendingValidation() {
               ${c.panPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.panPhotoUrl)}')">🪪 PAN</button>` : ''}
             </div>
             <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn-sm btn-view" style="flex:1;font-size:11px;" onclick="loyOpenEditForm('${escJs(c.cardNo)}','${escJs(c.cardType)}','admin','pending-validation')">✏️ Edit</button>
               <button class="btn-sm" style="flex:1;font-size:11px;color:var(--green);border-color:var(--green);" onclick="loySetValidation_('${escJs(c.cardNo)}','${escJs(c.cardType)}','Valid',this)">✅ Valid</button>
               <button class="btn-sm" style="flex:1;font-size:11px;color:var(--red);border-color:var(--red);" onclick="loySetValidation_('${escJs(c.cardNo)}','${escJs(c.cardType)}','Invalid',this)">❌ Invalid</button>
             </div>
