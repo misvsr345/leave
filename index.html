@@ -4550,6 +4550,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Access, Theme, Store Data, Password &amp; more</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
+        <!-- v-add (BRO: "employee perfomace ane oka option pettu, oka emp
+             taluka full history ravali" — pick one employee, see DSR
+             trend, purchases/loyalty/golden trend, weight sold, social
+             media adds, all month-wise, any date range.) -->
+        <div class="quick-action-btn" onclick="showAdminPage('emp-performance')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Employee Performance</div><div class="quick-action-sub">Full history — DSR, weight sold, social media</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
         <div class="quick-action-btn" id="adminQALoginActivity" onclick="showAdminPage('login-activity')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Login Activity</div><div class="quick-action-sub">Who, when, which device</div></div>
         <div class="quick-action-btn" onclick="openSyncOfflineModal()"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync Offline Data</div><div class="quick-action-sub" id="adminMoreSyncLabel">Checking...</div></div>
@@ -4570,6 +4575,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-login-activity">
       <div class="section-hdr"><span class="section-title2">🔐 Login Activity</span></div>
       <div id="loginActivityBox" class="section-body"></div>
+    </div>
+
+    <!-- v-add (BRO: "employee perfomace ane oka option pettu, oka emp taluka
+         full history ravali, dsr entry trend, perfomance trend, sale weight
+         count ila alll data ravali" + "date to date perfomance kuda chepu") -->
+    <div class="page-section" id="admin-emp-performance">
+      <div class="section-hdr"><span class="section-title2">📊 Employee Performance</span></div>
+      <div class="card">
+        <div class="form-row"><label>Employee</label>
+          <select id="empPerfEmpSelect-admin"><option value="">Loading...</option></select>
+        </div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="empPerfStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="empPerfEnd-admin"></div>
+        </div>
+        <button class="btn-primary" onclick="loadEmpPerformanceData('admin')" style="width:100%;">🔍 Show Performance</button>
+      </div>
+      <div id="empPerfBox-admin"><div class="empty-state"><p>Select an employee and date range to see their full performance history.</p></div></div>
     </div>
 
   </div>
@@ -13123,6 +13146,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '🗄️', label: 'Backend Sheets', page: 'backend-sheets' },
   { icon: '📋', label: 'Monthly Absent Report', page: 'monthly-absent' },
   { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
+  { icon: '📊', label: 'Employee Performance', page: 'emp-performance' },
   { icon: '🪪', label: 'Profile', page: 'profile' },
   { icon: '🔐', label: 'Login Activity', page: 'login-activity' }
 ];
@@ -14086,6 +14110,7 @@ function showAdminPage(page, opts) {
   if(page==='dsr-missing') { if(!SEC_LOADED['dsr-missing-admin']){ SEC_LOADED['dsr-missing-admin']=true; loadDsrMissing('admin'); } }
   if(page==='dsr-daterange') { if(!SEC_LOADED['dsr-daterange-admin']){ SEC_LOADED['dsr-daterange-admin']=true; initDsrDateRangeDefaults('admin'); } }
   if(page==='dsr-empsale') { if(!SEC_LOADED['dsr-empsale-admin']){ SEC_LOADED['dsr-empsale-admin']=true; initEmployeeSaleReportDefaults('admin'); } }
+  if(page==='emp-performance') { if(!SEC_LOADED['emp-performance-admin']){ SEC_LOADED['emp-performance-admin']=true; initEmpPerformancePage('admin'); } }
   if(page==='dsr-newentry') renderDsrEntryForm('admin');
   if(page==='outletissue') renderDsrEntryForm('admin-oi');
   if(page==='rdr') { renderDsrEntryForm('admin-rdr'); rdrSwitchTab('admin', RDR_TAB.admin || 'new'); }
@@ -18853,6 +18878,124 @@ function employeeSaleResultHtml(rows) {
     <thead><tr><th>Employee</th><th>Items</th><th>Gold (g)</th><th>Silver (g)</th></tr></thead>
     <tbody>${bodyRows}${totalRow}</tbody>
   </table></div>`;
+}
+
+// ══════════════════════════════════════
+// v-add (BRO: "employee perfomace ane oka option pettu, oka emp taluka
+// full history ravali. dsr entry trend, perfomance trend, sale weight
+// count , ila alll data ravali" + "date to date perfomance kuda chepu")
+// Admin-only "📊 Employee Performance" page — pick one employee, any date
+// range (defaults to running 6 months), see their full month-wise
+// history in one place: Purchases/Loyalty/Golden trend, DSR On-Time/
+// Late/Missing trend, Weight Sold (Gold/Silver/Diamond Net) trend, and
+// Social Media adds (Google Review/Instagram/Facebook/Whatsapp) trend —
+// reuses empPerformanceHistoryAPI (PortalBackend.gs).
+// ══════════════════════════════════════
+function initEmpPerformancePage(who) {
+  const sEl = document.getElementById('empPerfStart-' + who);
+  const eEl = document.getElementById('empPerfEnd-' + who);
+  if (sEl && !sEl.value) {
+    const today = new Date();
+    const sixAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+    sEl.value = toYMD(sixAgo);
+    eEl.value = toYMD(today);
+  }
+  // Reuses the SAME shared employee-list cache every other admin dropdown
+  // (Direct Action, Settings Access, Loyalty Edit Access, etc.) already
+  // loads — see ensureDirectEmpCache_'s own comment for why this exists.
+  ensureDirectEmpCache_(list => empPerfPopulateDropdown_(who, list))
+    .then(list => empPerfPopulateDropdown_(who, list));
+}
+
+function empPerfPopulateDropdown_(who, list) {
+  const sel = document.getElementById('empPerfEmpSelect-' + who);
+  if (!sel || sel.__empPerfFilled) return;
+  sel.__empPerfFilled = true;
+  sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+    (list || []).map(emp => `<option value="${escHtml(emp.name)}">${properCase(emp.name)}</option>`).join('');
+}
+
+function loadEmpPerformanceData(who) {
+  const box = document.getElementById('empPerfBox-' + who);
+  const emp = document.getElementById('empPerfEmpSelect-' + who).value;
+  const start = document.getElementById('empPerfStart-' + who).value;
+  const end = document.getElementById('empPerfEnd-' + who).value;
+  if (!emp) { toast('Select an employee', 'error'); return; }
+  if (!start || !end) { toast('Select both dates', 'error'); return; }
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  jsonpReliable({ page: 'empPerformanceHistoryAPI', role: 'ADMIN', targetEmp: emp, start, end }).then(res => {
+    if (!res || !res.ok) {
+      box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpPerformanceData(\'' + who + '\')" title="Retry">🔄</button></div>';
+      return;
+    }
+    renderEmpPerformance_(who, res);
+  }).catch(() => {
+    box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpPerformanceData(\'' + who + '\')" title="Retry">🔄</button></div>';
+  });
+}
+
+function renderEmpPerformance_(who, res) {
+  const box = document.getElementById('empPerfBox-' + who);
+  const t = res.totals || {};
+  const months = res.months || [];
+  if (!months.length) { box.innerHTML = '<div class="empty-state"><p>No data in this range.</p></div>'; return; }
+
+  const cards = [
+    ['🛍️', 'Purchases', t.purchased || 0],
+    ['💳', 'Loyalty Cards', t.loyalty || 0],
+    ['🌟', 'Golden Aura', t.golden || 0],
+    ['✅', 'DSR On-Time', t.dsrOnTime || 0],
+    ['⏰', 'DSR Late', t.dsrLate || 0],
+    ['🚫', 'DSR Missing', t.dsrMissing || 0],
+    ['⚖️', 'Total Weight Sold (g)', (t.totalWt || 0).toFixed(2)],
+    ['📢', 'Social Media Adds', t.socialTotal || 0]
+  ].map(c => `<div class="kd-box"><span class="kd-ic">${c[0]}</span><span class="kd-val">${c[2]}</span><span class="kd-lbl">${c[1]}</span></div>`).join('');
+
+  const labels = months.map(m => m.label);
+  const tableRows = months.map(m => `<tr>
+      <td>${m.label}</td>
+      <td style="text-align:center;">${m.purchased}</td>
+      <td style="text-align:center;">${m.dsrOnTime}/${m.dsrLate}/${m.dsrMissing}</td>
+      <td style="text-align:center;">${m.dsrPct}%</td>
+      <td style="text-align:right;">${m.goldWt.toFixed(2)}</td>
+      <td style="text-align:right;">${m.silverWt.toFixed(2)}</td>
+      <td style="text-align:right;">${m.diamondNetWt.toFixed(2)}</td>
+      <td style="text-align:center;">${m.socialTotal}</td>
+    </tr>`).join('');
+
+  box.innerHTML = `
+    <div class="card"><div class="kd-stats" style="flex-wrap:wrap;">${cards}</div></div>
+    <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">🛍️ Purchases Trend</div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartPurch-${who}"></canvas></div></div>
+    <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">🧾 DSR Entry Trend (On-Time / Late / Missing)</div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartDsr-${who}"></canvas></div></div>
+    <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">⚖️ Weight Sold Trend (g)</div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartWeight-${who}"></canvas></div></div>
+    <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">📢 Social Media Adds Trend</div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartSocial-${who}"></canvas></div></div>
+    <div class="kd-table-wrap"><table class="kd-table">
+      <thead><tr><th>Month</th><th>Purchases</th><th>On/Late/Miss</th><th>DSR%</th><th>Gold(g)</th><th>Silver(g)</th><th>Diamond Net(g)</th><th>Social</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table></div>
+  `;
+
+  dhMakeLine('empPerfChartPurch-' + who, labels, months.map(m => m.purchased), '#2E7D6B');
+  dhMakeMultiLine('empPerfChartDsr-' + who, labels, [
+    { label: 'On-Time', data: months.map(m => m.dsrOnTime), color: '#16A34A' },
+    { label: 'Late', data: months.map(m => m.dsrLate), color: '#D97706' },
+    { label: 'Missing', data: months.map(m => m.dsrMissing), color: '#DC2626' }
+  ]);
+  dhMakeMultiLine('empPerfChartWeight-' + who, labels, [
+    { label: 'Gold', data: months.map(m => m.goldWt), color: '#C9A84C' },
+    { label: 'Silver', data: months.map(m => m.silverWt), color: '#94A3B8' },
+    { label: 'Diamond Net', data: months.map(m => m.diamondNetWt), color: '#6C2BD9' }
+  ]);
+  dhMakeMultiLine('empPerfChartSocial-' + who, labels, [
+    { label: 'Google Review', data: months.map(m => m.googleReview), color: '#EA4335' },
+    { label: 'Instagram', data: months.map(m => m.instagram), color: '#C13584' },
+    { label: 'Facebook', data: months.map(m => m.facebook), color: '#1877F2' },
+    { label: 'Whatsapp', data: months.map(m => m.whatsapp), color: '#25D366' }
+  ]);
 }
 
 // ══════════════════════════════════════
@@ -27924,6 +28067,24 @@ function dhMakeLine(canvasId, labels, data, color) {
     data: { labels: labels, datasets: [{ data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.3, pointRadius: 2 }] },
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }, x: { ticks: { font: { size: 8 }, maxRotation: 45, minRotation: 45 } } } }
+  });
+}
+
+// Multi-series line chart — v-add (BRO's Employee Performance page: DSR
+// On-Time/Late/Missing, Gold/Silver/Diamond weight, and the 4 social
+// media channels each need several lines on ONE chart, not separate
+// single-series dhMakeLine calls). Same Chart.js instance registry
+// (window.__dhGauges) and styling conventions as dhMakeLine/dhMakeBar.
+function dhMakeMultiLine(canvasId, labels, series) {
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  window.__dhGauges = window.__dhGauges || {};
+  window.__dhGauges[canvasId] = new Chart(el, {
+    type: 'line',
+    data: { labels: labels, datasets: series.map(s => ({ label: s.label, data: s.data, borderColor: s.color, backgroundColor: s.color + '22', fill: false, tension: 0.3, pointRadius: 2 })) },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 9 } } } },
       scales: { y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }, x: { ticks: { font: { size: 8 }, maxRotation: 45, minRotation: 45 } } } }
   });
 }
