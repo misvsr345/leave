@@ -19086,6 +19086,23 @@ function renderEmpPerformanceOne_(who, idx, res, leadsMap, kpiMap, kpiLastMap) {
   const leadsData = (leadsMap || {})[empKeyForKpi] || null;
   const kpiData = kpiThisData; // this month's KPI row (already looked up above)
 
+  // v-fix (BRO: "data untene visible avali. ledu ante hide avali annanu kada" —
+  // the month buckets always exist for every month in the picked range (even
+  // when the employee has zero activity), so the old `!months.length` check
+  // never caught a genuinely empty employee — it just rendered a wall of 0s
+  // (see screenshot: Akshaya Kumar Sahu, every card and every month 0). Now,
+  // if every underlying number is 0 and there's no Leads/KPI row either, this
+  // employee's whole block is skipped (hidden) instead of showing all-zero
+  // cards/charts/table.
+  const hasAnyData = (t.purchased || 0) > 0 || (t.deals || 0) > 0 || (t.loyalty || 0) > 0 || (t.golden || 0) > 0 ||
+    (t.dsrOnTime || 0) > 0 || (t.dsrLate || 0) > 0 || (t.dsrMissing || 0) > 0 ||
+    (t.totalWt || 0) > 0 || (t.socialTotal || 0) > 0 || !!leadsData || !!kpiData;
+  if (!hasAnyData) {
+    block.innerHTML = '<div class="section-hdr" style="margin-top:4px;"><span class="section-title2">👤 ' + escHtml(properCase(res.employee)) + '</span></div>' +
+      '<div class="empty-state"><p>No activity for ' + escHtml(properCase(res.employee)) + ' in this date range.</p></div>';
+    return;
+  }
+
   // v-fix (BRO: "oka pani chei. score separate vadu. kpi ne continue cheddam" —
   // dropped the separate composite "Total Rating" average — it double-counted
   // Purchase/DSR performance that's already inside the KPI Score. The KPI Score
