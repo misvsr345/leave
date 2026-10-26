@@ -18911,7 +18911,13 @@ function empPerfPopulateDropdown_(who, list) {
   const sel = document.getElementById('empPerfEmpSelect-' + who);
   if (!sel || sel.__empPerfFilled) return;
   sel.__empPerfFilled = true;
+  // v-add (BRO: "all emp kuda kavai. adi select cheste, all emp dta one by
+  // one ravali" — an "All Employees" option at the top; the backend
+  // (targetEmp='ALL') does every employee in ONE pass, not one slow call
+  // per employee, and the page then renders each one's block stacked,
+  // one after another, so the admin can scroll through everyone).
   sel.innerHTML = '<option value="">-- Select Employee --</option>' +
+    '<option value="ALL">🧑‍🤝‍🧑 All Employees</option>' +
     (list || []).map(emp => `<option value="${escHtml(emp.name)}">${properCase(emp.name)}</option>`).join('');
 }
 
@@ -18928,17 +18934,31 @@ function loadEmpPerformanceData(who) {
       box.innerHTML = '<div class="empty-state"><p>' + (res && res.error || 'Failed to load.') + '</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpPerformanceData(\'' + who + '\')" title="Retry">🔄</button></div>';
       return;
     }
-    renderEmpPerformance_(who, res);
+    renderEmpPerformanceAll_(who, res);
   }).catch(() => {
     box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadEmpPerformanceData(\'' + who + '\')" title="Retry">🔄</button></div>';
   });
 }
 
-function renderEmpPerformance_(who, res) {
+// v-add (BRO: "all emp kuda kavai. adi select cheste, all emp dta one by
+// one ravali") — renders every employee's block one after another
+// (same per-employee card+charts+table as before), so "All Employees"
+// scrolls through everyone instead of merging them into one aggregate.
+function renderEmpPerformanceAll_(who, res) {
   const box = document.getElementById('empPerfBox-' + who);
+  const employees = res.employees || [];
+  if (!employees.length) { box.innerHTML = '<div class="empty-state"><p>No data in this range.</p></div>'; return; }
+  box.innerHTML = employees.map((_, idx) => `<div id="empPerfBlock-${who}-${idx}"></div>`).join('<div class="vsr-sidebar-divider" style="margin:16px 0;"></div>');
+  employees.forEach((empRes, idx) => renderEmpPerformanceOne_(who, idx, empRes));
+}
+
+function renderEmpPerformanceOne_(who, idx, res) {
+  const block = document.getElementById('empPerfBlock-' + who + '-' + idx);
+  if (!block) return;
+  const uid = who + '-' + idx; // unique per-employee chart-id suffix for "All Employees" mode
   const t = res.totals || {};
   const months = res.months || [];
-  if (!months.length) { box.innerHTML = '<div class="empty-state"><p>No data in this range.</p></div>'; return; }
+  if (!months.length) { block.innerHTML = '<div class="empty-state"><p>No data for ' + escHtml(properCase(res.employee)) + '.</p></div>'; return; }
 
   const cards = [
     ['🛍️', 'Purchases', t.purchased || 0],
@@ -18963,34 +18983,35 @@ function renderEmpPerformance_(who, res) {
       <td style="text-align:center;">${m.socialTotal}</td>
     </tr>`).join('');
 
-  box.innerHTML = `
+  block.innerHTML = `
+    <div class="section-hdr" style="margin-top:4px;"><span class="section-title2">👤 ${properCase(res.employee)}</span></div>
     <div class="card"><div class="kd-stats" style="flex-wrap:wrap;">${cards}</div></div>
     <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">🛍️ Purchases Trend</div>
-      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartPurch-${who}"></canvas></div></div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartPurch-${uid}"></canvas></div></div>
     <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">🧾 DSR Entry Trend (On-Time / Late / Missing)</div>
-      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartDsr-${who}"></canvas></div></div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartDsr-${uid}"></canvas></div></div>
     <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">⚖️ Weight Sold Trend (g)</div>
-      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartWeight-${who}"></canvas></div></div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartWeight-${uid}"></canvas></div></div>
     <div class="card"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">📢 Social Media Adds Trend</div>
-      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartSocial-${who}"></canvas></div></div>
+      <div class="dh-chart-wrap" style="height:180px;"><canvas id="empPerfChartSocial-${uid}"></canvas></div></div>
     <div class="kd-table-wrap"><table class="kd-table">
       <thead><tr><th>Month</th><th>Purchases</th><th>On/Late/Miss</th><th>DSR%</th><th>Gold(g)</th><th>Silver(g)</th><th>Diamond Net(g)</th><th>Social</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table></div>
   `;
 
-  dhMakeLine('empPerfChartPurch-' + who, labels, months.map(m => m.purchased), '#2E7D6B');
-  dhMakeMultiLine('empPerfChartDsr-' + who, labels, [
+  dhMakeLine('empPerfChartPurch-' + uid, labels, months.map(m => m.purchased), '#2E7D6B');
+  dhMakeMultiLine('empPerfChartDsr-' + uid, labels, [
     { label: 'On-Time', data: months.map(m => m.dsrOnTime), color: '#16A34A' },
     { label: 'Late', data: months.map(m => m.dsrLate), color: '#D97706' },
     { label: 'Missing', data: months.map(m => m.dsrMissing), color: '#DC2626' }
   ]);
-  dhMakeMultiLine('empPerfChartWeight-' + who, labels, [
+  dhMakeMultiLine('empPerfChartWeight-' + uid, labels, [
     { label: 'Gold', data: months.map(m => m.goldWt), color: '#C9A84C' },
     { label: 'Silver', data: months.map(m => m.silverWt), color: '#94A3B8' },
     { label: 'Diamond Net', data: months.map(m => m.diamondNetWt), color: '#6C2BD9' }
   ]);
-  dhMakeMultiLine('empPerfChartSocial-' + who, labels, [
+  dhMakeMultiLine('empPerfChartSocial-' + uid, labels, [
     { label: 'Google Review', data: months.map(m => m.googleReview), color: '#EA4335' },
     { label: 'Instagram', data: months.map(m => m.instagram), color: '#C13584' },
     { label: 'Facebook', data: months.map(m => m.facebook), color: '#1877F2' },
