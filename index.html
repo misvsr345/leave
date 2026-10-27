@@ -689,7 +689,7 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
 .page-content { padding: 16px 14px 90px; max-width: 800px; margin: 0 auto; }
 
 /* v-fix (BRO: "side bar feture remove chei. mobile and desktop lo ela chusina
-   oke laga ravali. desktop lo sidebar valla chala features రావడం లేదు" — the
+   oke laga ravali. desktop lo sidebar valla chala features raavadam ledu" — the
    persistent desktop-only left sidebar duplicated only a partial list of the
    full modulepicker/footer-nav links, so several features were effectively
    missing on desktop. Removed entirely: .vsr-sidebar now stays display:none
@@ -4586,8 +4586,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="section-hdr"><span class="section-title2">➕ New Employee</span></div>
       <div class="card">
         <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">
-          ఇక్కడ ఎంటర్ చేస్తే — Leave_Balance, Walkintrack, DSR, Employee Master, Stock Checklist, Daily Shop Checklist, Loyalty Card, Leads — అన్ని బ్యాకెండ్ షీట్లలో ఆటోమేటిక్ గా ఎంట్రీ పడుతుంది.
-          DUTY రోస్టర్‌లు మాన్యువల్ గానే ఉంటాయి.
+          Entering here auto-creates an entry in every backend sheet — Leave_Balance, Walkintrack, DSR, Employee Master, Stock Checklist, Daily Shop Checklist, Loyalty Card, Leads.
+          Duty rosters stay manual.
         </p>
         <div class="form-row"><label>Employee ID</label><input type="number" id="newEmpId" placeholder="Auto-suggested"></div>
         <div class="form-row"><label>Name</label><input type="text" id="newEmpName" placeholder="Full name"></div>
@@ -13718,7 +13718,7 @@ async function submitNewEmployee() {
   const email = document.getElementById('newEmpEmail').value.trim();
   const mobile = document.getElementById('newEmpMobile').value.trim();
 
-  if (!empId || !empName) { toast('Employee ID మరియు Name తప్పనిసరి', 'error'); return; }
+  if (!empId || !empName) { toast('Employee ID and Name are required', 'error'); return; }
 
   const btn = document.querySelector('#admin-new-employee .btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
@@ -13780,9 +13780,9 @@ async function checkPendingPermSetup_() {
     div.innerHTML = `<div class="modal-box" style="max-width:420px;">
       <button class="modal-close-x" onclick="document.getElementById('pendingPermSetupModal').remove()" title="Close">✕</button>
       <div class="modal-title">🔐 Access Setup Pending</div>
-      <div class="modal-sub">ఈ ${pending.length} కొత్త employee(s) కి ఇంకా access permissions set చేయలేదు — వాళ్లు login చేయలేరు.</div>
+      <div class="modal-sub">${pending.length} new employee(s) still don't have access permissions set — they can't log in.</div>
       <ul style="margin:10px 0 14px 18px;font-size:13px;">${rowsHtml}</ul>
-      <button class="btn-primary" style="width:100%;" onclick="document.getElementById('pendingPermSetupModal').remove(); showAdminPage('settings'); switchSettingsTab('emp');">Settings → Employee Access కి వెళ్ళు</button>
+      <button class="btn-primary" style="width:100%;" onclick="document.getElementById('pendingPermSetupModal').remove(); showAdminPage('settings'); switchSettingsTab('emp');">Go to Settings → Employee Access</button>
     </div>`;
     document.body.appendChild(div);
   } catch (e) { /* non-fatal */ }
