@@ -3014,6 +3014,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="vsr-sidebar-subitem" id="adminMoreFlyout_dsrDupTagNo" onclick="showAdminPage('dup-tagno')">🔁 Duplicate Tag No</div>
       <div class="vsr-sidebar-subitem" id="adminMoreFlyout_settings" onclick="showAdminPage('settings')">⚙️ Settings</div>
       <div class="vsr-sidebar-subitem" id="adminMoreFlyout_backendSheets" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
+      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_newEmployee" onclick="showAdminPage('new-employee')">➕ New Employee</div>
       <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
       <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
             <div class="vsr-sidebar-subitem" id="adminMoreFlyout_loginActivity" onclick="showAdminPage('login-activity')">🔐 Login Activity</div>
@@ -4550,6 +4551,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Access, Theme, Store Data, Password &amp; more</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
+        <div class="quick-action-btn" id="adminQANewEmployee" onclick="showAdminPage('new-employee')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Employee</div><div class="quick-action-sub">One form → all backend sheets</div></div>
         <div class="quick-action-btn" onclick="showAdminPage('customer-360')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Customer 360°</div><div class="quick-action-sub">Loyalty + Golden Aura + Leads + DSR, one place</div></div>
         <!-- v-add (BRO: "employee perfomace ane oka option pettu, oka emp
              taluka full history ravali" — pick one employee, see DSR
@@ -4570,6 +4572,34 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="card">
         <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Direct links to open the raw Google Sheets behind each module.</p>
         <div id="backendSheetsList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- v-add (BRO: "okkasari okkadagara enter cheste, annitiki auto sync
+         ayyela cheste autunda" — one form, writes the new employee's row
+         into Leave_Balance + every other backend sheet that needs it.
+         Employee_Granular_Perms is deliberately NOT written here — see
+         "Perms Pending" comment in PortalBackend.gs; the employee's login
+         stays blocked until MIS opens Settings → Employee Access and
+         saves permissions for them at least once. -->
+    <div class="page-section" id="admin-new-employee">
+      <div class="section-hdr"><span class="section-title2">➕ New Employee</span></div>
+      <div class="card">
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">
+          ఇక్కడ ఎంటర్ చేస్తే — Leave_Balance, Walkintrack, DSR, Employee Master, Stock Checklist, Daily Shop Checklist, Loyalty Card, Leads — అన్ని బ్యాకెండ్ షీట్లలో ఆటోమేటిక్ గా ఎంట్రీ పడుతుంది.
+          DUTY రోస్టర్‌లు మాన్యువల్ గానే ఉంటాయి.
+        </p>
+        <div class="form-row"><label>Employee ID</label><input type="number" id="newEmpId" placeholder="Auto-suggested"></div>
+        <div class="form-row"><label>Name</label><input type="text" id="newEmpName" placeholder="Full name"></div>
+        <div class="form-row"><label>Department</label><input type="text" id="newEmpDept" placeholder="e.g. Retail"></div>
+        <div class="form-row"><label>Designation</label><input type="text" id="newEmpDesignation" placeholder="e.g. Sales Associate"></div>
+        <div class="form-row"><label>Counter</label><input type="text" id="newEmpCounter" placeholder="e.g. Bangle &amp; Chain Counter"></div>
+        <div class="form-row"><label>Monthly Leave Quota</label><input type="number" id="newEmpQuota" value="3"></div>
+        <div class="form-row"><label>Password</label><input type="text" id="newEmpPassword" placeholder="Login password"></div>
+        <div class="form-row"><label>Email</label><input type="email" id="newEmpEmail" placeholder="name@gmail.com"></div>
+        <div class="form-row"><label>Mobile</label><input type="text" id="newEmpMobile" placeholder="10-digit mobile"></div>
+        <button class="btn-primary" style="margin-top:12px;" onclick="submitNewEmployee()">✅ Save — Sync to all sheets</button>
+        <div id="newEmployeeResult" style="margin-top:14px;"></div>
       </div>
     </div>
 
@@ -9170,6 +9200,7 @@ setInterval(() => { try { checkMyLoyaltyEditGrants_(); } catch (e) {} }, 180000)
 // re-applies the localStorage "3hr since last SHOWN" gate on every call, so a tab
 // left open all day doesn't spam this on top of the once-per-login check above.
 setInterval(() => { try { checkMyPendingAoAlerts_(); } catch (e) {} }, 10800000);
+setInterval(() => { try { if (state.adminRole) checkPendingPermSetup_(); } catch (e) {} }, 10800000);
 // v-add (BRO: "every 6hr ki okasari" — checkAdminAlertReminder_ itself only
 // ever actually pops the reminder up once per 6-hour window (tracked in
 // localStorage) and is a no-op for a non-MIS/Director admin or when
@@ -13198,6 +13229,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '⚙️', label: 'Settings', page: 'settings' },
   { icon: '📢', label: 'Notices', page: 'notices' },
   { icon: '🗄️', label: 'Backend Sheets', page: 'backend-sheets' },
+  { icon: '➕', label: 'New Employee', page: 'new-employee' },
   { icon: '📋', label: 'Monthly Absent Report', page: 'monthly-absent' },
   { icon: '🔍', label: 'Customer 360°', page: 'customer-360' },
   { icon: '📊', label: 'Employee Performance', page: 'emp-performance' },
@@ -13656,6 +13688,93 @@ function loadBackendSheetsPage() {
     ).join('') + `</div>`;
 }
 
+// ══════════════════════════════════════
+// v-add (BRO: "okkasari okkadagara enter cheste, annitiki auto sync
+// ayyela cheste autunda" — one New Employee form, writes into every
+// backend sheet. See adminAddNewEmployeeAPI in PortalBackend.gs for the
+// full list and why Employee_Granular_Perms is deliberately skipped.
+// ══════════════════════════════════════
+async function loadNewEmployeePage() {
+  ['newEmpName','newEmpDept','newEmpDesignation','newEmpCounter','newEmpPassword','newEmpEmail','newEmpMobile'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const qtyEl = document.getElementById('newEmpQuota'); if (qtyEl) qtyEl.value = 3;
+  const resultEl = document.getElementById('newEmployeeResult'); if (resultEl) resultEl.innerHTML = '';
+  try {
+    const res = await jsonpReliable({ page: 'adminSuggestNextEmpIdAPI' });
+    const idEl = document.getElementById('newEmpId');
+    if (res.ok && idEl) idEl.value = res.suggestedEmpId;
+  } catch (e) { /* non-fatal — MIS can type the ID themselves */ }
+}
+
+async function submitNewEmployee() {
+  const empId = document.getElementById('newEmpId').value.trim();
+  const empName = document.getElementById('newEmpName').value.trim();
+  const department = document.getElementById('newEmpDept').value.trim();
+  const designation = document.getElementById('newEmpDesignation').value.trim();
+  const counter = document.getElementById('newEmpCounter').value.trim();
+  const monthlyQuota = document.getElementById('newEmpQuota').value.trim();
+  const password = document.getElementById('newEmpPassword').value.trim();
+  const email = document.getElementById('newEmpEmail').value.trim();
+  const mobile = document.getElementById('newEmpMobile').value.trim();
+
+  if (!empId || !empName) { toast('Employee ID మరియు Name తప్పనిసరి', 'error'); return; }
+
+  const btn = document.querySelector('#admin-new-employee .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  try {
+    const res = await jsonpReliable({
+      page: 'adminAddNewEmployeeAPI', empId, empName, department, designation, counter,
+      monthlyQuota, password, email, mobile,
+      callerRole: state.adminRole, callerEmail: state.adminEmail
+    });
+    const resultEl = document.getElementById('newEmployeeResult');
+    if (res.ok) {
+      toast(res.message || 'Employee added', 'success');
+      const rows = Object.entries(res.results || {}).map(([k, v]) =>
+        `<tr><td style="padding:4px 8px;font-size:11.5px;">${k}</td><td style="padding:4px 8px;font-size:11.5px;">${v === 'ok' ? '✅' : '⚠️ ' + v}</td></tr>`
+      ).join('');
+      if (resultEl) resultEl.innerHTML = `<div class="card" style="background:var(--bg);"><table style="width:100%;">${rows}</table></div>`;
+      loadNewEmployeePage(); // reset form + fetch next suggested ID
+    } else {
+      toast(res.error || 'Save failed', 'error');
+    }
+  } catch (e) {
+    toast('Save failed: ' + e, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Save — Sync to all sheets'; }
+  }
+}
+
+// Popped up once per admin login (and every 3hrs while logged in) —
+// reminds MIS/Director that a new employee added via the form above is
+// still blocked from logging in until permissions are set for them.
+async function checkPendingPermSetup_() {
+  if (state.isRestrictedAdmin) return; // only MIS/Director can act on this anyway
+  try {
+    const res = await jsonpReliable({ page: 'adminPendingPermSetupAPI' });
+    const pending = res && res.pending;
+    if (!res || !res.ok || !pending || !pending.length) return;
+
+    const existing = document.getElementById('pendingPermSetupModal');
+    if (existing) existing.remove();
+
+    const rowsHtml = pending.map(p => `<li style="margin-bottom:4px;">${properCase(p.empName)} (ID ${p.empId})</li>`).join('');
+    const div = document.createElement('div');
+    div.id = 'pendingPermSetupModal';
+    div.className = 'modal-overlay show';
+    div.innerHTML = `<div class="modal-box" style="max-width:420px;">
+      <button class="modal-close-x" onclick="document.getElementById('pendingPermSetupModal').remove()" title="Close">✕</button>
+      <div class="modal-title">🔐 Access Setup Pending</div>
+      <div class="modal-sub">ఈ ${pending.length} కొత్త employee(s) కి ఇంకా access permissions set చేయలేదు — వాళ్లు login చేయలేరు.</div>
+      <ul style="margin:10px 0 14px 18px;font-size:13px;">${rowsHtml}</ul>
+      <button class="btn-primary" style="width:100%;" onclick="document.getElementById('pendingPermSetupModal').remove(); showAdminPage('settings'); switchSettingsTab('emp');">Settings → Employee Access కి వెళ్ళు</button>
+    </div>`;
+    document.body.appendChild(div);
+  } catch (e) { /* non-fatal */ }
+}
+
 function renderAdminProfile() {
   const nameOrEmail = state.adminName || state.adminEmail || 'Admin';
   const initials = nameOrEmail.trim().split(/\s+/).map(w => w[0]).join('').substring(0,2).toUpperCase();
@@ -13983,6 +14102,7 @@ const FEATURE_SUBKEYS = {
 const FLYOUT_MIRROR_MAP_ = {
   adminMoreFlyout_settings: 'adminQASettings',
   adminMoreFlyout_backendSheets: 'adminQABackendSheets',
+  adminMoreFlyout_newEmployee: 'adminQANewEmployee',
   adminMoreFlyout_monthlyAbsent: 'adminQAMonthlyAbsent',
   adminMoreFlyout_dsrExtraCheck: 'adminQADsrExtraCheck',
   adminMoreFlyout_dsrDupTagNo: 'adminQADupTagNo',
@@ -13992,6 +14112,11 @@ async function applyAdminRoleRestrictions() {
   const restrict = state.isRestrictedAdmin;
   const settingsQA = document.getElementById('adminQASettings');
   if (settingsQA) settingsQA.style.display = restrict ? 'none' : '';
+  // v-add — New Employee writes into 8 backend spreadsheets at once;
+  // MIS/Director only, same treatment as Settings above (no sub-permission
+  // key for it — it's always all-or-nothing).
+  const newEmpQA = document.getElementById('adminQANewEmployee');
+  if (newEmpQA) newEmpQA.style.display = restrict ? 'none' : '';
   // v-fix (BRO: "More flyout lo nunchi permission check avakunda page ki
   // vellipotunnaru" — hiding a tile isn't enough if the sidebar's "More ⋯"
   // flyout has its own shortcut straight to the same page with no check at
@@ -14205,6 +14330,7 @@ function showAdminPage(page, opts) {
   if(page==='notifications') renderNotifHistoryPage_('admin');
   if(page==='settings') loadSettingsPage();
   if(page==='backend-sheets') loadBackendSheetsPage();
+  if(page==='new-employee') loadNewEmployeePage();
   if(page==='monthly-absent') loadMonthlyAbsentReport();
   if(page==='profile') { renderAdminProfile(); populateViewEmpDropdown(); }
   if(page==='login-activity') loadLoginActivity('admin');
@@ -14248,6 +14374,7 @@ async function loadAdminData() {
     try { renderAdminLeaves(); } catch(e4) { console.error('renderAdminLeaves failed:', e4); }
     try { renderAdminCalendar(); } catch(e5) { console.error('renderAdminCalendar failed:', e5); }
     try { checkAdminAlertReminder_(); } catch(e6) { console.error('admin alert reminder failed:', e6); } // v-add — see checkAdminAlertReminder_ below
+    try { checkPendingPermSetup_(); } catch(e7) { console.error('pending perm setup check failed:', e7); } // v-add — see checkPendingPermSetup_ below
     // v-fix (BRO: "review and dismiss ani popup vastundi. ala naku vaddu. in any stage" —
     // removed entirely. Approved leave already auto-voids remaining leads instantly via
     // voidRemainingLeadsCrossProject_ (LeaveBackend.gs, on approve) — no popup needed for
@@ -26677,7 +26804,12 @@ function dsrfConfirmSubmit(who, evt) {
   // hang indefinitely with the "Saving..." spinner stuck forever and
   // nothing ever saved anywhere. 90s (longer than Leave's 45s) because a
   // multi-item DSR can carry several full-size photos in one payload.
-  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isOutlet ? 'saveOutletIssue' : isRDR ? 'saveReturnDamageRepair' : undefined, rows, idemKey }) }, 90000)
+  // v-fix (BRO: "time koddiga penchite baguntundi" — several employees submitting at once, each
+  // touching DSR + Walkintrack + Stock sync in one request, was occasionally slower than 90s could
+  // cover on a busy moment/weak connection, aborting a request that was actually still working on the
+  // server. Bumped to 2 minutes — still well short of Apps Script's own 6-minute hard execution limit,
+  // so a request that is genuinely stuck (not just slow) still gets aborted in reasonable time.
+  _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify({ action: isOutlet ? 'saveOutletIssue' : isRDR ? 'saveReturnDamageRepair' : undefined, rows, idemKey }) }, 120000)
     .then(r => r.json())
     .then(result => {
       clearInterval(progInt);
