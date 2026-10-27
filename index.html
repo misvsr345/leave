@@ -1702,6 +1702,7 @@ table.loy-detail td:first-child { font-weight:700; color:var(--text3); width:42%
 .dsrf-scope .pay-tgl button.on.purchased{background:linear-gradient(135deg,var(--dsuccess),#27AE60);color:#fff;}
 .dsrf-scope .pay-tgl button.on.advance{background:linear-gradient(135deg,var(--dorange),#F39C12);color:#fff;}
 .dsrf-scope .pay-tgl button.on.order{background:linear-gradient(135deg,var(--dgreen),#27AE60);color:#fff;}
+.dsrf-scope .pay-tgl button.on.cancelled{background:linear-gradient(135deg,#C0392B,#E74C3C);color:#fff;}
 .dsrf-scope .photo-warn{display:none;color:var(--dorange);font-size:10.5px;font-weight:700;margin-top:4px;padding:4px 8px;background:var(--dorangeBg);border-radius:5px;border:1px solid var(--dorange);}
 .dsrf-scope .photo-warn.show{display:block;}
 .dsrf-scope .photo-ok{display:none;color:var(--dsuccess);font-size:10.5px;font-weight:700;margin-top:4px;}
@@ -7781,6 +7782,7 @@ async function loadEmpData() {
     try { checkCrmEventPopup_(); } catch(e6) { console.error('crm event popup failed:', e6); }
     try { checkMyActiveAlerts_(); } catch(e7) { console.error('emp alert check failed:', e7); } // v-add — see checkMyActiveAlerts_ below
     try { checkMyLoyaltyEditGrants_(); } catch(e8) { console.error('loyalty edit grant check failed:', e8); } // v-add — see checkMyLoyaltyEditGrants_ below
+    try { checkMyPendingAoAlerts_(); } catch(e9) { console.error('pending advance/order alert check failed:', e9); } // v-add — see checkMyPendingAoAlerts_ below
   } catch(e) {
     toast('Data load error: ' + e.message, 'error');
   }
@@ -9163,6 +9165,11 @@ setInterval(pollForPortalChanges_, 10000);
 // the popup back for as long as Admin leaves the alert turned on.
 setInterval(() => { try { checkMyActiveAlerts_(); } catch (e) {} }, 180000);
 setInterval(() => { try { checkMyLoyaltyEditGrants_(); } catch (e) {} }, 180000);
+// v-add: re-checked every 3hr (not 3min like the alerts above — this one is a slow,
+// not-urgent reminder, not a push-style notice) — checkMyPendingAoAlerts_ itself
+// re-applies the localStorage "3hr since last SHOWN" gate on every call, so a tab
+// left open all day doesn't spam this on top of the once-per-login check above.
+setInterval(() => { try { checkMyPendingAoAlerts_(); } catch (e) {} }, 10800000);
 // v-add (BRO: "every 6hr ki okasari" — checkAdminAlertReminder_ itself only
 // ever actually pops the reminder up once per 6-hour window (tracked in
 // localStorage) and is a no-op for a non-MIS/Director admin or when
@@ -9402,6 +9409,53 @@ function showEmpAlertPopup_(alerts) {
         <div style="font-size:13px;margin-top:6px;">${escHtml(a.message)}</div>
       </div>`).join('')}
     <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="document.getElementById('empAlertPopupModal').remove();_drainAutoPopupQueue_();">OK, Got It</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+// v-add (BRO: "daily first time login aipudu advance or order dsr emaina unte pop up
+// ravali. valla data matrame, adi kuda enter chesina timestamp nundi, next 7 days
+// tarvata nundi ravali. every 3hr tarvata epudu open chesina mali pop ravali")
+// — employee-only: own pending Advance/Order DSR entries older than 7 days.
+// Backend (empPendingAoAlertsAPI) always returns the live list with no state of
+// its own — the "only after 7 days" gate is already applied server-side; the
+// "every 3 hours" repeat is tracked here via localStorage (per device, per
+// employee) so it survives the tab being closed and reopened, not just an
+// in-page timer: last-shown time is saved ONLY when the popup actually shows,
+// so e.g. seen at 12pm → next login at 4pm (4hr later, past the 3hr mark) pops
+// again; a login at 1pm (1hr later) stays quiet.
+function checkMyPendingAoAlerts_() {
+  if (state.__loginKind !== 'emp' || !state.empName || !navigator.onLine) return;
+  try {
+    var key = 'aoPendingAlertLastShown_' + state.empName.trim().toLowerCase();
+    var last = parseInt(localStorage.getItem(key) || '0', 10);
+    if (last && (Date.now() - last) < 3 * 60 * 60 * 1000) return; // under 3hr since last shown
+  } catch (e) {}
+  jsonpReliable({ page: 'empPendingAoAlertsAPI', empName: state.empName }).then(res => {
+    if (res && res.ok && Array.isArray(res.items) && res.items.length) {
+      _queueAutoPopup_(() => showAoPendingAlertPopup_(res.items));
+      try { localStorage.setItem('aoPendingAlertLastShown_' + state.empName.trim().toLowerCase(), String(Date.now())); } catch (e) {}
+    }
+  }).catch(() => {});
+}
+function showAoPendingAlertPopup_(items) {
+  const existing = document.getElementById('aoPendingAlertModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'aoPendingAlertModal';
+  div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;">
+    <div class="modal-title">⏳ Pending Advance / Order DSRs</div>
+    <div style="font-size:12.5px;color:var(--text2);margin:4px 0 10px;">These are still open 7+ days after entry — close them out (Purchased) or mark Cancelled if they fell through.</div>
+    ${items.map(it => `
+      <div class="kd-card" style="margin-bottom:8px;cursor:pointer;" onclick="document.getElementById('aoPendingAlertModal').remove();_drainAutoPopupQueue_();showEmpPage('dsr-advorder');loadAdvanceOrderList('emp');openAdvanceOrderEdit('emp','${escJs(it.dsrId)}');">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b>${escHtml(properCase(it.customerName) || '—')}</b>
+          <span class="kd-pill ${it.status === 'Advance' ? 'gold' : ''}" style="${it.status !== 'Advance' ? 'background:#e6f0ff;color:#1565C0;border:1px solid #1565C0;' : ''}">${it.status === 'Advance' ? '⏳' : '📦'} ${escHtml(it.status)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">🧾 ${escHtml(it.dsrId)} &nbsp;·&nbsp; 📅 ${fmtDMY(it.billDate) || '—'} &nbsp;·&nbsp; ⏱ ${it.daysOld} days old</div>
+      </div>`).join('')}
+    <button class="btn-secondary" style="width:100%;margin-top:6px;" onclick="document.getElementById('aoPendingAlertModal').remove();_drainAutoPopupQueue_();">OK, Later</button>
   </div>`;
   document.body.appendChild(div);
 }
@@ -27146,6 +27200,9 @@ function aoeSetNewStatus(who, val, btn) {
   btn.classList.add('on');
   document.getElementById('aoeNewStatus-' + who).value = val;
   document.getElementById('aoeTakenDateWrap-' + who).style.display = (val === 'Purchased') ? '' : 'none';
+  // v-add (BRO's Cancelled Advance/Order) — Cancel Reason box only shows when Cancelled is picked.
+  const crWrap = document.getElementById('aoeCancelReasonWrap-' + who);
+  if (crWrap) crWrap.style.display = (val === 'Cancelled') ? '' : 'none';
 }
 
 function openAdvanceOrderEdit(who, dsrId) {
@@ -27196,11 +27253,20 @@ function openAdvanceOrderEdit(who, dsrId) {
               <button class="${head.paymentStatus==='Advance'?'on advance':''}" onclick="aoeSetNewStatus('${who}','Advance',this)">⏳ Still Advance</button>
               <button class="${head.paymentStatus==='Order Placed'?'on order':''}" onclick="aoeSetNewStatus('${who}','Order Placed',this)">📦 Still Order Placed</button>
               <button class="on purchased" onclick="aoeSetNewStatus('${who}','Purchased',this)">✅ Purchased Now</button>
+              <!-- v-add (BRO: "cancel cheste, row delete kakapoina, DSR entry lo count
+                   avakudadu" — row stays in the sheet, Payment Status just becomes
+                   "Cancelled"; DSR Missing/Status/Range + Employee Performance already
+                   skip any row whose Payment Status is Cancelled, server-side. -->
+              <button class="cancelled" onclick="aoeSetNewStatus('${who}','Cancelled',this)">❌ Cancelled</button>
             </div>
             <input type="hidden" id="aoeNewStatus-${who}" value="Purchased">
             <div class="form-row" id="aoeTakenDateWrap-${who}" style="margin-top:10px;">
               <label>Customer Taken Date <span class="req">★</span></label>
               <input type="date" lang="en-GB" id="aoeTakenDate-${who}">
+            </div>
+            <div class="form-row" id="aoeCancelReasonWrap-${who}" style="margin-top:10px;display:none;">
+              <label>Cancel Reason <span class="req">★</span></label>
+              <textarea id="aoeCancelReason-${who}" rows="2" placeholder="Why is this Advance/Order being cancelled?"></textarea>
             </div>
           </div>
 
@@ -27239,6 +27305,8 @@ function submitAdvanceOrderUpdate(who) {
   const newStatus = dsrfGv(`aoeNewStatus-${who}`);
   const takenDate = document.getElementById('aoeTakenDate-' + who) ? document.getElementById('aoeTakenDate-' + who).value : '';
   if (newStatus === 'Purchased' && !takenDate) { toast('Please enter the date the customer took the item!', 'error'); return; }
+  const cancelReason = document.getElementById('aoeCancelReason-' + who) ? document.getElementById('aoeCancelReason-' + who).value.trim() : '';
+  if (newStatus === 'Cancelled' && !cancelReason) { toast('Please enter a reason for cancelling!', 'error'); return; }
 
   const cust = (dsrfGv(`aoeCust-${who}`) || '').toUpperCase();
   const mob  = dsrfGv(`aoeMobile-${who}`);
@@ -27336,6 +27404,7 @@ function submitAdvanceOrderUpdate(who) {
     billDate: date, customerName: cust, mobileNumber: mob, address: addr,
     newPaymentStatus: newStatus,
     takenDate: newStatus === 'Purchased' ? takenDate : '',
+    cancelReason: newStatus === 'Cancelled' ? cancelReason : '',
     rows: rows
   };
 
@@ -27344,7 +27413,7 @@ function submitAdvanceOrderUpdate(who) {
     .then(result => {
       btn.disabled = false; btn.innerHTML = '💾 &nbsp; Save Update &nbsp; 💾';
       if (result.status === 'success') {
-        toast('✅ DSR updated' + (newStatus === 'Purchased' ? ' — closed out' : ''), 'success');
+        toast('✅ DSR updated' + (newStatus === 'Purchased' ? ' — closed out' : newStatus === 'Cancelled' ? ' — marked Cancelled' : ''), 'success');
         document.getElementById('aoeEditBox-' + who).innerHTML = '';
         loadAdvanceOrderList(who);
       } else {
