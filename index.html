@@ -13724,11 +13724,24 @@ async function submitNewEmployee() {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
   try {
-    const res = await jsonpReliable({
-      page: 'adminAddNewEmployeeAPI', empId, empName, department, designation, counter,
-      monthlyQuota, password, email, mobile,
-      callerRole: state.adminRole, callerEmail: state.adminEmail
-    });
+    // v-fix (root cause of "new emp add chesta, all sheet lo sync
+    // avatledu"): this used to go through jsonpReliable (GET, password
+    // sitting in plaintext in the URL) — confirmed via Debug_Log that real
+    // save attempts never even reached the server (no "Frontend:
+    // adminAddNewEmployeeAPI" log line at all), i.e. it was dying in the
+    // browser/network layer before the request arrived, not a per-sheet
+    // sync problem. Switched to a JSON POST body, same proven fix already
+    // used for Loyalty Card / Golden Aura submissions.
+    const resp = await _fetchWithTimeout(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
+      body: JSON.stringify({
+        page: 'adminAddNewEmployeeAPI', empId, empName, department, designation, counter,
+        monthlyQuota, password, email, mobile,
+        callerRole: state.adminRole, callerEmail: state.adminEmail
+      })
+    }, 30000);
+    const res = await _parseMainApiResponse(resp);
     const resultEl = document.getElementById('newEmployeeResult');
     if (res.ok) {
       toast(res.message || 'Employee added', 'success');
