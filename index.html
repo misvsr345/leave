@@ -2541,9 +2541,21 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </div>
 
     <!-- v-add (BRO's KPI Trend Chart feature) -->
+    <!-- v-fix (root cause of "KPI Trend always empty"): used to read a
+         "KPI History" archive sheet that only fills up once a month-end
+         report has actually overwritten the last one. Now computes score
+         live from Walkintrack for whichever months the person picks. -->
     <div class="page-section" id="emp-kpi-trend">
       <div class="section-hdr"><span class="section-title2">📈 My KPI Trend</span></div>
-      <div class="card"><div id="kpiTrendBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+      <div class="card">
+        <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiTrendStart-emp"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiTrendEnd-emp"></div>
+        </div>
+        <button class="btn-primary" onclick="loadKpiTrend('emp')" style="width:100%;">🔍 Show Trend</button>
+      </div>
+      <div class="card"><div id="kpiTrendBox-emp"><div class="empty-state"><p>Pick a date range above and tap Show Trend.</p></div></div></div>
     </div>
 
     <div class="page-section" id="emp-walkins">
@@ -3893,10 +3905,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="card"><div id="kpiMonthlyBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
     <!-- v-add (BRO's KPI Trend Chart feature) -->
+    <!-- v-fix (root cause of "KPI Trend always empty"): used to read a
+         "KPI History" archive sheet that only fills up once a month-end
+         report has actually overwritten the last one. Now computes score
+         live from Walkintrack for whichever months are picked below. -->
     <div class="page-section" id="admin-kpi-trend">
       <div class="section-hdr"><span class="section-title2">📈 KPI Trend — Employee-wise</span></div>
-      <select id="kpiTrendEmpSelect-admin" class="uniform-select" style="width:100%;margin-bottom:10px;" onchange="renderKpiTrendChart('admin')"></select>
-      <div class="card"><div id="kpiTrendBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+      <div class="card">
+        <div class="card-title">🗓️ Pick a date range — live from Walkintrack</div>
+        <div class="form-2col">
+          <div class="form-row"><label>Start Date</label><input type="date" lang="en-GB" id="kpiTrendStart-admin"></div>
+          <div class="form-row"><label>End Date</label><input type="date" lang="en-GB" id="kpiTrendEnd-admin"></div>
+        </div>
+        <button class="btn-primary" onclick="loadKpiTrend('admin')" style="width:100%;">🔍 Show Trend</button>
+      </div>
+      <select id="kpiTrendEmpSelect-admin" class="uniform-select" style="width:100%;margin-bottom:10px;display:none;" onchange="renderKpiTrendChart('admin')"></select>
+      <div class="card"><div id="kpiTrendBox-admin"><div class="empty-state"><p>Pick a date range above and tap Show Trend.</p></div></div></div>
     </div>
     <div class="page-section" id="admin-kpi-compare">
       <div class="section-hdr"><span class="section-title2">📈 Month / Date Comparison — All Employees</span></div>
@@ -7708,7 +7732,8 @@ function showEmpPage(page, opts) {
   if(page==='kpi-tilldate') initKpiTillDatePage('emp');
   if(page==='walkins') initWalkinTrackPage('emp');
   if(page==='kpi-monthly') loadKpiMonthly('emp');
-  if(page==='kpi-trend') loadKpiTrend('emp');
+  // v-fix: KPI Trend no longer auto-loads — it now needs a picked date
+  // range (live-computed), so it just waits at its own empty-state prompt.
   if(page==='kpi-compare') loadKpiCompare('emp');
   if(page==='dsr') loadDsrHighlights('emp');
   if(page==='dsr-today') loadDsrToday('emp');
@@ -14294,7 +14319,8 @@ function showAdminPage(page, opts) {
   if(page==='kpi-target') loadKpiTarget('admin');
   if(page==='kpi-tilldate') initKpiTillDatePage('admin');
   if(page==='kpi-monthly') loadKpiMonthly('admin');
-  if(page==='kpi-trend') loadKpiTrend('admin');
+  // v-fix: KPI Trend no longer auto-loads — it now needs a picked date
+  // range (live-computed), so it just waits at its own empty-state prompt.
   if(page==='kpi-compare') loadKpiCompare('admin');
   if(page==='dsr') loadDsrHighlights('admin');
   if(page==='dsr-today') loadDsrToday('admin');
@@ -17404,22 +17430,40 @@ function kpiTrendSvg(points) {
 
 async function loadKpiTrend(who) {
   const box = document.getElementById('kpiTrendBox-' + who);
+  const startEl = document.getElementById('kpiTrendStart-' + who);
+  const endEl   = document.getElementById('kpiTrendEnd-' + who);
+  const start = startEl ? startEl.value : '';
+  const end   = endEl   ? endEl.value   : '';
+  if (!start || !end) { box.innerHTML = '<div class="empty-state"><p>Pick both a Start Date and an End Date first.</p></div>'; return; }
+  if (start > end) { box.innerHTML = '<div class="empty-state"><p>Start Date must be before End Date.</p></div>'; return; }
+
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  const sel = document.getElementById('kpiTrendEmpSelect-admin');
+  if (sel) sel.style.display = 'none';
   try {
-    const res = await jsonpReliable(kpiEmpParams(who, { page: 'kpiTrendJSON' }));
-    if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
-    if (!res.employees || !res.employees.length) { box.innerHTML = '<div class="empty-state"><p>No KPI history yet — this builds up automatically each month from now on.</p></div>'; return; }
+    // v-fix: computed live from Walkintrack for the picked range — no more
+    // dependency on the "KPI History" archive sheet (see comment above).
+    const res = await jsonpReliable(kpiEmpParams(who, { page: 'kpiTrendLiveJSON', start, end }));
+    if (!res || !res.ok) { box.innerHTML = `<div class="empty-state"><p>Failed to load.${res && res.error ? ' ' + res.error : ''}</p></div>`; return; }
+    if (!res.employees || !res.employees.length) {
+      box.innerHTML = '<div class="empty-state"><p>No completed-month data in this range yet.</p></div>';
+      return;
+    }
+    const note = res.skippedCurrentMonth
+      ? '<p style="font-size:11px;color:var(--text3);margin:0 0 8px;">Note: the current, still-running month is left out — its score is only meaningful once the month is over.</p>'
+      : '';
 
     if (who === 'admin') {
-      const sel = document.getElementById('kpiTrendEmpSelect-admin');
       const current = sel.value;
       sel.innerHTML = res.employees.map(e => `<option value="${e.employee}">${properCase(e.employee)}</option>`).join('');
       if (current && res.employees.some(e => e.employee === current)) sel.value = current;
+      sel.style.display = '';
       window.__kpiTrendData = res.employees;
+      window.__kpiTrendNote = note;
       renderKpiTrendChart('admin');
     } else {
       const mine = res.employees[0]; // employee view is already filtered server-side to just them
-      box.innerHTML = `<div style="text-align:center;">${kpiTrendSvg(mine.points)}</div>`;
+      box.innerHTML = note + (mine ? `<div style="text-align:center;">${kpiTrendSvg(mine.points)}</div>` : '<div class="empty-state"><p>No completed-month data in this range yet.</p></div>');
     }
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
@@ -17431,7 +17475,8 @@ function renderKpiTrendChart(who) {
   const box = document.getElementById('kpiTrendBox-admin');
   const sel = document.getElementById('kpiTrendEmpSelect-admin');
   const data = (window.__kpiTrendData || []).find(e => e.employee === sel.value);
-  box.innerHTML = data ? `<div style="text-align:center;">${kpiTrendSvg(data.points)}</div>` : '<div class="empty-state"><p>No data for this employee.</p></div>';
+  const note = window.__kpiTrendNote || '';
+  box.innerHTML = note + (data ? `<div style="text-align:center;">${kpiTrendSvg(data.points)}</div>` : '<div class="empty-state"><p>No data for this employee.</p></div>');
 }
 
 function loadEomBanner(who) {
