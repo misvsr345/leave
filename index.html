@@ -2902,7 +2902,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" onclick="showEmpPage('leads-pending')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Today's Leads</div><div class="quick-action-sub">Pending — call now</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('leads-submitted')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Submitted Today</div><div class="quick-action-sub">Calls already done</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Report</div><div class="quick-action-sub">My % &amp; status break-up</div></div>
+        <div class="quick-action-btn" id="empQALeadsMyReport" onclick="showEmpPage('leads-report')"><span class="quick-action-icon">📊</span><div class="quick-action-label">My Report</div><div class="quick-action-sub">My % &amp; status break-up</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('leads-conversions')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My Conversions</div><div class="quick-action-sub">Calls that brought customers to store</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
       </div>
@@ -7889,8 +7889,8 @@ function renderEmpOverview() {
         <div class="quick-action-btn" onclick="showEmpPage('apply')"><span class="quick-action-icon">✍️</span><div class="quick-action-label">Apply Leave</div><div class="quick-action-sub">Submit new request</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('myleaves')"><span class="quick-action-icon">📋</span><div class="quick-action-label">My Leaves</div><div class="quick-action-sub">View history</div></div>
         <div class="quick-action-btn" id="empQACalendarBtn" onclick="showEmpPage('calendar')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Calendar</div><div class="quick-action-sub">Leave schedule</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
-        <div class="quick-action-btn" onclick="showEmpPage('trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My Trends</div><div class="quick-action-sub">Usage analysis</div></div>
+        <div class="quick-action-btn" id="empQABlockedBtn" onclick="showEmpPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">This month's blocks</div></div>
+        <div class="quick-action-btn" id="empQATrendBtn" onclick="showEmpPage('trend')"><span class="quick-action-icon">📈</span><div class="quick-action-label">My Trends</div><div class="quick-action-sub">Usage analysis</div></div>
         <div class="quick-action-btn" id="empQAEventsBtn" onclick="showEmpPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
         <div class="quick-action-btn" onclick="showEmpPage('profile')"><span class="quick-action-icon">🪪</span><div class="quick-action-label">Profile</div><div class="quick-action-sub">Your details</div></div>
       </div>
@@ -12062,7 +12062,7 @@ function _empLeaveTypeExtraHtml_(emp, disabled, idPrefix) {
   const limit = lta && lta.specialPermissionLimit !== null && lta.specialPermissionLimit !== undefined ? lta.specialPermissionLimit : '';
   return `
     <div style="padding:10px 2px 4px;margin-top:4px;border-top:1px dashed var(--border);">
-      <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">↳ Leave Types Allowed</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Leave Types Allowed</div>
       <label style="display:flex;align-items:center;gap:9px;padding:6px 2px;cursor:pointer;">
         <input type="checkbox" id="${idPrefix}LtaCasualCheck" ${allowed['Casual Leave'] !== false ? 'checked' : ''} ${disabled} style="width:17px;height:17px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
         <span style="font-size:12.5px;color:var(--text2);">Casual Leave</span>
@@ -14048,6 +14048,10 @@ const SM_FEATURE_ELEMENTS = {
   // saw them regardless of what MIS configured):
   loyPendingValidation: ['adminQALoyPendingValidation'],
   loyIssues: ['adminQALoyIssues'],
+  // v-add (BRO's full audit — bonus fix, same key now used on the employee
+  // side for "My Cards"): gates admin's "All Cards" button too, which had
+  // no permission key at all until now.
+  loyMyCards: ['adminQALoyMyCards'],
   leadsReport: ['adminQALeadsReport'],
   leadsOverview: ['adminQALeadsOverview'], leadsSubmitted: ['adminQALeadsSubmitted'],
   leadsOverdue: ['adminQALeadsOverdue'], leadsQuota: ['adminQALeadsQuota'],
@@ -14065,6 +14069,9 @@ const SM_FEATURE_ELEMENTS = {
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
   dsrAdvOrder: ['adminQADsrAdvOrder'],
+  // v-add (BRO's full audit — bonus fix): gates admin's own "Search" (Tag
+  // No / DSR ID) button too, which had no permission key at all until now.
+  dsrTagSearch: ['adminQADsrTagSearch'],
   goldenAura: ['adminQAGoldenAura', 'adminSidebarGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
   stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
   dailyShop: ['adminQADailyShopModule', 'adminSidebarDailyShop'], dailyShopChecklist: ['adminQADailyShopModule'],
@@ -14131,7 +14138,10 @@ const FEATURE_SUBKEYS = {
   // v-add (same audit, round 2):
   monthlyAbsent: ['monthlyAbsent'], dsrExtraCheck: ['dsrExtraCheck'],
   dsrDupTagNo: ['dsrDupTagNo'], loginActivity: ['loginActivity'],
-  dsrEmpSale: ['dsrEmpSale']
+  dsrEmpSale: ['dsrEmpSale'],
+  // v-add (BRO's full audit — new keys for real buttons that had no
+  // permission anywhere before):
+  leaveTrend: ['leaveTrend'], loyMyCards: ['loyMyCards'], dsrTagSearch: ['dsrTagSearch']
 };
 
 // Sidebar "More ⋯" flyout shortcut id -> the main tile id it must mirror.
@@ -18243,6 +18253,11 @@ const EMP_FEATURE_ELEMENTS = {
   leaveModule: ['empQALeaveModule'],
   calendar: ['empQACalendarBtn'], events: ['empQAEventsBtn'], balance: ['empBalanceCard'],
   notices_view: ['applyNoticesCard'],
+  // v-add (BRO's full audit — "emp login lo vache all option ki toggle
+  // pettu... dont miss single one"): "Blocked Dates" (read-only, this
+  // month's blocks) and "My Trends" (own leave usage) are real employee
+  // buttons that had no permission gating anything at all.
+  blocked: ['empQABlockedBtn'], leaveTrend: ['empQATrendBtn'],
   kpi: ['empQAKpiModule'],
   kpiTarget: ['empQAKpiTarget'], kpiTillDate: ['empQAKpiTillDate'], kpiLastMonth: ['empQAKpiLastMonth'],
   kpiCompare: ['empQAKpiCompare'], kpiRules: ['empQAKpiRules'],
@@ -18250,17 +18265,25 @@ const EMP_FEATURE_ELEMENTS = {
   dsrNewEntry: ['empQADsrNewEntry'], dsrToday: ['empQADsrToday'], dsrStatus: ['empQADsrStatus'],
   dsrMissing: ['empQADsrMissing'], dsrTillDate: ['empQADsrTillDate'], dsrDateRange: ['empQADsrDateRange'],
   dsrAdvOrder: ['empQADsrAdvOrder'],
+  // v-add (BRO's full audit): "Search" (Tag No / DSR ID) is a real,
+  // fully-wired employee button inside DSR that had no permission gating
+  // it at all.
+  dsrTagSearch: ['empQADsrTagSearch'],
   loyalty: ['empQALoyaltyModule'],
   loySearch: ['empQALoySearch'],
-  // loyStats intentionally NOT mapped here — on the employee side this
-  // key's element (empQALoyStats) is actually "My Incentive" (the
-  // employee's own cards/rank/earnings), a completely different feature
-  // from what 'loyStats' means on the admin side ("All Employees" —
-  // other people's card timelines). It wrongly reused the same key
-  // name; un-gating it here means excluding admin's All-Employees view
-  // from the Employee tab (see EMP_EXCLUDED_PERM_KEYS) no longer
-  // collateral-damages the employee's own legitimate incentive view.
-  // loyDash also intentionally NOT mapped — there is no "Loyalty
+  // v-fix (BRO's full audit): 'loyStats' IS now mapped here — on the
+  // employee side this key's element (empQALoyStats) is "My Incentive"
+  // (the employee's own cards/rank/earnings), a completely different
+  // feature from what 'loyStats' means on the admin side ("All
+  // Employees" — other people's card timelines, gated separately via
+  // SM_FEATURE_ELEMENTS on the admin path). The two sides store and
+  // evaluate this key from entirely separate sheets (Admin_Permissions
+  // vs Employee_Granular_Perms), same as every other shared-key feature
+  // here (kpiTarget, dsrEmpSale, etc.), so no collision — removing
+  // 'loyStats' from EMP_EXCLUDED_PERM_KEYS no longer collateral-damages
+  // the employee's own legitimate incentive view.
+  loyStats: ['empQALoyStats'], loyMyCards: ['empQALoyMyCards'],
+  // loyDash intentionally NOT mapped — there is no "Loyalty
   // Dashboard" feature anywhere in the employee app (the employee
   // Loyalty section only has Search / My Incentive / My Cards /
   // Leaderboard) — excluded server-side instead, see
@@ -18268,6 +18291,12 @@ const EMP_FEATURE_ELEMENTS = {
   goldenAura: ['empQAGoldenAuraModule'],
   gaNew: ['empQAGaNew'], gaList: ['empQAGaList'],
   leads: ['empQALeadsModule', 'empSidebarLeads'],
+  // v-fix (BRO's full audit): 'leadsReport' IS now mapped here — on the
+  // employee side this key's element is "My Report" (own % & status
+  // break-up, empQALeadsMyReport) — a different feature from the admin's
+  // team-wide calling report (gated separately via SM_FEATURE_ELEMENTS),
+  // same shared-key-different-sheet pattern as loyStats above.
+  leadsReport: ['empQALeadsMyReport'],
   stock: ['empQAStockChecklist'],
   dailyShop: ['empQADailyShopModule', 'empSidebarDailyShop'], dailyShopChecklist: ['empQADailyShopModule'],
   // stockReport not mapped — already excluded for employees (see
