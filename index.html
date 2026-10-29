@@ -5293,11 +5293,29 @@ function todayYMD() { return toYMD(new Date()); }
 // and if so show a dedicated "Missing DSR" popup naming the exact dates.
 // Fire-and-forget background check — never blocks login, never shows an
 // error toast on failure (same pattern as checkLoyaltyAlerts('emp') above it).
+//
+// v-fix (BRO: "every time portal lo missing report 3pm tarvata, emp ki
+// yesterday dsr enter kakapote, adi enter chesinanta varaku ravali. popup.
+// means 28th oct dsr enter avakapote, 29 oct 3pm nundi start avali. every
+// 1hr ki pop ravali. adi valu dsr enter chesinata varaku ravali. 28th 30th
+// varaku enter cheyakapoina, 28th dsr pending ani ravsali." — this used to
+// just fire once at login, any time of day, for ANY missing date including
+// today. Now: (1) TODAY is never nagged — the deadline for a date is the
+// NEXT day, so only dates strictly before today count; (2) the whole popup
+// is gated behind 3PM local time — before 3PM, nothing is shown even if a
+// prior date is missing; (3) once past 3PM, this re-checks and re-shows
+// itself every 1 hour for as long as the portal tab stays open (see the
+// setInterval right after the login-time call below), so it keeps nagging
+// hour after hour, day after day, until that date's DSR is actually
+// entered — at which point dsrMissingAPI stops returning it and this goes
+// quiet on its own, no extra code needed for that part.
 async function checkEmpMissingDsrPopup() {
   try {
     if (!state.empName) return;
+    if (new Date().getHours() < 15) return; // before 3PM — not due yet
     const monthStart = todayYMD().substring(0, 8) + '01';
-    const res = await jsonpReliable({ page: 'dsrMissingAPI', role: 'EMP', empName: state.empName, start: monthStart, end: todayYMD() });
+    const today = todayYMD();
+    const res = await jsonpReliable({ page: 'dsrMissingAPI', role: 'EMP', empName: state.empName, start: monthStart, end: today });
     if (!res || !res.rows || !res.rows.length) return;
     const row = res.rows[0];
     const perDate = row.perDate || {};
@@ -5307,10 +5325,20 @@ async function checkEmpMissingDsrPopup() {
     // uses via showDsrMissingDetail's missEntries filter above) — anything
     // else (a checkmark, a count) is NOT missing. Matching that exact
     // convention instead of a generic non-'-'/non-'0' guess.
-    const missingDates = Object.keys(perDate).filter(iso => String(perDate[iso]).indexOf('M:') === 0).sort();
+    // v-fix: exclude TODAY — today's deadline hasn't passed (that's
+    // tomorrow's 3PM), so only a STRICTLY earlier missing date nags.
+    const missingDates = Object.keys(perDate)
+      .filter(iso => iso < today && String(perDate[iso]).indexOf('M:') === 0)
+      .sort();
     if (!missingDates.length) return;
     showEmpMissingDsrModal(missingDates);
   } catch (e) { /* silent — not critical to login */ }
+}
+// Hourly re-check while the portal stays open, so the nag keeps coming
+// back every 1hr past 3PM (not just once at login). Guarded so re-login
+// in the same tab never stacks a second interval.
+if (!window.__empMissingDsrHourlyTimer) {
+  window.__empMissingDsrHourlyTimer = setInterval(checkEmpMissingDsrPopup, 60 * 60 * 1000);
 }
 function showEmpMissingDsrModal(dates) {
   const subEl = document.getElementById('empMissingDsrSub');
@@ -5321,7 +5349,11 @@ function showEmpMissingDsrModal(dates) {
   // Queue behind the Welcome popup if it's still showing, so the two never overlap.
   const wb = document.getElementById('wbWelcomeModal');
   const delay = (wb && wb.classList.contains('show')) ? 10200 : 300;
-  setTimeout(() => openModal('empMissingDsrModal'), delay);
+  // v-fix: also route through the shared auto-popup queue (same one Admin Alert
+  // Reminder/Employee Alert/Loyalty Edit Grant use) — this now fires every 1hr via
+  // checkEmpMissingDsrPopup's setInterval, so it must never pop on top of whatever
+  // modal the employee happens to have open at that moment; it waits its turn instead.
+  setTimeout(() => _queueAutoPopup_(() => openModal('empMissingDsrModal')), delay);
 }
 function closeEmpMissingDsrModal_(goToDsr) {
   closeModal('empMissingDsrModal');
