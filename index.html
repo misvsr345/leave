@@ -14342,7 +14342,7 @@ function showAdminPage(page, opts) {
   if(page==='stocklevel-manage') slPageEnter('manage', slRenderManage);
   if(page==='stocklevel-today') slPageEnter('today', slRenderToday);
   if(page==='stocklevel-failed') slPageEnter('failed', slRenderFailed);
-  if(page==='stocklevel-print') slPageEnter('print', slRenderPrintOptions);
+  if(page==='stocklevel-print') { SL.printFilters = { entryType: '', counter: '', dateMode: 'all', dateFrom: '', dateTo: '' }; slPageEnter('print', slRenderPrintOptions); }
   if(page==='stocktransfer') stLoadHistory();
   if(page==='stockentry') mountStockEntryForm('admin');
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
@@ -21153,8 +21153,15 @@ async function slResolveFailed(i) {
 }
 
 // Print / Report filters — box-buttons (not a thin tab row) so each choice is easy to tap on mobile.
-// Stored on SL (a module-level object that's never reset on tab switches), so leaving this tab and coming
-// back later keeps whatever was picked.
+// Stored on SL (a module-level object) while this tab is open, so picking a filter and re-rendering (e.g.
+// switching Entry Type) keeps the other choices. v-fix (BRO: "CT1133 print lo raledu, deep ga check chesi
+// chepu" — root cause was this filter staying stuck on whatever was last picked, even across completely
+// different visits to this page, since it only got created once via `if (!SL.printFilters)` and was never
+// reset — so an Entry Type/Counter/Date choice from an earlier print silently kept hiding items from a
+// later one with no visible warning): the page-router entry for 'stocklevel-print' (where this tab is
+// actually opened) now resets SL.printFilters to all/"All" fresh every time the tab is entered, so a stale
+// filter from an earlier visit can never again silently exclude an item. This line only keeps a safe
+// fallback default in case slRenderPrintOptions is ever called before that reset runs.
 if (!SL.printFilters) SL.printFilters = { entryType: '', counter: '', dateMode: 'all', dateFrom: '', dateTo: '' };
 
 function slBoxBtn(label, active, onclick) {
