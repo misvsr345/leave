@@ -22276,7 +22276,7 @@ function mountStockEntryForm(scope) {
   if (SE_MOUNTED[scope]) { seLoadData(scope); return; }
   SE_MOUNTED[scope] = true;
   SE_STATE[scope] = { gold:[], diamond:[], length:[], bangleSize:[], ringSize:[], diamondClarity:[], diamondColor:[],
-    goldFlags:{}, diaFlags:{}, counterDesigns:{}, counters:[], mainHub:'Main Hub', seq:0, submitToken: Math.random().toString(36).slice(2,8) };
+    goldFlags:{}, diaFlags:{}, counterDesigns:{}, validTagSeries:[], counters:[], mainHub:'Main Hub', seq:0, submitToken: Math.random().toString(36).slice(2,8) };
   root.innerHTML = seFormHtml(scope);
   seBindToggle(SE(scope,'tglType'), () => seRecheckAllTags(scope));
   seBindToggle(SE(scope,'tglFrom'), v => {
@@ -22651,6 +22651,14 @@ async function seCheckTag(scope, b) {
   if (!raw) { seSetTagMsg(b,'info',''); return; }
   if (stockTagHasSep(raw)) { seSetTagMsg(b,'err','Space, - or / not allowed. Enter like BOM2154.'); inp.classList.add('se-bad'); b._tagState='sep'; return; }
   if (!dsrTagValid(raw)) { seSetTagMsg(b,'err','Tag No needs both letters and numbers — e.g. BOM2154.'); inp.classList.add('se-bad'); b._tagState='sep'; return; }
+  // v-add (BRO's Tag Series block feature) — block immediately (like Bill No) if prefix not in Valid Tag Series list.
+  const _vts = (SE_STATE[scope] && SE_STATE[scope].validTagSeries) || [];
+  if (_vts.length) {
+    const _pfx = (raw.toUpperCase().replace(/[^A-Z0-9]/g, '').match(/^[A-Z]+/) || [''])[0];
+    if (_pfx && _vts.indexOf(_pfx) === -1) {
+      seSetTagMsg(b, 'err', "'" + _pfx + "' is not a valid Tag Series — check the Tag No"); inp.classList.add('se-bad'); b._tagState = 'series'; return;
+    }
+  }
   inp.value = raw.toUpperCase(); inp.classList.remove('se-bad');
   const tagN = stockNormTag(raw);
   if (seTagUsedElsewhere(scope, b, tagN)) { seSetTagMsg(b,'err','Duplicate: this tag is already entered in another item below/above.'); inp.classList.add('se-bad'); b._tagState='dup'; return; }
@@ -22794,6 +22802,7 @@ function seCollect(scope) {
       const tn = stockNormTag(tagNo);
       if (tn && tagsSeen[tn]) return e('Duplicate: this tag is entered twice in this form.');
       if (tn) tagsSeen[tn] = 1;
+      if (b._tagState==='series') return e('Tag Series not valid — check the Tag No.');
       if (b._tagState==='dup') return e('Duplicate tag — already in stock.');
       if (b._tagState==='sold') {
         if (seR(b,'retChk').checked) confirmReturn.push(tn);
@@ -22941,7 +22950,7 @@ async function seLoadData(scope) {
     if (c) {
       st.gold=c.gold||[]; st.diamond=c.diamond||[]; st.length=c.length||[]; st.bangleSize=c.bangleSize||[]; st.ringSize=c.ringSize||[];
       st.diamondClarity=c.diamondClarity||[]; st.diamondColor=c.diamondColor||[]; st.goldFlags=c.goldFlags||{}; st.diaFlags=c.diaFlags||{};
-      st.counterDesigns=c.counterDesigns||{};
+      st.counterDesigns=c.counterDesigns||{}; st.validTagSeries=c.validTagSeries||[];
       hadCache = true;
     }
     const m = JSON.parse(localStorage.getItem(SE_LS_META)||'null');
@@ -22962,9 +22971,12 @@ async function seLoadData(scope) {
     st.length = p.length||[]; st.bangleSize = p.bangleSize||[]; st.ringSize = p.ringSize||[];
     st.diamondClarity = p.diamondClarity||[]; st.diamondColor = p.diamondColor||[];
     st.goldFlags = p.goldFlags||{}; st.diaFlags = p.diaFlags||{}; st.counterDesigns = p.counterDesigns||{};
+    // v-add (BRO's Tag Series block feature) — "Valid Tag Series" list from the Products sheet,
+    // same source seCheckTag below uses for the live block-while-typing check.
+    st.validTagSeries = p.validTagSeries||[];
     try { localStorage.setItem(SE_LS_LISTS, JSON.stringify({gold:st.gold, diamond:st.diamond, length:st.length, bangleSize:st.bangleSize,
       ringSize:st.ringSize, diamondClarity:st.diamondClarity, diamondColor:st.diamondColor, goldFlags:st.goldFlags, diaFlags:st.diaFlags,
-      counterDesigns:st.counterDesigns})); } catch (e) {}
+      counterDesigns:st.counterDesigns, validTagSeries:st.validTagSeries})); } catch (e) {}
     if (m && m.ok) {
       st.counters = m.counters||[]; st.mainHub = m.mainHub||'Main Hub';
       const cSel = SE(scope,'counter'); const prevC = cSel.value;
