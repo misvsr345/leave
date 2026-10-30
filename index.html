@@ -17609,7 +17609,17 @@ function loadEomBanner(who) {
     box.style.display = 'block';
     box.className = 'bday-marquee-wrap show';
     box.style.cssText = 'background:linear-gradient(135deg,#C9A84C,#E8C766);border:2px solid var(--gold);';
-    box.innerHTML = `<div class="bday-marquee-track"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 PERFORMER OF THE MONTH — ${res.name} — Score: ${res.score} 🏆</span></div>`;
+    // v-fix (BRO: "scroller lo month name kuda add chei"): month comes from the report title
+    // "VSR GOLD — Monthly KPI | <Month Year> | <generated-at>"; falls back to a month-name match.
+    let eomMonth = '';
+    try {
+      const t = String(res.monthTitle || '');
+      const parts = t.split('|');
+      const cand = parts.length >= 2 ? parts[1].trim() : t;
+      const mm = cand.match(/(January|February|March|April|May|June|July|August|September|October|November|December)[a-z]*[\s,\-]*(\d{4})?/i);
+      if (mm) eomMonth = (mm[1].charAt(0).toUpperCase() + mm[1].slice(1).toLowerCase()) + (mm[2] ? ' ' + mm[2] : '');
+    } catch (e) {}
+    box.innerHTML = `<div class="bday-marquee-track" style="animation-duration:40s;"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 PERFORMER OF THE MONTH${eomMonth ? ' (' + eomMonth + ')' : ''} — ${res.name} — Score: ${res.score} 🏆</span></div>`;
   }).catch(() => { box.style.display = 'none'; box.innerHTML = ''; });
 }
 
