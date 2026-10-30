@@ -9535,13 +9535,16 @@ function showAoPendingAlertPopup_(items) {
   div.innerHTML = `<div class="modal-box" style="max-width:400px;">
     <div class="modal-title">⏳ Pending Advance / Order DSRs</div>
     <div style="font-size:12.5px;color:var(--text2);margin:4px 0 10px;">These are still open 7+ days after entry — close them out (Purchased) or mark Cancelled if they fell through.</div>
+    <!-- v-add (30-day MIS-approval feature, BRO: "emp ki kuda warning ivali. advance order
+         placed pop vachinapuudu akade undali" — added to this EXISTING popup, no new popup). -->
+    <div style="font-size:12px;color:#9C5B00;background:#FFF3E0;border:1px solid #9C5B00;border-radius:8px;padding:8px 10px;margin-bottom:10px;">⚠️ 30 days లోపు Purchased/Cancelled చేయకపోతే, DSR count తగ్గుతుంది — దీని గురించి MIS ని సంప్రదించండి.</div>
     ${items.map(it => `
       <div class="kd-card" style="margin-bottom:8px;cursor:pointer;" onclick="document.getElementById('aoPendingAlertModal').remove();_drainAutoPopupQueue_();showEmpPage('dsr-advorder');loadAdvanceOrderList('emp');openAdvanceOrderEdit('emp','${escJs(it.dsrId)}');">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <b>${escHtml(properCase(it.customerName) || '—')}</b>
           <span class="kd-pill ${it.status === 'Advance' ? 'gold' : ''}" style="${it.status !== 'Advance' ? 'background:#e6f0ff;color:#1565C0;border:1px solid #1565C0;' : ''}">${it.status === 'Advance' ? '⏳' : '📦'} ${escHtml(it.status)}</span>
         </div>
-        <div style="font-size:12px;color:var(--text3);margin-top:4px;">🧾 ${escHtml(it.dsrId)} &nbsp;·&nbsp; 📅 ${fmtDMY(it.billDate) || '—'} &nbsp;·&nbsp; ⏱ ${it.daysOld} days old</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">🧾 ${escHtml(it.dsrId)} &nbsp;·&nbsp; 📅 ${fmtDMY(it.billDate) || '—'} &nbsp;·&nbsp; ⏱ ${it.daysOld} days old${it.daysOld >= 23 ? ' &nbsp;<span style="color:#9C5B00;font-weight:700;">(30 days ki daggaravutondi)</span>' : ''}</div>
       </div>`).join('')}
     <button class="btn-secondary" style="width:100%;margin-top:6px;" onclick="document.getElementById('aoPendingAlertModal').remove();_drainAutoPopupQueue_();">OK, Later</button>
   </div>`;
@@ -27083,6 +27086,20 @@ function renderAdvanceOrderListRows(who) {
     const tagPill = r.tag === 'Advance'
       ? `<span class="kd-pill gold">${tagIcon} ${r.tag}</span>`
       : `<span class="kd-pill" style="background:#e6f0ff;color:#1565C0;border:1px solid #1565C0;">${tagIcon} ${r.tag}</span>`;
+    // v-add (30-day MIS-approval feature) — Admin-only 30+ days badge + "OK, Exclude from DSR
+    // Count" button. Status/count are untouched by this button alone — see excludeAdvanceOrderFromCount
+    // in DSRBackend.gs. Nothing here is automatic; MIS has to tap it.
+    let reviewBlock = '';
+    if (who === 'admin' && (r.daysOld || 0) >= 30) {
+      if (r.excludedByMis) {
+        reviewBlock = `<div style="margin-top:8px;font-size:12px;font-weight:700;color:#9C5B00;">🏳️ Excluded by MIS from DSR Count</div>`;
+      } else {
+        reviewBlock = `<div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3E0;border:1px solid #9C5B00;border-radius:8px;padding:6px 10px;">
+          <span style="font-size:12px;font-weight:700;color:#9C5B00;">⚠️ ${r.daysOld} days old — review</span>
+          <button style="font-size:12px;padding:5px 10px;border-radius:6px;border:none;background:#9C5B00;color:#fff;font-weight:700;" onclick="event.stopPropagation(); aoExcludeFromCount('${who}','${escJs(r.dsrId)}')">OK, Exclude from DSR Count</button>
+        </div>`;
+      }
+    }
     html += `<div class="kd-card" style="cursor:pointer;margin-bottom:10px;" onclick="openAdvanceOrderEdit('${who}','${escJs(r.dsrId)}')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <b>${properCase(r.customerName) || '—'}</b>
@@ -27090,9 +27107,29 @@ function renderAdvanceOrderListRows(who) {
       </div>
       <div style="font-size:12px;color:var(--text3);margin-top:4px;">🧾 ${r.dsrId} &nbsp;·&nbsp; 👤 ${r.employeeName} &nbsp;·&nbsp; 📱 ${r.mobile || '—'}</div>
       <div style="font-size:12px;color:var(--text3);margin-top:2px;">📅 Bill: ${fmtDMY(r.billDate) || '—'} &nbsp;·&nbsp; 🧿 ${r.itemCount} item(s)</div>
+      ${reviewBlock}
     </div>`;
   });
   box.innerHTML = html;
+}
+
+// v-add (30-day MIS-approval feature) — the ONLY entry point that can decrement the DSR count /
+// Walkintrack Purchased count without a manual Cancelled close. Admin-only button (rendered above
+// only on who==='admin'); server (excludeAdvanceOrderFromCount, DSRBackend.gs) re-checks the 30-day
+// floor itself and is idempotent, so this is never relied on as the only guard.
+function aoExcludeFromCount(who, dsrId) {
+  if (!confirm('DSR ' + dsrId + ' ni DSR count nunchi exclude cheyyala?\n\nPayment Status maarudu ledu — item ippatikee open gaane chupistundi. DSR count & Purchased count matrame 1 తగ్గుతుంది.')) return;
+  fetch(DSR_GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'excludeAdvanceOrderFromCount', dsrId: dsrId })
+  }).then(r => r.json()).then(res => {
+    if (res && res.status === 'success') {
+      toast('✅ ' + (res.message || 'Excluded from DSR count'), 'success');
+      loadAdvanceOrderList(who);
+    } else {
+      toast('❌ ' + ((res && res.message) || 'Could not exclude this DSR'), 'error');
+    }
+  }).catch(() => toast('❌ Network error — try again', 'error'));
 }
 
 function aoeRefreshProducts(who, eid) {
@@ -27500,6 +27537,7 @@ function openAdvanceOrderEdit(who, dsrId) {
         if (!head.billDate && listRow.billDate) head.billDate = listRow.billDate;
       }
       window['__aoeHead_' + who] = head;
+      const isAdminView = (who === 'admin');   // v-add (BRO's role-restrict feature) — role was already computed above as 'ADMIN'/'EMP' for the API call
 
       editBox.innerHTML = `
         <div class="dsrf-scope">
@@ -27522,14 +27560,18 @@ function openAdvanceOrderEdit(who, dsrId) {
             <div class="pay-tgl" id="aoeStatusTgl-${who}">
               <button class="${head.paymentStatus==='Advance'?'on advance':''}" onclick="aoeSetNewStatus('${who}','Advance',this)">⏳ Still Advance</button>
               <button class="${head.paymentStatus==='Order Placed'?'on order':''}" onclick="aoeSetNewStatus('${who}','Order Placed',this)">📦 Still Order Placed</button>
-              <button class="on purchased" onclick="aoeSetNewStatus('${who}','Purchased',this)">✅ Purchased Now</button>
+              <!-- v-add (BRO: "emp ki cancel optionivadam ednuku, reject avdam endku, rmeoav
+                   chesei" — Purchased is Employee-only, Cancelled is MIS/Admin-only. UI-only
+                   restriction (button simply not rendered for the other role) — no backend
+                   role check, per BRO's explicit simplification. -->
+              ${!isAdminView ? `<button class="on purchased" onclick="aoeSetNewStatus('${who}','Purchased',this)">✅ Purchased Now</button>` : ''}
               <!-- v-add (BRO: "cancel cheste, row delete kakapoina, DSR entry lo count
                    avakudadu" — row stays in the sheet, Payment Status just becomes
                    "Cancelled"; DSR Missing/Status/Range + Employee Performance already
                    skip any row whose Payment Status is Cancelled, server-side. -->
-              <button class="cancelled" onclick="aoeSetNewStatus('${who}','Cancelled',this)">❌ Cancelled</button>
+              ${isAdminView ? `<button class="on cancelled" onclick="aoeSetNewStatus('${who}','Cancelled',this)">❌ Cancelled</button>` : ''}
             </div>
-            <input type="hidden" id="aoeNewStatus-${who}" value="Purchased">
+            <input type="hidden" id="aoeNewStatus-${who}" value="${isAdminView ? 'Cancelled' : 'Purchased'}">
             <div class="form-row" id="aoeTakenDateWrap-${who}" style="margin-top:10px;">
               <label>Customer Taken Date <span class="req">★</span></label>
               <input type="date" lang="en-GB" id="aoeTakenDate-${who}">
@@ -29989,6 +30031,102 @@ if (!restoreSession()) {
 flushAllOfflineQueues();
 syncHeaderHeight();
 initStoreSettings_();
+</script>
+<script>
+/* v-add (BRO: keyboard shortcuts for the whole portal, all logins).
+   Ctrl+S save | Ctrl+Enter add another item | Esc close popup | Alt+1..9 sidebar pages | / search | ? help.
+   Purely additive: clicks existing buttons, never touches business logic. */
+(function () {
+  function vis(el) { return !!(el && el.offsetParent !== null && !el.disabled); }
+  function inField(t) {
+    if (!t) return false; const tag = (t.tagName || '').toUpperCase();
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable;
+  }
+  function openModals() { return Array.prototype.slice.call(document.querySelectorAll('.modal-overlay.show')); }
+  function helpEl() { return document.getElementById('vsrKbHelp'); }
+  function closeHelp() { const h = helpEl(); if (h) h.remove(); }
+  function showHelp() {
+    if (helpEl()) { closeHelp(); return; }
+    const rows = [
+      ['Ctrl + S', 'Save / Submit this page'], ['Ctrl + Enter', 'Add another item'], ['Esc', 'Close popup'],
+      ['Alt + 1 … 9', 'Open sidebar page 1 … 9'], ['/', 'Go to Search box'], ['?', 'Show / hide this list']
+    ];
+    const d = document.createElement('div'); d.id = 'vsrKbHelp';
+    d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    d.onclick = function (e) { if (e.target === d) closeHelp(); };
+    d.innerHTML = '<div style="background:var(--card,#fff);color:var(--text,#222);border-radius:14px;padding:20px 22px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3);font-size:14px;">' +
+      '<div style="font-weight:800;font-size:16px;margin-bottom:12px;">⌨️ Keyboard Shortcuts</div>' +
+      rows.map(function (r) { return '<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.2);"><b>' + r[0] + '</b><span>' + r[1] + '</span></div>'; }).join('') +
+      '<div style="margin-top:12px;font-size:12px;opacity:.7;">Press Esc or ? to close</div></div>';
+    document.body.appendChild(d);
+  }
+  function toastMsg(m) { try { if (typeof toast === 'function') toast(m, 'info'); } catch (e) {} }
+
+  function findSaveBtn() {
+    const ms = openModals();
+    const scope = ms.length ? ms[ms.length - 1] : document;
+    // Tier 1: known primary save/submit buttons
+    const known = scope.querySelectorAll('.se-save, [id^="dsrfSubmitBtn-"], [id^="aoeSubmitBtn-"], [id^="gaSubmitBtn-"], #ncSubmitBtn, #ecSubmitBtn, #leadSubmitBtn, #fieldReqSaveBtn, #applySubmitBtn');
+    for (let i = 0; i < known.length; i++) if (vis(known[i])) return known[i];
+    // Tier 2: any visible primary button whose label starts with Save / Submit / Confirm — only if exactly one
+    const cands = Array.prototype.filter.call(scope.querySelectorAll('button.btn-primary, button.sbtn'), function (b) {
+      return vis(b) && /^[^A-Za-z]*(save|submit|confirm)/i.test((b.textContent || '').trim());
+    });
+    if (cands.length === 1) return cands[0];
+    return cands.length > 1 ? 'many' : null;
+  }
+  function closeTopModal() {
+    const ms = openModals(); if (!ms.length) return false;
+    const m = ms[ms.length - 1];
+    const btn = Array.prototype.find.call(m.querySelectorAll('button, .modal-close, [onclick]'), function (b) {
+      const t = (b.textContent || '').trim();
+      return vis(b) && (/^(cancel|close|skip|later|no)$/i.test(t.replace(/[^A-Za-z]/g, '')) || /^[✕×✖]$/.test(t) || /close/i.test(b.getAttribute('onclick') || ''));
+    });
+    if (btn) { btn.click(); return true; }
+    m.classList.remove('show'); return true;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.isComposing || e.defaultPrevented) return;
+    const k = e.key;
+    // Esc: help first, then top popup
+    if (k === 'Escape') {
+      if (helpEl()) { closeHelp(); e.preventDefault(); return; }
+      if (closeTopModal()) e.preventDefault();
+      return;
+    }
+    // Ctrl/Cmd + S
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (k === 's' || k === 'S')) {
+      e.preventDefault();
+      const b = findSaveBtn();
+      if (b === 'many') toastMsg('Click the Save button for this section');
+      else if (b) b.click();
+      return;
+    }
+    // Ctrl/Cmd + Enter : add another item
+    if ((e.ctrlKey || e.metaKey) && k === 'Enter') {
+      const b = Array.prototype.find.call(document.querySelectorAll('.se-add, .add-entry-btn'), vis);
+      if (b) { e.preventDefault(); b.click(); }
+      return;
+    }
+    // Alt + 1..9 : sidebar pages
+    if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.code ? e.code.replace('Digit', '') : k)) {
+      const n = parseInt(e.code ? e.code.replace('Digit', '') : k, 10);
+      const items = Array.prototype.filter.call(document.querySelectorAll('.vsr-sidebar-item'), function (x) { return x.offsetParent !== null; });
+      if (items[n - 1]) { e.preventDefault(); items[n - 1].click(); }
+      return;
+    }
+    // Plain keys below: never while typing, never with modifiers
+    if (e.ctrlKey || e.metaKey || e.altKey || inField(e.target)) return;
+    if (k === '?') { e.preventDefault(); showHelp(); return; }
+    if (k === '/') {
+      const inp = Array.prototype.find.call(document.querySelectorAll('input[type="search"], input[type="text"], input:not([type])'), function (i) {
+        return vis(i) && !i.readOnly && /search|tag|mobile|name|dsr/i.test((i.placeholder || '') + ' ' + (i.id || ''));
+      });
+      if (inp) { e.preventDefault(); inp.focus(); try { inp.select(); } catch (x) {} }
+    }
+  });
+})();
 </script>
 </body>
 </html>
