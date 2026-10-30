@@ -2315,7 +2315,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <div class="card" style="padding:14px 16px;">
         <div class="form-row"><label>Customer Full Name (As per Document) <span id="frqStarNcCustName">*</span></label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
-        <div class="form-row"><label>Occupation <span id="frqStarNcOccupation">*</span></label><input type="text" id="ncOccupation" placeholder="e.g. Business, Student, Govt Employee"></div>
+        <div class="form-row"><label>Occupation <span id="frqStarNcOccupation">*</span></label><select id="ncOccupationSel" onchange="ncOccupationPick()"><option value="">Select occupation</option><option value="Accountant">Accountant</option><option value="Agriculture / Farmer">Agriculture / Farmer</option><option value="Architect">Architect</option><option value="Army Personnel">Army Personnel</option><option value="Artist">Artist</option><option value="Bank Employee">Bank Employee</option><option value="Beautician">Beautician</option><option value="Business Owner">Business Owner</option><option value="Carpenter">Carpenter</option><option value="Chef / Cook">Chef / Cook</option><option value="Civil Engineer">Civil Engineer</option><option value="Clerk">Clerk</option><option value="Company Director">Company Director</option><option value="Construction Worker">Construction Worker</option><option value="Consultant">Consultant</option><option value="Contractor">Contractor</option><option value="Delivery Executive">Delivery Executive</option><option value="Dentist">Dentist</option><option value="Designer">Designer</option><option value="Doctor">Doctor</option><option value="Driver">Driver</option><option value="Electrician">Electrician</option><option value="Electronics Technician">Electronics Technician</option><option value="Entrepreneur / Startup Founder">Entrepreneur / Startup Founder</option><option value="Factory Employee">Factory Employee</option><option value="Fashion Designer">Fashion Designer</option><option value="Fisherman">Fisherman</option><option value="Florist">Florist</option><option value="Freelancer">Freelancer</option><option value="Government Employee">Government Employee</option><option value="Government Officer">Government Officer</option><option value="Government Teacher">Government Teacher</option><option value="Homemaker">Homemaker</option><option value="Hospital Staff">Hospital Staff</option><option value="Hotel Staff">Hotel Staff</option><option value="Housekeeping Staff">Housekeeping Staff</option><option value="Journalist">Journalist</option><option value="Labourer">Labourer</option><option value="Lawyer">Lawyer</option><option value="Nurse">Nurse</option><option value="Office Assistant">Office Assistant</option><option value="Other Medical Professional">Other Medical Professional</option><option value="Painter">Painter</option><option value="Pharmacist">Pharmacist</option><option value="Photographer">Photographer</option><option value="Pilot">Pilot</option><option value="Plumber">Plumber</option><option value="Police Personnel">Police Personnel</option><option value="Politician">Politician</option><option value="Post Office Employee">Post Office Employee</option><option value="Private School Teacher">Private School Teacher</option><option value="Private Sector Employee">Private Sector Employee</option><option value="Professor / Lecturer">Professor / Lecturer</option><option value="Railway Employee">Railway Employee</option><option value="Retired Employee">Retired Employee</option><option value="Sales Executive">Sales Executive</option><option value="Security Guard">Security Guard</option><option value="Self-Employed">Self-Employed</option><option value="Shopkeeper / Retailer">Shopkeeper / Retailer</option><option value="Social Worker">Social Worker</option><option value="Software Engineer">Software Engineer</option><option value="Student">Student</option><option value="Tailor">Tailor</option><option value="Technician">Technician</option><option value="Telecom Employee">Telecom Employee</option><option value="Travel Agent">Travel Agent</option><option value="Veterinarian">Veterinarian</option><option value="Waiter / Restaurant Staff">Waiter / Restaurant Staff</option><option value="Warehouse Employee">Warehouse Employee</option><option value="Web Developer">Web Developer</option><option value="Worker">Worker</option><option value="__other__">Other (type manually)</option></select>
+          <input type="text" id="ncOccupation" placeholder="Type occupation" style="display:none;margin-top:6px;"></div>
         <div class="form-row"><label>Organization Name</label><input type="text" id="ncOrgName" placeholder="Optional"></div>
         <div class="form-row"><label>Phone Number <span id="frqStarNcPhone">*</span></label><input type="tel" id="ncPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
         <div class="form-row"><label>Address <span id="frqStarNcAddress">*</span></label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
@@ -6104,16 +6105,154 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 // or one of these three popups' own close button below) calls _drainAutoPopupQueue_ right
 // after, which shows the next queued one, a moment later so the screen doesn't flash.
 window.__autoPopupQueue_ = [];
-function _anyModalOpen_() { return !!document.querySelector('.modal-overlay.show'); }
+window.__minPopups_ = []; // minimized popups waiting in the tray: { el, openCls, label }
+const AUTO_POPUP_SKIP_IDS_ = ['wbWelcomeModal'];
+function _anyModalOpen_() { return !!document.querySelector('.modal-overlay.show, .loy-img-modal.open'); }
+// v-add (BRO: "pop up only home page lo unnapudu matrame ravali ... ekkada unna vachestundi" —
+// auto popups now appear ONLY while the person is on the Home (module picker) page and no
+// other modal is open; anywhere else they wait in the queue until they come back Home.)
+function _onHomePage_() {
+  const a = document.getElementById('adminApp'), e = document.getElementById('empApp');
+  if (a && a.classList.contains('active')) return state._currentPage_admin === 'modulepicker';
+  if (e && e.classList.contains('active')) return state._currentPage_emp === 'modulepicker';
+  return false;
+}
+function _topOpenAutoModal_() {
+  const open = Array.prototype.filter.call(document.querySelectorAll('.modal-overlay.show, .loy-img-modal.open'),
+    function (el) { return AUTO_POPUP_SKIP_IDS_.indexOf(el.id) < 0; });
+  return open.length ? open[open.length - 1] : null;
+}
+function _runAutoPopup_(showFn, silent) {
+  showFn();
+  const el = _topOpenAutoModal_();
+  if (!el) return;
+  _addMinimizeBtn_(el);
+  if (silent) _minimizePopup_(el);
+}
 function _queueAutoPopup_(showFn) {
-  if (!_anyModalOpen_()) { showFn(); return; }
+  // Something already minimized in the tray → new popups go straight there too (quietly).
+  if (_liveMinPopups_().length && !_anyModalOpen_() && _onHomePage_() && !window.__autoPopupQueue_.length) { _runAutoPopup_(showFn, true); return; }
+  if (!window.__autoPopupQueue_.length && !_anyModalOpen_() && _onHomePage_()) { _runAutoPopup_(showFn, false); return; }
   window.__autoPopupQueue_.push(showFn);
+  _drainAutoPopupQueue_();
 }
+let __drainPending_ = false;
 function _drainAutoPopupQueue_() {
-  if (_anyModalOpen_() || !window.__autoPopupQueue_.length) return;
+  if (__drainPending_ || _anyModalOpen_() || !_onHomePage_() || !window.__autoPopupQueue_.length) return;
+  __drainPending_ = true;
   const next = window.__autoPopupQueue_.shift();
-  setTimeout(() => { if (!_anyModalOpen_()) next(); else window.__autoPopupQueue_.unshift(next); }, 400);
+  // small pause between popups so the next one doesn't flash in the instant the previous closes
+  setTimeout(() => {
+    __drainPending_ = false;
+    if (!_anyModalOpen_() && _onHomePage_()) _runAutoPopup_(next, false); else window.__autoPopupQueue_.unshift(next);
+  }, 700);
 }
+
+// ── Minimize + tray ──
+function _addMinimizeBtn_(el) {
+  if (!el || el.querySelector('.vsr-min-btn')) return;
+  const box = el.firstElementChild; if (!box) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'text-align:right;margin:0 0 6px;';
+  bar.innerHTML = '<button type="button" class="vsr-min-btn" style="border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;">– Minimize</button>';
+  bar.firstChild.onclick = function (ev) { ev.stopPropagation(); _minimizePopup_(el); _flushQueueToTray_(); };
+  box.insertBefore(bar, box.firstChild);
+}
+function _popupLabel_(el) {
+  const t = el.querySelector('.modal-title') || el.querySelector('[style*="font-weight:800"]') || el.querySelector('b');
+  return ((t && t.textContent) || 'Popup').replace(/\s+/g, ' ').trim().slice(0, 42);
+}
+function _minimizePopup_(el) {
+  const cls = el.classList.contains('show') ? 'show' : 'open';
+  el.classList.remove(cls);
+  window.__minPopups_.push({ el: el, openCls: cls, label: _popupLabel_(el) });
+  _renderTray_();
+}
+// After the person minimizes one, everything still waiting in the queue goes to the tray too.
+function _flushQueueToTray_() {
+  let guard = 20;
+  while (window.__autoPopupQueue_.length && guard-- > 0) {
+    if (_anyModalOpen_()) break;
+    _runAutoPopup_(window.__autoPopupQueue_.shift(), true);
+  }
+}
+function _liveMinPopups_() {
+  window.__minPopups_ = window.__minPopups_.filter(function (m) { return m.el && m.el.isConnected; });
+  return window.__minPopups_;
+}
+function _restoreMinPopup_(idx) {
+  const list = _liveMinPopups_();
+  const m = list[idx]; if (!m) return;
+  if (_anyModalOpen_()) { try { toast('Mundu ippudu open unna popup close cheyandi', 'info'); } catch (e) {} return; }
+  window.__minPopups_.splice(idx, 1);
+  m.el.classList.add(m.openCls);
+  const p = document.getElementById('vsrPopupTrayPanel'); if (p) p.style.display = 'none';
+  _renderTray_();
+}
+let __trayKey_ = '';
+function _renderTray_() {
+  const list = _liveMinPopups_();
+  let tray = document.getElementById('vsrPopupTray');
+  // Only touch the DOM when something actually changed — this runs from a MutationObserver,
+  // and rewriting the tray every time would re-trigger the observer forever.
+  const home = _onHomePage_();
+  const key = (home ? 'H' : 'x') + '|' + list.map(function (m) { return m.label; }).join('|');
+  if (key === __trayKey_ && (tray || !list.length)) return;
+  __trayKey_ = key;
+  if (!list.length || !home) { if (tray) tray.style.display = 'none'; return; }
+  if (!tray) {
+    tray = document.createElement('div');
+    tray.id = 'vsrPopupTray';
+    tray.style.cssText = 'position:fixed;right:14px;bottom:78px;z-index:2500;display:flex;flex-direction:column;align-items:flex-end;gap:6px;';
+    tray.innerHTML = '<div id="vsrPopupTrayPanel" style="display:none;background:var(--card,#fff);color:var(--text,#222);border:1px solid rgba(128,128,128,.35);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);padding:8px;max-width:300px;"></div>' +
+      '<button type="button" id="vsrPopupTrayChip" style="border:none;border-radius:20px;background:var(--purple,#4A0E8F);color:#fff;font-weight:800;font-size:13px;padding:9px 14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;"></button>';
+    document.body.appendChild(tray);
+    tray.querySelector('#vsrPopupTrayChip').onclick = function () {
+      const p = document.getElementById('vsrPopupTrayPanel');
+      p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    };
+  }
+  tray.style.display = 'flex';
+  tray.querySelector('#vsrPopupTrayChip').textContent = '🔔 ' + list.length + ' pending';
+  const panel = tray.querySelector('#vsrPopupTrayPanel');
+  panel.innerHTML = list.map(function (m, i) {
+    return '<div data-i="' + i + '" style="padding:9px 10px;border-bottom:1px solid rgba(128,128,128,.2);font-size:13px;font-weight:600;cursor:pointer;">' +
+      m.label.replace(/</g, '&lt;') + ' <span style="float:right;opacity:.6;">Open ›</span></div>';
+  }).join('');
+  Array.prototype.forEach.call(panel.children, function (row) {
+    row.onclick = function () { _restoreMinPopup_(parseInt(row.getAttribute('data-i'), 10)); };
+  });
+}
+// v-add (BRO: "chip lo pop up chudakunda undipote, madhyana reminder cheyali"): while popups sit unseen
+// in the tray, every 10 minutes (only on Home, with nothing open) pulse the chip + show a short toast.
+setInterval(function () {
+  try {
+    const n = _liveMinPopups_().length;
+    if (!n || !_onHomePage_() || _anyModalOpen_()) return;
+    if (typeof toast === 'function') toast('🔔 ' + n + ' popup(s) pending — tap the 🔔 chip (bottom right) to view', 'info');
+    const chip = document.getElementById('vsrPopupTrayChip');
+    if (chip) { chip.style.animation = 'vsrChipPulse 1s ease-in-out 6'; setTimeout(function () { chip.style.animation = ''; }, 6500); }
+  } catch (e) {}
+}, 10 * 60 * 1000);
+(function () {
+  const st = document.createElement('style');
+  st.textContent = '@keyframes vsrChipPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}';
+  document.head.appendChild(st);
+})();
+// Several popups close by simply removing themselves / toggling a class and never called
+// _drainAutoPopupQueue_ — watch for ANY modal closing / page change instead.
+(function () {
+  function check(muts) {
+    if (muts && muts.length && muts.every(function (m) { return m.target.closest && m.target.closest('#vsrPopupTray'); })) return;
+    if (window.__autoPopupQueue_.length && !_anyModalOpen_()) _drainAutoPopupQueue_();
+    _renderTray_();
+  }
+  function start() {
+    if (!document.body) return;
+    new MutationObserver(check).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 
 // ══════════════════════════════════════
@@ -7638,6 +7777,7 @@ function showEmpPage(page, opts) {
   if (sec) { sec.classList.add('active'); pptPageTransitionIn_(sec); }
   updateBackFabs('emp', page);
   renderFooterNav('emp', page);
+  if (page === 'modulepicker') setTimeout(function () { _drainAutoPopupQueue_(); _renderTray_(); }, 100);
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
@@ -14239,6 +14379,7 @@ function showAdminPage(page, opts) {
   if (sec) { sec.classList.add('active'); pptPageTransitionIn_(sec); }
   updateBackFabs('admin', page);
   renderFooterNav('admin', page);
+  if (page === 'modulepicker') setTimeout(function () { _drainAutoPopupQueue_(); _renderTray_(); }, 100);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
   if(page==='loyalty') { initLoyaltyPage('admin'); loadLoyaltyHighlights('admin'); }
@@ -14872,7 +15013,7 @@ function checkMISPendingLeavePopup() {
   jsonpReliable({ page: 'checkPendingLeaveWithLeadsJSON' }).then(res => {
     if (!res || !res.ok || !res.items || res.items.length === 0) return; // normal case — nothing to ask
     misLeaveLeadQueue = res.items.slice();
-    showNextMISLeaveLeadPopup();
+    _queueAutoPopup_(() => showNextMISLeaveLeadPopup());
   }).catch(() => { /* silent — this is a background check, not a page load */ });
 }
 
@@ -14976,12 +15117,13 @@ function checkLoyaltyAlerts(who) {
       }
 
       document.getElementById('loyAlertBody').innerHTML = html;
-      document.getElementById('loyAlertModal').classList.add('open');
+      _queueAutoPopup_(() => document.getElementById('loyAlertModal').classList.add('open'));
     })
     .catch(() => { /* alert check failing silently is fine — never block login */ });
 }
 function closeLoyaltyAlertModal() {
   document.getElementById('loyAlertModal').classList.remove('open');
+  _drainAutoPopupQueue_();
 }
 
 // On-open companion to the daily 9 AM "Walk-in Track — No Entries" mail
@@ -15002,12 +15144,13 @@ function checkWalkinMissingAlert() {
       document.getElementById('walkinAlertBody').innerHTML =
         `Not a single Walk-in Track entry was found for <b>${res.date}</b> — across every employee. ` +
         `Please confirm with the floor team and remind whoever is on Greeter Duty to enter Walk-in Track daily.`;
-      document.getElementById('walkinAlertModal').classList.add('open');
+      _queueAutoPopup_(() => document.getElementById('walkinAlertModal').classList.add('open'));
     })
     .catch(() => { /* alert check failing silently is fine — never block login */ });
 }
 function closeWalkinAlertModal() {
   document.getElementById('walkinAlertModal').classList.remove('open');
+  _drainAutoPopupQueue_();
 }
 
 // v-add (BRO: "pending mail vaddu... portal open chesina ventane leave
@@ -15030,7 +15173,8 @@ function checkPendingLeavePopup_() {
       }
     }
     if (!pending.length) return;
-    showPendingLeavePopup_(pending.length);
+    const _n = pending.length;
+    _queueAutoPopup_(() => showPendingLeavePopup_(_n));
   }).catch(() => { /* silent — background check, never block login */ });
 }
 function showPendingLeavePopup_(count) {
@@ -15062,7 +15206,8 @@ function showPendingLeavePopup_(count) {
 function checkLoyaltyPendingValidationPopup_() {
   jsonpReliable({ page: 'loyaltyPendingValidationAPI', role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail }).then(res => {
     if (!res || !res.ok || !res.total) return;
-    showLoyaltyPendingValidationPopup_(res.total);
+    const _t = res.total;
+    _queueAutoPopup_(() => showLoyaltyPendingValidationPopup_(_t));
   }).catch(() => { /* silent — background check, never block login */ });
 }
 function showLoyaltyPendingValidationPopup_(count) {
@@ -15191,7 +15336,16 @@ function validateMobileNo(raw) {
 // up to 5 photo uploads as base64 are far too large for a GET request's
 // URL length limit.
 // ══════════════════════════════════════
+// v-add (BRO: Occupation dropdown on New Loyalty Card). ncOccupation stays the single value-holder every
+// other function already reads; the dropdown fills it, and "Other" reveals it for manual typing.
+function ncOccupationPick() {
+  const sel = document.getElementById('ncOccupationSel'), inp = document.getElementById('ncOccupation');
+  if (!sel || !inp) return;
+  if (sel.value === '__other__') { inp.value = ''; inp.style.display = ''; inp.focus(); }
+  else { inp.style.display = 'none'; inp.value = sel.value; }
+}
 function resetNewLoyaltyCardForm() {
+  const _os = document.getElementById('ncOccupationSel'); if (_os) { _os.value = ''; ncOccupationPick(); }
   ['ncCustName','ncOccupation','ncOrgName','ncPhone','ncAddress','ncAadhaarNo','ncPanNo','ncCardNo'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
