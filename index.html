@@ -576,7 +576,6 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
 .login-logo-mark .vsr-logo-img { width: 100%; max-width: 288px; height: auto; }
 .topbar-logo .mark .vsr-logo-img { width: 26px; height: 26px; }
 .bday-poster-logo .vsr-logo-img { width: 56px; height: 56px; }
-.vsr-sidebar-brand .vsr-logo-img { width: 18px; height: 18px; }
 
 .topbar-logo {
   font-family: 'Spectral', serif; font-size: 23px; font-weight: 900;
@@ -697,7 +696,6 @@ button.tb-chip:hover { background: rgba(255,255,255,0.28); }
    room for it (hiding the footer nav / modulepicker, shifting page-content
    right) is removed too, so desktop now renders exactly the same
    modulepicker + footer-nav navigation as mobile, just at a wider viewport. */
-.vsr-sidebar { display: none; }
 
 /* Bottom footer tab bar — mirrors the primary destinations that used to be
    top nav tabs, now duplicated at the bottom for quick thumb-reach access. */
@@ -2042,30 +2040,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </div>
   </div>
 
-  <nav class="vsr-sidebar" id="empSidebar">
-    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR Connect</div>
-    <div class="vsr-sidebar-item" data-page="profile" onclick="showEmpPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
-    <div class="vsr-sidebar-item" data-page="overview" id="empSidebarLeave" onclick="showEmpPage('overview')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
-    <div class="vsr-sidebar-item" data-page="leads" id="empSidebarLeads" onclick="showEmpPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
-    <div class="vsr-sidebar-item" data-page="loyalty" id="empSidebarLoyalty" onclick="showEmpPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
-    <div class="vsr-sidebar-item" data-page="golden-aura" id="empSidebarGoldenAura" onclick="showEmpPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
-    <!-- v-fix (BRO: "DSR sectino lopala undalsina Outlet Issue and Return Damage form bayata undi" — Outlet Issue and Return/Damage/Repair are already reachable as tiles inside the DSR section (empQAOutletIssue/empQARdr below); these separate top-level sidebar entries were redundant, so removed. -->
-    <div class="vsr-sidebar-item" data-page="dsr" onclick="showEmpPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
-    <div class="vsr-sidebar-item" data-page="kpi" id="empSidebarKpi" onclick="showEmpPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
-    <div class="vsr-sidebar-item" data-page="stock" onclick="showEmpPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
-    <div class="vsr-sidebar-item" data-page="dailyshop" id="empSidebarDailyShop" onclick="showEmpPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
-    <div class="vsr-sidebar-item" data-page="stockentry" id="empSidebarStockEntry" onclick="showEmpPage('stockentry')"><span class="vsr-sidebar-icon">📦</span>Stock Entry</div>
-    <div class="vsr-sidebar-item" data-page="mystocktransfer" id="empSidebarStockTransfer" onclick="showEmpPage('mystocktransfer')"><span class="vsr-sidebar-icon">🔄</span>Stock Transfer</div>
-    <div class="vsr-sidebar-item" data-page="walkins" id="empSidebarWalkins" onclick="showEmpPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
-    <div class="vsr-sidebar-divider"></div>
-    <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('emp')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="empMoreCaret">▾</span></div>
-    <div class="vsr-sidebar-submenu" id="empSidebarMoreSubmenu" style="display:none;">
-      <div class="vsr-sidebar-subitem" onclick="openChangePassword('emp')">🔑 Change Password</div>
-      <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
-            <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="empSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
-      <div class="vsr-sidebar-subitem" onclick="openNotifHistoryModal()">🔔 Notifications</div>
-    </div>
-  </nav>
 
   <div class="page-content">
 
@@ -2992,48 +2966,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </div>
   </div>
 
-  <nav class="vsr-sidebar" id="adminSidebar">
-    <div class="vsr-sidebar-brand"><span class="vsr-logo-mark"></span> VSR Connect</div>
-    <div class="vsr-sidebar-item" data-page="profile" onclick="showAdminPage('profile')"><span class="vsr-sidebar-icon">🪪</span>Profile</div>
-    <div class="vsr-sidebar-item" data-page="dashboard" onclick="showAdminPage('dashboard')"><span class="vsr-sidebar-icon">🏖️</span>Leave</div>
-    <div class="vsr-sidebar-item" data-page="leads" id="adminSidebarLeads" onclick="showAdminPage('leads')"><span class="vsr-sidebar-icon">👥</span>Leads</div>
-    <div class="vsr-sidebar-item" data-page="loyalty" id="adminSidebarLoyalty" onclick="showAdminPage('loyalty')"><span class="vsr-sidebar-icon">💳</span>Loyalty Card</div>
-    <div class="vsr-sidebar-item" data-page="golden-aura" id="adminSidebarGoldenAura" onclick="showAdminPage('golden-aura')"><span class="vsr-sidebar-icon">🥇</span>Golden Aura</div>
-    <!-- v-fix (BRO: "DSR sectino lopala undalsina Outlet Issue and Return Damage form bayata undi" — Outlet Issue and Return/Damage/Repair are already reachable as tiles inside the DSR section (adminQAOutletIssue/adminQARdr below); these separate top-level sidebar entries were redundant, so removed. -->
-    <div class="vsr-sidebar-item" data-page="dsr" id="adminSidebarDsr" onclick="showAdminPage('dsr')"><span class="vsr-sidebar-icon">🧾</span>DSR</div>
-    <div class="vsr-sidebar-item" data-page="kpi" id="adminSidebarKpi" onclick="showAdminPage('kpi')"><span class="vsr-sidebar-icon">📈</span>KPI</div>
-    <div class="vsr-sidebar-item" data-page="stock" id="adminSidebarStock" onclick="showAdminPage('stock')"><span class="vsr-sidebar-icon">📝</span>Checklist</div>
-    <div class="vsr-sidebar-item" data-page="dailyshop" id="adminSidebarDailyShop" onclick="showAdminPage('dailyshop')"><span class="vsr-sidebar-icon">🕐</span>Daily Shop</div>
-    <div class="vsr-sidebar-item" data-page="walkins" id="adminSidebarWalkins" onclick="showAdminPage('walkins')"><span class="vsr-sidebar-icon">🚶</span>Walk-in Track</div>
-    <div class="vsr-sidebar-item" data-page="stocklevel" id="adminSidebarStockLevel" onclick="showAdminPage('stocklevel')"><span class="vsr-sidebar-icon">📦</span>Stock Level</div>
-    <!-- v-fix (BRO: "side bar lo 360 ekada undi" — Customer 360° was only
-         reachable via the "More" flyout; now a direct top-level item. -->
-    <div class="vsr-sidebar-item" data-page="customer-360" id="adminSidebarCustomer360" onclick="showAdminPage('customer-360')"><span class="vsr-sidebar-icon">🔍</span>Customer 360°</div>
-    <div class="vsr-sidebar-divider"></div>
-    <div class="vsr-sidebar-item" data-page="more" onclick="toggleSidebarMore('admin')"><span class="vsr-sidebar-icon">⋯</span>More <span class="vsr-sidebar-caret" id="adminMoreCaret">▾</span></div>
-    <div class="vsr-sidebar-submenu" id="adminSidebarMoreSubmenu" style="display:none;">
-      <!-- v-fix (BRO: "sidebar lo chala option lu levu" — the sidebar's More
-           flyout only had 6 of the 8 tiles the full-page "More" hub
-           (#admin-more) has, and 3 pages that were only ever reachable by
-           drilling into another module's own sub-hub (Leave → Monthly
-           Absent/Notices, DSR → Extra DSR Check) had NO direct path from
-           here at all. Every admin page now has a one-click route from
-           this flyout too. -->
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('profile')">🪪 Profile</div>
-      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_monthlyAbsent" onclick="showAdminPage('monthly-absent')">📋 Monthly Absent Report</div>
-      <div class="vsr-sidebar-subitem" onclick="showAdminPage('notices')">📢 Notices</div>
-      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_dsrExtraCheck" onclick="showAdminPage('extra-dsr')">⚠️ Extra DSR Check</div>
-      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_dsrDupTagNo" onclick="showAdminPage('dup-tagno')">🔁 Duplicate Tag No</div>
-      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_settings" onclick="showAdminPage('settings')">⚙️ Settings</div>
-      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_backendSheets" onclick="showAdminPage('backend-sheets')">🗄️ Backend Sheets</div>
-      <div class="vsr-sidebar-subitem" id="adminMoreFlyout_newEmployee" onclick="showAdminPage('new-employee')">➕ New Employee</div>
-      <div class="vsr-sidebar-subitem" onclick="openChangePassword('admin')">🔑 Change Password</div>
-      <div class="vsr-sidebar-subitem" onclick="openThemePickerModal()">🎨 Theme</div>
-            <div class="vsr-sidebar-subitem" id="adminMoreFlyout_loginActivity" onclick="showAdminPage('login-activity')">🔐 Login Activity</div>
-      <div class="vsr-sidebar-subitem" onclick="openSyncOfflineModal()">🔄 Sync Offline Data <span id="adminSidebarSyncLabel" style="font-size:10px;opacity:0.7;"></span></div>
-      <div class="vsr-sidebar-subitem" onclick="openNotifHistoryModal()">🔔 Notifications</div>
-    </div>
-  </nav>
 
   <div class="page-content">
 
@@ -7653,33 +7585,6 @@ function goHomeSmart(who) {
   (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker');
 }
 
-// Highlights the sidebar item matching the current page (desktop-only
-// sidebar — harmless no-op on mobile where it's hidden). Falls back to
-// a prefix match so sub-pages like 'kpi-target' or 'dsr-status' still
-// highlight their parent 'kpi'/'dsr' sidebar item rather than leaving
-// nothing highlighted.
-// Expands/collapses the More submenu directly inside the sidebar
-// (instead of navigating to a separate More page) — matches explicit
-// request: clicking More should extend the sidebar downward, not leave it.
-function toggleSidebarMore(role) {
-  const submenu = document.getElementById(role + 'SidebarMoreSubmenu');
-  const caret = document.getElementById(role + 'MoreCaret');
-  if (!submenu) return;
-  const isOpen = submenu.style.display !== 'none';
-  submenu.style.display = isOpen ? 'none' : 'block';
-  if (caret) caret.classList.toggle('open', !isOpen);
-}
-// Generic version of the same expand/collapse pattern above, for any other grouped sidebar section
-// (id="<role>Sidebar<Group>Submenu" / id="<role><Group>Caret").
-function toggleSidebarGroup(role, group) {
-  const submenu = document.getElementById(role + 'Sidebar' + group + 'Submenu');
-  const caret = document.getElementById(role + group + 'Caret');
-  if (!submenu) return;
-  const isOpen = submenu.style.display !== 'none';
-  submenu.style.display = isOpen ? 'none' : 'block';
-  if (caret) caret.classList.toggle('open', !isOpen);
-}
-
 // v-fix (BRO: "ivi rendu pettu. adi okasari, idi okasari animation avali" —
 // BOTH Pop In (zoom-bounce, like the welcome popup) and Slide In (from the
 // side) are used now, ALTERNATING every page open — one, then the other,
@@ -7696,24 +7601,6 @@ function pptPageTransitionIn_(sec) {
   sec.classList.add(cls);
   const cleanup = () => { sec.classList.remove(cls); sec.removeEventListener('animationend', cleanup); };
   sec.addEventListener('animationend', cleanup);
-}
-
-function syncSidebarActive(role, page) {
-  const sidebar = document.getElementById(role + 'Sidebar');
-  if (!sidebar) return;
-  const items = sidebar.querySelectorAll('.vsr-sidebar-item');
-  let matched = false;
-  items.forEach(it => {
-    const dp = it.dataset.page;
-    if (dp === page) { it.classList.add('active'); matched = true; }
-    else it.classList.remove('active');
-  });
-  if (!matched) {
-    items.forEach(it => {
-      const dp = it.dataset.page;
-      if (dp && page.indexOf(dp) === 0) it.classList.add('active');
-    });
-  }
 }
 
 function showEmpPage(page, opts) {
@@ -7751,7 +7638,6 @@ function showEmpPage(page, opts) {
   if (sec) { sec.classList.add('active'); pptPageTransitionIn_(sec); }
   updateBackFabs('emp', page);
   renderFooterNav('emp', page);
-  syncSidebarActive('emp', page);
   window.scrollTo(0, 0);
   if(page==='calendar') renderCalendar();
   if(page==='loyalty') { initLoyaltyPage('emp'); loadLoyaltyHighlights('emp'); }
@@ -9145,7 +9031,7 @@ function updateConnStatus() {
   //   pending > 0 → gold "📤 Sync (N)" — tap to upload now
   //   pending = 0 → green "✅ Synced"  — confirms nothing is waiting
   const pendingCount = getOfflineQueue().length + getQueueGeneric(DSR_OFFLINE_QUEUE_KEY).length + getQueueGeneric(DSR_PHOTO_RETRY_QUEUE_KEY).length + getQueueGeneric(LOYALTY_OFFLINE_QUEUE_KEY).length + getQueueGeneric(GOLDEN_AURA_OFFLINE_QUEUE_KEY).length + getQueueGeneric(LEADS_OFFLINE_QUEUE_KEY).length + getQueueGeneric(STOCK_OFFLINE_QUEUE_KEY).length;
-  ['empMoreSyncLabel', 'adminMoreSyncLabel', 'empSidebarSyncLabel', 'adminSidebarSyncLabel'].forEach(id => {
+  ['empMoreSyncLabel', 'adminMoreSyncLabel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = pendingCount > 0 ? pendingCount + ' item(s) pending' : 'All synced';
   });
@@ -14067,7 +13953,7 @@ const SM_FEATURE_ELEMENTS = {
   balance:   ['adminQABalance'],
   empwise:   ['adminQAEmpwise'],
   events:    ['adminQAEvents'],
-  loyalty: ['adminQALoyalty', 'adminSidebarLoyalty'],
+  loyalty: ['adminQALoyalty'],
   direct:    ['adminQADirect'],
   notices:   ['adminQANotices'],
   blocked:   ['adminQABlocked'],
@@ -14096,31 +13982,31 @@ const SM_FEATURE_ELEMENTS = {
   slAlerts: ['adminQASlAlerts'], slCounter: ['adminQASlCounter'], slSales: ['adminQASlSales'],
   slTag: ['adminQASlTag'], slPhotos: ['adminQASlPhotos'], slManage: ['adminQASlManage'],
   slToday: ['adminQASlToday'], slFailed: ['adminQASlFailed'], slPrint: ['adminQASlPrint'],
-  kpi: ['adminQAKpi', 'adminSidebarKpi'],
+  kpi: ['adminQAKpi'],
   kpiTarget: ['adminQAKpiTarget'], kpiTillDate: ['adminQAKpiTillDate'],
   kpiLastMonth: ['adminQAKpiLastMonth'], kpiCompare: ['adminQAKpiCompare'], kpiRules: ['adminQAKpiRules'],
   kpiTrend: ['adminQAKpiTrend'],
-  dsr: ['adminQADsr', 'adminSidebarDsr'],
+  dsr: ['adminQADsr'],
   dsrNewEntry: ['adminQADsrNewEntry'], dsrToday: ['adminQADsrToday'], dsrStatus: ['adminQADsrStatus'], dsrMissing: ['adminQADsrMissing'],
   dsrTillDate: ['adminQADsrTillDate'], dsrDateRange: ['adminQADsrDateRange'],
   dsrAdvOrder: ['adminQADsrAdvOrder'],
   // v-add (BRO's full audit — bonus fix): gates admin's own "Search" (Tag
   // No / DSR ID) button too, which had no permission key at all until now.
   dsrTagSearch: ['adminQADsrTagSearch'],
-  goldenAura: ['adminQAGoldenAura', 'adminSidebarGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
-  stock: ['adminQAStockModule', 'adminSidebarStock'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
-  dailyShop: ['adminQADailyShopModule', 'adminSidebarDailyShop'], dailyShopChecklist: ['adminQADailyShopModule'],
+  goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
+  stock: ['adminQAStockModule'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
+  dailyShop: ['adminQADailyShopModule'], dailyShopChecklist: ['adminQADailyShopModule'],
   backendSheets: ['adminQABackendSheets'],
-  walkins: ['adminSidebarWalkins', 'adminQAWalkinsGrid'],
+  walkins: ['adminQAWalkinsGrid'],
   // v-add (BRO: "Access Setting lo lenivi update chei" — audit found these
   // had real buttons already but were never in this map at all, so a
   // restricted admin ALWAYS saw them regardless of what MIS configured):
   pending: ['adminQAPending'],
-  leads: ['adminQALeads', 'adminSidebarLeads'],
+  leads: ['adminQALeads'],
   outletIssue: ['adminQAOutletIssue'],
   rdr: ['adminQARdr'],
-  stockLevel: ['adminQAStockLevel', 'adminSidebarStockLevel'],
-  stockTransfer: ['adminQAStockTransfer', 'adminSidebarStockTransfer'],
+  stockLevel: ['adminQAStockLevel'],
+  stockTransfer: ['adminQAStockTransfer'],
   // v-add (same audit, round 2 — the 4 flyout-only items that had NO
   // permission key at all, not even on their own main tile, so they were
   // visible to every admin unconditionally):
@@ -14353,7 +14239,6 @@ function showAdminPage(page, opts) {
   if (sec) { sec.classList.add('active'); pptPageTransitionIn_(sec); }
   updateBackFabs('admin', page);
   renderFooterNav('admin', page);
-  syncSidebarActive('admin', page);
   window.scrollTo(0, 0);
   if(page==='acalendar') renderAdminCalendar();
   if(page==='loyalty') { initLoyaltyPage('admin'); loadLoyaltyHighlights('admin'); }
@@ -15207,16 +15092,10 @@ function checkEmpLoyaltyAccess() {
       if (!res || !res.ok) return;
       const leaveBtn = document.getElementById('empQALeaveModule');
       if (leaveBtn) leaveBtn.style.display = (res.leaveAccess === false) ? 'none' : '';
-      const leaveSb = document.getElementById('empSidebarLeave');
-      if (leaveSb) leaveSb.style.display = (res.leaveAccess === false) ? 'none' : '';
       const loyBtn = document.getElementById('empQALoyaltyModule');
       if (loyBtn) loyBtn.style.display = (res.hasAccess === false) ? 'none' : '';
-      const loySb = document.getElementById('empSidebarLoyalty');
-      if (loySb) loySb.style.display = (res.hasAccess === false) ? 'none' : '';
       const kpiBtn = document.getElementById('empQAKpiModule');
       if (kpiBtn) kpiBtn.style.display = (res.kpiAccess === false) ? 'none' : '';
-      const kpiSb = document.getElementById('empSidebarKpi');
-      if (kpiSb) kpiSb.style.display = (res.kpiAccess === false) ? 'none' : '';
       // v-decision: DSR / Leads / Stock buttons are intentionally NEVER
       // hidden here, even though dsrAccess/leadsAccess/stockAccess are
       // still read above. Their real submission/data goes straight to
@@ -15234,8 +15113,6 @@ function checkEmpLoyaltyAccess() {
       // sidebar's matching items too, for the same reason.)
       const gaBtn = document.getElementById('empQAGoldenAuraModule');
       if (gaBtn) gaBtn.style.display = (res.goldenAuraAccess === false) ? 'none' : '';
-      const gaSb = document.getElementById('empSidebarGoldenAura');
-      if (gaSb) gaSb.style.display = (res.goldenAuraAccess === false) ? 'none' : '';
 
       // Granular sub-option restrictions now ride along in this same
       // response — applyEmpGranularRestrictions no longer makes its own
@@ -18325,7 +18202,7 @@ const EMP_FEATURE_ELEMENTS = {
   // EMP_EXCLUDED_PERM_KEYS.
   goldenAura: ['empQAGoldenAuraModule'],
   gaNew: ['empQAGaNew'], gaList: ['empQAGaList'],
-  leads: ['empQALeadsModule', 'empSidebarLeads'],
+  leads: ['empQALeadsModule'],
   // v-fix (BRO's full audit): 'leadsReport' IS now mapped here — on the
   // employee side this key's element is "My Report" (own % & status
   // break-up, empQALeadsMyReport) — a different feature from the admin's
@@ -18333,7 +18210,7 @@ const EMP_FEATURE_ELEMENTS = {
   // same shared-key-different-sheet pattern as loyStats above.
   leadsReport: ['empQALeadsMyReport'],
   stock: ['empQAStockChecklist'],
-  dailyShop: ['empQADailyShopModule', 'empSidebarDailyShop'], dailyShopChecklist: ['empQADailyShopModule'],
+  dailyShop: ['empQADailyShopModule'], dailyShopChecklist: ['empQADailyShopModule'],
   // stockReport not mapped — already excluded for employees (see
   // EMP_EXCLUDED_PERM_KEYS) and empQAStockReport doesn't exist on the
   // employee side anyway.
@@ -18345,12 +18222,12 @@ const EMP_FEATURE_ELEMENTS = {
   // employee buttons already but no permission ever gated them):
   outletIssue: ['empQAOutletIssue'],
   rdr: ['empQARdr'],
-  stockEntry: ['empQAStockEntryModule', 'empSidebarStockEntry'],
+  stockEntry: ['empQAStockEntryModule'],
   // v-add (BRO: "emp ki kotha Stock Transfer screen build chei" — now that there's a
   // real employee-side screen for it, this permission key (already existed in
   // SM_PERM_FEATURES, was excluded for employees — see EMP_EXCLUDED_PERM_KEYS in
   // PortalBackend.gs) actually gates something again.
-  stockTransfer: ['empQAStockTransferModule', 'empSidebarStockTransfer'],
+  stockTransfer: ['empQAStockTransferModule'],
   // v-fix (BRO's access audit, emp #40 bug — confirmed gap: the DASHBOARD
   // parent button that opens the combined Stock Level page
   // (empQAStockLevelModule, "Entry form & transfer") had NO permission
@@ -18361,7 +18238,7 @@ const EMP_FEATURE_ELEMENTS = {
   // 'stockLevelModule' entry (OR of stockEntry/stockTransfer) below —
   // shows if EITHER is granted, hides only if BOTH are off.
   stockLevelModule: ['empQAStockLevelModule'],
-  walkinsEntry: ['empQAWalkinsModule', 'empSidebarWalkins'],
+  walkinsEntry: ['empQAWalkinsModule'],
   // v-fix (BRO: "Customer 360 vitiki grp ledu, access lo add chei" —
   // reverses the earlier "360 no toggle" decision. Customer 360° is now
   // gated like any other standalone permission.
@@ -30034,7 +29911,7 @@ initStoreSettings_();
 </script>
 <script>
 /* v-add (BRO: keyboard shortcuts for the whole portal, all logins).
-   Ctrl+S save | Ctrl+Enter add another item | Esc close popup | Alt+1..9 sidebar pages | / search | ? help.
+   Ctrl+S save | Ctrl+Enter add another item | Esc close popup | Alt+1..9 page buttons | Alt+H home | / search | ? help.
    Purely additive: clicks existing buttons, never touches business logic. */
 (function () {
   function vis(el) { return !!(el && el.offsetParent !== null && !el.disabled); }
@@ -30049,7 +29926,7 @@ initStoreSettings_();
     if (helpEl()) { closeHelp(); return; }
     const rows = [
       ['Ctrl + S', 'Save / Submit this page'], ['Ctrl + Enter', 'Add another item'], ['Esc', 'Close popup'],
-      ['Alt + 1 … 9', 'Open sidebar page 1 … 9'], ['/', 'Go to Search box'], ['?', 'Show / hide this list']
+      ['Alt + 1 … 9', 'Open button 1 … 9 on this screen'], ['Alt + H', 'Go to Home'], ['/', 'Go to Search box'], ['?', 'Show / hide this list']
     ];
     const d = document.createElement('div'); d.id = 'vsrKbHelp';
     d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -30109,10 +29986,16 @@ initStoreSettings_();
       if (b) { e.preventDefault(); b.click(); }
       return;
     }
-    // Alt + 1..9 : sidebar pages
-    if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.code ? e.code.replace('Digit', '') : k)) {
-      const n = parseInt(e.code ? e.code.replace('Digit', '') : k, 10);
-      const items = Array.prototype.filter.call(document.querySelectorAll('.vsr-sidebar-item'), function (x) { return x.offsetParent !== null; });
+    // Alt + H : Home
+    if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyH') {
+      const h = Array.prototype.find.call(document.querySelectorAll('#empSectionsFab, #adminSectionsFab'), function (x) { return x.offsetParent !== null; });
+      if (h) { e.preventDefault(); h.click(); }
+      return;
+    }
+    // Alt + 1..9 : the Nth visible page button (Home cards / section tiles) on the current screen
+    if (e.altKey && !e.ctrlKey && !e.metaKey && /^Digit[1-9]$/.test(e.code || '')) {
+      const n = parseInt(e.code.replace('Digit', ''), 10);
+      const items = Array.prototype.filter.call(document.querySelectorAll('.quick-action-btn'), function (x) { return x.offsetParent !== null; });
       if (items[n - 1]) { e.preventDefault(); items[n - 1].click(); }
       return;
     }
