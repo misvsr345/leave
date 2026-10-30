@@ -29914,7 +29914,8 @@ initStoreSettings_();
    Ctrl+S save | Ctrl+Enter add another item | Esc close popup | Alt+1..9 page buttons | Alt+H home | / search | ? help.
    Purely additive: clicks existing buttons, never touches business logic. */
 (function () {
-  function vis(el) { return !!(el && el.offsetParent !== null && !el.disabled); }
+  function shown(el) { return !!(el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'); } // works for position:fixed too
+  function vis(el) { return !!(el && shown(el) && !el.disabled); }
   function inField(t) {
     if (!t) return false; const tag = (t.tagName || '').toUpperCase();
     return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable;
@@ -29926,7 +29927,7 @@ initStoreSettings_();
     if (helpEl()) { closeHelp(); return; }
     const rows = [
       ['Ctrl + S', 'Save / Submit this page'], ['Ctrl + Enter', 'Add another item'], ['Esc', 'Close popup'],
-      ['Alt + 1 … 9', 'Open button 1 … 9 on this screen'], ['Alt + H', 'Go to Home'], ['/', 'Go to Search box'], ['?', 'Show / hide this list']
+      ['Alt + 1 … 9', 'Open button 1 … 9 on this screen'], ['Alt + H', 'Go to Home'], ['Alt + Backspace', '← Back button'], ['/', 'Go to Search box'], ['?', 'Show / hide this list']
     ];
     const d = document.createElement('div'); d.id = 'vsrKbHelp';
     d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -29986,16 +29987,22 @@ initStoreSettings_();
       if (b) { e.preventDefault(); b.click(); }
       return;
     }
+    // Alt + Backspace : the floating "← Back" button (only when it is showing)
+    if (e.altKey && !e.ctrlKey && !e.metaKey && k === 'Backspace') {
+      const bk = Array.prototype.find.call(document.querySelectorAll('#empBackFab, #adminBackFab'), shown);
+      if (bk) { e.preventDefault(); bk.click(); }
+      return;
+    }
     // Alt + H : Home
     if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyH') {
-      const h = Array.prototype.find.call(document.querySelectorAll('#empSectionsFab, #adminSectionsFab'), function (x) { return x.offsetParent !== null; });
+      const h = Array.prototype.find.call(document.querySelectorAll('#empSectionsFab, #adminSectionsFab'), shown);
       if (h) { e.preventDefault(); h.click(); }
       return;
     }
     // Alt + 1..9 : the Nth visible page button (Home cards / section tiles) on the current screen
     if (e.altKey && !e.ctrlKey && !e.metaKey && /^Digit[1-9]$/.test(e.code || '')) {
       const n = parseInt(e.code.replace('Digit', ''), 10);
-      const items = Array.prototype.filter.call(document.querySelectorAll('.quick-action-btn'), function (x) { return x.offsetParent !== null; });
+      const items = Array.prototype.filter.call(document.querySelectorAll('.quick-action-btn'), shown);
       if (items[n - 1]) { e.preventDefault(); items[n - 1].click(); }
       return;
     }
