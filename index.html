@@ -17609,7 +17609,7 @@ function renderKpiTrendChart(who) {
 function checkPerformerAnnouncePopup_() {
   const isAdm = state.__loginKind === 'admin';
   if ((!isAdm && state.__loginKind !== 'emp') || !navigator.onLine || window.__perfPopHandled_) return;
-  jsonpReliable(kpiEmpParams(isAdm ? 'admin' : 'emp', { page: 'kpiEmployeeOfMonthJSON' })).then(res => {
+  jsonpReliable(kpiEmpParams(isAdm ? 'admin' : 'emp', { page: 'kpiEmployeeOfMonthJSON', empId: isAdm ? '' : (state.empId || '') })).then(res => {
     if (!res || !res.ok || !res.hasWinner || !res.popupToday || window.__perfPopHandled_) return;
     const key = 'vsrPerfPop_' + res.monthKey + '_' + String(isAdm ? (state.adminEmail || 'admin') : ('emp' + (state.empId || state.empName || ''))).toLowerCase();
     let n = 0; try { n = parseInt(localStorage.getItem(key) || '0', 10) || 0; } catch (e) {}
@@ -17627,12 +17627,18 @@ function showPerformerPopup_(res, infoOnly) {
   div.id = 'performerOfMonthModal';
   div.className = 'modal-overlay show';
   const mo = res.monthLabel || '';
+  // winner / 2nd place get their own personal message; every other employee just gets the information view
+  let titleTxt, subTxt;
+  if (infoOnly && res.iAmWinner)        { titleTxt = '🎉 Congratulations ' + res.name + '!'; subTxt = 'You are the Performer of the Month — ' + mo; }
+  else if (infoOnly && res.iAmRunnerUp) { titleTxt = '🥈 Well done ' + res.runnerUp + '!'; subTxt = 'You secured 2nd place — ' + mo; }
+  else if (infoOnly)                    { titleTxt = '🏆 Performer of the Month'; subTxt = mo + ' — Result'; }
+  else                                  { titleTxt = '🎉 Congratulations!'; subTxt = mo + ' — Performer of the Month'; }
   const cons = res.consistent
     ? `<div style="margin:10px 0 2px;padding:9px 12px;border-radius:10px;background:linear-gradient(135deg,#C9A84C,#E8C766);color:#1A0A3D;font-weight:800;font-size:13px;">⭐ CONSISTENT PERFORMANCE — ${res.streak || 2} months in a row</div>` : '';
   div.innerHTML = `<div class="modal-box" style="max-width:400px;text-align:center;">
     <div style="font-size:44px;line-height:1.1;">🏆</div>
-    <div class="modal-title" style="margin-top:4px;">${infoOnly ? '🏆 Performer of the Month' : '🎉 Congratulations!'}</div>
-    <div style="font-size:13px;color:var(--text3);margin:2px 0 10px;">${infoOnly ? mo + ' — Result' : mo + ' — Performer of the Month'}</div>
+    <div class="modal-title" style="margin-top:4px;">${titleTxt}</div>
+    <div style="font-size:13px;color:var(--text3);margin:2px 0 10px;">${subTxt}</div>
     <div style="border:1.5px solid var(--gold);border-radius:12px;padding:12px;background:var(--purple-bg);text-align:left;">
       <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);">🥇 PERFORMER OF THE MONTH (WINNER)</div>
       <div style="font-size:18px;font-weight:800;color:var(--text);margin-top:2px;">${res.name}</div>
