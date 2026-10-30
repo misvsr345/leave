@@ -7897,6 +7897,7 @@ async function loadEmpData() {
     try { renderTrend(); } catch(e5) { console.error('renderTrend failed:', e5); }
     try { checkCrmEventPopup_(); } catch(e6) { console.error('crm event popup failed:', e6); }
     try { checkMyActiveAlerts_(); } catch(e7) { console.error('emp alert check failed:', e7); } // v-add — see checkMyActiveAlerts_ below
+    try { checkPerformerAnnouncePopup_(); } catch(e8) { console.error('performer popup failed:', e8); }
     try { checkMyLoyaltyEditGrants_(); } catch(e8) { console.error('loyalty edit grant check failed:', e8); } // v-add — see checkMyLoyaltyEditGrants_ below
     try { checkMyPendingAoAlerts_(); } catch(e9) { console.error('pending advance/order alert check failed:', e9); } // v-add — see checkMyPendingAoAlerts_ below
   } catch(e) {
@@ -9280,6 +9281,7 @@ setInterval(pollForPortalChanges_, 10000);
 // happens right after login inside loadEmpData(), this just keeps bringing
 // the popup back for as long as Admin leaves the alert turned on.
 setInterval(() => { try { checkMyActiveAlerts_(); } catch (e) {} }, 180000);
+setInterval(() => { try { checkPerformerAnnouncePopup_(); } catch (e) {} }, 600000);   // employees: re-check every 10 min (popup shows only after 2 PM on the 1st)
 setInterval(() => { try { checkMyLoyaltyEditGrants_(); } catch (e) {} }, 180000);
 // v-add: re-checked every 3hr (not 3min like the alerts above — this one is a slow,
 // not-urgent reminder, not a push-style notice) — checkMyPendingAoAlerts_ itself
@@ -9294,7 +9296,7 @@ setInterval(() => { try { if (state.adminRole) checkPendingPermSetup_(); } catch
 // stays open, same as the first check already happening right after login
 // inside loadAdminData(), so a long-open admin tab still gets the reminder
 // on schedule without needing a page reload.
-setInterval(() => { try { checkAdminAlertReminder_(); } catch (e) {} }, 1800000);
+setInterval(() => { try { checkAdminAlertReminder_(); } catch (e) {} try { checkPerformerAnnouncePopup_(); } catch (e) {} }, 1800000);
 
 // ══════════════════════════════════════════════════════════════════
 // v-add (BRO: "admin oka new feture kavali, edaina issue ni aa
@@ -14487,6 +14489,7 @@ async function loadAdminData() {
     try { renderAdminLeaves(); } catch(e4) { console.error('renderAdminLeaves failed:', e4); }
     try { renderAdminCalendar(); } catch(e5) { console.error('renderAdminCalendar failed:', e5); }
     try { checkAdminAlertReminder_(); } catch(e6) { console.error('admin alert reminder failed:', e6); } // v-add — see checkAdminAlertReminder_ below
+    try { checkPerformerAnnouncePopup_(); } catch(e7) { console.error('performer popup failed:', e7); }
     try { checkPendingPermSetup_(); } catch(e7) { console.error('pending perm setup check failed:', e7); } // v-add — see checkPendingPermSetup_ below
     // v-fix (BRO: "review and dismiss ani popup vastundi. ala naku vaddu. in any stage" —
     // removed entirely. Approved leave already auto-voids remaining leads instantly via
@@ -17599,6 +17602,49 @@ function renderKpiTrendChart(who) {
   box.innerHTML = note + (data ? `<div style="text-align:center;">${kpiTrendSvg(data.points)}</div>` : '<div class="empty-state"><p>No data for this employee.</p></div>');
 }
 
+// ── Performer of the Month — ADMIN popup (BRO: "admin ki pop up ravlai, all admins ki ... 2PM tarvata evaru
+// open chestaro modati login ki ravlai, only aa roju matrame, 2 times ravali, consistent unte consistent ani") ──
+// Server (kpiEmployeeOfMonthJSON) only returns popupToday:true from the announce time (2 PM) on the announce day.
+// Admins AND employees see it (employees: information-style, no "Congratulations") at most 2 times that day (counted per device, on actual display); once per page load.
+function checkPerformerAnnouncePopup_() {
+  const isAdm = state.__loginKind === 'admin';
+  if ((!isAdm && state.__loginKind !== 'emp') || !navigator.onLine || window.__perfPopHandled_) return;
+  jsonpReliable(kpiEmpParams(isAdm ? 'admin' : 'emp', { page: 'kpiEmployeeOfMonthJSON' })).then(res => {
+    if (!res || !res.ok || !res.hasWinner || !res.popupToday || window.__perfPopHandled_) return;
+    const key = 'vsrPerfPop_' + res.monthKey + '_' + String(isAdm ? (state.adminEmail || 'admin') : ('emp' + (state.empId || state.empName || ''))).toLowerCase();
+    let n = 0; try { n = parseInt(localStorage.getItem(key) || '0', 10) || 0; } catch (e) {}
+    if (n >= 2) return;
+    window.__perfPopHandled_ = true;   // once per page load (2nd showing = next open/login)
+    _queueAutoPopup_(() => {
+      try { localStorage.setItem(key, String(n + 1)); } catch (e) {}
+      showPerformerPopup_(res, !isAdm);
+    });
+  }).catch(() => {});
+}
+function showPerformerPopup_(res, infoOnly) {
+  const old = document.getElementById('performerOfMonthModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'performerOfMonthModal';
+  div.className = 'modal-overlay show';
+  const mo = res.monthLabel || '';
+  const cons = res.consistent
+    ? `<div style="margin:10px 0 2px;padding:9px 12px;border-radius:10px;background:linear-gradient(135deg,#C9A84C,#E8C766);color:#1A0A3D;font-weight:800;font-size:13px;">⭐ CONSISTENT PERFORMANCE — ${res.streak || 2} months in a row</div>` : '';
+  div.innerHTML = `<div class="modal-box" style="max-width:400px;text-align:center;">
+    <div style="font-size:44px;line-height:1.1;">🏆</div>
+    <div class="modal-title" style="margin-top:4px;">${infoOnly ? '🏆 Performer of the Month' : '🎉 Congratulations!'}</div>
+    <div style="font-size:13px;color:var(--text3);margin:2px 0 10px;">${infoOnly ? mo + ' — Result' : mo + ' — Performer of the Month'}</div>
+    <div style="border:1.5px solid var(--gold);border-radius:12px;padding:12px;background:var(--purple-bg);text-align:left;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);">🥇 PERFORMER OF THE MONTH (WINNER)</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-top:2px;">${res.name}</div>
+      <div style="font-size:12px;color:var(--text3);">Score: ${res.score}${res.grade ? ' · Grade ' + res.grade : ''}</div>
+      ${res.runnerUp ? `<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);margin-top:10px;">🥈 2ND PLACE</div><div style="font-size:15px;font-weight:800;color:var(--text);margin-top:2px;">${res.runnerUp}</div>` : ''}
+    </div>
+    ${cons}
+    <button class="btn-primary" style="width:100%;margin-top:14px;" onclick="document.getElementById('performerOfMonthModal').remove();_drainAutoPopupQueue_();">OK</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+
 function loadEomBanner(who) {
   const box = document.getElementById((who === 'admin' ? 'adminEomBanner-box' : 'empEomBanner-box'));
   if (!box) return;
@@ -17619,7 +17665,11 @@ function loadEomBanner(who) {
       const mm = cand.match(/(January|February|March|April|May|June|July|August|September|October|November|December)[a-z]*[\s,\-]*(\d{4})?/i);
       if (mm) eomMonth = (mm[1].charAt(0).toUpperCase() + mm[1].slice(1).toLowerCase()) + (mm[2] ? ' ' + mm[2] : '');
     } catch (e) {}
-    box.innerHTML = `<div class="bday-marquee-track" style="animation-duration:40s;"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 PERFORMER OF THE MONTH${eomMonth ? ' (' + eomMonth + ')' : ''} — ${res.name} — Score: ${res.score} 🏆</span></div>`;
+    if (res.monthLabel) eomMonth = res.monthLabel;
+    const eomHead = res.consistent ? 'CONSISTENT PERFORMANCE — PERFORMER OF THE MONTH' : 'PERFORMER OF THE MONTH';
+    const eomStreak = res.consistent ? ` — ${res.streak || 2} months in a row ⭐` : '';
+    const eomRunner = res.runnerUp ? ` &nbsp;|&nbsp; 🥈 Runner-up: ${res.runnerUp}` : '';
+    box.innerHTML = `<div class="bday-marquee-track" style="animation-duration:40s;"><span class="bday-marquee-text" style="color:#1A0A3D;text-shadow:none;">🏆 ${eomHead}${eomMonth ? ' (' + eomMonth + ')' : ''} — ${res.name}${eomStreak} — Score: ${res.score}${eomRunner} 🏆</span></div>`;
   }).catch(() => { box.style.display = 'none'; box.innerHTML = ''; });
 }
 
