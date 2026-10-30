@@ -2315,8 +2315,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <div class="card" style="padding:14px 16px;">
         <div class="form-row"><label>Customer Full Name (As per Document) <span id="frqStarNcCustName">*</span></label><input type="text" id="ncCustName" placeholder="Full name as per Aadhaar/ID"></div>
-        <div class="form-row"><label>Occupation <span id="frqStarNcOccupation">*</span></label><select id="ncOccupationSel" onchange="ncOccupationPick()"><option value="">Select occupation</option><option value="Accountant">Accountant</option><option value="Agriculture / Farmer">Agriculture / Farmer</option><option value="Architect">Architect</option><option value="Army Personnel">Army Personnel</option><option value="Artist">Artist</option><option value="Bank Employee">Bank Employee</option><option value="Beautician">Beautician</option><option value="Business Owner">Business Owner</option><option value="Carpenter">Carpenter</option><option value="Chef / Cook">Chef / Cook</option><option value="Civil Engineer">Civil Engineer</option><option value="Clerk">Clerk</option><option value="Company Director">Company Director</option><option value="Construction Worker">Construction Worker</option><option value="Consultant">Consultant</option><option value="Contractor">Contractor</option><option value="Delivery Executive">Delivery Executive</option><option value="Dentist">Dentist</option><option value="Designer">Designer</option><option value="Doctor">Doctor</option><option value="Driver">Driver</option><option value="Electrician">Electrician</option><option value="Electronics Technician">Electronics Technician</option><option value="Entrepreneur / Startup Founder">Entrepreneur / Startup Founder</option><option value="Factory Employee">Factory Employee</option><option value="Fashion Designer">Fashion Designer</option><option value="Fisherman">Fisherman</option><option value="Florist">Florist</option><option value="Freelancer">Freelancer</option><option value="Government Employee">Government Employee</option><option value="Government Officer">Government Officer</option><option value="Government Teacher">Government Teacher</option><option value="Homemaker">Homemaker</option><option value="Hospital Staff">Hospital Staff</option><option value="Hotel Staff">Hotel Staff</option><option value="Housekeeping Staff">Housekeeping Staff</option><option value="Journalist">Journalist</option><option value="Labourer">Labourer</option><option value="Lawyer">Lawyer</option><option value="Nurse">Nurse</option><option value="Office Assistant">Office Assistant</option><option value="Other Medical Professional">Other Medical Professional</option><option value="Painter">Painter</option><option value="Pharmacist">Pharmacist</option><option value="Photographer">Photographer</option><option value="Pilot">Pilot</option><option value="Plumber">Plumber</option><option value="Police Personnel">Police Personnel</option><option value="Politician">Politician</option><option value="Post Office Employee">Post Office Employee</option><option value="Private School Teacher">Private School Teacher</option><option value="Private Sector Employee">Private Sector Employee</option><option value="Professor / Lecturer">Professor / Lecturer</option><option value="Railway Employee">Railway Employee</option><option value="Retired Employee">Retired Employee</option><option value="Sales Executive">Sales Executive</option><option value="Security Guard">Security Guard</option><option value="Self-Employed">Self-Employed</option><option value="Shopkeeper / Retailer">Shopkeeper / Retailer</option><option value="Social Worker">Social Worker</option><option value="Software Engineer">Software Engineer</option><option value="Student">Student</option><option value="Tailor">Tailor</option><option value="Technician">Technician</option><option value="Telecom Employee">Telecom Employee</option><option value="Travel Agent">Travel Agent</option><option value="Veterinarian">Veterinarian</option><option value="Waiter / Restaurant Staff">Waiter / Restaurant Staff</option><option value="Warehouse Employee">Warehouse Employee</option><option value="Web Developer">Web Developer</option><option value="Worker">Worker</option><option value="__other__">Other (type manually)</option></select>
-          <input type="text" id="ncOccupation" placeholder="Type occupation" style="display:none;margin-top:6px;"></div>
+        <div class="form-row"><label>Occupation <span id="frqStarNcOccupation">*</span></label><div style="position:relative;">
+            <input type="text" id="ncOccupation" autocomplete="off" placeholder="" oninput="ncOccInput()" onfocus="ncOccInput()" onblur="setTimeout(ncOccBlur,160)">
+            <div id="ncOccList" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:50;max-height:230px;overflow-y:auto;background:var(--card,#fff);border:1.5px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);margin-top:2px;"></div>
+            <a id="ncOccBack" href="javascript:void(0)" onclick="ncOccBack()" style="display:none;font-size:12px;margin-top:4px;">↩ Choose from list instead</a>
+          </div></div>
         <div class="form-row"><label>Organization Name</label><input type="text" id="ncOrgName" placeholder="Optional"></div>
         <div class="form-row"><label>Phone Number <span id="frqStarNcPhone">*</span></label><input type="tel" id="ncPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
         <div class="form-row"><label>Address <span id="frqStarNcAddress">*</span></label><textarea id="ncAddress" rows="2" placeholder="Full address as per Aadhaar Card — don't enter short address"></textarea></div>
@@ -15336,16 +15339,57 @@ function validateMobileNo(raw) {
 // up to 5 photo uploads as base64 are far too large for a GET request's
 // URL length limit.
 // ══════════════════════════════════════
-// v-add (BRO: Occupation dropdown on New Loyalty Card). ncOccupation stays the single value-holder every
-// other function already reads; the dropdown fills it, and "Other" reveals it for manual typing.
-function ncOccupationPick() {
-  const sel = document.getElementById('ncOccupationSel'), inp = document.getElementById('ncOccupation');
-  if (!sel || !inp) return;
-  if (sel.value === '__other__') { inp.value = ''; inp.style.display = ''; inp.focus(); }
-  else { inp.style.display = 'none'; inp.value = sel.value; }
+// v-add (BRO: Occupation on New Loyalty Card — type to filter the list, empty by default, "Other" = manual).
+// ncOccupation stays the single value-holder every other function already reads.
+const NC_OCC_LIST_ = ["Accountant", "Agriculture / Farmer", "Architect", "Army Personnel", "Artist", "Bank Employee", "Beautician", "Business Owner", "Carpenter", "Chef / Cook", "Civil Engineer", "Clerk", "Company Director", "Construction Worker", "Consultant", "Contractor", "Delivery Executive", "Dentist", "Designer", "Doctor", "Driver", "Electrician", "Electronics Technician", "Entrepreneur / Startup Founder", "Factory Employee", "Fashion Designer", "Fisherman", "Florist", "Freelancer", "Government Employee", "Government Officer", "Government Teacher", "Homemaker", "Hospital Staff", "Hotel Staff", "Housekeeping Staff", "Journalist", "Labourer", "Lawyer", "Nurse", "Office Assistant", "Other Medical Professional", "Painter", "Pharmacist", "Photographer", "Pilot", "Plumber", "Police Personnel", "Politician", "Post Office Employee", "Private School Teacher", "Private Sector Employee", "Professor / Lecturer", "Railway Employee", "Retired Employee", "Sales Executive", "Security Guard", "Self-Employed", "Shopkeeper / Retailer", "Social Worker", "Software Engineer", "Student", "Tailor", "Technician", "Telecom Employee", "Travel Agent", "Veterinarian", "Waiter / Restaurant Staff", "Warehouse Employee", "Web Developer", "Worker"];
+let ncOccManual_ = false, ncOccMatches_ = [];
+function ncOccInput() {
+  const inp = document.getElementById('ncOccupation'), box = document.getElementById('ncOccList');
+  if (!inp || !box) return;
+  if (ncOccManual_) { box.style.display = 'none'; return; }
+  const q = inp.value.trim().toLowerCase();
+  const starts = [], has = [];
+  NC_OCC_LIST_.forEach(function (o) { const l = o.toLowerCase(); if (!q || l.indexOf(q) === 0) starts.push(o); else if (l.indexOf(q) > -1) has.push(o); });
+  ncOccMatches_ = starts.concat(has);
+  box.innerHTML = ncOccMatches_.map(function (o, i) {
+    return '<div onmousedown="event.preventDefault();ncOccPick(' + i + ')" style="padding:9px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid rgba(128,128,128,.15);">' + escHtml(o) + '</div>';
+  }).join('') + '<div onmousedown="event.preventDefault();ncOccOther()" style="padding:9px 12px;cursor:pointer;font-size:14px;font-weight:700;color:var(--purple);">Other (type manually)</div>';
+  box.style.display = 'block';
+}
+function ncOccPick(i) {
+  const inp = document.getElementById('ncOccupation');
+  inp.value = ncOccMatches_[i] || '';
+  document.getElementById('ncOccList').style.display = 'none';
+}
+function ncOccOther() {
+  const inp = document.getElementById('ncOccupation');
+  ncOccManual_ = true; inp.value = ''; inp.placeholder = 'Type occupation';
+  document.getElementById('ncOccList').style.display = 'none';
+  document.getElementById('ncOccBack').style.display = 'inline-block';
+  inp.focus();
+}
+function ncOccBack() {
+  const inp = document.getElementById('ncOccupation');
+  ncOccManual_ = false; inp.value = ''; inp.placeholder = '';
+  document.getElementById('ncOccBack').style.display = 'none';
+  inp.focus(); ncOccInput();
+}
+// Leaving the box: a typed value must resolve to a list entry (exact, or the only match) — otherwise cleared.
+function ncOccBlur() {
+  const inp = document.getElementById('ncOccupation'), box = document.getElementById('ncOccList');
+  if (!inp) return;
+  if (box) box.style.display = 'none';
+  if (ncOccManual_) return;
+  const v = inp.value.trim().toLowerCase(); if (!v) return;
+  const exact = NC_OCC_LIST_.filter(function (o) { return o.toLowerCase() === v; })[0];
+  if (exact) { inp.value = exact; return; }
+  const part = NC_OCC_LIST_.filter(function (o) { return o.toLowerCase().indexOf(v) > -1; });
+  if (part.length === 1) { inp.value = part[0]; return; }
+  inp.value = '';
+  try { toast('List nunchi select cheyandi, leda "Other (type manually)" select cheyandi', 'info'); } catch (e) {}
 }
 function resetNewLoyaltyCardForm() {
-  const _os = document.getElementById('ncOccupationSel'); if (_os) { _os.value = ''; ncOccupationPick(); }
+  ncOccManual_ = false; { const _oi = document.getElementById('ncOccupation'); if (_oi) _oi.placeholder = ''; const _ob = document.getElementById('ncOccBack'); if (_ob) _ob.style.display = 'none'; const _ol = document.getElementById('ncOccList'); if (_ol) _ol.style.display = 'none'; }
   ['ncCustName','ncOccupation','ncOrgName','ncPhone','ncAddress','ncAadhaarNo','ncPanNo','ncCardNo'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
