@@ -3545,7 +3545,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div class="quick-action-btn" onclick="showSettingsSection('access')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Access</div><div class="quick-action-sub">Employee &amp; Admin feature access</div></div>
             <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub">Pick a color theme</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('storedata')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Store Data</div><div class="quick-action-sub">Logo, background, name, address, contact</div></div>
-            <div class="quick-action-btn" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
+            <div class="quick-action-btn" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
           </div>
@@ -4948,9 +4948,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <div class="modal-box" style="max-width:440px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="frqCloseModal()" title="Close">✕</button>
     <div class="modal-title" style="margin-bottom:4px;">⚙️ Required Fields Settings</div>
-    <div class="modal-sub" style="font-size:12.5px;margin-bottom:14px;">Switch OFF a field here to make it optional on that form — no ★, no "please fill this" block on save. Switch it back ON any time.</div>
+    <div class="modal-sub" id="fieldReqSub" style="font-size:12.5px;margin-bottom:14px;">Pick a form, then switch OFF any field to make it optional on that form — no ★, no "please fill this" block on save. Each form is saved separately.</div>
     <div id="fieldReqBody"></div>
-    <button class="btn-primary" style="width:100%;margin-top:16px;" id="fieldReqSaveBtn" onclick="frqSave()">Save Changes</button>
   </div>
 </div>
 
@@ -14381,6 +14380,7 @@ function resetAdminRoleRestrictions() {
 // ══════════════════════════════════════
 function showAdminPage(page, opts) {
   opts = opts || {};
+  try { const _t = document.getElementById('frqSettingsTile'); if (_t) _t.style.display = frqIsMis_() ? '' : 'none'; } catch (e) {}
   // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — same redirect
   // removed as in showEmpPage above: it used to send desktop straight to the Profile page
   // (no section buttons there) because modulepicker's CSS used to be hidden on desktop,
@@ -21084,50 +21084,118 @@ frqLoadCache_(); // instant from localStorage on page load
 frqApplyStaticStars_();
 frqRefresh().then(frqApplyStaticStars_); // fire-and-forget — quietly brings it current in the background (admin or employee, either can be filling a form)
 
+function frqIsMis_() { return (state.adminRole || '').toUpperCase().indexOf('MIS') > -1; }
+const FRQ_FORM_ICONS = {
+  'Stock Entry / Transfer': '📦', 'DSR': '📋', 'Outlet Issue': '🏷️', 'RDR': '🧾', 'Leave': '🏖️',
+  'Leave Application': '🏖️', 'New Loyalty Card': '💳', 'Golden Aura': '✨', 'Lead Call Log': '📞'
+};
+let FRQ_CURRENT_FORM = null;
+function frqFormGroups_() {
+  const groups = {};
+  FIELD_REQ_REGISTRY.forEach(f => { (groups[f.form] = groups[f.form] || []).push(f); });
+  return groups;
+}
 function frqOpenModal() {
+  if (!frqIsMis_()) { toast('Only MIS can change Required Fields settings.', 'error'); return; }
+  FRQ_CURRENT_FORM = null;
   frqRenderList_();
   openModal('fieldReqModal');
 }
 function frqCloseModal() { closeModal('fieldReqModal'); }
+// View 1 — one card per form, with a small "N optional" count.
 function frqRenderList_() {
   const body = document.getElementById('fieldReqBody');
   if (!body) return;
-  const groups = {};
-  FIELD_REQ_REGISTRY.forEach(f => { (groups[f.form] = groups[f.form] || []).push(f); });
-  let html = '';
+  FRQ_CURRENT_FORM = null;
+  const sub = document.getElementById('fieldReqSub');
+  if (sub) sub.style.display = '';
+  const groups = frqFormGroups_();
+  let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
   Object.keys(groups).forEach(formName => {
-    html += `<div style="font-weight:700;font-size:12.5px;color:var(--purple,#4A0E8F);margin:14px 0 6px;">${formName}</div>`;
-    groups[formName].forEach(f => {
-      const checked = frqIsRequired(f.key);
-      html += `<label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px;">
-        <span>${f.label}</span>
-        <input type="checkbox" data-frq-key="${f.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple,#4A0E8F);cursor:pointer;">
-      </label>`;
-    });
+    const fields = groups[formName];
+    const off = fields.filter(f => !frqIsRequired(f.key)).length;
+    const icon = FRQ_FORM_ICONS[formName] || '📄';
+    const badge = off
+      ? `<span style="background:#fef3c7;color:#92400e;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:700;">${off} optional</span>`
+      : `<span style="background:#dcfce7;color:#166534;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:700;">all required</span>`;
+    html += `<div data-frq-form="${encodeURIComponent(formName)}" onclick="frqOpenForm_(decodeURIComponent(this.dataset.frqForm))"
+      style="display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--border,#e5e7eb);border-radius:12px;cursor:pointer;background:var(--card,#fff);">
+      <span style="font-size:24px;line-height:1;">${icon}</span>
+      <span style="flex:1;min-width:0;"><span style="display:block;font-weight:700;font-size:14px;">${formName}</span>
+        <span style="display:block;font-size:11.5px;opacity:.7;margin-top:2px;">${fields.length} field${fields.length === 1 ? '' : 's'}</span></span>
+      ${badge}<span style="opacity:.45;font-size:18px;">›</span>
+    </div>`;
   });
+  html += '</div>';
   body.innerHTML = html;
 }
-async function frqSave() {
-  const btn = document.getElementById('fieldReqSaveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+// View 2 — only that form's fields + its own Save / Reset.
+function frqOpenForm_(formName) {
+  const body = document.getElementById('fieldReqBody');
+  if (!body) return;
+  FRQ_CURRENT_FORM = formName;
+  const sub = document.getElementById('fieldReqSub');
+  if (sub) sub.style.display = 'none';
+  const fields = frqFormGroups_()[formName] || [];
+  const icon = FRQ_FORM_ICONS[formName] || '📄';
+  let html = `<button onclick="frqRenderList_()" style="background:none;border:none;color:var(--purple,#4A0E8F);font-weight:700;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ All forms</button>
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${icon} ${formName}</div>
+    <div style="font-size:12px;opacity:.7;margin-bottom:6px;">Tick = required (★). Untick = optional.</div>`;
+  fields.forEach(f => {
+    const checked = frqIsRequired(f.key);
+    html += `<label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border,#eee);font-size:13px;">
+      <span>${f.label}</span>
+      <input type="checkbox" data-frq-key="${f.key}" ${checked ? 'checked' : ''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--purple,#4A0E8F);cursor:pointer;">
+    </label>`;
+  });
+  html += `<div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-primary" style="flex:1;" id="fieldReqSaveBtn" onclick="frqSave()">Save ${formName}</button>
+      <button class="btn-primary" style="flex:0 0 auto;background:#6b7280;" id="fieldReqResetBtn" onclick="frqResetForm()">↺ Reset to default</button>
+    </div>`;
+  body.innerHTML = html;
+  body.scrollIntoView({ block: 'start' });
+}
+// Builds the FULL overrides object: everything saved for OTHER forms stays exactly
+// as-is; only this form's keys are replaced by what is ticked on screen. Backend
+// (saveFieldRequiredSettings) is unchanged — it still receives one overrides object.
+async function frqPersistForm_(allOn, btn, busyText, idleText) {
+  btn.disabled = true; btn.textContent = busyText;
   try {
-    const checks = document.querySelectorAll('#fieldReqBody [data-frq-key]');
+    const fields = frqFormGroups_()[FRQ_CURRENT_FORM] || [];
+    const formKeys = fields.map(f => f.key);
     const overrides = {};
-    checks.forEach(c => { if (!c.checked) overrides[c.dataset.frqKey] = false; });
+    Object.keys(FIELD_REQ_OVERRIDES || {}).forEach(k => {
+      if (FIELD_REQ_OVERRIDES[k] === false && formKeys.indexOf(k) === -1) overrides[k] = false;
+    });
+    if (!allOn) {
+      document.querySelectorAll('#fieldReqBody [data-frq-key]').forEach(c => {
+        if (!c.checked) overrides[c.dataset.frqKey] = false;
+      });
+    }
     const res = await jsonpWriteOnce({ page: 'saveFieldRequiredSettings', role: state.adminRole || 'ADMIN', overrides: JSON.stringify(overrides) }, 'frq_' + Date.now(), 20000);
     if (res && res.ok) {
       FIELD_REQ_OVERRIDES = res.overrides || overrides;
       frqSaveCache_();
-      toast('✅ Saved. Reopen Stock Entry page to see the updated stars.', 'success');
-      frqCloseModal();
+      try { frqApplyStaticStars_(); } catch (e) {}
+      toast('✅ ' + FRQ_CURRENT_FORM + ' saved. Reopen that form to see the updated stars.', 'success');
+      frqRenderList_();
     } else {
       toast('Could not save — ' + (res && res.error ? res.error : 'try again.'), 'error');
+      btn.disabled = false; btn.textContent = idleText;
     }
   } catch (e) {
     toast('Could not save — network error.', 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save Changes';
+    btn.disabled = false; btn.textContent = idleText;
   }
+}
+function frqSave() {
+  if (!frqIsMis_() || !FRQ_CURRENT_FORM) return;
+  frqPersistForm_(false, document.getElementById('fieldReqSaveBtn'), 'Saving…', 'Save ' + FRQ_CURRENT_FORM);
+}
+function frqResetForm() {
+  if (!frqIsMis_() || !FRQ_CURRENT_FORM) return;
+  if (!confirm('Reset "' + FRQ_CURRENT_FORM + '" to default — every field required again?')) return;
+  frqPersistForm_(true, document.getElementById('fieldReqResetBtn'), 'Resetting…', '↺ Reset to default');
 }
 
 // ══════════════════════════════════════
