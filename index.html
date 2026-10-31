@@ -5519,6 +5519,31 @@ function formatLeaveMode(mode, halfDay) {
   return m;
 }
 
+// v-add (BRO: "ee place lo day count kanipincahli. one day aite 1 day, half day aite 0.5 day ani hilite"):
+// each per-date leave card shows THAT date's own count — 1 day (purple chip) or 0.5 day (orange chip).
+// A multi-day leave that carries a half day = full days first, the LAST date is the half day
+// (same rule as the backend's calculateLeaveDays: (n-1) + 0.5).
+function leaveDayCountInfo_(l) {
+  const isHalfRec = /half/i.test(String(l.mode || '')) || !!String(l.halfDay || '').trim();
+  const total = Number(l.dayTotal) || 1;
+  const idx = Number(l.dayIndex) || 1;
+  const half = isHalfRec && (total === 1 || idx === total);
+  return { half: half, val: half ? 0.5 : 1 };
+}
+function leaveDayChip_(l) {
+  if (!l.displayDate) return `${l.days} day(s) total`;
+  const d = leaveDayCountInfo_(l);
+  const chip = d.half
+    ? `<span style="display:inline-block;background:#fff1d6;color:#b45309;border:1px solid #f0b445;border-radius:12px;padding:1px 9px;font-weight:800;font-size:11.5px;">0.5 day</span>`
+    : `<span style="display:inline-block;background:#ede4fb;color:#5b21b6;border:1px solid #c9b3f0;border-radius:12px;padding:1px 9px;font-weight:800;font-size:11.5px;">1 day</span>`;
+  const tot = (Number(l.dayTotal) > 1) ? ` <span style="color:var(--text3);font-size:11px;">(${l.days} day(s) total)</span>` : '';
+  return chip + tot;
+}
+function leaveModeForDay_(l) {
+  if (l.displayDate && /half/i.test(String(l.mode || '')) && !leaveDayCountInfo_(l).half) return 'Full Day';
+  return formatLeaveMode(l.mode, l.halfDay);
+}
+
 // Formats a leave-day number for display WITHOUT lossy rounding to 1
 // decimal (the old .toFixed(1) turned 0.75 into "0.8", which visually
 // disagreed with the Sheet's exact 0.75/1.25 penalty values). Shows up
@@ -8021,7 +8046,7 @@ function leaveCardHTML(l, showActions=true) {
         <div><div class="leave-card-title">${l.type}</div><div class="leave-card-id">${l.leaveId}${l.leaveGroupId ? ` <span class="pill" style="background:var(--purple-bg,#f3e8ff);color:var(--purple,#6b21a8);font-size:9px;padding:2px 6px;">🔗 Multi-Date</span>` : ''}</div></div>
         <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
       </div>
-      <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
+      <div class="leave-card-date">📅 ${dateStr} · ${leaveModeForDay_(l)} · ${leaveDayChip_(l)}</div>
       ${l.reason && l.status !== 'Rejected' ? `<div class="leave-card-reason">${l.reason.substring(0,80)}${l.reason.length>80?'...':''}</div>` : ''}
       ${rejectionBlock}
       <div style="font-size:10px;color:var(--text3);margin-top:4px;">${fmtDMY(l.timestamp)}</div>
@@ -29698,7 +29723,7 @@ function adminLeaveCardHTML(l) {
         ${modifiedBadge}
       </div>
     </div>
-    <div class="leave-card-date">📅 ${dateStr} · ${formatLeaveMode(l.mode, l.halfDay)} · ${l.days} day(s) total</div>
+    <div class="leave-card-date">📅 ${dateStr} · ${leaveModeForDay_(l)} · ${leaveDayChip_(l)}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
     ${l.authorityName && isPending ? `<div style="background:#fff8e1;border:1.5px solid var(--gold);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:12px;"><b style="color:#92400e;">🔑 Authority: </b><b style="color:var(--text);">${l.authorityName}</b></div>` : ''}
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
