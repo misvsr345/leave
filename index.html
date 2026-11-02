@@ -26567,6 +26567,57 @@ function dsrYmdOrEmpty(s) {
   return isNaN(d.getTime()) ? '' : toYMD(d);
 }
 
+// RETURN ONLY - the customer gives the item back and takes nothing in its place.
+// The DSR row is removed (logged to "Returns Log" first), a tagged item goes back to
+// stock, and - when it was the last item of that DSR No - Purchased goes down by 1 and
+// Non Purchased goes up by 1 on the Walkintrack row for that employee and bill date.
+// Server: returnOnlyDsr() in DSRBackend.gs.
+function dsrOpenReturnOnly(who, idx) {
+  const r = (window['__dsrTagResults_' + who] || [])[idx];
+  if (!r) return;
+  const isAdm = who === 'admin';
+  const itemLbl = isAdm
+    ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' - ' + r.productName : ''))
+    : (r.productName || 'this item');
+  const custLbl = r.customerName || (r.prefill && r.prefill.customerName) || 'the customer';
+  if (!confirm('Return ' + itemLbl + ' from ' + custLbl + '?\n\n' +
+      '- The item is logged in Returns Log and removed from the DSR.\n' +
+      '- If it has a tag, it goes back to stock.\n' +
+      '- If it is the last item of this DSR, Purchased count goes down by 1 and Non Purchased count goes up by 1.\n\n' +
+      'No replacement item is added. This cannot be undone from the portal.')) return;
+
+  const d = new Date();
+  const todayYmd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const returnDate = prompt('Return date (yyyy-mm-dd) - the day the customer returned the item:', todayYmd);
+  if (returnDate === null) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate.trim())) { toast('Please enter the date as yyyy-mm-dd, for example ' + todayYmd, 'error'); return; }
+
+  const processedBy = isAdm ? (state.adminName || 'Admin') : (state.empName || 'Employee');
+  toast('Processing return...', 'info');
+  _fetchWithTimeout(DSR_GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate: returnDate.trim(), processedBy })
+  }, 90000)
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === 'success') {
+        // Row numbers in the old search results are stale now - drop them so a second action can never hit the wrong row.
+        window['__dsrTagResults_' + who] = [];
+        const sBox = document.getElementById('dsrTagSearchBox-' + who);
+        if (sBox) {
+          sBox.innerHTML = '<div class="card"><div class="empty-state"><p>✅ Return done' + (isAdm && result.dsrId ? ' (DSR ' + escHtml(result.dsrId) + ')' : '') + '.</p>' +
+            (result.countNote ? '<p style="font-size:12px;">' + escHtml(result.countNote) + '</p>' : '') +
+            (result.stockNote ? '<p style="font-size:12px;">' + escHtml(result.stockNote) + '</p>' : '') +
+            '<p style="font-size:12px;">Search again to see the updated record.</p></div></div>';
+        }
+        toast('Return saved!', 'success');
+      } else {
+        toast('Return failed - ' + (result.message || 'please try again.'), 'error');
+      }
+    })
+    .catch(err => toast('Network error - please retry (' + err.message + ')', 'error'));
+}
+
 function dsrOpenReturnReplace(who, idx) {
   const r = (window['__dsrTagResults_' + who] || [])[idx];
   if (!r) return;
@@ -26867,7 +26918,7 @@ function dsrMergedTagCardHtml(it, statusText, saleRow, idx, who) {
 
   const headTxt = (it.tagNo || properCase(it.productName) || (saleRow && properCase(saleRow.productName)) || 'Item') + (it.type ? ' · ' + it.type : '');
   const returnBtn = saleRow
-    ? `<div class="btn-row" style="margin-top:10px;justify-content:center;"><button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Return / Replace</button></div>`
+    ? `<div class="btn-row" style="margin-top:10px;justify-content:center;gap:8px;"><button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Replace</button><button class="btn-secondary" style="color:var(--red);border-color:var(--red);" onclick="dsrOpenReturnOnly('${who}',${idx})">↩️ Return</button></div>`
     : '';
 
   return `<div class="card" style="margin-bottom:12px;">
