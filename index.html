@@ -4941,6 +4941,25 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
      that field's ★ is actually enforced on submit. Saves to PortalBackend.gs via
      saveFieldRequiredSettings, which every form's frqRefresh() then picks up. Opened only
      from Settings → ⚙️ Required Fields Settings — one place, not a button per form. -->
+<!-- RETURN ONLY popup: asks for the return date and where the returned tag should go in stock
+     (Main Hub by default, or any counter). Filled by dsrOpenReturnOnly(), submitted by dsrReturnOnlySubmit_(). -->
+<div class="modal-overlay" id="returnOnlyModal">
+  <div class="modal-box" style="max-width:420px;">
+    <button class="modal-close-x" onclick="closeModal('returnOnlyModal')" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:4px;">↩️ Return Item</div>
+    <div class="modal-sub" id="roItemLine" style="font-size:13px;margin-bottom:10px;"></div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+      The item is logged in Returns Log and removed from the DSR. If this is the last item of the DSR, Purchased count goes down by 1 and Non Purchased count goes up by 1. No replacement item is added.
+    </div>
+    <div class="form-row"><label>Return Date</label><input type="date" lang="en-GB" id="roDate"></div>
+    <div class="form-row" id="roTagRow"><label>Item goes back to (stock)</label><select id="roTo" class="uniform-select"><option value="">Main Hub</option></select></div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn-secondary" style="flex:1;" onclick="closeModal('returnOnlyModal')">Cancel</button>
+      <button class="btn-primary" style="flex:1;" id="roSubmitBtn" onclick="dsrReturnOnlySubmit_()">↩️ Return Item</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="fieldReqModal">
   <div class="modal-box" style="max-width:440px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="frqCloseModal()" title="Close">✕</button>
@@ -19853,7 +19872,7 @@ function renderDsrEntryForm(who, force) {
                (Bill Date stays locked to the original sale). Hidden in a normal DSR entry. -->
           <div class="g2" id="dsrfReturnDateWrap-${who}" style="display:none;margin-top:14px;">
             <div><label>Return Date ${frqStar('dsr.returnDate')}</label><input type="date" lang="en-GB" id="dsrfReturnDate-${who}"></div>
-            <div></div>
+            <div><label>Old item goes back to</label><select id="dsrfReturnTo-${who}" class="uniform-select"><option value="">Main Hub</option></select></div>
           </div>
         </div>
       </div>
@@ -26567,11 +26586,38 @@ function dsrYmdOrEmpty(s) {
   return isNaN(d.getTime()) ? '' : toYMD(d);
 }
 
+// Counter list for "where does the returned item go": Main Hub (default, empty value) + every counter.
+// Uses the Stock Level / Stock Entry caches when present, otherwise asks the Stock server once.
+const DSR_RETURN_DEFAULT_COUNTERS = ['Bangles Counter', 'Necklace Counter', 'Chain Counter', 'Silver Counter', 'Finger Ring Counter', 'Ear Ring Counter', 'Diamond Counter'];
+async function dsrReturnCounters_() {
+  try { if (typeof SL !== 'undefined' && SL.counters && SL.counters.length) return SL.counters.slice(); } catch (e) {}
+  const keys = [typeof SL_META_CACHE_KEY !== 'undefined' ? SL_META_CACHE_KEY : 'vsrStockMetaCache', typeof SE_LS_META !== 'undefined' ? SE_LS_META : 'vsrPortalStockMeta_v1'];
+  for (const k of keys) {
+    try { const c = JSON.parse(localStorage.getItem(k) || 'null'); if (c && c.counters && c.counters.length) return c.counters.slice(); } catch (e) {}
+  }
+  try {
+    if (typeof stockIsConfigured === 'function' && stockIsConfigured()) {
+      const m = await _fetchWithTimeout(STOCK_GAS_URL + '?action=meta', {}, 15000).then(r => r.json());
+      if (m && m.ok && m.counters && m.counters.length) return m.counters.slice();
+    }
+  } catch (e) {}
+  return DSR_RETURN_DEFAULT_COUNTERS.slice();
+}
+// Fills a <select> with "Main Hub" (value "" = default) followed by every counter.
+async function dsrFillReturnToSelect_(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const counters = await dsrReturnCounters_();
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Main Hub</option>' + counters.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  if (prev) sel.value = prev;
+}
+
 // RETURN ONLY - the customer gives the item back and takes nothing in its place.
 // The DSR row is removed (logged to "Returns Log" first), a tagged item goes back to
-// stock, and - when it was the last item of that DSR No - Purchased goes down by 1 and
-// Non Purchased goes up by 1 on the Walkintrack row for that employee and bill date.
-// Server: returnOnlyDsr() in DSRBackend.gs.
+// stock (Main Hub by default, or the counter picked here) and - when it was the last item
+// of that DSR No - Purchased goes down by 1 and Non Purchased goes up by 1 on the
+// Walkintrack row for that employee and bill date. Server: returnOnlyDsr() in DSRBackend.gs.
 function dsrOpenReturnOnly(who, idx) {
   const r = (window['__dsrTagResults_' + who] || [])[idx];
   if (!r) return;
@@ -26580,27 +26626,40 @@ function dsrOpenReturnOnly(who, idx) {
     ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' - ' + r.productName : ''))
     : (r.productName || 'this item');
   const custLbl = r.customerName || (r.prefill && r.prefill.customerName) || 'the customer';
-  if (!confirm('Return ' + itemLbl + ' from ' + custLbl + '?\n\n' +
-      '- The item is logged in Returns Log and removed from the DSR.\n' +
-      '- If it has a tag, it goes back to stock.\n' +
-      '- If it is the last item of this DSR, Purchased count goes down by 1 and Non Purchased count goes up by 1.\n\n' +
-      'No replacement item is added. This cannot be undone from the portal.')) return;
-
+  window.__roCtx = { who, idx };
+  document.getElementById('roItemLine').textContent = 'Return ' + itemLbl + ' from ' + custLbl + '?';
   const d = new Date();
   const todayYmd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  const returnDate = prompt('Return date (yyyy-mm-dd) - the day the customer returned the item:', todayYmd);
-  if (returnDate === null) return;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate.trim())) { toast('Please enter the date as yyyy-mm-dd, for example ' + todayYmd, 'error'); return; }
-
+  const dateEl = document.getElementById('roDate');
+  dateEl.max = todayYmd;
+  const bill = dsrYmdOrEmpty((r.prefill && r.prefill.billDate) || r.billDate);
+  if (bill) dateEl.min = bill; else dateEl.removeAttribute('min');
+  dateEl.value = todayYmd;
+  document.getElementById('roTo').innerHTML = '<option value="">Main Hub</option>';
+  dsrFillReturnToSelect_('roTo');
+  openModal('returnOnlyModal');
+}
+function dsrReturnOnlySubmit_() {
+  const ctx = window.__roCtx || {};
+  const who = ctx.who;
+  const r = (window['__dsrTagResults_' + who] || [])[ctx.idx];
+  if (!r) { closeModal('returnOnlyModal'); return; }
+  const returnDate = (document.getElementById('roDate').value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate)) { toast('Please pick the return date.', 'error'); return; }
+  const toCounter = document.getElementById('roTo').value || '';
+  const isAdm = who === 'admin';
   const processedBy = isAdm ? (state.adminName || 'Admin') : (state.empName || 'Employee');
-  toast('Processing return...', 'info');
+  const btn = document.getElementById('roSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Processing...';
   _fetchWithTimeout(DSR_GAS_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate: returnDate.trim(), processedBy })
+    body: JSON.stringify({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate, processedBy, toCounter })
   }, 90000)
     .then(res => res.json())
     .then(result => {
+      btn.disabled = false; btn.textContent = '↩️ Return Item';
       if (result.status === 'success') {
+        closeModal('returnOnlyModal');
         // Row numbers in the old search results are stale now - drop them so a second action can never hit the wrong row.
         window['__dsrTagResults_' + who] = [];
         const sBox = document.getElementById('dsrTagSearchBox-' + who);
@@ -26615,7 +26674,7 @@ function dsrOpenReturnOnly(who, idx) {
         toast('Return failed - ' + (result.message || 'please try again.'), 'error');
       }
     })
-    .catch(err => toast('Network error - please retry (' + err.message + ')', 'error'));
+    .catch(err => { btn.disabled = false; btn.textContent = '↩️ Return Item'; toast('Network error - please retry (' + err.message + ')', 'error'); });
 }
 
 function dsrOpenReturnReplace(who, idx) {
@@ -26675,6 +26734,7 @@ function dsrOpenReturnReplace(who, idx) {
       rdEl.max = today;
       if (rm.billDate) rdEl.min = rm.billDate;
       rdEl.value = today;
+      dsrFillReturnToSelect_(`dsrfReturnTo-${who}`);
     }
 
     // Employee comes from the original sale, so the picker isn't needed in return mode.
@@ -26739,7 +26799,7 @@ function dsrfDoReturnReplaceSubmit(who, newItem, returnDate) {
 
   _fetchWithTimeout(DSR_GAS_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'returnReplace', oldRowNum: rm.oldRowNum, oldSourceSheet: rm.oldSourceSheet, rowKey: rm.rowKey, returnDate, processedBy, newItem })
+    body: JSON.stringify({ action: 'returnReplace', oldRowNum: rm.oldRowNum, oldSourceSheet: rm.oldSourceSheet, rowKey: rm.rowKey, returnDate, processedBy, newItem, toCounter: dsrfGv('dsrfReturnTo-' + who) })
   }, 90000)
     .then(r => r.json())
     .then(result => {
