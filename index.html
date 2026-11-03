@@ -4892,6 +4892,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
+<!-- Modal: Admin Events Alert — today's birthday/anniversary events assigned to CRMs. Shown to every admin
+     every 2 hours from 12 PM until that admin presses "Informed CRM". -->
+<div class="modal-overlay" id="adminEventAlertModal">
+  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">🎉 Customer Events Assigned Today</div>
+    <div class="modal-sub" id="adminEventAlertSub"></div>
+    <div id="adminEventAlertBody"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('adminEventAlertModal')">Remind me later</button>
+      <button class="btn-primary" style="flex:1;" id="adminEventAlertAckBtn" onclick="ackAdminEventAlert_()">✅ Informed CRM</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Loyalty Employee Detail — tap a row on "All Employees" to see
      that employee's full card timeline + stats (merges what used to be
      the separate "Employee Timeline" screen). -->
@@ -6811,6 +6825,7 @@ function restoreSession() {
       showAdminPage((lastPageAdmin && document.getElementById('admin-' + lastPageAdmin)) ? lastPageAdmin : 'modulepicker'); }
     applyAdminRoleRestrictions();
     loadAdminData();
+    try { startAdminEventAlert_(); } catch (eAl) {}
     return true;
   }
   return false;
@@ -7334,6 +7349,7 @@ async function adminLogin() {
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
         checkLoyaltyPendingValidationPopup_();
+        startAdminEventAlert_();
         // MIS-only: check for Pending leaves (today) that still have
         // active/uncalled leads assigned — see checkPendingLeaveWithLeadsAPI.
         // Never shown to Store Manager or any other admin role.
@@ -13324,6 +13340,87 @@ function dismissCrmEventPopupLater_() {
   closeModal('crmEventPopupModal');
 }
 
+// Admin Events Alert — every admin sees today's CRM-assigned birthday/anniversary events in a popup at
+// 12 PM, 2 PM, 4 PM, 6 PM and 8 PM until THAT admin presses "Informed CRM" (acknowledged per admin, per day).
+// Only shows while the portal is open. The slot check keeps it to one popup per 2-hour slot.
+let __adminEventAlertTimer = null;
+let __adminEventAlertBusy = false;
+function adminEventAlertSlot_() {
+  const h = new Date().getHours();
+  if (h < 12 || h > 20) return -1;
+  return Math.floor((h - 12) / 2); // 12-13 => 0, 14-15 => 1, 16-17 => 2, 18-19 => 3, 20 => 4
+}
+function adminEventAlertKey_() {
+  const d = new Date();
+  return 'vsrAdminEvAlert_' + (state.adminName || state.adminEmail || 'admin') + '_' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+async function adminEventAlertTick_() {
+  try {
+    if (__loginKindIsAdmin_() === false) { if (__adminEventAlertTimer) { clearInterval(__adminEventAlertTimer); __adminEventAlertTimer = null; } return; }
+    if (__adminEventAlertBusy) return;
+    const slot = adminEventAlertSlot_();
+    if (slot < 0) return;
+    let lastSlot = -1;
+    try { const v = localStorage.getItem(adminEventAlertKey_()); if (v !== null) lastSlot = parseInt(v, 10); } catch (e) {}
+    if (lastSlot === slot) return;
+    __adminEventAlertBusy = true;
+    const res = await leadsApiGet({ action: 'GET_ADMIN_EVENT_ALERT', admin: state.adminName || state.adminEmail || '' });
+    if (!res || !res.ok) return;
+    if (res.acked || !res.total) {
+      try { localStorage.setItem(adminEventAlertKey_(), String(slot)); } catch (e) {}
+      return;
+    }
+    renderAdminEventAlert_(res.events || []);
+    try { localStorage.setItem(adminEventAlertKey_(), String(slot)); } catch (e) {}
+  } catch (e) { /* quiet — tries again on the next tick */ }
+  finally { __adminEventAlertBusy = false; }
+}
+function __loginKindIsAdmin_() { return !!(state.adminEmail || state.adminName) && state.__loginKind !== 'emp'; }
+function renderAdminEventAlert_(events) {
+  const body = document.getElementById('adminEventAlertBody');
+  const sub = document.getElementById('adminEventAlertSub');
+  if (!body) return;
+  if (sub) sub.textContent = events.length + ' event' + (events.length === 1 ? '' : 's') + ' assigned today. Please tell the CRMs to call these customers and wish them.';
+  const byEmp = {};
+  events.forEach(ev => { (byEmp[ev.employee || '—'] = byEmp[ev.employee || '—'] || []).push(ev); });
+  body.innerHTML = Object.keys(byEmp).map(emp => {
+    const cards = byEmp[emp].map(ev => {
+      const isBday = ev.eventType === 'Birthday';
+      const color = isBday ? '#e91e63' : '#7b1fa2';
+      const whenLabel = ev.daysAway === 0 ? 'Today' : ev.daysAway === 1 ? 'Tomorrow' : 'In ' + ev.daysAway + ' days';
+      return `<div class="card" style="padding:10px 12px;margin-bottom:8px;border-left:4px solid ${color};">
+        <div style="font-weight:700;font-size:13.5px;">${isBday ? '🎂' : '💑'} ${escHtml(properCase(ev.name))} <span style="font-weight:600;font-size:11px;color:${color};">${escHtml(ev.eventType)}</span></div>
+        <div style="font-size:11.5px;color:var(--text3);">${escHtml(ev.phone || '')} · 📅 ${escHtml(ev.eventDate || '')} — ${whenLabel}</div>
+        ${ev.address ? `<div style="font-size:11px;color:var(--text3);">${escHtml(ev.address)}</div>` : ''}
+      </div>`;
+    }).join('');
+    return `<div style="font-weight:800;font-size:13px;margin:10px 0 6px;">👤 ${escHtml(properCase(emp))} (${byEmp[emp].length})</div>${cards}`;
+  }).join('');
+  const btn = document.getElementById('adminEventAlertAckBtn');
+  if (btn) { btn.disabled = false; btn.textContent = '✅ Informed CRM'; }
+  openModal('adminEventAlertModal');
+}
+async function ackAdminEventAlert_() {
+  const btn = document.getElementById('adminEventAlertAckBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const res = await leadsApiPost({ action: 'ACK_ADMIN_EVENT_ALERT', admin: state.adminName || state.adminEmail || '' });
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not save');
+    closeModal('adminEventAlertModal');
+    toast('✅ Noted — no more reminders for today.', 'success');
+  } catch (e) {
+    toast('❌ ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Informed CRM'; }
+  }
+}
+function startAdminEventAlert_() {
+  try {
+    if (__adminEventAlertTimer) clearInterval(__adminEventAlertTimer);
+    adminEventAlertTick_();
+    __adminEventAlertTimer = setInterval(adminEventAlertTick_, 5 * 60 * 1000);
+  } catch (e) {}
+}
+
 // ============================================================
 // v-add (BRO: "chinna emoji ivu search kosam, adi click chesi option
 // names click cheste, aa section and option ki direct velli" — a
@@ -16739,7 +16836,7 @@ async function loyOpenEditForm(cardNo, cardType, who, context) {
   // that clears the OLD photo (distinct from ncPhotoChanged's own
   // "✕ Remove", which only undoes a newly-picked replacement file).
   const photoField = (label, id, url, required) => `
-    <div class="form-row"><label>${label} ${required ? '<span style="color:var(--red);">*</span>' : ''}</label>
+    <div class="form-row"><label>${label} ${required ? ({ ecSigPhoto: frqStar('loyalty.sigPhoto'), ecCustPhoto: frqStar('loyalty.custPhoto'), ecAadhaarFront: frqStar('loyalty.aadhaarFront') }[id] || '') : ''}</label>
       ${url ? `<div id="${id}-oldwrap" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;">
         <img src="${dsrPhotoViewUrl(url)}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid var(--gold);cursor:pointer;" onclick="window.open('${escJs(url)}','_blank')">
         <span style="font-size:10.5px;color:var(--text3);">Current photo — tap to view</span>
@@ -16760,23 +16857,23 @@ async function loyOpenEditForm(cardNo, cardType, who, context) {
     <div class="modal-title">✏️ Edit Loyalty Card</div>
     <div style="font-size:11px;color:var(--text3);margin:4px 0 12px;">Card Type: <b>${escHtml(c.cardType)}</b> &nbsp;·&nbsp; Card No: <b>${escHtml(c.cardNo)}</b> (cannot be changed)</div>
 
-    <div class="form-row"><label>Customer Full Name <span style="color:var(--red);">*</span></label><input type="text" id="ecCustName" value="${escHtml(properCase(c.custName))}"></div>
-    <div class="form-row"><label>Occupation <span style="color:var(--red);">*</span></label><input type="text" id="ecOccupation" value="${escHtml(c.occupation)}"></div>
+    <div class="form-row"><label>Customer Full Name ${frqStar('loyalty.custName')}</label><input type="text" id="ecCustName" value="${escHtml(properCase(c.custName))}"></div>
+    <div class="form-row"><label>Occupation ${frqStar('loyalty.occupation')}</label><input type="text" id="ecOccupation" value="${escHtml(c.occupation)}"></div>
     <div class="form-row"><label>Organization Name</label><input type="text" id="ecOrgName" value="${escHtml(c.orgName)}"></div>
-    <div class="form-row"><label>Phone Number <span style="color:var(--red);">*</span></label><input type="tel" id="ecPhone" inputmode="numeric" maxlength="10" value="${escHtml(c.phone)}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
-    <div class="form-row"><label>Address <span style="color:var(--red);">*</span></label><textarea id="ecAddress" rows="2">${escHtml(c.address)}</textarea></div>
+    <div class="form-row"><label>Phone Number ${frqStar('loyalty.phone')}</label><input type="tel" id="ecPhone" inputmode="numeric" maxlength="10" value="${escHtml(c.phone)}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+    <div class="form-row"><label>Address ${frqStar('loyalty.address')}</label><textarea id="ecAddress" rows="2">${escHtml(c.address)}</textarea></div>
 
     ${photoField('Customer Signature Photo', 'ecSigPhoto', c.sigPhotoUrl, true)}
     ${photoField('Customer Photo', 'ecCustPhoto', c.custPhotoUrl, true)}
 
-    <div class="form-row"><label>Aadhaar No <span style="color:var(--red);">*</span></label><input type="text" id="ecAadhaarNo" inputmode="numeric" maxlength="12" value="${escHtml(c.aadhaarNo)}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
+    <div class="form-row"><label>Aadhaar No ${frqStar('loyalty.aadhaarNo')}</label><input type="text" id="ecAadhaarNo" inputmode="numeric" maxlength="12" value="${escHtml(c.aadhaarNo)}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)"></div>
     ${photoField('Aadhaar Card Front Photo', 'ecAadhaarFront', c.aadhaarFrontUrl, true)}
     ${photoField('Aadhaar Card Back Photo', 'ecAadhaarBack', c.aadhaarBackUrl, false)}
 
     <div class="form-row"><label>Pan No</label><input type="text" id="ecPanNo" maxlength="10" value="${escHtml(c.panNo)}"></div>
     ${photoField('Pan Card Photo', 'ecPanPhoto', c.panPhotoUrl, false)}
 
-    <div class="form-row"><label>Card Issued Date <span style="color:var(--red);">*</span></label><input type="date" id="ecCardDate" value="${escHtml(c.cardDateISO)}"></div>
+    <div class="form-row"><label>Card Issued Date ${frqStar('loyalty.cardDate')}</label><input type="date" id="ecCardDate" value="${escHtml(c.cardDateISO)}"></div>
 
     <div id="ecErrorMsg" style="display:none;color:var(--red);font-size:12px;margin:8px 0;"></div>
     <div class="btn-row" style="margin-top:14px;">
@@ -16815,26 +16912,28 @@ async function submitLoyaltyCardEdit(cardNo, cardType) {
   const panNo      = document.getElementById('ecPanNo').value.trim();
   const cardDate   = document.getElementById('ecCardDate').value;
 
-  if (!custName || !occupation || !phone || !address || !aadhaarNo || !cardDate) {
+  if ((frqIsRequired('loyalty.custName') && !custName) || (frqIsRequired('loyalty.occupation') && !occupation) ||
+      (frqIsRequired('loyalty.phone') && !phone) || (frqIsRequired('loyalty.address') && !address) ||
+      (frqIsRequired('loyalty.aadhaarNo') && !aadhaarNo) || (frqIsRequired('loyalty.cardDate') && !cardDate)) {
     errBox.textContent = 'Please fill all required fields'; errBox.style.display = 'block'; return;
   }
   // v-add: a removed OLD required photo with no replacement chosen would
   // otherwise silently submit as '' — block that explicitly instead of
   // letting the backend reject it with a less helpful generic error.
   const requiredPhotoChecks = [
-    ['ecSigPhoto', 'Customer Signature Photo'],
-    ['ecCustPhoto', 'Customer Photo'],
-    ['ecAadhaarFront', 'Aadhaar Card Front Photo']
+    ['ecSigPhoto', 'Customer Signature Photo', 'loyalty.sigPhoto'],
+    ['ecCustPhoto', 'Customer Photo', 'loyalty.custPhoto'],
+    ['ecAadhaarFront', 'Aadhaar Card Front Photo', 'loyalty.aadhaarFront']
   ];
   for (let rpi = 0; rpi < requiredPhotoChecks.length; rpi++) {
     const pid = requiredPhotoChecks[rpi][0], plabel = requiredPhotoChecks[rpi][1];
-    if (!state.confirmedPhotos[pid]) {
+    if (frqIsRequired(requiredPhotoChecks[rpi][2]) && !state.confirmedPhotos[pid]) {
       errBox.textContent = plabel + ' is required — please upload it'; errBox.style.display = 'block'; return;
     }
   }
-  const mobileErr = validateMobileNo(phone);
+  const mobileErr = phone ? validateMobileNo(phone) : '';
   if (mobileErr) { errBox.textContent = mobileErr; errBox.style.display = 'block'; return; }
-  const aadhaarErr = validateAadhaarNo(aadhaarNo);
+  const aadhaarErr = aadhaarNo ? validateAadhaarNo(aadhaarNo) : '';
   if (aadhaarErr) { errBox.textContent = aadhaarErr; errBox.style.display = 'block'; return; }
 
   const who = state.loyEditWho;
@@ -21077,6 +21176,8 @@ const FIELD_REQ_REGISTRY = [
   { form: 'DSR Entry', key: 'dsr.diaNetWt', label: 'Net Wt (Diamond)' },
   { form: 'DSR Entry', key: 'dsr.silverItem', label: 'Silver Item' },
   { form: 'DSR Entry', key: 'dsr.silverWeight', label: 'Weight (Silver)' },
+  { form: 'DSR Entry', key: 'dsr.takenDate', label: 'Customer Taken Date (Edit DSR, Advance/Order to Purchased)' },
+  { form: 'DSR Entry', key: 'dsr.cancelReason', label: 'Cancel Reason (Edit DSR, Cancelled)' },
   { form: 'Leave Application', key: 'leave.ackNotices', label: 'Notices Acknowledgement tick' },
   { form: 'Leave Application', key: 'leave.leaveType', label: 'Leave Type' },
   { form: 'Leave Application', key: 'leave.purpose', label: 'Purpose / Reason' },
@@ -21144,6 +21245,14 @@ const FRQ_FORM_ICONS = {
   'Stock Entry / Transfer': '📦', 'DSR': '📋', 'Outlet Issue': '🏷️', 'RDR': '🧾', 'Leave': '🏖️',
   'Leave Application': '🏖️', 'New Loyalty Card': '💳', 'Golden Aura': '✨', 'Lead Call Log': '📞'
 };
+const FRQ_FORM_NOTES = {
+  'DSR Entry': 'These settings apply to every DSR screen: New DSR, Outlet Issue, Stock Out (Damage / Return), Customer Return / Replace and Edit DSR.',
+  'New Loyalty Card': 'These settings apply to both the New Loyalty Card form and the Edit Loyalty Card form.',
+  'Stock Entry / Transfer': 'These settings apply to the Stock Entry form and to Edit in Stock Level. Stock Transfer only needs a Tag No and a destination, so those two are always required.',
+  'Leave Application': 'These settings apply to the Leave Application form and its modification screen.',
+  'Golden Aura': 'These settings apply to every Golden Aura enrollment form.',
+  'Lead Call Log': 'These settings apply to the call-status form on a lead.'
+};
 let FRQ_CURRENT_FORM = null;
 function frqFormGroups_() {
   const groups = {};
@@ -21195,7 +21304,8 @@ function frqOpenForm_(formName) {
   const icon = FRQ_FORM_ICONS[formName] || '📄';
   let html = `<button onclick="frqRenderList_()" style="background:none;border:none;color:var(--purple,#4A0E8F);font-weight:700;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ All forms</button>
     <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${icon} ${formName}</div>
-    <div style="font-size:12px;opacity:.7;margin-bottom:6px;">Tick = required (★). Untick = optional.</div>`;
+    <div style="font-size:12px;opacity:.7;margin-bottom:6px;">Tick = required (★). Untick = optional.</div>
+    ${FRQ_FORM_NOTES[formName] ? `<div style="font-size:11.5px;opacity:.8;margin-bottom:8px;padding:8px 10px;border-radius:8px;background:var(--gold-bg,#fff8e1);">${FRQ_FORM_NOTES[formName]}</div>` : ''}`;
   fields.forEach(f => {
     const checked = frqIsRequired(f.key);
     html += `<label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border,#eee);font-size:13px;">
@@ -22482,12 +22592,12 @@ async function slSaveEdit(i) {
   const gSel = id => { const v = g(id); if (v !== '__other') return v; const o = document.getElementById('slF-' + id + '-other'); return o ? o.value.trim() : ''; };
   const fields = { productFrom: g('productFrom'), productName: gSel('productName'), bangleSize: gSel('bangleSize'), ringSize: gSel('ringSize'), length: gSel('length'), tunch: g('tunch'), billNo: g('billNo') };
   if (fields.productFrom === 'Retail') fields.counter = g('counter');
-  if (tag) { fields.tagNo = g('tagNo'); if (!fields.tagNo) { toast('Tag No is required', 'error'); return; } if (stockTagHasSep(fields.tagNo)) { toast('Tag No: space, - or / not allowed', 'error'); return; } if (!dsrTagValid(fields.tagNo)) { toast('Tag No needs both letters and numbers', 'error'); return; } }
-  if (!fields.productName) { toast('Product Name is required', 'error'); return; }
+  if (tag) { fields.tagNo = g('tagNo'); if (!fields.tagNo && frqIsRequired('stock.tagNo')) { toast('Tag No is required', 'error'); return; } if (fields.tagNo && stockTagHasSep(fields.tagNo)) { toast('Tag No: space, - or / not allowed', 'error'); return; } if (fields.tagNo && !dsrTagValid(fields.tagNo)) { toast('Tag No needs both letters and numbers', 'error'); return; } }
+  if (frqIsRequired('stock.productName') && !fields.productName) { toast('Product Name is required', 'error'); return; }
   if (dia) { fields.gross = g('gross'); fields.net = g('net'); fields.weight = fields.net; fields.carat = g('carat'); fields.clarity = g('clarity'); fields.color = g('color'); fields.certNo = g('certNo');
-    if (!(parseFloat(fields.gross) > 0) || !(parseFloat(fields.net) > 0) || parseFloat(fields.net) > parseFloat(fields.gross)) { toast('Check Gross / Net weight', 'error'); return; } }
-  else { fields.design = gSel('design'); fields.weight = g('weight'); if (!(parseFloat(fields.weight) > 0)) { toast('Weight is required', 'error'); return; } }
-  if (!tag) { fields.qty = g('qty'); if (!(parseInt(fields.qty, 10) >= 1)) { toast('Quantity must be 1 or more', 'error'); return; } }
+    if ((frqIsRequired('stock.grossWt') && !(parseFloat(fields.gross) > 0)) || (frqIsRequired('stock.netWt') && !(parseFloat(fields.net) > 0)) || parseFloat(fields.net) > parseFloat(fields.gross)) { toast('Check Gross / Net weight', 'error'); return; } }
+  else { fields.design = gSel('design'); fields.weight = g('weight'); if (frqIsRequired('stock.weight') && !(parseFloat(fields.weight) > 0)) { toast('Weight is required', 'error'); return; } }
+  if (!tag) { fields.qty = g('qty'); if (frqIsRequired('stock.qty') && !(parseInt(fields.qty, 10) >= 1)) { toast('Quantity must be 1 or more', 'error'); return; } }
   if (SL.editPhoto) fields.photo = SL.editPhoto;
   // v-fix (BRO: "photo upload chesaka save click cheste response ledu" — a photo upload can
   // genuinely take several seconds (Drive write, not just the sheet edit), and with no visible
@@ -27992,21 +28102,21 @@ function aoeItemBlockHtml(who, eid, num, it) {
                   <button class="${it.tagStatus!=='No Tag'?'on':''}" onclick="aoeSetTagTgl('${who}','${eid}','Tag',this)">Tag</button>
                   <button class="${it.tagStatus==='No Tag'?'on':''}" onclick="aoeSetTagTgl('${who}','${eid}','No Tag',this)">Non Tag</button>
                 </div><input type="hidden" id="aoeTagSt-${who}-${eid}" value="${it.tagStatus || 'Tag'}"></div>
-              <div id="aoeTagNoWrap-${who}-${eid}" style="${it.tagStatus==='No Tag'?'display:none;':''}"><label>Tag No <span class="req">★</span></label>
+              <div id="aoeTagNoWrap-${who}-${eid}" style="${it.tagStatus==='No Tag'?'display:none;':''}"><label>Tag No ${frqStar('dsr.tagNo')}</label>
                 <input type="text" id="aoeTagNo-${who}-${eid}" value="${it.tagNo || ''}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
                   oninput="aoeTagTyping('${who}',${eid},'g')" onblur="aoeTagLookup('${who}',${eid},'g')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
                 <div id="aoeTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
             </div>
             <div class="g2 mb12">
-              <div><label>Product Name <span class="req">★</span></label>
+              <div><label>Product Name ${frqStar('dsr.productName')}</label>
                 <select id="aoePn-${who}-${eid}" onchange="aoeToggleOther('${who}','${eid}','gold')"><option value="">-- Select --</option></select>
                 <input type="hidden" id="aoePnPre-${who}-${eid}" value="${it.productName || ''}">
                 <div id="aoePnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="aoePnCustom-${who}-${eid}" placeholder="Enter product name"></div></div>
-              <div><label>Design <span class="req">★</span></label><input type="text" id="aoeDes-${who}-${eid}" value="${it.design || ''}" placeholder="Bombay, Traditional..."></div>
+              <div><label>Design ${frqStar('dsr.design')}</label><input type="text" id="aoeDes-${who}-${eid}" value="${it.design || ''}" placeholder="Bombay, Traditional..."></div>
             </div>
             <div class="g3">
-              <div><label>Tunch <span class="req">★</span></label><select id="aoeTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
-              <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="aoeWt-${who}-${eid}" value="${it.weight || ''}" placeholder="e.g. 21.37"></div>
+              <div><label>Tunch ${frqStar('dsr.tunch')}</label><select id="aoeTch-${who}-${eid}"><option value="">-- Select --</option>${tOpts}</select></div>
+              <div><label>Weight (gm) ${frqStar('dsr.weight')}</label><input type="text" id="aoeWt-${who}-${eid}" value="${it.weight || ''}" placeholder="e.g. 21.37"></div>
               <div><label>Photo</label>${dsrfPhotoWidget(who, 'aoe' + eid, 'g')}${it.photo ? `<div style="font-size:11px;color:var(--dmuted);margin-top:4px;">Current: <a href="${it.photo}" target="_blank">view</a> (leave blank to keep)</div>` : ''}</div>
             </div>
           </div>
@@ -28022,20 +28132,20 @@ function aoeItemBlockHtml(who, eid, num, it) {
                   <button class="${it.diamondTagStatus!=='No Tag'?'on':''}" onclick="aoeSetDiaTagTgl('${who}','${eid}','Tag',this)">Tag</button>
                   <button class="${it.diamondTagStatus==='No Tag'?'on':''}" onclick="aoeSetDiaTagTgl('${who}','${eid}','No Tag',this)">Non Tag</button>
                 </div><input type="hidden" id="aoeDiaTagSt-${who}-${eid}" value="${it.diamondTagStatus || 'Tag'}"></div>
-              <div id="aoeDiaTagNoWrap-${who}-${eid}" style="${it.diamondTagStatus==='No Tag'?'display:none;':''}"><label>Tag No <span class="req">★</span></label>
+              <div id="aoeDiaTagNoWrap-${who}-${eid}" style="${it.diamondTagStatus==='No Tag'?'display:none;':''}"><label>Tag No ${frqStar('dsr.tagNo')}</label>
                 <input type="text" id="aoeDiaTagNo-${who}-${eid}" value="${it.diamondTagNo || ''}" placeholder="e.g. C498, R749" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;"
                   oninput="aoeTagTyping('${who}',${eid},'d')" onblur="aoeTagLookup('${who}',${eid},'d')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
                 <div id="aoeDiaTagMsg-${who}-${eid}" style="font-size:11.5px;margin-top:5px;line-height:1.4;"></div></div>
             </div>
             <div class="mb12">
-              <label>Product Name <span class="req">★</span></label>
+              <label>Product Name ${frqStar('dsr.productName')}</label>
               <select id="aoeDiaPn-${who}-${eid}" onchange="aoeToggleOther('${who}','${eid}','diamond')"><option value="">-- Select --</option></select>
               <input type="hidden" id="aoeDiaPnPre-${who}-${eid}" value="${it.diamondProductName || ''}">
               <div id="aoeDiaPnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="aoeDiaPnCustom-${who}-${eid}" placeholder="Enter product name"></div>
             </div>
             <div class="g2 mb12">
-              <div><label>Gross Wt (gm) <span class="req">★</span></label><input type="text" id="aoeDiaGrossWt-${who}-${eid}" value="${it.diamondGrossWt || ''}" placeholder="e.g. 6.10"></div>
-              <div><label>Net Wt (gm) <span class="req">★</span></label><input type="text" id="aoeDiaNetWt-${who}-${eid}" value="${it.diamondNetWt || ''}" placeholder="e.g. 5.20"></div>
+              <div><label>Gross Wt (gm) ${frqStar('dsr.diaGrossWt')}</label><input type="text" id="aoeDiaGrossWt-${who}-${eid}" value="${it.diamondGrossWt || ''}" placeholder="e.g. 6.10"></div>
+              <div><label>Net Wt (gm) ${frqStar('dsr.diaNetWt')}</label><input type="text" id="aoeDiaNetWt-${who}-${eid}" value="${it.diamondNetWt || ''}" placeholder="e.g. 5.20"></div>
             </div>
             <div class="g2 mb12">
               <div><label>Gold Tunch</label><select id="aoeDiaGoldTunch-${who}-${eid}"><option value="">-- Select --</option>${st.tunchs.map(x => `<option${x === it.diamondGoldTunch ? ' selected' : ''}>${x}</option>`).join('')}${it.diamondGoldTunch && st.tunchs.indexOf(it.diamondGoldTunch) === -1 ? `<option selected>${it.diamondGoldTunch}</option>` : ''}</select></div>
@@ -28058,11 +28168,11 @@ function aoeItemBlockHtml(who, eid, num, it) {
           <div class="ch">◎ &nbsp;Silver Item Details</div>
           <div class="cb">
             <div class="g2 mb12">
-              <div><label>Silver Item <span class="req">★</span></label>
+              <div><label>Silver Item ${frqStar('dsr.silverItem')}</label>
                 <select id="aoeSn-${who}-${eid}" onchange="aoeToggleOther('${who}','${eid}','silver')"><option value="">-- Select --</option></select>
                 <input type="hidden" id="aoeSnPre-${who}-${eid}" value="${it.silverItemName || ''}">
                 <div id="aoeSnOther-${who}-${eid}" style="display:none;margin-top:8px;"><input type="text" id="aoeSnCustom-${who}-${eid}" placeholder="Enter silver item name"></div></div>
-              <div><label>Weight (gm) <span class="req">★</span></label><input type="text" id="aoeSw-${who}-${eid}" value="${it.silverItemWeight || ''}" placeholder="e.g. 12.50"></div>
+              <div><label>Weight (gm) ${frqStar('dsr.silverWeight')}</label><input type="text" id="aoeSw-${who}-${eid}" value="${it.silverItemWeight || ''}" placeholder="e.g. 12.50"></div>
             </div>
             <div><label>Photo</label>${dsrfPhotoWidget(who, 'aoe' + eid, 's')}${it.silverItemPhoto ? `<div style="font-size:11px;color:var(--dmuted);margin-top:4px;">Current: <a href="${it.silverItemPhoto}" target="_blank">view</a> (leave blank to keep)</div>` : ''}</div>
           </div>
@@ -28140,12 +28250,12 @@ function openAdvanceOrderEdit(who, dsrId) {
             <div class="ch">✎ &nbsp;Bill Details</div>
             <div class="cb">
               <div class="g2 mb14">
-                <div><label>Bill Date <span class="req">★</span></label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}" readonly onclick="return false;" onkeydown="return false;" style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;pointer-events:none;"></div>
-                <div><label>Customer Name <span class="req">★</span></label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}" readonly style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;"></div>
+                <div><label>Bill Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}" readonly onclick="return false;" onkeydown="return false;" style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;pointer-events:none;"></div>
+                <div><label>Customer Name ${frqStar('dsr.custName')}</label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}" readonly style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;"></div>
               </div>
               <div class="g2">
-                <div><label>Mobile Number <span class="req">★</span></label><input type="tel" id="aoeMobile-${who}" maxlength="10" value="${head.mobileNumber || ''}"></div>
-                <div><label>Address <span class="req">★</span></label><input type="text" id="aoeAddr-${who}" value="${head.address || ''}"></div>
+                <div><label>Mobile Number ${frqStar('dsr.mobile')}</label><input type="tel" id="aoeMobile-${who}" maxlength="10" value="${head.mobileNumber || ''}"></div>
+                <div><label>Address ${frqStar('dsr.address')}</label><input type="text" id="aoeAddr-${who}" value="${head.address || ''}"></div>
               </div>
             </div>
           </div>
@@ -28168,11 +28278,11 @@ function openAdvanceOrderEdit(who, dsrId) {
             </div>
             <input type="hidden" id="aoeNewStatus-${who}" value="${isAdminView ? 'Cancelled' : 'Purchased'}">
             <div class="form-row" id="aoeTakenDateWrap-${who}" style="margin-top:10px;">
-              <label>Customer Taken Date <span class="req">★</span></label>
+              <label>Customer Taken Date ${frqStar('dsr.takenDate')}</label>
               <input type="date" lang="en-GB" id="aoeTakenDate-${who}">
             </div>
             <div class="form-row" id="aoeCancelReasonWrap-${who}" style="margin-top:10px;display:none;">
-              <label>Cancel Reason <span class="req">★</span></label>
+              <label>Cancel Reason ${frqStar('dsr.cancelReason')}</label>
               <textarea id="aoeCancelReason-${who}" rows="2" placeholder="Why is this Advance/Order being cancelled?"></textarea>
             </div>
           </div>
@@ -28211,16 +28321,16 @@ function submitAdvanceOrderUpdate(who) {
 
   const newStatus = dsrfGv(`aoeNewStatus-${who}`);
   const takenDate = document.getElementById('aoeTakenDate-' + who) ? document.getElementById('aoeTakenDate-' + who).value : '';
-  if (newStatus === 'Purchased' && !takenDate) { toast('Please enter the date the customer took the item!', 'error'); return; }
+  if (newStatus === 'Purchased' && frqIsRequired('dsr.takenDate') && !takenDate) { toast('Please enter the date the customer took the item!', 'error'); return; }
   const cancelReason = document.getElementById('aoeCancelReason-' + who) ? document.getElementById('aoeCancelReason-' + who).value.trim() : '';
-  if (newStatus === 'Cancelled' && !cancelReason) { toast('Please enter a reason for cancelling!', 'error'); return; }
+  if (newStatus === 'Cancelled' && frqIsRequired('dsr.cancelReason') && !cancelReason) { toast('Please enter a reason for cancelling!', 'error'); return; }
 
   const cust = (dsrfGv(`aoeCust-${who}`) || '').toUpperCase();
   const mob  = dsrfGv(`aoeMobile-${who}`);
   const addr = (dsrfGv(`aoeAddr-${who}`) || '').toUpperCase();
   const date = dsrfGv(`aoeBillDate-${who}`);
-  if (!cust || !mob || !addr || !date) { toast('Please fill Bill Date, Customer, Mobile and Address!', 'error'); return; }
-  if (!/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
+  if ((frqIsRequired('dsr.custName') && !cust) || (frqIsRequired('dsr.mobile') && !mob) || (frqIsRequired('dsr.address') && !addr) || (frqIsRequired('dsr.billDate') && !date)) { toast('Please fill all required fields (marked with a star)!', 'error'); return; }
+  if (mob && !/^[6-9]\d{9}$/.test(mob)) { toast('Mobile must be a 10-digit number starting with 6, 7, 8 or 9!', 'error'); return; }
 
   const entries = document.querySelectorAll(`#aoeItemsList-${who} .entry`);
   if (!entries.length) { toast('At least one item is required!', 'error'); return; }
@@ -28234,8 +28344,8 @@ function submitAdvanceOrderUpdate(who) {
     if (type === 'Silver') {
       let sn = dsrfGv(`aoeSn-${who}-${eid}`); if (sn === 'Other' || !sn) sn = dsrfGv(`aoeSnCustom-${who}-${eid}`) || dsrfGv(`aoeSnPre-${who}-${eid}`);
       const sw = dsrfGv(`aoeSw-${who}-${eid}`);
-      if (!sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
-      if (!sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
+      if (frqIsRequired('dsr.silverItem') && !sn) { ok = false; errMsg = 'Please select Silver Item!'; return; }
+      if (frqIsRequired('dsr.silverWeight') && !sw) { ok = false; errMsg = 'Please enter Silver Weight!'; return; }
       const sPhotoNew = dsrfGv(`dsrfPh-s-${who}-aoe${eid}`);
       rows.push({
         type, productFrom: pf, tagStatus: '', tagNo: '', productName: '', design: '', tunch: '', weight: '', photo: '',
@@ -28249,12 +28359,12 @@ function submitAdvanceOrderUpdate(who) {
             dGoldTunch = dsrfGv(`aoeDiaGoldTunch-${who}-${eid}`), dCarat = dsrfGv(`aoeDiaCarat-${who}-${eid}`),
             dClarity = dsrfGv(`aoeDiaClarity-${who}-${eid}`), dColor = dsrfGv(`aoeDiaColor-${who}-${eid}`),
             dCert = dsrfGv(`aoeDiaCertNo-${who}-${eid}`), dBill = dsrfGv(`aoeDiaBillNo-${who}-${eid}`);
-      if (!dpn) { ok = false; errMsg = 'Please select/enter Diamond Product Name!'; return; }
+      if (frqIsRequired('dsr.productName') && !dpn) { ok = false; errMsg = 'Please select/enter Diamond Product Name!'; return; }
       if (newStatus !== 'Order Placed') {
-        if (!dGross) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
-        if (!dNet) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
-        if (parseFloat(dNet) > parseFloat(dGross)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
-        if (dTs === 'Tag' && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+        if (frqIsRequired('dsr.diaGrossWt') && !dGross) { ok = false; errMsg = 'Please enter Gross Wt!'; return; }
+        if (frqIsRequired('dsr.diaNetWt') && !dNet) { ok = false; errMsg = 'Please enter Net Wt!'; return; }
+        if (dNet && dGross && parseFloat(dNet) > parseFloat(dGross)) { ok = false; errMsg = 'Net Wt cannot be more than Gross Wt!'; return; }
+        if (dTs === 'Tag' && frqIsRequired('dsr.tagNo') && !dTn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       }
       const dPhotoNew = dsrfGv(`dsrfPh-dia-${who}-aoe${eid}`);
       // Cent / Quality / old single Weight are deliberately NOT sent (left undefined) so the server keeps
@@ -28272,11 +28382,11 @@ function submitAdvanceOrderUpdate(who) {
       let pn = dsrfGv(`aoePn-${who}-${eid}`); if (pn === 'Other' || !pn) pn = dsrfGv(`aoePnCustom-${who}-${eid}`) || dsrfGv(`aoePnPre-${who}-${eid}`);
       const des = dsrfGv(`aoeDes-${who}-${eid}`), tch = dsrfGv(`aoeTch-${who}-${eid}`), wt = dsrfGv(`aoeWt-${who}-${eid}`),
             ts = dsrfGv(`aoeTagSt-${who}-${eid}`), tn = dsrfGv(`aoeTagNo-${who}-${eid}`);
-      if (!pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
-      if (!des) { ok = false; errMsg = 'Please enter Design!'; return; }
-      if (!tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
-      if (!wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
-      if (ts === 'Tag' && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
+      if (frqIsRequired('dsr.productName') && !pn) { ok = false; errMsg = 'Please select/enter Product Name!'; return; }
+      if (frqIsRequired('dsr.design') && !des) { ok = false; errMsg = 'Please enter Design!'; return; }
+      if (frqIsRequired('dsr.tunch') && !tch) { ok = false; errMsg = 'Please select Tunch!'; return; }
+      if (frqIsRequired('dsr.weight') && !wt) { ok = false; errMsg = 'Please enter Weight!'; return; }
+      if (ts === 'Tag' && frqIsRequired('dsr.tagNo') && !tn) { ok = false; errMsg = 'Please enter Tag No!'; return; }
       const gPhotoNew = dsrfGv(`dsrfPh-g-${who}-aoe${eid}`);
       rows.push({
         type, productFrom: pf, tagStatus: ts || '', tagNo: tn || '', productName: pn, design: des || '', tunch: tch || '', weight: wt || '',
