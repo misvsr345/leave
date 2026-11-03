@@ -2573,6 +2573,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="empQADsrAdvOrder" onclick="showEmpPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — update &amp; close</div></div>
         <div class="quick-action-btn" id="empQADsrTagSearch" onclick="showEmpPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
+        <div class="quick-action-btn" id="empQADsrReturnReplace" onclick="showEmpPage('dsr-returnreplace')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Return / Replace</div><div class="quick-action-sub">Return or replace a sold item</div></div>
         <div class="quick-action-btn" id="empQADsrEmpSale" onclick="showEmpPage('dsr-empsale')"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">My Sale</div><div class="quick-action-sub">Your Gold/Silver weight sold</div></div>
       </div>
     </div>
@@ -2670,8 +2671,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="aoeEditBox-emp"></div>
     </div>
 
+    <!-- RETURN / REPLACE chooser: first screen of the Return / Replace button. Pick Return or Replace,
+         then the Search screen opens (Tag No or DSR No / DSR ID) and the matching process starts. -->
+    <div class="page-section" id="emp-dsr-returnreplace">
+      <div class="section-hdr"><span class="section-title2">🔄 Return / Replace</span></div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:12px;">What does the customer want to do with the sold item?</div>
+        <div class="btn-row" style="gap:12px;">
+          <button class="btn-secondary" style="flex:1;padding:22px 10px;font-size:15px;font-weight:700;color:var(--red);border-color:var(--red);" onclick="dsrRrStart('emp','return')">↩️ Return<div style="font-size:11px;font-weight:500;margin-top:4px;opacity:.8;">Item goes back, no new item</div></button>
+          <button class="btn-secondary" style="flex:1;padding:22px 10px;font-size:15px;font-weight:700;" onclick="dsrRrStart('emp','replace')">🔄 Replace<div style="font-size:11px;font-weight:500;margin-top:4px;opacity:.8;">Old item back, new item taken</div></button>
+        </div>
+      </div>
+    </div>
+
     <div class="page-section" id="emp-dsr-tagsearch">
-      <div class="section-hdr"><span class="section-title2">🔍 Search</span></div>
+      <div class="section-hdr"><span class="section-title2" id="dsrSearchTitle-emp">🔍 Search</span></div>
+      <div id="dsrSearchHint-emp" style="display:none;"></div>
       <div class="card">
         <div class="form-row"><label>Search By</label>
           <div class="filter-bar">
@@ -3888,6 +3903,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">This month so far — or pick your own range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrTagSearch" onclick="showAdminPage('dsr-tagsearch')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search</div><div class="quick-action-sub">By Tag No / DSR ID</div></div>
+        <div class="quick-action-btn" id="adminQADsrReturnReplace" onclick="showAdminPage('dsr-returnreplace')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Return / Replace</div><div class="quick-action-sub">Return or replace a sold item</div></div>
         <div class="quick-action-btn" id="adminQADsrExtraCheck" onclick="showAdminPage('extra-dsr')"><span class="quick-action-icon">⚠️</span><div class="quick-action-label">Extra DSR Check</div><div class="quick-action-sub">DSR entries vs Walk-in purchases</div></div>
         <div class="quick-action-btn" id="adminQADupTagNo" onclick="showAdminPage('dup-tagno')"><span class="quick-action-icon">🔁</span><div class="quick-action-label">Duplicate Tag No</div><div class="quick-action-sub">Same tag billed under 2 DSRs</div></div>
         <div class="quick-action-btn" id="adminQADsrEmpSale" onclick="showAdminPage('dsr-empsale')"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Employee-wise Sale</div><div class="quick-action-sub">Gold/Silver weight sold, per employee</div></div>
@@ -3994,8 +4010,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="aoeEditBox-admin"></div>
     </div>
 
+    <!-- RETURN / REPLACE chooser: first screen of the Return / Replace button. Pick Return or Replace,
+         then the Search screen opens (Tag No or DSR No / DSR ID) and the matching process starts. -->
+    <div class="page-section" id="admin-dsr-returnreplace">
+      <div class="section-hdr"><span class="section-title2">🔄 Return / Replace</span></div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:12px;">What does the customer want to do with the sold item?</div>
+        <div class="btn-row" style="gap:12px;">
+          <button class="btn-secondary" style="flex:1;padding:22px 10px;font-size:15px;font-weight:700;color:var(--red);border-color:var(--red);" onclick="dsrRrStart('admin','return')">↩️ Return<div style="font-size:11px;font-weight:500;margin-top:4px;opacity:.8;">Item goes back, no new item</div></button>
+          <button class="btn-secondary" style="flex:1;padding:22px 10px;font-size:15px;font-weight:700;" onclick="dsrRrStart('admin','replace')">🔄 Replace<div style="font-size:11px;font-weight:500;margin-top:4px;opacity:.8;">Old item back, new item taken</div></button>
+        </div>
+      </div>
+    </div>
+
     <div class="page-section" id="admin-dsr-tagsearch">
-      <div class="section-hdr"><span class="section-title2">🔍 Search</span></div>
+      <div class="section-hdr"><span class="section-title2" id="dsrSearchTitle-admin">🔍 Search</span></div>
+      <div id="dsrSearchHint-admin" style="display:none;"></div>
       <div class="card">
         <div class="form-row"><label>Search By</label>
           <div class="filter-bar">
@@ -7650,7 +7680,7 @@ const SECTION_LABEL_MAP = {
   'kpi-trend': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
-  'dsr-tagsearch': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR', 'dsr-empsale': 'DSR',
+  'dsr-tagsearch': 'DSR', 'dsr-returnreplace': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR', 'dsr-empsale': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
   'customer-events': 'Leads', 'flagged-numbers': 'Leads',
@@ -7787,6 +7817,7 @@ function pptPageTransitionIn_(sec) {
 
 function showEmpPage(page, opts) {
   opts = opts || {};
+  if (page === 'dsr-tagsearch' && !window.__dsrRrOpening) { try { dsrRrClear('emp'); } catch (e) {} }
   // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — after the sidebar
   // was removed so desktop renders exactly like mobile, this old redirect was left behind: it
   // used to skip modulepicker on desktop because the (now-removed) CSS used to hide
@@ -13343,6 +13374,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '🗓️', label: 'Date to Date (DSR)', page: 'dsr-daterange' },
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
   { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
+  { icon: '🔄', label: 'Return / Replace (DSR)', page: 'dsr-returnreplace' },
   { icon: '⚠️', label: 'Extra DSR Check', page: 'extra-dsr' },
   { icon: '🔁', label: 'Duplicate Tag No', page: 'dup-tagno' },
   { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
@@ -13449,6 +13481,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
   { icon: '⏳', label: 'Advance & Order Placed (DSR)', page: 'dsr-advorder' },
   { icon: '🔍', label: 'Search — Tag No / DSR ID (DSR)', page: 'dsr-tagsearch' },
+  { icon: '🔄', label: 'Return / Replace (DSR)', page: 'dsr-returnreplace' },
   { icon: '➕', label: 'New Enrollment (Golden Aura)', page: 'golden-aura-new' },
   { icon: '🔍', label: 'My Schemes (Golden Aura)', page: 'golden-aura-list' },
   { icon: '📋', label: "Today's Leads", page: 'leads-pending' },
@@ -14180,7 +14213,7 @@ const SM_FEATURE_ELEMENTS = {
   dsrAdvOrder: ['adminQADsrAdvOrder'],
   // v-add (BRO's full audit — bonus fix): gates admin's own "Search" (Tag
   // No / DSR ID) button too, which had no permission key at all until now.
-  dsrTagSearch: ['adminQADsrTagSearch'],
+  dsrTagSearch: ['adminQADsrTagSearch', 'adminQADsrReturnReplace'],
   goldenAura: ['adminQAGoldenAura'], gaNew: ['adminQAGaNew'], gaList: ['adminQAGaList'],
   stock: ['adminQAStockModule'], stockRetail: ['adminQAStockRetail'], stockWholesale: ['adminQAStockWholesale'], stockReport: ['adminQAStockReport'],
   dailyShop: ['adminQADailyShopModule'], dailyShopChecklist: ['adminQADailyShopModule'],
@@ -14399,6 +14432,7 @@ function resetAdminRoleRestrictions() {
 // ══════════════════════════════════════
 function showAdminPage(page, opts) {
   opts = opts || {};
+  if (page === 'dsr-tagsearch' && !window.__dsrRrOpening) { try { dsrRrClear('admin'); } catch (e) {} }
   try { const _t = document.getElementById('frqSettingsTile'); if (_t) _t.style.display = frqIsMis_() ? '' : 'none'; } catch (e) {}
   // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — same redirect
   // removed as in showEmpPage above: it used to send desktop straight to the Profile page
@@ -18488,7 +18522,7 @@ const EMP_FEATURE_ELEMENTS = {
   // v-add (BRO's full audit): "Search" (Tag No / DSR ID) is a real,
   // fully-wired employee button inside DSR that had no permission gating
   // it at all.
-  dsrTagSearch: ['empQADsrTagSearch'],
+  dsrTagSearch: ['empQADsrTagSearch', 'empQADsrReturnReplace'],
   loyalty: ['empQALoyaltyModule'],
   loySearch: ['empQALoySearch'],
   // v-fix (BRO's full audit): 'loyStats' IS now mapped here — on the
@@ -26838,6 +26872,51 @@ function dsrfDoReturnReplaceSubmit(who, newItem, returnDate) {
 //              other field arrives as "Restricted" (masked server-side, not
 //              just hidden in the UI) and no photo URL is ever sent.
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// RETURN / REPLACE as its own DSR button.
+// Flow: DSR section > Return / Replace > choose Return or Replace > Search by Tag No or
+// DSR No / DSR ID > the same Return process or Replace process as before.
+// The Search screen is shared; window.__dsrRrAction[who] is "return", "replace" or "" (plain Search).
+// ══════════════════════════════════════
+window.__dsrRrAction = window.__dsrRrAction || { emp: '', admin: '' };
+function dsrRrDsrLabel_(who) { return (window.__dsrRrAction || {})[who] === 'return' ? 'DSR No' : 'DSR ID'; }
+function dsrRrApplyMode_(who) {
+  const act = (window.__dsrRrAction || {})[who] || '';
+  const title = document.getElementById('dsrSearchTitle-' + who);
+  const hint = document.getElementById('dsrSearchHint-' + who);
+  const bDsr = document.getElementById('dsrSearchModeDsr-' + who);
+  if (title) title.textContent = act === 'return' ? '↩️ Return' : act === 'replace' ? '🔄 Replace' : '🔍 Search';
+  if (bDsr) bDsr.textContent = '🧾 ' + dsrRrDsrLabel_(who) + ' Wise';
+  if (hint) {
+    if (act) {
+      const page = who === 'admin' ? 'showAdminPage' : 'showEmpPage';
+      hint.style.display = '';
+      hint.innerHTML = `<div class="kd-note" style="margin:0 2px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span>Find the item by Tag No or ${dsrRrDsrLabel_(who)}, then press ${act === 'return' ? 'Return' : 'Replace'} on it.</span>
+        <button class="btn-sm" style="flex-shrink:0;" onclick="${page}('dsr-returnreplace')">← Change</button></div>`;
+    } else { hint.style.display = 'none'; hint.innerHTML = ''; }
+  }
+}
+function dsrRrStart(who, action) {
+  window.__dsrRrAction[who] = action;
+  window.__dsrRrOpening = true;
+  try { (who === 'admin' ? showAdminPage : showEmpPage)('dsr-tagsearch'); } finally { window.__dsrRrOpening = false; }
+  // Fresh search every time the flow is started.
+  DSR_SEARCH_MODE[who] = '';
+  const box = document.getElementById('dsrTagSearchBox-' + who); if (box) box.innerHTML = '';
+  window['__dsrTagResults_' + who] = [];
+  ['dsrSearchModeTag-', 'dsrSearchModeDsr-'].forEach(b => { const el = document.getElementById(b + who); if (el) el.classList.remove('active'); });
+  const row = document.getElementById('dsrSearchInputRow-' + who); if (row) row.style.display = 'none';
+  dsrRrApplyMode_(who);
+}
+function dsrRrClear(who) {
+  if (!(window.__dsrRrAction || {})[who]) return;
+  window.__dsrRrAction[who] = '';
+  const box = document.getElementById('dsrTagSearchBox-' + who); if (box) box.innerHTML = '';
+  window['__dsrTagResults_' + who] = [];
+  dsrRrApplyMode_(who);
+}
+
 const DSR_SEARCH_MODE = { emp: '', admin: '' };
 
 function dsrSearchSetMode(who, mode) {
@@ -26851,7 +26930,7 @@ function dsrSearchSetMode(who, mode) {
   const inp = document.getElementById('dsrSearchInput-' + who);
   const box = document.getElementById('dsrTagSearchBox-' + who);
   if (row) row.style.display = '';
-  if (lbl) lbl.textContent = mode === 'dsr' ? 'DSR ID' : 'Tag No';
+  if (lbl) lbl.textContent = mode === 'dsr' ? dsrRrDsrLabel_(who) : 'Tag No';
   if (inp) { inp.placeholder = mode === 'dsr' ? 'e.g. 20-20260909-001' : 'e.g. C498'; inp.value = ''; inp.focus(); }
   if (box) box.innerHTML = '';
   window['__dsrTagResults_' + who] = [];
@@ -26977,9 +27056,15 @@ function dsrMergedTagCardHtml(it, statusText, saleRow, idx, who) {
   }
 
   const headTxt = (it.tagNo || properCase(it.productName) || (saleRow && properCase(saleRow.productName)) || 'Item') + (it.type ? ' · ' + it.type : '');
-  const returnBtn = saleRow
-    ? `<div class="btn-row" style="margin-top:10px;justify-content:center;gap:8px;"><button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Replace</button><button class="btn-secondary" style="color:var(--red);border-color:var(--red);" onclick="dsrOpenReturnOnly('${who}',${idx})">↩️ Return</button></div>`
-    : '';
+  // Return / Replace buttons exist ONLY when this screen was opened from the Return / Replace button
+  // (mode "return" -> Return button only, mode "replace" -> Replace button only). The normal Search
+  // screen is look-up only.
+  const rrAct = (window.__dsrRrAction || {})[who] || '';
+  const returnBtn = (saleRow && rrAct === 'return')
+    ? `<div class="btn-row" style="margin-top:10px;justify-content:center;"><button class="btn-secondary" style="color:var(--red);border-color:var(--red);" onclick="dsrOpenReturnOnly('${who}',${idx})">↩️ Return this item</button></div>`
+    : (saleRow && rrAct === 'replace')
+      ? `<div class="btn-row" style="margin-top:10px;justify-content:center;"><button class="btn-secondary" onclick="dsrOpenReturnReplace('${who}',${idx})">🔄 Replace this item</button></div>`
+      : '';
 
   return `<div class="card" style="margin-bottom:12px;">
     <div style="margin-bottom:8px;">${statusText}</div>
@@ -27025,7 +27110,8 @@ function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount, incl
         return;
       }
       window['__dsrTagResults_' + who] = results;
-      const countNote = showCount ? '<div class="kd-note" style="margin:0 2px 8px;">' + results.length + ' item(s) found — Return / Replace works on one item at a time.</div>' : '';
+      const rrActNote = (window.__dsrRrAction || {})[who] || '';
+      const countNote = showCount ? '<div class="kd-note" style="margin:0 2px 8px;">' + results.length + ' item(s) found' + (rrActNote ? ' — ' + (rrActNote === 'return' ? 'Return' : 'Replace') + ' works on one item at a time.' : '.') + '</div>' : '';
       // Tag No Wise (includeStock=true): merge each matching DSR sale row with the ONE Stock record
       // for this tag, so Type/Product/Design/Tunch/Weight/Tag No show once, not twice.
       // DSR ID Wise (includeStock=false): no single tag to merge against — full standalone cards.
