@@ -26640,8 +26640,7 @@ function dsrfSubmit(who) {
   // pre-filled (see dsrOpenReturnReplace) and only ONE replacement item
   // is supported per return.
   if (DSR_ST[who].returnMode) {
-    if (rows.length > 1) { toast('Return/Replace only supports ONE replacement item — please remove the extra item entries.', 'error'); return; }
-    dsrfShowReturnReplacePreview(who, rows[0]);
+    dsrfShowReturnReplacePreview(who, rows);
     return;
   }
 
@@ -26704,13 +26703,56 @@ async function dsrFillReturnToSelect_(selectId) {
 // stock (Main Hub by default, or the counter picked here) and - when it was the last item
 // of that DSR No - Purchased goes down by 1 and Non Purchased goes up by 1 on the
 // Walkintrack row for that employee and bill date. Server: returnOnlyDsr() in DSRBackend.gs.
+// ── Several items of one DSR at once (DSR ID Wise only) ──────────────────────────────────────
+function dsrSelIdxs_(who) {
+  return Array.from(document.querySelectorAll('.dsrSelChk-' + who + ':checked')).map(c => parseInt(c.dataset.idx, 10));
+}
+function dsrSelAll(who, on) {
+  document.querySelectorAll('.dsrSelChk-' + who).forEach(c => { c.checked = on; });
+  dsrSelChanged(who);
+}
+function dsrSelChanged(who) {
+  const bar = document.getElementById('dsrSelBar-' + who);
+  if (!bar) return;
+  const total = document.querySelectorAll('.dsrSelChk-' + who).length;
+  const n = dsrSelIdxs_(who).length;
+  const act = (window.__dsrRrAction || {})[who] || '';
+  const label = act === 'return' ? '📥 Return selected' : '🔄 Replace selected';
+  bar.innerHTML = `<div class="card" style="padding:10px 14px;margin-bottom:10px;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer;"><input type="checkbox" ${n === total && total ? 'checked' : ''} onchange="dsrSelAll('${who}', this.checked)" style="width:18px;height:18px;"> Select All</label>
+    <span style="font-size:12px;color:var(--text3);flex:1;">${n} of ${total} selected</span>
+    <button class="btn-secondary" ${n ? '' : 'disabled'} style="${act === 'return' ? 'color:var(--red);border-color:var(--red);' : ''}" onclick="dsrBulkAction('${who}')">${label} (${n})</button></div>`;
+}
+function dsrBulkAction(who) {
+  const idxs = dsrSelIdxs_(who);
+  if (!idxs.length) { toast('Tick at least one item first.', 'error'); return; }
+  if ((window.__dsrRrAction || {})[who] === 'return') dsrOpenReturnOnly(who, idxs);
+  else dsrOpenReturnReplace(who, idxs);
+}
+// Sort so higher row numbers are processed first: deleting a row only shifts the rows BELOW it, so the
+// remaining (lower) row numbers stay valid for the next call.
+function dsrBulkOrder_(items) {
+  return items.slice().sort((a, b) => (a.sourceSheet === b.sourceSheet ? 0 : (a.sourceSheet < b.sourceSheet ? -1 : 1)) || (b.rowNum - a.rowNum));
+}
+function dsrItemLabel_(r, isAdm) {
+  return isAdm
+    ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' - ' + r.productName : ''))
+    : (r.productName || 'item');
+}
+async function dsrPostJson_(body) {
+  const res = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify(body) }, 90000);
+  return res.json();
+}
+
 function dsrOpenReturnOnly(who, idx) {
-  const r = (window['__dsrTagResults_' + who] || [])[idx];
+  const isBulk = Array.isArray(idx);
+  const list = window['__dsrTagResults_' + who] || [];
+  const r = list[isBulk ? idx[0] : idx];
   if (!r) return;
   const isAdm = who === 'admin';
-  const itemLbl = isAdm
-    ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' - ' + r.productName : ''))
-    : (r.productName || 'this item');
+  const itemLbl = isBulk
+    ? idx.length + ' items (' + idx.map(i => dsrItemLabel_(list[i] || {}, isAdm)).join('; ') + ')'
+    : dsrItemLabel_(r, isAdm).replace(/^item$/, 'this item');
   const custLbl = r.customerName || (r.prefill && r.prefill.customerName) || 'the customer';
   window.__roCtx = { who, idx };
   document.getElementById('roItemLine').textContent = 'Return ' + itemLbl + ' from ' + custLbl + '?';
@@ -26718,18 +26760,20 @@ function dsrOpenReturnOnly(who, idx) {
   const todayYmd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const dateEl = document.getElementById('roDate');
   dateEl.max = todayYmd;
-  const bill = dsrYmdOrEmpty((r.prefill && r.prefill.billDate) || r.billDate);
+  const bill = (isBulk ? idx : [idx]).map(i => dsrYmdOrEmpty(((list[i] || {}).prefill && list[i].prefill.billDate) || (list[i] || {}).billDate)).filter(Boolean).sort().pop() || '';
   if (bill) dateEl.min = bill; else dateEl.removeAttribute('min');
   dateEl.value = todayYmd;
   document.getElementById('roTo').innerHTML = '<option value="">Main Hub</option>';
   dsrFillReturnToSelect_('roTo');
   openModal('returnOnlyModal');
 }
-function dsrReturnOnlySubmit_() {
+async function dsrReturnOnlySubmit_() {
   const ctx = window.__roCtx || {};
   const who = ctx.who;
-  const r = (window['__dsrTagResults_' + who] || [])[ctx.idx];
-  if (!r) { closeModal('returnOnlyModal'); return; }
+  const list = window['__dsrTagResults_' + who] || [];
+  const isBulk = Array.isArray(ctx.idx);
+  const items = (isBulk ? ctx.idx : [ctx.idx]).map(i => list[i]).filter(Boolean);
+  if (!items.length) { closeModal('returnOnlyModal'); return; }
   const returnDate = (document.getElementById('roDate').value || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate)) { toast('Please pick the return date.', 'error'); return; }
   const toCounter = document.getElementById('roTo').value || '';
@@ -26737,40 +26781,50 @@ function dsrReturnOnlySubmit_() {
   const processedBy = isAdm ? (state.adminName || 'Admin') : (state.empName || 'Employee');
   const btn = document.getElementById('roSubmitBtn');
   btn.disabled = true; btn.textContent = 'Processing...';
-  _fetchWithTimeout(DSR_GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate, processedBy, toCounter })
-  }, 90000)
-    .then(res => res.json())
-    .then(result => {
-      btn.disabled = false; btn.textContent = '↩️ Return Item';
-      if (result.status === 'success') {
-        closeModal('returnOnlyModal');
-        // Row numbers in the old search results are stale now - drop them so a second action can never hit the wrong row.
-        window['__dsrTagResults_' + who] = [];
-        const sBox = document.getElementById('dsrTagSearchBox-' + who);
-        if (sBox) {
-          sBox.innerHTML = '<div class="card"><div class="empty-state"><p>✅ Return done' + (isAdm && result.dsrId ? ' (DSR ' + escHtml(result.dsrId) + ')' : '') + '.</p>' +
-            (result.countNote ? '<p style="font-size:12px;">' + escHtml(result.countNote) + '</p>' : '') +
-            (result.stockNote ? '<p style="font-size:12px;">' + escHtml(result.stockNote) + '</p>' : '') +
-            '<p style="font-size:12px;">Search again to see the updated record.</p></div></div>';
-        }
-        toast('Return saved!', 'success');
-      } else {
-        toast('Return failed - ' + (result.message || 'please try again.'), 'error');
-      }
-    })
-    .catch(err => { btn.disabled = false; btn.textContent = '↩️ Return Item'; toast('Network error - please retry (' + err.message + ')', 'error'); });
+  const done = [], failed = [];
+  let lastResult = {};
+  try {
+    const ordered = dsrBulkOrder_(items);
+    for (let k = 0; k < ordered.length; k++) {
+      const r = ordered[k];
+      btn.textContent = 'Processing ' + (k + 1) + ' of ' + ordered.length + '...';
+      let result;
+      try {
+        result = await dsrPostJson_({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate, processedBy, toCounter });
+      } catch (e) { result = { status: 'error', message: 'Network error - ' + e.message }; }
+      if (result.status === 'success') { done.push(r); lastResult = result; }
+      else { failed.push({ r, msg: result.message || 'failed' }); break; }   // stop at the first failure: the rest are untouched
+    }
+  } finally { btn.disabled = false; btn.textContent = '↩️ Return Item'; }
+  const notTried = items.length - done.length - failed.length;
+  closeModal('returnOnlyModal');
+  // Row numbers in the old search results are stale now - drop them so a second action can never hit the wrong row.
+  window['__dsrTagResults_' + who] = [];
+  const sBox = document.getElementById('dsrTagSearchBox-' + who);
+  if (sBox) {
+    let html = '<div class="card"><div class="empty-state">';
+    if (done.length) html += '<p>✅ ' + done.length + ' item(s) returned' + (isAdm && lastResult.dsrId ? ' (DSR ' + escHtml(lastResult.dsrId) + ')' : '') + '.</p>';
+    if (done.length === 1 && lastResult.countNote) html += '<p style="font-size:12px;">' + escHtml(lastResult.countNote) + '</p>';
+    if (done.length === 1 && lastResult.stockNote) html += '<p style="font-size:12px;">' + escHtml(lastResult.stockNote) + '</p>';
+    if (done.length > 1) html += '<p style="font-size:12px;">Stock and Purchased / Non Purchased counts were updated for each item (see Returns Log).</p>';
+    if (failed.length) html += '<p style="color:var(--red);font-size:12.5px;">❌ ' + escHtml(dsrItemLabel_(failed[0].r, isAdm)) + ' failed: ' + escHtml(failed[0].msg) + (notTried ? ' - ' + notTried + ' more item(s) were not touched.' : '') + '</p>';
+    html += '<p style="font-size:12px;">Search again to see the updated record.</p></div></div>';
+    sBox.innerHTML = html;
+  }
+  toast(failed.length ? 'Return stopped - see the message' : (done.length > 1 ? done.length + ' items returned!' : 'Return saved!'), failed.length ? 'error' : 'success');
 }
 
 function dsrOpenReturnReplace(who, idx) {
-  const r = (window['__dsrTagResults_' + who] || [])[idx];
+  const isBulk = Array.isArray(idx);
+  const list = window['__dsrTagResults_' + who] || [];
+  const picked = (isBulk ? idx : [idx]).map(i => list[i]).filter(Boolean);
+  const r = picked[0];
   if (!r) return;
   const isAdm = who === 'admin';
   const pf = r.prefill || {};
-  const itemLbl = isAdm
-    ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' — ' + r.productName : ''))
-    : (r.productName || 'this item');
+  const itemLbl = isBulk
+    ? picked.length + ' items (' + picked.map(x => dsrItemLabel_(x, isAdm)).join('; ') + ')'
+    : dsrItemLabel_(r, isAdm).replace(/^item$/, 'this item');
   const custLbl = r.customerName || pf.customerName || 'the customer';
 
   // An unfinished normal DSR in the form would get mixed up with the return, so the form is
@@ -26781,13 +26835,15 @@ function dsrOpenReturnReplace(who, idx) {
     hasUnfinished = !!(dsrfGv('dsrfCust-' + who) || dsrfGv('dsrfMobile-' + who) || dsrfGv('dsrfAddr-' + who) ||
       document.querySelectorAll(`#dsrfEntriesList-${who} .entry`).length > 1);
   }
-  if (!confirm(`Return/Replace ${itemLbl} for ${custLbl}?\n\nThe old item will be logged (audit trail) and removed. You will then enter the NEW item's details below, keeping the same customer, bill date and DSR No.` +
+  if (!confirm(`Return/Replace ${itemLbl} for ${custLbl}?\n\nThe old item will be logged (audit trail) and removed. You will then enter the NEW item(s) below - as many as the customer takes - keeping the same customer, bill date and DSR No.` +
       (hasUnfinished ? '\n\n⚠ The unfinished New DSR form will be cleared.' : ''))) return;
 
   DSR_ST[who].returnMode = {
     oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '',
     itemName: r.productName || '', tagNo: isAdm ? (r.tagNo || '') : '', dsrId: isAdm ? (r.dsrId || '') : '',
-    billDate: dsrYmdOrEmpty(pf.billDate || r.billDate)
+    billDate: picked.map(x => dsrYmdOrEmpty((x.prefill && x.prefill.billDate) || x.billDate)).filter(Boolean).sort().pop() || '',
+    // every old item being returned (one entry when a single item was picked)
+    bulk: picked.map(x => ({ sourceSheet: x.sourceSheet, rowNum: x.rowNum, rowKey: x.rowKey || '', itemName: x.productName || '', tagNo: isAdm ? (x.tagNo || '') : '' }))
   };
   const rm = DSR_ST[who].returnMode;
 
@@ -26836,13 +26892,15 @@ function dsrOpenReturnReplace(who, idx) {
       const form = document.getElementById(`dsrEntryFormBox-${who}`);
       if (form) form.prepend(banner);
     }
-    const what = [
+    const what = rm.bulk && rm.bulk.length > 1
+      ? '<b>' + rm.bulk.length + ' items</b>: ' + rm.bulk.map(x => escHtml(x.itemName || 'item') + (x.tagNo ? ' (' + escHtml(x.tagNo) + ')' : '')).join(', ') + (rm.dsrId ? ' · DSR ' + escHtml(rm.dsrId) : '')
+      : [
       rm.itemName ? '<b>' + escHtml(rm.itemName) + '</b>' : 'the selected item',
       rm.tagNo ? 'Tag No ' + escHtml(rm.tagNo) : '',
       rm.dsrId ? 'DSR ' + escHtml(rm.dsrId) : ''
     ].filter(Boolean).join(' · ');
     banner.innerHTML = `<div style="font-weight:800;">🔄 Customer Return / Replace Mode</div>
-      <div style="font-size:12.5px;margin:4px 0 8px;line-height:1.5;">Returning: ${what}<br>The old item is logged &amp; removed only when you submit the new item below. Bill Date &amp; Customer Name are locked to the original sale.</div>
+      <div style="font-size:12.5px;margin:4px 0 8px;line-height:1.5;">Returning: ${what}<br>The old item(s) are logged &amp; removed only when you submit the new item(s) below - add as many new items as the customer takes. Bill Date &amp; Customer Name are locked to the original sale.</div>
       <button class="btn-sm" onclick="dsrCancelReturnReplace('${who}')">✕ Cancel Return</button>`;
   }, 60);
 }
@@ -26867,53 +26925,65 @@ function dsrCancelReturnReplace(who) {
   draftClear('dsr-' + who);
 }
 
-function dsrfShowReturnReplacePreview(who, newItem) {
+function dsrfShowReturnReplacePreview(who, newItems) {
   const rm = DSR_ST[who].returnMode;
   const rd = dsrfGv('dsrfReturnDate-' + who);
-  const oldLbl = (rm.itemName || 'the old item') + (rm.tagNo ? ' (Tag No ' + rm.tagNo + ')' : '');
-  if (!confirm(`Confirm Return/Replace?\n\nOld item — ${oldLbl} — will be logged to Returns Log and removed.\nNew item (${newItem.type}) will be added under the SAME DSR No${rm.dsrId ? ' (' + rm.dsrId + ')' : ''} and the SAME Bill Date.\nReturn Date: ${fmtDMY(rd)}\n\nProceed?`)) return;
-  dsrfDoReturnReplaceSubmit(who, newItem, rd);
+  const olds = rm.bulk || [];
+  const oldLbl = olds.map(x => (x.itemName || 'item') + (x.tagNo ? ' (Tag No ' + x.tagNo + ')' : '')).join(', ') || 'the old item';
+  const newLbl = newItems.map(n => n.type + (n.tagNo ? ' ' + n.tagNo : '') + (n.productName ? ' - ' + n.productName : '')).join('; ');
+  if (!confirm(`Confirm Return/Replace?\n\nOld item(s) (${olds.length}) - ${oldLbl} - will be logged to Returns Log and removed.\nNew item(s) (${newItems.length}) - ${newLbl} - will be added under the SAME DSR No${rm.dsrId ? ' (' + rm.dsrId + ')' : ''} and the SAME Bill Date.\nReturn Date: ${fmtDMY(rd)}\n\nProceed?`)) return;
+  dsrfDoReturnReplaceSubmit(who, newItems, rd);
 }
 
-function dsrfDoReturnReplaceSubmit(who, newItem, returnDate) {
+// Old items and new items need not match in number. Old[i] is replaced by New[i] for as many pairs as
+// there are; extra new items are added to the same DSR; extra old items are simply returned.
+async function dsrfDoReturnReplaceSubmit(who, newItems, returnDate) {
   const rm = DSR_ST[who].returnMode;
   const processedBy = who === 'admin' ? (state.adminName || 'Admin') : (state.empName || 'Employee');
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
   const msg = document.getElementById('dsrfStatusMsg-' + who);
+  const toCounter = dsrfGv('dsrfReturnTo-' + who);
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Processing Return/Replace...'; }
   if (msg) msg.textContent = '';
 
-  _fetchWithTimeout(DSR_GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'returnReplace', oldRowNum: rm.oldRowNum, oldSourceSheet: rm.oldSourceSheet, rowKey: rm.rowKey, returnDate, processedBy, newItem, toCounter: dsrfGv('dsrfReturnTo-' + who) })
-  }, 90000)
-    .then(r => r.json())
-    .then(result => {
-      if (btn) { btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who); }
-      if (result.status === 'success') {
-        const shownDsr = who === 'admin' ? result.dsrId : '';
-        dsrCancelReturnReplace(who);
-        renderDsrEntryForm(who, true);   // clean form for the next entry
-
-        // Row numbers in the old search results are now stale (a row was deleted) — drop them so a
-        // second Return/Replace can never act on the wrong row. Search again to see fresh data.
-        window['__dsrTagResults_' + who] = [];
-        const sBox = document.getElementById('dsrTagSearchBox-' + who);
-        if (sBox) sBox.innerHTML = '<div class="card"><div class="empty-state"><p>Return/Replace done — search again to see the updated record.</p></div></div>';
-
-        const msg2 = document.getElementById('dsrfStatusMsg-' + who);
-        if (msg2) { msg2.style.color = 'var(--green)'; msg2.innerHTML = '✅ Return/Replace complete!' + (shownDsr ? ' DSR ID: <b>' + escHtml(shownDsr) + '</b>' : ''); }
-        toast('Return/Replace saved!', 'success');
+  const olds = dsrBulkOrder_((rm.bulk && rm.bulk.length ? rm.bulk : [{ sourceSheet: rm.oldSourceSheet, rowNum: rm.oldRowNum, rowKey: rm.rowKey }]));
+  const pairs = Math.min(olds.length, newItems.length);
+  let done = 0, shownDsr = '', failMsg = '';
+  try {
+    for (let i = 0; i < olds.length; i++) {
+      if (btn) btn.innerHTML = '⏳ &nbsp; Processing ' + (i + 1) + ' of ' + olds.length + '...';
+      const o = olds[i];
+      let body;
+      if (i < pairs) {
+        body = { action: 'returnReplace', oldRowNum: o.rowNum, oldSourceSheet: o.sourceSheet, rowKey: o.rowKey, returnDate, processedBy, newItem: newItems[i], toCounter };
+        // extra new items ride along with the last pair, so they join the same DSR
+        if (i === pairs - 1 && newItems.length > pairs) body.extraNewItems = newItems.slice(pairs);
       } else {
-        if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + (result.message || 'Failed to process Return/Replace.'); }
-        toast('Return/Replace failed — please check the message.', 'error');
+        body = { action: 'returnOnly', oldRowNum: o.rowNum, oldSourceSheet: o.sourceSheet, rowKey: o.rowKey, returnDate, processedBy, toCounter };
       }
-    })
-    .catch(err => {
-      if (btn) { btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who); }
-      if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ Network error: ' + err.message + ' — please retry (Return/Replace has no offline queue yet, unlike normal DSR entry).'; }
-      toast('Network error — please retry', 'error');
-    });
+      let result;
+      try { result = await dsrPostJson_(body); } catch (e) { result = { status: 'error', message: 'Network error: ' + e.message }; }
+      if (result.status !== 'success') { failMsg = result.message || 'Failed to process Return/Replace.'; break; }
+      done++;
+      if (result.dsrId) shownDsr = result.dsrId;
+    }
+  } finally { if (btn) { btn.disabled = false; btn.innerHTML = dsrfSubmitLabel(who); } }
+
+  // Row numbers in the old search results are stale now - drop them so a later action can never hit the wrong row.
+  window['__dsrTagResults_' + who] = [];
+  const sBox = document.getElementById('dsrTagSearchBox-' + who);
+  if (!failMsg) {
+    dsrCancelReturnReplace(who);
+    renderDsrEntryForm(who, true);   // clean form for the next entry
+    if (sBox) sBox.innerHTML = '<div class="card"><div class="empty-state"><p>Return/Replace done — search again to see the updated record.</p></div></div>';
+    const msg2 = document.getElementById('dsrfStatusMsg-' + who);
+    if (msg2) { msg2.style.color = 'var(--green)'; msg2.innerHTML = '✅ Return/Replace complete! (' + olds.length + ' old item(s), ' + newItems.length + ' new item(s))' + (who === 'admin' && shownDsr ? ' DSR ID: <b>' + escHtml(shownDsr) + '</b>' : ''); }
+    toast('Return/Replace saved!', 'success');
+  } else {
+    // Some old items may already be done - the form is kept so the message stays visible; search again before retrying.
+    if (msg) { msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + failMsg + (done ? ' (' + done + ' of ' + olds.length + ' old items were already processed - search again and do the rest separately; do NOT submit this form again.)' : ''); }
+    toast('Return/Replace failed — please check the message.', 'error');
+  }
 }
 
 // ══════════════════════════════════════
@@ -27169,10 +27239,14 @@ function dsrSearchFetch(who, action, paramName, value, emptyMsg, showCount, incl
       // Tag No Wise (includeStock=true): merge each matching DSR sale row with the ONE Stock record
       // for this tag, so Type/Product/Design/Tunch/Weight/Tag No show once, not twice.
       // DSR ID Wise (includeStock=false): no single tag to merge against — full standalone cards.
+      // DSR ID Wise + Return/Replace mode + more than one item under the DSR: items get tick boxes so
+      // several can be returned / replaced in one go. Tag No Wise never shows them.
+      const bulkOk = !includeStock && !!rrActNote && results.length > 1;
       const cardsHtml = includeStock
         ? results.map((r, i) => dsrMergedTagCardHtml(stockData ? stockData.it : null, stockData ? stockData.statusText : '', r, i, who, true)).join('')
-        : results.map((r, i) => dsrTagResultCardHtml(r, i, who)).join('');
-      box.innerHTML = countNote + cardsHtml;
+        : results.map((r, i) => dsrTagResultCardHtml(r, i, who, bulkOk)).join('');
+      box.innerHTML = countNote + (bulkOk ? '<div id="dsrSelBar-' + who + '"></div>' : '') + cardsHtml;
+      if (bulkOk) dsrSelChanged(who);
     })
     .catch(err => {
       const msg = (err && err.name === 'AbortError')
@@ -27187,7 +27261,7 @@ function dsrSearchCellHtml(v) {
   return s === 'Restricted' ? '<span class="loy-restricted-val">🔒 Restricted</span>' : escHtml(s);
 }
 
-function dsrTagResultCardHtml(r, idx, who) {
+function dsrTagResultCardHtml(r, idx, who, multi) {
   const isAdm = who === 'admin';
   const R = 'Restricted';
   const dt = v => (v && v !== R) ? fmtDMY(v) : v;
@@ -27246,10 +27320,10 @@ function dsrTagResultCardHtml(r, idx, who) {
 
   return `<div class="card" style="margin-bottom:12px;">
     <div class="tag-grid-wrap"><table class="tag-grid">
-      <thead><tr><th colspan="2">🏷️ ${escHtml(headTxt)}</th></tr></thead>
+      <thead><tr><th colspan="2">${multi ? `<input type="checkbox" class="dsrSelChk-${who}" data-idx="${idx}" onchange="dsrSelChanged('${who}')" style="width:18px;height:18px;vertical-align:middle;margin-right:8px;">` : ''}🏷️ ${escHtml(headTxt)}</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table></div>
-    ${dsrRrBtnHtml_(who, idx, true)}
+    ${multi ? '' : dsrRrBtnHtml_(who, idx, true)}
   </div>`;
 }
 
