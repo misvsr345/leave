@@ -2567,7 +2567,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="empQADsrNewEntry" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="empQAOutletIssue" onclick="showEmpPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
-        <div class="quick-action-btn" id="empQARdr" onclick="showEmpPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage / Repair / Return</div><div class="quick-action-sub">Tag leaving stock — no customer sale</div></div>
+        <div class="quick-action-btn" id="empQARdr" onclick="showEmpPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage / Return</div><div class="quick-action-sub">Damage out of stock, or Return to Main Hub</div></div>
         <div class="quick-action-btn" id="empQADsrToday" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
         <div class="quick-action-btn" id="empQADsrStatus" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -2657,7 +2657,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="dsrEntryFormBox-emp-oi"></div>
     </div>
     <div class="page-section" id="emp-rdr">
-      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage / Repair / Return</span></div>
+      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage / Return</span></div>
       <div class="filter-bar" style="margin-bottom:14px;">
         <button type="button" class="filter-btn active" id="rdrTabNew-emp" onclick="rdrSwitchTab('emp','new')">➕ New Entry</button>
         <button type="button" class="filter-btn" id="rdrTabPending-emp" onclick="rdrSwitchTab('emp','pending')">⏳ Pending (Received Back)</button>
@@ -3896,7 +3896,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="adminQAOutletIssue" onclick="showAdminPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
-        <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage / Repair / Return</div><div class="quick-action-sub">Tag leaving stock — no customer sale</div></div>
+        <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage / Return</div><div class="quick-action-sub">Damage out of stock, or Return to Main Hub</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -3996,7 +3996,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="dsrEntryFormBox-admin-oi"></div>
     </div>
     <div class="page-section" id="admin-rdr">
-      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage / Repair / Return</span></div>
+      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage / Return</span></div>
       <div class="filter-bar" style="margin-bottom:14px;">
         <button type="button" class="filter-btn active" id="rdrTabNew-admin" onclick="rdrSwitchTab('admin','new')">➕ New Entry</button>
         <button type="button" class="filter-btn" id="rdrTabPending-admin" onclick="rdrSwitchTab('admin','pending')">⏳ Pending (Received Back)</button>
@@ -13369,7 +13369,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
-  { icon: '📤', label: 'Stock Out: Damage / Repair / Return', page: 'rdr' },
+  { icon: '📤', label: 'Stock Out: Damage / Return', page: 'rdr' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -13477,7 +13477,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
-  { icon: '📤', label: 'Stock Out: Damage / Repair / Return', page: 'rdr' },
+  { icon: '📤', label: 'Stock Out: Damage / Return', page: 'rdr' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -19760,7 +19760,7 @@ function dsrfIsOutlet(who) { return who === 'admin-oi' || who === 'emp-oi'; }
 // "admin-rdr" / "emp-rdr" — BRO's Return/Damage/Repair feature. Same reasoning as Outlet Issue
 // above: same form engine, own minimal header (Date / Remarks), own backend action.
 function dsrfIsRDR(who) { return who === 'admin-rdr' || who === 'emp-rdr'; }
-function dsrfSubmitLabel(who) { return dsrfIsOutlet(who) ? '★ &nbsp; Save Outlet Issue &nbsp; ★' : dsrfIsRDR(who) ? '★ &nbsp; Save Return / Damage / Repair &nbsp; ★' : '★ &nbsp; Submit DSR &nbsp; ★'; }
+function dsrfSubmitLabel(who) { return dsrfIsOutlet(who) ? '★ &nbsp; Save Outlet Issue &nbsp; ★' : dsrfIsRDR(who) ? '★ &nbsp; Save Stock Out &nbsp; ★' : '★ &nbsp; Submit DSR &nbsp; ★'; }
 
 // Populates the admin employee dropdown — reuses the SAME employee
 // list/cache Direct Action already loads (directEmpListAPI), rather
@@ -19873,7 +19873,7 @@ function renderDsrEntryForm(who, force) {
            here. Reuses dsrfBillDate/dsrfCust exactly like Outlet Issue does above (dsrfCust holds
            Remarks here) so dsrfSubmit/draft-save/etc. need no structural change. -->
       <div class="card">
-        <div class="ch">📤 &nbsp;Stock Out Details (Damage / Repair / Return)</div>
+        <div class="ch">📤 &nbsp;Stock Out Details (Damage / Return)</div>
         <div class="cb">
           <div class="g2">
             <div><label>Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
@@ -20141,7 +20141,6 @@ function dsrfAddEntry(who) {
           <option value="">-- Select --</option>
           <option value="Return">Return</option>
           <option value="Damage">Damage</option>
-          <option value="Repair">Repair</option>
         </select>
       </div>
     </div>
@@ -20594,6 +20593,7 @@ function stockTagCacheRemoveFromRows(rows, dsrId) {
 // (or the Received Back flow, for Damage/Repair) is what would re-add it.
 function stockTagCacheRemoveFromRdrRows(rows) {
   (rows || []).forEach(d => {
+    if (d.reason === 'Return') return;   // a Return stays in stock (it only goes back to Main Hub), so keep it in the cache
     if (d.type === 'Gold' && String(d.tagStatus || '') !== 'No Tag' && String(d.tagNo || '').trim()) stockTagCacheRemove(d.tagNo);
     else if (d.type === 'Diamond' && String(d.diamondTagStatus || '') !== 'No Tag' && String(d.diamondTagNo || '').trim()) stockTagCacheRemove(d.diamondTagNo);
   });
@@ -20630,7 +20630,7 @@ async function rdrLoadPending(who) {
     const res = await slApi({ action: 'rdrPending' });
     if (!res || !res.ok) throw new Error((res && res.error) || 'Could not load.');
     const rows = res.rows || [];
-    if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>No items pending Damage/Repair right now.</p></div>'; return; }
+    if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>No damaged items pending right now.</p></div>'; return; }
     let html = '<div class="card"><div class="form-row"><label>Search Tag No</label><input type="text" id="rdrPendingSearch-' + who + '" placeholder="Type a Tag No..." oninput="rdrFilterPending(\'' + who + '\')"></div></div><div id="rdrPendingList-' + who + '"></div>';
     box.innerHTML = html;
     box.dataset.rows = JSON.stringify(rows);
@@ -21067,7 +21067,7 @@ const FIELD_REQ_REGISTRY = [
   { form: 'DSR Entry', key: 'dsr.address', label: 'Address' },
   { form: 'DSR Entry', key: 'dsr.billNo', label: 'Bill No' },
   { form: 'DSR Entry', key: 'dsr.returnDate', label: 'Return Date (Return/Replace)' },
-  { form: 'DSR Entry', key: 'dsr.reason', label: 'Reason (Return/Damage/Repair)' },
+  { form: 'DSR Entry', key: 'dsr.reason', label: 'Reason (Return/Damage)' },
   { form: 'DSR Entry', key: 'dsr.productName', label: 'Product Name' },
   { form: 'DSR Entry', key: 'dsr.tagNo', label: 'Tag No' },
   { form: 'DSR Entry', key: 'dsr.design', label: 'Design (Gold)' },
@@ -26560,7 +26560,7 @@ function dsrfSubmit(who) {
     const type = dsrfGv(`dsrfTyp-${who}-${eid}`), pf = dsrfGv(`dsrfPf-${who}-${eid}`);
     // v-add (BRO's Return/Damage/Repair feature) — Reason is per item.
     const rdrReason = isRDR ? dsrfGv(`dsrfRdrReason-${who}-${eid}`) : '';
-    if (isRDR && frqIsRequired('dsr.reason') && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Return/Damage/Repair) for every item!'; return; }
+    if (isRDR && frqIsRequired('dsr.reason') && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Return/Damage) for every item!'; return; }
 
     if (type === 'Silver') {
       let sn = dsrfGv(`dsrfSn-${who}-${eid}`); if (sn === 'Other') sn = dsrfGv(`dsrfSnCustom-${who}-${eid}`);
@@ -26775,9 +26775,10 @@ function dsrBulkOrder_(items) {
   return items.slice().sort((a, b) => (a.sourceSheet === b.sourceSheet ? 0 : (a.sourceSheet < b.sourceSheet ? -1 : 1)) || (b.rowNum - a.rowNum));
 }
 function dsrItemLabel_(r, isAdm) {
+  const tag = (r.tagNo && String(r.tagNo).toLowerCase() !== 'restricted') ? String(r.tagNo) : '';
   return isAdm
-    ? ((r.type || 'Item') + (r.tagNo ? ' (Tag No ' + r.tagNo + ')' : '') + (r.productName ? ' - ' + r.productName : ''))
-    : (r.productName || 'item');
+    ? ((r.type || 'Item') + (tag ? ' (Tag No ' + tag + ')' : '') + (r.productName ? ' - ' + r.productName : ''))
+    : ((r.productName || 'item') + (tag ? ' - Tag No ' + tag : ''));
 }
 async function dsrPostJson_(body) {
   const res = await _fetchWithTimeout(DSR_GAS_URL, { method: 'POST', body: JSON.stringify(body) }, 90000);
@@ -27453,7 +27454,7 @@ function dsrfShowPreview(who, rows) {
   div.innerHTML = `<div class="modal-box" style="max-width:420px;max-height:88vh;overflow-y:auto;"><button class="modal-close-x" onclick="document.getElementById('dsrPreviewModal').remove()" title="Close">✕</button>
     <div class="modal-title">✅ Review Before Submitting</div>
     <div class="dsr-receipt-card" style="margin-top:10px;">
-      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isRDR ? '↩️ New Return / Damage / Repair' : isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
+      <div class="dsr-receipt-hd"><span class="dsr-receipt-id">${isRDR ? '📤 New Stock Out' : isOutlet ? '🏢 New Outlet Issue' : '🧾 New DSR'}</span><span class="kd-pill gold">${r0.paymentStatus}</span></div>
       <div class="dsr-receipt-body">
         <table class="pv-table"><tbody>
           ${pvRows([
