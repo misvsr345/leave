@@ -4984,7 +4984,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       The item is logged in Returns Log and removed from the DSR. If this is the last item of the DSR, Purchased count goes down by 1 and Non Purchased count goes up by 1. No replacement item is added.
     </div>
     <div class="form-row"><label>Return Date</label><input type="date" lang="en-GB" id="roDate"></div>
-    <div class="form-row" id="roTagRow"><label>Item goes back to (stock)</label><select id="roTo" class="uniform-select"><option value="">Main Hub</option></select></div>
+    <div style="font-size:12px;font-weight:700;margin:6px 0 4px;">Item goes back to (stock)</div><div id="roDestBox"></div>
     <div style="display:flex;gap:10px;margin-top:14px;">
       <button class="btn-secondary" style="flex:1;" onclick="closeModal('returnOnlyModal')">Cancel</button>
       <button class="btn-primary" style="flex:1;" id="roSubmitBtn" onclick="dsrReturnOnlySubmit_()">↩️ Return Item</button>
@@ -19908,7 +19908,7 @@ function renderDsrEntryForm(who, force) {
                (Bill Date stays locked to the original sale). Hidden in a normal DSR entry. -->
           <div class="g2" id="dsrfReturnDateWrap-${who}" style="display:none;margin-top:14px;">
             <div><label>Return Date ${frqStar('dsr.returnDate')}</label><input type="date" lang="en-GB" id="dsrfReturnDate-${who}"></div>
-            <div><label>Old item goes back to</label><select id="dsrfReturnTo-${who}" class="uniform-select"><option value="">Main Hub</option></select></div>
+            <div style="grid-column:1/-1;"><label>Old item(s) go back to</label><div id="dsrfReturnTo-${who}"></div></div>
           </div>
         </div>
       </div>
@@ -26698,6 +26698,46 @@ async function dsrFillReturnToSelect_(selectId) {
   if (prev) sel.value = prev;
 }
 
+// Where does each returned item go? Only two choices per item: Main Hub (default) or the counter it was sold from.
+// The item's own counter is read from Stock (lookup); the server also resolves it ("ORIGINAL"), so it works even
+// when the name could not be loaded here.
+function dsrDestRender_(boxId, items, isAdm) {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  const rows = items.map((r, i) => {
+    r._destId = boxId + '-' + i;
+    const lbl = escHtml(dsrItemLabel_(r, isAdm));
+    if (!r.tagNo || String(r.tagNo).toLowerCase() === 'restricted') {
+      return `<div class="form-row"><label>${lbl}</label><div style="font-size:12px;color:var(--text3);">No tag on this item - nothing goes back to stock.</div></div>`;
+    }
+    return `<div class="form-row"><label>${lbl}</label><select id="${r._destId}" class="uniform-select"><option value="">Main Hub</option><option value="ORIGINAL">Its own counter (checking...)</option></select></div>`;
+  }).join('');
+  const all = items.length > 1
+    ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;"><button type="button" class="btn-sm" onclick="dsrDestAll_('${boxId}','')">All to Main Hub</button><button type="button" class="btn-sm" onclick="dsrDestAll_('${boxId}','ORIGINAL')">All to their own counters</button></div>` : '';
+  box.innerHTML = all + rows;
+  // read each item's original counter from Stock
+  items.forEach(r => {
+    if (!r._destId || !document.getElementById(r._destId)) return;
+    const setOpt = text => { const el = document.getElementById(r._destId); if (el && el.options[1]) el.options[1].textContent = text; };
+    if (typeof stockIsConfigured !== 'function' || !stockIsConfigured()) { setOpt('Its own counter'); return; }
+    _fetchWithTimeout(STOCK_GAS_URL + '?action=lookup&tag=' + encodeURIComponent(stockNormTag(r.tagNo)), {}, 15000).then(x => x.json()).then(res => {
+      const it = res && res.item;
+      const el = document.getElementById(r._destId);
+      if (!el) return;
+      if (it && String(it.productFrom) === 'Main') { el.remove(1); el.insertAdjacentHTML('afterend', '<div style="font-size:11px;color:var(--text3);margin-top:3px;">This item came from Main Hub.</div>'); }
+      else if (it && it.counter) setOpt('Back to ' + it.counter);
+      else setOpt('Its own counter');
+    }).catch(() => setOpt('Its own counter'));
+  });
+}
+function dsrDestAll_(boxId, val) {
+  document.querySelectorAll('[id^="' + boxId + '-"]').forEach(el => { if (el.tagName === 'SELECT') el.value = (val === 'ORIGINAL' && el.options.length < 2) ? '' : val; });
+}
+function dsrDestValue_(r) {
+  const el = r && r._destId ? document.getElementById(r._destId) : null;
+  return el ? (el.value || '') : '';
+}
+
 // RETURN ONLY - the customer gives the item back and takes nothing in its place.
 // The DSR row is removed (logged to "Returns Log" first), a tagged item goes back to
 // stock (Main Hub by default, or the counter picked here) and - when it was the last item
@@ -26763,8 +26803,7 @@ function dsrOpenReturnOnly(who, idx) {
   const bill = (isBulk ? idx : [idx]).map(i => dsrYmdOrEmpty(((list[i] || {}).prefill && list[i].prefill.billDate) || (list[i] || {}).billDate)).filter(Boolean).sort().pop() || '';
   if (bill) dateEl.min = bill; else dateEl.removeAttribute('min');
   dateEl.value = todayYmd;
-  document.getElementById('roTo').innerHTML = '<option value="">Main Hub</option>';
-  dsrFillReturnToSelect_('roTo');
+  dsrDestRender_('roDestBox', (isBulk ? idx : [idx]).map(i => list[i]).filter(Boolean), isAdm);
   openModal('returnOnlyModal');
 }
 async function dsrReturnOnlySubmit_() {
@@ -26776,7 +26815,6 @@ async function dsrReturnOnlySubmit_() {
   if (!items.length) { closeModal('returnOnlyModal'); return; }
   const returnDate = (document.getElementById('roDate').value || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate)) { toast('Please pick the return date.', 'error'); return; }
-  const toCounter = document.getElementById('roTo').value || '';
   const isAdm = who === 'admin';
   const processedBy = isAdm ? (state.adminName || 'Admin') : (state.empName || 'Employee');
   const btn = document.getElementById('roSubmitBtn');
@@ -26790,7 +26828,7 @@ async function dsrReturnOnlySubmit_() {
       btn.textContent = 'Processing ' + (k + 1) + ' of ' + ordered.length + '...';
       let result;
       try {
-        result = await dsrPostJson_({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate, processedBy, toCounter });
+        result = await dsrPostJson_({ action: 'returnOnly', oldRowNum: r.rowNum, oldSourceSheet: r.sourceSheet, rowKey: r.rowKey || '', returnDate, processedBy, toCounter: dsrDestValue_(r) });
       } catch (e) { result = { status: 'error', message: 'Network error - ' + e.message }; }
       if (result.status === 'success') { done.push(r); lastResult = result; }
       else { failed.push({ r, msg: result.message || 'failed' }); break; }   // stop at the first failure: the rest are untouched
@@ -26843,7 +26881,7 @@ function dsrOpenReturnReplace(who, idx) {
     itemName: r.productName || '', tagNo: isAdm ? (r.tagNo || '') : '', dsrId: isAdm ? (r.dsrId || '') : '',
     billDate: picked.map(x => dsrYmdOrEmpty((x.prefill && x.prefill.billDate) || x.billDate)).filter(Boolean).sort().pop() || '',
     // every old item being returned (one entry when a single item was picked)
-    bulk: picked.map(x => ({ sourceSheet: x.sourceSheet, rowNum: x.rowNum, rowKey: x.rowKey || '', itemName: x.productName || '', tagNo: isAdm ? (x.tagNo || '') : '' }))
+    bulk: picked.map(x => ({ sourceSheet: x.sourceSheet, rowNum: x.rowNum, rowKey: x.rowKey || '', itemName: x.productName || '', productName: x.productName || '', type: x.type || '', tagNo: x.tagNo || '' }))
   };
   const rm = DSR_ST[who].returnMode;
 
@@ -26876,7 +26914,7 @@ function dsrOpenReturnReplace(who, idx) {
       rdEl.max = today;
       if (rm.billDate) rdEl.min = rm.billDate;
       rdEl.value = today;
-      dsrFillReturnToSelect_(`dsrfReturnTo-${who}`);
+      dsrDestRender_(`dsrfReturnTo-${who}`, rm.bulk, isAdm);
     }
 
     // Employee comes from the original sale, so the picker isn't needed in return mode.
@@ -26942,7 +26980,6 @@ async function dsrfDoReturnReplaceSubmit(who, newItems, returnDate) {
   const processedBy = who === 'admin' ? (state.adminName || 'Admin') : (state.empName || 'Employee');
   const btn = document.getElementById('dsrfSubmitBtn-' + who);
   const msg = document.getElementById('dsrfStatusMsg-' + who);
-  const toCounter = dsrfGv('dsrfReturnTo-' + who);
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Processing Return/Replace...'; }
   if (msg) msg.textContent = '';
 
@@ -26955,11 +26992,11 @@ async function dsrfDoReturnReplaceSubmit(who, newItems, returnDate) {
       const o = olds[i];
       let body;
       if (i < pairs) {
-        body = { action: 'returnReplace', oldRowNum: o.rowNum, oldSourceSheet: o.sourceSheet, rowKey: o.rowKey, returnDate, processedBy, newItem: newItems[i], toCounter };
+        body = { action: 'returnReplace', oldRowNum: o.rowNum, oldSourceSheet: o.sourceSheet, rowKey: o.rowKey, returnDate, processedBy, newItem: newItems[i], toCounter: dsrDestValue_(o) };
         // extra new items ride along with the last pair, so they join the same DSR
         if (i === pairs - 1 && newItems.length > pairs) body.extraNewItems = newItems.slice(pairs);
       } else {
-        body = { action: 'returnOnly', oldRowNum: o.rowNum, oldSourceSheet: o.sourceSheet, rowKey: o.rowKey, returnDate, processedBy, toCounter };
+        body = { action: 'returnOnly', oldRowNum: o.rowNum, oldSourceSheet: o.sourceSheet, rowKey: o.rowKey, returnDate, processedBy, toCounter: dsrDestValue_(o) };
       }
       let result;
       try { result = await dsrPostJson_(body); } catch (e) { result = { status: 'error', message: 'Network error: ' + e.message }; }
