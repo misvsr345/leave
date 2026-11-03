@@ -12253,6 +12253,14 @@ function renderSettingsEmpBody(emp) {
   const perms = emp ? emp.granularPerms : null; // filled in by loadSettingsEmpGranular once fetched
 
   let html = `
+  ${emp ? `<div class="card" id="settingsEmpStatusCard" style="padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div><div style="font-weight:700;font-size:13.5px;">Account Status</div>
+      <div id="settingsEmpStatusText" style="font-size:11.5px;color:var(--text3);margin-top:2px;">Loading...</div></div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="settingsEmpActiveToggle" disabled onchange="setSettingsEmpActive_('${escJs(emp.empId)}', this)" style="width:22px;height:22px;accent-color:var(--green,#16a34a);cursor:pointer;">
+      <span style="font-size:12px;font-weight:700;">Active</span>
+    </label>
+  </div>` : ''}
   <div class="card" style="padding:10px 14px;margin-bottom:10px;">
     <div style="font-weight:700;font-size:13.5px;">${nameLabel}</div>
     ${!emp
@@ -12265,6 +12273,19 @@ function renderSettingsEmpBody(emp) {
     <button class="btn-primary" id="settingsSaveEmpGranularBtn" style="width:100%;margin-top:6px;" ${disabled} onclick="saveSettingsEmpGranular('${emp ? escJs(emp.empId) : ''}','${emp ? escJs(emp.name) : ''}')">💾 Save Access${emp ? ' for ' + emp.name : ''}</button>
   </div>`;
   body.innerHTML = html;
+  // The panel is redrawn several times while its data loads, so re-apply the known status (or fetch it once).
+  if (emp) {
+    if (emp.accountActive === undefined) loadSettingsEmpStatus_(emp.empId);
+    else {
+      const cb2 = document.getElementById('settingsEmpActiveToggle'), tx2 = document.getElementById('settingsEmpStatusText');
+      if (cb2 && tx2) {
+        const canEdit2 = /MIS|DIRECTOR/i.test(state.adminRole || '');
+        cb2.checked = emp.accountActive; cb2.disabled = !canEdit2;
+        tx2.textContent = (emp.accountActive ? 'Active — can log in' : 'Inactive — cannot log in') + (canEdit2 ? '' : ' (only MIS / Director can change)');
+        tx2.style.color = emp.accountActive ? 'var(--green,#16a34a)' : 'var(--red,#dc2626)';
+      }
+    }
+  }
 }
 
 // v-add (BRO: "emp drop down lo all emp option ivu, click cheste andariki
@@ -12287,6 +12308,44 @@ function renderSettingsAllEmpBody() {
   </div>`;
 }
 
+// Active / Inactive toggle for one employee (MIS / Director only). Inactive blocks the employee at login only;
+// all their old data stays untouched. Writes the Status cell of Leave_Balance through PortalBackend.
+async function loadSettingsEmpStatus_(empId) {
+  try {
+    const res = await jsonpReliable({ page: 'getEmpAccountStatusAPI', empId });
+    const cb = document.getElementById('settingsEmpActiveToggle');
+    const tx = document.getElementById('settingsEmpStatusText');
+    if (!cb || !tx || document.getElementById('settingsEmpSelect').value !== empId) return;
+    if (!res || !res.ok) { tx.textContent = (res && res.error) || 'Could not load status'; return; }
+    const empObj = (window.__settingsEmpList || []).find(x => x.empId === empId);
+    if (empObj) empObj.accountActive = !!res.active;
+    cb.checked = !!res.active;
+    const canEdit = /MIS|DIRECTOR/i.test(state.adminRole || '');
+    cb.disabled = !canEdit;
+    tx.textContent = res.active ? 'Active — can log in' : 'Inactive — cannot log in';
+    tx.style.color = res.active ? 'var(--green,#16a34a)' : 'var(--red,#dc2626)';
+    if (!canEdit) tx.textContent += ' (only MIS / Director can change)';
+  } catch (e) {
+    const tx = document.getElementById('settingsEmpStatusText');
+    if (tx) tx.textContent = 'Could not load status';
+  }
+}
+async function setSettingsEmpActive_(empId, cb) {
+  const wantActive = cb.checked;
+  if (!wantActive && !confirm('Make this employee INACTIVE? They will not be able to log in.')) { cb.checked = true; return; }
+  cb.disabled = true;
+  try {
+    const res = await jsonpWriteOnce({ page: 'setEmpAccountStatusAPI', empId, active: wantActive ? 'true' : 'false', callerRole: state.adminRole, callerEmail: state.adminEmail }, 'empstat_' + empId + '_' + Date.now(), 20000);
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not save');
+    toast(wantActive ? '✅ Employee is now Active' : '✅ Employee is now Inactive', 'success');
+  } catch (e) {
+    cb.checked = !wantActive;
+    toast('❌ ' + e.message, 'error');
+  }
+  cb.disabled = false;
+  loadSettingsEmpStatus_(empId);
+}
+
 function onSettingsEmpSelected() {
   const empId = document.getElementById('settingsEmpSelect').value;
   const alertListEl = document.getElementById('empAlertActiveList');
@@ -12299,6 +12358,7 @@ function onSettingsEmpSelected() {
   // Draw immediately with the simple toggles (already known) while the
   // detailed sub-option ticks are fetched — sections stay visible the
   // whole time, only their ticked state updates once data arrives.
+  emp.accountActive = undefined; // always re-read the real status when an employee is picked
   renderSettingsEmpBody(emp);
   loadSettingsEmpGranular(empId, emp.name);
   loadSettingsEmpLeaveTypeAccess(empId);
