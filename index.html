@@ -4483,6 +4483,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <!-- v-add (BRO: "10 rojula not connecting enni unnayo REPORT ga
            chupinchali" — informational only, doesn't change the
            existing 10/employee/day retry cap). -->
+      <div id="dispatchPauseBox" style="margin-bottom:10px;"></div>
+      <div id="leadSourcesBox" style="margin-bottom:10px;"></div>
       <div id="retryCountInfoBox" style="margin-bottom:10px;"></div>
       <div id="adminLeadsQuotaBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
@@ -25626,9 +25628,59 @@ async function avoidLeadAdmin(phone, employeeName, assignedDate) {
 }
 
 // ── ADMIN: Daily lead quota per employee ─────────────────────
+// Master switch for the automatic daily leads dispatch (10:00 AM).
+function renderDispatchPauseBox_(st) {
+  const box = document.getElementById('dispatchPauseBox');
+  if (!box) return;
+  const paused = !!(st && st.paused);
+  const since = paused && st.pausedOn ? ` <span style="font-weight:500;color:var(--text3);">(paused since ${st.pausedOn}${st.pausedBy ? ' by ' + st.pausedBy : ''})</span>` : '';
+  box.innerHTML = `<div class="card" style="padding:10px 14px;display:flex;align-items:center;gap:12px;border:1.5px solid ${paused ? '#e53935' : '#2e7d32'};">
+    <div style="flex:1;font-size:12.5px;line-height:1.5;"><b>${paused ? '⏸️ Daily leads are PAUSED' : '▶️ Daily leads are ON'}</b>${since}<br>
+      <span style="font-size:11px;color:var(--text3);">${paused ? 'No leads or event mails go out at 10:00 AM until you switch this back on. Manual dispatch from the sheet still works.' : 'Leads go out automatically every day at 10:00 AM. Set an employee quota to 0 to skip only that person.'}</span></div>
+    <label style="flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;cursor:pointer;">
+      <input type="checkbox" ${paused ? '' : 'checked'} onchange="toggleDailyDispatch(this)" style="width:20px;height:20px;"> ${paused ? 'OFF' : 'ON'}
+    </label></div>`;
+}
+// Selected sheets: where the daily dispatch takes its leads from (one or both).
+function renderLeadSourcesBox_(st) {
+  const box = document.getElementById('leadSourcesBox');
+  if (!box) return;
+  const clean = !st || st.clean !== false, loyalty = !!(st && st.loyalty);
+  box.innerHTML = `<div class="card" style="padding:10px 14px;">
+    <div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">📑 Selected Sheets (lead source)</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:4px;cursor:pointer;"><input type="checkbox" id="leadSrcClean" ${clean ? 'checked' : ''} onchange="saveLeadSources(this)" style="width:18px;height:18px;"> Clean Leads</label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;"><input type="checkbox" id="leadSrcLoyalty" ${loyalty ? 'checked' : ''} onchange="saveLeadSources(this)" style="width:18px;height:18px;"> Loyalty Card Master Sheet</label>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px;">Tick one or both. If both are ticked, leads come from both sheets (alternating); a phone number is never sent twice, and the 90-day gap still applies.</div>
+  </div>`;
+}
+async function saveLeadSources(chk) {
+  const c = document.getElementById('leadSrcClean'), l = document.getElementById('leadSrcLoyalty');
+  if (!c.checked && !l.checked) { chk.checked = true; toast('❌ Select at least one sheet', 'error'); return; }
+  c.disabled = l.disabled = true;
+  try {
+    const res = await leadsApiPost({ action: 'SET_LEAD_SOURCES', clean: c.checked, loyalty: l.checked });
+    if (res && res.ok) toast('✅ Lead sources saved', 'success');
+    else { chk.checked = !chk.checked; toast('❌ ' + ((res && (res.error || res.message)) || 'Update failed'), 'error'); }
+  } catch (e) { chk.checked = !chk.checked; toast('❌ Network error: ' + e.message, 'error'); }
+  c.disabled = l.disabled = false;
+}
+
+async function toggleDailyDispatch(chk) {
+  const turnOn = chk.checked;
+  if (!turnOn && !confirm('Pause the automatic daily leads dispatch? Nobody will receive leads until you switch it back on.')) { chk.checked = true; return; }
+  chk.disabled = true;
+  try {
+    const res = await leadsApiPost({ action: 'SET_DISPATCH_PAUSED', paused: !turnOn, by: (typeof state !== 'undefined' && state.empName) ? state.empName : 'Admin' });
+    if (res && res.ok) { renderDispatchPauseBox_(res); toast(turnOn ? '▶️ Daily leads dispatch is ON' : '⏸️ Daily leads dispatch is PAUSED', 'success'); }
+    else { chk.checked = !turnOn; chk.disabled = false; toast('❌ ' + ((res && (res.error || res.message)) || 'Update failed'), 'error'); }
+  } catch (e) { chk.checked = !turnOn; chk.disabled = false; toast('❌ Network error: ' + e.message, 'error'); }
+}
+
 async function loadAdminLeadsQuota() {
   const box = document.getElementById('adminLeadsQuotaBox');
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  leadsApiGet({ action: 'GET_DISPATCH_STATUS' }).then(renderDispatchPauseBox_).catch(() => {});
+  leadsApiGet({ action: 'GET_LEAD_SOURCES' }).then(renderLeadSourcesBox_).catch(() => renderLeadSourcesBox_(null));
   // v-add (BRO's Retry count display — informational, fired
   // independently so a slow/failed call here never blocks the quota
   // list itself from loading).
