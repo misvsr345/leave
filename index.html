@@ -2567,7 +2567,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="empQADsrNewEntry" onclick="showEmpPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="empQAOutletIssue" onclick="showEmpPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
-        <div class="quick-action-btn" id="empQARdr" onclick="showEmpPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage / Return</div><div class="quick-action-sub">Damage out of stock, or Return to Main Hub</div></div>
         <div class="quick-action-btn" id="empQADsrToday" onclick="showEmpPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today</div></div>
         <div class="quick-action-btn" id="empQADsrStatus" onclick="showEmpPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — yesterday</div></div>
         <div class="quick-action-btn" id="empQADsrMissing" onclick="showEmpPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -2657,7 +2656,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="dsrEntryFormBox-emp-oi"></div>
     </div>
     <div class="page-section" id="emp-rdr">
-      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage / Return</span></div>
+      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage</span></div>
       <div class="filter-bar" style="margin-bottom:14px;">
         <button type="button" class="filter-btn active" id="rdrTabNew-emp" onclick="rdrSwitchTab('emp','new')">➕ New Entry</button>
         <button type="button" class="filter-btn" id="rdrTabPending-emp" onclick="rdrSwitchTab('emp','pending')">⏳ Pending (Received Back)</button>
@@ -2717,6 +2716,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         <div class="quick-actions-grid">
           <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Entry Form</div><div class="quick-action-sub">Add counter stock</div></div>
           <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
+        <div class="quick-action-btn" id="empQARdr" onclick="showEmpPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage</div><div class="quick-action-sub">Take a damaged item out of stock</div></div>
         </div>
       </div>
     </div>
@@ -2736,7 +2736,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-mystocktransfer">
       <div class="section-hdr"><span class="section-title2">🔄 Stock Transfer</span></div>
       <div class="card">
-        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Move a tagged item between Main Hub and any counter, or from one counter to another. Enter the Tag No to find it, then pick where it should go.</p>
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Move a tagged item between Main Hub and any counter, or from one counter to another. Enter the Tag No to find it, then pick where it should go. To return an item to Main Hub, choose Main Hub as the destination.</p>
         <div class="form-row">
           <label>Tag No <span class="req">★</span></label>
           <div style="display:flex;gap:8px;">
@@ -3896,7 +3896,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQADsrNewEntry" onclick="showAdminPage('dsr-newentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New DSR Entry</div><div class="quick-action-sub">Log a sale</div></div>
         <div class="quick-action-btn" id="adminQAOutletIssue" onclick="showAdminPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
-        <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage / Return</div><div class="quick-action-sub">Damage out of stock, or Return to Main Hub</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
@@ -3996,7 +3995,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <div id="dsrEntryFormBox-admin-oi"></div>
     </div>
     <div class="page-section" id="admin-rdr">
-      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage / Return</span></div>
+      <div class="section-hdr"><span class="section-title2">📤 Stock Out: Damage</span></div>
       <div class="filter-bar" style="margin-bottom:14px;">
         <button type="button" class="filter-btn active" id="rdrTabNew-admin" onclick="rdrSwitchTab('admin','new')">➕ New Entry</button>
         <button type="button" class="filter-btn" id="rdrTabPending-admin" onclick="rdrSwitchTab('admin','pending')">⏳ Pending (Received Back)</button>
@@ -4069,6 +4068,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="adminQASlOverview" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
           <div class="quick-action-btn" id="adminQASlEntry" onclick="showAdminPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Stock Entry</div></div>
           <div class="quick-action-btn" id="adminQASlTransfer" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div></div>
+        <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage</div></div>
           <div class="quick-action-btn" id="adminQASlAlerts" onclick="showAdminPage('stockalerts')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Stock Alerts</div></div>
           <div class="quick-action-btn" id="adminQASlCounter" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
           <div class="quick-action-btn" id="adminQASlSales" onclick="showAdminPage('stocklevel-sales')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Daily Sales</div></div>
@@ -4149,7 +4149,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </style>
       <div class="section-hdr"><span class="section-title2">🔄 Stock Transfer</span></div>
       <div class="card">
-        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Move a tagged item between Main Hub and any counter, or from one counter to another. Enter the Tag No to find it, then pick where it should go.</p>
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Move a tagged item between Main Hub and any counter, or from one counter to another. Enter the Tag No to find it, then pick where it should go. To return an item to Main Hub, choose Main Hub as the destination.</p>
         <div class="form-row">
           <label>Tag No <span class="req">★</span></label>
           <div style="display:flex;gap:8px;">
@@ -13527,7 +13527,7 @@ const ADMIN_SEARCH_INDEX = [
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
-  { icon: '📤', label: 'Stock Out: Damage / Return', page: 'rdr' },
+  { icon: '📤', label: 'Stock Out: Damage', page: 'rdr' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -13635,7 +13635,7 @@ const EMP_SEARCH_INDEX = [
   { icon: '📜', label: 'Rules & Grading (KPI)', page: 'kpi-rules' },
   { icon: '➕', label: 'New DSR Entry', page: 'dsr-newentry' },
   { icon: '🏢', label: 'Outlet Issue', page: 'outletissue' },
-  { icon: '📤', label: 'Stock Out: Damage / Return', page: 'rdr' },
+  { icon: '📤', label: 'Stock Out: Damage', page: 'rdr' },
   { icon: '📝', label: "Today's DSR Entries", page: 'dsr-today' },
   { icon: '📶', label: "Yesterday's Status (DSR)", page: 'dsr-status' },
   { icon: '🚫', label: 'Missing DSR', page: 'dsr-missing' },
@@ -16052,7 +16052,8 @@ function showCropModal_(dataUrl, onDone) {
     const imgEl = document.getElementById('photoCropImg');
     let cropper = null;
     let initialBoxData = null;
-    imgEl.onload = () => {
+    const startCropper = () => {
+      if (cropper) return;
       try {
         cropper = new Cropper(imgEl, {
           viewMode: 1, autoCropArea: 0.9, background: false, responsive: true,
@@ -16061,8 +16062,10 @@ function showCropModal_(dataUrl, onDone) {
           // Crop & Use can tell whether the person actually moved/resized it at all.
           ready: function () { initialBoxData = cropper.getCropBoxData(); }
         });
-      } catch (e) { /* Cropper failed to load (offline/CDN blocked) — Crop & Use just falls back to the original below */ }
+      } catch (e) { cropper = null; /* Crop tool unavailable - Crop & Use below will ask the person to retry instead of saving the full photo */ }
     };
+    imgEl.onload = startCropper;
+    if (imgEl.complete && imgEl.naturalWidth) startCropper(); // image may already be loaded before onload was attached
     // v-fix (BRO: "crop cumpalsury, no skip" — the Skip button is gone; cropping is now
     // mandatory every time a photo is picked, no way to keep the full uncropped photo.
     document.getElementById('photoCropUseBtn').onclick = () => {
@@ -16081,14 +16084,15 @@ function showCropModal_(dataUrl, onDone) {
           return;
         }
       }
-      let resultUrl = dataUrl;
-      if (cropper) {
-        try {
-          const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000, imageSmoothingQuality: 'high' });
-          resultUrl = canvas ? canvas.toDataURL('image/jpeg', 0.92) : dataUrl;
-        } catch (e) { resultUrl = dataUrl; }
-      }
-      if (cropper) { try { cropper.destroy(); } catch (e) {} cropper = null; }
+      // Never fall back to the full photo: if the crop tool is missing or the crop fails, stop here.
+      if (!cropper) { toast('Crop tool did not load. Check the internet connection and pick the photo again.', 'error'); return; }
+      let resultUrl = '';
+      try {
+        const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000, imageSmoothingQuality: 'high' });
+        resultUrl = canvas ? canvas.toDataURL('image/jpeg', 0.92) : '';
+      } catch (e) { resultUrl = ''; }
+      if (!resultUrl) { toast('Could not crop this photo. Please try again.', 'error'); return; }
+      try { cropper.destroy(); } catch (e) {} cropper = null;
       renderPreviewScreen(resultUrl);
     };
   }
@@ -16360,9 +16364,13 @@ async function submitNewLoyaltyCard() {
     // before sending.
     // v-fix: reads from whichever of Camera/Gallery actually has the file
     // (see _ncFileInput above), instead of always the Gallery input.
+    // Signature and PAN photos: use the cropped version kept in confirmedPhotos (set right after the
+    // Crop & Save step). Only fall back to the raw file when no cropped copy exists.
+    const sigRaw = state.confirmedPhotos['ncSigPhoto'] || await fileToBase64(_ncFileInput('ncSigPhoto'));
+    const panRaw = state.confirmedPhotos['ncPanPhoto'] || await fileToBase64(_ncFileInput('ncPanPhoto'));
     const [sigPhoto, panPhoto] = await Promise.all([
-      fileToBase64(_ncFileInput('ncSigPhoto')).then(_silentCompressForUpload),
-      fileToBase64(_ncFileInput('ncPanPhoto')).then(_silentCompressForUpload)
+      _silentCompressForUpload(sigRaw),
+      panRaw ? _silentCompressForUpload(panRaw) : Promise.resolve('')
     ]);
     const custPhotoRaw    = state.confirmedPhotos['ncCustPhoto']    || await fileToBase64(_ncFileInput('ncCustPhoto'));
     const aadhaarFrontRaw = state.confirmedPhotos['ncAadhaarFront'] || await fileToBase64(_ncFileInput('ncAadhaarFront'));
@@ -20035,7 +20043,7 @@ function renderDsrEntryForm(who, force) {
            here. Reuses dsrfBillDate/dsrfCust exactly like Outlet Issue does above (dsrfCust holds
            Remarks here) so dsrfSubmit/draft-save/etc. need no structural change. -->
       <div class="card">
-        <div class="ch">📤 &nbsp;Stock Out Details (Damage / Return)</div>
+        <div class="ch">📤 &nbsp;Stock Out Details (Damage)</div>
         <div class="cb">
           <div class="g2">
             <div><label>Date ${frqStar(dsrFk_(who,'billDate'))}</label><input type="date" lang="en-GB" id="dsrfBillDate-${who}"></div>
@@ -20300,9 +20308,7 @@ function dsrfAddEntry(who) {
       <div class="ch">↩️ &nbsp;Reason</div>
       <div class="cb"><label>Reason ${frqStar(dsrFk_(who,'reason'))}</label>
         <select id="dsrfRdrReason-${who}-${eid}" class="uniform-select">
-          <option value="">-- Select --</option>
-          <option value="Return">Return</option>
-          <option value="Damage">Damage</option>
+          <option value="Damage" selected>Damage</option>
         </select>
       </div>
     </div>
@@ -21277,17 +21283,17 @@ const FIELD_REQ_REGISTRY = [
   { form: 'Outlet Issue', key: 'outlet.diaNetWt', label: 'Net Wt (Diamond)' },
   { form: 'Outlet Issue', key: 'outlet.silverItem', label: 'Silver Item' },
   { form: 'Outlet Issue', key: 'outlet.silverWeight', label: 'Weight (Silver)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.billDate', label: 'Date' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.reason', label: 'Reason (Return / Damage)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.productName', label: 'Product Name' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.tagNo', label: 'Tag No' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.design', label: 'Design (Gold)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.tunch', label: 'Tunch (Gold)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.weight', label: 'Weight (Gold)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.diaGrossWt', label: 'Gross Wt (Diamond)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.diaNetWt', label: 'Net Wt (Diamond)' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.silverItem', label: 'Silver Item' },
-  { form: 'Stock Out (Damage / Return)', key: 'rdr.silverWeight', label: 'Weight (Silver)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.billDate', label: 'Date' },
+  { form: 'Stock Out (Damage)', key: 'rdr.reason', label: 'Reason (Damage)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.productName', label: 'Product Name' },
+  { form: 'Stock Out (Damage)', key: 'rdr.tagNo', label: 'Tag No' },
+  { form: 'Stock Out (Damage)', key: 'rdr.design', label: 'Design (Gold)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.tunch', label: 'Tunch (Gold)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.weight', label: 'Weight (Gold)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.diaGrossWt', label: 'Gross Wt (Diamond)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.diaNetWt', label: 'Net Wt (Diamond)' },
+  { form: 'Stock Out (Damage)', key: 'rdr.silverItem', label: 'Silver Item' },
+  { form: 'Stock Out (Damage)', key: 'rdr.silverWeight', label: 'Weight (Silver)' },
   { form: 'Leave: Direct Action (Admin)', key: 'direct.authWho', label: 'Who was met (Emergency / Special Permission)' },
   { form: 'Leave: Reject / Absent / Modify (Admin)', key: 'adminLeave.rejectReason', label: 'Reject: Reason' },
   { form: 'Leave: Reject / Absent / Modify (Admin)', key: 'adminLeave.absentReason', label: 'Mark Absent: Reason' },
@@ -21337,12 +21343,12 @@ function frqIsMis_() { return (state.adminRole || '').toUpperCase().indexOf('MIS
 const FRQ_FORM_ICONS = {
   'Stock Entry / Transfer': '📦', 'DSR Entry': '📋', 'RDR': '🧾', 'Leave': '🏖️',
   'Leave Application': '🏖️', 'New Loyalty Card': '💳', 'Golden Aura': '✨', 'Lead Call Log': '📞',
-  'Outlet Issue': '🏷️', 'Stock Out (Damage / Return)': '📤', 'Leave: Direct Action (Admin)': '🎯', 'Leave: Reject / Absent / Modify (Admin)': '🛠️'
+  'Outlet Issue': '🏷️', 'Stock Out (Damage)': '📤', 'Leave: Direct Action (Admin)': '🎯', 'Leave: Reject / Absent / Modify (Admin)': '🛠️'
 };
 const FRQ_FORM_NOTES = {
   'DSR Entry': 'These settings apply to New DSR, Customer Return / Replace and Edit DSR. Outlet Issue and Stock Out have their own groups below.',
   'Outlet Issue': 'These settings apply to the Outlet Issue form only.',
-  'Stock Out (Damage / Return)': 'These settings apply to the Stock Out (Damage / Return) form only.',
+  'Stock Out (Damage)': 'These settings apply to the Stock Out (Damage) form only.',
   'Leave: Direct Action (Admin)': 'The admin Direct Action screen (Approve / Mark Absent on behalf of an employee).',
   'Leave: Reject / Absent / Modify (Admin)': 'The reason boxes and date fields in the admin Reject, Mark Absent and Modify Leave popups.',
   'New Loyalty Card': 'These settings apply to both the New Loyalty Card form and the Edit Loyalty Card form.',
@@ -26799,7 +26805,7 @@ function dsrfSubmit(who) {
     const type = dsrfGv(`dsrfTyp-${who}-${eid}`), pf = dsrfGv(`dsrfPf-${who}-${eid}`);
     // v-add (BRO's Return/Damage/Repair feature) — Reason is per item.
     const rdrReason = isRDR ? dsrfGv(`dsrfRdrReason-${who}-${eid}`) : '';
-    if (isRDR && frqIsRequired(dsrFk_(who,'reason')) && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Return/Damage) for every item!'; return; }
+    if (isRDR && frqIsRequired(dsrFk_(who,'reason')) && !rdrReason) { ok = false; errMsg = 'Please select a Reason (Damage) for every item!'; return; }
 
     if (type === 'Silver') {
       let sn = dsrfGv(`dsrfSn-${who}-${eid}`); if (sn === 'Other') sn = dsrfGv(`dsrfSnCustom-${who}-${eid}`);
@@ -27831,7 +27837,7 @@ function dsrfConfirmSubmit(who, evt) {
           icon: isRDR ? '🔄' : isOutlet ? '🏬' : '🧾',
           title: 'Submitted Successfully',
           type: 'dsr',
-          msg: (isRDR ? 'Return / Damage / Repair' : isOutlet ? 'Outlet Issue' : 'DSR entry') + ' saved successfully.',
+          msg: (isRDR ? 'Stock Out (Damage)' : isOutlet ? 'Outlet Issue' : 'DSR entry') + ' saved successfully.',
           details: [
             [isRDR ? 'ID' : isOutlet ? 'Outlet Issue ID' : 'DSR ID', result.dsrId || '—'],
             ['Customer', properCase(r0.customerName || '')],
