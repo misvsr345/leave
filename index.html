@@ -2588,6 +2588,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrTodayBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-emp','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+      <div id="dsrSelfEditBox-emp"></div>
     </div>
     <div class="page-section" id="emp-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status</span></div>
@@ -3569,6 +3570,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div class="quick-action-btn" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
+            <div class="quick-action-btn" onclick="dsrEditCtlOpen_()"><span class="quick-action-icon">✏️</span><div class="quick-action-label">DSR Edit <span id="decBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Employee DSR edit ON/OFF, requests</div></div>
             <div class="quick-action-btn" onclick="mailIssOpen_()"><span class="quick-action-icon">📧</span><div class="quick-action-label">Mail Issues <span id="mailIssBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Missing / bouncing e-mails, allow access</div></div>
             <div class="quick-action-btn" onclick="pwrOpen_()"><span class="quick-action-icon">🛟</span><div class="quick-action-label">Password Requests <span id="pwrBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Reset requests, employees without e-mail</div></div>
           </div>
@@ -4939,6 +4941,35 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div style="font-size:11.5px;opacity:.7;margin-bottom:8px;">Employees with no e-mail or a bouncing e-mail are blocked at login until they verify a new one. You can let someone continue for a short time.</div>
     <button class="btn-secondary" id="mailIssScanBtn" style="margin:0 0 10px;padding:8px;font-size:12.5px;width:100%;" onclick="mailIssScan_()">🔍 Scan Gmail for bounced mails now</button>
     <div id="mailIssBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dsrEditReqModal">
+  <div class="modal-box" style="max-width:400px;">
+    <button class="modal-close-x" onclick="closeModal('dsrEditReqModal')" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:6px;">📨 Request DSR Edit</div>
+    <div class="modal-sub" id="derSub"></div>
+    <div style="font-size:12.5px;font-weight:700;margin:6px 0;">What do you want to change?</div>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;"><input type="checkbox" class="derChk" value="billDate"> Bill Date</label>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;"><input type="checkbox" class="derChk" value="customer"> Customer name / mobile / address</label>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;"><input type="checkbox" class="derChk" value="items"> Item details (product, design, tunch, weight, photo, add / remove item)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:13px;"><input type="checkbox" class="derChk" value="tag"> Tag No</label>
+    <div class="form-group"><label>Reason</label><textarea id="derReason" rows="2" placeholder="Why does this DSR need a change?"></textarea></div>
+    <div class="err-msg" id="derMsg" style="display:none;"></div>
+    <button class="btn-primary" id="derSendBtn" onclick="dsrEditReqSend_()">Send request to MIS</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dsrEditCtlModal">
+  <div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('dsrEditCtlModal')" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:8px;">✏️ Employee DSR Edit</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-bottom:10px;">
+      <div style="font-size:12.5px;"><b>Allow employees to edit their DSR</b><br><span style="opacity:.7;">One edit per DSR. Every edit comes to you with old and new values; the DSR changes only after your OK.</span></div>
+      <button class="btn-secondary" id="decToggleBtn" style="width:auto;margin:0;padding:7px 16px;font-size:13px;font-weight:800;" onclick="dsrEditToggle_()">…</button>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;">Edit requests and edits waiting for you</div>
+    <div id="decBody"></div>
   </div>
 </div>
 
@@ -7785,6 +7816,171 @@ async function mailIssScan_() {
   } catch (e) { toast('Connection error. Try again.', 'error'); }
   btn.disabled = false; btn.textContent = '🔍 Scan Gmail for bounced mails now';
 }
+
+// ── Employee DSR edit (one time) ──
+window.__dsrEdit_ = { enabled: false, states: {}, fields: {} };
+const DSR_EDIT_LABELS = { billDate: 'Bill Date', customer: 'Customer name / mobile / address', items: 'Item details', tag: 'Tag No' };
+function dsrEditFieldNames_(csv) { return String(csv || '').split(',').map(f => DSR_EDIT_LABELS[f.trim()] || '').filter(Boolean).join(', '); }
+async function dsrEditLoadStates_(rows) {
+  try {
+    const ids = [...new Set((rows || []).map(r => r.dsrNo).filter(Boolean))];
+    if (!ids.length || !state.empName) return;
+    const r = await fetch(DSR_GAS_URL + '?action=dsrEditInfo&empName=' + encodeURIComponent(state.empName) + '&ids=' + encodeURIComponent(ids.join(','))).then(x => x.json());
+    if (r && r.status === 'success') {
+      window.__dsrEdit_ = { enabled: !!r.enabled, states: r.states || {}, fields: r.fields || {} };
+      renderDsrTodayFiltered('emp');
+    }
+  } catch (e) { /* the list still works without edit buttons */ }
+}
+function dsrEditBtnHtml_(dsrNo) {
+  const E = window.__dsrEdit_;
+  if (!E || !E.enabled || !dsrNo) return '';
+  const st = E.states[dsrNo];
+  const wrap = h => '<div style="padding:0 12px 10px;text-align:right;">' + h + '</div>';
+  const btn = (label, fn) => '<button class="btn-secondary" style="width:auto;margin:0;padding:7px 14px;font-size:12.5px;" onclick="' + fn + '(\'' + escJs(dsrNo) + '\')">' + label + '</button>';
+  if (st === 'edit') return wrap(btn('✏️ Edit (one time)', 'dsrEditOpen_'));
+  if (st === 'request') return wrap(btn('📨 Request Edit', 'dsrEditReqOpen_'));
+  if (st === 'requested') return wrap('<span class="kd-pill gold" style="font-size:11px;">⏳ Edit request sent to MIS</span>');
+  if (st === 'review') return wrap('<span class="kd-pill gold" style="font-size:11px;">⏳ Edit sent — waiting for MIS to approve</span>');
+  if (st === 'edited') return wrap('<span class="kd-pill green" style="font-size:11px;">✔ Edited once</span>');
+  return '';
+}
+function dsrEditOpen_(dsrNo) {
+  const fields = (window.__dsrEdit_.fields || {})[dsrNo] || '';
+  if (!fields) { toast('Edit is not available for this DSR.', 'error'); return; }
+  openAdvanceOrderEdit('emp', dsrNo, fields);
+}
+// Only the parts the employee asked for (and MIS allowed) stay open; the server enforces the same.
+function dsrEditApplyLocks_(who, fields) {
+  const A = {}; String(fields || '').split(',').forEach(f => { A[f.trim()] = true; });
+  const lock = el => { if (!el) return; el.setAttribute('readonly', 'readonly'); el.style.background = 'var(--bg-disabled,#f0f0f0)'; el.style.pointerEvents = 'none'; };
+  if (!A.billDate) lock(document.getElementById('aoeBillDate-' + who));
+  if (!A.customer) ['aoeCust-', 'aoeMobile-', 'aoeAddr-'].forEach(pf => lock(document.getElementById(pf + who)));
+  const list = document.getElementById('aoeItemsList-' + who);
+  const isTag = id => /TagNo/.test(id || '');
+  if (list) list.querySelectorAll('input,select,textarea,button').forEach(el => {
+    const tag = isTag(el.id);
+    if ((!A.items && !(A.tag && tag)) || (A.items && !A.tag && tag)) { el.disabled = true; el.style.opacity = '.6'; }
+  });
+  document.querySelectorAll('#dsrSelfEditBox-' + who + ' .add-entry-btn').forEach(b => { b.style.display = A.items ? '' : 'none'; });
+  const scope = document.querySelector('#dsrSelfEditBox-' + who + ' .dsrf-scope');
+  if (scope && !(A.billDate && A.customer && A.items && A.tag)) {
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;margin-bottom:10px;color:var(--purple-dark);';
+    note.textContent = 'You can change only: ' + dsrEditFieldNames_(fields) + '. Other fields are locked.';
+    scope.insertBefore(note, scope.children[1] || null);
+  }
+}
+let DER_ID = '';
+function dsrEditReqOpen_(dsrNo) {
+  DER_ID = dsrNo;
+  document.getElementById('derSub').textContent = 'DSR ' + dsrNo + ' was entered on an earlier day. Choose what you want to change; MIS will approve it. After approval only those parts can be edited, one time.';
+  document.querySelectorAll('.derChk').forEach(c => { c.checked = false; });
+  document.getElementById('derReason').value = '';
+  const m = document.getElementById('derMsg'); m.style.display = 'none';
+  openModal('dsrEditReqModal');
+}
+async function dsrEditReqSend_() {
+  const picked = [...document.querySelectorAll('.derChk')].filter(c => c.checked).map(c => c.value);
+  const reason = document.getElementById('derReason').value.trim();
+  const m = document.getElementById('derMsg');
+  const err = t => { m.textContent = t; m.style.display = 'block'; m.style.color = 'var(--red)'; };
+  if (!picked.length) { err('Select what you want to change.'); return; }
+  if (!reason) { err('Please write the reason.'); return; }
+  const btn = document.getElementById('derSendBtn'); btn.disabled = true;
+  try {
+    const r = await fetch(DSR_GAS_URL + '?action=dsrEditRequest&dsrId=' + encodeURIComponent(DER_ID) + '&empName=' + encodeURIComponent(state.empName) +
+      '&fields=' + encodeURIComponent(picked.join(',')) + '&reason=' + encodeURIComponent(reason)).then(x => x.json());
+    if (r.status !== 'success') { err(r.message || 'Could not send the request.'); btn.disabled = false; return; }
+    window.__dsrEdit_.states[DER_ID] = 'requested';
+    closeModal('dsrEditReqModal');
+    renderDsrTodayFiltered('emp');
+    toast('✅ ' + (r.message || 'Request sent to MIS.'), 'success');
+  } catch (e) { err('Connection error. Try again.'); }
+  btn.disabled = false;
+}
+
+// ── MIS: Settings -> DSR Edit (ON/OFF + approve requests) and the new-request popup ──
+let DEC_ON = false;
+function dsrEditCtlOpen_() { openModal('dsrEditCtlModal'); dsrEditCtlLoad_(); }
+async function dsrEditCtlLoad_() {
+  const body = document.getElementById('decBody');
+  body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;opacity:.7;">Loading...</div>';
+  try {
+    const r = await fetch(DSR_GAS_URL + '?action=dsrEditPending&callerRole=' + encodeURIComponent(state.adminRole || '') + '&callerEmail=' + encodeURIComponent(state.adminEmail || '')).then(x => x.json());
+    if (r.status !== 'success') throw new Error(r.message || 'Could not load');
+    DEC_ON = !!r.enabled; dsrEditToggleLabel_();
+    dsrEditBadge_(r.items.length);
+    if (!r.items.length) { body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;opacity:.7;">No pending requests.</div>'; return; }
+    body.innerHTML = r.items.map(i => {
+      const head = `<div style="font-weight:700;font-size:13px;">${escHtml_(i.dsrId)} <span style="opacity:.6;font-weight:600;">· ${escHtml_(properCase(i.emp))}</span> <span class="kd-pill ${i.kind === 'review' ? 'green' : 'gold'}" style="font-size:10px;">${i.kind === 'review' ? 'Edit done — needs OK' : 'Edit request'}</span></div>
+        <div style="font-size:11.5px;opacity:.75;margin:2px 0;">${escHtml_(properCase(i.customer))} · Bill ${escHtml_(i.billDate)} · Entered ${escHtml_(i.entryDay)}${i.submittedAt ? ' · Sent ' + escHtml_(i.submittedAt) : ''}</div>`;
+      if (i.kind === 'review') {
+        const rows = (i.changes || []).map(c => `<tr><td style="padding:4px 6px;border-top:1px solid var(--border);">${escHtml_(c.label)}</td><td style="padding:4px 6px;border-top:1px solid var(--border);color:var(--red);">${escHtml_(c.oldV || '—')}</td><td style="padding:4px 6px;border-top:1px solid var(--border);color:var(--green, #2E7D32);font-weight:700;">${escHtml_(c.newV || '—')}</td></tr>`).join('');
+        return `<div style="border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:8px;">${head}
+          <div style="overflow-x:auto;margin:6px 0;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="text-align:left;"><th style="padding:4px 6px;">Field</th><th style="padding:4px 6px;">Old</th><th style="padding:4px 6px;">New</th></tr></thead><tbody>${rows || '<tr><td colspan="3" style="padding:6px;opacity:.7;">No values changed.</td></tr>'}</tbody></table></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-primary" style="width:auto;margin:0;padding:7px 14px;font-size:12px;" onclick="dsrEditDecide_('${escJs(i.dsrId)}', 1, this)">OK — update data</button>
+            <button class="btn-secondary" style="width:auto;margin:0;padding:7px 14px;font-size:12px;" onclick="dsrEditDecide_('${escJs(i.dsrId)}', 0, this)">Reject</button>
+          </div></div>`;
+      }
+      return `<div style="border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:8px;">${head}
+        <div style="font-size:12px;margin:4px 0;"><b>Wants to change:</b> ${escHtml_(dsrEditFieldNames_(i.fields))}</div>
+        <div style="font-size:12px;margin-bottom:6px;"><b>Reason:</b> ${escHtml_(i.reason)}</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-primary" style="width:auto;margin:0;padding:7px 14px;font-size:12px;" onclick="dsrEditDecide_('${escJs(i.dsrId)}', 1, this)">Allow</button>
+          <button class="btn-secondary" style="width:auto;margin:0;padding:7px 14px;font-size:12px;" onclick="dsrEditDecide_('${escJs(i.dsrId)}', 0, this)">Reject</button>
+        </div></div>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</div>';
+  }
+}
+function dsrEditToggleLabel_() {
+  const b = document.getElementById('decToggleBtn');
+  if (!b) return;
+  b.textContent = DEC_ON ? 'ON' : 'OFF';
+  b.style.background = DEC_ON ? '#2E7D32' : '#9e9e9e'; b.style.color = '#fff'; b.style.border = 'none';
+}
+function dsrEditBadge_(n) {
+  const b = document.getElementById('decBadge');
+  if (!b) return;
+  b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none';
+}
+async function dsrEditToggle_() {
+  const b = document.getElementById('decToggleBtn'); b.disabled = true;
+  try {
+    const r = await fetch(DSR_GAS_URL + '?action=dsrEditToggle&enabled=' + (DEC_ON ? '0' : '1') + '&callerRole=' + encodeURIComponent(state.adminRole || '') + '&callerEmail=' + encodeURIComponent(state.adminEmail || '')).then(x => x.json());
+    if (r.status !== 'success') { toast(r.message || 'Could not change', 'error'); }
+    else { DEC_ON = !!r.enabled; dsrEditToggleLabel_(); toast('Employee DSR edit is now ' + (DEC_ON ? 'ON' : 'OFF'), 'success'); }
+  } catch (e) { toast('Connection error. Try again.', 'error'); }
+  b.disabled = false;
+}
+async function dsrEditDecide_(dsrId, approve, btn) {
+  btn.disabled = true;
+  try {
+    const r = await fetch(DSR_GAS_URL + '?action=dsrEditDecide&dsrId=' + encodeURIComponent(dsrId) + '&approve=' + approve + '&callerRole=' + encodeURIComponent(state.adminRole || '') + '&callerEmail=' + encodeURIComponent(state.adminEmail || '')).then(x => x.json());
+    if (r.status !== 'success') { toast(r.message || 'Could not update', 'error'); btn.disabled = false; return; }
+    toast('✅ ' + (r.message || 'Done'), 'success');
+    dsrEditCtlLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; }
+}
+// MIS popup: a new edit request pops up once (every 60 s check).
+const DEC_SEEN = {};
+async function dsrEditPoll_() {
+  try {
+    if (state.__loginKind !== 'admin' || String(state.adminRole || '').toUpperCase().indexOf('MIS') === -1) return;
+    const r = await fetch(DSR_GAS_URL + '?action=dsrEditPending&callerRole=' + encodeURIComponent(state.adminRole || '') + '&callerEmail=' + encodeURIComponent(state.adminEmail || '')).then(x => x.json());
+    if (!r || r.status !== 'success') return;
+    dsrEditBadge_(r.items.length);
+    const fresh = r.items.filter(i => !DEC_SEEN[i.dsrId]);
+    if (!fresh.length) return;
+    r.items.forEach(i => { DEC_SEEN[i.dsrId] = true; });
+    _queueAutoPopup_(() => { openModal('dsrEditCtlModal'); dsrEditCtlLoad_(); });
+  } catch (e) {}
+}
+setInterval(dsrEditPoll_, 60000);
+setTimeout(dsrEditPoll_, 8000);
 let FP_ROLE = 'EMP';
 function fpMsg_(text, isErr) {
   const el = document.getElementById('fpMsg');
@@ -19396,6 +19592,7 @@ function loadDsrToday(who, date) {
       }
     }
     renderDsrTodayFiltered(who);
+    if (who === 'emp') dsrEditLoadStates_(res.rows);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadDsrToday(\'' + who + '\')\" title=\"Retry\">🔄</button></div>'; });
 }
 
@@ -19489,6 +19686,7 @@ function renderDsrTodayFiltered(who) {
               <tbody>${itemsHtml}</tbody>
             </table>
           </div>
+          ${who === 'emp' ? dsrEditBtnHtml_(g.dsrNo) : ''}
         </div>
       </div>`;
     });
@@ -28824,9 +29022,12 @@ function aoeSetNewStatus(who, val, btn) {
   if (crWrap) crWrap.style.display = (val === 'Cancelled') ? '' : 'none';
 }
 
-function openAdvanceOrderEdit(who, dsrId) {
+function openAdvanceOrderEdit(who, dsrId, selfFields) {
   const role = who === 'admin' ? 'ADMIN' : 'EMP';
-  const editBox = document.getElementById('aoeEditBox-' + who);
+  const SELF = !!selfFields;   // employee's one-time edit of an own DSR (selfFields = which parts are open)
+  window['__aoeSelf_' + who] = SELF ? selfFields : null;
+  if (SELF) { const ao = document.getElementById('aoeEditBox-' + who); if (ao) ao.innerHTML = ''; }
+  const editBox = document.getElementById(SELF ? 'dsrSelfEditBox-' + who : 'aoeEditBox-' + who);
   editBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading DSR...</div>';
   editBox.scrollIntoView({ behavior: 'smooth' });
 
@@ -28853,12 +29054,13 @@ function openAdvanceOrderEdit(who, dsrId) {
 
       editBox.innerHTML = `
         <div class="dsrf-scope">
+          ${SELF ? `<div style="background:#fff7e0;border:1.5px solid #d4af37;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;"><b>✏️ Editing DSR ${escHtml_(head.dsrId)}</b> — this is a <b>one-time</b> edit. MIS will see your old and new values and the DSR is updated after MIS approves.</div>` : ''}
           <div class="card">
             <div class="ch">✎ &nbsp;Bill Details</div>
             <div class="cb">
               <div class="g2 mb14">
-                <div><label>Bill Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}" readonly onclick="return false;" onkeydown="return false;" style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;pointer-events:none;"></div>
-                <div><label>Customer Name ${frqStar('dsr.custName')}</label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}" readonly style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;"></div>
+                <div><label>Bill Date ${frqStar('dsr.billDate')}</label><input type="date" lang="en-GB" id="aoeBillDate-${who}" value="${head.billDate || ''}" ${SELF ? 'max="' + toYMD(new Date()) + '"' : 'readonly onclick="return false;" onkeydown="return false;" style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;pointer-events:none;"'}></div>
+                <div><label>Customer Name ${frqStar('dsr.custName')}</label><input type="text" id="aoeCust-${who}" value="${head.customerName || ''}" ${SELF ? '' : 'readonly style="background:var(--bg-disabled,#f0f0f0);cursor:not-allowed;"'}></div>
               </div>
               <div class="g2">
                 <div><label>Mobile Number ${frqStar('dsr.mobile')}</label><input type="tel" id="aoeMobile-${who}" maxlength="10" value="${head.mobileNumber || ''}"></div>
@@ -28867,7 +29069,7 @@ function openAdvanceOrderEdit(who, dsrId) {
             </div>
           </div>
 
-          <div class="pay-status-section">
+          <div class="pay-status-section"${SELF ? ' style="display:none;"' : ''}>
             <div class="pay-status-title">💰 &nbsp;New Status <span class="req">★</span></div>
             <div class="pay-tgl" id="aoeStatusTgl-${who}">
               <button class="${head.paymentStatus==='Advance'?'on advance':''}" onclick="aoeSetNewStatus('${who}','Advance',this)">⏳ Still Advance</button>
@@ -28883,7 +29085,7 @@ function openAdvanceOrderEdit(who, dsrId) {
                    skip any row whose Payment Status is Cancelled, server-side. -->
               ${isAdminView ? `<button class="on cancelled" onclick="aoeSetNewStatus('${who}','Cancelled',this)">❌ Cancelled</button>` : ''}
             </div>
-            <input type="hidden" id="aoeNewStatus-${who}" value="${isAdminView ? 'Cancelled' : 'Purchased'}">
+            <input type="hidden" id="aoeNewStatus-${who}" value="${SELF ? (head.paymentStatus || '') : (isAdminView ? 'Cancelled' : 'Purchased')}">
             <div class="form-row" id="aoeTakenDateWrap-${who}" style="margin-top:10px;">
               <label>Customer Taken Date ${frqStar('dsr.takenDate')}</label>
               <input type="date" lang="en-GB" id="aoeTakenDate-${who}">
@@ -28897,8 +29099,8 @@ function openAdvanceOrderEdit(who, dsrId) {
           <div id="aoeItemsList-${who}"></div>
           <button class="add-entry-btn" onclick="aoeAddEntry('${who}')">＋ &nbsp; Add Another Item</button>
 
-          <button class="sbtn" id="aoeSubmitBtn-${who}" onclick="submitAdvanceOrderUpdate('${who}')" style="margin-top:14px;">💾 &nbsp; Save Update &nbsp; 💾</button>
-          <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById('aoeEditBox-${who}').innerHTML=''">Cancel</button>
+          <button class="sbtn" id="aoeSubmitBtn-${who}" onclick="submitAdvanceOrderUpdate('${who}')" style="margin-top:14px;">${SELF ? '📨 &nbsp; Send Edit to MIS (one time) &nbsp; 📨' : '💾 &nbsp; Save Update &nbsp; 💾'}</button>
+          <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById('${SELF ? 'dsrSelfEditBox-' : 'aoeEditBox-'}${who}').innerHTML=''">Cancel</button>
           <div id="aoeStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
         </div>`;
 
@@ -28908,6 +29110,7 @@ function openAdvanceOrderEdit(who, dsrId) {
       const renderItems = () => {
         document.getElementById('aoeItemsList-' + who).innerHTML = '';
         (head.items || []).forEach(it => aoeAddEntry(who, it));
+        if (SELF) dsrEditApplyLocks_(who, selfFields);
       };
       if (!DSR_ST[who].loaded) {
         fetch(DSR_GAS_URL + '?action=getData').then(r => r.json()).then(data => {
@@ -29018,11 +29221,14 @@ function submitAdvanceOrderUpdate(who) {
 
   const btn = document.getElementById('aoeSubmitBtn-' + who);
   const msg = document.getElementById('aoeStatusMsg-' + who);
+  const SELF = !!window['__aoeSelf_' + who];
+  if (SELF && !confirm('This is a ONE-TIME edit. It will go to MIS for approval, and the DSR is updated only after MIS says OK. Send now?')) return;
   btn.disabled = true; btn.innerHTML = '⏳ &nbsp; Saving...';
   msg.textContent = '';
 
   const payload = {
-    action: 'updateAdvanceOrderDsr',
+    action: SELF ? 'empEditDsr' : 'updateAdvanceOrderDsr',
+    empName: SELF ? state.empName : undefined,
     dsrId: head.dsrId,
     employeeName: head.employeeName,
     billDate: date, customerName: cust, mobileNumber: mob, address: addr,
@@ -29035,8 +29241,13 @@ function submitAdvanceOrderUpdate(who) {
   fetch(DSR_GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
     .then(r => r.json())
     .then(result => {
-      btn.disabled = false; btn.innerHTML = '💾 &nbsp; Save Update &nbsp; 💾';
-      if (result.status === 'success') {
+      btn.disabled = false; btn.innerHTML = SELF ? '📨 &nbsp; Send Edit to MIS (one time) &nbsp; 📨' : '💾 &nbsp; Save Update &nbsp; 💾';
+      if (result.status === 'success' && SELF) {
+        toast('✅ ' + (result.message || 'Your edit was sent to MIS for approval.'), 'success');
+        document.getElementById('dsrSelfEditBox-' + who).innerHTML = '';
+        window['__aoeSelf_' + who] = null;
+        loadDsrTodayForDate(who);
+      } else if (result.status === 'success') {
         toast('✅ DSR updated' + (newStatus === 'Purchased' ? ' — closed out' : newStatus === 'Cancelled' ? ' — marked Cancelled' : ''), 'success');
         document.getElementById('aoeEditBox-' + who).innerHTML = '';
         loadAdvanceOrderList(who);
@@ -29046,7 +29257,7 @@ function submitAdvanceOrderUpdate(who) {
       }
     })
     .catch(err => {
-      btn.disabled = false; btn.innerHTML = '💾 &nbsp; Save Update &nbsp; 💾';
+      btn.disabled = false; btn.innerHTML = SELF ? '📨 &nbsp; Send Edit to MIS (one time) &nbsp; 📨' : '💾 &nbsp; Save Update &nbsp; 💾';
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ Network error: ' + err;
     });
