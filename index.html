@@ -521,7 +521,7 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
 .export-icon-btn:active { animation: iconWiggle 0.5s ease; }
 
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
-.fp-link { color: var(--purple, #4A0E8F); font-size: 12.5px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.fp-link { color: var(--purple, #4A0E8F); font-size: 13.5px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 
 /* ══════════════════════════════════════
    MAIN APP LAYOUT
@@ -1977,9 +1977,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <input type="password" id="empPassInput" placeholder="Enter your password" autocomplete="off">
             <button type="button" class="pw-toggle" onclick="togglePw('empPassInput', this)">👁</button>
           </div>
+          <div style="text-align:right;margin-top:6px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('EMP')">🔑 Forgot password?</a></div>
         </div>
         <button class="btn-primary" id="empLoginBtn" onclick="empLogin()">🔓 Login</button>
-        <div style="text-align:center;margin-top:10px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('EMP')">Forgot password?</a></div>
         <div class="err-msg" id="empLoginErr">Employee ID not found. Please check.</div>
       </div>
 
@@ -1995,9 +1995,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <input type="password" id="adminPassInput" placeholder="Enter password">
             <button type="button" class="pw-toggle" onclick="togglePw('adminPassInput', this)">👁</button>
           </div>
+          <div style="text-align:right;margin-top:6px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('ADMIN')">🔑 Forgot password?</a></div>
         </div>
         <button class="btn-primary" id="adminLoginBtn" onclick="adminLogin()">🔐 Admin Login</button>
-        <div style="text-align:center;margin-top:10px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('ADMIN')">Forgot password?</a></div>
         <div class="err-msg" id="adminLoginErr">Invalid credentials. Please try again.</div>
       </div>
     </div>
