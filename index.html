@@ -521,7 +521,9 @@ select option { font-family: 'Spectral', serif; font-weight: 600; padding: 10px;
 .export-icon-btn:active { animation: iconWiggle 0.5s ease; }
 
 .err-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
-.fp-link { color: var(--purple, #4A0E8F); font-size: 13.5px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.fp-btn { display:block; width:100%; margin-top:10px; padding:10px 14px; border-radius:12px; border:1.5px solid var(--purple, #4A0E8F); background:transparent; color:var(--purple, #4A0E8F); font-weight:700; font-size:13.5px; cursor:pointer; }
+.fp-btn:hover { background: rgba(74,14,143,.07); }
+.fp-link { color: var(--purple, #4A0E8F); font-size: 12.5px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 
 /* ══════════════════════════════════════
    MAIN APP LAYOUT
@@ -1977,9 +1979,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <input type="password" id="empPassInput" placeholder="Enter your password" autocomplete="off">
             <button type="button" class="pw-toggle" onclick="togglePw('empPassInput', this)">👁</button>
           </div>
-          <div style="text-align:right;margin-top:6px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('EMP')">🔑 Forgot password?</a></div>
         </div>
         <button class="btn-primary" id="empLoginBtn" onclick="empLogin()">🔓 Login</button>
+        <div style="text-align:center;margin-top:10px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('EMP')">Forgot password?</a></div>
         <div class="err-msg" id="empLoginErr">Employee ID not found. Please check.</div>
       </div>
 
@@ -1995,9 +1997,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <input type="password" id="adminPassInput" placeholder="Enter password">
             <button type="button" class="pw-toggle" onclick="togglePw('adminPassInput', this)">👁</button>
           </div>
-          <div style="text-align:right;margin-top:6px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('ADMIN')">🔑 Forgot password?</a></div>
         </div>
         <button class="btn-primary" id="adminLoginBtn" onclick="adminLogin()">🔐 Admin Login</button>
+        <div style="text-align:center;margin-top:10px;"><a href="javascript:void(0)" class="fp-link" onclick="fpOpen_('ADMIN')">Forgot password?</a></div>
         <div class="err-msg" id="adminLoginErr">Invalid credentials. Please try again.</div>
       </div>
     </div>
@@ -3567,6 +3569,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div class="quick-action-btn" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
+            <div class="quick-action-btn" onclick="pwrOpen_()"><span class="quick-action-icon">🛟</span><div class="quick-action-label">Password Requests <span id="pwrBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Reset requests, employees without e-mail</div></div>
           </div>
         </div>
 
@@ -4897,6 +4900,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
 <!-- Modal: Admin Events Alert — today's birthday/anniversary events assigned to CRMs. Shown to every admin
      every 2 hours from 12 PM until that admin presses "Informed CRM". -->
+<div class="modal-overlay" id="pwrModal">
+  <div class="modal-box" style="max-width:440px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('pwrModal')" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:8px;">🛟 Password Requests</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button class="btn-secondary" id="pwrTabReq" style="flex:1;margin:0;padding:8px;font-size:12.5px;" onclick="pwrTab_('req')">Reset Requests</button>
+      <button class="btn-secondary" id="pwrTabNoMail" style="flex:1;margin:0;padding:8px;font-size:12.5px;" onclick="pwrTab_('nomail')">No E-mail</button>
+    </div>
+    <div id="pwrBody"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="forgotPwdModal" style="z-index:100000;">
   <div class="modal-box" style="max-width:380px;">
     <div class="modal-title">🔑 Forgot Password</div>
@@ -4907,9 +4922,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </div>
     <div id="fpStep2" style="display:none;">
       <div class="form-group"><label>OTP (6 digits)</label><input type="text" id="fpOtpInput" inputmode="numeric" maxlength="6" autocomplete="off"></div>
-      <div class="form-group"><label>New Password</label><input type="password" id="fpNewPw" autocomplete="new-password"></div>
-      <div class="form-group"><label>Confirm New Password</label><input type="password" id="fpNewPw2" autocomplete="new-password"></div>
+      <div class="form-group"><label>New Password</label><div class="pw-input-wrap"><input type="password" id="fpNewPw" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePw('fpNewPw', this)">👁</button></div></div>
+      <div class="form-group"><label>Confirm New Password</label><div class="pw-input-wrap"><input type="password" id="fpNewPw2" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePw('fpNewPw2', this)">👁</button></div></div>
       <button class="btn-primary" id="fpResetBtn" onclick="fpReset_()">Reset Password</button>
+      <button type="button" class="fp-btn" id="fpResendBtn" onclick="fpResend_()" disabled>Resend OTP</button>
     </div>
     <div class="err-msg" id="fpMsg" style="display:none;"></div>
     <div class="modal-btns"><button class="btn-modal-cancel" style="flex:1;" onclick="closeModal('forgotPwdModal')">Close</button></div>
@@ -6521,6 +6537,18 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd) {
 function openEmpMoreModal() { showEmpPage('more'); }
 function openAdminMoreModal() { showAdminPage('more'); }
 
+// Same password rules as the backend (pwdStrengthError_). Returns an error text or ''.
+function pwdWeakMsg_(pwd) {
+  const p = String(pwd == null ? '' : pwd).trim();
+  if (p.length < 6) return 'Password must be at least 6 characters.';
+  const low = p.toLowerCase();
+  if (/^(.)\1+$/.test(low)) return 'Password is too easy. Do not repeat the same character.';
+  const runs = ['0123456789', '9876543210', 'abcdefghijklmnopqrstuvwxyz', 'zyxwvutsrqponmlkjihgfedcba', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+  if (runs.some(r => r.indexOf(low) > -1)) return 'Password is too easy (a simple sequence). Choose a different one.';
+  const common = ['password', 'passw0rd', 'abc123', 'abcd1234', 'admin123', 'welcome', 'welcome1', 'vsrgold', 'vsr123', 'vsrgold123', 'iloveyou', '123123', '112233', '121212', '696969'];
+  if (common.indexOf(low) > -1) return 'Password is too common. Choose a different one.';
+  return '';
+}
 function togglePw(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
@@ -7531,6 +7559,63 @@ document.addEventListener('visibilitychange', function () {
 });
 
 // ── Forgot password (OTP to the account's e-mail; MIS fallback when there is no e-mail) ──
+// ── Settings -> Password Requests (MIS / Director) ──
+let PWR_TAB = 'req';
+function pwrCaller_() { return { callerRole: state.adminRole, callerEmail: state.adminEmail }; }
+function pwrOpen_() { openModal('pwrModal'); pwrTab_('req'); }
+async function pwrTab_(tab) {
+  PWR_TAB = tab;
+  ['req', 'nomail'].forEach(t => {
+    const b = document.getElementById(t === 'req' ? 'pwrTabReq' : 'pwrTabNoMail');
+    if (b) b.style.opacity = (t === tab) ? '1' : '.55';
+  });
+  const body = document.getElementById('pwrBody');
+  body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;opacity:.7;">Loading...</div>';
+  try {
+    if (tab === 'req') {
+      const res = await jsonpReliable(Object.assign({ page: 'listPwdResetRequestsAPI' }, pwrCaller_()));
+      if (!res.ok) throw new Error(res.error || 'Could not load');
+      pwrBadge_(res.requests.length);
+      if (!res.requests.length) { body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;opacity:.7;">No pending reset requests.</div>'; return; }
+      body.innerHTML = '<div style="font-size:11.5px;opacity:.7;margin-bottom:8px;">These employees have no e-mail on file, so no OTP could be sent. Set a new password and tell them.</div>' +
+        res.requests.map(r => `<div style="border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:8px;">
+          <div style="font-weight:700;font-size:13px;">${escHtml_(r.name || r.id)} <span style="opacity:.6;font-weight:600;">(${escHtml_(r.id)})</span></div>
+          <div style="font-size:11px;opacity:.6;margin-bottom:6px;">Requested ${escHtml_(r.at)}</div>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="pwrNew_${r.row}" placeholder="New password" autocomplete="off" style="flex:1;min-width:0;">
+            <button class="btn-primary" style="width:auto;margin:0;padding:8px 14px;font-size:12.5px;" onclick="pwrSet_(${r.row}, '${escJs(r.id)}', '${escJs(r.role)}', this)">Set</button>
+          </div></div>`).join('');
+    } else {
+      const res = await jsonpReliable(Object.assign({ page: 'listEmpsWithoutEmailAPI' }, pwrCaller_()));
+      if (!res.ok) throw new Error(res.error || 'Could not load');
+      if (!res.employees.length) { body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;opacity:.7;">Every active employee has an e-mail. 👍</div>'; return; }
+      body.innerHTML = '<div style="font-size:11.5px;opacity:.7;margin-bottom:8px;">' + res.employees.length + ' active employee(s) have no e-mail in the "email" sheet. They cannot receive a password OTP.</div>' +
+        '<div class="frq-rows">' + res.employees.map(e => `<div class="frq-row" style="cursor:default;"><span>${escHtml_(e.name)}</span><span style="opacity:.6;">${escHtml_(e.id)}</span></div>`).join('') + '</div>';
+      frqInjectStyle_();
+    }
+  } catch (e) {
+    body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</div>';
+  }
+}
+function pwrBadge_(n) {
+  const b = document.getElementById('pwrBadge');
+  if (!b) return;
+  b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none';
+}
+async function pwrSet_(row, id, role, btn) {
+  const inp = document.getElementById('pwrNew_' + row);
+  const pw = (inp.value || '').trim();
+  const weak = pwdWeakMsg_(pw);
+  if (weak) { toast(weak, 'error'); return; }
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'resolvePwdResetRequestAPI', row: row, id: id, role: role, newPassword: pw }, pwrCaller_()));
+    if (!res.ok) { toast(res.error || 'Could not set the password', 'error'); btn.disabled = false; btn.textContent = 'Set'; return; }
+    toast('✅ ' + (res.message || 'Password set.'), 'success');
+    pwrTab_('req');
+  } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; btn.textContent = 'Set'; }
+}
+function escHtml_(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 let FP_ROLE = 'EMP';
 function fpMsg_(text, isErr) {
   const el = document.getElementById('fpMsg');
@@ -7545,8 +7630,9 @@ function fpOpen_(role) {
   document.getElementById('fpSub').textContent = 'A 6-digit OTP will be sent to the e-mail registered for this account.';
   document.getElementById('fpStep1').style.display = '';
   document.getElementById('fpStep2').style.display = 'none';
-  ['fpOtpInput', 'fpNewPw', 'fpNewPw2'].forEach(i => { document.getElementById(i).value = ''; });
+  ['fpOtpInput', 'fpNewPw', 'fpNewPw2'].forEach(i => { const el = document.getElementById(i); el.value = ''; if (el.type === 'text' && i !== 'fpOtpInput') { el.type = 'password'; const tg = el.parentNode.querySelector('.pw-toggle'); if (tg) tg.textContent = '👁'; } });
   fpMsg_('');
+  if (FP_CD_TIMER) { clearInterval(FP_CD_TIMER); FP_CD_TIMER = null; }
   openModal('forgotPwdModal');
 }
 async function fpSend_() {
@@ -7562,6 +7648,7 @@ async function fpSend_() {
       document.getElementById('fpStep1').style.display = 'none';
       document.getElementById('fpStep2').style.display = '';
       fpMsg_('');
+      fpCooldown_(60);
     } else {
       document.getElementById('fpStep1').style.display = 'none';
       fpMsg_('No e-mail is registered for this account. Your request has been sent to MIS. They will set a new password for you.', false);
@@ -7569,13 +7656,40 @@ async function fpSend_() {
   } catch (e) { fpMsg_('Network problem. Please try again.', true); }
   finally { btn.disabled = false; btn.textContent = 'Send OTP'; }
 }
+let FP_CD_TIMER = null;
+function fpCooldown_(secs) {
+  const btn = document.getElementById('fpResendBtn');
+  if (!btn) return;
+  if (FP_CD_TIMER) clearInterval(FP_CD_TIMER);
+  let left = secs;
+  btn.disabled = true;
+  btn.textContent = 'Resend OTP in ' + left + 's';
+  FP_CD_TIMER = setInterval(() => {
+    left--;
+    if (left <= 0) { clearInterval(FP_CD_TIMER); FP_CD_TIMER = null; btn.disabled = false; btn.textContent = 'Resend OTP'; }
+    else btn.textContent = 'Resend OTP in ' + left + 's';
+  }, 1000);
+}
+async function fpResend_() {
+  const id = document.getElementById('fpIdInput').value.trim();
+  const btn = document.getElementById('fpResendBtn');
+  if (!id || btn.disabled) return;
+  btn.disabled = true; btn.textContent = 'Sending...'; fpMsg_('');
+  try {
+    const res = await jsonp({ page: 'forgotPwdRequestAPI', role: FP_ROLE, id: id });
+    if (!res || !res.ok) { fpMsg_((res && res.error) || 'Could not resend the OTP.', true); btn.disabled = false; btn.textContent = 'Resend OTP'; return; }
+    fpMsg_('A new OTP was sent to ' + (res.maskedEmail || 'your e-mail') + '.', false);
+    fpCooldown_(60);
+  } catch (e) { fpMsg_('Network problem. Please try again.', true); btn.disabled = false; btn.textContent = 'Resend OTP'; }
+}
 async function fpReset_() {
   const id = document.getElementById('fpIdInput').value.trim();
   const otp = document.getElementById('fpOtpInput').value.trim();
   const p1 = document.getElementById('fpNewPw').value.trim();
   const p2 = document.getElementById('fpNewPw2').value.trim();
   if (!otp) { fpMsg_('Enter the OTP.', true); return; }
-  if (p1.length < 4) { fpMsg_('New password must be at least 4 characters.', true); return; }
+  const weakFp = pwdWeakMsg_(p1);
+  if (weakFp) { fpMsg_(weakFp, true); return; }
   if (p1 !== p2) { fpMsg_('The two passwords do not match.', true); return; }
   const btn = document.getElementById('fpResetBtn');
   btn.disabled = true; btn.textContent = 'Saving...'; fpMsg_('');
@@ -7596,8 +7710,12 @@ async function checkSessionLoop_() {
   if (!id) return;
   SESSION_CHECK_IN_FLIGHT = true;
   try {
-    const res = await jsonp({ page: 'checkSessionAPI', role: role, id: id, token: state.sessionToken });
-    if (res && res.ok && res.valid === false) {
+    const res = await jsonp({ page: 'checkSessionAPI', role: role, id: id, token: state.sessionToken, fp: state.pwdFp || '' });
+    if (res && res.ok && res.valid === false && res.reason === 'password') {
+      logout(state.__loginKind, '🔒 Your password was changed. Please login again.');
+    } else if (res && res.ok && res.valid === false && res.reason === 'inactive') {
+      logout(state.__loginKind, 'Network issue. Please try again later.');
+    } else if (res && res.ok && res.valid === false) {
       // v-fix (BRO: "2 divice lo matrame same id tho login ki avali" — up to 2 devices can be
       // active at once now, so THIS device only gets logged out when a 3rd device has taken its
       // slot; res.device names whichever device(s) are now active, using the real phone model
@@ -7667,7 +7785,8 @@ async function confirmChangePassword() {
   const newPw = document.getElementById('pwNew').value.trim();
   const confirmPw = document.getElementById('pwConfirm').value.trim();
   if(!newPw) { toast('Please enter a new password', 'error'); return; }
-  if(newPw.length < 4) { toast('Password should be at least 4 characters', 'error'); return; }
+  const weakMsg = pwdWeakMsg_(newPw);
+  if (weakMsg) { toast(weakMsg, 'error'); return; }
   if(newPw !== confirmPw) { toast('New password & confirm password do not match', 'error'); return; }
 
   const pwIdemKey = makeIdemKey(['pwchange', pwContext, pwContext==='emp'?state.empId:state.adminEmail, Date.now()]);
@@ -7682,7 +7801,8 @@ async function confirmChangePassword() {
       }
       if(res.ok) {
         closeModal('pwModal');
-        toast('✅ Password updated successfully', 'success');
+        if (res.pwdFp) { state.pwdFp = res.pwdFp; try { saveSession(); } catch (e) {} }
+        toast('✅ Password updated successfully. Your other devices will be logged out.', 'success');
       } else {
         toast(res.error || 'Could not update password', 'error');
       }
