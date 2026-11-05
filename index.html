@@ -7833,13 +7833,11 @@ function dsrEditBtnHtml_(dsrNo) {
   const E = window.__dsrEdit_;
   if (!E || !E.enabled || !dsrNo) return '';
   const st = E.states[dsrNo];
-  const wrap = h => '<div style="padding:0 12px 10px;text-align:right;">' + h + '</div>';
-  const btn = (label, fn) => '<button class="btn-secondary" style="width:auto;margin:0;padding:7px 14px;font-size:12.5px;" onclick="' + fn + '(\'' + escJs(dsrNo) + '\')">' + label + '</button>';
-  if (st === 'edit') return wrap(btn('✏️ Edit (one time)', 'dsrEditOpen_'));
-  if (st === 'request') return wrap(btn('📨 Request Edit', 'dsrEditReqOpen_'));
-  if (st === 'requested') return wrap('<span class="kd-pill gold" style="font-size:11px;">⏳ Edit request sent to MIS</span>');
-  if (st === 'review') return wrap('<span class="kd-pill gold" style="font-size:11px;">⏳ Edit sent — waiting for MIS to approve</span>');
-  if (st === 'edited') return wrap('<span class="kd-pill green" style="font-size:11px;">✔ Edited once</span>');
+  const btn = (label, fn) => '<button style="background:#fff;color:#1a1a2e;border:1.5px solid #d4af37;border-radius:14px;padding:3px 12px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();' + fn + '(\'' + escJs(dsrNo) + '\')">' + label + '</button>';
+  if (st === 'edit') return btn('✏️ Edit', 'dsrEditOpen_');
+  if (st === 'request') return btn('📨 Request Edit', 'dsrEditReqOpen_');
+  if (st === 'requested') return '<span class="kd-pill gold" style="font-size:10px;white-space:nowrap;">⏳ Request sent</span>';
+  if (st === 'review') return '<span class="kd-pill gold" style="font-size:10px;white-space:nowrap;">⏳ With MIS</span>';
   return '';
 }
 function dsrEditOpen_(dsrNo) {
@@ -19669,7 +19667,7 @@ function renderDsrTodayFiltered(who) {
       html += `<div class="dsr-receipt-card">
         <div class="dsr-receipt-hd"${who === 'admin' ? ` onclick="openDsrDetailModal('${key}','${who}')" style="cursor:pointer;"` : ''}>
           <span class="dsr-receipt-id">🧾 ${g.dsrNo || '—'}${who === 'admin' ? ' <span style="font-size:10px;font-weight:400;opacity:0.85;">(tap for full detail)</span>' : ''}</span>
-          <span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>
+          <span style="display:inline-flex;align-items:center;gap:8px;"><span class="kd-pill ${payColor}">${g.paymentStatus || '—'}</span>${who === 'emp' ? dsrEditBtnHtml_(g.dsrNo) : ''}</span>
         </div>
         <div class="dsr-receipt-body">
           <div class="dsr-cust-name">${properCase(g.customerName) || '—'}</div>
@@ -19683,7 +19681,6 @@ function renderDsrTodayFiltered(who) {
               <tbody>${itemsHtml}</tbody>
             </table>
           </div>
-          ${who === 'emp' ? dsrEditBtnHtml_(g.dsrNo) : ''}
         </div>
       </div>`;
     });
