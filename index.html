@@ -2588,7 +2588,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       </div>
       <button class="export-icon-btn" id="exportBtn-dsrTodayBox-emp" style="display:none;" onclick="openBoxExportModal('dsrTodayBox-emp','DSR Entries')" title="Export">📥</button>
       <div class="card"><div id="dsrTodayBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
-      <div id="dsrSelfEditBox-emp"></div>
     </div>
     <div class="page-section" id="emp-dsr-status">
       <div class="section-hdr"><span class="section-title2">📶 Yesterday's DSR % / Status</span></div>
@@ -2673,7 +2672,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="emp-dsr-advorder">
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed</span></div>
       <div class="card"><div id="aoeListBox-emp"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <!-- Edit page: the DSR edit form and the Advance / Order Placed update form open here (own page), and return to the page they came from. -->
+    <div class="page-section" id="emp-dsr-edit">
+      <div class="section-hdr"><span class="section-title2" id="dsrEditTitle-emp">✏️ Edit DSR</span></div>
       <div id="aoeEditBox-emp"></div>
+      <div id="dsrSelfEditBox-emp"></div>
     </div>
 
     <!-- RETURN / REPLACE chooser: first screen of the Return / Replace button. Pick Return or Replace,
@@ -4015,7 +4020,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-dsr-advorder">
       <div class="section-hdr"><span class="section-title2">⏳ Advance &amp; Order Placed — All Employees</span></div>
       <div class="card"><div id="aoeListBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-dsr-edit">
+      <div class="section-hdr"><span class="section-title2" id="dsrEditTitle-admin">✏️ Edit DSR</span></div>
       <div id="aoeEditBox-admin"></div>
+      <div id="dsrSelfEditBox-admin"></div>
     </div>
 
     <!-- RETURN / REPLACE chooser: first screen of the Return / Replace button. Pick Return or Replace,
@@ -6871,6 +6881,7 @@ function setLock(key, val) { state.actionLock[key] = val; }
 // on every reload, no matter which page was actually open. These two helpers
 // remember the last page shown so a reload can return to it instead.
 function saveLastPage(who, page) {
+  if (page === 'dsr-edit') return;   // an unsaved edit form cannot be restored: a refresh returns to the page it was opened from
   try { localStorage.setItem(who === 'admin' ? 'vsrLastPage_admin' : 'vsrLastPage_emp', page); } catch(e) {}
 }
 function getLastPage(who) {
@@ -7866,6 +7877,14 @@ function dsrEditApplyLocks_(who, fields) {
     scope.insertBefore(note, scope.children[1] || null);
   }
 }
+function dsrEditClose_(who) {
+  ['aoeEditBox-', 'dsrSelfEditBox-'].forEach(pf => { const b = document.getElementById(pf + who); if (b) b.innerHTML = ''; });
+  window['__aoeSelf_' + who] = null;
+  const origin = state['_editOrigin_' + who] || 'dsr-advorder';
+  state['_editOrigin_' + who] = null;
+  (who === 'admin' ? showAdminPage : showEmpPage)(origin === 'dsr-edit' ? 'dsr-advorder' : origin);
+  if (origin === 'dsr-today' && document.getElementById('dsrTodayDate-' + who)) { try { loadDsrTodayForDate(who); } catch (e) {} }
+}
 let DER_ID = '';
 function dsrEditReqOpen_(dsrNo) {
   DER_ID = dsrNo;
@@ -8193,7 +8212,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openEmpMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder','dsr-empsale'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder','dsr-edit','dsr-empsale'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -8231,7 +8250,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'kpi-tilldate', icon:'📅', label:'Till Date' },
       { page:'kpi-monthly', icon:'🏁', label:'Last Month' }
     ], more: 'openAdminMoreModal()' },
-    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder','dsr-empsale'], items: [
+    dsr: { pages: ['dsr','dsr-today','dsr-status','dsr-missing','dsr-daterange','dsr-newentry','dsr-advorder','dsr-edit','dsr-empsale'], items: [
       { page:'dsr', icon:'🏠', label:'Home' },
       { page:'dsr-newentry', icon:'➕', label:'New Entry' },
       { page:'dsr-status', icon:'📶', label:"Yesterday" },
@@ -8310,7 +8329,7 @@ const SECTION_LABEL_MAP = {
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
   'kpi-trend': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR',
-  'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR',
+  'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR', 'dsr-edit': 'DSR',
   'dsr-tagsearch': 'DSR', 'dsr-returnreplace': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR', 'dsr-empsale': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
@@ -8377,6 +8396,7 @@ function goToSectionDashboard(who) {
 // instead. This is what's now wired up.
 function goBackOneStep(who) {
   const current = state['_currentPage_' + who];
+  if (current === 'dsr-edit') { dsrEditClose_(who); return; }
   // v-fix: Settings' own sub-views (Access/Store Data/Auto-Logout) aren't
   // separate pages — they're all still page 'settings' — so step back into
   // the Settings landing menu first instead of jumping straight to main Home.
@@ -29022,6 +29042,14 @@ function openAdvanceOrderEdit(who, dsrId, selfFields) {
   window['__aoeSelf_' + who] = SELF ? selfFields : null;
   if (SELF) { const ao = document.getElementById('aoeEditBox-' + who); if (ao) ao.innerHTML = ''; }
   const editBox = document.getElementById(SELF ? 'dsrSelfEditBox-' + who : 'aoeEditBox-' + who);
+  { // open the form on its own page; remember where to come back to
+    const other = document.getElementById(SELF ? 'aoeEditBox-' + who : 'dsrSelfEditBox-' + who); if (other) other.innerHTML = '';
+    const cur = state['_currentPage_' + who];
+    if (cur !== 'dsr-edit') state['_editOrigin_' + who] = cur || (SELF ? 'dsr-today' : 'dsr-advorder');
+    const ttl = document.getElementById('dsrEditTitle-' + who);
+    if (ttl) ttl.textContent = SELF ? '✏️ Edit DSR' : '⏳ Update Advance / Order DSR';
+    (who === 'admin' ? showAdminPage : showEmpPage)('dsr-edit');
+  }
   editBox.innerHTML = '<div class="loading"><span class="spinner"></span>Loading DSR...</div>';
   editBox.scrollIntoView({ behavior: 'smooth' });
 
@@ -29094,7 +29122,7 @@ function openAdvanceOrderEdit(who, dsrId, selfFields) {
           <button class="add-entry-btn" onclick="aoeAddEntry('${who}')">＋ &nbsp; Add Another Item</button>
 
           <button class="sbtn" id="aoeSubmitBtn-${who}" onclick="submitAdvanceOrderUpdate('${who}')" style="margin-top:14px;">${SELF ? '📨 &nbsp; Send Edit to MIS (one time) &nbsp; 📨' : '💾 &nbsp; Save Update &nbsp; 💾'}</button>
-          <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById('${SELF ? 'dsrSelfEditBox-' : 'aoeEditBox-'}${who}').innerHTML=''">Cancel</button>
+          <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="dsrEditClose_('${who}')">Cancel</button>
           <div id="aoeStatusMsg-${who}" style="margin-top:10px;font-size:13px;text-align:center;"></div>
         </div>`;
 
@@ -29238,13 +29266,10 @@ function submitAdvanceOrderUpdate(who) {
       btn.disabled = false; btn.innerHTML = SELF ? '📨 &nbsp; Send Edit to MIS (one time) &nbsp; 📨' : '💾 &nbsp; Save Update &nbsp; 💾';
       if (result.status === 'success' && SELF) {
         toast('✅ ' + (result.message || 'Your edit was sent to MIS for approval.'), 'success');
-        document.getElementById('dsrSelfEditBox-' + who).innerHTML = '';
-        window['__aoeSelf_' + who] = null;
-        loadDsrTodayForDate(who);
+        dsrEditClose_(who);
       } else if (result.status === 'success') {
         toast('✅ DSR updated' + (newStatus === 'Purchased' ? ' — closed out' : newStatus === 'Cancelled' ? ' — marked Cancelled' : ''), 'success');
-        document.getElementById('aoeEditBox-' + who).innerHTML = '';
-        loadAdvanceOrderList(who);
+        dsrEditClose_(who);
       } else {
         msg.style.color = 'var(--red)';
         msg.textContent = '❌ ' + (result.message || 'Update failed');
