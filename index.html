@@ -3570,7 +3570,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div class="quick-action-btn" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
-            <div class="quick-action-btn" onclick="dsrEditCtlOpen_()"><span class="quick-action-icon">✏️</span><div class="quick-action-label">DSR Edit <span id="decBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Employee DSR edit ON/OFF, requests</div></div>
+            <div class="quick-action-btn" onclick="dsrEditCtlOpen_()"><span class="quick-action-icon">✏️</span><div class="quick-action-label">DSR Edit <span id="decBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Edit requests and approvals</div></div>
             <div class="quick-action-btn" onclick="mailIssOpen_()"><span class="quick-action-icon">📧</span><div class="quick-action-label">Mail Issues <span id="mailIssBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Missing / bouncing e-mails, allow access</div></div>
             <div class="quick-action-btn" onclick="pwrOpen_()"><span class="quick-action-icon">🛟</span><div class="quick-action-label">Password Requests <span id="pwrBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Reset requests, employees without e-mail</div></div>
           </div>
@@ -4964,10 +4964,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   <div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="closeModal('dsrEditCtlModal')" title="Close">✕</button>
     <div class="modal-title" style="margin-bottom:8px;">✏️ Employee DSR Edit</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-bottom:10px;">
-      <div style="font-size:12.5px;"><b>Allow employees to edit their DSR</b><br><span style="opacity:.7;">One edit per DSR. Every edit comes to you with old and new values; the DSR changes only after your OK.</span></div>
-      <button class="btn-secondary" id="decToggleBtn" style="width:auto;margin:0;padding:7px 16px;font-size:13px;font-weight:800;" onclick="dsrEditToggle_()">…</button>
-    </div>
+    <div style="font-size:12px;opacity:.75;margin-bottom:10px;">Employees can edit today's DSR once. Older DSRs need an edit request. Every edit comes to you here with old and new values, and the DSR changes only after your OK.</div>
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;">Edit requests and edits waiting for you</div>
     <div id="decBody"></div>
   </div>
