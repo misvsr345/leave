@@ -3569,6 +3569,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
             <div class="quick-action-btn" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
+            <div class="quick-action-btn" onclick="mailIssOpen_()"><span class="quick-action-icon">📧</span><div class="quick-action-label">Mail Issues <span id="mailIssBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Missing / bouncing e-mails, allow access</div></div>
             <div class="quick-action-btn" onclick="pwrOpen_()"><span class="quick-action-icon">🛟</span><div class="quick-action-label">Password Requests <span id="pwrBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Reset requests, employees without e-mail</div></div>
           </div>
         </div>
@@ -4909,6 +4910,35 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
       <button class="btn-secondary" id="pwrTabNoMail" style="flex:1;margin:0;padding:8px;font-size:12.5px;" onclick="pwrTab_('nomail')">No E-mail</button>
     </div>
     <div id="pwrBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mailGateModal" style="z-index:100002;">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-title" id="mgTitle">📧 Update your e-mail ID</div>
+    <div class="modal-sub" id="mgSub"></div>
+    <div id="mgStep1">
+      <div class="form-group"><label>New e-mail ID</label><input type="email" id="mgEmail" autocomplete="off" placeholder="name@gmail.com"></div>
+      <button class="btn-primary" id="mgSendBtn" onclick="mailGateSend_()">Send OTP</button>
+    </div>
+    <div id="mgStep2" style="display:none;">
+      <div class="form-group"><label>OTP (6 digits)</label><input type="text" id="mgOtp" inputmode="numeric" maxlength="6" autocomplete="off"></div>
+      <button class="btn-primary" id="mgVerifyBtn" onclick="mailGateVerify_()">Verify &amp; Save</button>
+      <button type="button" class="fp-btn" id="mgResendBtn" onclick="mailGateSend_()" disabled>Resend OTP</button>
+    </div>
+    <div class="err-msg" id="mgMsg" style="display:none;"></div>
+    <button type="button" class="fp-btn" id="mgRecheckBtn" onclick="mailGateRecheck_()">MIS has allowed me — Check again</button>
+    <div class="modal-btns"><button class="btn-modal-cancel" style="flex:1;" onclick="mailGateLogout_()">Logout</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mailIssModal">
+  <div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('mailIssModal')" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:8px;">📧 Mail Issues</div>
+    <div style="font-size:11.5px;opacity:.7;margin-bottom:8px;">Employees with no e-mail or a bouncing e-mail are blocked at login until they verify a new one. You can let someone continue for a short time.</div>
+    <button class="btn-secondary" id="mailIssScanBtn" style="margin:0 0 10px;padding:8px;font-size:12.5px;width:100%;" onclick="mailIssScan_()">🔍 Scan Gmail for bounced mails now</button>
+    <div id="mailIssBody"></div>
   </div>
 </div>
 
@@ -7327,6 +7357,7 @@ async function empLogin() {
         document.getElementById('empModulePickerMeta').textContent = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
         showEmpPage('modulepicker');
         wbShowWelcomePopup_(state.empName || 'Employee');
+        if (res.mail && res.mail.need) mailGateShow_(res.mail);
         loadEmpData();
         checkLoyaltyAlerts('emp');
         checkEmpLoyaltyAccess();
@@ -7473,6 +7504,7 @@ async function loadLoginActivity(who) {
 }
 
 function logout(who, reason) {
+  try { const mg = document.getElementById('mailGateModal'); if (mg) mg.classList.remove('show'); } catch (eMg) {}
   if (who === 'admin' && misPopupPollTimer_) { clearInterval(misPopupPollTimer_); misPopupPollTimer_ = null; }
   if(who==='emp') {
     if (typeof _stopEmpLeadsAutoRefresh_ === 'function') _stopEmpLeadsAutoRefresh_();
@@ -7543,6 +7575,7 @@ async function verifySessionPwd_(resume) {
     const res = await jsonp({ page: 'verifySessionAPI', role: role, id: id, fp: state.pwdFp, device: device, resume: resume ? '1' : '0' });
     if (res && res.ok) {
       lastPwdVerifyAt_ = Date.now();
+      if (res.valid !== false && role === 'EMP' && res.mail) { if (res.mail.need) mailGateShow_(res.mail); else mailGateHide_(); }
       if (res.valid === false) {
         const msg = res.reason === 'password'
           ? '🔒 Your password was changed. Please login again.'
@@ -7616,6 +7649,142 @@ async function pwrSet_(row, id, role, btn) {
   } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; btn.textContent = 'Set'; }
 }
 function escHtml_(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+// ── Mail gate: employee with no e-mail / a bouncing e-mail is blocked until a new e-mail is verified by OTP ──
+let MG_CD_TIMER = null;
+function mgMsg_(text, isErr) {
+  const el = document.getElementById('mgMsg');
+  el.textContent = text || '';
+  el.style.display = text ? 'block' : 'none';
+  el.style.color = isErr ? 'var(--red)' : 'var(--green, #2E7D32)';
+}
+function mailGateShow_(m) {
+  if (!m || !m.need) return;
+  if (document.getElementById('mailGateModal').classList.contains('show')) return;   // already open: keep what the person typed
+  const sub = document.getElementById('mgSub');
+  sub.textContent = m.reason === 'missing'
+    ? 'No e-mail ID is saved for your account. Please add a working e-mail ID now. You cannot use the portal until it is verified.'
+    : 'Mails sent to ' + (m.maskedEmail || 'your e-mail') + ' are not being delivered' + (m.detail ? ' (' + m.detail + ')' : '') + '. Please update a new, working e-mail ID urgently. You cannot use the portal until it is verified.';
+  document.getElementById('mgStep1').style.display = '';
+  document.getElementById('mgStep2').style.display = 'none';
+  document.getElementById('mgEmail').value = '';
+  document.getElementById('mgOtp').value = '';
+  mgMsg_('');
+  openModal('mailGateModal');
+}
+function mailGateHide_() {
+  const el = document.getElementById('mailGateModal');
+  if (el && el.classList.contains('show')) closeModal('mailGateModal');
+}
+function mgCooldown_(secs) {
+  const btn = document.getElementById('mgResendBtn');
+  if (MG_CD_TIMER) clearInterval(MG_CD_TIMER);
+  let left = secs;
+  btn.disabled = true; btn.textContent = 'Resend OTP in ' + fpFmt_(left);
+  MG_CD_TIMER = setInterval(function () {
+    left--;
+    if (left <= 0) { clearInterval(MG_CD_TIMER); MG_CD_TIMER = null; btn.disabled = false; btn.textContent = 'Resend OTP'; }
+    else btn.textContent = 'Resend OTP in ' + fpFmt_(left);
+  }, 1000);
+}
+async function mailGateSend_() {
+  const mail = (document.getElementById('mgEmail').value || '').trim();
+  if (!/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(mail)) { mgMsg_('Enter a valid e-mail address.', true); return; }
+  const btn = document.getElementById('mgSendBtn');
+  btn.disabled = true; mgMsg_('');
+  try {
+    const res = await jsonp({ page: 'mailUpdateRequestAPI', empId: state.empId, token: state.sessionToken, newEmail: mail });
+    if (!res.ok) { mgMsg_(res.error || 'Could not send the OTP.', true); btn.disabled = false; return; }
+    document.getElementById('mgStep1').style.display = 'none';
+    document.getElementById('mgStep2').style.display = '';
+    mgMsg_('OTP sent to ' + (res.maskedEmail || mail) + '. Check your inbox (and spam).', false);
+    mgCooldown_(120);
+  } catch (e) { mgMsg_('Connection error. Try again.', true); }
+  btn.disabled = false;
+}
+async function mailGateVerify_() {
+  const otp = (document.getElementById('mgOtp').value || '').trim();
+  if (!/^\d{6}$/.test(otp)) { mgMsg_('Enter the 6-digit OTP.', true); return; }
+  const btn = document.getElementById('mgVerifyBtn');
+  btn.disabled = true; mgMsg_('');
+  try {
+    const res = await jsonp({ page: 'mailUpdateVerifyAPI', empId: state.empId, token: state.sessionToken, otp: otp });
+    if (!res.ok) { mgMsg_(res.error || 'Could not verify.', true); btn.disabled = false; return; }
+    if (MG_CD_TIMER) { clearInterval(MG_CD_TIMER); MG_CD_TIMER = null; }
+    mailGateHide_();
+    toast('✅ ' + (res.message || 'E-mail updated.'), 'success');
+  } catch (e) { mgMsg_('Connection error. Try again.', true); }
+  btn.disabled = false;
+}
+async function mailGateRecheck_() {
+  const btn = document.getElementById('mgRecheckBtn');
+  btn.disabled = true;
+  try {
+    const res = await jsonp({ page: 'mailGateAPI', empId: state.empId, token: state.sessionToken });
+    if (res && res.ok && res.mail && !res.mail.need) { mailGateHide_(); toast('✅ You can continue.', 'success'); }
+    else mgMsg_('MIS has not allowed access yet.', true);
+  } catch (e) { mgMsg_('Connection error. Try again.', true); }
+  btn.disabled = false;
+}
+function mailGateLogout_() { mailGateHide_(); logout('emp'); }
+
+// ── Settings -> Mail Issues (MIS / Director) ──
+async function mailIssOpen_() { openModal('mailIssModal'); mailIssLoad_(); }
+async function mailIssLoad_() {
+  const body = document.getElementById('mailIssBody');
+  body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;opacity:.7;">Loading...</div>';
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'listMailIssuesAPI' }, pwrCaller_()));
+    if (!res.ok) throw new Error(res.error || 'Could not load');
+    const blocked = res.items.filter(i => !i.allowedUntil).length;
+    mailIssBadge_(blocked);
+    if (!res.items.length) { body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;opacity:.7;">No mail issues. 👍</div>'; return; }
+    body.innerHTML = res.items.map(i => `<div style="border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:8px;">
+      <div style="font-weight:700;font-size:13px;">${escHtml_(i.name)} <span style="opacity:.6;font-weight:600;">(${escHtml_(i.id)})</span></div>
+      <div style="font-size:11.5px;opacity:.75;margin:2px 0 6px;">${escHtml_(i.reason)}${i.email ? ' · ' + escHtml_(i.email) : ''}${i.since ? ' · ' + escHtml_(i.since) : ''}</div>
+      ${i.allowedUntil ? '<div style="font-size:11.5px;color:var(--green, #2E7D32);margin-bottom:6px;">✅ Allowed until ' + escHtml_(i.allowedUntil) + '</div>' : '<div style="font-size:11.5px;color:var(--red);margin-bottom:6px;">⛔ Blocked at login</div>'}
+      <div style="display:flex;gap:6px;">
+        <button class="btn-primary" style="width:auto;margin:0;padding:7px 12px;font-size:12px;" onclick="mailIssAllow_('${escJs(i.id)}', this)">${i.allowedUntil ? 'Extend ' : 'Allow '}${res.days} days</button>
+        ${i.kind === 'issue' ? `<button class="btn-secondary" style="width:auto;margin:0;padding:7px 12px;font-size:12px;" onclick="mailIssClear_('${escJs(i.id)}', this)">Mark fixed</button>` : ''}
+      </div></div>`).join('');
+  } catch (e) {
+    body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</div>';
+  }
+}
+function mailIssBadge_(n) {
+  const b = document.getElementById('mailIssBadge');
+  if (!b) return;
+  b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none';
+}
+async function mailIssAllow_(id, btn) {
+  btn.disabled = true;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'grantMailBypassAPI', id: id }, pwrCaller_()));
+    if (!res.ok) { toast(res.error || 'Could not allow', 'error'); btn.disabled = false; return; }
+    toast('✅ ' + (res.message || 'Allowed.'), 'success');
+    mailIssLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; }
+}
+async function mailIssClear_(id, btn) {
+  if (!confirm('Mark this e-mail problem as fixed? The employee will no longer be blocked.')) return;
+  btn.disabled = true;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'clearMailIssueAPI', id: id }, pwrCaller_()));
+    if (!res.ok) { toast(res.error || 'Could not update', 'error'); btn.disabled = false; return; }
+    mailIssLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; }
+}
+async function mailIssScan_() {
+  const btn = document.getElementById('mailIssScanBtn');
+  btn.disabled = true; btn.textContent = '⏳ Scanning...';
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'scanMailBouncesAPI' }, pwrCaller_()));
+    if (!res.ok) toast(res.error || 'Scan failed', 'error');
+    else toast(res.added ? ('Found ' + res.added + ' new bounced e-mail(s).') : 'No new bounced mails.', 'info');
+    mailIssLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); }
+  btn.disabled = false; btn.textContent = '🔍 Scan Gmail for bounced mails now';
+}
 let FP_ROLE = 'EMP';
 function fpMsg_(text, isErr) {
   const el = document.getElementById('fpMsg');
@@ -7648,7 +7817,7 @@ async function fpSend_() {
       document.getElementById('fpStep1').style.display = 'none';
       document.getElementById('fpStep2').style.display = '';
       fpMsg_('');
-      fpCooldown_(60);
+      fpCooldown_(120);
     } else {
       document.getElementById('fpStep1').style.display = 'none';
       fpMsg_('No e-mail is registered for this account. Your request has been sent to MIS. They will set a new password for you.', false);
@@ -7656,6 +7825,7 @@ async function fpSend_() {
   } catch (e) { fpMsg_('Network problem. Please try again.', true); }
   finally { btn.disabled = false; btn.textContent = 'Send OTP'; }
 }
+function fpFmt_(n) { return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); }
 let FP_CD_TIMER = null;
 function fpCooldown_(secs) {
   const btn = document.getElementById('fpResendBtn');
@@ -7663,11 +7833,11 @@ function fpCooldown_(secs) {
   if (FP_CD_TIMER) clearInterval(FP_CD_TIMER);
   let left = secs;
   btn.disabled = true;
-  btn.textContent = 'Resend OTP in ' + left + 's';
+  btn.textContent = 'Resend OTP in ' + fpFmt_(left);
   FP_CD_TIMER = setInterval(() => {
     left--;
     if (left <= 0) { clearInterval(FP_CD_TIMER); FP_CD_TIMER = null; btn.disabled = false; btn.textContent = 'Resend OTP'; }
-    else btn.textContent = 'Resend OTP in ' + left + 's';
+    else btn.textContent = 'Resend OTP in ' + fpFmt_(left);
   }, 1000);
 }
 async function fpResend_() {
@@ -7679,7 +7849,7 @@ async function fpResend_() {
     const res = await jsonp({ page: 'forgotPwdRequestAPI', role: FP_ROLE, id: id });
     if (!res || !res.ok) { fpMsg_((res && res.error) || 'Could not resend the OTP.', true); btn.disabled = false; btn.textContent = 'Resend OTP'; return; }
     fpMsg_('A new OTP was sent to ' + (res.maskedEmail || 'your e-mail') + '.', false);
-    fpCooldown_(60);
+    fpCooldown_(120);
   } catch (e) { fpMsg_('Network problem. Please try again.', true); btn.disabled = false; btn.textContent = 'Resend OTP'; }
 }
 async function fpReset_() {
@@ -31221,6 +31391,7 @@ initStoreSettings_();
   function closeTopModal() {
     const ms = openModals(); if (!ms.length) return false;
     const m = ms[ms.length - 1];
+    if (m.id === 'mailGateModal') return true;   // blocking popup: cannot be dismissed
     const btn = Array.prototype.find.call(m.querySelectorAll('button, .modal-close, [onclick]'), function (b) {
       const t = (b.textContent || '').trim();
       return vis(b) && (/^(cancel|close|skip|later|no)$/i.test(t.replace(/[^A-Za-z]/g, '')) || /^[✕×✖]$/.test(t) || /close/i.test(b.getAttribute('onclick') || ''));
