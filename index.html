@@ -7968,6 +7968,35 @@ async function dsrEditAllowAgain_() {
   } catch (e) { toast('Connection error. Try again.', 'error'); }
   btn.disabled = false;
 }
+// Tag history popup: every DSR row (Main file + Archive) that holds this Tag No, newest first.
+async function dsrTagHistoryOpen_(tag, who) {
+  let m = document.getElementById('dsrTagHistModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.className = 'modal-overlay'; m.id = 'dsrTagHistModal'; m.style.zIndex = '100001';
+    m.innerHTML = '<div class="modal-box" style="max-width:440px;max-height:85vh;overflow-y:auto;"><button class="modal-close-x" onclick="closeModal(\'dsrTagHistModal\')" title="Close">✕</button><div class="modal-title" style="margin-bottom:8px;" id="dsrTagHistTitle"></div><div id="dsrTagHistBody"></div></div>';
+    document.body.appendChild(m);
+  }
+  document.getElementById('dsrTagHistTitle').textContent = '🔍 Tag History — ' + tag;
+  const body = document.getElementById('dsrTagHistBody');
+  body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;opacity:.7;">Loading...</div>';
+  openModal('dsrTagHistModal');
+  try {
+    const role = who === 'admin' ? 'ADMIN' : 'EMPLOYEE';
+    const r = await _fetchWithTimeout(DSR_GAS_URL + '?action=searchByTagNo&tagNo=' + encodeURIComponent(tag) + '&role=' + role, {}, 60000).then(x => x.json());
+    if (r.status !== 'success') throw new Error(r.message || 'Could not load');
+    const list = (r.results || []).slice().sort((a, b) => String(b.billDate || '').localeCompare(String(a.billDate || '')));
+    if (!list.length) { body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;opacity:.7;">No history found for this Tag No.</div>'; return; }
+    const row = (k, v) => v ? '<div style="font-size:12px;margin:2px 0;"><b>' + k + ':</b> ' + escHtml_(String(v)) + '</div>' : '';
+    body.innerHTML = list.map(e => '<div style="border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:8px;">'
+      + '<div style="font-weight:700;font-size:13px;">' + escHtml_(e.dsrId || '(no DSR No)') + ' <span class="kd-pill gold" style="font-size:10px;">' + escHtml_(e.sourceSheet || '') + '</span></div>'
+      + row('Bill Date', e.billDate) + row('Customer', e.customerName) + row('Mobile', e.mobileNumber) + row('Employee', e.employeeName)
+      + row('Status', e.paymentStatus) + row('Item', [e.type, e.productName, e.design].filter(Boolean).join(' · ')) + row('Weight', e.weight) + row('Return Date', e.returnDate)
+      + '</div>').join('');
+  } catch (e) {
+    body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</div>';
+  }
+}
 function dsrEditToggleLabel_() {
   const b = document.getElementById('decToggleBtn');
   if (!b) return;
@@ -28566,6 +28595,18 @@ function dsrfConfirmSubmit(who, evt) {
       } else {
         msg.style.color = 'var(--red)';
         msg.textContent = '❌ ' + (result.message || 'Failed to save') + ' — nothing was saved. Please try again.';
+        if (result.duplicateTag) {
+          // Small link under the error: opens that Tag No's full history in a popup.
+          const dupT = result.dupTag || ((/Tag No '([^']+)'/.exec(result.message || '')) || [])[1] || '';
+          if (dupT) {
+            const lnk = document.createElement('button');
+            lnk.type = 'button';
+            lnk.textContent = '🔍 View Tag History';
+            lnk.style.cssText = 'display:block;margin:8px auto 0;background:#fff;color:#1a1a2e;border:1.5px solid #d4af37;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:800;cursor:pointer;';
+            lnk.onclick = () => dsrTagHistoryOpen_(dupT, who);
+            msg.appendChild(lnk);
+          }
+        }
         // v-fix (BRO: "dsr entry kuda online lo untene save avali. cache lo
         // save vaddu" — BRO explicitly turned off the offline-queue safety
         // net for DSR, same as Stock: a server-side error response (e.g.
