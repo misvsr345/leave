@@ -4971,6 +4971,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   </div>
 </div>
 
+<div class="modal-overlay" id="healthAlertModal" style="z-index:100003;">
+  <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close-x" onclick="closeModal('healthAlertModal')" title="Close">✕</button>
+    <div class="modal-title" style="margin-bottom:6px;color:#c0392b;">⚠️ System Alert</div>
+    <div style="font-size:12px;opacity:.75;margin-bottom:10px;">The automatic health check found problem(s). Tap "Got it" once you have seen a problem. It comes back only if it keeps happening.</div>
+    <div id="healthAlertBody"></div>
+    <button class="btn-secondary" style="margin-top:6px;" onclick="healthAckAll_()">Got it — all</button>
+  </div>
+</div>
 <div class="modal-overlay" id="dsrEditCtlModal">
   <div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="closeModal('dsrEditCtlModal')" title="Close">✕</button>
@@ -7553,6 +7562,7 @@ async function loadLoginActivity(who) {
 function logout(who, reason) {
   try { const mg = document.getElementById('mailGateModal'); if (mg) mg.classList.remove('show'); } catch (eMg) {}
   if (who === 'admin' && misPopupPollTimer_) { clearInterval(misPopupPollTimer_); misPopupPollTimer_ = null; }
+  if (who === 'admin') { try { for (const k in HLT_SEEN) delete HLT_SEEN[k]; HLT_ITEMS = []; document.getElementById('healthAlertModal').classList.remove('show'); } catch (eH) {} }
   if(who==='emp') {
     if (typeof _stopEmpLeadsAutoRefresh_ === 'function') _stopEmpLeadsAutoRefresh_();
     document.getElementById('empApp').classList.remove('active');
@@ -8043,6 +8053,50 @@ async function dsrEditPoll_() {
 }
 setInterval(dsrEditPoll_, 60000);
 setTimeout(dsrEditPoll_, 8000);
+
+// ── MIS: automatic system-health alert popup (data comes from the backend Health Watchdog) ──
+const HLT_SEEN = {};
+function healthIsMis_() { return state.__loginKind === 'admin' && String(state.adminRole || '').toUpperCase().indexOf('MIS') !== -1; }
+function healthUrl_(action, extra) {
+  return DSR_GAS_URL + '?action=' + action + '&callerRole=' + encodeURIComponent(state.adminRole || '') + '&callerEmail=' + encodeURIComponent(state.adminEmail || '') + (extra || '');
+}
+async function healthPoll_() {
+  try {
+    if (!healthIsMis_()) return;
+    const r = await fetch(healthUrl_('healthAlerts')).then(x => x.json());
+    if (!r || r.status !== 'success') return;
+    if (!r.items.length) { HLT_ITEMS = []; return; }
+    HLT_ITEMS = r.items;
+    // Show again only when something is new or has happened again since it was last shown in this login.
+    const fresh = r.items.filter(i => HLT_SEEN[i.id] !== i.last);
+    if (!fresh.length) return;
+    r.items.forEach(i => { HLT_SEEN[i.id] = i.last; });
+    _queueAutoPopup_(() => { healthRender_(); openModal('healthAlertModal'); });
+  } catch (e) {}
+}
+let HLT_ITEMS = [];
+function healthRender_() {
+  const body = document.getElementById('healthAlertBody');
+  if (!HLT_ITEMS.length) { body.innerHTML = '<div style="text-align:center;padding:12px;font-size:13px;opacity:.7;">No open alerts.</div>'; return; }
+  body.innerHTML = HLT_ITEMS.map(i => {
+    const col = i.sev === 'Critical' ? '#c0392b' : (i.sev === 'Warning' ? '#e67e22' : '#8e44ad');
+    return `<div style="border:1.5px solid ${col};border-radius:10px;padding:9px 10px;margin-bottom:8px;">
+      <div style="font-weight:800;font-size:13px;"><span style="color:${col};">${escHtml_(i.sev)}</span> · ${escHtml_(String(i.problem).replace(/\s*\[.*\]\s*$/, ''))}</div>
+      <div style="font-size:11.5px;opacity:.75;margin:3px 0;">Happened ${escHtml_(i.count)} time(s) · first ${escHtml_(i.first)} · last ${escHtml_(i.last)}</div>
+      <div style="font-size:12px;word-break:break-word;margin-bottom:6px;">${escHtml_(i.details)}</div>
+      <button class="btn-primary" style="width:auto;margin:0;padding:6px 14px;font-size:12px;" onclick="healthAck_('${escJs(i.id)}')">Got it</button>
+    </div>`;
+  }).join('');
+}
+async function healthAck_(id) {
+  try { await fetch(healthUrl_('healthAlertAck', '&id=' + encodeURIComponent(id))).then(x => x.json()); } catch (e) {}
+  HLT_ITEMS = HLT_ITEMS.filter(i => i.id !== id);
+  healthRender_();
+  if (!HLT_ITEMS.length) closeModal('healthAlertModal');
+}
+function healthAckAll_() { healthAck_('ALL').then(() => { HLT_ITEMS = []; healthRender_(); closeModal('healthAlertModal'); }); }
+setInterval(healthPoll_, 60000);
+setTimeout(healthPoll_, 12000);
 let FP_ROLE = 'EMP';
 function fpMsg_(text, isErr) {
   const el = document.getElementById('fpMsg');
