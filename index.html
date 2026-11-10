@@ -3059,7 +3059,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <!-- PENDING -->
     <div class="page-section" id="admin-pending">
       <div class="section-hdr"><span class="section-title2">⏳ Pending Approvals</span>
-        <button class="btn-sm btn-view" id="pendingRefreshBtn" onclick="manualRefreshPending()">🔄 Refresh</button>
+        <span style="display:flex;gap:6px;align-items:center;">
+          <button class="btn-sm btn-reject" id="pendingRejectedBtn" onclick="openRejectedList_()">❌ Rejected List <span id="pendingRejectedBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:0 6px;margin-left:4px;font-size:11px;font-weight:700;">0</span></button>
+          <button class="btn-sm btn-view" id="pendingRefreshBtn" onclick="manualRefreshPending()">🔄 Refresh</button>
+        </span>
       </div>
       <div id="pendingSummary"></div>
       <div id="pendingContainer"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -5055,6 +5058,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
 <!-- Modal: Leave Detail — full clear breakdown of a single leave: dates,
      mode, submitted time, approved/processed time, purpose, address, etc. -->
+<!-- Modal: Rejected leaves list (admin, opened from Pending Approvals) -->
+<div class="modal-overlay" id="rejectedListModal">
+  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">❌ Rejected Leaves (Recent)</div>
+    <div id="rejectedListBody"></div>
+    <button class="btn-primary" style="width:100%;margin-top:10px;" onclick="closeModal('rejectedListModal')">Close</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="leaveDetailModal">
   <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="closeModal('leaveDetailModal')" title="Close">✕</button>
@@ -30095,6 +30107,58 @@ function fadeOutLeaveCard(leaveId) {
   });
 }
 
+
+// ── Rejected leaves list (Pending Approvals) ─────────────────────────────────
+// The button shows how many recent rejected leaves have not been looked at yet; opening the list
+// marks them all as seen and the number disappears until a new leave gets rejected.
+function recentRejectedLeaves_() {
+  let list = (state.allLeaves || []).filter(l => l.status === 'Rejected');
+  if (state.isStoreManager && state.adminDepartment) {
+    list = list.filter(l => (l.department || '').trim().toLowerCase() === state.adminDepartment.trim().toLowerCase());
+  }
+  // allLeaves is already latest-first; dedupe multi-day groups by leaveId and keep the 30 most recent
+  const seen = {}, out = [];
+  list.forEach(l => { if (!seen[l.leaveId]) { seen[l.leaveId] = true; out.push(l); } });
+  return out.slice(0, 30);
+}
+function rejSeenKey_() { return 'rejSeenIds_' + String(state.adminName || state.adminEmail || 'admin'); }
+function rejSeenIds_() { try { return JSON.parse(localStorage.getItem(rejSeenKey_()) || '[]'); } catch (e) { return []; } }
+function updateRejectedBadge_() {
+  const el = document.getElementById('pendingRejectedBadge');
+  if (!el) return;
+  const seen = {}; rejSeenIds_().forEach(id => seen[id] = true);
+  const n = recentRejectedLeaves_().filter(l => !seen[l.leaveId]).length;
+  el.textContent = n;
+  el.style.display = n > 0 ? 'inline-block' : 'none';
+}
+function openRejectedList_() {
+  const list = recentRejectedLeaves_();
+  const body = document.getElementById('rejectedListBody');
+  if (list.length === 0) {
+    body.innerHTML = '<div class="empty-state"><span class="emoji">📭</span><p>No rejected leaves</p></div>';
+  } else {
+    body.innerHTML = list.map(l => {
+      const dateStr = l.startDate === l.endDate ? fmtDMY(l.startDate) : fmtDMY(l.startDate) + ' → ' + fmtDMY(l.endDate);
+      return `<div class="leave-card" style="cursor:pointer;" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)">
+        <div class="leave-card-top">
+          <div><div class="leave-card-title">${escHtml(l.name)}</div><div class="leave-card-id">${escHtml(l.leaveId)} · ${escHtml(l.empId)}</div></div>
+          <span class="pill ${pillClass(l.status)}">${statusLabel(l.status)}</span>
+        </div>
+        <div class="leave-card-date">📅 ${dateStr}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${escHtml(l.type || '')}${l.processDate ? ' · Rejected: ' + escHtml(l.processDate) : ''}</div>
+        <div class="leave-card-reason" style="color:var(--red);border-left-color:var(--red);"><b>Reason:</b> ${escHtml(l.reason || 'Not specified')}</div>
+      </div>`;
+    }).join('');
+  }
+  try {
+    const ids = rejSeenIds_(); const m = {}; ids.forEach(i => m[i] = true);
+    list.forEach(l => { m[l.leaveId] = true; });
+    localStorage.setItem(rejSeenKey_(), JSON.stringify(Object.keys(m).slice(-300)));
+  } catch (e) {}
+  updateRejectedBadge_();
+  openModal('rejectedListModal');
+}
+
 function renderPending() {
   let pending = state.allLeaves.filter(l => l.status==='Pending' || l.status==='MIS_Approved');
   if(state.isStoreManager) {
@@ -30137,6 +30201,7 @@ function renderPending() {
     pending.forEach(l => { html += adminLeaveCardHTML(l); });
   }
   document.getElementById('pendingContainer').innerHTML = html;
+  try { updateRejectedBadge_(); } catch (eB) {}
 }
 
 async function manualRefreshPending() {
@@ -31285,6 +31350,21 @@ function adminLeaveCardHTML(l) {
   const subStaffTag = isSubStaffLeave
     ? `<div style="margin-top:6px;"><span class="pill" style="background:#fff3cd;color:#8a5a00;border:1px solid #e0b34d;">🧑‍🔧 Sub Staff</span></div>`
     : '';
+  // Leave Balance + Used Leaves boxes (for the month this leave falls in) — shown on cards that
+  // are waiting for approval, so the approver sees the employee's position at a glance.
+  let balanceBoxes = '';
+  if (isPending && l.balQuota !== undefined) {
+    const _fmt = n => (Math.round(Number(n) * 10) / 10).toString();
+    const _remain = Number(l.balRemain) || 0;
+    balanceBoxes = `<div style="display:flex;gap:8px;margin-top:8px;">
+      <div style="flex:1;border:1.5px solid ${_remain < 0 ? 'var(--red)' : 'var(--gold)'};border-radius:8px;padding:6px 8px;text-align:center;background:var(--purple-bg);">
+        <div style="font-size:16px;font-weight:700;color:${_remain < 0 ? 'var(--red)' : 'var(--purple-dark)'};">${_fmt(_remain)}</div>
+        <div style="font-size:10px;color:var(--text3);">Leave Balance</div></div>
+      <div style="flex:1;border:1.5px solid var(--gold);border-radius:8px;padding:6px 8px;text-align:center;background:var(--purple-bg);">
+        <div style="font-size:16px;font-weight:700;color:var(--purple-dark);">${_fmt(l.balUsed)}</div>
+        <div style="font-size:10px;color:var(--text3);">Used Leaves</div></div>
+    </div>`;
+  }
   return `<div class="leave-card" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)" style="cursor:pointer;">
     <div class="leave-card-top">
       <div><div class="leave-card-title">${l.name}</div><div class="leave-card-id">${l.leaveId} · ${l.empId}${l.department?' · '+l.department:''}${l.leaveGroupId ? ` <span class="pill" style="background:var(--purple-bg,#f3e8ff);color:var(--purple,#6b21a8);font-size:9px;padding:2px 6px;">🔗 Multi-Date</span>` : ''}</div></div>
@@ -31299,6 +31379,7 @@ function adminLeaveCardHTML(l) {
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
     ${rejectionBlock}
     ${subStaffTag}
+    ${balanceBoxes}
     <div class="leave-card-actions" onclick="event.stopPropagation();">${actions}</div>
   </div>`;
 }
