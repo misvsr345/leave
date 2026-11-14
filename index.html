@@ -20457,12 +20457,14 @@ function showDsrMissingDetail(idx) {
       const eMatch = parts[2] ? parts[2].replace('E:', '') : '';
       const extra = (pMatch !== '' || eMatch !== '') ? ` <span style="color:var(--text3);font-weight:400;">(🛍️ ${pMatch} · 🧾 ${eMatch})</span>` : '';
       // DSR IDs counted for this date (Bill Date = this date), each with the date it was actually entered
+      const crPart = parts.find(x => x.indexOf('C:') === 0);
+      const crHtml = crPart ? ' <span style="color:var(--text3);font-weight:400;">· ' + crPart.substring(2) + ' covered by extra DSRs</span>' : '';
       const idPart = parts.find(x => x.indexOf('I:') === 0);
       const idHtml = idPart ? '<div style="margin-top:4px;font-weight:400;font-size:11px;color:var(--text2);line-height:1.6;">' + idPart.substring(2).split(',').filter(Boolean).map(t => {
         const k = t.split('@'); const en = k[1] ? ' · Entered ' + fmtDMY(k[1]) : '';
         return '<div>' + escHtml_(k[0]) + ' <span style="color:var(--text3);">· Bill ' + fmtDMY(d) + en + '</span></div>';
       }).join('') + '</div>' : '';
-      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing${extra}${idHtml}</td></tr>`;
+      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing${extra}${crHtml}${idHtml}</td></tr>`;
     }).join('') + `</tbody></table>`;
   }
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto;">
