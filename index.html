@@ -7722,7 +7722,30 @@ async function loadLoginActivity(who) {
   }
 }
 
+// Closes every popup / overlay (static ones are hidden, dynamically created ones removed). Used on logout and by a
+// watchdog so a late response can never leave a popup on screen after the user is logged out.
+const STATIC_OVERLAY_IDS_ = new Set(Array.prototype.map.call(document.querySelectorAll('.modal-overlay[id]'), function (e) { return e.id; }));
+function closeAllPopups_() {
+  try {
+    document.querySelectorAll('.modal-overlay').forEach(function (el) {
+      if (el.id === 'forgotPwdModal') return; // belongs to the login screen
+      if (el.id && STATIC_OVERLAY_IDS_.has(el.id)) el.classList.remove('show'); else el.remove();
+    });
+    document.querySelectorAll('.loy-img-modal.open').forEach(function (el) { el.classList.remove('open'); });
+    const st = document.getElementById('newEntryPopupStack'); if (st) st.innerHTML = '';
+    const tray = document.getElementById('vsrPopupTray'); if (tray) tray.style.display = 'none';
+    window.__autoPopupQueue_ = []; window.__minPopups_ = [];
+  } catch (e) {}
+}
+setInterval(function () {
+  try {
+    const a = document.getElementById('adminApp'), e = document.getElementById('empApp');
+    const loggedIn = (a && a.classList.contains('active')) || (e && e.classList.contains('active'));
+    if (!loggedIn && document.querySelector('.modal-overlay.show:not(#forgotPwdModal), .loy-img-modal.open, #newEntryPopupStack > *')) closeAllPopups_();
+  } catch (x) {}
+}, 700);
 function logout(who, reason) {
+  closeAllPopups_();
   try { const mg = document.getElementById('mailGateModal'); if (mg) mg.classList.remove('show'); } catch (eMg) {}
   if (who === 'admin' && misPopupPollTimer_) { clearInterval(misPopupPollTimer_); misPopupPollTimer_ = null; }
   if (who === 'admin') { try { for (const k in HLT_SEEN) delete HLT_SEEN[k]; HLT_ITEMS = []; document.getElementById('healthAlertModal').classList.remove('show'); } catch (eH) {} }
