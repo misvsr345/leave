@@ -3648,8 +3648,8 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
             <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub">Pick a color theme</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('storedata')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Store Data</div><div class="quick-action-sub">Logo, background, name, address, contact</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
-            <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="smPicker_()"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Manage / Settings</div><div class="quick-action-sub">All options in one place</div></div>
+            <div class="quick-action-btn" onclick="pwOpen_()"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Password <span id="pwrBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Change password, forgot-password requests</div></div>
+            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mtPageEnter_('mis')"><span class="quick-action-icon">🛠️</span><div class="quick-action-label">MIS Tools</div><div class="quick-action-sub">Access, alerts, limits, connections</div></div>
           </div>
         </div>
 
@@ -4639,12 +4639,6 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <div class="quick-action-btn" onclick="mkrOpen_('admin','addr')"><span class="quick-action-icon">📍</span><div class="quick-action-label">Address-wise count</div><div class="quick-action-sub">Entries per area</div></div>
         <div class="quick-action-btn" onclick="mkrOpen_('admin','export')"><span class="quick-action-icon">📥</span><div class="quick-action-label">Export</div><div class="quick-action-sub">Download as CSV</div></div>
         <div class="quick-action-btn" onclick="mkrOpen_('admin','dupLog')"><span class="quick-action-icon">🗑️</span><div class="quick-action-label">Deleted duplicates log</div><div class="quick-action-sub">Backup of removed rows</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkSync')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Sync now</div><div class="quick-action-sub">New numbers → Feedback file</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkDry')"><span class="quick-action-icon">🧪</span><div class="quick-action-label">Test sync</div><div class="quick-action-sub">Nothing is written</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkDedupe')"><span class="quick-action-icon">🧹</span><div class="quick-action-label">Delete duplicates</div><div class="quick-action-sub">In the Marketing sheet</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkDedupeFb')"><span class="quick-action-icon">🧹</span><div class="quick-action-label">Delete duplicates</div><div class="quick-action-sub">In the Feedback file</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkAuto')"><span class="quick-action-icon">🌙</span><div class="quick-action-label">Nightly auto sync</div><div class="quick-action-sub">Switch on / off</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkSumm')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Sheet summary</div><div class="quick-action-sub">Rows / unique numbers</div></div>
       </div>
       <div class="card" id="mkPageDetail"></div>
     </div>
@@ -7822,6 +7816,7 @@ document.addEventListener('visibilitychange', function () {
 // ── Settings -> Password Requests (MIS / Director) ──
 let PWR_TAB = 'req';
 function pwrCaller_() { return { callerRole: state.adminRole, callerEmail: state.adminEmail }; }
+function pwOpen_() { if (frqIsMis_()) mtPageEnter_('password'); else openChangePassword('admin'); }
 function pwrOpen_() { openModal('pwrModal'); pwrTab_('req'); }
 async function pwrTab_(tab) {
   PWR_TAB = tab;
@@ -24203,7 +24198,7 @@ function slAdjCheckAccess_() {
   }).catch(() => {});
 }
 // ── Special Access hub, DSR Types screen, Leave Types & Limits screen (Admin) ──
-function specialAccessOpen_() { smPicker_(); }
+function specialAccessOpen_() { showAdminPage('settings'); }
 async function dsrTypesOpen_() {
   slOpenModal('<div class="loading"><span class="spinner"></span>Loading...</div>');
   try {
@@ -24336,39 +24331,6 @@ async function ltBulk_(action) {
     if (r && r.ok) { toast('✅ Done ' + r.done + ' · skipped ' + r.skipped + ' · errors ' + r.errors, r.errors ? 'error' : 'success'); ltBulkOpen_(); }
     else toast((r && r.error) || 'Failed', 'error');
   } catch (e) { toast('No confirmation from server — reopen to verify before retrying', 'error'); }
-}
-async function ltHolidayOpen_() {
-  slOpenModal('<div class="loading"><span class="spinner"></span>Loading...</div>');
-  try {
-    const emps = await jsonpReliable({ page: 'getEmployees' });
-    const list = ((emps && emps.employees) || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name)));
-    const today = toYMD(new Date());
-    slOpenModal('<div class="modal-title">🏢 Company Holiday</div><div class="kd-note">Adds an approved leave for every selected employee on these dates.</div>' +
-      slField('chStart', 'From', today, 'date') + slField('chEnd', 'To', today, 'date') +
-      '<div class="form-row"><label>Leave type</label><select id="slF-chType"><option>Casual Leave</option><option>Sick Leave</option><option>Special Permission Leave</option><option>Emergency Leave</option><option selected>Company Holiday</option></select></div>' +
-      '<div class="form-row"><label>Mode</label><select id="slF-chMode"><option>Full Day</option><option>Half Day</option></select></div>' +
-      '<div class="form-row"><label>Half day (only for Half Day)</label><select id="slF-chHalf"><option>First Half (Morning)</option><option>Second Half (Afternoon)</option></select></div>' +
-      slField('chPurpose', 'Reason / Purpose', 'Company Holiday') +
-      '<div class="form-row"><label>Deduct from leave balance</label><select id="slF-chDed"><option value="no">No — paid holiday</option><option value="yes">Yes — deduct</option></select></div>' +
-      '<div class="form-row"><label>Send approval mail</label><select id="slF-chMail"><option value="yes">Yes</option><option value="no">No — silently</option></select></div>' +
-      '<label style="display:flex;gap:8px;font-size:13px;margin:8px 0 2px;"><input type="checkbox" checked onchange="document.querySelectorAll(\'.chEmp\').forEach(c=>c.checked=this.checked)"> Select all employees</label>' +
-      list.map(e => `<label style="display:flex;gap:8px;align-items:center;font-size:12.5px;padding:3px 0;"><input type="checkbox" class="chEmp" value="${escHtml(String(e.empId))}" checked> ${escHtml(properCase(e.name))}</label>`).join('') +
-      '<button class="btn-primary" style="width:100%;margin-top:10px;" onclick="ltHoliday_()">Add holiday</button>');
-  } catch (e) { slOpenModal('<div class="empty-state"><p>Could not load.</p></div>'); }
-}
-async function ltHoliday_() {
-  const g = id => document.getElementById('slF-' + id).value;
-  const ids = Array.from(document.querySelectorAll('.chEmp')).filter(c => c.checked).map(c => c.value);
-  if (!ids.length) { toast('Select at least one employee', 'error'); return; }
-  if (!g('chStart') || !g('chEnd')) { toast('Choose the dates', 'error'); return; }
-  if (!confirm('Add "' + g('chPurpose') + '" for ' + ids.length + ' employee(s), ' + g('chStart') + ' to ' + g('chEnd') + '?')) return;
-  const payload = { empIds: ids, startDate: g('chStart'), endDate: g('chEnd'), leaveType: g('chType'), leaveMode: g('chMode'),
-    halfDay: g('chMode') === 'Half Day' ? g('chHalf') : '', purpose: g('chPurpose'), deductBalance: g('chDed'), sendMail: g('chMail') };
-  try {
-    const r = await adminTool_('holiday', { payload: JSON.stringify(payload) });
-    if (r && r.ok) { toast('✅ Added ' + r.added + ' · skipped ' + r.skipped + ' · mails ' + r.mails, 'success'); document.getElementById('slModal').remove(); }
-    else toast((r && r.error) || 'Failed', 'error');
-  } catch (e) { toast('No confirmation from server — check Leave data before retrying', 'error'); }
 }
 async function eomRulesOpen_() {
   slOpenModal('<div class="loading"><span class="spinner"></span>Loading...</div>');
@@ -33063,7 +33025,7 @@ function mtShow_(title, text, isErr) {
 }
 function mtBusy_(msg) { slOpenModal(`<div class="loading"><span class="spinner"></span>${escHtml(msg || 'Working...')}<div style="font-size:11px;opacity:.7;margin-top:6px;">Some tools take a minute. Please wait.</div></div>`); }
 // MIS Tools / Manage-Settings lists are normal pages with direct buttons (no popups).
-// Views: 'all' (tool groups), 'group' (tools of one group), 'sec' (one section's options), 'picker' (all sections).
+// Views: 'tools' (one section's tools) and 'leavetools'.
 window.__mtStack = []; window.__mtOrigin = 'modulepicker'; window.__mtView = null;
 function mtPageInit_() {
   const host = document.querySelector('#adminApp .page-content');
@@ -33095,26 +33057,27 @@ function mtMeta_(gid, label) {
   return ['🛠️', 'Other Tools'];
 }
 // ---- Tools & Settings block at the bottom of each section page (MIS only) ----
-const SEC_TOOLS_ = {
-  dsr: [['🥇', 'DSR Types', 'Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️', 'DSR Edit Requests', 'Edit requests and approvals', 'dsrEditCtlOpen_()', 'decBadge'], ['🛠️', 'DSR Tools', 'Mails, duplicates, reports', "mtGroup_('dsr')"]],
-  kpi: [['🏆', 'Performer Rules', 'Score, Loyalty %, Golden %', 'eomRulesOpen_()'], ['🛠️', 'KPI / Performer Tools', 'Reports, mails, auto mail', "mtGroup_('kpi')"]],
-  loyalty: [['🛠️', 'Loyalty Tools', 'Approve, pay, reports, KYC', "mtGroup_('loy')"]],
-  leads: [['🛠️', 'Leads Tools', 'Dispatch, CRM reports, sync', "mtGroup_('leads')"]],
-  stocklevel: [['🛠️', 'Stock Tools', 'Counters, rebuild, checks', "mtGroup_('stock')"]],
-  walkins: [['🚶', 'Walk-in Summary', 'For a date', "mtRun_('walkSum')"], ['🧹', 'Walk-in Duplicate Check', 'Odd entries', "mtRun_('walkDup')"]]
+const SEC_TOOLS_ = { 'golden-aura': 1, dsr: 1, kpi: 1, loyalty: 1, leads: 1, stocklevel: 1, walkins: 1, marketing: 1 };
+const SEC_TITLE_ = { 'golden-aura': '🥇 Golden Aura', dsr: '🧾 DSR', kpi: '📊 KPI', loyalty: '💳 Loyalty Card', leads: '👥 Leads / CRM', stocklevel: '📦 Stock Level', walkins: '🚶 Walk-in Track', marketing: '📣 Marketing' };
+const SEC_OWN_ = {
+  dsr: [['🥇', 'DSR Types', 'Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️', 'DSR Edit Requests', 'Edit requests and approvals', 'dsrEditCtlOpen_()', 'decBadge']],
+  kpi: [['🏆', 'Performer Rules', 'Score, Loyalty %, Golden %', 'eomRulesOpen_()']]
 };
+const SEC_GROUPS_ = { 'golden-aura': ['leads'], dsr: ['dsr'], kpi: ['kpi'], walkins: ['kpi'], loyalty: ['loy'], leads: ['leads'], stocklevel: ['stock'], marketing: ['mkt'] };
+const SEC_ONLY_ = { 'golden-aura': ['crmGolden'], walkins: ['walkSum', 'walkDup'] };
+const SEC_EXCL_ = { leads: ['crmGolden'], kpi: ['walkSum', 'walkDup'] };
 function secToolsRender_(page) {
   const list = SEC_TOOLS_[page]; if (!list) return;
   const el = document.getElementById('admin-' + page); if (!el) return;
   const old = document.getElementById('secTools-' + page); if (old) old.remove();
   if (!frqIsMis_()) return;
   const d = document.createElement('div'); d.id = 'secTools-' + page;
-  d.innerHTML = '<div style="font-weight:800;font-size:14px;margin:18px 2px 6px;padding-bottom:4px;border-bottom:2px solid var(--gold,#C9A227);">🛠️ Tools &amp; Settings</div><div class="quick-actions-grid">' + list.map(i => mtTile_(i[0], i[1], i[2], i[3], i[4])).join('') + '</div>';
+  d.innerHTML = '<div class="quick-actions-grid" style="margin-top:14px;">' + mtTile_('🛠️', String(SEC_TITLE_[page] || '').replace(/^\S+\s+/, '') + ' Tools', 'Options, reports, mails', "mtPageEnter_('tools','" + page + "')") + '</div>';
   el.appendChild(d);
   setTimeout(function () { const bn = window.__badgeN_ || {}; if (bn.dsrEditBadge_ !== undefined && typeof window.dsrEditBadge_ === 'function') { try { window.dsrEditBadge_(bn.dsrEditBadge_); } catch (e) {} } }, 100);
 }
 const LEAVE_TOOL_ITEMS_ = [
-  ['📩 Resend Leave Mail', 'ltResendOpen_()'], ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'], ['🏢 Company Holiday', 'ltHolidayOpen_()'],
+  ['📩 Resend Leave Mail', 'ltResendOpen_()'], ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'],
   ['🆔 Generate Missing Leave Ids', "ltRunTile_('genIds')"], ['🔧 Fix All Counters', "ltRunTile_('fixCounters')"], ['📧 Check Mail Quota', "ltRunTile_('quota')"]
 ];
 function mtTile_(icon, label, sub, action, badgeId) {
@@ -33123,47 +33086,41 @@ function mtTile_(icon, label, sub, action, badgeId) {
 function mtPageRender_(view, arg) {
   mtPageInit_();
   let title = '', note = '', tiles = '';
-  if (view === 'all') {
-    title = '🛠️ MIS Tools'; note = 'Everything that used to be in the Google Sheet menus.';
-    tiles = MT_GROUPS_.map(g => mtTile_(g.icon, g.title, g.tools.length + ' tools', "mtGroup_('" + g.id + "')")).join('');
-  } else if (view === 'group') {
-    const g = MT_GROUPS_.find(x => x.id === arg); if (!g) return;
-    title = g.icon + ' ' + g.title;
-    const heads = [], by = {};
-    g.tools.forEach(t => { const m = mtMeta_(g.id, t.label); if (!by[m[1]]) { by[m[1]] = []; heads.push(m[1]); } by[m[1]].push(mtTile_(m[0], t.label, t.desc || '', "mtRun_('" + t.id + "')")); });
-    tiles = heads.map(h => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:12px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(h) + '</div>' + by[h].join('')).join('');
-  } else if (view === 'sec') {
-    const sec = SM_SECS_[arg]; if (!sec) return;
-    title = sec.t + ' — Manage / Settings';
-    const isGeneral = a => /smSettings_\('(access|alert)'\)|frqOpenModal|mtLimitsOpen_/.test(a);
-    const own = sec.items.filter(i => !isGeneral(i[1]));
-    const hdr = t => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:8px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(t) + '</div>';
-    const sp = s => { const m = String(s).match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['⚙️', s]; };
-    tiles = hdr('📌 ' + sec.t.replace(/^\S+\s+/, '') + ' — this section')
-      + (own.length ? own.map(i => { const x = sp(i[0]); return mtTile_(x[0], x[1], '', i[1]); }).join('') : '<div class="kd-note" style="grid-column:1/-1;margin:0 2px;">No section-specific options. Everything below applies to all sections.</div>')
-      + hdr('🌐 General — applies to all sections')
-      + mtTile_('🔐', 'Access', 'Who can use what', "smSettings_('access')")
+  if (view === 'tools') {
+    title = (SEC_TITLE_[arg] || 'Section') + ' — Tools';
+    const hdr = t => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:12px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(t) + '</div>';
+    const own = SEC_OWN_[arg] || [];
+    if (own.length) tiles += hdr('⚙️ Options') + own.map(i => mtTile_(i[0], i[1], i[2], i[3], i[4])).join('');
+    const only = SEC_ONLY_[arg], excl = SEC_EXCL_[arg] || [];
+    (SEC_GROUPS_[arg] || []).forEach(gid => {
+      const g = MT_GROUPS_.find(x => x.id === gid); if (!g) return;
+      const heads = [], by = {};
+      g.tools.filter(t => (only ? only.indexOf(t.id) >= 0 : excl.indexOf(t.id) < 0)).forEach(t => { const m = mtMeta_(g.id, t.label); if (!by[m[1]]) { by[m[1]] = []; heads.push(m[1]); } by[m[1]].push(mtTile_(m[0], t.label, t.desc || '', "mtRun_('" + t.id + "')")); });
+      tiles += heads.map(h => hdr(h) + by[h].join('')).join('');
+    });
+    setTimeout(function () { const bn = window.__badgeN_ || {}; if (bn.dsrEditBadge_ !== undefined && typeof window.dsrEditBadge_ === 'function') { try { window.dsrEditBadge_(bn.dsrEditBadge_); } catch (e) {} } }, 100);
+  } else if (view === 'mis') {
+    title = '🛠️ MIS Tools'; note = '';
+    const big = t => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:12px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(t) + '</div>';
+    tiles = big('Access')
+      + mtTile_('👤', 'Employee Access', 'Who can use what', "smSettings_('access')")
+      + mtTile_('🔑', 'Admin Access', 'Admin permissions', "smSettings_('access');setTimeout(function(){switchSettingsTab('admin');},500)")
+      + big('Settings')
       + mtTile_('⭐', 'Required Fields', 'All forms', 'frqOpenModal()')
       + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
-      + mtTile_('⚙️', 'System Limits', 'Mail block days, alerts, sync limits', 'mtLimitsOpen_()')
+      + mtTile_('⚙️', 'System Limits', 'Mail block days, alert limits, sync limits, back-date days', 'mtLimitsOpen_()')
+      + mtTile_('🔌', 'Tool Connections', 'Links of the Loyalty, Walk-in and Marketing scripts', 'mtConnOpen_()')
       + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
+  } else if (view === 'password') {
+    title = '🔑 Password'; note = '';
+    tiles = mtTile_('🔑', 'Change My Password', 'Your own login password', "openChangePassword('admin')")
+      + mtTile_('🛟', 'Forgot Password Requests', 'Employees who asked for a reset', "pwrOpen_()")
+      + mtTile_('📭', 'No E-mail Accounts', 'Reset for accounts without an e-mail', "pwrOpen_();pwrTab_('nomail')");
   } else if (view === 'leavetools') {
     title = '🧰 Leave Tools'; note = '';
     tiles = LEAVE_TOOL_ITEMS_.map(i => { const x = String(i[0]).match(/^(\S+)\s+(.*)$/); return mtTile_(x[1] ? x[1] : '🧰', x[2] || i[0], '', i[1]); }).join('');
-  } else if (view === 'picker') {
-    title = '⚙️ Manage / Settings'; note = 'Access and general settings only. Each section has its own tools at the bottom of its page.';
-    const big = t => '<div style="grid-column:1/-1;font-weight:800;font-size:16px;margin:16px 2px 2px;padding-bottom:4px;border-bottom:2px solid var(--gold,#C9A227);">' + escHtml(t) + '</div>';
-    tiles = big('🔐 Access')
-      + mtTile_('👤', 'Employee Access', 'Who can use what', "smSettings_('access')")
-      + mtTile_('🔑', 'Admin Access', 'Admin permissions', "smSettings_('access');setTimeout(function(){switchSettingsTab('admin');},500)")
-      + mtTile_('🛟', 'Password Requests', 'Reset requests', 'pwrOpen_()', 'pwrBadge')
-      + big('⚙️ Settings')
-      + mtTile_('⭐', 'Required Fields', 'All forms', 'frqOpenModal()')
-      + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
-      + mtTile_('⚙️', 'System Limits', 'Mail block days, alerts, sync limits', 'mtLimitsOpen_()')
-      + mtTile_('📧', 'Mail Issues', 'Missing or bouncing e-mails', 'mailIssOpen_()', 'mailIssBadge')
-      + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
-    setTimeout(function () { const bn = window.__badgeN_ || {}; ['pwrBadge_', 'mailIssBadge_'].forEach(function (f) { try { if (bn[f] !== undefined && typeof window[f] === 'function') window[f](bn[f]); } catch (e) {} }); }, 100);
+    tiles += mtTile_('📧', 'Mail Issues', 'Missing or bouncing e-mails', 'mailIssOpen_()', 'mailIssBadge');
+    setTimeout(function () { const bn = window.__badgeN_ || {}; try { if (bn.mailIssBadge_ !== undefined && typeof window.mailIssBadge_ === 'function') window.mailIssBadge_(bn.mailIssBadge_); } catch (e) {} }, 100);
   }
   window.__mtView = { view: view, arg: arg };
   document.getElementById('mtPageTitle').textContent = title;
@@ -33183,8 +33140,6 @@ function mtPageBack_() {
   if (window.__mtStack.length) { const v = window.__mtStack.pop(); mtPageRender_(v.view, v.arg); return; }
   showAdminPage(window.__mtOrigin || 'modulepicker', { isBack: true });
 }
-function mtOpen_() { mtPageEnter_('all'); }
-function mtGroup_(gid) { mtPageEnter_('group', gid); }
 function mtRun_(id) {
   const t = mtFind_(id);
   if (t.custom) { window[t.custom](t); return; }
@@ -33431,30 +33386,6 @@ async function mtConnSave_() {
 }
 
 
-// ── Manage / Settings in every section (same options also reachable from Settings > Section Settings) ──
-const SM_SECS_ = {
-  leave: { t: '🏖️ Leave', items: [
-    ['🔐 Access (who can use what)', "smSettings_('access')"], ['🗂️ Leave Types & Limits', 'leaveLimitsOpen_()'],
-    ...LEAVE_TOOL_ITEMS_.map(i => [i[0], i[1], 1]), ['⛔ Blocked Dates', "showAdminPage('blocked')"],
-    ['📧 Mail Issues', 'mailIssOpen_()'], ['📢 Send Alert', "smSettings_('alert')"], ['⭐ Required fields', 'frqOpenModal()'],
-    ['🔌 Mail block days (System Limits)', 'mtLimitsOpen_()', 1] ] },
-  dsr: { t: '🧾 DSR', items: [
-    ['🥇 DSR Types — Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️ DSR Edit requests', 'dsrEditCtlOpen_()'],
-    ['🛠️ DSR tools — resend mail, duplicates, alerts, reports', "mtGroup_('dsr')", 1], ['⚙️ DSR health alert limits', 'mtLimitsOpen_()', 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
-  kpi: { t: '📊 KPI', items: [
-    ['🏆 Performer Rules', 'eomRulesOpen_()', 1], ['📈 KPI / Performer tools — reports, mails, auto mail', "mtGroup_('kpi')", 1], ['🔐 Access', "smSettings_('access')"] ] },
-  loyalty: { t: '💳 Loyalty Card', items: [
-    ['💳 Loyalty tools — approve, pay, reports, KYC', "mtGroup_('loy')", 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
-  leads: { t: '👥 Leads / CRM', items: [
-    ['📞 Leads tools — dispatch, CRM reports, data sync', "mtGroup_('leads')", 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'], ['⚙️ Contacts sync limit', 'mtLimitsOpen_()', 1] ] },
-  stock: { t: '📦 Stock Level', items: [
-    ['📦 Stock tools — counters, rebuild, drift, mismatch', "mtGroup_('stock')", 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
-  walkin: { t: '🚶 Walk-in Track', items: [
-    ['🚶 Walk-in Summary', "mtRun_('walkSum')", 1], ['🧹 Walk-in Duplicate Check', "mtRun_('walkDup')", 1], ['⚙️ Walk-in back-date days', 'mtLimitsOpen_()', 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
-  golden: { t: '🥇 Golden Aura', items: [['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()']] },
-  checklist: { t: '📝 Checklist', items: [['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()']] },
-  marketing: { t: '📣 Marketing', items: [['🔐 Access', "smSettings_('access')"]] }
-};
 // Access / Send Alert live inside the Settings page: open that page first, then the sub view; Back returns to the page we came from.
 function smSettings_(which) {
   if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
@@ -33463,8 +33394,6 @@ function smSettings_(which) {
   showSettingsSection(which);
   window.__settingsReturn = from || null;
 }
-function smOpen_(key) { mtPageEnter_('picker'); }
-function smPicker_() { mtPageEnter_('picker'); }
 
 // ── Marketing: New Customer Entry form for employees (same web app as the standalone marketing entry form) ──
 const MKE_API_URL = 'https://script.google.com/macros/s/AKfycbx9u-RfzHQus6jkKBtSwgW7gmKesnVeOnkJL6fHozU27tjqdqNCi2_1QBmDD-Iy9olq3g/exec';
