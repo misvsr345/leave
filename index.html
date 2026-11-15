@@ -3055,7 +3055,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
           <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
           <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mkOpen_()"><span class="quick-action-icon">📣</span><div class="quick-action-label">Marketing</div><div class="quick-action-sub">Daily entries, duplicates, sync</div></div>
-          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Daily Shop, Settings &amp; more</div></div>
+          <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
+          <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings &amp; more</div></div>
         </div>
       </div>
     </div>
@@ -4620,7 +4621,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-more">
       <div class="section-hdr"><span class="section-title2">☰ More</span></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
         <div class="quick-action-btn" id="adminQASettings" onclick="showAdminPage('settings')"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Settings</div><div class="quick-action-sub">Access, Theme, Store Data, Password &amp; more</div></div>
         <div class="quick-action-btn" id="adminQABackendSheets" onclick="showAdminPage('backend-sheets')"><span class="quick-action-icon">🗄️</span><div class="quick-action-label">Backend Sheets</div><div class="quick-action-sub">Open raw Google Sheets</div></div>
         <div class="quick-action-btn" id="adminQANewEmployee" onclick="showAdminPage('new-employee')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Employee</div><div class="quick-action-sub">One form → all backend sheets</div></div>
@@ -15061,7 +15061,8 @@ function loadBackendSheetsPage() {
     { label: 'Leads',                url: 'https://docs.google.com/spreadsheets/d/1J8N7OyXAbKb2i8qwUMSAS3XAIpKsw7IY3zjz91XK0bs/edit?resourcekey=&gid=1742228891#gid=1742228891' },
     { label: 'Stock Checklist',      url: 'https://docs.google.com/spreadsheets/d/1qfRFIfA2cpkVgZzw_agk3Gpsbbi9tyzLAIyVcbWlQFQ/edit' },
     { label: 'Employee Master',      url: 'https://docs.google.com/spreadsheets/d/1xZZdVvYp3Ke7Ot_leXyNnwvgT5VxnC1bn42_NvRma7E/edit' },
-    { label: 'Stock Level / Photos',  url: 'https://docs.google.com/spreadsheets/d/1GvSZA10RNA82aJxABBGxNSBk4ChqvGGFdcpBPueeT3c/edit?gid=1222848194#gid=1222848194' }
+    { label: 'Stock Level / Photos',  url: 'https://docs.google.com/spreadsheets/d/1GvSZA10RNA82aJxABBGxNSBk4ChqvGGFdcpBPueeT3c/edit?gid=1222848194#gid=1222848194' },
+    { label: 'Marketing Form',       url: 'https://docs.google.com/spreadsheets/d/1EG6dtlfpKB2eftwyi0DrV0BCwiV2TKSvu3nPRsf8PNU/edit' }
   ];
   box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;">` +
     links.map(l =>
