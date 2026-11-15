@@ -3645,22 +3645,11 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
              directly — no sub-view needed for those three. -->
         <div id="settingsHomeView">
           <div class="quick-actions-grid">
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="showSettingsSection('access')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Access</div><div class="quick-action-sub">Employee &amp; Admin feature access</div></div>
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="showSettingsSection('alert')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Send Alert</div><div class="quick-action-sub">Pop-up alert to one or all employees</div></div>
             <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub">Pick a color theme</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('storedata')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Store Data</div><div class="quick-action-sub">Logo, background, name, address, contact</div></div>
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="specialAccessOpen_()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Special Access</div><div class="quick-action-sub">All special options in one place</div></div>
             <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="smPicker_()"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">Manage / Settings</div><div class="quick-action-sub">All options in one place</div></div>
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mtOpen_()"><span class="quick-action-icon">🛠️</span><div class="quick-action-label">MIS Tools</div><div class="quick-action-sub">DSR, KPI, Loyalty, Leads, Stock, Marketing</div></div>
-            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mtLimitsOpen_()"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">System Limits</div><div class="quick-action-sub">Alert mails, daily limits, back-date days</div></div>
-            <div class="quick-action-btn" onclick="eomRulesOpen_()"><span class="quick-action-icon">🏆</span><div class="quick-action-label">Performer Rules</div><div class="quick-action-sub">Score, Loyalty %, Golden %</div></div>
-            <div class="quick-action-btn" onclick="dsrTypesOpen_()"><span class="quick-action-icon">🥇</span><div class="quick-action-label">DSR Types</div><div class="quick-action-sub">Gold / Silver / Diamond per employee</div></div>
-            <div class="quick-action-btn" onclick="dsrEditCtlOpen_()"><span class="quick-action-icon">✏️</span><div class="quick-action-label">DSR Edit <span id="decBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Edit requests and approvals</div></div>
-            <div class="quick-action-btn" onclick="mailIssOpen_()"><span class="quick-action-icon">📧</span><div class="quick-action-label">Mail Issues <span id="mailIssBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Missing / bouncing e-mails, allow access</div></div>
-            <div class="quick-action-btn" onclick="pwrOpen_()"><span class="quick-action-icon">🛟</span><div class="quick-action-label">Password Requests <span id="pwrBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Reset requests, employees without e-mail</div></div>
           </div>
         </div>
 
@@ -7576,6 +7565,7 @@ async function empLogin() {
         checkEmpMissingDsrPopup();
         checkDutyAssignmentPopup_(false);
         checkStockPopups_();
+        checkEmpKpiPopup_();
         // v-fix (BRO: "madhyana vastunna welcome mis executive green color lo vastundi kada, adi vaddu" —
         // removed the duplicate green "Welcome, ..." toast here; the wbWelcomeModal popup already shows it.
         // v-fix (BRO: "if Malleswara has a pending DSR queued on a device, does it sync when Liza logs in on that same device?" — answer was no, login wasn't one of
@@ -7660,6 +7650,7 @@ async function adminLogin() {
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
         checkLoyaltyPendingValidationPopup_();
+        checkGoldenPendingPopup_();
         startAdminEventAlert_();
         // MIS-only: check for Pending leaves (today) that still have
         // active/uncalled leads assigned — see checkPendingLeaveWithLeadsAPI.
@@ -7869,7 +7860,7 @@ async function pwrTab_(tab) {
     body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</div>';
   }
 }
-function pwrBadge_(n) {
+function pwrBadge_(n) { (window.__badgeN_ = window.__badgeN_ || {})['pwrBadge_'] = n;
   const b = document.getElementById('pwrBadge');
   if (!b) return;
   b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none';
@@ -7990,7 +7981,7 @@ async function mailIssLoad_() {
     body.innerHTML = '<div style="text-align:center;padding:18px;font-size:13px;color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</div>';
   }
 }
-function mailIssBadge_(n) {
+function mailIssBadge_(n) { (window.__badgeN_ = window.__badgeN_ || {})['mailIssBadge_'] = n;
   const b = document.getElementById('mailIssBadge');
   if (!b) return;
   b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none';
@@ -8229,7 +8220,7 @@ function dsrEditToggleLabel_() {
   b.textContent = DEC_ON ? 'ON' : 'OFF';
   b.style.background = DEC_ON ? '#2E7D32' : '#9e9e9e'; b.style.color = '#fff'; b.style.border = 'none';
 }
-function dsrEditBadge_(n) {
+function dsrEditBadge_(n) { (window.__badgeN_ = window.__badgeN_ || {})['dsrEditBadge_'] = n;
   const b = document.getElementById('decBadge');
   if (!b) return;
   b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none';
@@ -10618,15 +10609,20 @@ function checkDutyAssignmentPopup_(force) {
     if (!sm) return;
     const slot = sm.slot, mode = sm.mode;
     const key = 'dutyPopupLastShown_' + who + '_' + slot + '_' + mode + '_' + todayYMD();
-    try {
-      const last = parseInt(localStorage.getItem(key) || '0', 10);
-      if (!force && last && (mode === 'chart' || (Date.now() - last) < 60 * 60 * 1000)) return; // chart once a day, reminder hourly
-    } catch (e) {}
+    let last = 0;
+    try { last = parseInt(localStorage.getItem(key) || '0', 10); } catch (e) {}
+    if (!force && last && mode === 'chart') return; // the duty chart is information only, once a day
+    if (!force && last && (Date.now() - last) < 14 * 60 * 1000) return; // never closer than 15 minutes
     jsonpReliable({ page: 'dailyShopDashboardJSON' }).then(res => {
       if (!res || !res.ok) return;
       const done = slot === 'closing' ? res.closing && res.closing.done : res.opening && res.opening.done;
       if (mode === 'remind' && done) return; // reminder only while the checklist is not submitted
       const duty = (res.duty && res.duty[slot]) || null;
+      if (mode === 'remind' && !force && last) {
+        // the person on duty is reminded every 15 minutes, everyone else every 30 minutes
+        const isDuty = !!(duty && duty.name && String(duty.name).trim().toLowerCase() === who);
+        if (Date.now() - last < (isDuty ? 15 : 30) * 60 * 1000 - 30000) return;
+      }
       _queueAutoPopup_(() => showDutyAssignmentPopup_(slot, duty, mode, !!done));
       try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
     }).catch(() => {});
@@ -10644,7 +10640,7 @@ function showDutyAssignmentPopup_(slot, duty, mode, done) {
   div.innerHTML = `<div class="modal-box" style="max-width:380px;">
     <div class="modal-title">${mode === 'chart' ? (isClosing ? '🌙 Closing Duty Chart' : '🌅 Opening Duty Chart') : (isClosing ? '🌙 Closing Duty Assigned' : '🌅 Opening Duty Assigned')}</div>
     ${dpTable_(['Employee', 'Status'], [[escHtml(properCase(name)), escHtml(done ? 'Submitted' : status)]])}
-    ${mode === 'chart' ? '' : `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">The ${isClosing ? 'Closing' : 'Opening'} checklist is not submitted yet. This reminder repeats every 1 hour until it is submitted.</div>`}
+    ${mode === 'chart' ? '' : `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">The ${isClosing ? 'Closing' : 'Opening'} checklist is not submitted yet. This reminder repeats every 15-30 minutes until it is submitted.</div>`}
     <button class="btn-primary" style="width:100%;" onclick="document.getElementById('dutyAssignPopupModal').remove();_drainAutoPopupQueue_();">OK</button>
   </div>`;
   document.body.appendChild(div);
@@ -10661,7 +10657,10 @@ function checkStockDutyPopup_() {
   if (!sm) return;
   const slot = sm.slot, mode = sm.mode;
   const key = 'stockDutyPopupLastShown_' + who + '_' + slot + '_' + mode + '_' + todayYMD();
-  try { const last = parseInt(localStorage.getItem(key) || '0', 10); if (last && (mode === 'chart' || (Date.now() - last) < 60 * 60 * 1000)) return; } catch (e) {}
+  let last = 0;
+  try { last = parseInt(localStorage.getItem(key) || '0', 10); } catch (e) {}
+  if (last && mode === 'chart') return; // the duty chart is information only, once a day
+  if (last && (Date.now() - last) < 14 * 60 * 1000) return; // never closer than 15 minutes
   jsonpReliable({ page: 'stockDashboardJSON' }).then(res => {
     if (!res || !res.ok) return;
     const list = [];
@@ -10678,6 +10677,11 @@ function checkStockDutyPopup_() {
       if (name && (mode === 'chart' || !done)) list.push({ section, name, done });
     });
     if (!list.length) return;
+    if (mode === 'remind' && last) {
+      // the person on duty is reminded every 15 minutes, everyone else every 30 minutes
+      const isDuty = list.some(x => String(x.name || '').trim().toLowerCase() === who);
+      if (Date.now() - last < (isDuty ? 15 : 30) * 60 * 1000 - 30000) return;
+    }
     _queueAutoPopup_(() => showStockDutyPopup_(slot, list, mode));
     try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
   }).catch(() => {});
@@ -10690,7 +10694,7 @@ function showStockDutyPopup_(slot, pending, mode) {
   div.innerHTML = `<div class="modal-box" style="max-width:380px;">
     <div class="modal-title">${closing ? '🌙 Stock Check List — Closing Duty' : '🌅 Stock Check List — Opening Duty'}${chart ? ' Chart' : ''}</div>
     ${dpTable_(['Section', 'Employee', 'Status'], pending.map(p => [escHtml(p.section), escHtml(properCase(p.name)), p.done ? 'Submitted' : 'Please Submit']))}
-    ${chart ? '' : '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">This reminder repeats every 1 hour until the checklist is submitted.</div>'}
+    ${chart ? '' : '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">This reminder repeats every 15-30 minutes until the checklist is submitted.</div>'}
     <button class="btn-primary" style="width:100%;margin-bottom:6px;" onclick="stockPopupGo_('stockDutyPopupModal','stock')">📋 Go to Stock Check List</button>
     <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('stockDutyPopupModal').remove();_drainAutoPopupQueue_();">Later</button>
   </div>`;
@@ -10738,7 +10742,7 @@ function showStockVariancePopup_(rows) {
   document.body.appendChild(div);
 }
 if (!window.__dutyPopupTimer) {
-  window.__dutyPopupTimer = setInterval(() => { try { checkDutyAssignmentPopup_(false); checkStockPopups_(); } catch (e) {} }, 5 * 60 * 1000);
+  window.__dutyPopupTimer = setInterval(() => { try { checkDutyAssignmentPopup_(false); checkStockPopups_(); } catch (e) {} }, 3 * 60 * 1000);
 }
 
 function showEmpAlertPopup_(alerts) {
@@ -33076,8 +33080,8 @@ function mtPageInit_() {
   host.appendChild(d);
 }
 mtPageInit_();
-function mtTile_(icon, label, sub, action) {
-  return '<div class="quick-action-btn" onclick="' + action.replace(/"/g, '&quot;') + '"><span class="quick-action-icon">' + icon + '</span><div class="quick-action-label">' + escHtml(label) + '</div>' + (sub ? '<div class="quick-action-sub">' + escHtml(sub) + '</div>' : '') + '</div>';
+function mtTile_(icon, label, sub, action, badgeId) {
+  return '<div class="quick-action-btn" onclick="' + action.replace(/"/g, '&quot;') + '"><span class="quick-action-icon">' + icon + '</span><div class="quick-action-label">' + escHtml(label) + (badgeId ? ' <span id="' + badgeId + '" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>' : '') + '</div>' + (sub ? '<div class="quick-action-sub">' + escHtml(sub) + '</div>' : '') + '</div>';
 }
 function mtPageRender_(view, arg) {
   mtPageInit_();
@@ -33105,22 +33109,40 @@ function mtPageRender_(view, arg) {
       + mtTile_('⚙️', 'System Limits', 'Mail block days, alerts, sync limits', 'mtLimitsOpen_()')
       + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
   } else if (view === 'picker') {
-    title = '⚙️ Manage / Settings'; note = 'Everything in one place: general options first, then each section.';
+    title = '⚙️ Manage / Settings'; note = 'Access first, then Settings. Each group has the section name as its heading.';
     const hdr = t => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:10px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(t) + '</div>';
+    const big = t => '<div style="grid-column:1/-1;font-weight:800;font-size:16px;margin:16px 2px 2px;padding-bottom:4px;border-bottom:2px solid var(--gold,#C9A227);">' + escHtml(t) + '</div>';
     const sp = x => { const m = String(x).match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['⚙️', x]; };
-    const isGeneral = a => /smSettings_\('(access|alert)'\)|frqOpenModal|mtLimitsOpen_/.test(a);
-    tiles = hdr('🌐 General — all sections')
-      + mtTile_('🔐', 'Access', 'Who can use what', "smSettings_('access')")
+    const isAccess = a => /smSettings_\('access'\)|slAdjAccess|specialAccessOpen_|pwrOpen_/.test(a);
+    const isGeneral = a => /smSettings_\('(access|alert)'\)|frqOpenModal|mtLimitsOpen_|mailIssOpen_|pwrOpen_|specialAccessOpen_/.test(a);
+    // ---- Access ----
+    tiles = big('🔐 Access')
+      + hdr('🌐 General — all sections')
+      + mtTile_('👤', 'Employee Access', 'Who can use what', "smSettings_('access')")
+      + mtTile_('🔑', 'Admin Access', 'Admin permissions', "smSettings_('access');setTimeout(function(){switchSettingsTab('admin');},500)")
+      + mtTile_('⭐', 'Special Access', 'All special options', 'specialAccessOpen_()')
+      + mtTile_('🛟', 'Password Requests', 'Reset requests', 'pwrOpen_()', 'pwrBadge');
+    Object.keys(SM_SECS_).forEach(k => {
+      const acc = SM_SECS_[k].items.filter(i => /slAdjAccess/.test(i[1]));
+      if (!acc.length) return;
+      tiles += hdr(SM_SECS_[k].t) + acc.map(i => { const x = sp(i[0]); return mtTile_(x[0], x[1], '', i[1]); }).join('');
+    });
+    // ---- Settings ----
+    tiles += big('⚙️ Settings')
+      + hdr('🌐 General — all sections')
       + mtTile_('⭐', 'Required Fields', 'All forms', 'frqOpenModal()')
       + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
       + mtTile_('⚙️', 'System Limits', 'Mail block days, alerts, sync limits', 'mtLimitsOpen_()')
+      + mtTile_('📧', 'Mail Issues', 'Missing or bouncing e-mails', 'mailIssOpen_()', 'mailIssBadge')
       + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()')
       + mtTile_('🛠️', 'All MIS Tools', 'Every tool, grouped', 'mtOpen_()');
     Object.keys(SM_SECS_).forEach(k => {
-      const own = SM_SECS_[k].items.filter(i => !isGeneral(i[1]));
+      const own = SM_SECS_[k].items.filter(i => !isGeneral(i[1]) && !isAccess(i[1]));
       if (!own.length) return;
-      tiles += hdr(SM_SECS_[k].t) + own.map(i => { const x = sp(i[0]); return mtTile_(x[0], x[1], '', i[1]); }).join('');
+      tiles += hdr(SM_SECS_[k].t) + own.map(i => { const x = sp(i[0]); return mtTile_(x[0], x[1], '', i[1], /dsrEditCtlOpen_/.test(i[1]) ? 'decBadge' : ''); }).join('');
     });
+    // refresh the red count badges for tiles that were just drawn
+    setTimeout(function () { const bn = window.__badgeN_ || {}; ['pwrBadge_', 'mailIssBadge_', 'dsrEditBadge_'].forEach(function (f) { try { if (bn[f] !== undefined && typeof window[f] === 'function') window[f](bn[f]); } catch (e) {} }); }, 100);
   }
   window.__mtView = { view: view, arg: arg };
   document.getElementById('mtPageTitle').textContent = title;
@@ -33754,6 +33776,86 @@ async function mkPageLoad_() {
 // ── Timed section popups (MIS): a daily popup at a fixed time that repeats until the section is visited ──
 // Rules: shows from the set hour. Closing it (X / outside) = shows again after 15 minutes. "Skip" = shows again after 1 hour.
 // Opening the section (button, or by going there yourself) = done for the day. To add another section, add one entry to DP_REGISTRY_.
+// ---- Golden Aura: new entries waiting for Valid / Invalid (admin, not restricted roles) ----
+function gaPendingParams_(extra) { return Object.assign({ role: 'ADMIN', adminRole: state.adminRole, adminEmail: state.adminEmail }, extra || {}); }
+function checkGoldenPendingPopup_() {
+  try {
+    if (state.__loginKind !== 'admin' || state.isRestrictedAdmin || document.hidden || !navigator.onLine) return;
+    if (document.getElementById('gaPendingModal')) return;
+    jsonpReliable(gaPendingParams_({ page: 'goldenAuraPendingAPI' })).then(res => {
+      if (!res || !res.ok || !res.total) return;
+      const sig = res.rows.map(r => r.planNo).join(',');
+      let last = {}; try { last = JSON.parse(localStorage.getItem('gaPendingSeen') || '{}'); } catch (e) {}
+      // show when new entries arrived, or every hour while some are still pending
+      if (last.sig === sig && Date.now() - (last.t || 0) < 60 * 60 * 1000) return;
+      try { localStorage.setItem('gaPendingSeen', JSON.stringify({ sig: sig, t: Date.now() })); } catch (e) {}
+      _queueAutoPopup_(() => showGoldenPendingPopup_(res.rows));
+    }).catch(() => {});
+  } catch (e) {}
+}
+function showGoldenPendingPopup_(rows) {
+  const old = document.getElementById('gaPendingModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'gaPendingModal'; div.className = 'modal-overlay show';
+  const body = rows.slice(0, 20).map(r => [escHtml(String(r.planNo)), escHtml(properCase(r.custName)), escHtml(properCase(r.employee)), escHtml(r.planType.replace('Golden ', '')), escHtml(String(r.amount || '')),
+    `<button class="btn-primary" style="padding:3px 8px;font-size:11px;margin-right:4px;" onclick="gaSetValidation_('${escJs(String(r.planNo))}','Valid')">Valid</button><button class="btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="gaSetValidation_('${escJs(String(r.planNo))}','Invalid')">Invalid</button>`]);
+  div.innerHTML = `<div class="modal-box" style="max-width:560px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-title">🥇 Golden Aura Awaiting Validation</div>
+    ${dpCards_([[rows.length, 'Pending entries']])}
+    ${dpTable_(['Plan', 'Customer', 'Employee', 'Type', 'Amount', 'Action'], body)}
+    ${rows.length > 20 ? `<div style="font-size:11px;opacity:.7;margin-bottom:6px;">+ ${rows.length - 20} more pending</div>` : ''}
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('gaPendingModal').remove();_drainAutoPopupQueue_();">Later</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+function gaSetValidation_(planNo, status) {
+  jsonpReliable(gaPendingParams_({ page: 'goldenAuraSetValidationAPI', planNo: planNo, status: status })).then(res => {
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not save', 'error'); return; }
+    toast('Plan ' + planNo + ' marked ' + status, 'success');
+    return jsonpReliable(gaPendingParams_({ page: 'goldenAuraPendingAPI' })).then(r2 => {
+      const m = document.getElementById('gaPendingModal'); if (m) m.remove();
+      if (r2 && r2.ok && r2.total) showGoldenPendingPopup_(r2.rows); else { try { _drainAutoPopupQueue_(); } catch (e) {} }
+    });
+  }).catch(() => toast('Network error', 'error'));
+}
+setInterval(() => { try { checkGoldenPendingPopup_(); } catch (e) {} }, 5 * 60 * 1000);
+
+// ---- Employee KPI popup: shown about 1 hour after the employee's own KPI changed, up to 4 times a day ----
+function checkEmpKpiPopup_() {
+  try {
+    if (state.__loginKind !== 'emp' || !state.empName || document.hidden || !navigator.onLine) return;
+    const key = 'empKpiWatch_' + String(state.empName).trim().toLowerCase();
+    jsonpReliable(kpiEmpParams('emp', { page: 'kpiTillDateJSON' })).then(res => {
+      if (!res || !res.ok || !res.rows || !res.rows.length) return;
+      const r = res.rows[0];
+      const fp = dpHash_(JSON.stringify([r.overallScore, r.grade, r.place, r.deals, r.conversionPct]));
+      let st = {}; try { st = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+      const today = todayYMD(), now = Date.now();
+      if (!st.fp) { st = { fp: fp, changedAt: 0, shown: true, day: today, n: 0 }; }
+      else if (st.fp !== fp) { st.fp = fp; st.changedAt = now; st.shown = false; }
+      if (st.day !== today) { st.day = today; st.n = 0; }
+      if (!st.shown && st.changedAt && now - st.changedAt >= 60 * 60 * 1000 && st.n < 4) {
+        st.shown = true; st.n++;
+        _queueAutoPopup_(() => showEmpKpiPopup_(r));
+      }
+      try { localStorage.setItem(key, JSON.stringify(st)); } catch (e) {}
+    }).catch(() => {});
+  } catch (e) {}
+}
+function showEmpKpiPopup_(r) {
+  const old = document.getElementById('empKpiModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'empKpiModal'; div.className = 'modal-overlay show';
+  div.innerHTML = `<div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">📊 Your KPI Is Updated</div>
+    ${dpTable_(['Item', 'Value'], [['Place', escHtml(String(r.place || '—'))], ['Overall Score', escHtml(String(r.overallScore || '—'))], ['Grade', escHtml(String(r.grade || '—'))], ['Deals', escHtml(String(r.deals || '0'))]])}
+    <button class="btn-primary" style="width:100%;margin-bottom:6px;" onclick="document.getElementById('empKpiModal').remove();_drainAutoPopupQueue_();showEmpPage('kpi')">Open KPI</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('empKpiModal').remove();_drainAutoPopupQueue_();">Later</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+setInterval(() => { try { checkEmpKpiPopup_(); } catch (e) {} }, 15 * 60 * 1000);
+
 const DP_REGISTRY_ = {
   crm:       { time: '19:00', section: 'leads',      title: '📞 CRM Daily Report', load: dpCrmBody_ },
   stocklevel:{ time: '00:00', every: 2,  section: 'stocklevel', title: '📦 Stock Level', load: dpStockBody_ },
