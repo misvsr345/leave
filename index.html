@@ -8696,6 +8696,7 @@ function goToSectionDashboard(who) {
 // instead. This is what's now wired up.
 function goBackOneStep(who) {
   const current = state['_currentPage_' + who];
+  if (who === 'admin' && current === 'mtpage') { mtPageBack_(); return; }
   if (current === 'dsr-edit') { dsrEditClose_(who); return; }
   // v-fix: Settings' own sub-views (Access/Store Data/Auto-Logout) aren't
   // separate pages — they're all still page 'settings' — so step back into
@@ -15221,6 +15222,29 @@ async function submitNewEmployee() {
   const mobile = document.getElementById('newEmpMobile').value.trim();
 
   if (!empId || !empName) { toast('Employee ID and Name are required', 'error'); return; }
+  // Popup before saving: set this month's Loyalty / Golden targets for the new employee (they are added to the Target sheet automatically).
+  const mon = new Date(); const monStr = String(mon.getMonth() + 1).padStart(2, '0') + '/' + mon.getFullYear();
+  slOpenModal(`<div class="modal-title">🎯 Targets for ${escHtml(properCase(empName))}</div>
+    <div class="kd-note">The name is added to the Target sheet for ${monStr} automatically. Enter the targets now, or leave 0 to use the store average. Targets carry forward every month; change them later from KPI → Target.</div>
+    <div class="form-2col"><div class="form-row"><label>💳 Loyalty Target</label><input type="number" min="0" step="1" inputmode="numeric" id="neTgtLoy" value="0"></div>
+    <div class="form-row"><label>🌟 Golden Target</label><input type="number" min="0" step="1" inputmode="numeric" id="neTgtGold" value="0"></div></div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="submitNewEmployeeGo_()">✅ Save employee</button>
+    <button class="btn-secondary" style="width:100%;margin-top:6px;" onclick="document.getElementById('slModal').remove()">Cancel</button>`);
+}
+
+async function submitNewEmployeeGo_() {
+  const loyT = Math.max(0, Math.floor(Number((document.getElementById('neTgtLoy') || {}).value) || 0));
+  const goldT = Math.max(0, Math.floor(Number((document.getElementById('neTgtGold') || {}).value) || 0));
+  try { const m = document.getElementById('slModal'); if (m) m.remove(); } catch (e) {}
+  const empId = document.getElementById('newEmpId').value.trim();
+  const empName = document.getElementById('newEmpName').value.trim();
+  const department = document.getElementById('newEmpDept').value.trim();
+  const designation = document.getElementById('newEmpDesignation').value.trim();
+  const counter = document.getElementById('newEmpCounter').value.trim();
+  const monthlyQuota = document.getElementById('newEmpQuota').value.trim();
+  const password = document.getElementById('newEmpPassword').value.trim();
+  const email = document.getElementById('newEmpEmail').value.trim();
+  const mobile = document.getElementById('newEmpMobile').value.trim();
 
   const btn = document.querySelector('#admin-new-employee .btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
@@ -15239,7 +15263,7 @@ async function submitNewEmployee() {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
       body: JSON.stringify({
         page: 'adminAddNewEmployeeAPI', empId, empName, department, designation, counter,
-        monthlyQuota, password, email, mobile,
+        monthlyQuota, password, email, mobile, loyaltyTarget: loyT, goldenTarget: goldT,
         callerRole: state.adminRole, callerEmail: state.adminEmail
       })
     }, 30000);
@@ -19232,23 +19256,59 @@ function renderKpiRules(who) {
 }
 
 
+async function ktSave_(i) {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  let p;
+  if (i === 'new') {
+    p = { row: '', employee: (document.getElementById('ktNewEmp').value || '').trim(), month: (document.getElementById('ktNewMon').value || '').trim(), loyalty: document.getElementById('ktNewLoy').value, golden: document.getElementById('ktNewGold').value };
+    if (!p.employee) { toast('Enter the employee name', 'error'); return; }
+    if (!/^\d{1,2}\/\d{4}$/.test(p.month)) { toast('Month must be MM/YYYY (e.g. 11/2026)', 'error'); return; }
+  } else {
+    const r = (window.__ktRows || [])[i]; if (!r) return;
+    p = { row: r.row, employee: r.employee, month: r.month, loyalty: document.getElementById('ktLoy' + i).value, golden: document.getElementById('ktGold' + i).value };
+  }
+  if (p.loyalty === '' || p.golden === '' || isNaN(Number(p.loyalty)) || isNaN(Number(p.golden)) || Number(p.loyalty) < 0 || Number(p.golden) < 0) { toast('Enter both targets (0 or more)', 'error'); return; }
+  try {
+    const res = await jsonpWriteOnce(Object.assign({ page: 'kpiTargetSaveAPI', callerRole: state.adminRole, callerEmail: state.adminEmail }, p), 'kt_' + p.employee + '_' + p.month + '_' + p.loyalty + '_' + p.golden);
+    if (res && res.ok) { toast('Target saved', 'success'); loadKpiTarget('admin'); }
+    else toast((res && res.error) || 'Could not save', 'error');
+  } catch (e) { toast('Connection error — not saved', 'error'); }
+}
+function ktEditToggle_(i, on) {
+  const e = document.getElementById('ktEdit' + i), v = document.getElementById('ktView' + i), b = document.getElementById('ktEditBtn' + i);
+  if (e) e.style.display = on ? '' : 'none'; if (v) v.style.display = on ? 'none' : ''; if (b) b.style.display = on ? 'none' : '';
+}
 function loadKpiTarget(who) {
   const box = document.getElementById('kpiTargetBox-' + who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   jsonpReliable(kpiEmpParams(who, { page: 'kpiTargetJSON' })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadKpiTarget(\'" + who + "\')\" title=\"Retry\">🔄</button></div>'; return; }
-    if (!res.rows.length) { box.innerHTML = '<div class="empty-state"><p>No target set yet.</p></div>'; return; }
+    // Only rows with a valid MM/YYYY month are targets; note lines typed in the sheet are skipped.
+    const rows = (res.rows || []).filter(r => /^\d{1,2}\/\d{4}$/.test(String(r.month || '').trim()));
+    const canEdit = who === 'admin' && frqIsMis_();
+    if (!rows.length && !canEdit) { box.innerHTML = '<div class="empty-state"><p>No target set yet.</p></div>'; return; }
     let html = '';
-    res.rows.forEach(r => {
+    if (canEdit) html += `<div class="note" style="font-size:12px;opacity:.75;margin:0 2px 8px;">Targets carry forward every month automatically. Press Edit on an employee only when the target changes.</div><div class="kd-card"><div class="kd-head"><span class="kd-name">➕ Add a target (new employee / new month)</span></div>
+        <div class="form-2col"><div class="form-row"><label>Employee</label><input type="text" id="ktNewEmp" placeholder="Employee name"></div><div class="form-row"><label>Month (MM/YYYY)</label><input type="text" id="ktNewMon" placeholder="11/2026" maxlength="7"></div></div>
+        <div class="form-2col"><div class="form-row"><label>💳 Loyalty Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktNewLoy"></div><div class="form-row"><label>🌟 Golden Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktNewGold"></div></div>
+        <button class="btn-primary" style="width:100%;" onclick="ktSave_('new')">💾 Save target</button></div>`;
+    rows.forEach((r, i) => {
       html += `<div class="kd-card">
-        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill gold">📅 ${r.month}</span></div>
-        <div class="kd-stats">
+        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill gold">📅 ${escHtml(String(r.month))}</span></div>
+        <div class="kd-stats" id="ktView${i}">
           <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyaltyTarget}</span><span class="kd-lbl">Loyalty Target</span></div>
           <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.goldenTarget}</span><span class="kd-lbl">Golden Target</span></div>
+        </div>` + (canEdit ? `
+        <div id="ktEdit${i}" style="display:none;">
+          <div class="form-2col"><div class="form-row"><label>💳 Loyalty Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktLoy${i}" value="${escHtml(String(r.loyaltyTarget))}"></div>
+          <div class="form-row"><label>🌟 Golden Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktGold${i}" value="${escHtml(String(r.goldenTarget))}"></div></div>
+          <div class="btn-row"><button class="btn-primary" style="flex:1;" onclick="ktSave_(${i})">💾 Save</button><button class="btn-secondary" style="flex:1;" onclick="ktEditToggle_(${i}, false)">Cancel</button></div>
         </div>
+        <button class="btn-secondary" id="ktEditBtn${i}" style="width:100%;margin-top:8px;" onclick="ktEditToggle_(${i}, true)">✏️ Edit target</button>` : '') + `
       </div>`;
     });
+    window.__ktRows = rows;
     box.innerHTML = html;
     showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTarget(\'" + who + "\')" title="Retry">🔄</button></div>'; });
@@ -32998,17 +33058,61 @@ function mtShow_(title, text, isErr) {
   slOpenModal(`<div class="modal-title">${escHtml(title)}</div><pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;background:${isErr ? '#fee2e2' : '#f3f4f6'};color:#111;border-radius:8px;padding:10px;max-height:55vh;overflow:auto;">${escHtml(text || '')}</pre><button class="btn-primary" style="width:100%;margin-top:8px;" onclick="document.getElementById('slModal').remove()">Close</button>`);
 }
 function mtBusy_(msg) { slOpenModal(`<div class="loading"><span class="spinner"></span>${escHtml(msg || 'Working...')}<div style="font-size:11px;opacity:.7;margin-top:6px;">Some tools take a minute. Please wait.</div></div>`); }
-function mtOpen_() {
+// MIS Tools / Manage-Settings lists are normal pages with direct buttons (no popups).
+// Views: 'all' (tool groups), 'group' (tools of one group), 'sec' (one section's options), 'picker' (all sections).
+window.__mtStack = []; window.__mtOrigin = 'modulepicker'; window.__mtView = null;
+function mtPageInit_() {
+  const host = document.querySelector('#adminApp .page-content');
+  if (!host || document.getElementById('admin-mtpage')) return;
+  const d = document.createElement('div');
+  d.className = 'page-section'; d.id = 'admin-mtpage';
+  d.innerHTML = '<div class="section-hdr"><span class="section-title2" id="mtPageTitle"></span></div><div class="kd-note" id="mtPageNote" style="margin:0 2px 8px;"></div><div class="quick-actions-grid" id="mtPageGrid"></div>';
+  host.appendChild(d);
+}
+mtPageInit_();
+function mtTile_(icon, label, sub, action) {
+  return '<div class="quick-action-btn" onclick="' + action.replace(/"/g, '&quot;') + '"><span class="quick-action-icon">' + icon + '</span><div class="quick-action-label">' + escHtml(label) + '</div>' + (sub ? '<div class="quick-action-sub">' + escHtml(sub) + '</div>' : '') + '</div>';
+}
+function mtPageRender_(view, arg) {
+  mtPageInit_();
+  let title = '', note = '', tiles = '';
+  if (view === 'all') {
+    title = '🛠️ MIS Tools'; note = 'Everything that used to be in the Google Sheet menus.';
+    tiles = MT_GROUPS_.map(g => mtTile_(g.icon, g.title, g.tools.length + ' tools', "mtGroup_('" + g.id + "')")).join('');
+  } else if (view === 'group') {
+    const g = MT_GROUPS_.find(x => x.id === arg); if (!g) return;
+    title = g.icon + ' ' + g.title;
+    tiles = g.tools.map(t => mtTile_(g.icon, t.label, t.desc || '', "mtRun_('" + t.id + "')")).join('');
+  } else if (view === 'sec') {
+    const sec = SM_SECS_[arg]; if (!sec) return;
+    title = sec.t + ' — Manage / Settings';
+    tiles = sec.items.map(i => { const m = String(i[0]).match(/^(\S+)\s+(.*)$/); return mtTile_(m ? m[1] : '⚙️', m ? m[2] : i[0], '', i[1]); }).join('')
+      + (arg !== 'marketing' ? mtTile_('🛠️', 'All MIS Tools', 'Every tool, grouped', 'mtOpen_()') : '');
+  } else if (view === 'picker') {
+    title = '🗂️ Section Settings';
+    tiles = Object.keys(SM_SECS_).map(k => { const m = String(SM_SECS_[k].t).match(/^(\S+)\s+(.*)$/); return mtTile_(m ? m[1] : '⚙️', m ? m[2] : SM_SECS_[k].t, 'Manage / Settings', "smOpen_('" + k + "')"); }).join('')
+      + mtTile_('🔔', 'Daily popups', 'Times on / off', 'dpCfgOpen_()');
+  }
+  window.__mtView = { view: view, arg: arg };
+  document.getElementById('mtPageTitle').textContent = title;
+  document.getElementById('mtPageNote').textContent = note; document.getElementById('mtPageNote').style.display = note ? '' : 'none';
+  document.getElementById('mtPageGrid').innerHTML = tiles;
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+function mtPageEnter_(view, arg) {
   if (!mtIsMis_()) { toast('MIS login only', 'error'); return; }
-  slOpenModal(`<div class="modal-title">🛠️ MIS Tools</div><div class="kd-note">Everything that used to be in the Google Sheet menus.</div>` +
-    MT_GROUPS_.map(g => `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="mtGroup_('${g.id}')">${g.icon} ${escHtml(g.title)} <span style="opacity:.6;">(${g.tools.length})</span></button>`).join(''));
+  try { const m = document.getElementById('slModal'); if (m) m.remove(); } catch (e) {}
+  if (state._currentPage_admin !== 'mtpage') { window.__mtOrigin = state._currentPage_admin || 'modulepicker'; window.__mtStack = []; window.__mtView = null; }
+  else if (window.__mtView) window.__mtStack.push(window.__mtView);
+  mtPageRender_(view, arg);
+  if (state._currentPage_admin !== 'mtpage') showAdminPage('mtpage');
 }
-function mtGroup_(gid) {
-  const g = MT_GROUPS_.find(x => x.id === gid);
-  slOpenModal(`<div class="modal-title">${g.icon} ${escHtml(g.title)}</div>` +
-    g.tools.map(t => `<button class="btn-secondary" style="width:100%;margin:3px 0;text-align:left;" onclick="mtRun_('${t.id}')">${escHtml(t.label)}${t.desc ? `<div style="font-size:11px;opacity:.65;font-weight:400;">${escHtml(t.desc)}</div>` : ''}</button>`).join('') +
-    `<button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="mtOpen_()">← Back</button>`);
+function mtPageBack_() {
+  if (window.__mtStack.length) { const v = window.__mtStack.pop(); mtPageRender_(v.view, v.arg); return; }
+  showAdminPage(window.__mtOrigin || 'modulepicker', { isBack: true });
 }
+function mtOpen_() { mtPageEnter_('all'); }
+function mtGroup_(gid) { mtPageEnter_('group', gid); }
 function mtRun_(id) {
   const t = mtFind_(id);
   if (t.custom) { window[t.custom](t); return; }
@@ -33279,20 +33383,8 @@ const SM_SECS_ = {
   checklist: { t: '📝 Checklist', items: [['🔐 Access', "showSettingsSection('access')"], ['⭐ Required fields', 'frqOpenModal()']] },
   marketing: { t: '📣 Marketing', items: [['🛠️ Marketing tools (all)', "mtGroup_('mkt')", 1], ['🔌 Tool Connections', 'mtConnOpen_()', 1]] }
 };
-function smOpen_(key) {
-  const sec = SM_SECS_[key]; if (!sec) return;
-  const mis = (state.adminRole || '').toUpperCase().indexOf('MIS') > -1;
-  if (!mis) { toast('MIS login only', 'error'); return; }
-  const items = sec.items;
-  slOpenModal(`<div class="modal-title">⚙️ ${escHtml(sec.t)} — Manage / Settings</div>` +
-    items.map(i => `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="${i[1].replace(/"/g, '&quot;')}">${escHtml(i[0])}</button>`).join('') +
-    (key !== 'marketing' && mis ? `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="mtOpen_()">🛠️ All MIS Tools</button>` : ''));
-}
-function smPicker_() {
-  const mis = (state.adminRole || '').toUpperCase().indexOf('MIS') > -1;
-  if (!mis) { toast('MIS login only', 'error'); return; }
-  slOpenModal(`<div class="modal-title">🗂️ Section Settings</div>` + Object.keys(SM_SECS_).filter(k => mis || k !== 'marketing').map(k => `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="smOpen_('${k}')">${escHtml(SM_SECS_[k].t)}</button>`).join('') + `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="dpCfgOpen_()">🔔 Daily popups — times on / off</button>`);
-}
+function smOpen_(key) { if (!SM_SECS_[key]) return; mtPageEnter_('sec', key); }
+function smPicker_() { mtPageEnter_('picker'); }
 
 // ── Marketing: New Customer Entry form for employees (same web app as the standalone marketing entry form) ──
 const MKE_API_URL = 'https://script.google.com/macros/s/AKfycbx9u-RfzHQus6jkKBtSwgW7gmKesnVeOnkJL6fHozU27tjqdqNCi2_1QBmDD-Iy9olq3g/exec';
