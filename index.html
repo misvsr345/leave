@@ -8615,6 +8615,12 @@ function goBackOneStep(who) {
     showSettingsSection('home');
     return;
   }
+  // A page opened from the More menu goes back to the More menu (not to the main Home).
+  if (state['_moreOrigin_' + who] && state['_moreOrigin_' + who] === current) {
+    state['_moreOrigin_' + who] = null;
+    (who === 'admin' ? showAdminPage : showEmpPage)('more');
+    return;
+  }
   const dash = getSectionDashboardPage(who, current);
   if (dash && dash !== current) {
     (who === 'admin' ? showAdminPage : showEmpPage)(dash);
@@ -8638,7 +8644,8 @@ function updateBackFabs(who, page) {
   //   any deeper page inside it  → Back only
   const homeFab = document.getElementById(who === 'admin' ? 'adminHomeFab' : 'empHomeFab');
   const dash = getSectionDashboardPage(who, page);
-  const isSectionHome = dash === page && page !== 'modulepicker';
+  const viaMore = state['_moreOrigin_' + who] === page && page !== 'more';
+  const isSectionHome = !viaMore && dash === page && page !== 'modulepicker';
   const isHomePage = page === 'modulepicker' || isSectionHome;
   if (backFab) {
     backFab.classList.toggle('show', !isHomePage);
@@ -8654,6 +8661,28 @@ function updateBackFabs(who, page) {
 function backLabelFor(page) {
   return '← Back';
 }
+
+// Navigation bookkeeping: remembers pages opened from the More menu (Back returns there) and gives the
+// browser / phone Back button the same behaviour as the on-screen Back button.
+function vsrNavHook_(who, prev, page) {
+  if (page === 'modulepicker' || page === 'more') state['_moreOrigin_' + who] = null;
+  else if (prev === 'more') state['_moreOrigin_' + who] = page;
+  if (!window.__vsrPop && page !== 'modulepicker' && prev !== page) {
+    try { history.pushState({ vsr: 1, who: who, page: page }, ''); } catch (e) {}
+  }
+}
+function vsrActiveWho_() {
+  const vis = id => { const el = document.getElementById(id); return !!(el && el.offsetParent !== null && getComputedStyle(el).display !== 'none'); };
+  if (vis('adminApp')) return 'admin';
+  if (vis('empApp')) return 'emp';
+  return null;
+}
+window.addEventListener('popstate', function () {
+  const who = vsrActiveWho_();
+  if (!who) return;
+  window.__vsrPop = true;
+  try { goBackOneStep(who); } catch (e) {} finally { window.__vsrPop = false; }
+});
 
 function goHomeSmart(who) {
   (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker');
@@ -8695,6 +8724,7 @@ function showEmpPage(page, opts) {
     if (state._pageHistory_emp.length > 40) state._pageHistory_emp.shift();
   }
   state._currentPage_emp = page;
+  try { vsrNavHook_('emp', prevPage, page); } catch (e) {}
   saveLastPage('emp', page);
   // v-fix (KPI table not fitting screen — box sat inside the 900px-capped
   // content column with empty space beside it): this used to only widen
@@ -15702,6 +15732,7 @@ function showAdminPage(page, opts) {
     if (state._pageHistory_admin.length > 40) state._pageHistory_admin.shift();
   }
   state._currentPage_admin = page;
+  try { vsrNavHook_('admin', prevPage, page); } catch (e) {}
   saveLastPage('admin', page);
   // Wide-data pages (whose report table is much wider than the normal
   // 900px content column) opt the shared .page-content wrapper out of
@@ -32859,7 +32890,8 @@ async function mtCall_(ep, tool, args) {
     url = LEADS_WEB_APP_URL + '?action=PORTAL_TOOLS&role=' + encodeURIComponent(role) + '&tool=' + encodeURIComponent(tool) + '&a=' + encodeURIComponent(JSON.stringify(args));
   } else {
     const need = MT_NEEDS_[ep];
-    const u = (await mtUrls_()).urls || {};
+    const u = Object.assign({}, (await mtUrls_()).urls || {});
+    if (ep === 'mkt' && !u.marketing) u.marketing = MKE_API_URL; // the Marketing form web app already runs this backend
     if (!u[need[0]]) return { ok: false, error: 'The ' + need[1] + ' tool is not connected yet. Open Settings > Tool Connections and paste its web app link.' };
     if (ep === 'wt') url = u.walkin + '?role=' + encodeURIComponent(role) + '&action=' + encodeURIComponent(tool) + '&payload=' + encodeURIComponent(JSON.stringify(args));
     else if (ep === 'loy') url = u.loyalty + '?role=' + encodeURIComponent(role) + '&tool=' + encodeURIComponent(tool) + '&a=' + encodeURIComponent(JSON.stringify(args));
