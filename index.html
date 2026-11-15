@@ -3101,7 +3101,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
           <div class="quick-action-btn" id="adminQABalance" onclick="showAdminPage('balance')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Balance</div><div class="quick-action-sub">Leave balances</div></div>
           <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile / all leaves</div></div>
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
-          <div class="quick-action-btn" id="adminQALeaveTools" onclick="leaveToolsOpen_()"><span class="quick-action-icon">🧰</span><div class="quick-action-label">Leave Tools</div><div class="quick-action-sub">Resend mail, bulk, holiday, fixes</div></div>
+          <div class="quick-action-btn" id="adminQALeaveTools" onclick="mtPageEnter_('leavetools')"><span class="quick-action-icon">🧰</span><div class="quick-action-label">Leave Tools</div><div class="quick-action-sub">Resend mail, bulk, holiday, fixes</div></div>
           <div class="quick-action-btn" id="adminQALeaveLimits" onclick="leaveLimitsOpen_()"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Leave Types &amp; Limits</div><div class="quick-action-sub">Allowed types, Special limit / month</div></div>
           <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
           <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
@@ -3656,7 +3656,6 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <!-- ACCESS sub-view (unchanged Employee/Admin Access tabs — just gated behind
              a click now instead of always rendered) -->
         <div id="settingsAccessView" style="display:none;">
-          <button class="btn-sm" style="margin:0 0 10px;" onclick="specialAccessOpen_()">⭐ Special Access</button>
           <button class="btn-secondary" style="width:auto;padding:7px 16px;margin-bottom:14px;" onclick="showSettingsSection('home')">← Back to Settings</button>
 
           <div class="filter-bar" style="margin-bottom:12px;">
@@ -4644,9 +4643,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <div class="quick-action-btn" onclick="mtRun_('mkDry')"><span class="quick-action-icon">🧪</span><div class="quick-action-label">Test sync</div><div class="quick-action-sub">Nothing is written</div></div>
         <div class="quick-action-btn" onclick="mtRun_('mkDedupe')"><span class="quick-action-icon">🧹</span><div class="quick-action-label">Delete duplicates</div><div class="quick-action-sub">In the Marketing sheet</div></div>
         <div class="quick-action-btn" onclick="mtRun_('mkDedupeFb')"><span class="quick-action-icon">🧹</span><div class="quick-action-label">Delete duplicates</div><div class="quick-action-sub">In the Feedback file</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkOn')"><span class="quick-action-icon">🌙</span><div class="quick-action-label">Auto sync ON</div><div class="quick-action-sub">Nightly sync</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkOff')"><span class="quick-action-icon">⏸️</span><div class="quick-action-label">Auto sync OFF</div><div class="quick-action-sub">Stop nightly sync</div></div>
-        <div class="quick-action-btn" onclick="mtRun_('mkStat')"><span class="quick-action-icon">ℹ️</span><div class="quick-action-label">Auto sync status</div><div class="quick-action-sub">Is it running?</div></div>
+        <div class="quick-action-btn" onclick="mtRun_('mkAuto')"><span class="quick-action-icon">🌙</span><div class="quick-action-label">Nightly auto sync</div><div class="quick-action-sub">Switch on / off</div></div>
         <div class="quick-action-btn" onclick="mtRun_('mkSumm')"><span class="quick-action-icon">📋</span><div class="quick-action-label">Sheet summary</div><div class="quick-action-sub">Rows / unique numbers</div></div>
       </div>
       <div class="card" id="mkPageDetail"></div>
@@ -24206,17 +24203,7 @@ function slAdjCheckAccess_() {
   }).catch(() => {});
 }
 // ── Special Access hub, DSR Types screen, Leave Types & Limits screen (Admin) ──
-function specialAccessOpen_() {
-  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
-  slOpenModal(`<div class="modal-title">⭐ Special Access</div>
-    <div class="kd-note">Every special per-employee option in one place.</div>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="slAdjAccess()">⚖️ Stock Adjust — Employee access</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="leaveLimitsOpen_()">🗂️ Leave Types &amp; Special Permission limit</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="dsrTypesOpen_()">🥇 DSR Types — Gold / Silver / Diamond</button>
-    ${(state.adminRole || '').toUpperCase().indexOf('MIS') > -1 ? '<button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="eomRulesOpen_()">🏆 Performer of the Month rules</button>' : ''}
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="document.getElementById('slModal').remove();dsrEditCtlOpen_()">✏️ DSR Edit requests</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="document.getElementById('slModal').remove();frqOpenModal()">📝 Required fields</button>`);
-}
+function specialAccessOpen_() { smPicker_(); }
 async function dsrTypesOpen_() {
   slOpenModal('<div class="loading"><span class="spinner"></span>Loading...</div>');
   try {
@@ -24296,15 +24283,11 @@ async function leaveLimitsSave_() {
 function adminTool_(tool, extra) {
   return jsonpReliable(Object.assign({ page: 'adminToolsAPI', tool: tool, role: state.adminRole, by: state.adminName || 'MIS' }, extra || {}));
 }
-function leaveToolsOpen_() {
-  slOpenModal(`<div class="modal-title">🧰 Leave Tools</div>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="ltResendOpen_()">📩 Resend leave mail (by Leave ID)</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="ltBulkOpen_()">📋 Bulk Approve / Reject (pending requests)</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="ltHolidayOpen_()">🏢 Company Holiday</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="ltRun_('genIds')">🆔 Generate missing Leave IDs / Day Count</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="ltRun_('fixCounters')">🔧 Fix all Counters from Leave_Balance</button>
-    <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="ltRun_('quota')">📧 Check mail quota</button>
-    <div id="ltOut" class="kd-note" style="margin-top:8px;display:none;"></div>`);
+function leaveToolsOpen_() { mtPageEnter_('leavetools'); }
+// A leave tool opened from a button (not from a menu popup): shows its result in a small window.
+function ltRunTile_(tool) {
+  slOpenModal('<div class="modal-title">Leave Tool</div><div id="ltOut" class="kd-note" style="margin-top:8px;display:none;"></div>');
+  ltRun_(tool);
 }
 async function ltRun_(tool) {
   if (tool === 'fixCounters' && !confirm('Correct the Counter value on every leave row from Leave_Balance?\n\nPast decisions are not changed.')) return;
@@ -32948,28 +32931,19 @@ const MT_RECIP_ = [{ id: 'auth', label: 'Authority mails' }, { id: 'mis', label:
 const MT_GROUPS_ = [
   { id: 'dsr', icon: '🧾', title: 'DSR', tools: [
     { id: 'dsrResend', label: 'Resend DSR mail', desc: 'Sends the DSR mail again for one DSR No', ep: 'dsr', tool: 'resend', fields: [{ id: 'dsrId', label: 'DSR No (e.g. 30-20260418-001)', req: 1 }], confirm: 'This sends the DSR mail again to the employee and to the office mail list.' },
-    { id: 'dupPrev', label: 'Duplicate Tags — preview', desc: 'Shows how many repeat rows exist. Nothing is changed.', ep: 'dsr', tool: 'dupPreview' },
     { id: 'dupRun', label: 'Duplicate Tags — remove repeats', desc: 'Removes same-employee repeat rows (a backup copy is made first)', ep: 'dsr', tool: 'dupRun', confirm: 'Remove the repeat rows now?\n\nA full backup copy of the DSR file is made first and every removed row is saved in the "Removed Duplicates" sheet.' },
     { id: 'fixTs', label: 'Fix blank Timestamps', desc: 'Fills blank Timestamp cells from the row\'s own Bill Date', ep: 'dsr', tool: 'fixTs', confirm: 'Fix blank Timestamp cells in the Main file?' },
     { id: 'dsrAlert', label: 'DSR alert to pending employees', desc: 'Mails employees who have not submitted DSR today', ep: 'wt', tool: 'dsrAlert', confirm: 'Send the DSR reminder mail to every employee whose DSR is still pending?' },
     { id: 'dsrDaily', label: 'Resend daily DSR report', desc: 'Generates yesterday\'s DSR report and mails it', ep: 'wt', tool: 'dailyDsrReport', confirm: 'Generate yesterday\'s DSR report and mail it?' },
-    { id: 'dsrRange', label: 'DSR report — date range', desc: 'DSR summary for any period', ep: 'wt', tool: 'dsrRange', fields: [{ id: 'startDate', label: 'From', type: 'date', req: 1 }, { id: 'endDate', label: 'To', type: 'date', req: 1 }, { id: 'sendMail', label: 'Also send by mail', type: 'check' }] },
-    { id: 'dsrMissing', label: 'Missing DSR — datewise report', desc: 'Who missed DSR on which date', ep: 'wt', tool: 'dsrMissing', fields: [{ id: 'startDate', label: 'From', type: 'date', req: 1 }, { id: 'endDate', label: 'To', type: 'date', req: 1 }], recip: 1 }
   ] },
   { id: 'kpi', icon: '📈', title: 'KPI / Performer / Walk-in', tools: [
-    { id: 'kpiTill', label: 'KPI report — till date', desc: 'KPI for a period, optionally mailed', ep: 'wt', tool: 'kpiTill', fields: [{ id: 'startDate', label: 'From', type: 'date', req: 1 }, { id: 'endDate', label: 'To', type: 'date', req: 1 }], recip: 1 },
-    { id: 'kpiCustom', label: 'KPI report — custom dates', desc: 'Custom period KPI', ep: 'wt', tool: 'kpiCustom', fields: [{ id: 'startDate', label: 'From', type: 'date', req: 1 }, { id: 'endDate', label: 'To', type: 'date', req: 1 }], recip: 1 },
     { id: 'kpiEmp', label: 'KPI mail to one employee', desc: 'Sends one employee\'s KPI', ep: 'wt', tool: 'kpiEmployee', custom: 'mtKpiEmp_' },
     { id: 'kpiMonthly', label: 'Monthly KPI mail to employees', desc: 'Last month\'s KPI to every employee', ep: 'wt', tool: 'kpiMonthlyMail', confirm: 'Send last month\'s KPI mail to every employee now?' },
-    { id: 'multiMonth', label: 'Multi-month comparison', desc: 'Compare 2 or more months', ep: 'wt', tool: 'multiMonth', fields: [{ id: 'm1', label: 'Month 1', type: 'month', req: 1 }, { id: 'm2', label: 'Month 2', type: 'month', req: 1 }, { id: 'm3', label: 'Month 3 (optional)', type: 'month' }, { id: 'm4', label: 'Month 4 (optional)', type: 'month' }], build: function (v) { return { months: [v.m1, v.m2, v.m3, v.m4].filter(Boolean) }; } },
     { id: 'walkSum', label: 'Walk-in summary for a date', desc: 'Builds the walk-in summary sheet', ep: 'wt', tool: 'walkinSummary', fields: [{ id: 'date', label: 'Date', type: 'date', req: 1 }] },
     { id: 'walkDup', label: 'Walk-in duplicate check', desc: 'Highlights duplicates / odd entries in the Walkintrack sheet', ep: 'wt', tool: 'walkinDup' },
-    { id: 'leader', label: 'Refresh loyalty leaderboard', desc: '', ep: 'wt', tool: 'leaderboard' },
     { id: 'perfPrev', label: 'Performer of the Month — preview', desc: 'Shows the announcement without sending', ep: 'wt', tool: 'perfPreview' },
+    { id: 'perfAuto', label: 'Performer auto mail', desc: 'Monthly mail on / off', ep: 'wt', custom: 'mtToggle_', on: 'perfAutoOn', off: 'perfAutoOff', stat: 'perfAutoStatus', re: 'Status:\\s*ON' },
     { id: 'perfSend', label: 'Performer of the Month — resend mails', desc: '', ep: 'wt', tool: 'perfResend', confirm: 'Send the Performer of the Month mails again?' },
-    { id: 'perfOn', label: 'Performer auto mail — turn ON', desc: '', ep: 'wt', tool: 'perfAutoOn', confirm: 'Turn ON the automatic monthly Performer mail?' },
-    { id: 'perfOff', label: 'Performer auto mail — turn OFF', desc: '', ep: 'wt', tool: 'perfAutoOff', confirm: 'Turn OFF the automatic monthly Performer mail?' },
-    { id: 'perfStat', label: 'Performer auto mail — status', desc: '', ep: 'wt', tool: 'perfAutoStatus' }
   ] },
   { id: 'loy', icon: '💳', title: 'Loyalty', tools: [
     { id: 'loyApprove', label: 'Approve cards (row + quantity, KYC check)', desc: '', custom: 'mtApprove_' },
@@ -32977,7 +32951,6 @@ const MT_GROUPS_ = [
     { id: 'loySummary', label: 'Summary (and mail to selected)', desc: '', custom: 'mtSummary_' },
     { id: 'loyTimeline', label: 'Employee card timeline', desc: 'Shows the timeline and mails it', custom: 'mtTimeline_' },
     { id: 'loyMonthly', label: 'Send monthly report now', desc: '', ep: 'loy', tool: 'monthlyReport', confirm: 'Send the monthly loyalty report to MIS now?' },
-    { id: 'loyRange', label: 'Card report by date range', desc: 'Mails each selected employee their cards in the period', custom: 'mtRange_' },
     { id: 'loyKyc', label: 'KYC report by date range', desc: '', ep: 'loy', tool: 'kycRange', fields: [{ id: 'from', label: 'From', type: 'date', req: 1 }, { id: 'to', label: 'To', type: 'date', req: 1 }], confirm: 'Send the KYC report for this period by mail?' },
     { id: 'loyBlank', label: 'Mark blank-status cards as Pending', desc: 'From a date', ep: 'loy', tool: 'markBlank', fields: [{ id: 'date', label: 'From date (dd/mm/yyyy)', req: 1 }], confirm: 'Every card with a blank Validation Status on or after this date will be set to Pending. Continue?' },
     { id: 'loySweep', label: 'Run Auto-Pending check now', desc: '', ep: 'loy', tool: 'sweep' }
@@ -32993,8 +32966,6 @@ const MT_GROUPS_ = [
     { id: 'crmRange', label: 'CRM report — date range', desc: '', ep: 'fb', tool: 'crmRange', fields: [{ id: 'from', label: 'From', type: 'date', req: 1 }, { id: 'to', label: 'To', type: 'date', req: 1 }], confirm: 'Generate and mail this CRM report?' },
     { id: 'crmEvent', label: 'Event alert (birthdays / anniversaries)', desc: '', ep: 'fb', tool: 'eventAlert', confirm: 'Send the event alert mails now?' },
     { id: 'crmGolden', label: 'Golden Aura due report', desc: '', ep: 'fb', tool: 'goldenAura', confirm: 'Send the Golden Aura due report by mail?' },
-    { id: 'crmCalling', label: 'Calling status report', desc: '', ep: 'fb', tool: 'callingStatus', fields: [{ id: 'from', label: 'From', type: 'date', req: 1 }, { id: 'to', label: 'To', type: 'date', req: 1 }] },
-    { id: 'crmFollow', label: 'Pending follow-up report', desc: '', ep: 'fb', tool: 'pendingFollowUp', confirm: 'Send the pending follow-up report by mail?' },
     { id: 'crmComp', label: 'CRM compliance till date', desc: '', ep: 'fb', tool: 'compliance', confirm: 'Send the CRM compliance report by mail?' },
     { id: 'ldSync', label: 'Sync customer data → Clean Leads', desc: '', ep: 'fb', tool: 'syncClean', confirm: 'Sync customer data into Clean Leads now?' },
     { id: 'ldDup', label: 'Remove duplicates in Clean Leads', desc: '', ep: 'fb', tool: 'cleanDup', confirm: 'Remove duplicate rows from Clean Leads?' },
@@ -33022,9 +32993,7 @@ const MT_GROUPS_ = [
     { id: 'mkSync', label: 'Sync now to Feedback', desc: 'New Marketing numbers are added to the Feedback file', ep: 'mkt', tool: 'syncNow', confirm: 'Add new Marketing numbers to the Feedback file now?' },
     { id: 'mkDedupe', label: 'Delete duplicates in Marketing', desc: 'Oldest entry of each number is kept', ep: 'mkt', tool: 'dedupe', confirm: 'Delete duplicate numbers in Marketing? (a backup is kept in the log tab)' },
     { id: 'mkDedupeFb', label: 'Delete duplicates in Feedback', desc: '', ep: 'mkt', tool: 'dedupeFeedback', confirm: 'Delete duplicate numbers in Feedback? (a backup is kept in the log tab)' },
-    { id: 'mkOn', label: 'Nightly auto sync — turn ON', desc: '', ep: 'mkt', tool: 'autoOn', confirm: 'Turn ON the nightly auto sync?' },
-    { id: 'mkOff', label: 'Nightly auto sync — turn OFF', desc: '', ep: 'mkt', tool: 'autoOff', confirm: 'Turn OFF the nightly auto sync?' },
-    { id: 'mkStat', label: 'Auto sync status', desc: '', ep: 'mkt', tool: 'autoStatus' },
+    { id: 'mkAuto', label: 'Nightly auto sync', desc: 'Nightly sync on / off', ep: 'mkt', custom: 'mtToggle_', on: 'autoOn', off: 'autoOff', stat: 'autoStatus', re: 'Nightly sync:\\s*ON' },
     { id: 'mkSumm', label: 'Sheet summary (rows / unique numbers)', desc: '', ep: 'mkt', tool: 'summary' }
   ] }
 ];
@@ -33063,6 +33032,31 @@ async function mtCall_(ep, tool, args) {
   res = await _fetchWithTimeout(url, {}, 330000).then(r => r.json());
   return Object.assign({ raw: res }, res);
 }
+
+async function mtToggle_(t) {
+  const read = async () => { const r = await mtCall_(t.ep, t.stat, {}).catch(() => null); if (!r || !r.ok) return null; return { on: new RegExp(t.re, 'i').test(r.msg || ''), msg: r.msg || '' }; };
+  mtBusy_(t.label + ' ...');
+  const st = await read();
+  if (!st) { mtShow_('❌ ' + t.label, 'Could not read the current status.', true); return; }
+  window.__mtTg = t;
+  slOpenModal(`<div class="modal-title">${escHtml(t.label)}</div>
+    <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;font-weight:600;">
+      <span id="mtTgLbl">${st.on ? 'ON' : 'OFF'}</span>
+      <input type="checkbox" id="mtTgChk" ${st.on ? 'checked' : ''} style="width:44px;height:24px;" onchange="mtToggleSet_(this.checked)"></label>
+    <pre id="mtTgMsg" style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:12px;opacity:.8;">${escHtml(st.msg)}</pre>`);
+}
+async function mtToggleSet_(on) {
+  const t = window.__mtTg, chk = document.getElementById('mtTgChk'), msg = document.getElementById('mtTgMsg');
+  chk.disabled = true; msg.textContent = 'Saving...';
+  try {
+    const r = await mtCall_(t.ep, on ? t.on : t.off, {});
+    if (!r || !r.ok) throw new Error((r && (r.error || r.msg)) || 'Failed');
+    const s2 = await mtCall_(t.ep, t.stat, {});
+    const now = new RegExp(t.re, 'i').test((s2 && s2.msg) || '');
+    chk.checked = now; document.getElementById('mtTgLbl').textContent = now ? 'ON' : 'OFF'; msg.textContent = (s2 && s2.msg) || '';
+  } catch (e) { chk.checked = !on; msg.textContent = '❌ ' + (e.message || 'Failed'); }
+  chk.disabled = false;
+}
 function mtFind_(id) { for (const g of MT_GROUPS_) { for (const t of g.tools) if (t.id === id) return t; } return null; }
 function mtShow_(title, text, isErr) {
   slOpenModal(`<div class="modal-title">${escHtml(title)}</div><pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;background:${isErr ? '#fee2e2' : '#f3f4f6'};color:#111;border-radius:8px;padding:10px;max-height:55vh;overflow:auto;">${escHtml(text || '')}</pre><button class="btn-primary" style="width:100%;margin-top:8px;" onclick="document.getElementById('slModal').remove()">Close</button>`);
@@ -33080,6 +33074,49 @@ function mtPageInit_() {
   host.appendChild(d);
 }
 mtPageInit_();
+// Heading + own emoji for every MIS tool, so a long list is grouped and each button looks different.
+const MT_META_ = {
+  leads: [[/backfill/i, '🩹', 'Data & Contacts Sync'], [/^dispatch all/i, '📤', 'Dispatch'], [/^dispatch/i, '📨', 'Dispatch'], [/void/i, '🚫', 'Dispatch'], [/re-?send/i, '🔁', 'Dispatch'], [/reset dispatch/i, '⏮️', 'Dispatch'],
+    [/today/i, '📅', 'CRM Reports'], [/last month/i, '🗓️', 'CRM Reports'], [/date range/i, '📆', 'CRM Reports'], [/golden aura/i, '🥇', 'CRM Reports'], [/calling status/i, '☎️', 'CRM Reports'], [/follow-?up/i, '⏳', 'CRM Reports'], [/compliance/i, '✅', 'CRM Reports'],
+    [/event alert/i, '🎂', 'Alerts & Messages'], [/whatsapp/i, '💬', 'Alerts & Messages'], [/leave \+ leads alert/i, '🔔', 'Alerts & Messages'],
+    [/remove duplicates/i, '🧹', 'Data & Contacts Sync'], [/convert/i, '🔀', 'Data & Contacts Sync'], [/test contacts/i, '🧪', 'Data & Contacts Sync'], [/reset contacts/i, '♻️', 'Data & Contacts Sync'], [/google contacts/i, '📇', 'Data & Contacts Sync'], [/loyalty card no/i, '💳', 'Data & Contacts Sync'], [/calling log/i, '📒', 'Data & Contacts Sync'], [/backfill/i, '🩹', 'Data & Contacts Sync'], [/sync customer/i, '🔄', 'Data & Contacts Sync']],
+  kpi: [[/^kpi report/i, '📈', 'Reports'], [/multi-month/i, '📊', 'Reports'], [/walk-in summary/i, '🚶', 'Reports'], [/kpi mail to one/i, '📧', 'Mails'], [/monthly kpi/i, '📬', 'Mails'],
+    [/preview/i, '👁️', 'Performer Of The Month'], [/resend mails/i, '🔁', 'Performer Of The Month'], [/auto mail/i, '🔛', 'Performer Of The Month'],
+    [/duplicate/i, '🧹', 'Checks'], [/leaderboard/i, '🏅', 'Checks']],
+  dsr: [[/resend dsr mail/i, '📧', 'Mails & Alerts'], [/alert/i, '🔔', 'Mails & Alerts'], [/daily dsr/i, '📬', 'Mails & Alerts'], [/date range/i, '📆', 'Reports'], [/missing dsr/i, '🚫', 'Reports'], [/preview/i, '👁️', 'Data Fixes'], [/remove repeats/i, '🧹', 'Data Fixes'], [/timestamp/i, '🕐', 'Data Fixes']],
+  loy: [[/approve/i, '✅', 'Approvals & Payments'], [/pay all/i, '💰', 'Approvals & Payments'], [/blank-status/i, '🩹', 'Approvals & Payments'], [/auto-pending/i, '🤖', 'Approvals & Payments'],
+    [/summary/i, '📊', 'Reports'], [/timeline/i, '🕰️', 'Reports'], [/monthly report/i, '📬', 'Reports'], [/card report/i, '📆', 'Reports'], [/kyc/i, '🪪', 'Reports']],
+  stock: [[/add counter/i, '➕', 'Counters'], [/remove counter/i, '➖', 'Counters'], [/target qty/i, '🎯', 'Counters'], [/summary/i, '🏗️', 'Rebuild Sheets'], [/dashboard/i, '🧱', 'Rebuild Sheets'], [/drift/i, '📉', 'Checks'], [/mismatch/i, '⚠️', 'Checks']],
+  mkt: [[/test sync/i, '🧪', 'Sync'], [/sync now/i, '🔄', 'Sync'], [/nightly auto sync/i, '🌙', 'Sync'], [/duplicates/i, '🧹', 'Cleanup'], [/summary/i, '📊', 'Report']]
+};
+function mtMeta_(gid, label) {
+  const rules = MT_META_[gid] || [];
+  for (let i = 0; i < rules.length; i++) { if (rules[i][0].test(label)) return [rules[i][1], rules[i][2]]; }
+  return ['🛠️', 'Other Tools'];
+}
+// ---- Tools & Settings block at the bottom of each section page (MIS only) ----
+const SEC_TOOLS_ = {
+  dsr: [['🥇', 'DSR Types', 'Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️', 'DSR Edit Requests', 'Edit requests and approvals', 'dsrEditCtlOpen_()', 'decBadge'], ['🛠️', 'DSR Tools', 'Mails, duplicates, reports', "mtGroup_('dsr')"]],
+  kpi: [['🏆', 'Performer Rules', 'Score, Loyalty %, Golden %', 'eomRulesOpen_()'], ['🛠️', 'KPI / Performer Tools', 'Reports, mails, auto mail', "mtGroup_('kpi')"]],
+  loyalty: [['🛠️', 'Loyalty Tools', 'Approve, pay, reports, KYC', "mtGroup_('loy')"]],
+  leads: [['🛠️', 'Leads Tools', 'Dispatch, CRM reports, sync', "mtGroup_('leads')"]],
+  stocklevel: [['🛠️', 'Stock Tools', 'Counters, rebuild, checks', "mtGroup_('stock')"]],
+  walkins: [['🚶', 'Walk-in Summary', 'For a date', "mtRun_('walkSum')"], ['🧹', 'Walk-in Duplicate Check', 'Odd entries', "mtRun_('walkDup')"]]
+};
+function secToolsRender_(page) {
+  const list = SEC_TOOLS_[page]; if (!list) return;
+  const el = document.getElementById('admin-' + page); if (!el) return;
+  const old = document.getElementById('secTools-' + page); if (old) old.remove();
+  if (!frqIsMis_()) return;
+  const d = document.createElement('div'); d.id = 'secTools-' + page;
+  d.innerHTML = '<div style="font-weight:800;font-size:14px;margin:18px 2px 6px;padding-bottom:4px;border-bottom:2px solid var(--gold,#C9A227);">🛠️ Tools &amp; Settings</div><div class="quick-actions-grid">' + list.map(i => mtTile_(i[0], i[1], i[2], i[3], i[4])).join('') + '</div>';
+  el.appendChild(d);
+  setTimeout(function () { const bn = window.__badgeN_ || {}; if (bn.dsrEditBadge_ !== undefined && typeof window.dsrEditBadge_ === 'function') { try { window.dsrEditBadge_(bn.dsrEditBadge_); } catch (e) {} } }, 100);
+}
+const LEAVE_TOOL_ITEMS_ = [
+  ['📩 Resend Leave Mail', 'ltResendOpen_()'], ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'], ['🏢 Company Holiday', 'ltHolidayOpen_()'],
+  ['🆔 Generate Missing Leave Ids', "ltRunTile_('genIds')"], ['🔧 Fix All Counters', "ltRunTile_('fixCounters')"], ['📧 Check Mail Quota', "ltRunTile_('quota')"]
+];
 function mtTile_(icon, label, sub, action, badgeId) {
   return '<div class="quick-action-btn" onclick="' + action.replace(/"/g, '&quot;') + '"><span class="quick-action-icon">' + icon + '</span><div class="quick-action-label">' + escHtml(label) + (badgeId ? ' <span id="' + badgeId + '" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span>' : '') + '</div>' + (sub ? '<div class="quick-action-sub">' + escHtml(sub) + '</div>' : '') + '</div>';
 }
@@ -33092,7 +33129,9 @@ function mtPageRender_(view, arg) {
   } else if (view === 'group') {
     const g = MT_GROUPS_.find(x => x.id === arg); if (!g) return;
     title = g.icon + ' ' + g.title;
-    tiles = g.tools.map(t => mtTile_(g.icon, t.label, t.desc || '', "mtRun_('" + t.id + "')")).join('');
+    const heads = [], by = {};
+    g.tools.forEach(t => { const m = mtMeta_(g.id, t.label); if (!by[m[1]]) { by[m[1]] = []; heads.push(m[1]); } by[m[1]].push(mtTile_(m[0], t.label, t.desc || '', "mtRun_('" + t.id + "')")); });
+    tiles = heads.map(h => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:12px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(h) + '</div>' + by[h].join('')).join('');
   } else if (view === 'sec') {
     const sec = SM_SECS_[arg]; if (!sec) return;
     title = sec.t + ' — Manage / Settings';
@@ -33108,41 +33147,23 @@ function mtPageRender_(view, arg) {
       + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
       + mtTile_('⚙️', 'System Limits', 'Mail block days, alerts, sync limits', 'mtLimitsOpen_()')
       + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
+  } else if (view === 'leavetools') {
+    title = '🧰 Leave Tools'; note = '';
+    tiles = LEAVE_TOOL_ITEMS_.map(i => { const x = String(i[0]).match(/^(\S+)\s+(.*)$/); return mtTile_(x[1] ? x[1] : '🧰', x[2] || i[0], '', i[1]); }).join('');
   } else if (view === 'picker') {
-    title = '⚙️ Manage / Settings'; note = 'Access first, then Settings. Each group has the section name as its heading.';
-    const hdr = t => '<div style="grid-column:1/-1;font-weight:800;font-size:13px;margin:10px 2px 0;color:var(--purple,#4A0E8F);">' + escHtml(t) + '</div>';
+    title = '⚙️ Manage / Settings'; note = 'Access and general settings only. Each section has its own tools at the bottom of its page.';
     const big = t => '<div style="grid-column:1/-1;font-weight:800;font-size:16px;margin:16px 2px 2px;padding-bottom:4px;border-bottom:2px solid var(--gold,#C9A227);">' + escHtml(t) + '</div>';
-    const sp = x => { const m = String(x).match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['⚙️', x]; };
-    const isAccess = a => /smSettings_\('access'\)|slAdjAccess|specialAccessOpen_|pwrOpen_/.test(a);
-    const isGeneral = a => /smSettings_\('(access|alert)'\)|frqOpenModal|mtLimitsOpen_|mailIssOpen_|pwrOpen_|specialAccessOpen_/.test(a);
-    // ---- Access ----
     tiles = big('🔐 Access')
-      + hdr('🌐 General — all sections')
       + mtTile_('👤', 'Employee Access', 'Who can use what', "smSettings_('access')")
       + mtTile_('🔑', 'Admin Access', 'Admin permissions', "smSettings_('access');setTimeout(function(){switchSettingsTab('admin');},500)")
-      + mtTile_('⭐', 'Special Access', 'All special options', 'specialAccessOpen_()')
-      + mtTile_('🛟', 'Password Requests', 'Reset requests', 'pwrOpen_()', 'pwrBadge');
-    Object.keys(SM_SECS_).forEach(k => {
-      const acc = SM_SECS_[k].items.filter(i => /slAdjAccess/.test(i[1]));
-      if (!acc.length) return;
-      tiles += hdr(SM_SECS_[k].t) + acc.map(i => { const x = sp(i[0]); return mtTile_(x[0], x[1], '', i[1]); }).join('');
-    });
-    // ---- Settings ----
-    tiles += big('⚙️ Settings')
-      + hdr('🌐 General — all sections')
+      + mtTile_('🛟', 'Password Requests', 'Reset requests', 'pwrOpen_()', 'pwrBadge')
+      + big('⚙️ Settings')
       + mtTile_('⭐', 'Required Fields', 'All forms', 'frqOpenModal()')
       + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
       + mtTile_('⚙️', 'System Limits', 'Mail block days, alerts, sync limits', 'mtLimitsOpen_()')
       + mtTile_('📧', 'Mail Issues', 'Missing or bouncing e-mails', 'mailIssOpen_()', 'mailIssBadge')
-      + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()')
-      + mtTile_('🛠️', 'All MIS Tools', 'Every tool, grouped', 'mtOpen_()');
-    Object.keys(SM_SECS_).forEach(k => {
-      const own = SM_SECS_[k].items.filter(i => !isGeneral(i[1]) && !isAccess(i[1]));
-      if (!own.length) return;
-      tiles += hdr(SM_SECS_[k].t) + own.map(i => { const x = sp(i[0]); return mtTile_(x[0], x[1], '', i[1], /dsrEditCtlOpen_/.test(i[1]) ? 'decBadge' : ''); }).join('');
-    });
-    // refresh the red count badges for tiles that were just drawn
-    setTimeout(function () { const bn = window.__badgeN_ || {}; ['pwrBadge_', 'mailIssBadge_', 'dsrEditBadge_'].forEach(function (f) { try { if (bn[f] !== undefined && typeof window[f] === 'function') window[f](bn[f]); } catch (e) {} }); }, 100);
+      + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
+    setTimeout(function () { const bn = window.__badgeN_ || {}; ['pwrBadge_', 'mailIssBadge_'].forEach(function (f) { try { if (bn[f] !== undefined && typeof window[f] === 'function') window[f](bn[f]); } catch (e) {} }); }, 100);
   }
   window.__mtView = { view: view, arg: arg };
   document.getElementById('mtPageTitle').textContent = title;
@@ -33414,11 +33435,11 @@ async function mtConnSave_() {
 const SM_SECS_ = {
   leave: { t: '🏖️ Leave', items: [
     ['🔐 Access (who can use what)', "smSettings_('access')"], ['🗂️ Leave Types & Limits', 'leaveLimitsOpen_()'],
-    ['🧰 Leave Tools — resend mail, bulk approve, holiday, counters', 'leaveToolsOpen_()', 1], ['⛔ Blocked Dates', "showAdminPage('blocked')"],
+    ...LEAVE_TOOL_ITEMS_.map(i => [i[0], i[1], 1]), ['⛔ Blocked Dates', "showAdminPage('blocked')"],
     ['📧 Mail Issues', 'mailIssOpen_()'], ['📢 Send Alert', "smSettings_('alert')"], ['⭐ Required fields', 'frqOpenModal()'],
     ['🔌 Mail block days (System Limits)', 'mtLimitsOpen_()', 1] ] },
   dsr: { t: '🧾 DSR', items: [
-    ['🥇 DSR Types — Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️ DSR Edit requests', 'dsrEditCtlOpen_()'], ['🚫 Missing DSR / Adjust', "showAdminPage('dsr-missing')"],
+    ['🥇 DSR Types — Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️ DSR Edit requests', 'dsrEditCtlOpen_()'],
     ['🛠️ DSR tools — resend mail, duplicates, alerts, reports', "mtGroup_('dsr')", 1], ['⚙️ DSR health alert limits', 'mtLimitsOpen_()', 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
   kpi: { t: '📊 KPI', items: [
     ['🏆 Performer Rules', 'eomRulesOpen_()', 1], ['📈 KPI / Performer tools — reports, mails, auto mail', "mtGroup_('kpi')", 1], ['🔐 Access', "smSettings_('access')"] ] },
@@ -33427,12 +33448,12 @@ const SM_SECS_ = {
   leads: { t: '👥 Leads / CRM', items: [
     ['📞 Leads tools — dispatch, CRM reports, data sync', "mtGroup_('leads')", 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'], ['⚙️ Contacts sync limit', 'mtLimitsOpen_()', 1] ] },
   stock: { t: '📦 Stock Level', items: [
-    ['⚖️ Stock Adjust (Extra / Short)', 'slOpenAdjust()'], ['👥 Stock Adjust — Employee access', 'slAdjAccess()'], ['📦 Stock tools — counters, rebuild, drift, mismatch', "mtGroup_('stock')", 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
+    ['📦 Stock tools — counters, rebuild, drift, mismatch', "mtGroup_('stock')", 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
   walkin: { t: '🚶 Walk-in Track', items: [
-    ['📈 Walk-in tools — summary, duplicate check', "mtGroup_('kpi')", 1], ['⚙️ Walk-in back-date days', 'mtLimitsOpen_()', 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
+    ['🚶 Walk-in Summary', "mtRun_('walkSum')", 1], ['🧹 Walk-in Duplicate Check', "mtRun_('walkDup')", 1], ['⚙️ Walk-in back-date days', 'mtLimitsOpen_()', 1], ['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()'] ] },
   golden: { t: '🥇 Golden Aura', items: [['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()']] },
   checklist: { t: '📝 Checklist', items: [['🔐 Access', "smSettings_('access')"], ['⭐ Required fields', 'frqOpenModal()']] },
-  marketing: { t: '📣 Marketing', items: [['🛠️ Marketing tools (all)', "mtGroup_('mkt')", 1]] }
+  marketing: { t: '📣 Marketing', items: [['🔐 Access', "smSettings_('access')"]] }
 };
 // Access / Send Alert live inside the Settings page: open that page first, then the sub view; Back returns to the page we came from.
 function smSettings_(which) {
@@ -34029,7 +34050,9 @@ function dpTick_() {
   if (typeof orig === 'function') {
     window.showAdminPage = function (page, opts) {
       try { Object.keys(DP_REGISTRY_).forEach(k => { const m = dpMins_(k); if (m !== null && DP_REGISTRY_[k].section === page && (state.adminRole || '').toUpperCase().indexOf('MIS') > -1) { const n = dpIst_(); if (n.mins >= m) { dpSet_(k, { day: n.day, done: true }); dpFpSet_(k, null); window.__dpLast_[k] = 0; } } }); } catch (e) {}
-      return orig.apply(this, arguments);
+      const _r = orig.apply(this, arguments);
+      try { secToolsRender_(page); } catch (e) {}
+      return _r;
     };
   }
   setInterval(dpTick_, 60000);
