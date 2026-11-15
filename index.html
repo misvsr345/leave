@@ -3587,15 +3587,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
              directly — no sub-view needed for those three. -->
         <div id="settingsHomeView">
           <div class="quick-actions-grid">
-            <div class="quick-action-btn" onclick="showSettingsSection('access')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Access</div><div class="quick-action-sub">Employee &amp; Admin feature access</div></div>
-            <div class="quick-action-btn" onclick="showSettingsSection('alert')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Send Alert</div><div class="quick-action-sub">Pop-up alert to one or all employees</div></div>
+            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="showSettingsSection('access')"><span class="quick-action-icon">🔐</span><div class="quick-action-label">Access</div><div class="quick-action-sub">Employee &amp; Admin feature access</div></div>
+            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="showSettingsSection('alert')"><span class="quick-action-icon">📢</span><div class="quick-action-label">Send Alert</div><div class="quick-action-sub">Pop-up alert to one or all employees</div></div>
             <div class="quick-action-btn" onclick="openThemePickerModal()"><span class="quick-action-icon">🎨</span><div class="quick-action-label">Theme</div><div class="quick-action-sub">Pick a color theme</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('storedata')"><span class="quick-action-icon">🏪</span><div class="quick-action-label">Store Data</div><div class="quick-action-sub">Logo, background, name, address, contact</div></div>
-            <div class="quick-action-btn" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
+            <div class="quick-action-btn mt-mis-tile" style="display:none;" id="frqSettingsTile" onclick="frqOpenModal()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Star Mark (Field Settings)</div><div class="quick-action-sub">Required (★) fields, every form</div></div>
             <div class="quick-action-btn" onclick="showSettingsSection('autologout')"><span class="quick-action-icon">⏱️</span><div class="quick-action-label">Auto-Logout Timer</div><div class="quick-action-sub">Idle timeout — every login</div></div>
             <div class="quick-action-btn" onclick="openChangePassword('admin')"><span class="quick-action-icon">🔑</span><div class="quick-action-label">Change Password</div><div class="quick-action-sub">Your own login password</div></div>
-            <div class="quick-action-btn" onclick="specialAccessOpen_()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Special Access</div><div class="quick-action-sub">All special options in one place</div></div>
-            <div class="quick-action-btn" onclick="smPicker_()"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Section Settings</div><div class="quick-action-sub">Access, mails, limits — section wise</div></div>
+            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="specialAccessOpen_()"><span class="quick-action-icon">⭐</span><div class="quick-action-label">Special Access</div><div class="quick-action-sub">All special options in one place</div></div>
+            <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="smPicker_()"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Section Settings</div><div class="quick-action-sub">Access, mails, limits — section wise</div></div>
             <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mtOpen_()"><span class="quick-action-icon">🛠️</span><div class="quick-action-label">MIS Tools</div><div class="quick-action-sub">DSR, KPI, Loyalty, Leads, Stock, Marketing</div></div>
             <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mtLimitsOpen_()"><span class="quick-action-icon">⚙️</span><div class="quick-action-label">System Limits</div><div class="quick-action-sub">Alert mails, daily limits, back-date days</div></div>
             <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mtConnOpen_()"><span class="quick-action-icon">🔌</span><div class="quick-action-label">Tool Connections</div><div class="quick-action-sub">Links of the tool scripts</div></div>
@@ -7979,7 +7979,7 @@ async function dsrEditReqSend_() {
 
 // ── MIS: Settings -> DSR Edit (ON/OFF + approve requests) and the new-request popup ──
 let DEC_ON = false;
-function dsrEditCtlOpen_() { openModal('dsrEditCtlModal'); dsrEditCtlLoad_(); }
+function dsrEditCtlOpen_() { if (!frqIsMis_()) { toast('MIS login only', 'error'); return; } openModal('dsrEditCtlModal'); dsrEditCtlLoad_(); }
 async function dsrEditCtlLoad_() {
   const body = document.getElementById('decBody');
   body.innerHTML = '<div style="text-align:center;padding:14px;font-size:13px;opacity:.7;">Loading...</div>';
@@ -12897,6 +12897,7 @@ async function loadSettingsPage() {
 // to Settings" buttons already do, before it ever falls through to the main Home.
 window.__settingsSubView = 'home';
 function showSettingsSection(which) {
+  if ((which === 'access' || which === 'alert') && !frqIsMis_()) { toast('MIS login only', 'error'); return; }
   window.__settingsSubView = which;
   const views = {
     home: 'settingsHomeView',
@@ -15656,6 +15657,7 @@ function showAdminPage(page, opts) {
   if (page === 'dsr-tagsearch' && !window.__dsrRrOpening) { try { dsrRrClear('admin'); } catch (e) {} }
   try { const _t = document.getElementById('frqSettingsTile'); if (_t) _t.style.display = frqIsMis_() ? '' : 'none'; } catch (e) {}
   try { document.querySelectorAll('.mt-mis-tile').forEach(function (t) { t.style.display = frqIsMis_() ? '' : 'none'; }); } catch (e) {}
+  try { document.querySelectorAll('.sm-bar').forEach(function (t) { t.style.display = frqIsMis_() ? '' : 'none'; }); } catch (e) {}
   // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — same redirect
   // removed as in showEmpPage above: it used to send desktop straight to the Profile page
   // (no section buttons there) because modulepicker's CSS used to be hidden on desktop,
@@ -16477,6 +16479,8 @@ function closeWalkinAlertModal() {
 // department filter renderPending() uses, so the number shown here always
 // matches what's on that page a tap later.
 function checkPendingLeavePopup_() {
+  // MIS gets the timed 'Leave' daily popup (10:00 AM, with Skip) instead, so the same reminder is not shown twice.
+  if ((state.adminRole || '').toUpperCase().indexOf('MIS') > -1) return;
   if (!adminPopupOn_('popup_pendingLeave', adminCan_('pending'))) return; // needs the Popups tick + Pending Approvals access
   jsonpReliable({ page: 'allLeavesAPI', role: 'ADMIN' }).then(res => {
     if (!res || !res.ok) return;
@@ -22532,6 +22536,7 @@ function frqFormGroups_() {
   return groups;
 }
 function frqOpenModal() {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
   if (!frqIsMis_()) { toast('Only MIS can change Required Fields settings.', 'error'); return; }
   FRQ_CURRENT_FORM = null;
   frqRenderList_();
@@ -23975,6 +23980,7 @@ function slAdjCheckAccess_() {
 }
 // ── Special Access hub, DSR Types screen, Leave Types & Limits screen (Admin) ──
 function specialAccessOpen_() {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
   slOpenModal(`<div class="modal-title">⭐ Special Access</div>
     <div class="kd-note">Every special per-employee option in one place.</div>
     <button class="btn-secondary" style="width:100%;margin:4px 0;" onclick="slAdjAccess()">⚖️ Stock Adjust — Employee access</button>
@@ -33095,13 +33101,15 @@ const SM_SECS_ = {
 function smOpen_(key) {
   const sec = SM_SECS_[key]; if (!sec) return;
   const mis = (state.adminRole || '').toUpperCase().indexOf('MIS') > -1;
-  const items = sec.items.filter(i => !i[2] || mis);
+  if (!mis) { toast('MIS login only', 'error'); return; }
+  const items = sec.items;
   slOpenModal(`<div class="modal-title">⚙️ ${escHtml(sec.t)} — Manage / Settings</div>` +
     items.map(i => `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="${i[1].replace(/"/g, '&quot;')}">${escHtml(i[0])}</button>`).join('') +
     (key !== 'marketing' && mis ? `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="mtOpen_()">🛠️ All MIS Tools</button>` : ''));
 }
 function smPicker_() {
   const mis = (state.adminRole || '').toUpperCase().indexOf('MIS') > -1;
+  if (!mis) { toast('MIS login only', 'error'); return; }
   slOpenModal(`<div class="modal-title">🗂️ Section Settings</div>` + Object.keys(SM_SECS_).filter(k => mis || k !== 'marketing').map(k => `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="smOpen_('${k}')">${escHtml(SM_SECS_[k].t)}</button>`).join('') + `<button class="btn-secondary" style="width:100%;margin:4px 0;text-align:left;" onclick="dpCfgOpen_()">🔔 Daily popups — times on / off</button>`);
 }
 
