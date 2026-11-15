@@ -3314,7 +3314,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     <div class="page-section" id="admin-loyalty-upcoming">
       <div class="section-hdr"><span class="section-title2">🔔 Upcoming Approvals</span>
       </div>
-      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals()">🔄 Refresh</button>
+      <button class="btn-sm btn-view" style="margin-bottom:10px;" onclick="loadLoyaltyUpcomingApprovals(true)">🔄 Refresh</button>
       <div id="loyUpcomingContent"><div class="loading"><span class="spinner"></span>Loading...</div></div>
     </div>
 
@@ -30354,11 +30354,12 @@ function mailLoyaltyTimeline() {
 }
 
 // ── Upcoming Card Approvals — who has a full ready-to-pay set right now ──
-function loadLoyaltyUpcomingApprovals() {
+function loadLoyaltyUpcomingApprovals(refresh) {
   const content = document.getElementById('loyUpcomingContent');
   content.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable({ page: 'loyaltyUpcomingApprovalsAPI' })
+  jsonpReliable(refresh ? { page: 'loyaltyUpcomingApprovalsAPI', refresh: '1' } : { page: 'loyaltyUpcomingApprovalsAPI' })
     .then(res => {
+      if (refresh && res && res.ok) toast('Incentive Tracker updated', 'success');
       if (!res || !res.ok) { content.innerHTML = '<div class="empty-state"><p>' + ((res&&res.error)||'Failed to load') + '</p><button class=\"btn-secondary\" style=\"margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;\" onclick=\"loadLoyaltyUpcomingApprovals()\" title=\"Retry\">🔄</button></div>'; return; }
       if (res.rows.length === 0) { content.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>No pending balances — everyone is fully paid up</p></div>'; return; }
       let rowsHtml = '';
@@ -33086,8 +33087,7 @@ function mtPageRender_(view, arg) {
   } else if (view === 'sec') {
     const sec = SM_SECS_[arg]; if (!sec) return;
     title = sec.t + ' — Manage / Settings';
-    tiles = sec.items.map(i => { const m = String(i[0]).match(/^(\S+)\s+(.*)$/); return mtTile_(m ? m[1] : '⚙️', m ? m[2] : i[0], '', i[1]); }).join('')
-      + (arg !== 'marketing' ? mtTile_('🛠️', 'All MIS Tools', 'Every tool, grouped', 'mtOpen_()') : '');
+    tiles = sec.items.map(i => { const m = String(i[0]).match(/^(\S+)\s+(.*)$/); return mtTile_(m ? m[1] : '⚙️', m ? m[2] : i[0], '', i[1]); }).join('');
   } else if (view === 'picker') {
     title = '🗂️ Section Settings';
     tiles = Object.keys(SM_SECS_).map(k => { const m = String(SM_SECS_[k].t).match(/^(\S+)\s+(.*)$/); return mtTile_(m ? m[1] : '⚙️', m ? m[2] : SM_SECS_[k].t, 'Manage / Settings', "smOpen_('" + k + "')"); }).join('')
