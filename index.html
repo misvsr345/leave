@@ -2096,9 +2096,9 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
       <div class="section-hdr"><span class="section-title2">📣 Marketing</span></div>
       <div class="card" id="mkHubEmp"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showEmpPage('marketing-entry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">New customer entry form</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('emp','entries')"><span class="quick-action-icon">📅</span><div class="quick-action-label">My Entries</div><div class="quick-action-sub">Only your own entries</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('emp','gift')"><span class="quick-action-icon">🎁</span><div class="quick-action-label">My Gift Customers</div><div class="quick-action-sub">Gifts &amp; visit status</div></div>
+        <div class="quick-action-btn" data-mk="marketingEntry" onclick="showEmpPage('marketing-entry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">New customer entry form</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('emp','entries')"><span class="quick-action-icon">📅</span><div class="quick-action-label">My Entries</div><div class="quick-action-sub">Only your own entries</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('emp','gift')"><span class="quick-action-icon">🎁</span><div class="quick-action-label">My Gift Customers</div><div class="quick-action-sub">Gifts &amp; visit status</div></div>
       </div>
     </div>
 
@@ -3094,7 +3094,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
           <div class="quick-action-btn" id="adminQAStockChecklist" onclick="showAdminPage('stock')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Checklist</div><div class="quick-action-sub">All options</div></div>
           <div class="quick-action-btn" id="adminQAWalkinsGrid" onclick="showAdminPage('walkins')"><span class="quick-action-icon">🚶</span><div class="quick-action-label">Walk-in Track</div><div class="quick-action-sub">Deals, purchase &amp; conversion</div></div>
           <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
-          <div class="quick-action-btn mt-mis-tile" style="display:none;" onclick="mkOpen_()"><span class="quick-action-icon">📣</span><div class="quick-action-label">Marketing</div><div class="quick-action-sub">Daily entries, duplicates, sync</div></div>
+          <div class="quick-action-btn" id="adminQAMarketing" style="display:none;" onclick="mkOpen_()"><span class="quick-action-icon">📣</span><div class="quick-action-label">Marketing</div><div class="quick-action-sub">Daily entries, duplicates, sync</div></div>
           <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings &amp; more</div></div>
         </div>
@@ -4649,15 +4649,15 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
       <div class="section-hdr"><span class="section-title2">📣 Marketing</span></div>
       <div class="card" id="mkPageHighlights"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
-        <div class="quick-action-btn" onclick="showAdminPage('marketing-entry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">New customer entry form</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','entries')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Entries by date</div><div class="quick-action-sub">Date range, any employee</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','gift')"><span class="quick-action-icon">🎁</span><div class="quick-action-label">Gift Issue report</div><div class="quick-action-sub">Gifts &amp; visit status</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','emp')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Employee-wise report</div><div class="quick-action-sub">Who entered how many</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search number</div><div class="quick-action-sub">Find a mobile number</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','edit')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Edit / Delete entry</div><div class="quick-action-sub">Correct a wrong entry</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','addr')"><span class="quick-action-icon">📍</span><div class="quick-action-label">Address-wise count</div><div class="quick-action-sub">Entries per area</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','export')"><span class="quick-action-icon">📥</span><div class="quick-action-label">Export</div><div class="quick-action-sub">Download as CSV</div></div>
-        <div class="quick-action-btn" onclick="mkrOpen_('admin','dupLog')"><span class="quick-action-icon">🗑️</span><div class="quick-action-label">Deleted duplicates log</div><div class="quick-action-sub">Backup of removed rows</div></div>
+        <div class="quick-action-btn" data-mk="marketingEntry" onclick="showAdminPage('marketing-entry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Entry</div><div class="quick-action-sub">New customer entry form</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','entries')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Entries by date</div><div class="quick-action-sub">Date range, any employee</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','gift')"><span class="quick-action-icon">🎁</span><div class="quick-action-label">Gift Issue report</div><div class="quick-action-sub">Gifts &amp; visit status</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','emp')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Employee-wise report</div><div class="quick-action-sub">Who entered how many</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','search')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Search number</div><div class="quick-action-sub">Find a mobile number</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','edit')"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Edit / Delete entry</div><div class="quick-action-sub">Correct a wrong entry</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','addr')"><span class="quick-action-icon">📍</span><div class="quick-action-label">Address-wise count</div><div class="quick-action-sub">Entries per area</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','export')"><span class="quick-action-icon">📥</span><div class="quick-action-label">Export</div><div class="quick-action-sub">Download as CSV</div></div>
+        <div class="quick-action-btn" data-mk="marketingReport" onclick="mkrOpen_('admin','dupLog')"><span class="quick-action-icon">🗑️</span><div class="quick-action-label">Deleted duplicates log</div><div class="quick-action-sub">Backup of removed rows</div></div>
       </div>
       <div class="card" id="mkPageDetail"></div>
     </div>
@@ -4750,8 +4750,6 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <div class="form-row"><label>Counter</label><input type="text" id="newEmpCounter" placeholder="e.g. Bangle &amp; Chain Counter"></div>
         <div class="form-row"><label>Monthly Leave Quota</label><input type="number" id="newEmpQuota" value="3"></div>
         <div class="form-row"><label>Password</label><input type="text" id="newEmpPassword" placeholder="Login password"></div>
-        <div class="form-row"><label>Email</label><input type="email" id="newEmpEmail" placeholder="name@gmail.com"></div>
-        <div class="form-row"><label>Mobile</label><input type="text" id="newEmpMobile" placeholder="10-digit mobile"></div>
         <button class="btn-primary" style="margin-top:12px;" onclick="submitNewEmployee()">✅ Save — Sync to all sheets</button>
         <div id="newEmployeeResult" style="margin-top:14px;"></div>
       </div>
@@ -6488,10 +6486,21 @@ function _topOpenAutoModal_() {
     function (el) { return AUTO_POPUP_SKIP_IDS_.indexOf(el.id) < 0; });
   return open.length ? open[open.length - 1] : null;
 }
+// ✕ on every automatic popup: asks first; Yes = it will not come again today.
+function _popDay_() { return new Date().toISOString().slice(0, 10); }
+function _popDismissed_(label) { try { return localStorage.getItem('vsrPopX_' + _popDay_() + '_' + label) === '1'; } catch (e) { return false; } }
+function _popAskClose_(el) {
+  const label = _popupLabel_(el);
+  if (!confirm('Close this popup?\n\nIt will NOT come again today.')) return false;
+  try { localStorage.setItem('vsrPopX_' + _popDay_() + '_' + label, '1'); } catch (e) {}
+  el.remove(); _drainAutoPopupQueue_();
+  return true;
+}
 function _runAutoPopup_(showFn, silent) {
   showFn();
   const el = _topOpenAutoModal_();
   if (!el) return;
+  if (_popDismissed_(_popupLabel_(el))) { el.remove(); _drainAutoPopupQueue_(); return; }
   _addMinimizeBtn_(el);
   if (silent) _minimizePopup_(el);
 }
@@ -6522,6 +6531,10 @@ function _addMinimizeBtn_(el) {
   bar.style.cssText = 'text-align:right;margin:0 0 6px;';
   bar.innerHTML = '<button type="button" class="vsr-min-btn" style="border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;">– Minimize</button>';
   bar.firstChild.onclick = function (ev) { ev.stopPropagation(); _minimizePopup_(el); _flushQueueToTray_(); };
+  const xb = document.createElement('button'); xb.type = 'button'; xb.className = 'vsr-x-btn'; xb.textContent = '✕';
+  xb.style.cssText = 'border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;border-radius:6px;padding:3px 9px;font-size:13px;font-weight:700;margin-left:6px;cursor:pointer;';
+  xb.onclick = function (ev) { ev.stopPropagation(); _popAskClose_(el); };
+  bar.appendChild(xb);
   box.insertBefore(bar, box.firstChild);
 }
 function _popupLabel_(el) {
@@ -7573,6 +7586,7 @@ async function empLogin() {
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
         checkEmpMissingDsrPopup();
+        checkEmpFormPopup_();
         checkDutyAssignmentPopup_(false);
         checkStockPopups_();
         checkEmpKpiPopup_();
@@ -7660,6 +7674,7 @@ async function adminLogin() {
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
         checkBlockedLeavesPopup_();
+        checkFormPendingPopup_();
         checkLoyaltyPendingValidationPopup_();
         checkGoldenPendingPopup_();
         startAdminEventAlert_();
@@ -7955,6 +7970,7 @@ async function mailGateVerify_() {
     if (MG_CD_TIMER) { clearInterval(MG_CD_TIMER); MG_CD_TIMER = null; }
     mailGateHide_();
     toast('✅ ' + (res.message || 'E-mail updated.'), 'success');
+    try { setTimeout(checkEmpFormPopup_, 800); } catch (fe) {}   // next step: ask for the details form
   } catch (e) { mgMsg_('Connection error. Try again.', true); }
   btn.disabled = false;
 }
@@ -9826,6 +9842,100 @@ function leaveShowPreview(d) {
 // BLOCKED LEAVES (MIS) — attempts stopped at submit (Casual rules, monthly limit).
 // MIS taps Allow once; the employee's next submit for the same dates goes through.
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// EMPLOYEE DETAILS FORM (MIS) — employees missing from the Employee Master Data form sheet.
+// MIS taps Send; each employee gets a mail with a button to the Google Form.
+// ══════════════════════════════════════
+async function fmOpen_() {
+  const old = document.getElementById('fmModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'fmModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:560px;"><div class="modal-title">📝 Employee Details Form</div>'
+    + '<div style="font-size:12px;opacity:.75;margin-bottom:6px;">These employees have not filled the details form yet. Send gives each one a mail with a button to the form.</div>'
+    + '<div id="fmBody" style="font-size:13px;text-align:center;padding:14px;">Loading...</div>'
+    + '<div id="fmBtns" style="display:flex;gap:8px;margin-top:8px;"><button class="btn-secondary" style="flex:1;" onclick="document.getElementById(\'fmModal\').remove()">Close</button></div></div>';
+  document.body.appendChild(div);
+  fmLoad_();
+}
+async function fmLoad_() {
+  const body = document.getElementById('fmBody'); if (!body) return;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'listFormPendingAPI' }, pwrCaller_()));
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not load');
+    const items = res.items || [];
+    if (!items.length) { body.innerHTML = 'Everyone has filled the form. 👍'; return; }
+    const st = i => !i.hasEmail ? '<span style="color:#b3261e;">No e-mail</span>'
+      : i.state === 'sent' ? 'Sent ' + escHtml_(i.sentAt)
+      : i.state === 'due' ? '<span style="color:#b3261e;">Sent ' + escHtml_(i.sentAt) + ' — not filled</span>' : 'Not sent';
+    const act = i => !i.hasEmail ? '<button class="btn-sm" onclick="fmCopyLink_()">📋 Copy Link</button>' : '<button class="btn-sm" style="background:#b8860b;color:#fff;" onclick="fmSend_(\'' + escJs(i.id) + '\',this)">' + (i.state === 'new' ? 'Send' : 'Resend') + '</button>';
+    body.style.textAlign = 'left'; body.style.padding = '0';
+    body.innerHTML = dpTable_(['Employee', 'Dept', 'Status', ''], items.map(i => [
+      '<b>' + escHtml_(i.name) + '</b><br><span style="opacity:.65;">' + escHtml_(i.id) + '</span>', escHtml_(i.dept), st(i), act(i)]));
+    const btns = document.getElementById('fmBtns');
+    if (btns && res.needCount > 0 && !document.getElementById('fmAllBtn')) {
+      const b = document.createElement('button'); b.id = 'fmAllBtn'; b.className = 'btn-primary'; b.style.flex = '1';
+      b.textContent = '📨 Send To All (' + res.needCount + ')'; b.onclick = () => fmSend_('', b, true);
+      btns.insertBefore(b, btns.firstChild);
+    }
+    const ab = document.getElementById('fmAllBtn'); if (ab && !(res.needCount > 0)) ab.remove();
+    else if (ab) ab.textContent = '📨 Send To All (' + res.needCount + ')';
+  } catch (e) { body.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+}
+function fmCopyLink_() {
+  const url = 'https://docs.google.com/forms/d/e/1FAIpQLSdBwNTIQFTo-yvRlP35BxlLaGX7y7MkQZb-v3eL5m2J9iQA2w/viewform';
+  try { navigator.clipboard.writeText(url).then(() => toast('Form link copied', 'success')); } catch (e) { prompt('Form link:', url); }
+}
+async function fmSend_(id, btn, all) {
+  if (all && !confirm('Send the form mail to everyone who still needs it?')) return;
+  btn.disabled = true;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'sendFormMailAPI' }, all ? { all: '1' } : { ids: id }, pwrCaller_()));
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not send', 'error'); btn.disabled = false; return; }
+    toast('✅ ' + (res.message || 'Sent'), 'success');
+    fmLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; }
+}
+// MIS popup — once a day, only when someone still needs the mail.
+function checkFormPendingPopup_() {
+  if (state.__loginKind !== 'admin' || !mtIsMis_() || !navigator.onLine) return;
+  const key = 'vsrFormPopup_' + new Date().toISOString().slice(0, 10);
+  try { if (localStorage.getItem(key)) return; } catch (e) {}
+  jsonpReliable(Object.assign({ page: 'listFormPendingAPI' }, pwrCaller_())).then(res => {
+    if (!res || !res.ok || !res.needCount) return;
+    const need = res.items.filter(i => i.state !== 'sent' && i.hasEmail).slice(0, 8);
+    _queueAutoPopup_(() => showFormPendingPopup_(need, res.needCount, key));
+  }).catch(() => {});
+}
+function showFormPendingPopup_(items, total, key) {
+  const old = document.getElementById('fmPopupModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'fmPopupModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:380px;"><div class="modal-title">📝 Details Form Pending</div>'
+    + '<div style="font-size:12.5px;margin:4px 0 6px;">' + total + ' employee(s) have not filled the details form.</div>'
+    + dpTable_(['Employee', 'Dept'], items.map(i => [escHtml_(i.name) + '<br><span style="opacity:.65;">' + escHtml_(i.id) + '</span>', escHtml_(i.dept)]))
+    + (total > items.length ? '<div style="font-size:11px;opacity:.7;">+ ' + (total - items.length) + ' more</div>' : '')
+    + '<div style="display:flex;gap:8px;"><button class="btn-secondary" style="flex:1;" onclick="try{localStorage.setItem(\'' + key + '\',1)}catch(e){};document.getElementById(\'fmPopupModal\').remove();_drainAutoPopupQueue_();">Later</button>'
+    + '<button class="btn-primary" style="flex:1;" onclick="try{localStorage.setItem(\'' + key + '\',1)}catch(e){};document.getElementById(\'fmPopupModal\').remove();fmOpen_();">Open</button></div></div>';
+  document.body.appendChild(div);
+}
+
+// Employee popup — comes right after the first-login e-mail step and at every login until the details form is filled.
+function checkEmpFormPopup_() {
+  if (state.__loginKind !== 'emp' || !state.empId || !navigator.onLine) return;
+  jsonpReliable({ page: 'empFormStatusAPI', empId: state.empId }).then(res => {
+    if (res && res.ok && res.need) _queueAutoPopup_(() => showEmpFormPopup_(res.url));
+  }).catch(() => {});
+}
+function showEmpFormPopup_(url) {
+  const old = document.getElementById('empFormPopupModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'empFormPopupModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:360px;"><div class="modal-title">📝 Fill Your Details Form</div>'
+    + '<div style="font-size:13.5px;line-height:1.5;margin:8px 0 12px;">Please fill your employee details form. This reminder stays until it is filled.<br><br>Your Employee ID: <b>' + escHtml_(state.empId) + '</b></div>'
+    + '<button class="btn-primary" style="width:100%;margin-bottom:6px;" onclick="window.open(\'' + escJs(url) + '\',\'_blank\');document.getElementById(\'empFormPopupModal\').remove();_drainAutoPopupQueue_();">📝 Fill The Form</button>'
+    + '<button class="btn-secondary" style="width:100%;" onclick="document.getElementById(\'empFormPopupModal\').remove();_drainAutoPopupQueue_();">Later</button></div>';
+  document.body.appendChild(div);
+}
 function leaveBlockedMsg_(text) {
   const old = document.getElementById('leaveBlockedMsgModal'); if (old) old.remove();
   const div = document.createElement('div');
@@ -15315,7 +15425,7 @@ function loadBackendSheetsPage() {
 // full list and why Employee_Granular_Perms is deliberately skipped.
 // ══════════════════════════════════════
 async function loadNewEmployeePage() {
-  ['newEmpName','newEmpDept','newEmpDesignation','newEmpCounter','newEmpPassword','newEmpEmail','newEmpMobile'].forEach(id => {
+  ['newEmpName','newEmpDept','newEmpDesignation','newEmpCounter','newEmpPassword'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const qtyEl = document.getElementById('newEmpQuota'); if (qtyEl) qtyEl.value = 3;
@@ -15335,8 +15445,7 @@ async function submitNewEmployee() {
   const counter = document.getElementById('newEmpCounter').value.trim();
   const monthlyQuota = document.getElementById('newEmpQuota').value.trim();
   const password = document.getElementById('newEmpPassword').value.trim();
-  const email = document.getElementById('newEmpEmail').value.trim();
-  const mobile = document.getElementById('newEmpMobile').value.trim();
+  const email = '', mobile = ''; // filled later by the employee in the details form
 
   if (!empId || !empName) { toast('Employee ID and Name are required', 'error'); return; }
   // Popup before saving: set this month's Loyalty / Golden targets for the new employee (they are added to the Target sheet automatically).
@@ -15360,8 +15469,7 @@ async function submitNewEmployeeGo_() {
   const counter = document.getElementById('newEmpCounter').value.trim();
   const monthlyQuota = document.getElementById('newEmpQuota').value.trim();
   const password = document.getElementById('newEmpPassword').value.trim();
-  const email = document.getElementById('newEmpEmail').value.trim();
-  const mobile = document.getElementById('newEmpMobile').value.trim();
+  const email = '', mobile = ''; // filled later by the employee in the details form
 
   const btn = document.querySelector('#admin-new-employee .btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
@@ -15945,12 +16053,26 @@ function resetAdminRoleRestrictions() {
 // ══════════════════════════════════════
 // ADMIN NAV
 // ══════════════════════════════════════
+// Marketing access: MIS sees everything; employees keep it unless MIS unticks it; other admins need a tick.
+function mkAllowed_(key) {
+  if (state.__loginKind === 'admin') { if (frqIsMis_()) return true; const p = state.loyaltyPerms; return !!(p && p.marketing && (key === 'marketing' || p[key])); }
+  const p = window.__empPermsCache_; if (!p || Object.keys(p).length === 0) return true;
+  return p.marketing !== false && (key === 'marketing' || p[key] !== false);
+}
+function mkApplyPerms_() {
+  try {
+    const tile = document.getElementById('adminQAMarketing'); if (tile) tile.style.display = (state.__loginKind === 'admin' && mkAllowed_('marketing')) ? '' : 'none';
+    const et = document.getElementById('empQAMarketingEntry'); if (et && state.__loginKind === 'emp') et.style.display = mkAllowed_('marketing') ? '' : 'none';
+    document.querySelectorAll('#emp-marketing [data-mk], #admin-marketing [data-mk]').forEach(el => { el.style.display = mkAllowed_(el.getAttribute('data-mk')) ? '' : 'none'; });
+  } catch (e) {}
+}
 function showAdminPage(page, opts) {
   opts = opts || {};
   if (page !== 'settings') window.__settingsReturn = null;
   if (page === 'dsr-tagsearch' && !window.__dsrRrOpening) { try { dsrRrClear('admin'); } catch (e) {} }
   try { const _t = document.getElementById('frqSettingsTile'); if (_t) _t.style.display = frqIsMis_() ? '' : 'none'; } catch (e) {}
   try { document.querySelectorAll('.mt-mis-tile').forEach(function (t) { t.style.display = frqIsMis_() ? '' : 'none'; }); } catch (e) {}
+  mkApplyPerms_();
   try { document.querySelectorAll('.sm-tile').forEach(function (t) { t.style.display = frqIsMis_() ? '' : 'none'; }); } catch (e) {}
   // v-fix (BRO: "home page idi undi. section button lu ravadam leledu" — same redirect
   // removed as in showEmpPage above: it used to send desktop straight to the Profile page
@@ -20200,6 +20322,7 @@ async function applyEmpGranularRestrictions() {
 // own login fetch, avoiding a redundant round-trip) do real work.
 function applyEmpGranularRestrictionsFromPerms(perms) {
   if (!perms || Object.keys(perms).length === 0) return;
+  window.__empPermsCache_ = perms; mkApplyPerms_();
 
   const sectionLoyaltyOn = perms.section_loyalty !== false;
   const sectionKpiOn = perms.section_kpi !== false;
@@ -33356,6 +33479,7 @@ function mtPageRender_(view, arg) {
       + mtTile_('🔑', 'Admin Access', 'Admin permissions', "smSettings_('access');setTimeout(function(){switchSettingsTab('admin');},500)")
       + big('Settings')
       + mtTile_('⭐', 'Required Fields', 'All forms', 'frqOpenModal()')
+      + mtTile_('📝', 'Employee Details', 'Details form not filled yet', 'fmOpen_()')
       + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
       + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
   } else if (view === 'password') {
@@ -34054,7 +34178,6 @@ setInterval(() => { try { checkEmpKpiPopup_(); } catch (e) {} }, 15 * 60 * 1000)
 
 const DP_REGISTRY_ = {
   crm:       { time: '19:00', section: 'leads',      title: '📞 CRM Daily Report', load: dpCrmBody_ },
-  stocklevel:{ time: '00:00', every: 2,  section: 'stocklevel', title: '📦 Stock Level', load: dpStockBody_ },
   dsr:       { time: '10:00', every: 180, section: 'dsr',       title: '🧾 Missing DSR', load: dpDsrBody_ },
   walkin:    { time: '15:00', section: 'walkins',    title: '🚶 Walk-in Track', load: dpWalkinBody_ },
   kpi:       { time: '11:00', times: ['11:00', '14:00', '17:00', '20:00'], section: 'kpi', title: '📊 KPI', load: dpKpiBody_ },
@@ -34169,6 +34292,7 @@ function dpHash_(t) { let h = 0; for (let i = 0; i < t.length; i++) { h = ((h <<
 // Popups appear only when the section's numbers CHANGED since the last time they were acknowledged.
 function dpDone_(key) { if (window.__dpFp_[key]) dpFpSet_(key, window.__dpFp_[key]); dpSet_(key, { day: dpIst_().day, done: true }); const m = document.getElementById('dpModal'); if (m) m.remove(); }
 function dpClose_(key) { if (window.__dpFp_[key]) dpFpSet_(key, window.__dpFp_[key]); const m = document.getElementById('dpModal'); if (m) m.remove(); }
+function dpXClose_(key) { if (!confirm('Close this popup?\n\nIt will NOT come again today.')) return; if (window.__dpFp_[key]) dpFpSet_(key, window.__dpFp_[key]); dpSet_(key, { day: dpIst_().day, until: Date.now() + 24 * 3600000 }); const m = document.getElementById('dpModal'); if (m) m.remove(); }
 function dpLater_(key, minutes) { dpSet_(key, { day: dpIst_().day, until: Date.now() + minutes * 60000 }); const m = document.getElementById('dpModal'); if (m) m.remove(); }
 async function dpCrmBody_() {
   const r = await leadsApiGet({ action: 'GET_DAILY_REPORT', role: 'admin', date: todayISO() });
@@ -34193,6 +34317,7 @@ async function dpCheck_(key) {
   const o = document.createElement('div'); o.id = 'dpModal'; o.className = 'modal-overlay show';
   o.addEventListener('click', ev => { if (ev.target === o) dpClose_(key); });
   o.innerHTML = `<div class="modal-box" style="max-width:380px;max-height:88vh;overflow-y:auto;">
+    <div style="text-align:right;margin:0 0 6px;"><button type="button" onclick="dpXClose_('${key}')" style="border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;border-radius:6px;padding:3px 9px;font-size:13px;font-weight:700;cursor:pointer;">✕</button></div>
     <div class="modal-title">${d.title}</div>${body}
     <button class="btn-primary" style="width:100%;margin-bottom:6px;" onclick="dpDone_('${key}');${d.open || ("showAdminPage('" + d.section + "')")}">Open</button>
     <button class="btn-secondary" style="width:100%;" onclick="dpLater_('${key}',60)">Later</button>
@@ -34233,6 +34358,43 @@ function dpTick_() {
   setInterval(dpTick_, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(dpTick_, 1500); });
   setTimeout(dpTick_, 8000);
+})();
+// ══════════════════════════════════════
+// All dropdowns are shown in A–Z order. A placeholder at the top ("-- Select --", "All") stays first.
+// Lists with a natural order (numbers, dates, months, weekdays, periods, halves of a day, sizes) are left alone.
+// Add data-nosort="1" on any <select> that must keep its own order.
+// ══════════════════════════════════════
+(function () {
+  const KEEP = /^(today|yesterday|tomorrow|this |last |next |past |first half|second half|1st |2nd |morning|afternoon|evening|night|low|medium|high|small|large|daily|weekly|monthly|yearly|quarter|q[1-4]|yes|no|on|off|enabled|disabled|active|inactive)\b/i;
+  const NAMED = /^(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)$/i;
+  const PLACE = /^(\s*-{1,}|select\b|choose\b|all\b|any\b|none\b|--|—|please\b)/i;
+  function isPlace_(o) { const t = (o.textContent || '').trim(); return o.value === '' || PLACE.test(t); }
+  function sortSel_(sel) {
+    try {
+      if (!sel || sel.multiple || (sel.dataset && sel.dataset.nosort) || sel.options.length < 3) return;
+      const opts = Array.prototype.slice.call(sel.options);
+      let lead = 0; while (lead < opts.length && isPlace_(opts[lead])) lead++;
+      const rest = opts.slice(lead);
+      if (rest.length < 2) return;
+      const texts = rest.map(o => (o.textContent || '').trim());
+      const numeric = texts.filter(t => /^[\d₹.,:\-\/\s]+(am|pm)?/i.test(t) && /\d/.test(t.slice(0, 3))).length;
+      if (numeric >= rest.length / 2) return;                       // numbers, dates, times
+      if (texts.filter(t => KEEP.test(t) || NAMED.test(t)).length >= 2) return;      // periods, months, weekdays, yes/no, levels
+      const sorted = rest.slice().sort((a, b) => (a.textContent || '').trim().localeCompare((b.textContent || '').trim(), undefined, { numeric: true, sensitivity: 'base' }));
+      let same = true; for (let i = 0; i < rest.length; i++) { if (rest[i] !== sorted[i]) { same = false; break; } }
+      if (same) return;
+      const keep = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+      sorted.forEach(o => sel.appendChild(o));
+      if (keep) keep.selected = true;
+    } catch (e) {}
+  }
+  let timer = 0;
+  function sortAll_(root) { (root || document).querySelectorAll('select').forEach(sortSel_); }
+  function later_() { if (timer) return; timer = setTimeout(() => { timer = 0; sortAll_(); }, 120); }
+  window.sortAllSelects_ = sortAll_;
+  document.addEventListener('DOMContentLoaded', () => { sortAll_(); });
+  new MutationObserver(later_).observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(sortAll_, 500);
 })();
 </script>
 </body>
