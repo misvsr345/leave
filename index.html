@@ -4159,6 +4159,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
           <div class="quick-action-btn" id="adminQASlOverview" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
           <div class="quick-action-btn" id="adminQASlEntry" onclick="showAdminPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Stock Entry</div></div>
           <div class="quick-action-btn" id="adminQASlTransfer" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div></div>
+        <div class="quick-action-btn" id="adminQASlAdjust" onclick="slOpenAdjust()"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Stock Adjust</div><div class="quick-action-sub">Extra / Short tags after a sale</div></div>
         <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage</div></div>
           <div class="quick-action-btn" id="adminQASlAlerts" onclick="showAdminPage('stockalerts')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Stock Alerts</div></div>
           <div class="quick-action-btn" id="adminQASlCounter" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
@@ -4242,6 +4243,8 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
       <div class="card">
         <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Move a tagged item between Main Hub and any counter, or from one counter to another. Enter the Tag No to find it, then pick where it should go. To return an item to Main Hub, choose Main Hub as the destination.</p>
         <div class="form-row">
+          <label>Employee Name <span class="req">★</span></label>
+          <select id="stEmpSel" class="uniform-select" style="margin-bottom:10px;"><option value="">-- Select Employee --</option></select>
           <label>Tag No <span class="req">★</span></label>
           <div style="display:flex;gap:8px;">
             <input type="text" id="stTagInput" placeholder="e.g. BOM2154" style="flex:1 1 auto;min-width:0;" onkeydown="if(event.key==='Enter'){stFindTag();}">
@@ -15899,7 +15902,7 @@ function showAdminPage(page, opts) {
   if(page==='stocklevel-today') slPageEnter('today', slRenderToday);
   if(page==='stocklevel-failed') slPageEnter('failed', slRenderFailed);
   if(page==='stocklevel-print') { SL.printFilters = { entryType: '', counter: '', dateMode: 'all', dateFrom: '', dateTo: '' }; slPageEnter('print', slRenderPrintOptions); }
-  if(page==='stocktransfer') stLoadHistory();
+  if(page==='stocktransfer') { stLoadHistory(); adminEmpSelectFill_('stEmpSel'); }
   if(page==='stockentry') mountStockEntryForm('admin');
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
@@ -22967,7 +22970,8 @@ async function stDoTransfer(who) {
   try {
     // v-fix: 'by' is now set explicitly here (employee's own name when who==='emp'), instead of
     // relying on slPost's old always-admin default — see slPost's own fix note above it.
-    const byName = who === 'emp' ? (state.empName || 'Employee') : (state.adminName || 'Admin');
+    const byName = who === 'emp' ? (state.empName || 'Employee') : ((document.getElementById('stEmpSel') || {}).value || '');
+    if (!byName) { toast('Select the employee', 'error'); return; }
     const res = await slPost({ action: 'transferStock', tagNo: ST_FOUND[who].tagNo, toProductFrom: toMain ? 'Main' : 'Retail', toCounter: toMain ? '' : dest, by: byName });
     if (res && res.ok) {
       toast('✅ ' + res.tagNo + ' moved: ' + res.from + ' → ' + res.to, 'success');
@@ -23975,7 +23979,6 @@ async function slRenderManage(box) {
         <div class="form-row"><label>Tag / Product</label><input type="text" id="slMgQ" placeholder="e.g. BOM2154 or Chain" autocomplete="off" onkeydown="if(event.key==='Enter')slLoadManage()"></div>
       </div>
       <button class="btn-primary" style="width:100%;" onclick="slLoadManage()">🔍 Show Stock</button>
-      <button class="btn-sm" style="margin-top:10px;" onclick="slOpenAdjust()">⚖️ Stock Adjust</button>
       <div id="slMgBody" style="margin-top:12px;"></div>`;
     slLoadManage();
   } catch (e) { slError(box, null); }
@@ -24159,7 +24162,7 @@ async function slDeleteRow(i) {
 function slOpenAdjust() {
   slOpenModal(`<div class="modal-title">⚖️ Stock Adjust</div>
     <div class="form-row"><label>Type</label><select id="slF-adjMode"><option value="extra">Extra (physically here, system shows Sold)</option><option value="short">Short (not physically here, system shows In Stock)</option></select></div>
-    ${state.__loginKind === 'admin' ? '<button class="btn-sm" style="margin-bottom:8px;" onclick="slAdjAccess()">👥 Employee access</button>' : ''}
+    ${(state.__loginKind === 'admin' && frqIsMis_()) ? '<button class="btn-sm" style="margin-bottom:8px;" onclick="slAdjAccess()">👥 Employee access</button>' : ''}
     ${slField('adjTag', 'Tag No', '')}${slField('adjDate', 'Date', toYMD(new Date()), 'date')}${slField('adjNote', 'Note (optional)', '')}
     <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="slSaveAdjust()">Adjust</button>`);
 }
@@ -24381,7 +24384,23 @@ var SE_TUNCHS = ['750','916','999','585','375'];
 
 function seId(scope, name) { return 'se-' + scope + '-' + name; }
 function SE(scope, name) { return document.getElementById(seId(scope, name)); }
-function seCurrentEmpName(scope) { return scope === 'admin' ? (state.adminName || '') : (state.empName || ''); }
+function adminEmpSelectFill_(selId) {
+  const sel = document.getElementById(selId); if (!sel) return;
+  const fill = list => {
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">-- Select Employee --</option>' + (list || []).map(e => String(e.name || '').trim()).filter(Boolean).sort().map(n => '<option>' + escHtml(n) + '</option>').join('');
+    if (keep) sel.value = keep;
+  };
+  ensureDirectEmpCache_(fill).then(fill).catch(() => {});
+}
+function seCurrentEmpName(scope) {
+  if (scope === 'admin') { const el = document.getElementById(seId('admin', 'empSel')); return el ? el.value : ''; }
+  return state.empName || '';
+}
+function seShowEmp_(scope) {
+  if (scope === 'admin') { const d = SE(scope, 'empDisplay'); if (d) d.style.display = 'none'; adminEmpSelectFill_(seId(scope, 'empSel')); return; }
+  SE(scope, 'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
+}
 function seOptList(arr, other) {
   return '<option value="">-- Select --</option>' + (arr||[]).map(x => `<option>${escHtml(x)}</option>`).join('') +
     (other ? '<option value="__other">Other (type manually)</option>' : '');
@@ -24415,7 +24434,7 @@ function mountStockEntryForm(scope) {
   });
   SE(scope,'counter').addEventListener('change', () => { seRefreshAllDesigns(scope); seApplyDiamondCounterLockAll(scope); seRecheckAllTags(scope); });
   SE(scope,'date').value = toYMD(new Date());
-  SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
+  seShowEmp_(scope);
   SE(scope,'addItem').addEventListener('click', () => { const d = seAddItem(scope); d.scrollIntoView({block:'center', behavior:'smooth'}); });
   SE(scope,'saveBtn').addEventListener('click', () => seSave(scope));
   seAddItem(scope);
@@ -24475,6 +24494,7 @@ function seFormHtml(scope) {
         <div class="se-mb">
           <label>Employee Name</label>
           <div style="padding:11px 14px;background:var(--purple-bg,#F5EEFB);border:1.5px solid var(--gold,#B8860B);border-radius:10px;font-weight:700;color:var(--purple,#4A0E8F);font-size:15px;" id="${seId(scope,'empDisplay')}">👤 —</div>
+          ${scope === 'admin' ? `<select id="${seId(scope,'empSel')}" style="width:100%;padding:11px 14px;border:1.5px solid var(--gold,#B8860B);border-radius:10px;font-weight:700;"><option value="">-- Select Employee --</option></select>` : ''}
         </div>
         <div class="se-g2 se-mb">
           <div><label>Date ${frqStar('stock.date')}</label><input type="date" id="${seId(scope,'date')}"></div>
@@ -24909,7 +24929,7 @@ function seCollect(scope) {
     productFrom: seTogVal(SE(scope,'tglFrom')), counter: SE(scope,'counter').value
   };
   let hErr = '';
-  if (!header.enteredBy) hErr = 'Employee not identified — please log in again.';
+  if (!header.enteredBy) hErr = scope === 'admin' ? 'Select the employee.' : 'Employee not identified — please log in again.';
   else if (frqIsRequired('stock.date') && !header.entryDate) hErr = 'Select Date.';
   else if (frqIsRequired('stock.entryType') && !header.entryType) hErr = 'Select Stock Entry Type.';
   else if (frqIsRequired('stock.counter') && header.productFrom==='Retail' && !header.counter) hErr = 'Select Counter Name.';
@@ -25088,7 +25108,7 @@ async function seLoadData(scope) {
     SE(scope,'items').querySelectorAll('.se-item').forEach(b => seRefreshItemLists(scope, b));
     const cSel = SE(scope,'counter'); cSel.innerHTML = '<option value="">-- Select Counter --</option>' + st.counters.map(c=>`<option>${escHtml(c)}</option>`).join('');
   }
-  SE(scope,'empDisplay').textContent = '👤 ' + (seCurrentEmpName(scope) || 'Not logged in');
+  seShowEmp_(scope);
   try {
     const [d, m] = await Promise.all([
       _fetchWithTimeout(DSR_GAS_URL+'?action=getData', {}, 25000).then(r=>r.json()),
@@ -25142,6 +25162,7 @@ function renderGoldenAuraForm(who, force) {
   if (box.dataset.gaRendered === '1' && !force) return;
   box.dataset.gaRendered = '1';
   const empName = who === 'admin' ? state.adminName : state.empName;
+  if (who === 'admin') setTimeout(function () { adminEmpSelectFill_('gaEmpSel-admin'); }, 0);
   const stateOptions = INDIAN_STATES.map(s => `<option value="${s}">${s}</option>`).join('');
   const photoField = (id, label) => `<div class="form-row"><label>${label}</label><input type="file" id="${id}" accept="image/*" onchange="ncPhotoChanged('${id}')"><div id="${id}-fb" style="font-size:11px;color:var(--text3);margin-top:4px;"></div></div>`;
 
@@ -25201,7 +25222,7 @@ function renderGoldenAuraForm(who, force) {
 
     <div class="card">
       <div class="card-title">🏪 Office Purpose Only</div>
-      <div class="form-row"><label>Employee Name</label><input type="text" value="${empName || ''}" disabled style="background:var(--bg);opacity:0.8;"></div>
+      <div class="form-row"><label>Employee Name</label>${who === 'admin' ? `<select id="gaEmpSel-admin" class="uniform-select"><option value="">-- Select Employee --</option></select>` : `<input type="text" value="${empName || ''}" disabled style="background:var(--bg);opacity:0.8;">`}</div>
     </div>
 
     <div class="btn-row">
@@ -25233,6 +25254,7 @@ function gaClearForm(who) {
 
 async function submitGoldenAura(who) {
   const g = id => document.getElementById(id + '-' + who);
+  if (who === 'admin' && !((document.getElementById('gaEmpSel-admin') || {}).value)) { toast('Select the employee', 'error'); return; }
   // v-fix (mandatory formatting): same uppercase-at-source treatment as DSR/Loyalty.
   const custName = g('gaCustName').value.trim().toUpperCase();
   const mobile = g('gaMobile').value.trim();
@@ -25306,7 +25328,7 @@ async function submitGoldenAura(who) {
 
     const payload = {
       page: 'goldenAuraSubmitAPI',
-      empName: who === 'admin' ? state.adminName : state.empName,
+      empName: who === 'admin' ? ((document.getElementById('gaEmpSel-admin') || {}).value || '') : state.empName,
       empId: who === 'admin' ? '' : state.empId,
       enrollDate: g('gaEnrollDate').value, planType, planNo, amount, custName, mobile,
       coDoWoSo: g('gaCoDoWoSo').value, street: g('gaStreet').value, area: g('gaArea').value,
