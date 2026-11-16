@@ -16540,7 +16540,7 @@ async function pollNewEntryPopups() {
       if (!res || !res.ok || !res.rows || !res.rows.length) continue;
       let maxTs = since;
       res.rows.forEach(row => {
-        if (popupRowAllowed_(src.key, row.html)) showNewEntryPopup(row.html, src.key);
+        if (popupRowAllowed_(src.key, row.html)) { const _h = row.html, _k = src.key; _queueAutoPopup_(() => showNewEntryPopup(_h, _k)); }
         if (row.ts > maxTs) maxTs = row.ts;
       });
       _misPopupSetLastTs_(src.key, maxTs);
@@ -34304,10 +34304,11 @@ async function dpCrmBody_() {
 }
 async function dpCheck_(key) {
   const d = DP_REGISTRY_[key];
+  if (!_onHomePage_()) return;   // automatic popups only on the home page
   if (document.getElementById('dpModal')) return;
   let body;
   try { body = await d.load(); } catch (e) { return; } // nothing to show when the numbers cannot be loaded
-  if (document.getElementById('dpModal')) return;
+  if (document.getElementById('dpModal') || !_onHomePage_() || _anyModalOpen_()) return;
   if (body === null || body === undefined) { dpFpSet_(key, null); return; } // nothing to report
   const fp = dpHash_(String(body).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim());
   window.__dpFp_[key] = fp;
