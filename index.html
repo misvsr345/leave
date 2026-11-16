@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" id="vsrViewportMeta">
 <title>VSR Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- v-add (BRO: Loyalty Card + Golden Aura photo auto-processing —
      free/open-source only, no paid API):
@@ -278,6 +279,11 @@ html[data-theme="sapphire"] {
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* Login page keeps its original Spectral font; the rest of the portal uses Lexend */
+#loginPage, #loginPage * { font-family: 'Spectral', serif !important; }
+#loginPage .login-handwritten-tagline { font-family: 'Lucida Handwriting', 'Brush Script MT', 'Segoe Script', cursive !important; }
+#loginPage .vsr-connect-tag { font-family: 'Georgia', serif !important; }
 
 body {
   font-family: 'Lexend', sans-serif;
@@ -2786,7 +2792,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <div class="quick-actions-grid">
           <div class="quick-action-btn" id="empQAStockEntryModule" onclick="showEmpPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Entry Form</div><div class="quick-action-sub">Add counter stock</div></div>
           <div class="quick-action-btn" id="empQAStockTransferModule" onclick="showEmpPage('mystocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Transfer</div><div class="quick-action-sub">Move stock between counters</div></div>
-        <div class="quick-action-btn" id="empQAStockAdjust" style="display:none;" onclick="slOpenAdjust()"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Stock Adjust</div><div class="quick-action-sub">Extra / Short tags after a stock check</div></div>
+        <div class="quick-action-btn" id="empQAStockAdjust" style="display:none;" onclick="showEmpPage('stockadjust')"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Stock Adjust</div><div class="quick-action-sub">Extra / Short tags after a stock check</div></div>
         <div class="quick-action-btn" id="empQARdr" onclick="showEmpPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage</div><div class="quick-action-sub">Take a damaged item out of stock</div></div>
         </div>
       </div>
@@ -2804,6 +2810,11 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
          stClearTag/stFindTag/stDoTransfer/stLoadHistory functions (see stId() in
          the JS, "who" scope). Recent Transfers below only shows THIS employee's
          own transfers, not everyone's. ══════════════ -->
+    <div class="page-section" id="emp-stockadjust">
+      <div class="section-hdr"><span class="section-title2">⚖️ Stock Adjust</span></div>
+      <div id="saMount-emp"></div>
+    </div>
+
     <div class="page-section" id="emp-mystocktransfer">
       <div class="section-hdr"><span class="section-title2">🔄 Stock Transfer</span></div>
       <div class="card">
@@ -4159,7 +4170,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
           <div class="quick-action-btn" id="adminQASlOverview" onclick="showAdminPage('stocklevel-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div></div>
           <div class="quick-action-btn" id="adminQASlEntry" onclick="showAdminPage('stockentry')"><span class="quick-action-icon">➕</span><div class="quick-action-label">Stock Entry</div></div>
           <div class="quick-action-btn" id="adminQASlTransfer" onclick="showAdminPage('stocktransfer')"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Stock Transfer</div></div>
-        <div class="quick-action-btn" id="adminQASlAdjust" onclick="slOpenAdjust()"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Stock Adjust</div><div class="quick-action-sub">Extra / Short tags after a sale</div></div>
+        <div class="quick-action-btn" id="adminQASlAdjust" onclick="showAdminPage('stockadjust')"><span class="quick-action-icon">⚖️</span><div class="quick-action-label">Stock Adjust</div><div class="quick-action-sub">Extra / Short tags after a sale</div></div>
         <div class="quick-action-btn" id="adminQARdr" onclick="showAdminPage('rdr')"><span class="quick-action-icon">📤</span><div class="quick-action-label">Stock Out: Damage</div></div>
           <div class="quick-action-btn" id="adminQASlAlerts" onclick="showAdminPage('stockalerts')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Stock Alerts</div></div>
           <div class="quick-action-btn" id="adminQASlCounter" onclick="showAdminPage('stocklevel-counter')"><span class="quick-action-icon">🏷️</span><div class="quick-action-label">Counter-wise</div></div>
@@ -4232,6 +4243,11 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
          transfer cheyali... separate unte baguntundi" — a dedicated screen instead of transfers
          happening through the Stock Level ✏️ Manage/Edit screen. Find by Tag No, pick the
          destination, Transfer — backed by StockBackend.gs's transferStock_ / Transfer_Log. ══ -->
+    <div class="page-section" id="admin-stockadjust">
+      <div class="section-hdr"><span class="section-title2">⚖️ Stock Adjust</span></div>
+      <div id="saMount-admin"></div>
+    </div>
+
     <div class="page-section" id="admin-stocktransfer">
       <style>
         .st-loc{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:10px 12px;background:var(--purple-bg,#F5EEFB);border:1.5px solid var(--gold);border-radius:10px;margin:10px 0;}
@@ -7643,6 +7659,7 @@ async function adminLogin() {
         checkStockPopups_();
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
+        checkBlockedLeavesPopup_();
         checkLoyaltyPendingValidationPopup_();
         checkGoldenPendingPopup_();
         startAdminEventAlert_();
@@ -8654,6 +8671,7 @@ const SECTION_LABEL_MAP = {
   // Stock Level section too, so "← Back" from it returns to the Stock
   // Level hub (not all the way to the main Home page).
   stocktransfer: 'Stock Level',
+  stockadjust: 'Stock Level',
   stockalerts: 'Stock Level',
   // v-fix (BRO: "emp login lo stock level section button add chei, dani
   // lopala entry form and transfer add chei" — the employee's Stock Entry
@@ -8871,6 +8889,7 @@ function showEmpPage(page, opts) {
   if(page==='dsr-advorder') loadAdvanceOrderList('emp');
   if(page==='stockentry') mountStockEntryForm('emp');
   if(page==='mystocktransfer') stLoadHistory('emp');
+  if(page==='stockadjust') saMount('emp');
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
   if(page==='stock') loadStockDashboard('emp');
@@ -9803,6 +9822,100 @@ function leaveShowPreview(d) {
 // instant it's submitted) — this makes sure that real result is what
 // the employee sees, not a generic "submitted" message that looked the
 // same whether the leave actually went through or was auto-rejected.
+// ══════════════════════════════════════
+// BLOCKED LEAVES (MIS) — attempts stopped at submit (Casual rules, monthly limit).
+// MIS taps Allow once; the employee's next submit for the same dates goes through.
+// ══════════════════════════════════════
+function leaveBlockedMsg_(text) {
+  const old = document.getElementById('leaveBlockedMsgModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'leaveBlockedMsgModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:380px;"><div class="modal-title">🚫 Leave Not Submitted</div>'
+    + '<div style="font-size:13.5px;line-height:1.5;margin:8px 0 14px;">' + escHtml_(text) + '</div>'
+    + '<button class="btn-primary" style="width:100%;" onclick="document.getElementById(\'leaveBlockedMsgModal\').remove()">OK</button></div>';
+  document.body.appendChild(div);
+}
+function leaveWarnHtml_(l) {
+  const w = (l && Array.isArray(l.warn)) ? l.warn : [];
+  if (!w.length) return '';
+  return '<div style="background:#fdecea;border:1.5px solid #b3261e;border-radius:8px;padding:6px 10px;margin-top:6px;font-size:12px;color:#b3261e;font-weight:700;">'
+    + w.map(x => '🔴 ' + escHtml_(x)).join('<br>') + '</div>';
+}
+let BL_SEEN_ = '';
+async function blOpen_() {
+  const old = document.getElementById('blModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'blModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:560px;"><div class="modal-title">🚫 Blocked Leaves</div>'
+    + '<div style="font-size:12px;opacity:.75;margin-bottom:6px;">Allow lets the employee submit these dates again, one time. Resolved means the employee has submitted.</div>'
+    + '<div id="blBody" style="font-size:13px;text-align:center;padding:14px;">Loading...</div>'
+    + '<button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'blModal\').remove()">Close</button></div>';
+  document.body.appendChild(div);
+  blLoad_();
+}
+async function blLoad_() {
+  const body = document.getElementById('blBody'); if (!body) return;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'listBlockedLeavesAPI' }, pwrCaller_()));
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not load');
+    const items = res.items || [];
+    if (!items.length) { body.innerHTML = 'No blocked leaves. 👍'; return; }
+    const dr = i => escHtml_(i.start) + (i.end !== i.start ? ' → ' + escHtml_(i.end) : '');
+    const pend = items.filter(i => i.status === 'Pending');
+    const rest = items.filter(i => i.status !== 'Pending');
+    let h = '';
+    if (pend.length) {
+      h += dpTable_(['Employee', 'Leave', 'Why', ''], pend.map(i => [
+        '<b>' + escHtml_(i.name) + '</b><br><span style="opacity:.65;">' + escHtml_(i.empId) + (i.counter ? ' · ' + escHtml_(i.counter) : '') + '</span>',
+        escHtml_(i.type) + '<br>' + dr(i),
+        '<span style="color:#b3261e;">' + escHtml_(i.reason) + '</span>',
+        '<button class="btn-sm" style="background:#16a34a;color:#fff;margin-bottom:4px;" onclick="blAct_(' + i.row + ',\'allow\',this)">✓ Allow</button><br>'
+        + '<button class="btn-sm" style="background:#b3261e;color:#fff;" onclick="blAct_(' + i.row + ',\'decline\',this)">✗ Decline</button>']));
+    } else h += '<div style="padding:8px;">Nothing waiting. 👍</div>';
+    if (rest.length) {
+      h += '<div style="font-weight:700;margin:10px 0 2px;text-align:left;">History</div>' + dpTable_(['Employee', 'Leave', 'Status'], rest.slice(0, 30).map(i => [
+        escHtml_(i.name), escHtml_(i.type) + '<br>' + dr(i),
+        '<b>' + escHtml_(i.status) + '</b>' + (i.by ? '<br><span style="opacity:.65;">' + escHtml_(i.at) + '</span>' : '')]));
+    }
+    body.style.textAlign = 'left'; body.style.padding = '0'; body.innerHTML = h;
+    BL_SEEN_ = String(res.pendingCount || 0);
+  } catch (e) { body.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+}
+async function blAct_(row, act, btn) {
+  if (act === 'decline' && !confirm('Decline this request? The employee will be told to contact MIS.')) return;
+  btn.disabled = true;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'handleBlockedLeaveAPI', row: row, act: act }, pwrCaller_()));
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not update', 'error'); btn.disabled = false; return; }
+    toast(res.message || 'Done', 'success');
+    blLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); btn.disabled = false; }
+}
+// MIS popup — only when something new is waiting.
+function checkBlockedLeavesPopup_() {
+  if (state.__loginKind !== 'admin' || !mtIsMis_() || !navigator.onLine) return;
+  jsonpReliable(Object.assign({ page: 'listBlockedLeavesAPI' }, pwrCaller_())).then(res => {
+    if (!res || !res.ok || !res.pendingCount) return;
+    const sig = res.items.filter(i => i.status === 'Pending').map(i => i.row + ':' + i.time).join('|');
+    if (sig === BL_SEEN_) return;
+    BL_SEEN_ = sig;
+    _queueAutoPopup_(() => showBlockedLeavesPopup_(res.items.filter(i => i.status === 'Pending')));
+  }).catch(() => {});
+}
+function showBlockedLeavesPopup_(items) {
+  const old = document.getElementById('blPopupModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'blPopupModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:400px;"><div class="modal-title">🚫 Leaves Stopped</div>'
+    + dpTable_(['Employee', 'Leave', 'Why'], items.slice(0, 8).map(i => [escHtml_(i.name), escHtml_(i.type) + '<br>' + escHtml_(i.start) + (i.end !== i.start ? ' → ' + escHtml_(i.end) : ''), '<span style="color:#b3261e;">' + escHtml_(i.codes) + '</span>']))
+    + (items.length > 8 ? '<div style="font-size:11px;opacity:.7;">+ ' + (items.length - 8) + ' more</div>' : '')
+    + '<div style="display:flex;gap:8px;"><button class="btn-secondary" style="flex:1;" onclick="document.getElementById(\'blPopupModal\').remove();_drainAutoPopupQueue_();">Later</button>'
+    + '<button class="btn-primary" style="flex:1;" onclick="document.getElementById(\'blPopupModal\').remove();blOpen_();">Open</button></div></div>';
+  document.body.appendChild(div);
+}
+if (!window.__blPopupTimer) window.__blPopupTimer = setInterval(() => { try { checkBlockedLeavesPopup_(); } catch (e) {} }, 3 * 60 * 1000);
+if (!window.__smLeaveTimer) window.__smLeaveTimer = setInterval(() => { try { if (state.__loginKind === 'admin' && state.isStoreManager) checkPendingLeavePopup_(); } catch (e) {} }, 60 * 60 * 1000);
+
 function showLeaveResultPopup(res) {
   const status = (res.status || 'Pending').toString();
   const presets = {
@@ -10010,7 +10123,8 @@ async function confirmSubmitLeave() {
         showLeaveResultPopup(res); // immediate popup with the REAL outcome (Pending/Approved/Rejected/Absent), not a generic toast
         loadEmpData(); // background — refreshes My Leaves once data arrives
       } else {
-        toast(res.reason || 'Submission failed', 'error');
+        if (res && (res.blocked || res.message === 'Not allowed') && res.reason) leaveBlockedMsg_(res.reason);
+        else toast(res.reason || 'Submission failed', 'error');
         _reportSubmitError_('Leave Application', 'backend-reject', res.reason || 'Submission failed');
       }
     } catch(e) {
@@ -15903,6 +16017,7 @@ function showAdminPage(page, opts) {
   if(page==='stocklevel-failed') slPageEnter('failed', slRenderFailed);
   if(page==='stocklevel-print') { SL.printFilters = { entryType: '', counter: '', dateMode: 'all', dateFrom: '', dateTo: '' }; slPageEnter('print', slRenderPrintOptions); }
   if(page==='stocktransfer') { stLoadHistory(); adminEmpSelectFill_('stEmpSel'); }
+  if(page==='stockadjust') saMount('admin');
   if(page==='stockentry') mountStockEntryForm('admin');
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
@@ -16675,11 +16790,11 @@ function checkPendingLeavePopup_() {
       }
     }
     if (!pending.length) return;
-    const _n = pending.length;
-    _queueAutoPopup_(() => showPendingLeavePopup_(_n));
+    const _n = pending.length, _w = pending.filter(l => Array.isArray(l.warn) && l.warn.length).slice(0, 6);
+    _queueAutoPopup_(() => showPendingLeavePopup_(_n, _w));
   }).catch(() => { /* silent — background check, never block login */ });
 }
-function showPendingLeavePopup_(count) {
+function showPendingLeavePopup_(count, warned) {
   const existing = document.getElementById('pendingLeavePopupModal');
   if (existing) existing.remove();
   const div = document.createElement('div');
@@ -16688,6 +16803,7 @@ function showPendingLeavePopup_(count) {
   div.innerHTML = `<div class="modal-box" style="max-width:360px;">
     <div class="modal-title">⏳ Pending Leaves</div>
     ${dpTable_(['Item', 'Count'], [['Leave requests awaiting action', count]])}
+    ${(warned && warned.length) ? dpTable_(['Employee', 'Warning'], warned.map(l => [escHtml_(l.name) + '<br><span style="opacity:.65;">' + escHtml_(l.type) + '</span>', '<span style="color:#b3261e;font-weight:700;">' + l.warn.map(escHtml_).join('<br>') + '</span>'])) : ''}
     <div style="display:flex;gap:8px;">
       <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('pendingLeavePopupModal').remove()">Later</button>
       <button class="btn-primary" style="flex:1;" onclick="document.getElementById('pendingLeavePopupModal').remove();showAdminPage('pending')">⏳ View</button>
@@ -24159,24 +24275,165 @@ async function slDeleteRow(i) {
   } catch (e) { toast('Network error — not deleted', 'error'); }
 }
 // Stock Adjust (Admin, after a physical Stock Check) - no DSR is entered.
-function slOpenAdjust() {
-  slOpenModal(`<div class="modal-title">⚖️ Stock Adjust</div>
-    <div class="form-row"><label>Type</label><select id="slF-adjMode"><option value="extra">Extra (physically here, system shows Sold)</option><option value="short">Short (not physically here, system shows In Stock)</option></select></div>
-    ${(state.__loginKind === 'admin' && frqIsMis_()) ? '<button class="btn-sm" style="margin-bottom:8px;" onclick="slAdjAccess()">👥 Employee access</button>' : ''}
-    ${slField('adjTag', 'Tag No', '')}${slField('adjDate', 'Date', toYMD(new Date()), 'date')}${slField('adjNote', 'Note (optional)', '')}
-    <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="slSaveAdjust()">Adjust</button>`);
+// ══════════════════════════════════════
+// STOCK ADJUST PAGE (admin + employee with permission)
+// Flow: date → adjusted by → tag no (auto look-up) → details → type (auto, can be changed) → submit.
+// Tag in Sold = Excess (goes back to Stock). Tag in Stock = Short (leaves Stock, shown in Sold as Adjusted).
+// Tag in neither = Add New (all details typed in, saved as an Adjusted stock entry).
+// ══════════════════════════════════════
+const SA_ = { admin: { mode: '', found: null }, emp: { mode: '', found: null } };
+function saId_(scope, n) { return 'sa-' + scope + '-' + n; }
+function saEl_(scope, n) { return document.getElementById(saId_(scope, n)); }
+function saFlash_(msg, kind) {
+  const old = document.getElementById('saFlash'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'saFlash';
+  d.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;max-width:92vw;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 6px 22px rgba(0,0,0,.25);border:1.5px solid var(--gold,#B8860B);'
+    + (kind === 'err' ? 'background:#fdecea;color:#b3261e;' : kind === 'ok' ? 'background:#e8f5e9;color:#1b5e20;' : 'background:#fff8e1;color:#7a5200;');
+  d.textContent = msg; document.body.appendChild(d);
+  setTimeout(function () { try { d.remove(); } catch (e) {} }, 5000);
 }
-async function slSaveAdjust() {
-  const g = id => document.getElementById('slF-' + id).value.trim();
-  const mode = g('adjMode'), tag = g('adjTag');
-  if (!tag) { toast('Enter the Tag No', 'error'); return; }
-  if (!confirm((mode === 'extra' ? 'Move tag ' + tag + ' from Sold back into Stock?' : 'Remove tag ' + tag + ' from Stock (not physically available)?') + '\n\nNo DSR will be entered.')) return;
+function saCanAccess_() { return state.__loginKind === 'admin' && frqIsMis_(); }
+async function saMount(scope) {
+  const box = document.getElementById('saMount-' + scope); if (!box) return;
+  try { await slEnsureMeta(); } catch (e) {}
+  const counters = (SL.counters || []).concat([SL.mainHub || 'Main Hub']);
+  const cOpts = '<option value="">-- Select Counter --</option>' + counters.map(c => '<option>' + escHtml(c) + '</option>').join('');
+  const I = n => saId_(scope, n);
+  const fld = (n, label, extra) => '<div class="form-row" id="' + I(n + 'Row') + '"><label>' + label + '</label><input type="text" id="' + I(n) + '" ' + (extra || '') + '></div>';
+  box.innerHTML = '<div class="card">'
+    + (scope === 'admin' && saCanAccess_() ? '<button class="btn-sm" style="margin-bottom:10px;" onclick="slAdjAccess()">👥 Employee access</button>' : '')
+    + '<div class="form-2col"><div class="form-row"><label>Adjust Date</label><input type="date" id="' + I('date') + '" value="' + toYMD(new Date()) + '"></div>'
+    + '<div class="form-row"><label>Adjusted By</label>' + (scope === 'admin'
+        ? '<select id="' + I('by') + '" class="uniform-select"><option value="">-- Select Employee --</option></select>'
+        : '<input type="text" id="' + I('by') + '" value="' + escHtml(state.empName || '') + '" disabled style="background:var(--bg);opacity:.85;">') + '</div></div>'
+    + '<div class="form-row"><label>Tag No</label><div style="display:flex;gap:8px;">'
+    + '<input type="text" id="' + I('tag') + '" placeholder="e.g. BOM2154" autocomplete="off" style="flex:1 1 auto;min-width:0;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saLookup(\'' + scope + '\');}" onchange="saLookup(\'' + scope + '\')">'
+    + '<button class="btn-secondary" style="width:auto;flex:0 0 auto;padding:12px 16px;" onclick="saLookup(\'' + scope + '\')">🔍 Find</button>'
+    + '<button class="btn-secondary" style="width:auto;flex:0 0 auto;padding:12px 16px;" onclick="saAddNew(\'' + scope + '\')">➕ Add New</button></div></div>'
+    + '<div class="form-row"><label>Adjust Type</label><div style="display:flex;gap:14px;flex-wrap:wrap;font-weight:700;">'
+    + '<label><input type="radio" name="' + I('mode') + '" value="extra" onchange="saSetMode(\'' + scope + '\',\'extra\')"> Excess (tag is here, system shows Sold)</label>'
+    + '<label><input type="radio" name="' + I('mode') + '" value="short" onchange="saSetMode(\'' + scope + '\',\'short\')"> Short (tag is not here, system shows In Stock)</label>'
+    + '<label><input type="radio" name="' + I('mode') + '" value="new" onchange="saSetMode(\'' + scope + '\',\'new\')"> Add New (not in Stock or Sold)</label></div></div>'
+    + '<div id="' + I('info') + '" class="kd-note" style="display:none;"></div>'
+    + '<div id="' + I('details') + '" style="display:none;">'
+    + '<div class="card-title" style="margin:8px 0;">Tag Details</div>'
+    + '<div id="' + I('photoBox') + '" style="margin-bottom:8px;"></div>'
+    + '<div class="form-2col"><div class="form-row"><label>Product From</label><select id="' + I('from') + '" class="uniform-select" onchange="saFromChange(\'' + scope + '\')"><option value="Main">Main Hub</option><option value="Retail">Retail Counter</option></select></div>'
+    + '<div class="form-row" id="' + I('counterRow') + '" style="display:none;"><label>Counter</label><select id="' + I('counter') + '" class="uniform-select">' + cOpts + '</select></div></div>'
+    + '<div class="form-2col"><div class="form-row"><label>Type</label><select id="' + I('type') + '" class="uniform-select" onchange="saTypeChange(\'' + scope + '\')"><option>Gold</option><option>Diamond</option></select></div>'
+    + fld('name', 'Product Name') + '</div>'
+    + '<div class="form-2col">' + fld('design', 'Design / Item Name') + fld('tunch', 'Tunch') + '</div>'
+    + '<div class="form-2col">' + fld('weight', 'Weight (gm)', 'inputmode="decimal"') + fld('length', 'Length') + '</div>'
+    + '<div class="form-2col">' + fld('bangle', 'Bangle Size') + fld('ring', 'Ring Size') + '</div>'
+    + '<div id="' + I('dia') + '" style="display:none;"><div class="form-2col">' + fld('gross', 'Gross Wt (gm)', 'inputmode="decimal"') + fld('net', 'Net Wt (gm)', 'inputmode="decimal"') + '</div>'
+    + '<div class="form-2col">' + fld('carat', 'Carat') + fld('clarity', 'Clarity') + '</div><div class="form-2col">' + fld('color', 'Color') + fld('cert', 'Certificate No') + '</div></div>'
+    + '<div class="form-2col">' + fld('bill', 'Bill No') + '<div class="form-row" id="' + I('photoRow') + '"><label>Photo</label><input type="file" accept="image/*" id="' + I('photo') + '"></div></div>'
+    + '<div id="' + I('toRow') + '" class="form-row" style="display:none;"><label>Send back to</label><select id="' + I('to') + '" class="uniform-select">' + cOpts.replace('-- Select Counter --', SL.mainHub || 'Main Hub') + '</select></div>'
+    + '</div>'
+    + '<div class="form-row"><label>Note (optional)</label><input type="text" id="' + I('note') + '"></div>'
+    + '<button class="btn-primary" style="width:100%;margin-top:6px;" id="' + I('submit') + '" onclick="saSubmit(\'' + scope + '\')">Submit Adjust</button></div>';
+  SA_[scope] = { mode: '', found: null };
+  if (scope === 'admin') adminEmpSelectFill_(I('by'));
+}
+function saFields_() { return ['name', 'design', 'tunch', 'weight', 'length', 'bangle', 'ring', 'gross', 'net', 'carat', 'clarity', 'color', 'cert', 'bill']; }
+function saTypeChange(scope) { const d = saEl_(scope, 'dia'); if (d) d.style.display = saEl_(scope, 'type').value === 'Diamond' ? '' : 'none'; }
+function saFromChange(scope) { saEl_(scope, 'counterRow').style.display = saEl_(scope, 'from').value === 'Retail' ? '' : 'none'; }
+function saLock_(scope, locked) {
+  saFields_().forEach(n => { const e = saEl_(scope, n); if (e) { e.disabled = locked; e.style.opacity = locked ? '.85' : ''; } });
+  ['from', 'counter', 'type'].forEach(n => { const e = saEl_(scope, n); if (e) e.disabled = locked; });
+  saEl_(scope, 'photoRow').style.display = locked ? 'none' : '';
+}
+function saClear_(scope) {
+  saFields_().forEach(n => { saEl_(scope, n).value = ''; });
+  saEl_(scope, 'from').value = 'Main'; saEl_(scope, 'counter').value = ''; saEl_(scope, 'type').value = 'Gold'; saEl_(scope, 'photo').value = '';
+  saEl_(scope, 'photoBox').innerHTML = ''; saFromChange(scope); saTypeChange(scope);
+}
+function saFill_(scope, it) {
+  const set = (n, v) => { saEl_(scope, n).value = (v === undefined || v === null) ? '' : v; };
+  set('name', it.productName); set('design', it.design); set('tunch', it.tunch); set('weight', it.weight); set('length', it.length);
+  set('bangle', it.bangleSize); set('ring', it.ringSize); set('gross', it.gross); set('net', it.net); set('carat', it.carat);
+  set('clarity', it.clarity); set('color', it.color); set('cert', it.certNo); set('bill', it.billNo);
+  saEl_(scope, 'type').value = it.type === 'Diamond' ? 'Diamond' : 'Gold';
+  saEl_(scope, 'from').value = it.productFrom === 'Retail' ? 'Retail' : 'Main';
+  saFromChange(scope); saEl_(scope, 'counter').value = it.counter || ''; saTypeChange(scope);
+  saEl_(scope, 'photoBox').innerHTML = it.photo ? '<img src="' + escHtml(it.photo) + '" style="max-width:140px;max-height:140px;border-radius:10px;border:1.5px solid var(--gold,#B8860B);" onerror="this.style.display=\'none\'">' : '';
+}
+function saSetMode(scope, mode) {
+  SA_[scope].mode = mode;
+  const r = document.querySelector('input[name="' + saId_(scope, 'mode') + '"][value="' + mode + '"]'); if (r) r.checked = true;
+  saEl_(scope, 'details').style.display = '';
+  saLock_(scope, mode !== 'new');
+  saEl_(scope, 'toRow').style.display = mode === 'extra' ? '' : 'none';
+  const info = saEl_(scope, 'info'); info.style.display = '';
+  const f = SA_[scope].found;
+  info.textContent = mode === 'extra' ? 'Excess: the tag goes back from Sold into Stock. No DSR is entered.'
+    : mode === 'short' ? 'Short: the tag leaves Stock and shows in Sold as Adjusted. No DSR is entered.'
+    : 'Add New: fill all the details. The tag is added to Stock as an Adjusted entry.';
+  if (mode === 'new' && f && f.where !== 'none') info.textContent += ' Note: this tag already exists in ' + (f.where === 'stock' ? 'Stock' : 'Sold') + '.';
+}
+function saAddNew(scope) {
+  const tag = saEl_(scope, 'tag').value.trim();
+  if (!tag) { toast('Enter the Tag No first', 'error'); return; }
+  SA_[scope].found = { where: 'none' };
+  saClear_(scope); saSetMode(scope, 'new');
+}
+async function saLookup(scope) {
+  const tag = saEl_(scope, 'tag').value.trim().toUpperCase();
+  saEl_(scope, 'tag').value = tag;
+  if (!tag) return;
+  if (SA_[scope].busy === tag) return;
+  SA_[scope].busy = tag;
   try {
-    const res = await slPost({ action: 'stockAdjust', mode: mode, tagNo: tag, date: g('adjDate'), note: g('adjNote'), role: state.__loginKind === 'admin' ? 'ADMIN' : 'EMP', empId: state.empId });
-    if (res && res.ok) { toast('Stock adjusted', 'success'); document.getElementById('slModal').remove(); slLoadManage(); }
-    else toast((res && res.error) || 'Failed', 'error');
-  } catch (e) { toast('Network error — not saved', 'error'); }
+    const res = await slPost({ action: 'adjustLookup', tagNo: tag, role: scope === 'admin' ? 'ADMIN' : 'EMP', empId: state.empId });
+    if (!res || !res.ok) { saFlash_((res && res.error) || 'Could not look up the tag', 'err'); return; }
+    SA_[scope].found = res;
+    if (res.where === 'sold') {
+      saClear_(scope); saFill_(scope, res.item); saSetMode(scope, 'extra');
+      saEl_(scope, 'info').textContent = 'Found in Sold (DSR ' + (res.dsrId || '—') + ', ' + (res.soldDate || '—') + '). Excess: submit to move it back into Stock. No DSR is entered.';
+    } else if (res.where === 'stock') {
+      saClear_(scope); saFill_(scope, res.item); saSetMode(scope, 'short');
+      saEl_(scope, 'info').textContent = 'Found in Stock (' + (res.item.counter || 'Main Hub') + '). Short: submit to remove it from Stock. It will show in Sold as Adjusted. No DSR is entered.';
+    } else {
+      saClear_(scope); saSetMode(scope, 'new');
+      saFlash_('Tag ' + tag + ' is not in Stock or Sold. Fill all the details by hand.', 'warn');
+    }
+  } catch (e) { saFlash_('Network error — try again', 'err'); }
+  finally { SA_[scope].busy = ''; }
 }
+async function saSubmit(scope) {
+  const g = n => (saEl_(scope, n).value || '').trim();
+  const mode = SA_[scope].mode, tag = g('tag').toUpperCase(), by = g('by');
+  if (!tag) { toast('Enter the Tag No', 'error'); return; }
+  if (!mode) { toast('Find the tag first', 'error'); return; }
+  if (!by) { toast('Select the employee', 'error'); return; }
+  const payload = { action: 'stockAdjust', mode: mode, tagNo: tag, date: g('date'), note: g('note'), by: by,
+    role: scope === 'admin' ? 'ADMIN' : 'EMP', empId: state.empId };
+  if (mode === 'extra') payload.toCounter = (g('to') && g('to') !== (SL.mainHub || 'Main Hub')) ? g('to') : '';
+  if (mode === 'new') {
+    const isRetail = g('from') === 'Retail';
+    if (isRetail && !g('counter')) { toast('Select the counter', 'error'); return; }
+    if (!g('name')) { toast('Enter the Product Name', 'error'); return; }
+    let photo = '';
+    const pf = saEl_(scope, 'photo');
+    if (pf && pf.files && pf.files[0]) { try { photo = await _silentCompressForUpload(await fileToBase64(pf)); } catch (e) { photo = ''; } }
+    payload.item = { productFrom: g('from'), counter: g('counter'), type: g('type'), productName: g('name'), design: g('design'), tunch: g('tunch'),
+      weight: g('weight'), length: g('length'), bangleSize: g('bangle'), ringSize: g('ring'), gross: g('gross'), net: g('net'), carat: g('carat'),
+      clarity: g('clarity'), color: g('color'), certNo: g('cert'), billNo: g('bill'), photo: photo };
+  }
+  const label = mode === 'extra' ? 'Move tag ' + tag + ' from Sold back into Stock?' : mode === 'short' ? 'Remove tag ' + tag + ' from Stock (not physically available)?' : 'Add tag ' + tag + ' to Stock as a new Adjusted entry?';
+  if (!confirm(label + '\n\nNo DSR will be entered.')) return;
+  const btn = saEl_(scope, 'submit'); btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const res = await slPost(payload);
+    if (res && res.ok) {
+      saFlash_('✅ Stock adjusted', 'ok'); toast('Stock adjusted', 'success');
+      const keepBy = saEl_(scope, 'by').value, keepDate = g('date');
+      await saMount(scope); saEl_(scope, 'date').value = keepDate; if (scope === 'admin') { const s = saEl_(scope, 'by'); const t = setInterval(function () { if (s.options.length > 1) { s.value = keepBy; clearInterval(t); } }, 200); setTimeout(function () { clearInterval(t); }, 3000); }
+    } else toast((res && res.error) || 'Failed', 'error');
+  } catch (e) { toast('Network error — not saved', 'error'); }
+  btn.disabled = false; btn.textContent = 'Submit Adjust';
+}
+
 async function slAdjAccess() {
   slOpenModal('<div class="loading"><span class="spinner"></span>Loading...</div>');
   try {
@@ -32114,6 +32371,7 @@ function adminLeaveCardHTML(l) {
     <div class="leave-card-date">📅 ${dateStr} · ${leaveModeForDay_(l)} · ${leaveDayChip_(l)}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
     ${l.authorityName && isPending ? `<div style="background:#fff8e1;border:1.5px solid var(--gold);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:12px;"><b style="color:#92400e;">🔑 Authority: </b><b style="color:var(--text);">${l.authorityName}</b></div>` : ''}
+    ${isPending || l.status === 'MIS_Approved' ? leaveWarnHtml_(l) : ''}
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
     ${rejectionBlock}
     ${subStaffTag}
@@ -33067,6 +33325,7 @@ function secToolsRender_(page) {
   setTimeout(function () { const bn = window.__badgeN_ || {}; if (bn.dsrEditBadge_ !== undefined && typeof window.dsrEditBadge_ === 'function') { try { window.dsrEditBadge_(bn.dsrEditBadge_); } catch (e) {} } }, 100);
 }
 const LEAVE_TOOL_ITEMS_ = [
+  ['🚫 Blocked Leaves', 'blOpen_()'],
   ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'],
   ['🆔 Generate Missing Leave Ids', "ltRunTile_('genIds')"], ['🔧 Fix All Counters', "ltRunTile_('fixCounters')"], ['📧 Check Mail Quota', "ltRunTile_('quota')"]
 ];
