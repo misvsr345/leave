@@ -15339,6 +15339,18 @@ async function loadCustomer360(who) {
     ['DSR ID', 'Bill Date', 'Employee', 'Status', 'Items'],
     en => [en.dsrId || '—', en.billDate || '—', properCase(en.employeeName) || '—', `<b>${en.paymentStatus || '—'}</b>`, (en.items || []).map(it => properCase(it.productName || it.diamondProductName || it.silverItemName)).filter(Boolean).join(', ') || '—'],
     dsErr && !ds ? (ds === null && dsErr.indexOf('Search by') === 0 ? dsErr : ('Could not load this section right now. (' + dsErr + ')')) : null);
+  // Marketing entries (who entered, gift, visit status) — by mobile
+  let mkSec = null;
+  if (mobile && mkAllowed_('marketing')) {
+    try {
+      const mr = await mkeApi_({ action: 'mkr', mode: 'lookup', mobile, role: isAdminView ? (state.adminRole || 'MIS') : 'EMP', emp: who === 'emp' ? (state.empName || '') : '', by: who === 'emp' ? (state.empName || '') : (state.adminName || 'MIS') });
+      mkSec = (mr && mr.ok) ? { rows: mr.rows || [] } : { err: (mr && mr.error) || 'Failed' };
+    } catch (e) { mkSec = { err: e.message }; }
+  }
+  if (mkSec) html += section('Marketing', '📣', mkSec.rows || null,
+    ['Date', 'Customer', 'Mobile', 'Address', 'Entered by', 'Social media', 'Gift', 'Visit'],
+    x => [escHtml(x.time || '—'), escHtml(properCase(x.name) || '—'), escHtml(isAdminView ? x.mobile : c360MaskMobile_(x.mobile)), escHtml(x.address || '—'), escHtml(properCase(x.emp) || '—'), escHtml(mkrSocTxt_(x)), escHtml(x.gift || '—'), escHtml(x.visit || (x.gift === 'Yes' ? 'Pending' : '—'))],
+    mkSec.err ? ('Could not load this section right now. (' + mkSec.err + ')') : null);
   html += `</div>`;
   box.innerHTML = html;
 }
