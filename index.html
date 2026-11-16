@@ -32897,7 +32897,7 @@ const MT_GROUPS_ = [
     { id: 'dupRun', label: 'Duplicate Tags — remove repeats', desc: 'Removes same-employee repeat rows (a backup copy is made first)', ep: 'dsr', tool: 'dupRun', confirm: 'Remove the repeat rows now?\n\nA full backup copy of the DSR file is made first and every removed row is saved in the "Removed Duplicates" sheet.' },
     { id: 'fixTs', label: 'Fix blank Timestamps', desc: 'Fills blank Timestamp cells from the row\'s own Bill Date', ep: 'dsr', tool: 'fixTs', confirm: 'Fix blank Timestamp cells in the Main file?' },
     { id: 'dsrAlert', label: 'DSR alert to pending employees', desc: 'Mails employees who have not submitted DSR today', ep: 'wt', tool: 'dsrAlert', confirm: 'Send the DSR reminder mail to every employee whose DSR is still pending?' },
-    { id: 'dsrDaily', label: 'Resend daily DSR report', desc: 'Generates yesterday\'s DSR report and mails it', ep: 'wt', tool: 'dailyDsrReport', confirm: 'Generate yesterday\'s DSR report and mail it?' },
+    { id: 'dsrDaily', label: 'Resend daily DSR report', desc: 'Generates yesterday\'s DSR report and mails it', ep: 'wt', tool: 'dailyDsrReport', confirm: 'Generate yesterday\'s DSR report and mail it?' }
   ] },
   { id: 'kpi', icon: '📈', title: 'KPI / Performer / Walk-in', tools: [
     { id: 'kpiEmp', label: 'KPI mail to one employee', desc: 'Sends one employee\'s KPI', ep: 'wt', tool: 'kpiEmployee', custom: 'mtKpiEmp_' },
@@ -32906,17 +32906,10 @@ const MT_GROUPS_ = [
     { id: 'walkDup', label: 'Walk-in duplicate check', desc: 'Highlights duplicates / odd entries in the Walkintrack sheet', ep: 'wt', tool: 'walkinDup' },
     { id: 'perfPrev', label: 'Performer of the Month — preview', desc: 'Shows the announcement without sending', ep: 'wt', tool: 'perfPreview' },
     { id: 'perfAuto', label: 'Performer auto mail', desc: 'Monthly mail on / off', ep: 'wt', custom: 'mtToggle_', on: 'perfAutoOn', off: 'perfAutoOff', stat: 'perfAutoStatus', re: 'Status:\\s*ON' },
-    { id: 'perfSend', label: 'Performer of the Month — resend mails', desc: '', ep: 'wt', tool: 'perfResend', confirm: 'Send the Performer of the Month mails again?' },
+    { id: 'perfSend', label: 'Performer of the Month — resend mails', desc: '', ep: 'wt', tool: 'perfResend', confirm: 'Send the Performer of the Month mails again?' }
   ] },
   { id: 'loy', icon: '💳', title: 'Loyalty', tools: [
-    { id: 'loyApprove', label: 'Approve cards (row + quantity, KYC check)', desc: '', custom: 'mtApprove_' },
-    { id: 'loyPay', label: 'Pay ALL pending (all / one employee)', desc: '', custom: 'mtPay_' },
-    { id: 'loySummary', label: 'Summary (and mail to selected)', desc: '', custom: 'mtSummary_' },
-    { id: 'loyTimeline', label: 'Employee card timeline', desc: 'Shows the timeline and mails it', custom: 'mtTimeline_' },
-    { id: 'loyMonthly', label: 'Send monthly report now', desc: '', ep: 'loy', tool: 'monthlyReport', confirm: 'Send the monthly loyalty report to MIS now?' },
-    { id: 'loyKyc', label: 'KYC report by date range', desc: '', ep: 'loy', tool: 'kycRange', fields: [{ id: 'from', label: 'From', type: 'date', req: 1 }, { id: 'to', label: 'To', type: 'date', req: 1 }], confirm: 'Send the KYC report for this period by mail?' },
-    { id: 'loyBlank', label: 'Mark blank-status cards as Pending', desc: 'From a date', ep: 'loy', tool: 'markBlank', fields: [{ id: 'date', label: 'From date (dd/mm/yyyy)', req: 1 }], confirm: 'Every card with a blank Validation Status on or after this date will be set to Pending. Continue?' },
-    { id: 'loySweep', label: 'Run Auto-Pending check now', desc: '', ep: 'loy', tool: 'sweep' }
+    { id: 'loyMonthly', label: 'Send monthly report now', desc: '', ep: 'loy', tool: 'monthlyReport', confirm: 'Send the monthly loyalty report to MIS now?' }
   ] },
   { id: 'leads', icon: '📞', title: 'Leads / CRM', tools: [
     { id: 'ldDispatch', label: 'Dispatch — select employees', desc: '', custom: 'mtDispatch_' },
@@ -32924,40 +32917,14 @@ const MT_GROUPS_ = [
     { id: 'ldVoid', label: 'Void dispatch (absent employee)', desc: '', custom: 'mtVoid_' },
     { id: 'ldResend', label: 'Re-send same leads', desc: '', custom: 'mtResendLeads_' },
     { id: 'ldCursor', label: 'Reset dispatch cursor', desc: 'Next dispatch starts from the top', ep: 'fb', tool: 'resetCursor', confirm: 'Reset the dispatch cursor to the top?' },
-    { id: 'crmDaily', label: 'CRM report — today', desc: '', ep: 'fb', tool: 'crmDaily', confirm: 'Send today\'s CRM report by mail?' },
-    { id: 'crmMonthly', label: 'CRM report — last month', desc: '', ep: 'fb', tool: 'crmMonthly', confirm: 'Send last month\'s CRM report by mail?' },
-    { id: 'crmRange', label: 'CRM report — date range', desc: '', ep: 'fb', tool: 'crmRange', fields: [{ id: 'from', label: 'From', type: 'date', req: 1 }, { id: 'to', label: 'To', type: 'date', req: 1 }], confirm: 'Generate and mail this CRM report?' },
-    { id: 'crmEvent', label: 'Event alert (birthdays / anniversaries)', desc: '', ep: 'fb', tool: 'eventAlert', confirm: 'Send the event alert mails now?' },
     { id: 'crmGolden', label: 'Golden Aura due report', desc: '', ep: 'fb', tool: 'goldenAura', confirm: 'Send the Golden Aura due report by mail?' },
-    { id: 'crmComp', label: 'CRM compliance till date', desc: '', ep: 'fb', tool: 'compliance', confirm: 'Send the CRM compliance report by mail?' },
-    { id: 'ldSync', label: 'Sync customer data → Clean Leads', desc: '', ep: 'fb', tool: 'syncClean', confirm: 'Sync customer data into Clean Leads now?' },
-    { id: 'ldDup', label: 'Remove duplicates in Clean Leads', desc: '', ep: 'fb', tool: 'cleanDup', confirm: 'Remove duplicate rows from Clean Leads?' },
-    { id: 'ldConv', label: 'Convert old Dispatch Log phones', desc: '', ep: 'fb', tool: 'convertLog', confirm: 'Convert the old Dispatch Log entries to phone numbers?' },
-    { id: 'ldWa', label: 'WhatsApp notify employees', desc: '', custom: 'mtWa_' },
-    { id: 'ldContacts', label: 'Sync Clean Leads → Google Contacts', desc: '', ep: 'fb', tool: 'contactsSync', confirm: 'Add Clean Leads to Google Contacts now? (up to the per-run limit set in System Limits)' },
-    { id: 'ldContacts5', label: 'Test contacts sync (5 only)', desc: '', ep: 'fb', tool: 'contactsTest5' },
-    { id: 'ldContactsReset', label: 'Reset contacts sync log', desc: '', ep: 'fb', tool: 'contactsReset', confirm: 'Reset the contacts sync log? The next sync will treat all leads as new.' },
-    { id: 'ldLoy', label: 'Sync Loyalty Card No now', desc: '', ep: 'fb', tool: 'loyaltySync' },
-    { id: 'ldLog', label: 'Create / check Calling Log sheet', desc: '', ep: 'fb', tool: 'callingLog' },
-    { id: 'ldBackfill', label: 'Backfill today\'s pending leads', desc: '', ep: 'fb', tool: 'backfill', confirm: 'Backfill today\'s pending leads?' },
-    { id: 'ldLeaveAlert', label: 'Send Leave + Leads alert now', desc: '', ep: 'fb', tool: 'leaveLeadsAlert', confirm: 'Send the Leave + Leads alert mail now?' }
+    { id: 'ldDup', label: 'Remove duplicates in Clean Leads', desc: '', ep: 'fb', tool: 'cleanDup', confirm: 'Remove duplicate rows from Clean Leads?' }
   ] },
   { id: 'stock', icon: '📦', title: 'Stock', tools: [
     { id: 'stAdd', label: 'Add counter', desc: '', ep: 'stk', tool: 'addCounter', fields: [{ id: 'name', label: 'New counter name (e.g. Pearl Counter)', req: 1 }], confirm: 'Add this counter?' },
-    { id: 'stRem', label: 'Remove counter', desc: '', ep: 'stk', tool: 'removeCounter', custom: 'mtRemoveCounter_' },
-    { id: 'stTabs', label: 'Sync Target Qty tabs', desc: 'Per counter, from the Products sheet', ep: 'stk', tool: 'syncTabs', confirm: 'Sync the Target Qty tabs now?' },
-    { id: 'stSum', label: 'Rebuild Summary sheet', desc: '', ep: 'stk', tool: 'rebuildSummary' },
-    { id: 'stDash', label: 'Rebuild Dashboard sheet', desc: '', ep: 'stk', tool: 'dashboard' },
-    { id: 'stDrift', label: 'Sold-vs-Stock drift fix now', desc: '', ep: 'stk', tool: 'drift', confirm: 'Run the Sold-vs-Stock drift fix now?' },
-    { id: 'stMis', label: 'Daily stock mismatch check now', desc: '', ep: 'stk', tool: 'mismatch' }
+    { id: 'stRem', label: 'Remove counter', desc: '', ep: 'stk', tool: 'removeCounter', custom: 'mtRemoveCounter_' }
   ] },
   { id: 'mkt', icon: '📣', title: 'Marketing', tools: [
-    { id: 'mkDry', label: 'Test sync (nothing written)', desc: '', ep: 'mkt', tool: 'dryRun' },
-    { id: 'mkSync', label: 'Sync now to Feedback', desc: 'New Marketing numbers are added to the Feedback file', ep: 'mkt', tool: 'syncNow', confirm: 'Add new Marketing numbers to the Feedback file now?' },
-    { id: 'mkDedupe', label: 'Delete duplicates in Marketing', desc: 'Oldest entry of each number is kept', ep: 'mkt', tool: 'dedupe', confirm: 'Delete duplicate numbers in Marketing? (a backup is kept in the log tab)' },
-    { id: 'mkDedupeFb', label: 'Delete duplicates in Feedback', desc: '', ep: 'mkt', tool: 'dedupeFeedback', confirm: 'Delete duplicate numbers in Feedback? (a backup is kept in the log tab)' },
-    { id: 'mkAuto', label: 'Nightly auto sync', desc: 'Nightly sync on / off', ep: 'mkt', custom: 'mtToggle_', on: 'autoOn', off: 'autoOff', stat: 'autoStatus', re: 'Nightly sync:\\s*ON' },
-    { id: 'mkSumm', label: 'Sheet summary (rows / unique numbers)', desc: '', ep: 'mkt', tool: 'summary' }
   ] }
 ];
 let MT_URLS_ = null;
@@ -33058,7 +33025,7 @@ function mtMeta_(gid, label) {
   return ['🛠️', 'Other Tools'];
 }
 // ---- Tools & Settings block at the bottom of each section page (MIS only) ----
-const SEC_TOOLS_ = { 'golden-aura': 1, dsr: 1, kpi: 1, loyalty: 1, leads: 1, stocklevel: 1, walkins: 1, marketing: 1 };
+const SEC_TOOLS_ = { 'golden-aura': 1, dsr: 1, kpi: 1, loyalty: 1, leads: 1, stocklevel: 1, walkins: 1 };
 const SEC_TITLE_ = { 'golden-aura': '🥇 Golden Aura', dsr: '🧾 DSR', kpi: '📊 KPI', loyalty: '💳 Loyalty Card', leads: '👥 Leads / CRM', stocklevel: '📦 Stock Level', walkins: '🚶 Walk-in Track', marketing: '📣 Marketing' };
 const SEC_OWN_ = {
   dsr: [['🥇', 'DSR Types', 'Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️', 'DSR Edit Requests', 'Edit requests and approvals', 'dsrEditCtlOpen_()', 'decBadge']],
@@ -33078,7 +33045,7 @@ function secToolsRender_(page) {
   setTimeout(function () { const bn = window.__badgeN_ || {}; if (bn.dsrEditBadge_ !== undefined && typeof window.dsrEditBadge_ === 'function') { try { window.dsrEditBadge_(bn.dsrEditBadge_); } catch (e) {} } }, 100);
 }
 const LEAVE_TOOL_ITEMS_ = [
-  ['📩 Resend Leave Mail', 'ltResendOpen_()'], ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'],
+  ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'],
   ['🆔 Generate Missing Leave Ids', "ltRunTile_('genIds')"], ['🔧 Fix All Counters', "ltRunTile_('fixCounters')"], ['📧 Check Mail Quota', "ltRunTile_('quota')"]
 ];
 function mtTile_(icon, label, sub, action, badgeId) {
@@ -33109,8 +33076,6 @@ function mtPageRender_(view, arg) {
       + big('Settings')
       + mtTile_('⭐', 'Required Fields', 'All forms', 'frqOpenModal()')
       + mtTile_('📢', 'Send Alert', 'Message to employees', "smSettings_('alert')")
-      + mtTile_('⚙️', 'System Limits', 'Mail block days, alert limits, sync limits, back-date days', 'mtLimitsOpen_()')
-      + mtTile_('🔌', 'Tool Connections', 'Links of the Loyalty, Walk-in and Marketing scripts', 'mtConnOpen_()')
       + mtTile_('🔔', 'Daily Popups', 'Times on / off', 'dpCfgOpen_()');
   } else if (view === 'password') {
     title = '🔑 Password'; note = '';
@@ -33120,7 +33085,6 @@ function mtPageRender_(view, arg) {
   } else if (view === 'leavetools') {
     title = '🧰 Leave Tools'; note = '';
     tiles = LEAVE_TOOL_ITEMS_.map(i => { const x = String(i[0]).match(/^(\S+)\s+(.*)$/); return mtTile_(x[1] ? x[1] : '🧰', x[2] || i[0], '', i[1]); }).join('');
-    tiles += mtTile_('📧', 'Mail Issues', 'Missing or bouncing e-mails', 'mailIssOpen_()', 'mailIssBadge');
     setTimeout(function () { const bn = window.__badgeN_ || {}; try { if (bn.mailIssBadge_ !== undefined && typeof window.mailIssBadge_ === 'function') window.mailIssBadge_(bn.mailIssBadge_); } catch (e) {} }, 100);
   }
   window.__mtView = { view: view, arg: arg };
