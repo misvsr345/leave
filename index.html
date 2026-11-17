@@ -6527,7 +6527,7 @@ function _drainAutoPopupQueue_() {
 
 // ── Minimize + tray ──
 function _addMinimizeBtn_(el) {
-  if (!el || el.querySelector('.vsr-min-btn')) return;
+  if (!el || el.id === 'stockDutyPopupModal' || el.querySelector('.vsr-min-btn')) return;
   const box = el.firstElementChild; if (!box) return;
   const bar = document.createElement('div');
   bar.style.cssText = 'text-align:right;margin:0 0 6px;';
@@ -10896,54 +10896,55 @@ function showDutyAssignmentPopup_(slot, duty, mode, done) {
 // ── Stock Check List: duty assignment popup (everyone) + variance popup (all admins, once) ────────────────
 function checkStockPopups_() { try { checkStockDutyPopup_(); checkStockVariancePopup_(); } catch (e) {} }
 function _stockMeaningful_(v) { const t = String(v || '').trim(); return !!t && t !== '-' && t !== '—' && !/^n\/?a$/i.test(t); }
-// Opening 10:00 AM - 2:00 PM, Closing 8:00 PM - 10:00 PM; repeats hourly until that duty's checklist is submitted.
+// Stock Check List reminders. Opening: 10:00 AM - 3:00 PM, Closing: 8:00 PM - midnight, only until it is submitted.
+// Staff of a section = names on the DUTY sheet (Opening + Closing merged). The person on duty today is asked every 10 minutes
+// (on any page); the other staff of that section every 30 minutes (Home page only).
+function stockWindowSlot_() {
+  const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
+  if (m >= 600 && m < 900) return 'opening';
+  if (m >= 1200 && m < 1440) return 'closing';
+  return '';
+}
+function _stockNorm_(n) { return String(n || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function _forcePopup_(fn) {
+  if (_anyModalOpen_()) { setTimeout(() => _forcePopup_(fn), 60000); return; }
+  _runAutoPopup_(fn, false);
+}
 function checkStockDutyPopup_() {
-  const who = dutyPopupWho_();
-  if (!who || !navigator.onLine) return;
-  const sm = dutySlotMode_();
-  if (!sm) return;
-  const slot = sm.slot, mode = sm.mode;
-  const key = 'stockDutyPopupLastShown_' + who + '_' + slot + '_' + mode + '_' + todayYMD();
-  let last = 0;
-  try { last = parseInt(localStorage.getItem(key) || '0', 10); } catch (e) {}
-  if (last && mode === 'chart') return; // the duty chart is information only, once a day
-  if (last && (Date.now() - last) < 14 * 60 * 1000) return; // never closer than 15 minutes
+  if (state.__loginKind !== 'emp' || !state.empName || !navigator.onLine) return;
+  const slot = stockWindowSlot_(); if (!slot) return;
+  const who = _stockNorm_(state.empName);
   jsonpReliable({ page: 'stockDashboardJSON' }).then(res => {
-    if (!res || !res.ok) return;
-    const list = [];
+    if (!res || !res.ok || !res.state || !res.staff) return;
     ['Retail', 'Wholesale'].forEach(section => {
-      const arr = ((res.duty || {})[section] || []).filter(d => (String(d.shift || '').toLowerCase().indexOf('clos') > -1 ? 'closing' : 'opening') === slot);
-      if (!arr.length) return;
-      let name = '', done = false;
-      arr.forEach(d => {
-        const st = String(d.today || '');
-        if (st.indexOf('✅') > -1) done = true;
-        const sg = String(d.suggestedToday || '').trim();
-        if (!name && _stockMeaningful_(sg) && !/waiting/i.test(sg)) name = d.employee;
-      });
-      if (name && (mode === 'chart' || !done)) list.push({ section, name, done });
+      if (!(res.staff[section] || []).some(n => _stockNorm_(n) === who)) return;
+      const x = (res.state[section] || {})[slot];
+      if (!x || !x.has || x.done) return;
+      const isDuty = !!x.assigned && _stockNorm_(x.assigned) === who;
+      const key = 'stockNag_' + who + '_' + section + '_' + slot + '_' + todayYMD();
+      let last = 0; try { last = parseInt(localStorage.getItem(key) || '0', 10); } catch (e) {}
+      const gap = (isDuty ? 10 : 30) * 60 * 1000 - 60000;
+      if (last && Date.now() - last < gap) return;
+      try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
+      const fn = () => showStockDutyPopup_(slot, section, x.assigned, isDuty);
+      if (isDuty) _forcePopup_(fn); else _queueAutoPopup_(fn);
     });
-    if (!list.length) return;
-    if (mode === 'remind' && last) {
-      // the person on duty is reminded every 15 minutes, everyone else every 30 minutes
-      const isDuty = list.some(x => String(x.name || '').trim().toLowerCase() === who);
-      if (Date.now() - last < (isDuty ? 15 : 30) * 60 * 1000 - 30000) return;
-    }
-    _queueAutoPopup_(() => showStockDutyPopup_(slot, list, mode));
-    try { localStorage.setItem(key, String(Date.now())); } catch (e) {}
   }).catch(() => {});
 }
-function showStockDutyPopup_(slot, pending, mode) {
+function showStockDutyPopup_(slot, section, assigned, isDuty) {
   const old = document.getElementById('stockDutyPopupModal'); if (old) old.remove();
-  const closing = slot === 'closing', chart = mode === 'chart';
+  const title = section + ' ' + (slot === 'closing' ? 'Closing' : 'Opening');
   const div = document.createElement('div');
   div.id = 'stockDutyPopupModal'; div.className = 'modal-overlay show';
+  const msg = isDuty
+    ? 'You are on duty for the <b>' + escHtml(title) + '</b> Stock Check List. Why is it not done yet? Please submit it now.'
+    : 'The <b>' + escHtml(title) + '</b> Stock Check List is not entered yet.' + (assigned ? ' On duty today: <b>' + escHtml(properCase(assigned)) + '</b>.' : '');
   div.innerHTML = `<div class="modal-box" style="max-width:380px;">
-    <div class="modal-title">${closing ? '🌙 Stock Check List — Closing Duty' : '🌅 Stock Check List — Opening Duty'}${chart ? ' Chart' : ''}</div>
-    ${dpTable_(['Section', 'Employee', 'Status'], pending.map(p => [escHtml(p.section), escHtml(properCase(p.name)), p.done ? 'Submitted' : 'Please Submit']))}
-    ${chart ? '' : '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">This reminder repeats every 15-30 minutes until the checklist is submitted.</div>'}
+    <div class="modal-title">${slot === 'closing' ? '🌙' : '🌅'} Stock Check List — ${escHtml(title)}</div>
+    ${dpTable_(['Employee', 'Status'], [[escHtml(assigned ? properCase(assigned) : '—'), 'Not submitted']])}
+    <div style="font-size:13px;margin:8px 0 10px;">${msg}</div>
     <button class="btn-primary" style="width:100%;margin-bottom:6px;" onclick="stockPopupGo_('stockDutyPopupModal','stock')">📋 Go to Stock Check List</button>
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('stockDutyPopupModal').remove();_drainAutoPopupQueue_();">Later</button>
+    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('stockDutyPopupModal').remove();_drainAutoPopupQueue_();">OK</button>
   </div>`;
   document.body.appendChild(div);
 }
