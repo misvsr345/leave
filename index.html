@@ -1922,6 +1922,15 @@ button, .btn-primary, .btn-secondary, .btn-sm, label, th, summary, h1, h2, h3, h
 }
 input, textarea, select, option, td, pre, code { text-transform: none; }
 </style>
+<style id="vsrCompactButtons">
+/* Smaller default buttons; buttons sitting beside an input in a flex row stay compact instead of stretching */
+.btn-primary { padding: 10px 14px; font-size: 13.5px; letter-spacing: 0.2px; }
+.btn-secondary { padding: 9px 14px; font-size: 13px; letter-spacing: 0.1px; }
+div[style*="display:flex"] > .btn-secondary:not([style*="flex"]):not([style*="width"]),
+div[style*="display: flex"] > .btn-secondary:not([style*="flex"]):not([style*="width"]),
+div[style*="display:flex"] > .btn-primary:not([style*="flex"]):not([style*="width"]),
+div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="width"]) { width: auto; flex: 0 0 auto; padding: 9px 14px; }
+</style>
 </head>
 <body>
 
@@ -4414,7 +4423,16 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
     </div>
 
     <div class="page-section" id="admin-walkins">
-      <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span>
+      <div class="section-hdr"><span class="section-title2">🚶 Walk-ins</span></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" id="adminQAWalkinToday" onclick="wkOpen_('today')"><span class="quick-action-icon">📍</span><div class="quick-action-label">Today</div><div class="quick-action-sub">Today's walk-ins — employee wise</div></div>
+        <div class="quick-action-btn" id="adminQAWalkinMonth" onclick="wkOpen_('month')"><span class="quick-action-icon">📅</span><div class="quick-action-label">Running Month</div><div class="quick-action-sub">This month so far</div></div>
+        <div class="quick-action-btn" id="adminQAWalkinCustom" onclick="wkOpen_('custom')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">Custom Date</div><div class="quick-action-sub">Pick any date range</div></div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-walkins-report">
+      <div class="section-hdr"><span class="section-title2">🚶 Walk-ins — Report</span>
         <button class="btn-sm btn-view" onclick="refreshWalkinTrackTable('admin')">🔄 Refresh</button>
       </div>
       <div id="walkin-admin-mount"></div>
@@ -8689,6 +8707,7 @@ const SECTION_LABEL_MAP = {
   // Stock Level section too, so "← Back" from it returns to the Stock
   // Level hub (not all the way to the main Home page).
   stocktransfer: 'Stock Level',
+  'walkins-report': 'Walk-in Track',
   stockadjust: 'Stock Level',
   stockalerts: 'Stock Level',
   // v-fix (BRO: "emp login lo stock level section button add chei, dani
@@ -8713,6 +8732,7 @@ const SECTION_DASHBOARD_PAGE = {
   'Golden Aura':    { emp: 'golden-aura', admin: 'golden-aura' },
   'Stock Check List': { emp: 'stock', admin: 'stock' },
   'Stock Level':    { emp: 'stocklevel', admin: 'stocklevel' },
+  'Walk-in Track':  { emp: 'walkins', admin: 'walkins' },
   Leads:            { emp: 'leads',   admin: 'leads' }
 };
 function getSectionDashboardPage(who, page) {
@@ -8868,7 +8888,7 @@ function showEmpPage(page, opts) {
   // of the real screen width — leaving a small squeezed table with a
   // large blank gap to its right. Now widened on every page that can
   // render a .kpi-fit-wrap table.
-  const WIDE_TABLE_PAGES = ['kpi', 'kpi-tilldate', 'kpi-monthly', 'kpi-compare', 'walkins'];
+  const WIDE_TABLE_PAGES = ['kpi', 'kpi-tilldate', 'kpi-monthly', 'kpi-compare', 'walkins', 'walkins-report'];
   document.querySelector('#empApp .page-content').classList.toggle('page-content-wide', WIDE_TABLE_PAGES.indexOf(page) > -1);
   document.querySelectorAll('#empApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('emp-' + page);
@@ -16137,7 +16157,7 @@ function showAdminPage(page, opts) {
   // kept the container capped at 900px there, so the fitted table
   // shrank to fit that narrow box with empty space beside it instead
   // of using the real screen width. See matching fix in showEmpPage.
-  const WIDE_TABLE_PAGES = ['kpi', 'kpi-tilldate', 'kpi-monthly', 'kpi-compare', 'walkins'];
+  const WIDE_TABLE_PAGES = ['kpi', 'kpi-tilldate', 'kpi-monthly', 'kpi-compare', 'walkins', 'walkins-report'];
   document.querySelector('#adminApp .page-content').classList.toggle('page-content-wide', WIDE_TABLE_PAGES.indexOf(page) > -1);
   document.querySelectorAll('#adminApp .page-section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('admin-' + page);
@@ -16191,7 +16211,7 @@ function showAdminPage(page, opts) {
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
   if(page==='stock-wholesale') loadStockDetail('admin','Wholesale','today');
   if(page==='stock-report') loadStockReport('admin');
-  if(page==='walkins') initWalkinTrackPage('admin');
+  if(page==='walkins-report') initWalkinTrackPage('admin');
   if(page==='stock-variance') loadStockVarianceLog('admin');
   if(page==='stock-changelog') loadStockChangeLog('admin');
   if(page==='loyalty-stats') loadLoyaltyAdminStats();
@@ -28492,6 +28512,18 @@ function stockReportThisMonth(who) {
 // Entry point for the Walk-in Track page — mounts the Today / Running
 // Month / Custom Date bar once (Running Month is the default, matching
 // the page's original "all rows" behaviour for the current month).
+
+// Walk-ins hub tile -> report page with the chosen date scope.
+function wkOpen_(mode) {
+  showAdminPage('walkins-report');
+  setTimeout(function () {
+    try {
+      const bar = document.getElementById('walkin-admin-bar'); if (!bar) return;
+      const btn = Array.from(bar.querySelectorAll('.filter-btn')).find(b => (b.getAttribute('onclick') || '').indexOf("'" + mode + "'") > -1);
+      if (btn) btn.click();
+    } catch (e) {}
+  }, 60);
+}
 function initWalkinTrackPage(who) {
   const scopeId = 'walkin-' + who;
   if (!__dateScopes[scopeId]) {
