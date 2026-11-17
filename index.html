@@ -1922,6 +1922,14 @@ button, .btn-primary, .btn-secondary, .btn-sm, label, th, summary, h1, h2, h3, h
 }
 input, textarea, select, option, td, pre, code { text-transform: none; }
 </style>
+<style id="vsrPageModals">
+/* Tool / data windows open as a full page (with a Back bar) instead of a small popup */
+#blModal.show, #slModal.show, #fmModal.show, #dsrEditCtlModal.show, #mailIssModal.show, #pwrModal.show, #gaEditModal.show { background: var(--bg, #f7f3fb); padding: 0; align-items: flex-start; justify-content: center; z-index: 900; }
+#blModal.show > .modal-box, #slModal.show > .modal-box, #fmModal.show > .modal-box, #dsrEditCtlModal.show > .modal-box, #mailIssModal.show > .modal-box, #pwrModal.show > .modal-box, #gaEditModal.show > .modal-box { max-width: 980px !important; width: 100%; max-height: none !important; min-height: 100vh; border-radius: 0; box-shadow: none; margin: 0 auto; background: var(--bg, #f7f3fb); padding-top: 10px; }
+.vsr-pg-bar { position: sticky; top: 0; z-index: 6; background: var(--bg, #f7f3fb); padding: 8px 0 10px; margin-bottom: 6px; }
+.vsr-pg-bar button { width: auto; padding: 7px 16px; font-size: 13px; }
+#slModal .modal-close-x { display: none; }
+</style>
 <style id="vsrCompactButtons">
 /* Smaller default buttons; buttons sitting beside an input in a flex row stay compact instead of stretching */
 .btn-primary { padding: 10px 14px; font-size: 13.5px; letter-spacing: 0.2px; }
@@ -3145,7 +3153,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
     <div class="page-section" id="admin-pending">
       <div class="section-hdr"><span class="section-title2">⏳ Pending Approvals</span>
         <span style="display:flex;gap:6px;align-items:center;">
-          <button class="btn-sm btn-reject" id="pendingRejectedBtn" onclick="openRejectedList_()">❌ Rejected List <span id="pendingRejectedBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:0 6px;margin-left:4px;font-size:11px;font-weight:700;">0</span></button>
           <button class="btn-sm btn-view" id="pendingRefreshBtn" onclick="manualRefreshPending()">🔄 Refresh</button>
         </span>
       </div>
@@ -5218,15 +5225,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
 
 <!-- Modal: Leave Detail — full clear breakdown of a single leave: dates,
      mode, submitted time, approved/processed time, purpose, address, etc. -->
-<!-- Modal: Rejected leaves list (admin, opened from Pending Approvals) -->
-<div class="modal-overlay" id="rejectedListModal">
-  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
-    <div class="modal-title">❌ Rejected Leaves (Recent)</div>
-    <div id="rejectedListBody"></div>
-    <button class="btn-primary" style="width:100%;margin-top:10px;" onclick="closeModal('rejectedListModal')">Close</button>
-  </div>
-</div>
-
 <div class="modal-overlay" id="leaveDetailModal">
   <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
     <button class="modal-close-x" onclick="closeModal('leaveDetailModal')" title="Close">✕</button>
@@ -34632,6 +34630,25 @@ function dpTick_() {
     if (!timer) timer = setTimeout(flush, 80);
   }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   setTimeout(() => walk(document.body), 400);
+})();
+
+// ---- Tool / data windows as full pages: add a "← Back" bar ----
+(function () {
+  const IDS = ['blModal', 'slModal', 'fmModal', 'dsrEditCtlModal', 'mailIssModal', 'pwrModal', 'gaEditModal'];
+  const STATIC = ['dsrEditCtlModal', 'mailIssModal', 'pwrModal'];
+  function pageify() {
+    IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el || !el.classList.contains('show')) return;
+      const box = el.firstElementChild; if (!box || box.querySelector(':scope > .vsr-pg-bar')) return;
+      const bar = document.createElement('div'); bar.className = 'vsr-pg-bar';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-secondary'; b.textContent = '← Back';
+      b.onclick = function () { el.classList.remove('show'); if (STATIC.indexOf(id) < 0) el.remove(); };
+      bar.appendChild(b); box.insertBefore(bar, box.firstChild);
+    });
+  }
+  let t = 0;
+  new MutationObserver(() => { if (!t) t = setTimeout(() => { t = 0; try { pageify(); } catch (e) {} }, 40); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
 </script>
 </body>
