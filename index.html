@@ -34680,7 +34680,14 @@ function dpTick_() {
       const bar = document.createElement('div'); bar.className = 'vsr-pg-bar';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-secondary'; b.textContent = '← Back';
       b.onclick = function () { el.classList.remove('show'); if (STATIC.indexOf(id) < 0) el.remove(); };
-      bar.appendChild(b); box.insertBefore(bar, box.firstChild);
+      const h = document.createElement('button'); h.type = 'button'; h.className = 'btn-secondary'; h.textContent = '🏠 Home'; h.style.marginLeft = '8px';
+      h.onclick = function () {
+        el.classList.remove('show'); if (STATIC.indexOf(id) < 0) el.remove();
+        const adm = document.getElementById('adminApp');
+        const isAdm = !!(adm && adm.classList.contains('active'));
+        try { (isAdm ? showAdminPage : showEmpPage)('modulepicker'); } catch (e) {}
+      };
+      bar.appendChild(b); bar.appendChild(h); box.insertBefore(bar, box.firstChild);
     });
   }
   let t = 0;
