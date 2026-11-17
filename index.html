@@ -3113,6 +3113,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
           <div class="quick-action-btn" id="adminQAEmpwise" onclick="showAdminPage('empwise')"><span class="quick-action-icon">👤</span><div class="quick-action-label">Employee Wise</div><div class="quick-action-sub">Full profile / all leaves</div></div>
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
           <div class="quick-action-btn" id="adminQALeaveTools" onclick="mtPageEnter_('leavetools')"><span class="quick-action-icon">🧰</span><div class="quick-action-label">Leave Tools</div><div class="quick-action-sub">Resend mail, bulk, holiday, fixes</div></div>
+          <div class="quick-action-btn mt-mis-tile" id="adminQABlockedLeaves" style="display:none;" onclick="blOpen_()"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Leaves</div><div class="quick-action-sub">Stopped at submit — Allow / Decline</div></div>
           <div class="quick-action-btn" id="adminQALeaveLimits" onclick="leaveLimitsOpen_()"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Leave Types &amp; Limits</div><div class="quick-action-sub">Allowed types, Special limit / month</div></div>
           <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
           <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
@@ -3266,6 +3267,11 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
     <!-- LOYALTY: Pending Validation (admin) — v-add (BRO's validation
          feature): every card still at "Pending" review, full details,
          Valid/Invalid decided right here. -->
+    <div class="page-section" id="admin-golden-aura-validation">
+      <div class="section-hdr"><span class="section-title2">✅ Golden Aura — Pending Validation</span></div>
+      <div class="card" id="gaValSummary" style="padding:12px 14px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      <div id="gaValContent"></div>
+    </div>
     <div class="page-section" id="admin-loyalty-pending-validation">
       <div class="section-hdr"><span class="section-title2">✅ Pending Validation</span></div>
       <div class="card" id="loyPendingValSummary" style="padding:12px 14px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
@@ -3995,6 +4001,7 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <div class="quick-action-btn" id="adminQAOutletIssue" onclick="showAdminPage('outletissue')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Outlet Issue</div><div class="quick-action-sub">Sale to another shop</div></div>
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
+        <div class="quick-action-btn mt-mis-tile" id="adminQADsrEditReq" style="display:none;" onclick="dsrEditCtlOpen_()"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Edit Requests <span id="decBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Edit requests and approvals</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">This month so far — or pick your own range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
@@ -4320,6 +4327,8 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
       <div class="card" id="gaCountsBox-admin"><div class="loading"><span class="spinner"></span>Loading...</div></div>
       <div class="quick-actions-grid">
         <div class="quick-action-btn" id="adminQAGaNew" onclick="showAdminPage('golden-aura-new')"><span class="quick-action-icon">➕</span><div class="quick-action-label">New Enrollment</div><div class="quick-action-sub">Enroll a customer</div></div>
+        <div class="quick-action-btn mt-mis-tile" id="adminQAGaDue" style="display:none;" onclick="mtRun_('crmGolden')"><span class="quick-action-icon">📧</span><div class="quick-action-label">Due Report</div><div class="quick-action-sub">Send Golden Aura due report by mail</div></div>
+        <div class="quick-action-btn" id="adminQAGaValidation" onclick="showAdminPage('golden-aura-validation')"><span class="quick-action-icon">✅</span><div class="quick-action-label">Pending Validation</div><div class="quick-action-sub">Check photos &amp; data, then Valid / Invalid</div></div>
         <div class="quick-action-btn" id="adminQAGaList" onclick="showAdminPage('golden-aura-list')"><span class="quick-action-icon">🔍</span><div class="quick-action-label">All Schemes</div><div class="quick-action-sub">View &amp; search</div></div>
       </div>
     </div>
@@ -4532,13 +4541,6 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
         <div class="quick-action-btn" id="adminQALeadsConversions" onclick="showAdminPage('leads-conversions')"><span class="quick-action-icon">📈</span><div class="quick-action-label">Conversions</div><div class="quick-action-sub">Which calls brought customers to store</div></div>
         <div class="quick-action-btn" id="adminQACustomerEvents" onclick="showAdminPage('customer-events')"><span class="quick-action-icon">🎉</span><div class="quick-action-label">Customer Events</div><div class="quick-action-sub">Birthdays &amp; anniversaries — next 7 days</div></div>
         <div class="quick-action-btn" id="adminQAFlaggedNumbers" onclick="showAdminPage('flagged-numbers')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Flagged Numbers</div><div class="quick-action-sub">Review &amp; permanently delete</div></div>
-      </div>
-      <div class="card" style="margin-top:14px;">
-        <div class="card-title">🛠️ More Tools</div>
-        <div class="btn-row">
-          <button class="btn-secondary" style="margin-bottom:8px;" onclick="sendPendingFollowUpReportNow()">🔁 Pending Follow-ups</button>
-          <button class="btn-secondary" style="" onclick="sendCallingStatusReportNow()">📞 Calling Status</button>
-        </div>
       </div>
     </div>
 
@@ -8599,7 +8601,7 @@ const FOOTER_NAV_CONFIG = {
       { page:'loyalty-stats', icon:'📊', label:'Employees' },
       { page:'loyalty-leaderboard', icon:'🏆', label:'Leaders' }
     ], more: 'openAdminMoreModal()' },
-    goldenAura: { pages: ['golden-aura','golden-aura-new','golden-aura-list'], items: [
+    goldenAura: { pages: ['golden-aura','golden-aura-new','golden-aura-list','golden-aura-validation'], items: [
       { page:'golden-aura', icon:'🏠', label:'Home' },
       { page:'golden-aura-new', icon:'➕', label:'New' },
       { page:'golden-aura-list', icon:'🔍', label:'Search' }
@@ -8660,7 +8662,7 @@ const SECTION_LABEL_MAP = {
   'loyalty-upcoming': 'Loyalty Card',
   'loyalty-incenthist': 'Loyalty Card', 'loyalty-kyc': 'Loyalty Card', 'loyalty-issues': 'Loyalty Card',
   'loyalty-mycards': 'Loyalty Card', 'loyalty-pending-validation': 'Loyalty Card',
-  'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura',
+  'golden-aura': 'Golden Aura', 'golden-aura-new': 'Golden Aura', 'golden-aura-list': 'Golden Aura', 'golden-aura-validation': 'Golden Aura',
   'stock': 'Stock Check List', 'stock-retail': 'Stock Check List', 'stock-wholesale': 'Stock Check List', 'stock-report': 'Stock Check List',
   'stock-variance': 'Stock Check List', 'stock-changelog': 'Stock Check List',
   kpi: 'KPI', 'kpi-target': 'KPI', 'kpi-tilldate': 'KPI', 'kpi-monthly': 'KPI', 'kpi-compare': 'KPI', 'kpi-rules': 'KPI',
@@ -9952,6 +9954,32 @@ function leaveWarnHtml_(l) {
     + w.map(x => '🔴 ' + escHtml_(x)).join('<br>') + '</div>';
 }
 let BL_SEEN_ = '';
+
+// ---- Counter & Store leave limits (Leave Tools) ----
+async function lcsOpen_() {
+  slOpenModal('<div class="loading"><span class="spinner"></span>Loading...</div>');
+  try {
+    const r = await jsonpReliable(Object.assign({ page: 'leaveLimitsListAPI' }, pwrCaller_()));
+    if (!r || !r.ok) throw new Error((r && r.error) || 'Could not load');
+    const row = (n, v, store) => '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="flex:1;font-size:13px;font-weight:' + (store ? 800 : 600) + ';">' + escHtml(n) + '</div><input type="number" min="1" class="lcsIn" data-n="' + escHtml(n) + '" value="' + escHtml(String(v)) + '" style="width:80px;padding:6px;"></div>';
+    const counters = (r.counters || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    slOpenModal('<div class="modal-title">🔢 Counter &amp; Store Limits</div>' +
+      '<div class="kd-note">Maximum number of employees allowed on leave on the same day. Casual Leave is stopped when the limit is reached; other leave types only show a red warning.</div>' +
+      '<div style="padding:8px;border:1.5px solid var(--gold,#c9a227);border-radius:8px;margin-bottom:8px;">' + row('Store Total (all counters)', r.store, true).replace('data-n="Store Total (all counters)"', 'data-n="STORE TOTAL"') + '</div>' +
+      counters.map(c => row(c.name, c.max)).join('') +
+      '<button class="btn-primary" style="width:100%;margin-top:10px;" onclick="lcsSave_()">💾 Save</button>');
+  } catch (e) { slOpenModal('<div class="empty-state"><p>Could not load. ' + escHtml(e.message || '') + '</p></div>'); }
+}
+async function lcsSave_() {
+  const rows = Array.from(document.querySelectorAll('.lcsIn')).map(i => ({ name: i.getAttribute('data-n'), max: parseInt(i.value, 10) }));
+  if (rows.some(x => !(x.max > 0))) { toast('Every limit must be 1 or more', 'error'); return; }
+  try {
+    const r = await jsonpReliable(Object.assign({ page: 'leaveLimitsSaveAPI', rows: JSON.stringify(rows) }, pwrCaller_()));
+    if (!r || !r.ok) throw new Error((r && r.error) || 'Save failed');
+    toast('✅ Limits saved', 'success');
+    const m = document.getElementById('slModal'); if (m) m.remove();
+  } catch (e) { toast('❌ ' + (e.message || 'Save failed'), 'error'); }
+}
 async function blOpen_() {
   const old = document.getElementById('blModal'); if (old) old.remove();
   const div = document.createElement('div');
@@ -10811,13 +10839,13 @@ function dutyPopupWho_() {
   if (state.__loginKind === 'emp' && state.empName) return String(state.empName).trim().toLowerCase();
   return '';
 }
-// Duty chart (names): 10:00 and 20:00, once a day. Not-submitted reminder: from 11:30 and from 21:30, hourly, only while not submitted.
+// Duty chart (names): 10:00 and 20:00, once a day. Not-submitted reminder: from 11:30 (until 20:00) and from 21:30 (until midnight), only while not submitted.
 function dutySlotMode_() {
   const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
   if (m >= 600 && m < 660) return { slot: 'opening', mode: 'chart' };
-  if (m >= 690 && m < 840) return { slot: 'opening', mode: 'remind' };
+  if (m >= 690 && m < 1200) return { slot: 'opening', mode: 'remind' };   // keeps reminding until the closing chart time
   if (m >= 1200 && m < 1260) return { slot: 'closing', mode: 'chart' };
-  if (m >= 1290 && m < 1380) return { slot: 'closing', mode: 'remind' };
+  if (m >= 1290 && m < 1440) return { slot: 'closing', mode: 'remind' };  // keeps reminding until midnight
   return null;
 }
 function checkDutyAssignmentPopup_(force) {
@@ -16156,6 +16184,7 @@ function showAdminPage(page, opts) {
   if(page==='golden-aura') loadGoldenAuraCounts('admin');
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
   if(page==='golden-aura-list') loadGoldenAuraList('admin');
+  if(page==='golden-aura-validation') gaValLoad_();
   if(page==='stock') loadStockDashboard('admin');
   if(page==='dailyshop') loadDailyShopChecklist('admin');
   if(page==='stock-retail') loadStockDetail('admin','Retail','today');
@@ -19510,6 +19539,41 @@ function renderKpiRules(who) {
 }
 
 
+function ktField_(id, label, val, type) { return '<div class="form-row"><label>' + label + '</label><input type="' + (type || 'number') + '" ' + (type === 'text' ? '' : 'min="0" step="1" inputmode="numeric" ') + 'id="' + id + '" value="' + escHtml(String(val == null ? '' : val)) + '"></div>'; }
+function ktCurMonth_() { const d = new Date(); return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); }
+function ktAddOpen_() {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  slOpenModal('<div class="modal-title">➕ Add Target To New Employee</div>' + ktField_('ktNewEmp', 'Employee', '', 'text') + ktField_('ktNewMon', 'Month (MM/YYYY)', ktCurMonth_(), 'text') +
+    ktField_('ktNewLoy', '💳 Loyalty Target', '') + ktField_('ktNewGold', '🌟 Golden Target', '') +
+    '<button class="btn-primary" style="width:100%;margin-top:8px;" onclick="ktSave_(\'new\')">💾 Save</button>');
+}
+function ktEditOpen_(i) {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  const r = (window.__ktRows || [])[i]; if (!r) return;
+  slOpenModal('<div class="modal-title">✏️ Edit Target — ' + escHtml(properCase(r.employee)) + '</div><div class="kd-note">Month ' + escHtml(String(r.month)) + '</div>' +
+    ktField_('ktLoy' + i, '💳 Loyalty Target', r.loyaltyTarget) + ktField_('ktGold' + i, '🌟 Golden Target', r.goldenTarget) +
+    '<button class="btn-primary" style="width:100%;margin-top:8px;" onclick="ktSave_(' + i + ')">💾 Save</button>');
+}
+function ktEditAllOpen_() {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  const months = Array.from(new Set((window.__ktRows || []).map(r => String(r.month).trim())));
+  const cur = ktCurMonth_(); if (months.indexOf(cur) < 0) months.push(cur);
+  slOpenModal('<div class="modal-title">✏️ Edit All Employees</div><div class="kd-note">The same targets are set for every employee of the chosen month.</div>' +
+    '<div class="form-row"><label>Month</label><select id="ktAllMon">' + months.map(m => '<option' + (m === cur ? ' selected' : '') + '>' + escHtml(m) + '</option>').join('') + '</select></div>' +
+    ktField_('ktAllLoy', '💳 Loyalty Target', '') + ktField_('ktAllGold', '🌟 Golden Target', '') +
+    '<button class="btn-primary" style="width:100%;margin-top:8px;" onclick="ktSaveAll_()">💾 Save For All</button>');
+}
+async function ktSaveAll_() {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  const month = document.getElementById('ktAllMon').value, loy = document.getElementById('ktAllLoy').value, gold = document.getElementById('ktAllGold').value;
+  if (loy === '' || gold === '' || isNaN(Number(loy)) || isNaN(Number(gold)) || Number(loy) < 0 || Number(gold) < 0) { toast('Enter both targets (0 or more)', 'error'); return; }
+  if (!confirm('Set Loyalty ' + loy + ' and Golden ' + gold + ' for ALL employees of ' + month + '?')) return;
+  try {
+    const res = await jsonpWriteOnce({ page: 'kpiTargetBulkAPI', callerRole: state.adminRole, callerEmail: state.adminEmail, month: month, loyalty: loy, golden: gold }, 'ktall_' + month + '_' + loy + '_' + gold);
+    if (res && res.ok) { toast('Updated ' + res.updated + ' employees', 'success'); const m = document.getElementById('slModal'); if (m) m.remove(); loadKpiTarget('admin'); }
+    else toast((res && res.error) || 'Could not save', 'error');
+  } catch (e) { toast('Connection error — not saved', 'error'); }
+}
 async function ktSave_(i) {
   if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
   let p;
@@ -19524,13 +19588,9 @@ async function ktSave_(i) {
   if (p.loyalty === '' || p.golden === '' || isNaN(Number(p.loyalty)) || isNaN(Number(p.golden)) || Number(p.loyalty) < 0 || Number(p.golden) < 0) { toast('Enter both targets (0 or more)', 'error'); return; }
   try {
     const res = await jsonpWriteOnce(Object.assign({ page: 'kpiTargetSaveAPI', callerRole: state.adminRole, callerEmail: state.adminEmail }, p), 'kt_' + p.employee + '_' + p.month + '_' + p.loyalty + '_' + p.golden);
-    if (res && res.ok) { toast('Target saved', 'success'); loadKpiTarget('admin'); }
+    if (res && res.ok) { toast('Target saved', 'success'); const m = document.getElementById('slModal'); if (m) m.remove(); loadKpiTarget('admin'); }
     else toast((res && res.error) || 'Could not save', 'error');
   } catch (e) { toast('Connection error — not saved', 'error'); }
-}
-function ktEditToggle_(i, on) {
-  const e = document.getElementById('ktEdit' + i), v = document.getElementById('ktView' + i), b = document.getElementById('ktEditBtn' + i);
-  if (e) e.style.display = on ? '' : 'none'; if (v) v.style.display = on ? 'none' : ''; if (b) b.style.display = on ? 'none' : '';
 }
 function loadKpiTarget(who) {
   const box = document.getElementById('kpiTargetBox-' + who);
@@ -19542,27 +19602,14 @@ function loadKpiTarget(who) {
     const rows = (res.rows || []).filter(r => /^\d{1,2}\/\d{4}$/.test(String(r.month || '').trim()));
     const canEdit = who === 'admin' && frqIsMis_();
     if (!rows.length && !canEdit) { box.innerHTML = '<div class="empty-state"><p>No target set yet.</p></div>'; return; }
-    let html = '';
-    if (canEdit) html += `<div class="note" style="font-size:12px;opacity:.75;margin:0 2px 8px;">Targets carry forward every month automatically. Press Edit on an employee only when the target changes.</div><div class="kd-card"><div class="kd-head"><span class="kd-name">➕ Add a target (new employee / new month)</span></div>
-        <div class="form-2col"><div class="form-row"><label>Employee</label><input type="text" id="ktNewEmp" placeholder="Employee name"></div><div class="form-row"><label>Month (MM/YYYY)</label><input type="text" id="ktNewMon" placeholder="11/2026" maxlength="7"></div></div>
-        <div class="form-2col"><div class="form-row"><label>💳 Loyalty Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktNewLoy"></div><div class="form-row"><label>🌟 Golden Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktNewGold"></div></div>
-        <button class="btn-primary" style="width:100%;" onclick="ktSave_('new')">💾 Save target</button></div>`;
-    rows.forEach((r, i) => {
-      html += `<div class="kd-card">
-        <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill gold">📅 ${escHtml(String(r.month))}</span></div>
-        <div class="kd-stats" id="ktView${i}">
-          <div class="kd-box"><span class="kd-ic">💳</span><span class="kd-val">${r.loyaltyTarget}</span><span class="kd-lbl">Loyalty Target</span></div>
-          <div class="kd-box"><span class="kd-ic">🌟</span><span class="kd-val">${r.goldenTarget}</span><span class="kd-lbl">Golden Target</span></div>
-        </div>` + (canEdit ? `
-        <div id="ktEdit${i}" style="display:none;">
-          <div class="form-2col"><div class="form-row"><label>💳 Loyalty Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktLoy${i}" value="${escHtml(String(r.loyaltyTarget))}"></div>
-          <div class="form-row"><label>🌟 Golden Target</label><input type="number" min="0" step="1" inputmode="numeric" id="ktGold${i}" value="${escHtml(String(r.goldenTarget))}"></div></div>
-          <div class="btn-row"><button class="btn-primary" style="flex:1;" onclick="ktSave_(${i})">💾 Save</button><button class="btn-secondary" style="flex:1;" onclick="ktEditToggle_(${i}, false)">Cancel</button></div>
-        </div>
-        <button class="btn-secondary" id="ktEditBtn${i}" style="width:100%;margin-top:8px;" onclick="ktEditToggle_(${i}, true)">✏️ Edit target</button>` : '') + `
-      </div>`;
-    });
     window.__ktRows = rows;
+    let html = '';
+    if (canEdit) html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;"><button class="btn-secondary" style="width:auto;padding:7px 12px;font-size:12.5px;" onclick="ktAddOpen_()">➕ Add Target To New Employee</button><button class="btn-secondary" style="width:auto;padding:7px 12px;font-size:12.5px;" onclick="ktEditAllOpen_()">✏️ Edit All</button></div><div class="note" style="font-size:12px;opacity:.75;margin:0 2px 8px;">Targets carry forward every month automatically. Edit only when a target changes.</div>`;
+    const th = 'border:1px solid var(--border);padding:7px 9px;background:var(--bg2);text-align:left;white-space:nowrap;';
+    const td = 'border:1px solid var(--border);padding:7px 9px;';
+    html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr><th style="${th}">Employee Name</th><th style="${th}">Month (MM/YYYY)</th><th style="${th}">Loyalty Card Target</th><th style="${th}">Golden Aura Target</th>${canEdit ? `<th style="${th}">Edit</th>` : ''}</tr></thead><tbody>` +
+      rows.map((r, i) => `<tr><td style="${td}font-weight:700;">${escHtml(properCase(r.employee))}</td><td style="${td}">${escHtml(String(r.month))}</td><td style="${td}text-align:center;font-weight:700;">${escHtml(String(r.loyaltyTarget))}</td><td style="${td}text-align:center;font-weight:700;">${escHtml(String(r.goldenTarget))}</td>${canEdit ? `<td style="${td}"><button class="btn-secondary" style="width:auto;padding:4px 10px;font-size:12px;" onclick="ktEditOpen_(${i})">✏️ Edit</button></td>` : ''}</tr>`).join('') +
+      '</tbody></table></div>';
     box.innerHTML = html;
     showExportBtn(box.id);
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadKpiTarget(\'" + who + "\')" title="Retry">🔄</button></div>'; });
@@ -25914,12 +25961,17 @@ function goldenAuraCacheFilter(who, search, planType, empFilter, startDate, endD
   });
 }
 function gaRowsHtml(rows) {
+  const adm = state.__loginKind === 'admin';
   return rows.map(r => `<div class="dsr-receipt-card">
         <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🌟 Plan #${r.planNo} — ${r.planType}</span><span class="kd-pill gold">₹${r.amount}</span></div>
         <div class="dsr-receipt-body">
           <div class="dsr-cust-name">${properCase(r.custName)}</div>
           <div class="dsr-meta-row">📱 ${r.mobile} &nbsp;·&nbsp; 📍 ${properCase(r.town) || '—'}, ${properCase(r.state) || '—'}</div>
           <div class="dsr-meta-row" style="border-bottom:none;">👤 ${properCase(r.employee)} &nbsp;·&nbsp; 📅 Enrolled: ${fmtDMY(r.enrollDate)}</div>
+          ${r.canEdit !== undefined ? `<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            ${r.canEdit ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="gaEditOpen_('${escJs(String(r.planNo))}','${escJs(r.planType)}','${adm ? 'admin' : 'emp'}')">✏️ Edit</button>` : ''}
+            ${adm ? `<button class="btn-sm" style="font-size:11px;" onclick="gaToggleEdit_('${escJs(String(r.planNo))}','${escJs(r.planType)}',${r.editAllowed ? 'false' : 'true'})">${r.editAllowed ? '🔒 Turn Off Employee Edit' : '🔓 Allow Employee Edit'}</button>` : ''}
+          </div>` : ''}
         </div>
       </div>`).join('');
 }
@@ -33440,11 +33492,12 @@ function mtMeta_(gid, label) {
   return ['🛠️', 'Other Tools'];
 }
 // ---- Tools & Settings block at the bottom of each section page (MIS only) ----
-const SEC_TOOLS_ = { 'golden-aura': 1, dsr: 1, kpi: 1, loyalty: 1, leads: 1, stocklevel: 1, walkins: 1 };
+const SEC_TOOLS_ = { dsr: 1, kpi: 1, loyalty: 1, leads: 1, stocklevel: 1, walkins: 1 };
 const SEC_TITLE_ = { 'golden-aura': '🥇 Golden Aura', dsr: '🧾 DSR', kpi: '📊 KPI', loyalty: '💳 Loyalty Card', leads: '👥 Leads / CRM', stocklevel: '📦 Stock Level', walkins: '🚶 Walk-in Track', marketing: '📣 Marketing' };
 const SEC_OWN_ = {
-  dsr: [['🥇', 'DSR Types', 'Gold / Silver / Diamond', 'dsrTypesOpen_()'], ['✏️', 'DSR Edit Requests', 'Edit requests and approvals', 'dsrEditCtlOpen_()', 'decBadge']],
-  kpi: [['🏆', 'Performer Rules', 'Score, Loyalty %, Golden %', 'eomRulesOpen_()']]
+  dsr: [['🥇', 'DSR Types', 'Gold / Silver / Diamond', 'dsrTypesOpen_()']],
+  kpi: [['🏆', 'Performer Rules', 'Score, Loyalty %, Golden %', 'eomRulesOpen_()']],
+  leads: [['🔁', 'Pending Follow-ups', 'Send report mail now', 'sendPendingFollowUpReportNow()'], ['📞', 'Calling Status', 'Send report mail now', 'sendCallingStatusReportNow()']]
 };
 const SEC_GROUPS_ = { 'golden-aura': ['leads'], dsr: ['dsr'], kpi: ['kpi'], walkins: ['kpi'], loyalty: ['loy'], leads: ['leads'], stocklevel: ['stock'], marketing: ['mkt'] };
 const SEC_ONLY_ = { 'golden-aura': ['crmGolden'], walkins: ['walkSum', 'walkDup'] };
@@ -33460,7 +33513,7 @@ function secToolsRender_(page) {
   setTimeout(function () { const bn = window.__badgeN_ || {}; if (bn.dsrEditBadge_ !== undefined && typeof window.dsrEditBadge_ === 'function') { try { window.dsrEditBadge_(bn.dsrEditBadge_); } catch (e) {} } }, 100);
 }
 const LEAVE_TOOL_ITEMS_ = [
-  ['🚫 Blocked Leaves', 'blOpen_()'],
+  ['🔢 Counter & Store Limits', 'lcsOpen_()'],
   ['📋 Bulk Approve / Reject', 'ltBulkOpen_()'],
   ['🆔 Generate Missing Leave Ids', "ltRunTile_('genIds')"], ['🔧 Fix All Counters', "ltRunTile_('fixCounters')"], ['📧 Check Mail Quota', "ltRunTile_('quota')"]
 ];
@@ -34129,16 +34182,114 @@ function showGoldenPendingPopup_(rows) {
   const old = document.getElementById('gaPendingModal'); if (old) old.remove();
   const div = document.createElement('div');
   div.id = 'gaPendingModal'; div.className = 'modal-overlay show';
-  const body = rows.slice(0, 20).map(r => [escHtml(String(r.planNo)), escHtml(properCase(r.custName)), escHtml(properCase(r.employee)), escHtml(r.planType.replace('Golden ', '')), escHtml(String(r.amount || '')),
-    `<button class="btn-primary" style="padding:3px 8px;font-size:11px;margin-right:4px;" onclick="gaSetValidation_('${escJs(String(r.planNo))}','Valid')">Valid</button><button class="btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="gaSetValidation_('${escJs(String(r.planNo))}','Invalid')">Invalid</button>`]);
-  div.innerHTML = `<div class="modal-box" style="max-width:560px;max-height:88vh;overflow-y:auto;">
+  const body = rows.slice(0, 20).map(r => [escHtml(String(r.planNo)), escHtml(properCase(r.custName)), escHtml(properCase(r.employee)), escHtml(r.planType.replace('Golden ', '')), escHtml(String(r.amount || ''))]);
+  div.innerHTML = `<div class="modal-box" style="max-width:520px;max-height:88vh;overflow-y:auto;">
     <div class="modal-title">🥇 Golden Aura Awaiting Validation</div>
     ${dpCards_([[rows.length, 'Pending entries']])}
-    ${dpTable_(['Plan', 'Customer', 'Employee', 'Type', 'Amount', 'Action'], body)}
+    ${dpTable_(['Plan', 'Customer', 'Employee', 'Type', 'Amount'], body)}
     ${rows.length > 20 ? `<div style="font-size:11px;opacity:.7;margin-bottom:6px;">+ ${rows.length - 20} more pending</div>` : ''}
-    <button class="btn-secondary" style="width:100%;" onclick="document.getElementById('gaPendingModal').remove();_drainAutoPopupQueue_();">Later</button>
+    <div style="display:flex;gap:8px;"><button class="btn-secondary" style="flex:1;" onclick="document.getElementById('gaPendingModal').remove();_drainAutoPopupQueue_();">Later</button>
+    <button class="btn-primary" style="flex:1;" onclick="document.getElementById('gaPendingModal').remove();showAdminPage('golden-aura-validation')">✅ Review</button></div>
   </div>`;
   document.body.appendChild(div);
+}
+
+// ---- Golden Aura: validation page (full data + photos), edit form, one-time employee edit ----
+const GA_PHOTO_LABELS_ = [['aadhaarPhoto', '🪪 Aadhaar'], ['panPhoto', '🪪 PAN'], ['custPhoto', '📷 Customer'], ['nomAadhaarPhoto', '🪪 Nominee Aadhaar'], ['nomPanPhoto', '🪪 Nominee PAN'], ['nomSigPhoto', '✍️ Nominee Signature'], ['nomPhoto', '📷 Nominee']];
+const GA_EDIT_FIELDS_ = [['custName', 'Customer Name'], ['mobile', 'Mobile'], ['amount', 'Amount'], ['coDoWoSo', 'C/o D/o W/o S/o'], ['street', 'Street'], ['area', 'Area'], ['landmark', 'Landmark'], ['town', 'Town'], ['district', 'District'], ['state', 'State'], ['pin', 'PIN'],
+  ['aadhaarNo', 'Aadhaar No'], ['panNo', 'PAN No'], ['accountNo', 'Account No'], ['ifsc', 'IFSC'], ['branch', 'Branch'], ['nomName', 'Nominee Name'], ['nomAddress', 'Nominee Address'], ['nomMobile', 'Nominee Mobile'], ['nomAadhaarNo', 'Nominee Aadhaar No'], ['nomPanNo', 'Nominee PAN No']];
+function gaPhotoBtns_(d) {
+  return GA_PHOTO_LABELS_.map(pl => String(d[pl[0]] || '').split(/,\s*(?=https?:)/).filter(Boolean).map((u, k) => `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(u)}')">${pl[1]}${k ? ' ' + (k + 1) : ''}</button>`).join('')).join('');
+}
+async function gaValLoad_() {
+  const sum = document.getElementById('gaValSummary'), out = document.getElementById('gaValContent');
+  if (!sum || !out) return;
+  sum.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; out.innerHTML = '';
+  try {
+    const res = await jsonpReliable(gaPendingParams_({ page: 'goldenAuraPendingAPI', full: '1' }));
+    if (!res || !res.ok) { sum.innerHTML = '<div class="empty-state"><p>' + escHtml((res && res.error) || 'Failed to load') + '</p></div>'; return; }
+    window.__gaValRows = res.rows || [];
+    sum.innerHTML = `<div style="font-size:13px;font-weight:700;">${res.total} plan(s) awaiting validation</div>`;
+    if (!res.rows.length) { out.innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>Nothing pending — all caught up</p></div>'; return; }
+    out.innerHTML = res.rows.map(r => {
+      const d = r.d || {};
+      const row = (l, v) => `<tr><td>${l}</td><td>${escHtml(String(v == null ? '' : v)) || '—'}</td></tr>`;
+      const addr = [d.coDoWoSo, d.street, d.area, d.landmark, d.town, d.district, d.state, d.pin].filter(Boolean).join(', ');
+      return `<div class="loy-result" data-plan="${escHtml(String(r.planNo))}">
+        <div class="loy-result-hdr"><span>${escHtml(properCase(d.custName))}</span><span class="loy-badge">#${escHtml(String(r.planNo))}</span></div>
+        <div class="loy-result-body"><table class="loy-detail">
+          ${row('Entered By', properCase(d.employee))}${row('Plan', d.planType)}${row('Amount', d.amount)}${row('Mobile', d.mobile)}${row('Address', addr)}
+          ${row('Aadhaar No', d.aadhaarNo)}${row('PAN No', d.panNo)}${row('Account / IFSC / Branch', [d.accountNo, d.ifsc, d.branch].filter(Boolean).join(' / '))}
+          ${row('Nominee', [d.nomName, d.nomMobile].filter(Boolean).join(' · '))}${row('Nominee Address', d.nomAddress)}${row('Nominee Aadhaar / PAN', [d.nomAadhaarNo, d.nomPanNo].filter(Boolean).join(' / '))}${row('Enrolled', d.enrollDate)}
+        </table>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${gaPhotoBtns_(d)}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-sm btn-view" style="flex:1;font-size:11px;" onclick="gaEditOpen_('${escJs(String(r.planNo))}','${escJs(r.planType)}','admin')">✏️ Edit</button>
+          <button class="btn-sm" style="flex:1;font-size:11px;color:var(--green);border-color:var(--green);" onclick="gaValSet_('${escJs(String(r.planNo))}','Valid',this)">✅ Valid</button>
+          <button class="btn-sm" style="flex:1;font-size:11px;color:var(--red);border-color:var(--red);" onclick="gaValSet_('${escJs(String(r.planNo))}','Invalid',this)">❌ Invalid</button>
+        </div></div></div>`;
+    }).join('');
+  } catch (e) { sum.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; }
+}
+function gaValSet_(planNo, status, btn) {
+  const card = btn.closest('.loy-result');
+  jsonpReliable(gaPendingParams_({ page: 'goldenAuraSetValidationAPI', planNo: planNo, status: status })).then(res => {
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not save', 'error'); return; }
+    toast('Plan ' + planNo + ' marked ' + status, 'success');
+    if (card) card.remove();
+    const left = document.querySelectorAll('#gaValContent .loy-result').length;
+    const sum = document.getElementById('gaValSummary'); if (sum) sum.innerHTML = `<div style="font-size:13px;font-weight:700;">${left} plan(s) awaiting validation</div>`;
+    if (!left) document.getElementById('gaValContent').innerHTML = '<div class="empty-state"><span class="emoji">✅</span><p>Nothing pending — all caught up</p></div>';
+  }).catch(() => toast('Network error', 'error'));
+}
+async function gaEditOpen_(planNo, planType, who) {
+  const q = who === 'admin' ? gaPendingParams_({ page: 'goldenAuraGetAPI', planNo: planNo, planType: planType }) : { page: 'goldenAuraGetAPI', role: 'EMP', empName: state.empName, planNo: planNo, planType: planType };
+  let res; try { res = await jsonpReliable(q); } catch (e) { toast('Network error', 'error'); return; }
+  if (!res || !res.ok) { toast((res && res.error) || 'Could not open this plan for edit', 'error'); return; }
+  const d = res.d; state.gaEdit = { who: who, d: d };
+  const old = document.getElementById('gaEditModal'); if (old) old.remove();
+  const div = document.createElement('div'); div.id = 'gaEditModal'; div.className = 'modal-overlay show';
+  const fields = GA_EDIT_FIELDS_.map(f => `<div class="form-row"><label>${f[1]}</label><input type="text" id="gaE_${f[0]}" value="${escHtml(String(d[f[0]] || ''))}"></div>`).join('');
+  const photos = GA_PHOTO_LABELS_.map(pl => {
+    const cur = String(d[pl[0]] || '');
+    return `<div class="form-row"><label>${pl[1]}</label>${cur ? `<div style="margin-bottom:4px;">${cur.split(/,\s*(?=https?:)/).filter(Boolean).map((u, k) => `<button class="btn-sm btn-view" style="font-size:11px;margin-right:4px;" onclick="openLoyaltyImage(event,'${escJs(u)}')">View current${k ? ' ' + (k + 1) : ''}</button>`).join('')}</div>` : '<div style="font-size:11px;opacity:.7;">No photo</div>'}<input type="file" accept="image/*" id="gaEP_${pl[0]}"><div style="font-size:11px;opacity:.65;">Pick a file only to replace the photo.</div></div>`;
+  }).join('');
+  div.innerHTML = `<div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto;"><div class="modal-title">✏️ Edit Plan #${escHtml(String(d.planNo))} — ${escHtml(d.planType)}</div>${fields}<div class="card-title" style="margin-top:8px;">Photos</div>${photos}
+    <div id="gaEditMsg" style="font-size:12px;margin:6px 0;"></div>
+    <div style="display:flex;gap:8px;"><button class="btn-secondary" style="flex:1;" onclick="document.getElementById('gaEditModal').remove()">Cancel</button><button class="btn-primary" style="flex:1;" id="gaEditSaveBtn" onclick="gaEditSave_()">💾 Save</button></div></div>`;
+  document.body.appendChild(div);
+}
+async function gaEditSave_() {
+  const st = state.gaEdit; if (!st) return;
+  const d = st.d, who = st.who, btn = document.getElementById('gaEditSaveBtn'), msg = document.getElementById('gaEditMsg');
+  const payload = { page: 'goldenAuraEditAPI', planNo: d.planNo, planType: d.planType };
+  if (who === 'admin') Object.assign(payload, gaPendingParams_({})); else Object.assign(payload, { role: 'EMP', empName: state.empName });
+  GA_EDIT_FIELDS_.forEach(f => { payload[f[0]] = (document.getElementById('gaE_' + f[0]).value || '').trim(); });
+  if (!payload.custName || !payload.mobile || !payload.amount) { msg.style.color = 'var(--red)'; msg.textContent = 'Customer name, mobile and amount are required.'; return; }
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  try {
+    for (const pl of GA_PHOTO_LABELS_) {
+      const inp = document.getElementById('gaEP_' + pl[0]);
+      if (inp && inp.files && inp.files[0]) payload[pl[0]] = await _silentCompressForUpload(await fileToBase64(inp));
+      else payload[pl[0]] = d[pl[0]] || '';
+    }
+    const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }, 90000);
+    const res = await _parseMainApiResponse(resp);
+    if (res && res.ok) {
+      toast(who === 'admin' ? 'Plan updated' : 'Plan updated — sent to MIS for validation', 'success');
+      document.getElementById('gaEditModal').remove();
+      if (document.getElementById('gaValContent') && (document.getElementById('admin-golden-aura-validation') || {}).offsetParent) gaValLoad_();
+      try { loadGoldenAuraList(who); } catch (e) {}
+    } else { msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + ((res && res.error) || 'Could not save'); }
+  } catch (e) { msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + (e.message || 'Connection error — not saved'); }
+  finally { btn.disabled = false; btn.textContent = '💾 Save'; }
+}
+async function gaToggleEdit_(planNo, planType, enabled) {
+  try {
+    const res = await jsonpReliable(gaPendingParams_({ page: 'goldenAuraSetEditAllowedAPI', planNo: planNo, planType: planType, enabled: enabled ? 'true' : 'false' }));
+    if (res && res.ok) { toast(enabled ? 'Employee can edit this plan once' : 'Employee edit turned off', 'success'); loadGoldenAuraList('admin'); }
+    else toast((res && res.error) || 'Could not change', 'error');
+  } catch (e) { toast('Network error', 'error'); }
 }
 function gaSetValidation_(planNo, status) {
   jsonpReliable(gaPendingParams_({ page: 'goldenAuraSetValidationAPI', planNo: planNo, status: status })).then(res => {
