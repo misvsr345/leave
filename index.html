@@ -1929,6 +1929,42 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
 .vsr-pg-bar { position: sticky; top: 0; z-index: 6; background: var(--bg, #f7f3fb); padding: 8px 0 10px; margin-bottom: 6px; }
 .vsr-pg-bar button { width: auto; padding: 7px 16px; font-size: 13px; }
 #slModal .modal-close-x { display: none; }
+/* Compact buttons inside page-style windows (Back, Close, Save, etc.) */
+#blModal.show .btn-primary,
+#slModal.show .btn-primary,
+#fmModal.show .btn-primary,
+#dsrEditCtlModal.show .btn-primary,
+#mailIssModal.show .btn-primary,
+#pwrModal.show .btn-primary,
+#gaEditModal.show .btn-primary,
+#blModal.show .btn-secondary,
+#slModal.show .btn-secondary,
+#fmModal.show .btn-secondary,
+#dsrEditCtlModal.show .btn-secondary,
+#mailIssModal.show .btn-secondary,
+#pwrModal.show .btn-secondary,
+#gaEditModal.show .btn-secondary,
+#blModal.show .btn-danger,
+#slModal.show .btn-danger,
+#fmModal.show .btn-danger,
+#dsrEditCtlModal.show .btn-danger,
+#mailIssModal.show .btn-danger,
+#pwrModal.show .btn-danger,
+#gaEditModal.show .btn-danger,
+#blModal.show .vsr-pg-bar button,
+#slModal.show .vsr-pg-bar button,
+#fmModal.show .vsr-pg-bar button,
+#dsrEditCtlModal.show .vsr-pg-bar button,
+#mailIssModal.show .vsr-pg-bar button,
+#pwrModal.show .vsr-pg-bar button,
+#gaEditModal.show .vsr-pg-bar button { width: auto !important; min-width: 0 !important; display: inline-block !important; padding: 5px 12px !important; font-size: 12px !important; line-height: 1.3 !important; border-radius: 8px !important; margin-top: 8px; }
+#blModal.show .vsr-pg-bar button,
+#slModal.show .vsr-pg-bar button,
+#fmModal.show .vsr-pg-bar button,
+#dsrEditCtlModal.show .vsr-pg-bar button,
+#mailIssModal.show .vsr-pg-bar button,
+#pwrModal.show .vsr-pg-bar button,
+#gaEditModal.show .vsr-pg-bar button { margin-top: 0; }
 </style>
 <style id="vsrCompactButtons">
 /* Smaller default buttons; buttons sitting beside an input in a flex row stay compact instead of stretching */
@@ -24697,6 +24733,7 @@ async function leaveLimitsOpen_() {
       '<div style="max-height:190px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:4px 8px;">' +
       lmList_.map(e => `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;"><input type="checkbox" class="lmEmpCk" value="${escHtml(String(e.empId))}" onchange="lmSelChanged_()" style="width:16px;height:16px;accent-color:var(--purple);"> ${escHtml(properCase(e.name))} (${escHtml(String(e.empId))})</label>`).join('') + '</div>' +
       '<div id="lmBody"></div>');
+    lmToggleAll_(true);
   } catch (e) { slOpenModal('<div class="empty-state"><p>Could not load.</p></div>'); }
 }
 function lmToggleAll_(on) { document.querySelectorAll('.lmEmpCk').forEach(c => { c.checked = on; }); lmSelChanged_(); }
@@ -24705,13 +24742,12 @@ async function lmSelChanged_() {
   const sel = lmSelected_(), body = document.getElementById('lmBody'); if (!body) return;
   const all = document.getElementById('lmAll'); if (all) all.checked = sel.length === lmList_.length && sel.length > 0;
   if (!sel.length) { body.innerHTML = ''; return; }
-  // With one employee selected the current values are filled in; with several, everything starts ticked with no limit.
+  // The saved values (from the sheet) are filled in. With several employees, the first selected employee's saved values are shown.
   let res = null;
-  if (sel.length === 1) {
-    body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-    try { res = await jsonpReliable({ page: 'getEmpLeaveTypeAccessForAdminAPI', empId: sel[0] }); } catch (e) { res = null; }
-    if (lmSelected_().length !== 1 || lmSelected_()[0] !== sel[0]) return;
-  }
+  const firstId = sel[0], selKey = sel.join(',');
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try { res = await jsonpReliable({ page: 'getEmpLeaveTypeAccessForAdminAPI', empId: firstId }); } catch (e) { res = null; }
+  if (lmSelected_().join(',') !== selKey) return;
   const ok = res && res.ok;
   const rows = LM_TYPES_.map(t => {
     const allowed = !ok || (res.allowed || {})[t[0]] !== false;
@@ -24722,7 +24758,7 @@ async function lmSelChanged_() {
       <span style="flex:1;font-size:12.5px;">${t[2]} Leave${used !== null && lim !== '' ? `<br><span style="font-size:10.5px;color:var(--text3);">Used ${used} of ${lim} this month</span>` : ''}</span>
       <input type="number" min="0" id="lmLim${t[1]}" value="${lim}" placeholder="No limit" style="width:84px;padding:5px 7px;border:1px solid var(--border);border-radius:7px;font-size:12px;"><span style="font-size:10.5px;color:var(--text3);">/ month</span></div>`;
   }).join('');
-  body.innerHTML = `<div style="font-weight:700;margin:10px 0 2px;">Leave types for ${sel.length} employee${sel.length > 1 ? 's' : ''}</div>${rows}<button class="btn-primary" style="width:100%;margin-top:10px;" onclick="leaveLimitsSave_()">Save for ${sel.length} employee${sel.length > 1 ? 's' : ''}</button>`;
+  body.innerHTML = `<div style="font-weight:700;margin:10px 0 2px;">Leave types for ${sel.length} employee${sel.length > 1 ? 's' : ''}</div>${sel.length > 1 && ok ? '<div class="kd-note">Showing the saved values of ' + escHtml(properCase((lmList_.find(x => String(x.empId) === String(firstId)) || {}).name || '')) + '. Saving applies to all selected employees.</div>' : ''}${rows}<button class="btn-primary" style="width:100%;margin-top:10px;" onclick="leaveLimitsSave_()">Save for ${sel.length} employee${sel.length > 1 ? 's' : ''}</button>`;
 }
 async function leaveLimitsSave_() {
   const sel = lmSelected_(); if (!sel.length) { toast('Tick at least one employee', 'error'); return; }
