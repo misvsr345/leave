@@ -4301,35 +4301,18 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
     <!-- ══════════════ PETTY CASH SECTION (MIS only) — data comes from the Petty Cash sheet through
          PortalBackend.gs (page=pettyCashAPI) ══════════════ -->
     <div class="page-section" id="admin-pettycash">
-      <div class="section-hdr"><span class="section-title2">💰 Petty Cash</span></div>
-      <div class="card">
-        <div class="quick-actions-title">📊 Overview</div>
-        <div class="quick-actions-grid" style="margin-bottom:12px;">
-          <div class="quick-action-btn" onclick="showAdminPage('pettycash-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div><div class="quick-action-sub">Today &amp; month summary</div></div>
-        </div>
-        <div class="quick-actions-title">📋 Records</div>
-        <div class="quick-actions-grid" style="margin-bottom:12px;">
-          <div class="quick-action-btn" onclick="showAdminPage('pettycash-txn')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Transactions</div><div class="quick-action-sub">Expenses &amp; cash received</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('pettycash-advance')"><span class="quick-action-icon">🏦</span><div class="quick-action-label">Advance</div><div class="quick-action-sub">Advance given</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('pettycash-category')"><span class="quick-action-icon">📂</span><div class="quick-action-label">Category Summary</div><div class="quick-action-sub">Expenses by category</div></div>
-        </div>
-        <div class="quick-actions-title">✏️ Edit Requests</div>
-        <div class="quick-actions-grid" style="margin-bottom:12px;">
-          <div class="quick-action-btn" onclick="showAdminPage('pettycash-pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending Requests <span class="pcPendBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Approve / Reject</div></div>
-          <div class="quick-action-btn" onclick="showAdminPage('pettycash-history')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Edit History</div><div class="quick-action-sub">Old &amp; new values</div></div>
-        </div>
-        <div class="quick-actions-title">⚙️ Tools</div>
-        <div class="quick-actions-grid">
-          <div class="quick-action-btn" onclick="pcTool_('sendDaily', this)"><span class="quick-action-icon">📧</span><div class="quick-action-label">Send Daily Email Now</div><div class="quick-action-sub">Yesterday's report to all staff</div></div>
-          <div class="quick-action-btn" onclick="pcTool_('sendMonthly', this)"><span class="quick-action-icon">📅</span><div class="quick-action-label">Send Monthly Summary Now</div><div class="quick-action-sub">Last month's report to all staff</div></div>
-          <div class="quick-action-btn" onclick="pcTool_('refresh', this)"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Refresh Petty Cash Sheet</div><div class="quick-action-sub">Rebuild the sheet tabs</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="page-section" id="admin-pettycash-overview">
-      <div class="section-hdr"><span class="section-title2">📊 Overview</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('overview')">🔄 Refresh</button></div>
+      <div class="section-hdr"><span class="section-title2">💰 Petty Cash</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('overview')">🔄 Refresh</button></div>
       <div class="card"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;"><div class="form-group" style="margin:0;min-width:170px;"><label>Month</label><select id="pcMonth-overview" data-nosort="1" onchange="pcLoad_('overview')"></select></div></div><div id="pcBox-overview"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+      <div class="quick-actions-grid">
+        <div class="quick-action-btn" onclick="showAdminPage('pettycash-txn')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Transactions</div><div class="quick-action-sub">Expenses &amp; cash received</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('pettycash-advance')"><span class="quick-action-icon">🏦</span><div class="quick-action-label">Advance</div><div class="quick-action-sub">Advance given</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('pettycash-category')"><span class="quick-action-icon">📂</span><div class="quick-action-label">Category Summary</div><div class="quick-action-sub">Expenses by category</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('pettycash-pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending Requests <span class="pcPendBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Approve / Reject</div></div>
+        <div class="quick-action-btn" onclick="showAdminPage('pettycash-history')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Edit History</div><div class="quick-action-sub">Old &amp; new values</div></div>
+        <div class="quick-action-btn" onclick="pcTool_('sendDaily', this)"><span class="quick-action-icon">📧</span><div class="quick-action-label">Send Daily Email Now</div><div class="quick-action-sub">Yesterday's report to all staff</div></div>
+        <div class="quick-action-btn" onclick="pcTool_('sendMonthly', this)"><span class="quick-action-icon">📅</span><div class="quick-action-label">Send Monthly Summary Now</div><div class="quick-action-sub">Last month's report to all staff</div></div>
+        <div class="quick-action-btn" onclick="pcTool_('refresh', this)"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Refresh Petty Cash Sheet</div><div class="quick-action-sub">Rebuild the sheet tabs</div></div>
+      </div>
     </div>
 
     <div class="page-section" id="admin-pettycash-txn">
@@ -34801,7 +34784,7 @@ function pcPageEnter_(page) {
     if (sec) sec.querySelectorAll('[id^="pcBox-"]').forEach(b => pcErr_(b, 'Only MIS can open Petty Cash.'));
     return;
   }
-  if (page === 'pettycash') { pcPopupCheck_(true); return; }
+  if (page === 'pettycash') { pcLoad_('overview'); pcPopupCheck_(true); return; }
   pcLoad_(page.replace('pettycash-', ''));
 }
 async function pcLoad_(key) {
