@@ -3149,6 +3149,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
           <div class="quick-action-btn" id="adminQAStockLevel" onclick="showAdminPage('stocklevel')"><span class="quick-action-icon">📦</span><div class="quick-action-label">Stock Level</div><div class="quick-action-sub">Counter stock, sales &amp; tag status</div></div>
           <div class="quick-action-btn" id="adminQAMarketing" style="display:none;" onclick="mkOpen_()"><span class="quick-action-icon">📣</span><div class="quick-action-label">Marketing</div><div class="quick-action-sub">Daily entries, duplicates, sync</div></div>
           <div class="quick-action-btn" id="adminQADailyShopModule" onclick="showAdminPage('dailyshop')"><span class="quick-action-icon">🕐</span><div class="quick-action-label">Daily Shop</div><div class="quick-action-sub">Open/Close status &amp; duty</div></div>
+          <div class="quick-action-btn mt-mis-tile" id="adminQAPettyCash" style="display:none;" onclick="showAdminPage('pettycash')"><span class="quick-action-icon">💰</span><div class="quick-action-label">Petty Cash <span class="pcPendBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Cash, expenses &amp; edit requests</div></div>
           <div class="quick-action-btn" onclick="openAdminMoreModal()"><span class="quick-action-icon">☰</span><div class="quick-action-label">More</div><div class="quick-action-sub">Settings &amp; more</div></div>
         </div>
       </div>
@@ -4295,6 +4296,65 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
       <div class="section-hdr"><span class="section-title2">🖨️ Print / Report</span></div>
       <button class="export-icon-btn" id="exportBtn-slBox-print" style="display:none;" onclick="openBoxExportModal('slBox-print','Print / Report')" title="Export">📥</button>
       <div class="card"><div id="slBox-print"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <!-- ══════════════ PETTY CASH SECTION (MIS only) — data comes from the Petty Cash sheet through
+         PortalBackend.gs (page=pettyCashAPI) ══════════════ -->
+    <div class="page-section" id="admin-pettycash">
+      <div class="section-hdr"><span class="section-title2">💰 Petty Cash</span></div>
+      <div class="card">
+        <div class="quick-actions-title">📊 Overview</div>
+        <div class="quick-actions-grid" style="margin-bottom:12px;">
+          <div class="quick-action-btn" onclick="showAdminPage('pettycash-overview')"><span class="quick-action-icon">📊</span><div class="quick-action-label">Overview</div><div class="quick-action-sub">Today &amp; month summary</div></div>
+        </div>
+        <div class="quick-actions-title">📋 Records</div>
+        <div class="quick-actions-grid" style="margin-bottom:12px;">
+          <div class="quick-action-btn" onclick="showAdminPage('pettycash-txn')"><span class="quick-action-icon">🧾</span><div class="quick-action-label">Transactions</div><div class="quick-action-sub">Expenses &amp; cash received</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('pettycash-advance')"><span class="quick-action-icon">🏦</span><div class="quick-action-label">Advance</div><div class="quick-action-sub">Advance given</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('pettycash-category')"><span class="quick-action-icon">📂</span><div class="quick-action-label">Category Summary</div><div class="quick-action-sub">Expenses by category</div></div>
+        </div>
+        <div class="quick-actions-title">✏️ Edit Requests</div>
+        <div class="quick-actions-grid" style="margin-bottom:12px;">
+          <div class="quick-action-btn" onclick="showAdminPage('pettycash-pending')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Pending Requests <span class="pcPendBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Approve / Reject</div></div>
+          <div class="quick-action-btn" onclick="showAdminPage('pettycash-history')"><span class="quick-action-icon">📜</span><div class="quick-action-label">Edit History</div><div class="quick-action-sub">Old &amp; new values</div></div>
+        </div>
+        <div class="quick-actions-title">⚙️ Tools</div>
+        <div class="quick-actions-grid">
+          <div class="quick-action-btn" onclick="pcTool_('sendDaily', this)"><span class="quick-action-icon">📧</span><div class="quick-action-label">Send Daily Email Now</div><div class="quick-action-sub">Yesterday's report to all staff</div></div>
+          <div class="quick-action-btn" onclick="pcTool_('sendMonthly', this)"><span class="quick-action-icon">📅</span><div class="quick-action-label">Send Monthly Summary Now</div><div class="quick-action-sub">Last month's report to all staff</div></div>
+          <div class="quick-action-btn" onclick="pcTool_('refresh', this)"><span class="quick-action-icon">🔄</span><div class="quick-action-label">Refresh Petty Cash Sheet</div><div class="quick-action-sub">Rebuild the sheet tabs</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-section" id="admin-pettycash-overview">
+      <div class="section-hdr"><span class="section-title2">📊 Overview</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('overview')">🔄 Refresh</button></div>
+      <div class="card"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;"><div class="form-group" style="margin:0;min-width:170px;"><label>Month</label><select id="pcMonth-overview" data-nosort="1" onchange="pcLoad_('overview')"></select></div></div><div id="pcBox-overview"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-pettycash-txn">
+      <div class="section-hdr"><span class="section-title2">🧾 Transactions</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('txn')">🔄 Refresh</button></div>
+      <div class="card"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;"><div class="form-group" style="margin:0;min-width:170px;"><label>Month</label><select id="pcMonth-txn" data-nosort="1" onchange="pcLoad_('txn')"></select></div><div class="form-group" style="margin:0;flex:1;min-width:160px;"><label>Search</label><input type="text" id="pcSearch-txn" placeholder="Details or name" oninput="pcRenderTxn_()"></div></div><div id="pcBox-txn"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-pettycash-advance">
+      <div class="section-hdr"><span class="section-title2">🏦 Advance</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('advance')">🔄 Refresh</button></div>
+      <div class="card"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;"><div class="form-group" style="margin:0;min-width:170px;"><label>Month</label><select id="pcMonth-advance" data-nosort="1" onchange="pcLoad_('advance')"></select></div></div><div id="pcBox-advance"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-pettycash-category">
+      <div class="section-hdr"><span class="section-title2">📂 Category Summary</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('category')">🔄 Refresh</button></div>
+      <div class="card"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;"><div class="form-group" style="margin:0;min-width:170px;"><label>Month</label><select id="pcMonth-category" data-nosort="1" onchange="pcLoad_('category')"></select></div></div><div id="pcBox-category"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-pettycash-pending">
+      <div class="section-hdr"><span class="section-title2">⏳ Pending Requests</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('pending')">🔄 Refresh</button></div>
+      <div class="card"><div id="pcBox-pending"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
+    </div>
+
+    <div class="page-section" id="admin-pettycash-history">
+      <div class="section-hdr"><span class="section-title2">📜 Edit History</span><button class="btn-sm btn-view" style="min-width:0;" onclick="pcLoad_('history')">🔄 Refresh</button></div>
+      <div class="card"><div id="pcBox-history"><div class="loading"><span class="spinner"></span>Loading...</div></div></div>
     </div>
 
     <!-- ══════════════ STOCK TRANSFER (admin only) — v-add (BRO: "main hub ki stock ela add
@@ -8735,6 +8795,9 @@ const SECTION_LABEL_MAP = {
   'stocklevel-today': 'Stock Level',
   'stocklevel-failed': 'Stock Level',
   'stocklevel-print': 'Stock Level',
+  pettycash: 'Petty Cash', 'pettycash-overview': 'Petty Cash', 'pettycash-txn': 'Petty Cash',
+  'pettycash-advance': 'Petty Cash', 'pettycash-category': 'Petty Cash', 'pettycash-pending': 'Petty Cash',
+  'pettycash-history': 'Petty Cash',
   // v-fix (BRO: "stock transfer, stock level button click cheste, lopala
   // ravali" — Stock Transfer moved inside the Stock Level hub, no longer
   // its own sidebar/quick-action entry): now treated as part of the
@@ -8767,7 +8830,8 @@ const SECTION_DASHBOARD_PAGE = {
   'Stock Check List': { emp: 'stock', admin: 'stock' },
   'Stock Level':    { emp: 'stocklevel', admin: 'stocklevel' },
   'Walk-in Track':  { emp: 'walkins', admin: 'walkins' },
-  Leads:            { emp: 'leads',   admin: 'leads' }
+  Leads:            { emp: 'leads',   admin: 'leads' },
+  'Petty Cash':     { emp: null,      admin: 'pettycash' }
 };
 function getSectionDashboardPage(who, page) {
   const section = SECTION_LABEL_MAP[page];
@@ -16232,6 +16296,7 @@ function showAdminPage(page, opts) {
   if(page==='stocklevel-manage') slPageEnter('manage', slRenderManage);
   if(page==='stocklevel-today') slPageEnter('today', slRenderToday);
   if(page==='stocklevel-failed') slPageEnter('failed', slRenderFailed);
+  if(page==='pettycash' || page.indexOf('pettycash-')===0) pcPageEnter_(page);
   if(page==='stocklevel-print') { SL.printFilters = { entryType: '', counter: '', dateMode: 'all', dateFrom: '', dateTo: '' }; slPageEnter('print', slRenderPrintOptions); }
   if(page==='stocktransfer') { stLoadHistory(); adminEmpSelectFill_('stEmpSel'); }
   if(page==='stockadjust') saMount('admin');
@@ -34693,6 +34758,226 @@ function dpTick_() {
   let t = 0;
   new MutationObserver(() => { if (!t) t = setTimeout(() => { t = 0; try { pageify(); } catch (e) {} }, 40); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
+
+// ══════════════════════════════════════
+// PETTY CASH (MIS only) — data from the Petty Cash sheet via PortalBackend (page=pettyCashAPI)
+// ══════════════════════════════════════
+const PC_ACT_ = { overview: 'overview', txn: 'transactions', advance: 'advance', category: 'category', pending: 'pending', history: 'history' };
+const PC_DATA_ = {};
+let PC_SEEN_ = '';
+function pcIsMis_() { return state.__loginKind === 'admin' && frqIsMis_(); }
+function pcCall_(act, extra, write) {
+  const q = Object.assign({ page: 'pettyCashAPI', act: act, callerEmail: state.adminEmail || '', token: state.sessionToken || '' }, extra || {});
+  return write ? jsonpWriteOnce(q, null, 60000) : jsonpReliable(q);
+}
+function pcInr_(n) { return '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+function pcTs_(t) { return String(t == null ? '' : t).replace(/(\d{1,2}:\d{2}):\d{2}/, '$1'); }
+function pcErr_(box, msg) { box.innerHTML = '<div style="padding:10px;color:var(--red);">' + escHtml_(msg || 'Could not load. Please try again.') + '</div>'; }
+function pcTable_(heads, rows, foot) {
+  return '<div class="kd-table-wrap" style="margin-top:6px;"><table class="kd-table"><thead><tr>' + heads.map(h => '<th>' + escHtml_(h) + '</th>').join('') + '</tr></thead><tbody>'
+    + rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('')
+    + (foot ? '<tr>' + foot.map(c => '<td style="font-weight:800;background:var(--purple-bg);">' + c + '</td>').join('') + '</tr>' : '')
+    + '</tbody></table></div>';
+}
+function pcFillMonths_(key) {
+  const sel = document.getElementById('pcMonth-' + key);
+  if (!sel || sel.options.length) return;
+  const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const d = new Date();
+  for (let i = 0; i < 12; i++) {
+    const x = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    const o = document.createElement('option');
+    o.value = x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0');
+    o.textContent = names[x.getMonth()] + ' ' + x.getFullYear();
+    sel.appendChild(o);
+  }
+}
+function pcBadges_(n) {
+  document.querySelectorAll('.pcPendBadge').forEach(b => { b.textContent = n || ''; b.style.display = n ? 'inline-block' : 'none'; });
+}
+function pcPageEnter_(page) {
+  if (!pcIsMis_()) {
+    const sec = document.getElementById('admin-' + page);
+    if (sec) sec.querySelectorAll('[id^="pcBox-"]').forEach(b => pcErr_(b, 'Only MIS can open Petty Cash.'));
+    return;
+  }
+  if (page === 'pettycash') { pcPopupCheck_(true); return; }
+  pcLoad_(page.replace('pettycash-', ''));
+}
+async function pcLoad_(key) {
+  const box = document.getElementById('pcBox-' + key);
+  if (!box) return;
+  pcFillMonths_(key);
+  const sel = document.getElementById('pcMonth-' + key);
+  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await pcCall_(PC_ACT_[key], sel ? { ym: sel.value } : {});
+    if (!res || !res.ok) { pcErr_(box, res && res.error); return; }
+    PC_DATA_[key] = res;
+    ({ overview: pcRenderOverview_, txn: pcRenderTxn_, advance: pcRenderAdvance_, category: pcRenderCategory_, pending: pcRenderPending_, history: pcRenderHistory_ })[key]();
+  } catch (e) { pcErr_(box, 'Connection error. Please try again.'); }
+}
+function pcStat_(label, val, color) {
+  return '<div class="stat-box"><div class="stat-val" style="font-size:17px;color:' + color + ';">' + pcInr_(val) + '</div><div class="stat-lbl">' + label + '</div></div>';
+}
+function pcRenderOverview_() {
+  const r = PC_DATA_.overview, box = document.getElementById('pcBox-overview');
+  pcBadges_(r.pendingCount);
+  let h = '';
+  if (r.lowCash) h += '<div style="background:var(--red-bg);color:var(--red);border-radius:8px;padding:8px 10px;font-weight:700;font-size:12.5px;margin-bottom:10px;">⚠️ Low Cash Alert — balance today is ' + pcInr_(r.today.balance) + '. Please arrange cash.</div>';
+  h += '<div class="quick-actions-title">📅 Today (' + escHtml_(r.today.date) + ')</div>'
+    + pcTable_(['Opening', 'Received', 'Expenses', 'Advance', 'Balance'],
+      [[pcInr_(r.today.open), pcInr_(r.today.received), pcInr_(r.today.expenses), pcInr_(r.today.advance), '<b>' + pcInr_(r.today.balance) + '</b>']]);
+  h += '<div class="quick-actions-title" style="margin-top:14px;">🗓️ ' + escHtml_(r.month) + ' (' + r.entries + ' Entries)</div>'
+    + '<div class="stats-grid">'
+    + pcStat_('Opening Balance', r.openBal, 'var(--gold)')
+    + pcStat_('Total Received', r.received, 'var(--blue)')
+    + pcStat_('Total Expenses', r.expenses, 'var(--red)')
+    + pcStat_('Total Advance', r.advance, 'var(--orange)')
+    + pcStat_('Cash In Hand', r.cashInHand, r.cashInHand < 0 ? 'var(--red)' : 'var(--green)')
+    + '</div>'
+    + '<div style="font-size:11.5px;color:var(--text3);">Cash In Hand = Opening Balance + Total Received − Total Expenses − Total Advance</div>';
+  if (r.pendingCount) h += '<div style="margin-top:10px;"><button class="btn-sm btn-modify" onclick="showAdminPage(\'pettycash-pending\')">⏳ ' + r.pendingCount + ' Pending Request' + (r.pendingCount > 1 ? 's' : '') + '</button></div>';
+  h += '<div style="font-size:11px;color:var(--text3);margin-top:8px;">Updated: ' + escHtml_(r.updatedAt) + '</div>';
+  box.innerHTML = h;
+}
+function pcRenderTxn_() {
+  const r = PC_DATA_.txn, box = document.getElementById('pcBox-txn');
+  if (!r || !box) return;
+  const q = ((document.getElementById('pcSearch-txn') || {}).value || '').trim().toLowerCase();
+  const items = r.items.map((x, i) => Object.assign({ n: i + 1 }, x))
+    .filter(x => !q || [x.details, x.paidBy, x.rcvdBy, x.date].join(' ').toLowerCase().indexOf(q) > -1);
+  let h = '<div style="font-size:12.5px;margin-bottom:4px;">Opening Balance: <b>' + pcInr_(r.openBal) + '</b> · ' + r.items.length + ' Entries</div>';
+  if (!items.length) { box.innerHTML = h + '<div style="padding:10px;opacity:.7;">No entries.</div>'; return; }
+  h += pcTable_(['#', 'Date', 'Details', 'Expense', 'Paid By', 'Cash Received', 'Received By', 'Balance'],
+    items.map(x => [x.n, escHtml_(x.date), escHtml_(x.details),
+      x.expAmt ? '<span style="color:var(--red);">' + pcInr_(x.expAmt) + '</span>' : '', escHtml_(x.paidBy || ''),
+      x.cashRec ? '<span style="color:var(--green);">' + pcInr_(x.cashRec) + '</span>' : '', escHtml_(x.rcvdBy || ''),
+      '<b style="' + (x.balance < 0 ? 'color:var(--red);' : '') + '">' + pcInr_(x.balance) + '</b>']),
+    q ? null : ['', '', 'Total', pcInr_(r.expenses), '', pcInr_(r.received), '', '']);
+  box.innerHTML = h;
+}
+function pcRenderAdvance_() {
+  const r = PC_DATA_.advance, box = document.getElementById('pcBox-advance');
+  if (!r.items.length) { box.innerHTML = '<div style="padding:10px;opacity:.7;">No advance entries in ' + escHtml_(r.month) + '.</div>'; return; }
+  box.innerHTML = pcTable_(['#', 'Date', 'Narration', 'Amount', 'Given By', 'Taken By'],
+    r.items.map((x, i) => [i + 1, escHtml_(x.date), escHtml_(x.narration), '<b style="color:var(--orange);">' + pcInr_(x.amount) + '</b>', escHtml_(x.givenBy), escHtml_(x.takenBy)]),
+    ['', '', 'Total', pcInr_(r.total), '', '']);
+}
+function pcRenderCategory_() {
+  const r = PC_DATA_.category, box = document.getElementById('pcBox-category');
+  if (!r.categories.length) { box.innerHTML = '<div style="padding:10px;opacity:.7;">No expenses in ' + escHtml_(r.month) + '.</div>'; return; }
+  let h = '<div style="font-size:12.5px;margin-bottom:4px;">Total Expenses: <b>' + pcInr_(r.total) + '</b></div>'
+    + pcTable_(['#', 'Category', 'Amount', 'Entries', '% Of Total'],
+      r.categories.map((c, i) => [i + 1, escHtml_(c.name), '<b>' + pcInr_(c.total) + '</b>', c.rows.length, (r.total ? (c.total / r.total * 100).toFixed(1) : '0') + '%']));
+  h += '<div class="quick-actions-title" style="margin-top:14px;">🔹 Category Details</div>';
+  r.categories.forEach(c => {
+    h += '<details style="border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:8px;"><summary style="cursor:pointer;font-weight:700;color:var(--purple);">'
+      + escHtml_(c.name) + ' — ' + pcInr_(c.total) + ' (' + c.rows.length + ')</summary>'
+      + pcTable_(['#', 'Date', 'Details', 'Amount', 'Paid By'], c.rows.map((x, i) => [i + 1, escHtml_(x.date), escHtml_(x.details), pcInr_(x.amount), escHtml_(x.paidBy)]))
+      + '</details>';
+  });
+  box.innerHTML = h;
+}
+function pcChangesTable_(fields) {
+  return pcTable_(['Field', 'Old Value', 'New Value'], fields.map(f => [escHtml_(f.col),
+    '<span style="color:var(--red);">' + escHtml_(f.oldV || '-') + '</span>', '<b style="color:var(--green);">' + escHtml_(f.newV || '-') + '</b>']));
+}
+function pcRenderPending_() {
+  const r = PC_DATA_.pending, box = document.getElementById('pcBox-pending');
+  pcBadges_(r.items.length);
+  PC_SEEN_ = r.items.map(x => x.id).join('|');
+  if (!r.items.length) { box.innerHTML = '<div style="padding:10px;">No pending requests. 👍</div>'; return; }
+  box.innerHTML = r.items.map((x, i) => '<div class="leave-card">'
+    + '<div class="leave-card-top"><div><div class="leave-card-title">' + escHtml_(x.by) + '</div><div class="leave-card-id">' + escHtml_(x.id) + ' · ' + escHtml_(pcTs_(x.submittedAt)) + '</div></div><span class="pill pill-pending">Pending</span></div>'
+    + '<div class="leave-card-date">🧾 ' + escHtml_(x.entry) + '</div>'
+    + '<div class="leave-card-reason">' + escHtml_(x.reason) + '</div>'
+    + pcChangesTable_(x.fields)
+    + '<div id="pcRj' + i + '" style="display:none;margin-top:8px;" class="form-group"><label>Reject Reason</label><textarea id="pcRr' + i + '" placeholder="Why is this request rejected?"></textarea></div>'
+    + '<div class="leave-card-actions"><button class="btn-sm btn-approve" id="pcAb' + i + '" onclick="pcApprove_(' + i + ')">✓ Approve</button>'
+    + '<button class="btn-sm btn-reject" id="pcRb' + i + '" onclick="pcReject_(' + i + ')">✗ Reject</button></div></div>').join('');
+}
+async function pcApprove_(i) {
+  const x = PC_DATA_.pending.items[i];
+  if (!x || !confirm('Approve ' + x.id + '?\n\nThe petty cash entry will be updated.')) return;
+  const ab = document.getElementById('pcAb' + i), rb = document.getElementById('pcRb' + i);
+  ab.disabled = rb.disabled = true; ab.textContent = 'Saving...';
+  try {
+    const res = await pcCall_('approve', { id: x.id }, true);
+    if (!res || !res.ok) { alert((res && res.error) || 'Could not approve.'); ab.disabled = rb.disabled = false; ab.textContent = '✓ Approve'; return; }
+    toast(res.message || 'Approved', 'success');
+    pcLoad_('pending');
+  } catch (e) { toast('Connection problem. Open Edit History to check before trying again.', 'error'); pcLoad_('pending'); }
+}
+async function pcReject_(i) {
+  const x = PC_DATA_.pending.items[i];
+  const box = document.getElementById('pcRj' + i), rb = document.getElementById('pcRb' + i), ab = document.getElementById('pcAb' + i);
+  if (box.style.display === 'none') { box.style.display = 'block'; rb.textContent = '✗ Confirm Reject'; return; }
+  const reason = (document.getElementById('pcRr' + i).value || '').trim();
+  if (reason.length < 3) { toast('Please enter the reject reason.', 'error'); return; }
+  ab.disabled = rb.disabled = true; rb.textContent = 'Saving...';
+  try {
+    const res = await pcCall_('reject', { id: x.id, reason: reason }, true);
+    if (!res || !res.ok) { alert((res && res.error) || 'Could not reject.'); ab.disabled = rb.disabled = false; rb.textContent = '✗ Confirm Reject'; return; }
+    toast(res.message || 'Rejected', 'success');
+    pcLoad_('pending');
+  } catch (e) { toast('Connection problem. Open Edit History to check before trying again.', 'error'); pcLoad_('pending'); }
+}
+function pcRenderHistory_() {
+  const r = PC_DATA_.history, box = document.getElementById('pcBox-history');
+  if (!r.items.length) { box.innerHTML = '<div style="padding:10px;opacity:.7;">No history yet.</div>'; return; }
+  box.innerHTML = pcTable_(['Request ID', 'Status', 'Requested By', 'Submitted', 'Changes (Old → New)', 'Reason', 'Action On', 'Action By', 'Remarks'],
+    r.items.map(x => [escHtml_(x.id),
+      '<span class="pill ' + (x.status === 'APPROVED' ? 'pill-approved' : x.status === 'REJECTED' ? 'pill-rejected' : 'pill-cancelled') + '">' + escHtml_(properCase(x.status)) + '</span>',
+      escHtml_(x.by), escHtml_(pcTs_(x.submittedAt)),
+      x.fields.map(f => '<b>' + escHtml_(f.col) + ':</b> <span style="color:var(--red);">' + escHtml_(f.oldV || '-') + '</span> → <span style="color:var(--green);">' + escHtml_(f.newV || '-') + '</span>').join('<br>'),
+      escHtml_(x.reason), escHtml_(pcTs_(x.actionedAt)), escHtml_(x.actionedBy), escHtml_(x.remarks)]));
+}
+async function pcTool_(act, btn) {
+  if (!pcIsMis_()) return;
+  const names = { sendDaily: 'Send the daily email to all staff now?', sendMonthly: 'Send last month\'s summary to all staff now?', refresh: 'Refresh the Petty Cash sheet now?' };
+  if (!confirm(names[act])) return;
+  if (btn.dataset.busy) return;
+  btn.dataset.busy = '1'; btn.style.opacity = '.5';
+  toast('Working... please wait', 'info');
+  try {
+    const res = await pcCall_(act, {}, true);
+    if (!res || !res.ok) toast((res && res.error) || 'Could not complete.', 'error');
+    else toast(res.message || 'Done', 'success');
+  } catch (e) { toast('Connection problem. Please check before trying again.', 'error'); }
+  finally { delete btn.dataset.busy; btn.style.opacity = ''; }
+}
+// MIS popup — only while on Home, and only when the list of pending requests has changed.
+async function pcPopupCheck_(badgeOnly) {
+  if (!pcIsMis_() || !navigator.onLine) return;
+  try {
+    const res = await pcCall_('pending');
+    if (!res || !res.ok) return;
+    pcBadges_(res.items.length);
+    if (badgeOnly) return;
+    const sig = res.items.map(x => x.id).join('|');
+    if (!res.items.length) { PC_SEEN_ = ''; return; }
+    if (sig === PC_SEEN_) return;
+    PC_SEEN_ = sig;
+    _queueAutoPopup_(() => pcShowPopup_(res.items));
+  } catch (e) {}
+}
+function pcShowPopup_(items) {
+  const old = document.getElementById('pcPopupModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pcPopupModal'; div.className = 'modal-overlay show';
+  div.innerHTML = '<div class="modal-box" style="max-width:400px;"><div class="modal-title">💰 Petty Cash Edit Requests</div>'
+    + dpTable_(['Requested By', 'Change', 'Reason'], items.slice(0, 8).map(x => [escHtml_(x.by) + '<br><span style="opacity:.65;">' + escHtml_(pcTs_(x.submittedAt)) + '</span>',
+      x.fields.map(f => escHtml_(f.col) + ': ' + escHtml_(f.oldV || '-') + ' → <b>' + escHtml_(f.newV || '-') + '</b>').join('<br>'), escHtml_(x.reason)]))
+    + (items.length > 8 ? '<div style="font-size:11px;opacity:.7;">+ ' + (items.length - 8) + ' more</div>' : '')
+    + '<div style="display:flex;gap:8px;"><button class="btn-secondary" style="flex:1;" onclick="document.getElementById(\'pcPopupModal\').remove();_drainAutoPopupQueue_();">Later</button>'
+    + '<button class="btn-primary" style="flex:1;" onclick="document.getElementById(\'pcPopupModal\').remove();showAdminPage(\'pettycash-pending\');">Open</button></div></div>';
+  document.body.appendChild(div);
+}
+if (!window.__pcPopupTimer) {
+  window.__pcPopupTimer = setInterval(() => { try { pcPopupCheck_(false); } catch (e) {} }, 3 * 60 * 1000);
+  setTimeout(() => { try { pcPopupCheck_(false); } catch (e) {} }, 12000);
+}
 </script>
 </body>
 </html>
