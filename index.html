@@ -35098,7 +35098,9 @@ async function celebLoad_() {
       if (!items.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
       let h = '<div class="celeb-t">🎉 Birthdays & Anniversaries</div>';
       items.forEach(function (x) {
-        const when = x.inDays === 0 ? 'Today' : (x.inDays === 1 ? 'Tomorrow' : x.date.slice(0, 5));
+        const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dd = parseInt(x.date.slice(0, 2), 10) + ' ' + mn[parseInt(x.date.slice(3, 5), 10) - 1];
+        const when = x.inDays === 0 ? 'Today · ' + dd : (x.inDays === 1 ? 'Tomorrow · ' + dd : dd);
         h += '<div class="celeb-r' + (x.inDays === 0 ? ' today' : '') + '"><span>' + (x.type === 'Birthday' ? '🎂 ' : '💍 ') + escHtml(properCase(x.name)) + ' — ' + x.type + '</span><span class="celeb-w">' + when + '</span></div>';
       });
       box.innerHTML = h; box.style.display = '';
