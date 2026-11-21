@@ -1975,6 +1975,30 @@ div[style*="display: flex"] > .btn-secondary:not([style*="flex"]):not([style*="w
 div[style*="display:flex"] > .btn-primary:not([style*="flex"]):not([style*="width"]),
 div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="width"]) { width: auto; flex: 0 0 auto; padding: 9px 14px; }
 </style>
+<style id="vsrCelebCss">
+.celeb-card{margin:10px 12px 0;background:#fff;border:1.5px solid var(--gold,#C9A227);border-radius:12px;padding:8px 12px;}
+.celeb-card .celeb-t{font-weight:800;font-size:12.5px;color:var(--purple,#4B2A85);margin-bottom:4px;}
+.celeb-card .celeb-r{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0;border-top:1px dashed var(--border,#E2D9EE);}
+.celeb-card .celeb-r.today{font-weight:800;color:#b45309;}
+.celeb-card .celeb-w{color:var(--dmuted,#7D6E8C);white-space:nowrap;}
+</style>
+<style id="vsrSnapCss">
+.snap-card{margin:10px 12px 0;background:#fff;border:1.5px solid var(--border,#E2D9EE);border-radius:12px;padding:10px 12px;}
+.snap-card .snap-t{font-weight:800;font-size:12.5px;color:var(--purple,#4B2A85);margin-bottom:6px;display:flex;justify-content:space-between;}
+.snap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;}
+.snap-box{background:var(--purple-bg,#F5EEFB);border-radius:10px;padding:8px 10px;text-align:center;}
+.snap-v{font-size:18px;font-weight:800;color:var(--purple,#4B2A85);}
+.snap-l{font-size:10.5px;font-weight:700;color:var(--dmuted,#7D6E8C);margin-top:2px;}
+.snap-bar{height:7px;background:#eadff5;border-radius:6px;overflow:hidden;margin-top:6px;}
+.snap-bar>i{display:block;height:100%;background:linear-gradient(90deg,#C9A227,#7B2FBE);}
+</style>
+<style id="vsrNotifCss">
+.notif-bell{position:relative;}
+.notif-n{position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:800;line-height:15px;}
+.notif-row{border-top:1px dashed var(--border,#E2D9EE);padding:7px 2px;font-size:12.5px;}
+.notif-row b{color:var(--purple,#4B2A85);}
+.notif-row .nt{color:var(--dmuted,#7D6E8C);font-size:11px;}
+</style>
 </head>
 <body>
 
@@ -2090,6 +2114,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <button class="tb-chip" id="syncNowBtn" onclick="syncNowClicked()" style="display:none;background:var(--gold);border-color:var(--gold);color:#4a3600;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="empRefreshBtn" onclick="manualRefresh('emp')" title="Refresh now">🔄</button>
         <button class="tb-chip" id="empSearchBtn" onclick="openEmpQuickSearch()" title="Search sections & options">🔍</button>
+        <button class="tb-chip notif-bell" id="notifBell-emp" onclick="notifOpen_()" title="Notifications">🔔<span class="notif-n" style="display:none;"></span></button>
         <button class="tb-chip sections-fab-top" id="empSectionsFab" onclick="showEmpPage('modulepicker')">🏠 Home</button>
                 <button class="tb-chip logout-chip" onclick="logout('emp')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
@@ -2124,6 +2149,9 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <div class="home-header-name" id="empModulePickerName">Employee</div>
         <div class="home-header-sub" id="empModulePickerMeta"></div>
       </div>
+      <div id="snapCard-emp" class="snap-card" style="display:none;"></div>
+      <div id="progCard-emp" class="snap-card" style="display:none;"></div>
+      <div id="celebCard-emp" class="celeb-card" style="display:none;"></div>
       <div class="quick-actions-section">
         <div class="quick-actions-title">📊 Dashboard</div>
         <div class="quick-actions-grid">
@@ -3109,6 +3137,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <button class="tb-chip" id="syncNowBtnAdmin" onclick="syncNowClicked()" style="display:none;background:var(--gold);border-color:var(--gold);color:#4a3600;font-weight:800;">📤 Sync</button>
         <button class="tb-chip" id="adminRefreshBtn" onclick="manualRefresh('admin')" title="Refresh now">🔄</button>
         <button class="tb-chip" id="adminSearchBtn" onclick="openAdminQuickSearch()" title="Search sections & options">🔍</button>
+        <button class="tb-chip notif-bell" id="notifBell-admin" onclick="notifOpen_()" title="Notifications">🔔<span class="notif-n" style="display:none;"></span></button>
         <button class="tb-chip sections-fab-top" id="adminSectionsFab" onclick="showAdminPage('modulepicker')">🏠 Home</button>
                 <button class="tb-chip logout-chip" onclick="logout('admin')" title="Logout"><span class="logout-icon">⏻</span> Logout</button>
       </div>
@@ -3135,6 +3164,9 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <div class="home-header-name" id="adminModulePickerName">Admin</div>
         <div class="home-header-sub" id="adminModulePickerMeta"></div>
       </div>
+      <div id="snapCard-admin" class="snap-card" style="display:none;"></div>
+      <div id="progCard-admin" class="snap-card" style="display:none;"></div>
+      <div id="celebCard-admin" class="celeb-card" style="display:none;"></div>
       <div class="quick-actions-section">
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
@@ -34961,6 +34993,177 @@ if (!window.__pcPopupTimer) {
   window.__pcPopupTimer = setInterval(() => { try { pcPopupCheck_(false); } catch (e) {} }, 3 * 60 * 1000);
   setTimeout(() => { try { pcPopupCheck_(false); } catch (e) {} }, 12000);
 }
+
+// ══════════════════════════════════════
+// HOME — Birthday & Anniversary card (colleagues, today and the next 7 days)
+// ══════════════════════════════════════
+let CELEB_AT_ = 0;
+async function celebLoad_() {
+  try {
+    if (Date.now() - CELEB_AT_ < 600000) return;
+    const res = await jsonpReliable({ page: 'celebrationsAPI' });
+    CELEB_AT_ = Date.now();
+    const items = (res && res.items) || [];
+    ['emp', 'admin'].forEach(function (w) {
+      const box = document.getElementById('celebCard-' + w);
+      if (!box) return;
+      if (!items.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      let h = '<div class="celeb-t">🎉 Birthdays & Anniversaries</div>';
+      items.forEach(function (x) {
+        const when = x.inDays === 0 ? 'Today' : (x.inDays === 1 ? 'Tomorrow' : x.date.slice(0, 5));
+        h += '<div class="celeb-r' + (x.inDays === 0 ? ' today' : '') + '"><span>' + (x.type === 'Birthday' ? '🎂 ' : '💍 ') + escHtml(properCase(x.name)) + ' — ' + x.type + '</span><span class="celeb-w">' + when + '</span></div>';
+      });
+      box.innerHTML = h; box.style.display = '';
+    });
+  } catch (e) {}
+}
+(function () {
+  const se = window.showEmpPage, sa = window.showAdminPage;
+  window.showEmpPage = function (p) { const r = se.apply(this, arguments); if (p === 'modulepicker') celebLoad_(); return r; };
+  window.showAdminPage = function (p) { const r = sa.apply(this, arguments); if (p === 'modulepicker') celebLoad_(); return r; };
+  setTimeout(function () { celebLoad_(); }, 4000);
+})();
+
+// ══════════════════════════════════════
+// HOME — Today Snapshot (uses the existing DSR / Walk-in / Leave data)
+// ══════════════════════════════════════
+let SNAP_AT_ = 0;
+async function snapLoad_(force) {
+  try {
+    if (!force && Date.now() - SNAP_AT_ < 120000) return;
+    const adminOn = !!(document.getElementById('adminApp') && document.getElementById('adminApp').classList.contains('active'));
+    const who = adminOn ? 'admin' : 'emp';
+    const box = document.getElementById('snapCard-' + who);
+    if (!box) return;
+    const today = toYMD(new Date());
+    const [dsrToday, dsrStatus, dsrMissing, wk] = await Promise.all([
+      jsonpReliable(kpiEmpParams(who, { page: 'dsrDateRangeJSON', start: today, end: today })).catch(() => null),
+      jsonpReliable(kpiEmpParams(who, { page: 'dsrStatusJSON' })).catch(() => null),
+      jsonpReliable(kpiEmpParams(who, { page: 'dsrMissingJSON' })).catch(() => null),
+      who === 'admin'
+        ? jsonpReliable({ page: 'walkinReportAPI', role: 'ADMIN' }).catch(() => null)
+        : jsonpReliable({ page: 'walkinReportAPI', role: 'EMP', empName: state.empName, start: today, end: today }).catch(() => null)
+    ]);
+    SNAP_AT_ = Date.now();
+    const boxes = [];
+    const entries = (dsrToday && dsrToday.ok && dsrToday.details) ? dsrToday.details.length : null;
+    boxes.push(['🧾', entries == null ? '—' : entries, "Today's DSR Entries"]);
+    let pct = null;
+    if (dsrStatus && dsrStatus.ok && dsrStatus.rows && dsrStatus.rows.length) {
+      const done = r => Number(r.purchases) === 0 || String(r.status).toLowerCase().indexOf('complete') === 0;
+      if (who === 'admin') pct = Math.round(dsrStatus.rows.filter(done).length * 100 / dsrStatus.rows.length);
+      else pct = done(dsrStatus.rows[0]) ? 100 : parseInt(String(dsrStatus.rows[0].dsrPct), 10) || 0;
+    }
+    boxes.push(['📶', pct == null ? '—' : pct + '%', "Yesterday's DSR Complete"]);
+    if (dsrMissing && dsrMissing.ok) boxes.push(['🚫', dsrMissing.rows.reduce((a, r) => a + (Number(r.totalMissing) || 0), 0), 'Missing DSR (Month)']);
+    let walk = null, deals = null, conv = null;
+    if (wk && wk.ok) {
+      if (who === 'admin' && wk.todayStore) { deals = wk.todayStore.customerDeals; conv = Math.round(wk.todayStore.conversionPct || 0); }
+      else if (wk.totals) { walk = wk.totals.walkins; deals = wk.totals.deals; conv = Math.round(wk.totals.conversionPct || 0); }
+    }
+    if (deals != null) boxes.push(['🚶', deals, "Today's Customer Deals"]);
+    if (conv != null) boxes.push(['🎯', conv + '%', 'Conversion Today']);
+    if (who === 'admin' && state.pendingBadgeCount != null) boxes.push(['⏳', state.pendingBadgeCount || 0, 'Leave Approvals Pending']);
+    let h = '<div class="snap-t"><span>📊 Today Snapshot</span><span style="cursor:pointer;" onclick="snapLoad_(true)">🔄</span></div><div class="snap-grid">';
+    boxes.forEach(b => { h += '<div class="snap-box"><div class="snap-v">' + b[0] + ' ' + b[1] + '</div><div class="snap-l">' + b[2] + '</div></div>'; });
+    h += '</div>';
+    if (pct != null) h += '<div class="snap-bar" title="Yesterday DSR complete"><i style="width:' + Math.max(0, Math.min(100, pct)) + '%"></i></div>';
+    box.innerHTML = h; box.style.display = '';
+  } catch (e) {}
+}
+(function () {
+  const se = window.showEmpPage, sa = window.showAdminPage;
+  window.showEmpPage = function (p) { const r = se.apply(this, arguments); if (p === 'modulepicker') snapLoad_(); return r; };
+  window.showAdminPage = function (p) { const r = sa.apply(this, arguments); if (p === 'modulepicker') snapLoad_(); return r; };
+  setTimeout(function () { snapLoad_(); }, 5000);
+})();
+
+// ══════════════════════════════════════
+// NOTIFICATION CENTER — keeps the last 30 automatic popups so they can be read again
+// ══════════════════════════════════════
+function notifKey_() { return 'vsrNotif_' + String(state.empName || state.adminEmail || state.adminName || 'user').toLowerCase(); }
+function notifRead_() { try { return JSON.parse(localStorage.getItem(notifKey_()) || '{"seen":0,"items":[]}'); } catch (e) { return { seen: 0, items: [] }; } }
+function notifWrite_(d) { try { localStorage.setItem(notifKey_(), JSON.stringify(d)); } catch (e) {} }
+function notifStamp_(t) { const d = new Date(t), z = n => ('0' + n).slice(-2); return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }
+function notifAdd_(el) {
+  const label = _popupLabel_(el);
+  const text = (el.textContent || '').replace(/\s+/g, ' ').replace(/Minimize|✕/g, '').trim().slice(0, 220);
+  const d = notifRead_(), day = notifStamp_(Date.now()).slice(0, 10);
+  const i = d.items.findIndex(x => x.label === label && notifStamp_(x.t).slice(0, 10) === day);
+  if (i >= 0) d.items.splice(i, 1);
+  d.items.unshift({ label: label, text: text, t: Date.now() });
+  d.items = d.items.slice(0, 30);
+  notifWrite_(d); notifBadge_();
+}
+function notifBadge_() {
+  const d = notifRead_(), n = d.items.filter(x => x.t > d.seen).length;
+  document.querySelectorAll('.notif-bell .notif-n').forEach(b => { b.textContent = n; b.style.display = n ? '' : 'none'; });
+}
+function notifOpen_() {
+  const d = notifRead_();
+  let h = '<div class="modal-title" style="font-weight:800;">🔔 Notifications</div>';
+  if (!d.items.length) h += '<div class="empty-state"><p>No notifications yet.</p></div>';
+  d.items.forEach(x => { h += '<div class="notif-row"><b>' + escHtml(x.label) + '</b> <span class="nt">' + notifStamp_(x.t) + '</span><div>' + escHtml(x.text) + '</div></div>'; });
+  if (d.items.length) h += '<div style="margin-top:10px;"><button class="btn-sm btn-modify" onclick="notifClear_()">Clear All</button></div>';
+  slOpenModal(h);
+  d.seen = Date.now(); notifWrite_(d); notifBadge_();
+}
+function notifClear_() { notifWrite_({ seen: Date.now(), items: [] }); notifOpen_(); }
+(function () {
+  const orig = window._runAutoPopup_;
+  window._runAutoPopup_ = function (showFn, silent) {
+    const w = function () { showFn(); try { const el = _topOpenAutoModal_(); if (el) notifAdd_(el); } catch (e) {} };
+    return orig.call(this, w, silent);
+  };
+  setTimeout(notifBadge_, 3000);
+  setInterval(notifBadge_, 60000);
+})();
+
+// ══════════════════════════════════════
+// HOME — Leaderboard (admin) / My Progress (employee), from the KPI till-date data
+// ══════════════════════════════════════
+let PROG_AT_ = 0;
+async function progLoad_(force) {
+  try {
+    if (!force && Date.now() - PROG_AT_ < 300000) return;
+    const adminOn = !!(document.getElementById('adminApp') && document.getElementById('adminApp').classList.contains('active'));
+    const who = adminOn ? 'admin' : 'emp';
+    const box = document.getElementById('progCard-' + who);
+    if (!box) return;
+    const res = await jsonpReliable(kpiEmpParams(who, { page: 'kpiTillDateJSON' })).catch(() => null);
+    PROG_AT_ = Date.now();
+    if (!res || !res.ok || !res.rows || !res.rows.length) { box.style.display = 'none'; return; }
+    let h = '';
+    if (who === 'admin') {
+      const medals = ['🥇', '🥈', '🥉'];
+      h = '<div class="snap-t"><span>🏆 Top Performers (This Month)</span></div>';
+      res.rows.slice(0, 3).forEach((r, i) => {
+        const sc = parseFloat(String(r.overallScore).replace('%', '')) || 0;
+        h += '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:12.5px;"><span>' + medals[i] + ' ' + escHtml(properCase(r.employee)) + '</span><b>' + escHtml(String(r.overallScore)) + '</b></div><div class="snap-bar"><i style="width:' + Math.max(0, Math.min(100, sc)) + '%"></i></div></div>';
+      });
+    } else {
+      const r = res.rows[0];
+      const bar = (label, val) => { const n = parseFloat(String(val).replace('%', '')) || 0; return '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:12.5px;"><span>' + label + '</span><b>' + escHtml(String(val)) + '</b></div><div class="snap-bar"><i style="width:' + Math.max(0, Math.min(100, n)) + '%"></i></div></div>'; };
+      h = '<div class="snap-t"><span>🎯 My Progress (This Month)</span><span>Grade: <b>' + escHtml(String(r.grade || '—')) + '</b></span></div>'
+        + bar('Overall Score', r.overallScore) + bar('Purchase Achievement', r.purchAchPct) + bar('DSR Score', r.dsrScore);
+    }
+    box.innerHTML = h; box.style.display = '';
+  } catch (e) {}
+}
+// Leaving Home: any open automatic popup goes to the minimized tray instead of staying on top of another page.
+(function () {
+  function tuck() {
+    try {
+      document.querySelectorAll('.modal-overlay.show, .loy-img-modal.open').forEach(function (el) {
+        if (el.querySelector('.vsr-min-btn')) _minimizePopup_(el);
+      });
+    } catch (e) {}
+  }
+  const se = window.showEmpPage, sa = window.showAdminPage;
+  window.showEmpPage = function (p) { const r = se.apply(this, arguments); if (p === 'modulepicker') progLoad_(); else tuck(); return r; };
+  window.showAdminPage = function (p) { const r = sa.apply(this, arguments); if (p === 'modulepicker') progLoad_(); else tuck(); return r; };
+  setTimeout(function () { progLoad_(); }, 6000);
+})();
 </script>
 </body>
 </html>
