@@ -1966,6 +1966,82 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
 #pwrModal.show .vsr-pg-bar button,
 #gaEditModal.show .vsr-pg-bar button { margin-top: 0; }
 </style>
+<style id="vsrPageRich">
+/* Page-style windows: bordered card, clear title, bordered rows and inputs */
+#blModal.show > .modal-box,
+#slModal.show > .modal-box,
+#fmModal.show > .modal-box,
+#dsrEditCtlModal.show > .modal-box,
+#mailIssModal.show > .modal-box,
+#pwrModal.show > .modal-box,
+#gaEditModal.show > .modal-box { background: #fff !important; border: 1.5px solid var(--gold, #C9A227) !important; border-radius: 14px !important; box-shadow: 0 2px 12px rgba(75, 42, 133, .10) !important; padding: 0 16px 16px !important; margin: 4px auto 16px !important; }
+#blModal.show > .modal-box .vsr-pg-bar,
+#slModal.show > .modal-box .vsr-pg-bar,
+#fmModal.show > .modal-box .vsr-pg-bar,
+#dsrEditCtlModal.show > .modal-box .vsr-pg-bar,
+#mailIssModal.show > .modal-box .vsr-pg-bar,
+#pwrModal.show > .modal-box .vsr-pg-bar,
+#gaEditModal.show > .modal-box .vsr-pg-bar { background: #fff !important; border-bottom: 1px solid var(--border, #E2D9EE); margin: 0 -16px 10px !important; padding: 10px 16px !important; border-radius: 14px 14px 0 0; }
+#blModal.show > .modal-box .modal-title,
+#slModal.show > .modal-box .modal-title,
+#fmModal.show > .modal-box .modal-title,
+#dsrEditCtlModal.show > .modal-box .modal-title,
+#mailIssModal.show > .modal-box .modal-title,
+#pwrModal.show > .modal-box .modal-title,
+#gaEditModal.show > .modal-box .modal-title { font-size: 17px !important; font-weight: 800 !important; color: var(--purple, #4B2A85) !important; border-bottom: 2px solid var(--gold, #C9A227); padding-bottom: 8px; margin-bottom: 10px !important; }
+#blModal.show > .modal-box .kd-note,
+#slModal.show > .modal-box .kd-note,
+#fmModal.show > .modal-box .kd-note,
+#dsrEditCtlModal.show > .modal-box .kd-note,
+#mailIssModal.show > .modal-box .kd-note,
+#pwrModal.show > .modal-box .kd-note,
+#gaEditModal.show > .modal-box .kd-note { background: var(--purple-bg, #F5EEFB); border: 1px solid var(--border, #E2D9EE); border-radius: 8px; padding: 7px 10px; margin-bottom: 10px; font-size: 11.5px !important; }
+#blModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"],
+#slModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"],
+#fmModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"],
+#dsrEditCtlModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"],
+#mailIssModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"],
+#pwrModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"],
+#gaEditModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"] { border: 1.5px solid var(--border, #E2D9EE); border-radius: 10px; padding: 8px 12px; margin: 6px 0 !important; background: #fff; }
+#blModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover,
+#slModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover,
+#fmModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover,
+#dsrEditCtlModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover,
+#mailIssModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover,
+#pwrModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover,
+#gaEditModal.show > .modal-box > div[style*="display:flex"][style*="align-items:center"]:hover { border-color: var(--purple-mid, #7B2FBE); background: var(--purple-bg, #F5EEFB); }
+#blModal.show > .modal-box input[type="number"],
+#slModal.show > .modal-box input[type="number"],
+#fmModal.show > .modal-box input[type="number"],
+#dsrEditCtlModal.show > .modal-box input[type="number"],
+#mailIssModal.show > .modal-box input[type="number"],
+#pwrModal.show > .modal-box input[type="number"],
+#gaEditModal.show > .modal-box input[type="number"],
+#blModal.show > .modal-box input[type="text"],
+#slModal.show > .modal-box input[type="text"],
+#fmModal.show > .modal-box input[type="text"],
+#dsrEditCtlModal.show > .modal-box input[type="text"],
+#mailIssModal.show > .modal-box input[type="text"],
+#pwrModal.show > .modal-box input[type="text"],
+#gaEditModal.show > .modal-box input[type="text"],
+#blModal.show > .modal-box select,
+#slModal.show > .modal-box select,
+#fmModal.show > .modal-box select,
+#dsrEditCtlModal.show > .modal-box select,
+#mailIssModal.show > .modal-box select,
+#pwrModal.show > .modal-box select,
+#gaEditModal.show > .modal-box select { border: 1.5px solid var(--border, #CFC3E0) !important; border-radius: 8px !important; padding: 6px 8px !important; background: #fff; }
+</style>
+<style id="vsrPageTop">
+/* Page-style windows start below the top header so it stays visible */
+#blModal.show,
+#slModal.show,
+#fmModal.show,
+#dsrEditCtlModal.show,
+#mailIssModal.show,
+#pwrModal.show,
+#gaEditModal.show { top: var(--pg-top, 0px) !important; height: auto !important; bottom: 0 !important; }
+</style>
 <style id="vsrCompactButtons">
 /* Smaller default buttons; buttons sitting beside an input in a flex row stay compact instead of stretching */
 .btn-primary { padding: 10px 14px; font-size: 13.5px; letter-spacing: 0.2px; }
@@ -9877,7 +9953,19 @@ async function submitLeave() {
   // without both, since these leave types cannot go for approval otherwise.
   let authMet = '';
   let authWho = '';
-  if (isDual && frqIsRequired('leave.authorityMet')) {
+  // Own birthday / marriage anniversary: Authority Met is not required.
+  let spDay = false;
+  if (isDual && frqIsRequired('leave.authorityMet') && (!document.getElementById('applyAuthMetCheck').checked || !getAuthWho())) {
+    try {
+      const starts = segments.map(x => x.startDate).sort(), ends = segments.map(x => x.endDate).sort();
+      const sp = await jsonpReliable({ page: 'specialDayAPI', empId: state.empId, empName: state.empName, start: starts[0], end: ends[ends.length - 1] });
+      spDay = !!(sp && sp.special);
+    } catch (e) { spDay = false; }
+  }
+  if (isDual && spDay) {
+    authMet = document.getElementById('applyAuthMetCheck').checked ? 'Yes' : '';
+    authWho = getAuthWho();
+  } else if (isDual && frqIsRequired('leave.authorityMet')) {
     const metChecked = document.getElementById('applyAuthMetCheck').checked;
     if (!metChecked) {
       toast('Please tick "Authority Met" before submitting ' + lt, 'error');
@@ -10136,17 +10224,17 @@ async function blLoad_() {
     const rest = items.filter(i => i.status !== 'Pending');
     let h = '';
     if (pend.length) {
-      h += dpTable_(['Employee', 'Leave', 'Why', ''], pend.map(i => [
-        '<b>' + escHtml_(i.name) + '</b><br><span style="opacity:.65;">' + escHtml_(i.empId) + (i.counter ? ' · ' + escHtml_(i.counter) : '') + '</span>',
-        escHtml_(i.type) + '<br>' + dr(i),
-        '<span style="color:#b3261e;">' + escHtml_(i.reason) + '</span>',
+      h += dpTable_(['Details', ''], pend.map(i => [
+        '<div style="text-align:left;"><b>' + escHtml_(i.name) + '</b> <span style="opacity:.65;">' + escHtml_(i.empId) + (i.counter ? ' · ' + escHtml_(i.counter) : '') + '</span>'
+        + '<br>' + escHtml_(i.type) + ' · ' + dr(i)
+        + '<br><span style="color:#b3261e;">' + escHtml_(i.reason) + '</span></div>',
         '<button class="btn-sm" style="background:#16a34a;color:#fff;margin-bottom:4px;" onclick="blAct_(' + i.row + ',\'allow\',this)">✓ Allow</button><br>'
         + '<button class="btn-sm" style="background:#b3261e;color:#fff;" onclick="blAct_(' + i.row + ',\'decline\',this)">✗ Decline</button>']));
     } else h += '<div style="padding:8px;">Nothing waiting. 👍</div>';
     if (rest.length) {
-      h += '<div style="font-weight:700;margin:10px 0 2px;text-align:left;">History</div>' + dpTable_(['Employee', 'Leave', 'Status'], rest.slice(0, 30).map(i => [
-        escHtml_(i.name), escHtml_(i.type) + '<br>' + dr(i),
-        '<b>' + escHtml_(i.status) + '</b>' + (i.by ? '<br><span style="opacity:.65;">' + escHtml_(i.at) + '</span>' : '')]));
+      h += '<div style="font-weight:700;margin:10px 0 2px;text-align:left;">History</div>' + dpTable_(['Details', 'Status'], rest.slice(0, 30).map(i => [
+        '<div style="text-align:left;"><b>' + escHtml_(i.name) + '</b><br>' + escHtml_(i.type) + ' · ' + dr(i) + '</div>',
+        '<div style="text-align:left;"><b>' + escHtml_(i.status) + '</b>' + (i.by ? '<br><span style="opacity:.65;">' + escHtml_(i.at) + '</span>' : '') + '</div>']));
     }
     body.style.textAlign = 'left'; body.style.padding = '0'; body.innerHTML = h;
     BL_SEEN_ = String(res.pendingCount || 0);
@@ -35163,6 +35251,22 @@ async function progLoad_(force) {
   window.showEmpPage = function (p) { const r = se.apply(this, arguments); if (p === 'modulepicker') progLoad_(); else tuck(); return r; };
   window.showAdminPage = function (p) { const r = sa.apply(this, arguments); if (p === 'modulepicker') progLoad_(); else tuck(); return r; };
   setTimeout(function () { progLoad_(); }, 6000);
+})();
+
+// Keeps --pg-top equal to the bottom edge of the visible top header, so page-style windows open beneath it.
+(function () {
+  function setTop() {
+    try {
+      const tb = document.querySelector('.app.active .topbar') || document.querySelector('.topbar');
+      const r = tb ? tb.getBoundingClientRect() : null;
+      const v = r && r.height > 0 ? Math.max(0, Math.round(r.bottom)) : 0;
+      document.documentElement.style.setProperty('--pg-top', v + 'px');
+    } catch (e) {}
+  }
+  let t = 0;
+  new MutationObserver(function () { if (!t) t = setTimeout(function () { t = 0; setTop(); }, 40); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('resize', setTop); window.addEventListener('scroll', setTop, { passive: true });
+  setTop();
 })();
 </script>
 </body>
