@@ -21429,11 +21429,20 @@ async function dsrMissBuild_(who) {
   const btn = document.getElementById('dsrMissBuildBtn-' + who);
   if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
   const box = document.getElementById('dsrMissingBox-' + who);
-  if (box) box.innerHTML = '<div class="loading"><span class="spinner"></span>Generating the Missing DSR report. This can take a minute...</div>';
+  if (box) box.innerHTML = '<div class="loading"><span class="spinner"></span>Generating the Missing DSR report. This can take 1-2 minutes...</div>';
   try {
-    const r = await mtCall_('wt', 'dsrMissing', { startDate: s, endDate: e, recipients: {} });
-    if (!r || !r.ok) throw new Error((r && (r.error || r.msg)) || 'Failed');
-    toast('✅ Missing DSR report generated', 'success');
+    const r = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', start: s, end: e, by: state.adminName || state.empName || 'MIS' }));
+    if (!r || !r.ok) throw new Error((r && r.error) || 'Request failed');
+    // The Walk-in / KPI script picks the request up within a minute; wait for it to finish.
+    let status = 'Pending', note = '';
+    for (let i = 0; i < 45 && (status === 'Pending' || status === 'Running'); i++) {
+      await new Promise(res => setTimeout(res, 4000));
+      const q = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', mode: 'status', id: r.id })).catch(() => null);
+      if (q && q.ok) { status = q.status; note = q.note || ''; }
+    }
+    if (status === 'Done') toast('✅ Missing DSR report generated', 'success');
+    else if (status === 'Error') throw new Error(note || 'The report could not be generated');
+    else toast('Still working in the background. Reload the list in a minute.', 'error');
   } catch (err) {
     toast('⚠️ ' + (err && err.message ? err.message : 'Could not generate'), 'error');
   }
