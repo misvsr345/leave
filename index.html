@@ -14551,27 +14551,19 @@ function renderExtraDsrResults() {
 
   rows.sort((a, b) => properCase(a.employee).localeCompare(properCase(b.employee)) || b.date.localeCompare(a.date));
 
-  let html = `<div style="display:grid;gap:8px;">`;
-  let lastEmp = null;
-  rows.forEach((f) => {
-    // v-add: employee-wise group heading, so multiple flagged dates for
-    // the same employee visually sit together instead of a flat list.
-    if (f.employee !== lastEmp) {
-      const empTotal = rows.filter(r => r.employee === f.employee).length;
-      html += `<div style="font-size:11.5px;font-weight:800;color:var(--purple,#6b21a8);margin:${lastEmp ? '10px' : '0'} 0 2px;">👤 ${properCase(f.employee)} <span style="font-weight:600;color:var(--text3);">(${empTotal} flagged)</span></div>`;
-      lastEmp = f.employee;
-    }
-    // v-add (BRO: "click chesthe e date lo ala jarigindo, aa detail
-    // kuda ravali" — tap any flagged card to see the actual DSR
-    // entries behind it, so a wrong date/duplicate/whatever can
-    // actually be found and fixed, not just known to exist).
-    html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">
-      <div class="kd-head"><span class="kd-name">${properCase(f.employee)}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">+${f.extraCount} Extra DSR</span></div>
-      <div class="kd-note">📅 ${fmtDMY(f.date)} — DSR entries: <b>${f.dsrEntries}</b> vs Walk-in purchases reported: <b>${f.walkinPurchased}</b></div>
-      <div style="font-size:10.5px;color:var(--purple,#6b21a8);margin-top:4px;font-weight:600;">Tap to see the entries →</div>
-    </div>`;
+  // One box per employee: every flagged date of that employee in a single table.
+  const groups = {}, order = [];
+  rows.forEach(f => { if (!groups[f.employee]) { groups[f.employee] = []; order.push(f.employee); } groups[f.employee].push(f); });
+  let html = '<div style="display:grid;gap:12px;">';
+  order.forEach(emp => {
+    const list = groups[emp], totalExtra = list.reduce((a, f) => a + (Number(f.extraCount) || 0), 0);
+    html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);">
+      <div class="kd-head"><span class="kd-name">${properCase(emp)}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">${totalExtra} Extra DSR</span></div>
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>DSR Entries</th><th>Walk-In Purchases</th><th>Extra</th><th></th></tr></thead><tbody>` +
+      list.map(f => `<tr style="cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')"><td>${fmtDMY(f.date)}</td><td>${f.dsrEntries}</td><td>${f.walkinPurchased}</td><td style="color:#c97a10;font-weight:700;">+${f.extraCount}</td><td><button class="btn-sm" onclick="event.stopPropagation();showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">View</button></td></tr>`).join('') +
+      `</tbody></table></div></div>`;
   });
-  html += `</div>`;
+  html += '</div>';
   box.innerHTML = html;
 }
 
@@ -14631,36 +14623,45 @@ async function loadExtraDsrDetailBody(employee, date) {
     const wk = res.walkin;
     html += `<div class="kd-table-wrap" style="margin-bottom:6px;"><table class="kd-table"><thead><tr><th>Source</th><th>Deals</th><th>Golden</th><th>Loyalty</th><th>Purchased</th><th>Non-Purchased</th></tr></thead><tbody>
       <tr><td><b>Walk-in Track</b></td><td>${wk ? wk.deals : '—'}</td><td>${wk ? wk.golden : '—'}</td><td>${wk ? wk.loyalty : '—'}</td><td>${wk ? wk.purchased : '—'}</td><td>${wk ? wk.nonPurchased : '—'}</td></tr>
-      <tr><td><b>DSR Entries</b></td><td colspan="5">${__extraDsrEntries.length} entr${__extraDsrEntries.length === 1 ? 'y' : 'ies'} — DSR No${__extraDsrEntries.length === 1 ? '' : 's'}: ${[...new Set(__extraDsrEntries.map(en => en.dsrNo))].join(', ')}</td></tr>
+      <tr><td><b>DSR Entries</b></td><td colspan="5">${__extraDsrEntries.length} item row${__extraDsrEntries.length === 1 ? '' : 's'} — DSR No${__extraDsrEntries.length === 1 ? '' : 's'}: ${[...new Set(__extraDsrEntries.map(en => en.dsrNo))].join(', ')}</td></tr>
       </tbody></table></div>`;
-    html += `<div class="kd-table-wrap" style="margin-bottom:12px;"><table class="kd-table"><thead><tr><th>DSR No</th><th>Customer</th><th>Item</th><th>Tag No</th><th>Time</th></tr></thead><tbody>` +
-      __extraDsrEntries.map(en => `<tr${en.possibleDuplicate ? ' style="background:#ffebee;"' : ''}><td>${en.dsrNo}</td><td>${properCase(en.customerName) || '—'}</td><td>${properCase(en.itemName) || '—'}</td><td>${en.tagNo || '—'}</td><td>${en.timestamp || '—'}</td></tr>`).join('') +
-      `</tbody></table></div>`;
-
-    const excessFrom_ = Math.min(__extraDsrEntries.length, Math.max(0, wk ? (Number(wk.purchased) || 0) : 0));
-    if (excessFrom_ < __extraDsrEntries.length) html += `<p style="font-size:12px;font-weight:700;color:#c97a10;margin:0 0 8px;">${__extraDsrEntries.length - excessFrom_} excess DSR${__extraDsrEntries.length - excessFrom_ === 1 ? '' : 's'} (not counted)</p>`; else html += '<p style="font-size:12px;font-weight:700;color:var(--green,#2e7d32);margin:0 0 8px;">No excess DSR on this date.</p>';
+    // Same customer + same mobile on this date = ONE DSR (same rule as the counting). Rows without a usable mobile group by DSR No.
+    const groups = [], gIdx = {};
     __extraDsrEntries.forEach((en, i) => {
-      html += `<div class="dsr-receipt-card" style="margin-bottom:8px;${en.possibleDuplicate ? 'border:1.5px solid var(--red);' : ''}">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${en.dsrNo}</span>
+      const mob = String(en.mobileNumber || '').replace(/\D/g, ''), nm = String(en.customerName || '').trim().toLowerCase();
+      const key = (mob.length >= 10 && nm) ? 'c:' + mob + '|' + nm : 'd:' + en.dsrNo;
+      if (gIdx[key] === undefined) { gIdx[key] = groups.length; groups.push({ items: [] }); }
+      groups[gIdx[key]].items.push({ en, i });
+    });
+    const purchasedN = Math.max(0, wk ? (Number(wk.purchased) || 0) : 0);
+    const excessGroupFrom = Math.min(groups.length, purchasedN);
+    const excessN = groups.length - excessGroupFrom;
+    html += excessN > 0
+      ? `<p style="font-size:12px;font-weight:700;color:#c97a10;margin:0 0 8px;">${excessN} excess DSR${excessN === 1 ? '' : 's'} (not counted)</p>`
+      : '<p style="font-size:12px;font-weight:700;color:var(--green,#2e7d32);margin:0 0 8px;">No excess DSR on this date.</p>';
+    groups.forEach((g, gi) => {
+      const f = g.items[0].en, isEx = gi >= excessGroupFrom;
+      const nos = [...new Set(g.items.map(x => x.en.dsrNo))].join(', ');
+      const dup = g.items.some(x => x.en.possibleDuplicate);
+      html += `<div class="dsr-receipt-card" style="margin-bottom:10px;${dup ? 'border:1.5px solid var(--red);' : ''}">
+        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${escHtml(nos)}</span>
           <span style="display:flex;gap:6px;align-items:center;">
-            ${en.possibleDuplicate ? '<span class="kd-pill red" style="font-size:9.5px;">⚠️ Possible Duplicate</span>' : ''}
-            ${i >= excessFrom_ ? '<span class="kd-pill" style="background:#fff3e0;color:#c97a10;font-size:9.5px;">Excess</span>' : ''}
-            <span class="kd-pill gold">${en.paymentStatus || '—'}</span>
+            ${dup ? '<span class="kd-pill red" style="font-size:9.5px;">⚠️ Possible Duplicate</span>' : ''}
+            ${isEx ? '<span class="kd-pill" style="background:#fff3e0;color:#c97a10;font-size:9.5px;">Excess</span>' : '<span class="kd-pill gold" style="font-size:9.5px;">Counted</span>'}
           </span>
         </div>
         <div class="dsr-receipt-body">
-          <div class="dsr-cust-name">${properCase(en.customerName) || '—'}</div>
+          <div class="dsr-cust-name">${properCase(f.customerName) || '—'}</div>
           <table class="pv-table"><tbody>${pvRows([
-            ['Mobile', en.mobileNumber ? fmtPhone(en.mobileNumber) : ''],
-            ['Time', en.timestamp],
-            ['Item', (en.type || '—') + ' — ' + (properCase(en.itemName) || '—') + (en.weight ? ' — ' + en.weight + 'g' : '')]
+            ['Mobile', f.mobileNumber ? fmtPhone(f.mobileNumber) : ''],
+            ['Time', f.timestamp],
+            ['Items', String(g.items.length)]
           ])}</tbody></table>
+          <div class="kd-table-wrap" style="margin-top:8px;"><table class="kd-table"><thead><tr><th>Item</th><th>Weight</th><th>Tag No</th><th></th></tr></thead><tbody>` +
+          g.items.map(x => `<tr><td>${escHtml((x.en.type || '—') + ' — ' + (properCase(x.en.itemName) || '—'))}</td><td>${x.en.weight ? escHtml(x.en.weight) + 'g' : '—'}</td><td>${escHtml(x.en.tagNo || '—')}</td><td style="white-space:nowrap;"><button class="btn-sm" onclick="extraDsrEditEntry(${x.i})">Edit</button> <button class="btn-sm" style="color:var(--red);" onclick="extraDsrConfirmDelete(${x.i})">Delete</button></td></tr>`).join('') +
+          `</tbody></table></div>
         </div>
-        <div class="btn-row" style="padding:0 14px 12px;">
-          ${(i >= excessFrom_ && frqIsMis_()) ? `<button class="btn-sm" data-emp="${escHtml(employee)}" data-date="${date}" onclick="extraDsrAddCount_(this)">Add To DSR Count</button>` : ''}
-          <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;" onclick="extraDsrEditEntry(${i})">✏️ Edit</button>
-          <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;color:var(--red);border-color:var(--red);" onclick="extraDsrConfirmDelete(${i})">🗑️ Delete</button>
-        </div>
+        ${(isEx && frqIsMis_()) ? `<div style="padding:0 14px 12px;"><button class="btn-sm" data-emp="${escHtml(employee)}" data-date="${date}" onclick="extraDsrAddCount_(this)">Add To DSR Count</button></div>` : ''}
       </div>`;
     });
     body.innerHTML = html;
