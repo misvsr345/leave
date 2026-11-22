@@ -4199,6 +4199,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <div class="btn-row" style="margin-bottom:8px;">
           <button class="btn-secondary" onclick="loadDsrMissingThisMonth('admin')">🗓️ Running Month</button>
           <button class="btn-sm" onclick="toggleCustomDateGroup('dsrMiss-admin', this)">🔍 Custom Date</button>
+          <span id="dsrMissBuildWrap-admin"></span>
         </div>
         <div id="dsrMiss-admin-wrap" style="display:none;">
           <div class="date-scope-custom-row">
@@ -21179,6 +21180,7 @@ function loadDsrStatus(who) {
 
 function loadDsrMissing(who, start, end) {
   const box = document.getElementById('dsrMissingBox-' + who);
+  dsrMissBuildInit_(who);
   hideExportBtn(box.id);
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
   // v-fix (corrected): the real Missing DSR mail uses a
@@ -21395,6 +21397,37 @@ function dsrRangeResultHtml(res) {
     </div>`;
   });
   return html;
+}
+
+// ── Missing DSR: build the report sheet from the portal (MIS only) ──
+// Uses the dates typed in Custom Date, or the running month when both are empty. The Walk-in / KPI script
+// rebuilds the Missing DSR sheet for that period, then the list below is reloaded.
+function dsrMissBuildInit_(who) {
+  const w = document.getElementById('dsrMissBuildWrap-' + who);
+  if (!w || who !== 'admin') return;
+  w.innerHTML = frqIsMis_() ? '<button class="btn-sm" id="dsrMissBuildBtn-admin" onclick="dsrMissBuild_(\'admin\')" title="Build the Missing DSR sheet for the selected dates (or the running month) and reload">🔄 Generate</button>' : '';
+}
+async function dsrMissBuild_(who) {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  const sEl = document.getElementById('dsrMissStart-' + who), eEl = document.getElementById('dsrMissEnd-' + who);
+  let s = sEl ? sEl.value : '', e = eEl ? eEl.value : '';
+  if ((s && !e) || (!s && e)) { toast('Select both dates, or clear both for the running month', 'error'); return; }
+  const custom = !!(s && e);
+  if (!custom) { const t = new Date(); s = toYMD(new Date(t.getFullYear(), t.getMonth(), 1)); e = toYMD(t); }
+  if (s > e) { toast('Start date is after the end date', 'error'); return; }
+  const btn = document.getElementById('dsrMissBuildBtn-' + who);
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
+  const box = document.getElementById('dsrMissingBox-' + who);
+  if (box) box.innerHTML = '<div class="loading"><span class="spinner"></span>Generating the Missing DSR report. This can take a minute...</div>';
+  try {
+    const r = await mtCall_('wt', 'dsrMissing', { startDate: s, endDate: e, recipients: {} });
+    if (!r || !r.ok) throw new Error((r && (r.error || r.msg)) || 'Failed');
+    toast('✅ Missing DSR report generated', 'success');
+  } catch (err) {
+    toast('⚠️ ' + (err && err.message ? err.message : 'Could not generate'), 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Generate'; }
+  if (custom) loadDsrMissing(who, s, e); else loadDsrMissing(who);
 }
 
 function loadDsrMissingThisMonth(who) {
