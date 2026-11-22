@@ -21484,12 +21484,13 @@ function dsrRangeResultHtml(res) {
 function dsrMissBuildInit_(who) {
   const w = document.getElementById('dsrMissBuildWrap-' + who);
   if (!w || who !== 'admin') return;
+  if (window.__dsrMissBusy && Date.now() - (window.__dsrMissBusyAt || 0) > 90000) window.__dsrMissBusy = false; // never stay stuck
   if (!frqIsMis_()) { w.innerHTML = ''; return; }
   w.innerHTML = '<button class="btn-sm" id="dsrMissBuildBtn-admin" onclick="dsrMissBuild_(\'admin\')" title="Build the Missing DSR sheet for the selected dates (or the running month) and reload">' + (window.__dsrMissBusy ? 'Generating...' : '🔄 Generate') + '</button> <span id="dsrMissBuildMsg-admin" style="font-size:11.5px;color:var(--text3);"></span>';
   const b = document.getElementById('dsrMissBuildBtn-admin'); if (b && window.__dsrMissBusy) b.disabled = true;
 }
 function dsrMissBuildState_(who, busy, msg) {
-  window.__dsrMissBusy = !!busy;
+  window.__dsrMissBusy = !!busy; window.__dsrMissBusyAt = busy ? Date.now() : 0;
   const b = document.getElementById('dsrMissBuildBtn-' + who), m = document.getElementById('dsrMissBuildMsg-' + who);
   if (b) { b.disabled = !!busy; b.textContent = busy ? 'Generating...' : '🔄 Generate'; }
   if (m) m.textContent = msg || '';
@@ -21504,20 +21505,20 @@ async function dsrMissBuild_(who) {
   if (!custom) { const t = new Date(); s = toYMD(new Date(t.getFullYear(), t.getMonth(), 1)); e = toYMD(t); }
   if (s > e) { toast('Start date is after the end date', 'error'); return; }
   // The list below stays visible while the report is built; only the button and a small status line change.
-  dsrMissBuildState_(who, true, 'Working, this can take 1-2 minutes...');
+  dsrMissBuildState_(who, true, 'Working, this can take about a minute...');
   try {
     const r = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', start: s, end: e, by: state.adminName || state.empName || 'MIS' }));
     if (!r || !r.ok) throw new Error((r && r.error) || 'Request failed');
     // The Walk-in / KPI script picks the request up within a minute; wait for it to finish.
     let status = 'Pending', note = '';
-    for (let i = 0; i < 45 && (status === 'Pending' || status === 'Running'); i++) {
+    for (let i = 0; i < 15 && (status === 'Pending' || status === 'Running'); i++) {
       await new Promise(res => setTimeout(res, 4000));
       const q = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', mode: 'status', id: r.id })).catch(() => null);
       if (q && q.ok) { status = q.status; note = q.note || ''; }
     }
     if (status === 'Done') toast('✅ Missing DSR report generated', 'success');
     else if (status === 'Error') throw new Error(note || 'The report could not be generated');
-    else toast('Still working in the background. Tap Generate again in a minute to reload.', 'error');
+    else toast('Report is being built in the background. The list below is reloaded; tap Generate again if it still looks old.', 'success');
   } catch (err) {
     toast('⚠️ ' + (err && err.message ? err.message : 'Could not generate'), 'error');
   } finally {
@@ -35313,10 +35314,18 @@ function notifStamp_(t) { const d = new Date(t), z = n => ('0' + n).slice(-2); r
 function notifAdd_(el) {
   const label = _popupLabel_(el);
   const text = (el.textContent || '').replace(/\s+/g, ' ').replace(/Minimize|✕/g, '').trim().slice(0, 220);
+  // keep the popup's tables as real tables (buttons, title and handlers stripped) so the list reads like the popup did
+  let html = '';
+  try {
+    const box = (el.firstElementChild || el).cloneNode(true);
+    box.querySelectorAll('button, script, style, iframe, .vsr-min-btn, .modal-close-x, .modal-title').forEach(n => { const w = n.parentElement && n.parentElement.children.length === 1 && n.tagName === 'BUTTON' && n.parentElement !== box ? n.parentElement : n; w.remove(); });
+    box.querySelectorAll('*').forEach(n => { Array.from(n.attributes).forEach(a => { if (/^on/i.test(a.name) || a.name === 'id') n.removeAttribute(a.name); }); if (n.tagName === 'TABLE') n.style.cssText = 'width:100%;border-collapse:collapse;'; });
+    if (box.querySelector('table')) html = box.innerHTML.slice(0, 8000);
+  } catch (e) { html = ''; }
   const d = notifRead_(), day = notifStamp_(Date.now()).slice(0, 10);
   const i = d.items.findIndex(x => x.label === label && notifStamp_(x.t).slice(0, 10) === day);
   if (i >= 0) d.items.splice(i, 1);
-  d.items.unshift({ label: label, text: text, t: Date.now() });
+  d.items.unshift({ label: label, text: text, html: html, t: Date.now() });
   d.items = d.items.slice(0, 30);
   notifWrite_(d); notifBadge_();
 }
@@ -35328,7 +35337,7 @@ function notifOpen_() {
   const d = notifRead_();
   let h = '<div class="modal-title" style="font-weight:800;">🔔 Notifications</div>';
   if (!d.items.length) h += '<div class="empty-state"><p>No notifications yet.</p></div>';
-  d.items.forEach(x => { h += '<div class="notif-row"><b>' + escHtml(x.label) + '</b> <span class="nt">' + notifStamp_(x.t) + '</span><div>' + escHtml(x.text) + '</div></div>'; });
+  d.items.forEach(x => { h += '<div class="notif-row"><b>' + escHtml(x.label) + '</b> <span class="nt">' + notifStamp_(x.t) + '</span><div style="overflow-x:auto;">' + (x.html ? x.html : escHtml(x.text)) + '</div></div>'; });
   if (d.items.length) h += '<div style="margin-top:10px;"><button class="btn-sm btn-modify" onclick="notifClear_()">Clear All</button></div>';
   slOpenModal(h);
   d.seen = Date.now(); notifWrite_(d); notifBadge_();
@@ -35360,12 +35369,9 @@ async function progLoad_(force) {
     if (!res || !res.ok || !res.rows || !res.rows.length) { box.style.display = 'none'; return; }
     let h = '';
     if (who === 'admin') {
-      const medals = ['🥇', '🥈', '🥉'];
-      h = '<div class="snap-t"><span>🏆 Top Performers (This Month)</span></div>';
-      res.rows.slice(0, 3).forEach((r, i) => {
-        const sc = parseFloat(String(r.overallScore).replace('%', '')) || 0;
-        h += '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:12.5px;"><span>' + medals[i] + ' ' + escHtml(properCase(r.employee)) + '</span><b>' + escHtml(String(r.overallScore)) + '</b></div><div class="snap-bar"><i style="width:' + Math.max(0, Math.min(100, sc)) + '%"></i></div></div>';
-      });
+      window.__perfRows = res.rows.slice();
+      window.__perfTab = window.__perfTab || 0;
+      h = '<div class="snap-t"><span>🏆 Performance (This Month)</span></div><div id="perfTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;"></div><div id="perfBody"></div>';
     } else {
       const r = res.rows[0];
       const bar = (label, val) => { const n = parseFloat(String(val).replace('%', '')) || 0; return '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:12.5px;"><span>' + label + '</span><b>' + escHtml(String(val)) + '</b></div><div class="snap-bar"><i style="width:' + Math.max(0, Math.min(100, n)) + '%"></i></div></div>'; };
@@ -35373,7 +35379,99 @@ async function progLoad_(force) {
         + bar('Overall Score', r.overallScore) + bar('Purchase Achievement', r.purchAchPct) + bar('DSR Score', r.dsrScore);
     }
     box.innerHTML = h; box.style.display = '';
+    if (who === 'admin') perfRender_();
   } catch (e) {}
+}
+// Admin Home: every employee's performance as a ranked list, pie charts and bar charts (tabs).
+const PERF_COLORS_ = ['#7B2FBE', '#C9A227', '#2E7D32', '#1565C0', '#C62828', '#00838F', '#EF6C00', '#6D4C41', '#AD1457', '#546E7A', '#558B2F', '#4527A0', '#00695C', '#F9A825', '#37474F'];
+const PERF_TABS_ = ['Score Columns', 'Purchases Pie', 'Loyalty Pie', 'Achievement And DSR', 'Score Lines', 'All Data'];
+function perfNum_(v) { return parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')) || 0; }
+function perfSetTab_(i) { window.__perfTab = i; perfRender_(); }
+function perfShort_(r) { return escHtml(properCase(String(r.employee || '')).split(' ')[0]); }
+// Vertical (grouped) column chart: series = [{ label, color, get(row) }]
+function perfColumns_(rows, series, maxV) {
+  const n = rows.length, gw = Math.max(34, series.length * 16 + 12), W = Math.max(340, n * gw + 40), H = 250, top = 18, bot = 70, left = 30;
+  const ph = H - top - bot;
+  let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:none;">';
+  [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+    const y = top + ph - f * ph;
+    svg += '<line x1="' + left + '" x2="' + (W - 6) + '" y1="' + y + '" y2="' + y + '" stroke="currentColor" opacity=".12"/><text x="' + (left - 4) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="currentColor" opacity=".6">' + Math.round(maxV * f) + '</text>';
+  });
+  rows.forEach((r, i) => {
+    const x0 = left + i * gw + 6, bw = Math.max(8, (gw - 12) / series.length);
+    series.forEach((s, k) => {
+      const v = s.get(r), h = Math.max(0, Math.min(maxV, v)) / maxV * ph, x = x0 + k * bw, y = top + ph - h;
+      svg += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw - 2).toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2" fill="' + s.color + '"><title>' + escHtml(properCase(String(r.employee))) + ' — ' + s.label + ': ' + v + '</title></rect>';
+      if (series.length === 1) svg += '<text x="' + (x + (bw - 2) / 2).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">' + v + '</text>';
+    });
+    const cx = x0 + (series.length * bw) / 2;
+    svg += '<text transform="translate(' + cx.toFixed(1) + ',' + (top + ph + 10) + ') rotate(-45)" text-anchor="end" font-size="10" fill="currentColor">' + perfShort_(r) + '</text>';
+  });
+  return '<div style="overflow-x:auto;">' + svg + '</svg></div>';
+}
+function perfLegend_(series) {
+  return '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;margin-bottom:4px;">' + series.map(s => '<span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + s.color + ';"></i> ' + s.label + '</span>').join('') + '</div>';
+}
+// Line chart: one line per series across employees
+function perfLines_(rows, series, maxV) {
+  const n = rows.length, step = Math.max(38, 320 / Math.max(1, n - 1)), W = Math.max(340, (n - 1) * step + 60), H = 250, top = 14, bot = 62, left = 30;
+  const ph = H - top - bot, px = i => left + 10 + i * step, py = v => top + ph - Math.max(0, Math.min(maxV, v)) / maxV * ph;
+  let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:none;">';
+  [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+    const y = top + ph - f * ph;
+    svg += '<line x1="' + left + '" x2="' + (W - 6) + '" y1="' + y + '" y2="' + y + '" stroke="currentColor" opacity=".12"/><text x="' + (left - 4) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="currentColor" opacity=".6">' + Math.round(maxV * f) + '</text>';
+  });
+  series.forEach(s => {
+    const pts = rows.map((r, i) => px(i).toFixed(1) + ',' + py(s.get(r)).toFixed(1)).join(' ');
+    svg += '<polyline points="' + pts + '" fill="none" stroke="' + s.color + '" stroke-width="2.2" stroke-linejoin="round"/>';
+    rows.forEach((r, i) => { svg += '<circle cx="' + px(i).toFixed(1) + '" cy="' + py(s.get(r)).toFixed(1) + '" r="3" fill="' + s.color + '"><title>' + escHtml(properCase(String(r.employee))) + ' — ' + s.label + ': ' + s.get(r) + '</title></circle>'; });
+  });
+  rows.forEach((r, i) => { svg += '<text transform="translate(' + px(i).toFixed(1) + ',' + (top + ph + 12) + ') rotate(-45)" text-anchor="end" font-size="10" fill="currentColor">' + perfShort_(r) + '</text>'; });
+  return '<div style="overflow-x:auto;">' + svg + '</svg></div>';
+}
+function perfPie_(rows, key, body) {
+  const nm = r => escHtml(properCase(r.employee));
+  const items = rows.map(r => ({ n: nm(r), v: perfNum_(r[key]) })).filter(x => x.v > 0).sort((a, b) => b.v - a.v);
+  const tot = items.reduce((a, x) => a + x.v, 0);
+  if (!tot) { body.innerHTML = '<div class="empty-state"><p>No data yet.</p></div>'; return; }
+  const R = 70, C = 2 * Math.PI * R;
+  let off = 0, arcs = '';
+  items.forEach((x, i) => {
+    const len = x.v / tot * C;
+    arcs += '<circle r="' + R + '" cx="90" cy="90" fill="none" stroke="' + PERF_COLORS_[i % PERF_COLORS_.length] + '" stroke-width="34" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 90 90)"><title>' + x.n + ': ' + x.v + '</title></circle>';
+    off += len;
+  });
+  const legend = items.map((x, i) => '<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin:3px 0;"><i style="width:10px;height:10px;border-radius:2px;background:' + PERF_COLORS_[i % PERF_COLORS_.length] + ';display:inline-block;"></i><span style="flex:1;">' + x.n + '</span><b>' + x.v + '</b><span style="color:var(--text3);width:46px;text-align:right;">' + (x.v / tot * 100).toFixed(1) + '%</span></div>').join('');
+  body.innerHTML = '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;"><svg width="180" height="180" viewBox="0 0 180 180">' + arcs + '<text x="90" y="86" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">Total</text><text x="90" y="104" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">' + tot + '</text></svg><div style="flex:1;min-width:200px;max-height:260px;overflow:auto;">' + legend + '</div></div>';
+}
+function perfRender_() {
+  const tabs = document.getElementById('perfTabs'), body = document.getElementById('perfBody');
+  if (!tabs || !body) return;
+  const rows = (window.__perfRows || []).slice(), tab = window.__perfTab || 0;
+  tabs.innerHTML = PERF_TABS_.map((t, i) => '<button class="btn-sm' + (i === tab ? ' btn-modify' : '') + '" onclick="perfSetTab_(' + i + ')">' + t + '</button>').join('');
+  const score = { label: 'Overall Score', color: '#7B2FBE', get: r => perfNum_(r.overallScore) };
+  const ach = { label: 'Purchase Achievement %', color: '#1565C0', get: r => perfNum_(r.purchAchPct) };
+  const dsr = { label: 'DSR Score', color: '#C9A227', get: r => perfNum_(r.dsrScore) };
+  const conv = { label: 'Conversion %', color: '#2E7D32', get: r => perfNum_(r.conversionPct) };
+  if (tab === 0) {
+    rows.sort((a, b) => perfNum_(b.overallScore) - perfNum_(a.overallScore));
+    body.innerHTML = perfColumns_(rows, [score], Math.max(100, ...rows.map(score.get)));
+  } else if (tab === 1) { perfPie_(rows, 'purchases', body); }
+  else if (tab === 2) { perfPie_(rows, 'loyaltyCards', body); }
+  else if (tab === 3) {
+    rows.sort((a, b) => perfNum_(b.purchAchPct) - perfNum_(a.purchAchPct));
+    body.innerHTML = perfLegend_([ach, dsr]) + perfColumns_(rows, [ach, dsr], Math.max(100, ...rows.map(ach.get), ...rows.map(dsr.get)));
+  } else if (tab === 4) {
+    rows.sort((a, b) => perfNum_(b.overallScore) - perfNum_(a.overallScore));
+    const s2 = [score, ach, conv];
+    body.innerHTML = perfLegend_(s2) + perfLines_(rows, s2, Math.max(100, ...rows.map(score.get), ...rows.map(ach.get), ...rows.map(conv.get)));
+  } else {
+    rows.sort((a, b) => perfNum_(b.overallScore) - perfNum_(a.overallScore));
+    const medals = ['🥇', '🥈', '🥉'];
+    body.innerHTML = '<div style="overflow-x:auto;max-height:400px;overflow-y:auto;"><table class="pv-table"><thead><tr><th>#</th><th>Employee</th><th>Score</th><th>Purchases</th><th>Ach %</th><th>Loyalty</th><th>DSR</th></tr></thead><tbody>'
+      + rows.map((r, i) => '<tr><td>' + (medals[i] || (i + 1)) + '</td><td>' + escHtml(properCase(r.employee)) + '</td><td><b>' + escHtml(String(r.overallScore)) + '</b></td><td>' + escHtml(String(r.purchases)) + '</td><td>' + escHtml(String(r.purchAchPct)) + '</td><td>' + escHtml(String(r.loyaltyCards)) + '</td><td>' + escHtml(String(r.dsrScore)) + '</td></tr>').join('')
+      + '</tbody></table></div>';
+  }
 }
 // Leaving Home: any open automatic popup goes to the minimized tray instead of staying on top of another page.
 (function () {
