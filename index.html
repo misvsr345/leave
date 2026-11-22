@@ -19523,6 +19523,7 @@ function loyLeaderboardCustom(who) {
 function kpiEmpParams(who, extra) {
   const p = Object.assign({ role: who === 'admin' ? 'ADMIN' : 'EMP' }, extra || {});
   if (who === 'emp') p.empName = state.empName;
+  if (who === 'admin' && (state.adminRole || '').toUpperCase().indexOf('MIS') > -1) p.mis = '1'; // excess DSRs are shown to MIS only
   return p;
 }
 
@@ -19845,6 +19846,7 @@ function loadKpiTarget(who) {
 // view (kpiRowCardHtml) since a whole wide table for one row adds
 // nothing.
 function kpiTableHtml(rows, storeTotal) {
+  const xs = frqIsMis_(); // the Excess column is for MIS only
   const fmtScore = v => { const n = Number(v); return isNaN(n) ? v : n.toFixed(2); };
   // v-fix (BRO: "running month KPI score lo conversion ravadam ledu,
   // backend sheet lo data undi kani ikkada radu" — real bug found): this
@@ -19859,7 +19861,7 @@ function kpiTableHtml(rows, storeTotal) {
     <th colspan="6" style="background:#1a5fa8;color:#fff;">Purchase + Deals Bonus</th>
     <th colspan="4" style="background:#1a7a4f;color:#fff;">Loyalty Cards</th>
     <th colspan="4" style="background:#c9720d;color:#fff;">Golden Aura</th>
-    <th colspan="4" style="background:#6b21a8;color:#fff;">DSR Entry</th>
+    <th colspan="${xs ? 5 : 4}" style="background:#6b21a8;color:#fff;">DSR Entry</th>
     <th>Last Updated</th>
   </tr>
   <tr style="font-size:10.5px;color:var(--text3);">
@@ -19867,7 +19869,7 @@ function kpiTableHtml(rows, storeTotal) {
     <th>Target</th><th>Purch.</th><th>Ach%</th><th>Score</th><th>Ratio</th><th>Bonus</th>
     <th>Target</th><th>Cards</th><th>Ach%</th><th>Score</th>
     <th>Target</th><th>Golden Aura</th><th>Ach%</th><th>Score</th>
-    <th>On-Time</th><th>Late</th><th>No-Entry</th><th>Score</th>
+    <th>On-Time</th><th>Late</th><th>No-Entry</th><th>Score</th>${xs ? '<th>Excess</th>' : ''}
     <th></th>
   </tr>`;
   const body = rows.map(r => `<tr>
@@ -19876,7 +19878,7 @@ function kpiTableHtml(rows, storeTotal) {
     <td>${r.purchTarget}</td><td>${r.purchases}</td><td>${r.purchAchPct}</td><td>${r.purchScore}</td><td>${r.dealsRatio}</td><td>${r.dealsBonus}</td>
     <td>${r.loyalTarget}</td><td>${r.loyaltyCards}</td><td>${r.loyaltyAchPct}</td><td>${r.loyaltyScore}</td>
     <td>${r.goldTarget}</td><td>${r.goldenAura}</td><td>${r.goldenAchPct}</td><td>${r.goldenScore}</td>
-    <td>${r.dsrOnTime}</td><td>${r.dsrLate}</td><td>${r.dsrNoEntry}</td><td>${r.dsrScore}</td>
+    <td>${r.dsrOnTime}</td><td>${r.dsrLate}</td><td>${r.dsrNoEntry}</td><td>${r.dsrScore}</td>${xs ? `<td style="color:var(--text3);">${Number(r.dsrExcess) || 0}</td>` : ''}
     <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.lastUpdated}</td>
   </tr>`).join('');
   // v-add (BRO: "all employee data kalipithe store data, ade kavali
@@ -19906,7 +19908,7 @@ function kpiTableHtml(rows, storeTotal) {
     <td>${storeTotal.purchTargetTotal}</td><td>${storeTotal.purchases}</td><td>${storeTotal.purchAchPct}</td><td>—</td><td>—</td><td>—</td>
     <td>${storeTotal.loyalTargetTotal}</td><td>${storeTotal.loyaltyCards}</td><td>${storeTotal.loyaltyAchPct}</td><td>—</td>
     <td>${storeTotal.goldTargetTotal}</td><td>${storeTotal.goldenAura}</td><td>${storeTotal.goldenAchPct}</td><td>—</td>
-    <td>${storeTotal.dsrOnTime}</td><td>${storeTotal.dsrLate}</td><td>${storeTotal.dsrNoEntry}</td><td>—</td>
+    <td>${storeTotal.dsrOnTime}</td><td>${storeTotal.dsrLate}</td><td>${storeTotal.dsrNoEntry}</td><td>—</td>${xs ? `<td>${storeTotal.dsrExcess || 0}</td>` : ''}
     <td style="font-size:10px;">🧾 ${storeTotal.totalDsrEntries} total entries</td>
   </tr>` : '';
   // v-fix: min-width lives in its own class (kpi-report-table-minw) now
@@ -19984,6 +19986,7 @@ function kpiRowCardHtml(r) {
       <div class="kd-box"><span class="kd-val">${r.dsrLate}</span><span class="kd-lbl">Late</span></div>
       <div class="kd-box"><span class="kd-val">${r.dsrNoEntry}</span><span class="kd-lbl">No-Entry</span></div>
       <div class="kd-box"><span class="kd-val">${r.dsrScore}</span><span class="kd-lbl">Score</span></div>
+      ${(state.__loginKind === 'admin' && frqIsMis_()) ? `<div class="kd-box"><span class="kd-val">${Number(r.dsrExcess) || 0}</span><span class="kd-lbl">Excess (Not Counted)</span></div>` : ''}
     </div>
     <div class="kd-note" style="margin-top:8px;margin-bottom:0;">Last Updated: ${r.lastUpdated}</div>
   </div>`;
@@ -21162,6 +21165,7 @@ function loadDsrStatus(who) {
           <div class="kd-box"><span class="kd-ic">✅</span><span class="kd-val">${r.onTime}</span><span class="kd-lbl">On-Time</span></div>
           <div class="kd-box"><span class="kd-ic">⏰</span><span class="kd-val">${r.late}</span><span class="kd-lbl">Late</span></div>
           <div class="kd-box"><span class="kd-ic">🚫</span><span class="kd-val">${r.missing}</span><span class="kd-lbl">Missing</span></div>
+          ${Number(r.excess) > 0 ? `<div class="kd-box"><span class="kd-ic">➕</span><span class="kd-val">${r.excess}</span><span class="kd-lbl">Excess (Not Counted)</span></div>` : ''}
           <div class="kd-box"><span class="kd-ic">📶</span><span class="kd-val">${noSales ? '—' : r.dsrPct}</span><span class="kd-lbl">DSR %</span></div>
           <div class="kd-box"><span class="kd-ic">🎯</span><span class="kd-val">${noSales ? '—' : r.effectivePct}</span><span class="kd-lbl">Effective %</span></div>
         </div>
@@ -21286,8 +21290,8 @@ function showDsrMissingDetail(idx) {
       const eMatch = parts[2] ? parts[2].replace('E:', '') : '';
       const extra = (pMatch !== '' || eMatch !== '') ? ` <span style="color:var(--text3);font-weight:400;">(🛍️ ${pMatch} · 🧾 ${eMatch})</span>` : '';
       // DSR IDs counted for this date (Bill Date = this date), each with the date it was actually entered
-      const crPart = parts.find(x => x.indexOf('C:') === 0);
-      const crHtml = crPart ? ' <span style="color:var(--text3);font-weight:400;">· ' + crPart.substring(2) + ' covered by extra DSRs</span>' : '';
+      const crPart = parts.find(x => x.indexOf('X:') === 0);
+      const crHtml = crPart ? ' <span style="color:var(--text3);font-weight:400;">· ' + crPart.substring(2) + ' excess (not counted)</span>' : '';
       const idPart = parts.find(x => x.indexOf('I:') === 0);
       const idHtml = idPart ? '<div style="margin-top:4px;font-weight:400;font-size:11px;color:var(--text2);line-height:1.6;">' + idPart.substring(2).split(',').filter(Boolean).map(t => {
         const k = t.split('@'); const en = k[1] ? ' · Entered ' + fmtDMY(k[1]) : '';
