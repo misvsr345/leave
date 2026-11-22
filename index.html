@@ -4072,7 +4072,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
     </div>
 
     <div class="page-section" id="admin-extra-dsr-detail">
-      <div style="margin-bottom:8px;"><button class="btn-sm" onclick="extraDsrBack_()">← Back</button></div>
       <div class="section-hdr"><span class="section-title2" id="extraDsrDetailTitle">Extra DSR Details</span></div>
       <div id="extraDsrDetailBody" style="margin-top:10px;"><div class="loading"><span class="spinner"></span>Loading entries...</div></div>
     </div>
@@ -14512,6 +14511,7 @@ async function populateExtraDsrEmpFilter_() {
   }
 }
 
+let __extraDsrPending = []; // DSRs whose Walk-in Track is not entered yet (not excess)
 let __extraDsrAllFlagged = []; // raw backend result for the loaded date range — re-filtered/re-sorted client-side on every dropdown change, no re-fetch needed
 
 async function loadExtraDsrCheck() {
@@ -14524,6 +14524,7 @@ async function loadExtraDsrCheck() {
     const res = await jsonp({ page: 'extraDsrDiscrepancyJSON', dateFrom, dateTo });
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
     __extraDsrAllFlagged = res.flagged || [];
+    __extraDsrPending = res.pending || [];
     renderExtraDsrResults();
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>Could not load. ${e.message}</p></div>`;
@@ -14535,6 +14536,17 @@ async function loadExtraDsrCheck() {
 // (alphabetical), newest date first within each employee, and narrows
 // it to one employee when the dropdown above is set. Pure client-side
 // re-render off __extraDsrAllFlagged — no re-fetch on every dropdown change.
+function extraDsrPendingHtml_(empFilter) {
+  let list = (__extraDsrPending || []).filter(f => !empFilter || String(f.employee).toLowerCase() === empFilter);
+  if (!list.length) return '';
+  list = list.slice().sort((a, b) => properCase(a.employee).localeCompare(properCase(b.employee)) || b.date.localeCompare(a.date));
+  return `<div class="kd-card" style="margin-top:14px;border-left:3px solid var(--text3,#888);">
+    <div class="kd-head"><span class="kd-name">Pending Walk-In Entry</span><span class="kd-pill">${list.length}</span></div>
+    <div class="kd-note" style="margin-bottom:6px;">Walk-In Track is not entered yet for these. They will adjust automatically once it is entered, so they are not excess.</div>
+    <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Employee</th><th>Date</th><th>DSR Entries</th></tr></thead><tbody>` +
+    list.map(f => `<tr><td>${properCase(f.employee)}</td><td>${fmtDMY(f.date)}</td><td>${f.dsrEntries}</td></tr>`).join('') +
+    `</tbody></table></div></div>`;
+}
 function renderExtraDsrResults() {
   const box = document.getElementById('extraDsrBox');
   const empSel = document.getElementById('extraDsrEmpFilter');
@@ -14546,6 +14558,7 @@ function renderExtraDsrResults() {
     box.innerHTML = empFilter
       ? '<div class="empty-state"><p>✅ No discrepancies for this employee in this date range.</p></div>'
       : '<div class="empty-state"><p>✅ No discrepancies found for this date range — every DSR entry has a matching Walk-in purchase.</p></div>';
+    box.innerHTML += extraDsrPendingHtml_(empFilter);
     return;
   }
 
@@ -14564,7 +14577,7 @@ function renderExtraDsrResults() {
       `</tbody></table></div><div style="margin-top:8px;"><button class="btn-sm" onclick="showExtraDsrEmp('${escJs(emp)}')">View</button></div></div>`;
   });
   html += '</div>';
-  box.innerHTML = html;
+  box.innerHTML = html + extraDsrPendingHtml_(empFilter);
 }
 
 // Modal showing every DSR entry for this employee on this date — the
@@ -14573,7 +14586,6 @@ function renderExtraDsrResults() {
 // accidental duplicate, etc.) and go correct it directly in the sheet.
 let __extraDsrEntries = []; // populated fresh each time the detail modal opens — Edit/Delete below index into THIS array
 
-function extraDsrBack_() { try { goBackOneStep('admin'); } catch (e) { showAdminPage('extra-dsr'); } }
 // One View per employee: every excess DSR of that employee (all flagged dates) on one page.
 async function showExtraDsrEmp(employee) {
   const dates = (__extraDsrAllFlagged || []).filter(f => f.employee === employee).map(f => f.date).sort().reverse();
