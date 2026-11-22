@@ -21367,6 +21367,7 @@ function adjSubmit(idx) {
     if (!res || !res.ok) { toast((res && res.error) || 'Adjust failed', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Adjust the DSR'; } return; }
     if (res.skipped && res.skipped.length) { alert('Adjusted ' + (res.created || 0) + ' DSR.\n\nSkipped:\n' + res.skipped.join('\n')); }
     toast((Number(res.created) > 0 ? '✅ ' : '⚠️ ') + 'Adjusted ' + res.created + ' DSR' + ((res.skipped && res.skipped.length) ? ' (' + res.skipped.length + ' skipped)' : ''), Number(res.created) > 0 ? 'success' : 'error');
+    if (Number(res.created) > 0) { if (res.kpiRefresh === 'queued') toast('KPI and DSR Status will update in about a minute', 'success'); else if (res.kpiRefresh && res.kpiRefresh !== 'none') toast('KPI refresh not started (' + res.kpiRefresh + '). It will update on the next scheduled refresh.', 'error'); }
     (res.done || []).forEach(d => { document.querySelectorAll('.adjChk').forEach(c => { if (c.dataset.date === d.date) { c.checked = false; c.disabled = true; const lb = c.closest('label'); if (lb) lb.style.opacity = '.4'; } }); });
     adjLoad();
     try { loadDsrMissing(window.__adjWho || 'admin', document.getElementById('adjStart').value, document.getElementById('adjEnd').value); } catch (e) {}
