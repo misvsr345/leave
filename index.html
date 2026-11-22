@@ -21416,20 +21416,27 @@ function dsrRangeResultHtml(res) {
 function dsrMissBuildInit_(who) {
   const w = document.getElementById('dsrMissBuildWrap-' + who);
   if (!w || who !== 'admin') return;
-  w.innerHTML = frqIsMis_() ? '<button class="btn-sm" id="dsrMissBuildBtn-admin" onclick="dsrMissBuild_(\'admin\')" title="Build the Missing DSR sheet for the selected dates (or the running month) and reload">🔄 Generate</button>' : '';
+  if (!frqIsMis_()) { w.innerHTML = ''; return; }
+  w.innerHTML = '<button class="btn-sm" id="dsrMissBuildBtn-admin" onclick="dsrMissBuild_(\'admin\')" title="Build the Missing DSR sheet for the selected dates (or the running month) and reload">' + (window.__dsrMissBusy ? 'Generating...' : '🔄 Generate') + '</button> <span id="dsrMissBuildMsg-admin" style="font-size:11.5px;color:var(--text3);"></span>';
+  const b = document.getElementById('dsrMissBuildBtn-admin'); if (b && window.__dsrMissBusy) b.disabled = true;
+}
+function dsrMissBuildState_(who, busy, msg) {
+  window.__dsrMissBusy = !!busy;
+  const b = document.getElementById('dsrMissBuildBtn-' + who), m = document.getElementById('dsrMissBuildMsg-' + who);
+  if (b) { b.disabled = !!busy; b.textContent = busy ? 'Generating...' : '🔄 Generate'; }
+  if (m) m.textContent = msg || '';
 }
 async function dsrMissBuild_(who) {
   if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  if (window.__dsrMissBusy) return;
   const sEl = document.getElementById('dsrMissStart-' + who), eEl = document.getElementById('dsrMissEnd-' + who);
   let s = sEl ? sEl.value : '', e = eEl ? eEl.value : '';
   if ((s && !e) || (!s && e)) { toast('Select both dates, or clear both for the running month', 'error'); return; }
   const custom = !!(s && e);
   if (!custom) { const t = new Date(); s = toYMD(new Date(t.getFullYear(), t.getMonth(), 1)); e = toYMD(t); }
   if (s > e) { toast('Start date is after the end date', 'error'); return; }
-  const btn = document.getElementById('dsrMissBuildBtn-' + who);
-  if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
-  const box = document.getElementById('dsrMissingBox-' + who);
-  if (box) box.innerHTML = '<div class="loading"><span class="spinner"></span>Generating the Missing DSR report. This can take 1-2 minutes...</div>';
+  // The list below stays visible while the report is built; only the button and a small status line change.
+  dsrMissBuildState_(who, true, 'Working, this can take 1-2 minutes...');
   try {
     const r = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', start: s, end: e, by: state.adminName || state.empName || 'MIS' }));
     if (!r || !r.ok) throw new Error((r && r.error) || 'Request failed');
@@ -21442,12 +21449,14 @@ async function dsrMissBuild_(who) {
     }
     if (status === 'Done') toast('✅ Missing DSR report generated', 'success');
     else if (status === 'Error') throw new Error(note || 'The report could not be generated');
-    else toast('Still working in the background. Reload the list in a minute.', 'error');
+    else toast('Still working in the background. Tap Generate again in a minute to reload.', 'error');
   } catch (err) {
     toast('⚠️ ' + (err && err.message ? err.message : 'Could not generate'), 'error');
+  } finally {
+    // Whatever happened, the buttons and the list come back to normal.
+    dsrMissBuildState_(who, false, '');
+    try { if (custom) loadDsrMissing(who, s, e); else loadDsrMissing(who); } catch (e2) {}
   }
-  if (btn) { btn.disabled = false; btn.textContent = '🔄 Generate'; }
-  if (custom) loadDsrMissing(who, s, e); else loadDsrMissing(who);
 }
 
 function loadDsrMissingThisMonth(who) {
