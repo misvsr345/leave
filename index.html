@@ -21337,45 +21337,75 @@ function adjPageEnter_() {
   if (eEl && !eEl.value) eEl.value = toYMD(today);
   adjLoad();
 }
+// Dates adjusted a moment ago: remember what is left (0 = fully adjusted) so the list is right at once,
+// whatever state the report sheet is in. Entries expire after 3 minutes.
+function adjRemKey_(emp, d) { return String(emp).toLowerCase() + '|' + d; }
+function adjEntries_(r) {
+  const lp = window.__adjLocalRem = window.__adjLocalRem || {}, now = Date.now();
+  const out = [];
+  Object.entries(r.perDate || {}).forEach(([d, v]) => {
+    if (String(v).indexOf('M:') !== 0) return;
+    const p = String(v).split('|');
+    let miss = parseInt(p[0].replace('M:', ''), 10) || 0;
+    const k = adjRemKey_(r.employee, d), loc = lp[k];
+    if (loc) { if (now - loc.t < 180000) miss = Math.min(miss, loc.rem); else delete lp[k]; }
+    if (miss <= 0) return;
+    out.push({ d: d, miss: miss, pu: (p[1] || '').replace('P:', ''), en: (p[2] || '').replace('E:', '') });
+  });
+  return out.sort((a, b) => a.d.localeCompare(b.d));
+}
 function adjLoad() {
   const box = document.getElementById('adjList'); if (!box) return;
   const start = document.getElementById('adjStart').value, end = document.getElementById('adjEnd').value;
   if (!start || !end) { toast('Select both dates', 'error'); return; }
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  Promise.all([
-    jsonpReliable(kpiEmpParams(window.__adjWho || 'admin', { page: 'dsrMissingJSON', start: start, end: end })),
-    jsonpReliable({ page: 'dsrAdjPendingAPI', role: 'ADMIN' }).catch(() => null)
-  ]).then(([res, pend]) => {
-    // dates adjusted a moment ago whose reports are still being rebuilt stay disabled
-    const pm = {};
-    ((pend && pend.ok && pend.items) || []).forEach(it => { pm[String(it.employee).toLowerCase() + '|' + it.date] = true; });
-    const lp = window.__adjLocalPend || {}, nowMs = Date.now();
-    Object.keys(lp).forEach(k => { if (nowMs - lp[k] < 120000) pm[k] = true; else delete lp[k]; });
-    window.__adjPendMap = pm;
+  jsonpReliable(kpiEmpParams(window.__adjWho || 'admin', { page: 'dsrMissingJSON', start: start, end: end })).then(res => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
-    const rows = (res.rows || []).filter(r => Number(r.totalMissing) > 0 && Object.values(r.perDate || {}).some(v => String(v).indexOf('M:') === 0));
+    const rows = [];
+    (res.rows || []).forEach(r => {
+      const ents = adjEntries_(r);
+      if (!ents.length) return;
+      rows.push({ employee: r.employee, ents: ents, totalMissing: ents.reduce((a, x) => a + x.miss, 0) });
+    });
     window.__adjRows = rows;
     if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR in this range.</p></div>'; return; }
-    box.innerHTML = rows.map((r, i) => `<div class="kd-card kd-danger" style="cursor:pointer;" onclick="adjOpenEmp(${i})">
+    const bulk = window.__adjWho === 'emp' ? '' : `<div style="margin-bottom:8px;"><button class="btn-sm" onclick="adjBulkOpen()">☑️ Select All Employees</button></div>`;
+    box.innerHTML = bulk + rows.map((r, i) => `<div class="kd-card kd-danger" style="cursor:pointer;" onclick="adjOpenEmp(${i})">
       <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill red">🚫 ${r.totalMissing} Missing</span></div>
       <div style="font-size:10.5px;color:var(--purple,#6b21a8);font-weight:600;">Tap to select dates →</div></div>`).join('');
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
 }
+function adjRowsHtml_(r, cls) {
+  return r.ents.map(x => `<tr><td style="width:28px;"><input type="checkbox" class="${cls}" data-emp="${escHtml(r.employee)}" data-date="${x.d}" data-n="${x.miss}"${cls === 'adjBulkChk' ? ' checked' : ''}></td><td>${fmtDMY(x.d)}</td><td style="color:var(--red);">${x.miss} missing <span style="color:var(--text3);font-weight:400;">(🛍️ ${x.pu} · 🧾 ${x.en})</span></td></tr>`).join('');
+}
 function adjOpenEmp(idx) {
   const r = (window.__adjRows || [])[idx]; const box = document.getElementById('adjList');
   if (!r || !box) return;
-  const ents = Object.entries(r.perDate || {}).filter(([d, v]) => String(v).indexOf('M:') === 0).sort((a, b) => a[0].localeCompare(b[0]));
   box.innerHTML = `<button class="btn-sm" onclick="adjLoad()">← Back</button>
     <div style="font-weight:700;margin:8px 0;">${properCase(r.employee)}</div>
     <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px;"><input type="checkbox" id="adjAll" onchange="document.querySelectorAll('.adjChk').forEach(c=>c.checked=this.checked)"> Select all</label>
-    <table class="pv-table"><tbody>` + ents.map(([d, v]) => {
-      const p = String(v).split('|'); const miss = p[0].replace('M:', '');
-      const pu = (p[1] || '').replace('P:', ''), en = (p[2] || '').replace('E:', '');
-      const busy = !!(window.__adjPendMap || {})[String(r.employee).toLowerCase() + '|' + d];
-      if (busy) return `<tr style="opacity:.5;"><td style="width:28px;"><input type="checkbox" disabled></td><td>${fmtDMY(d)}</td><td style="color:var(--text3);">Updating... <span style="font-weight:400;">(just adjusted, report is refreshing)</span></td></tr>`;
-      return `<tr><td style="width:28px;"><input type="checkbox" class="adjChk" data-date="${d}" data-n="${miss}"></td><td>${fmtDMY(d)}</td><td style="color:var(--red);">${miss} missing <span style="color:var(--text3);font-weight:400;">(🛍️ ${pu} · 🧾 ${en})</span></td></tr>`;
-    }).join('') + `</tbody></table>
-    <button class="btn-primary" id="adjGo" style="width:100%;margin-top:10px;" onclick="adjSubmit(${idx})">Adjust the DSR</button>`;
+    <table class="pv-table"><tbody>` + adjRowsHtml_(r, 'adjChk') + `</tbody></table>
+    <button class="btn-primary" id="adjGo" style="margin-top:10px;" onclick="adjSubmit(${idx})">Adjust the DSR</button>`;
+}
+// Select All Employees: every employee and every missing date ticked; untick what should stay.
+function adjBulkOpen() {
+  const rows = window.__adjRows || [], box = document.getElementById('adjList');
+  if (!rows.length || !box) return;
+  box.innerHTML = `<button class="btn-sm" onclick="adjLoad()">← Back</button>
+    <div style="font-weight:700;margin:8px 0;">All Employees</div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px;"><input type="checkbox" id="adjBulkAll" checked onchange="document.querySelectorAll('.adjBulkChk').forEach(c=>c.checked=this.checked)"> Select all</label>` +
+    rows.map(r => `<div style="font-weight:700;font-size:12.5px;margin:10px 0 4px;">${properCase(r.employee)} <span style="color:var(--red);font-weight:600;">(${r.totalMissing} missing)</span></div><table class="pv-table"><tbody>${adjRowsHtml_(r, 'adjBulkChk')}</tbody></table>`).join('') +
+    `<button class="btn-primary" id="adjBulkGo" style="margin-top:12px;" onclick="adjBulkSubmit()">Adjust Selected</button>`;
+}
+function adjMarkDone_(emp, date, made, had) {
+  const lp = window.__adjLocalRem = window.__adjLocalRem || {};
+  lp[adjRemKey_(emp, date)] = { rem: Math.max(0, had - made), t: Date.now() };
+}
+function adjAfter_(res) {
+  if (Number(res.created) > 0) {
+    if (res.kpiRefresh === 'queued') toast('KPI and DSR Status will update in about a minute', 'success');
+    else if (res.kpiRefresh && res.kpiRefresh !== 'none') toast('KPI refresh not started (' + res.kpiRefresh + '). It will update on the next scheduled refresh.', 'error');
+  }
 }
 function adjSubmit(idx) {
   const r = (window.__adjRows || [])[idx]; if (!r) return;
@@ -21385,23 +21415,48 @@ function adjSubmit(idx) {
   if (!confirm('Create ' + total + ' adjusted DSR entr' + (total === 1 ? 'y' : 'ies') + ' for ' + properCase(r.employee) + '?')) return;
   const btn = document.getElementById('adjGo'); if (btn) { btn.disabled = true; btn.textContent = 'Adjusting...'; }
   const items = chk.map(c => c.dataset.date + ':' + c.dataset.n).join(',');
+  const had = {}; chk.forEach(c => { had[c.dataset.date] = Number(c.dataset.n || 0); });
   jsonpReliable(window.__adjWho === 'emp' ? { page: 'dsrAdjustMissingAPI', role: 'EMP', empId: state.empId, empName: state.empName, items: items } : { page: 'dsrAdjustMissingAPI', role: 'ADMIN', empName: r.employee, items: items, by: (state.empName || 'MIS') }).then(res => {
     if (!res || !res.ok) { toast((res && res.error) || 'Adjust failed', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Adjust the DSR'; } return; }
     if (res.skipped && res.skipped.length) { alert('Adjusted ' + (res.created || 0) + ' DSR.\n\nSkipped:\n' + res.skipped.join('\n')); }
     toast((Number(res.created) > 0 ? '✅ ' : '⚠️ ') + 'Adjusted ' + res.created + ' DSR' + ((res.skipped && res.skipped.length) ? ' (' + res.skipped.length + ' skipped)' : ''), Number(res.created) > 0 ? 'success' : 'error');
-    if (Number(res.created) > 0) { if (res.kpiRefresh === 'queued') toast('KPI and DSR Status will update in about a minute', 'success'); else if (res.kpiRefresh && res.kpiRefresh !== 'none') toast('KPI refresh not started (' + res.kpiRefresh + '). It will update on the next scheduled refresh.', 'error'); }
-    window.__adjLocalPend = window.__adjLocalPend || {};
-    (res.done || []).forEach(d => { window.__adjLocalPend[String(r.employee).toLowerCase() + '|' + d.date] = Date.now(); });
-    (res.done || []).forEach(d => { document.querySelectorAll('.adjChk').forEach(c => { if (c.dataset.date === d.date) { c.checked = false; c.disabled = true; const lb = c.closest('label'); if (lb) lb.style.opacity = '.4'; } }); });
+    adjAfter_(res);
+    (res.done || []).forEach(d => adjMarkDone_(r.employee, d.date, Number(d.count) || 0, had[d.date] || 0));
     adjLoad();
-    try { loadDsrMissing(window.__adjWho || 'admin', document.getElementById('adjStart').value, document.getElementById('adjEnd').value); } catch (e) {}
-    // The Missing DSR and KPI sheets rebuild in the background right after an adjustment; reload the lists
-    // twice so the final numbers show up without the user having to refresh.
-    if (Number(res.created) > 0 && res.kpiRefresh === 'queued') {
-      const w = window.__adjWho || 'admin', st = document.getElementById('adjStart') ? document.getElementById('adjStart').value : '', en = document.getElementById('adjEnd') ? document.getElementById('adjEnd').value : '';
-      [25000, 55000].forEach(ms => setTimeout(() => { try { if (document.getElementById('dsrMissingBox-' + w)) loadDsrMissing(w, st, en); } catch (e) {} }, ms));
-    }
+    adjReloadLater_();
   }).catch(() => { toast('Network error — check Missing DSR before retrying', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Adjust the DSR'; } });
+}
+async function adjBulkSubmit() {
+  const chk = Array.from(document.querySelectorAll('.adjBulkChk')).filter(c => c.checked);
+  if (!chk.length) { toast('Select at least one date', 'error'); return; }
+  const by = {}; chk.forEach(c => { (by[c.dataset.emp] = by[c.dataset.emp] || []).push({ d: c.dataset.date, n: Number(c.dataset.n || 0) }); });
+  const emps = Object.keys(by), total = chk.reduce((a, c) => a + Number(c.dataset.n || 0), 0);
+  if (!confirm('Create ' + total + ' adjusted DSR entr' + (total === 1 ? 'y' : 'ies') + ' for ' + emps.length + ' employee' + (emps.length === 1 ? '' : 's') + '?')) return;
+  const btn = document.getElementById('adjBulkGo');
+  let made = 0, fails = [], skips = [], anyQueued = false;
+  for (let i = 0; i < emps.length; i++) {
+    const emp = emps[i], list = by[emp];
+    if (btn) { btn.disabled = true; btn.textContent = 'Adjusting ' + (i + 1) + ' of ' + emps.length + '...'; }
+    try {
+      const res = await jsonpReliable({ page: 'dsrAdjustMissingAPI', role: 'ADMIN', empName: emp, items: list.map(x => x.d + ':' + x.n).join(','), by: (state.empName || 'MIS') });
+      if (!res || !res.ok) { fails.push(properCase(emp) + ': ' + ((res && res.error) || 'failed')); continue; }
+      made += Number(res.created) || 0;
+      if (res.kpiRefresh === 'queued') anyQueued = true;
+      (res.skipped || []).forEach(s => skips.push(properCase(emp) + ' ' + s));
+      const had = {}; list.forEach(x => { had[x.d] = x.n; });
+      (res.done || []).forEach(d => adjMarkDone_(emp, d.date, Number(d.count) || 0, had[d.date] || 0));
+    } catch (e) { fails.push(properCase(emp) + ': network error'); }
+  }
+  toast((made > 0 ? '✅ ' : '⚠️ ') + 'Adjusted ' + made + ' DSR for ' + emps.length + ' employees', made > 0 ? 'success' : 'error');
+  if (made > 0 && anyQueued) toast('KPI and DSR Status will update in about a minute', 'success');
+  if (fails.length || skips.length) alert('Adjusted ' + made + ' DSR.\n\n' + (fails.length ? 'Failed:\n' + fails.join('\n') + '\n\n' : '') + (skips.length ? 'Skipped:\n' + skips.join('\n') : ''));
+  adjLoad();
+  adjReloadLater_();
+}
+// The Missing DSR sheet is rebuilt in the background after an adjustment; refresh the Missing DSR list twice.
+function adjReloadLater_() {
+  const w = window.__adjWho || 'admin';
+  [25000, 55000].forEach(ms => setTimeout(() => { try { if (document.getElementById('dsrMissingBox-' + w)) loadDsrMissing(w, '', ''); } catch (e) {} }, ms));
 }
 
 
