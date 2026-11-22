@@ -21349,6 +21349,7 @@ function adjEntries_(r) {
     let miss = parseInt(p[0].replace('M:', ''), 10) || 0;
     const k = adjRemKey_(r.employee, d), loc = lp[k];
     if (loc) { if (now - loc.t < 180000) miss = Math.min(miss, loc.rem); else delete lp[k]; }
+    if ((window.__adjDoneMap || {})[k] || loc) return;
     if (miss <= 0) return;
     out.push({ d: d, miss: miss, pu: (p[1] || '').replace('P:', ''), en: (p[2] || '').replace('E:', '') });
   });
@@ -21359,8 +21360,14 @@ function adjLoad() {
   const start = document.getElementById('adjStart').value, end = document.getElementById('adjEnd').value;
   if (!start || !end) { toast('Select both dates', 'error'); return; }
   box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
-  jsonpReliable(kpiEmpParams(window.__adjWho || 'admin', { page: 'dsrMissingJSON', start: start, end: end })).then(res => {
+  Promise.all([
+    jsonpReliable(kpiEmpParams(window.__adjWho || 'admin', { page: 'dsrMissingJSON', start: start, end: end })),
+    jsonpReliable({ page: 'dsrAdjPendingAPI', role: 'ADMIN', mode: 'all' }).catch(() => null)
+  ]).then(([res, done]) => {
     if (!res || !res.ok) { box.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
+    // a date that has been adjusted once is finished: it never comes back to this list
+    const dn = {}; ((done && done.ok && done.items) || []).forEach(it => { dn[adjRemKey_(it.employee, it.date)] = true; });
+    window.__adjDoneMap = dn;
     const rows = [];
     (res.rows || []).forEach(r => {
       const ents = adjEntries_(r);
