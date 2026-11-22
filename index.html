@@ -4071,6 +4071,12 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
       <div id="extraDsrBox"><div class="empty-state"><p>Pick a date range and tap Check.</p></div></div>
     </div>
 
+    <div class="page-section" id="admin-extra-dsr-detail">
+      <div style="margin-bottom:8px;"><button class="btn-sm" onclick="extraDsrBack_()">← Back</button></div>
+      <div class="section-hdr"><span class="section-title2" id="extraDsrDetailTitle">Extra DSR Details</span></div>
+      <div id="extraDsrDetailBody" style="margin-top:10px;"><div class="loading"><span class="spinner"></span>Loading entries...</div></div>
+    </div>
+
     <!-- v-add (BRO: "same tag no unte row color change chei... naku duplicate enter aindi alert
          ivu chealu. delete chesaka color change chei.") -->
     <div class="page-section" id="admin-dup-tagno">
@@ -8885,7 +8891,7 @@ const SECTION_LABEL_MAP = {
   'kpi-trend': 'KPI',
   dsr: 'DSR', 'dsr-today': 'DSR', 'dsr-status': 'DSR', 'dsr-missing': 'DSR', 'dsr-adjust': 'DSR',
   'dsr-daterange': 'DSR', 'dsr-newentry': 'DSR', 'dsr-advorder': 'DSR', 'dsr-edit': 'DSR',
-  'dsr-tagsearch': 'DSR', 'dsr-returnreplace': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'dup-tagno': 'DSR', 'dsr-empsale': 'DSR',
+  'dsr-tagsearch': 'DSR', 'dsr-returnreplace': 'DSR', outletissue: 'DSR', rdr: 'DSR', 'extra-dsr': 'DSR', 'extra-dsr-detail': 'DSR', 'dup-tagno': 'DSR', 'dsr-empsale': 'DSR',
   leads: 'Leads', 'leads-pending': 'Leads', 'leads-submitted': 'Leads', 'leads-report': 'Leads',
   'leads-overview': 'Leads', 'leads-overdue': 'Leads', 'leads-quota': 'Leads', 'leads-conversions': 'Leads',
   'customer-events': 'Leads', 'flagged-numbers': 'Leads',
@@ -14575,19 +14581,29 @@ function renderExtraDsrResults() {
 // accidental duplicate, etc.) and go correct it directly in the sheet.
 let __extraDsrEntries = []; // populated fresh each time the detail modal opens — Edit/Delete below index into THIS array
 
+function extraDsrBack_() { try { goBackOneStep('admin'); } catch (e) { showAdminPage('extra-dsr'); } }
 async function showExtraDsrDetail(employee, date) {
-  const existing = document.getElementById('extraDsrDetailModal');
-  if (existing) existing.remove();
-  const div = document.createElement('div');
-  div.id = 'extraDsrDetailModal';
-  div.className = 'modal-overlay show';
-  div.innerHTML = `<div class="modal-box" style="max-width:460px;max-height:85vh;overflow-y:auto;">
-    <button class="modal-close-x" onclick="document.getElementById('extraDsrDetailModal').remove()" title="Close">✕</button>
-    <div class="modal-title">🧾 ${employee} — ${fmtDMY(date)}</div>
-    <div id="extraDsrDetailBody" style="margin-top:10px;" data-employee="${escJs(employee)}" data-date="${date}"><div class="loading"><span class="spinner"></span>Loading entries...</div></div>
-  </div>`;
-  document.body.appendChild(div);
+  showAdminPage('extra-dsr-detail');
+  const t = document.getElementById('extraDsrDetailTitle');
+  if (t) t.textContent = '🧾 ' + properCase(employee) + ' — ' + fmtDMY(date);
+  const body = document.getElementById('extraDsrDetailBody');
+  body.dataset.employee = employee; body.dataset.date = date;
   await loadExtraDsrDetailBody(employee, date);
+}
+
+// MIS: count one excess DSR of this employee/date (purchases +1 at the same time).
+function extraDsrAddCount_(btn) {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  const emp = btn.dataset.emp, d = btn.dataset.date;
+  if (!confirm('Add this excess DSR of ' + properCase(emp) + ' on ' + fmtDMY(d) + ' to the DSR count? Purchases for that date will also increase by 1.')) return;
+  btn.disabled = true; btn.textContent = 'Adding...';
+  jsonpReliable(kpiEmpParams('admin', { page: 'dsrExcessAddAPI', empName: emp, iso: d, by: state.adminName || state.empName || 'MIS' })).then(async res => {
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not add', 'error'); btn.disabled = false; btn.textContent = 'Add To DSR Count'; return; }
+    toast('✅ Added to the DSR count' + (res.remaining > 0 ? ' (' + res.remaining + ' excess left)' : ''), 'success');
+    if (res.kpiRefresh === 'queued') toast('KPI and DSR Status will update in about a minute', 'success');
+    await loadExtraDsrDetailBody(emp, d);
+    loadExtraDsrCheck();
+  }).catch(() => { toast('Network error. Check before retrying.', 'error'); btn.disabled = false; btn.textContent = 'Add To DSR Count'; });
 }
 
 // Separated from showExtraDsrDetail so Edit/Delete can call this same
@@ -14621,11 +14637,14 @@ async function loadExtraDsrDetailBody(employee, date) {
       __extraDsrEntries.map(en => `<tr${en.possibleDuplicate ? ' style="background:#ffebee;"' : ''}><td>${en.dsrNo}</td><td>${properCase(en.customerName) || '—'}</td><td>${properCase(en.itemName) || '—'}</td><td>${en.tagNo || '—'}</td><td>${en.timestamp || '—'}</td></tr>`).join('') +
       `</tbody></table></div>`;
 
+    const excessFrom_ = Math.min(__extraDsrEntries.length, Math.max(0, wk ? (Number(wk.purchased) || 0) : 0));
+    if (excessFrom_ < __extraDsrEntries.length) html += `<p style="font-size:12px;font-weight:700;color:#c97a10;margin:0 0 8px;">${__extraDsrEntries.length - excessFrom_} excess DSR${__extraDsrEntries.length - excessFrom_ === 1 ? '' : 's'} (not counted)</p>`; else html += '<p style="font-size:12px;font-weight:700;color:var(--green,#2e7d32);margin:0 0 8px;">No excess DSR on this date.</p>';
     __extraDsrEntries.forEach((en, i) => {
       html += `<div class="dsr-receipt-card" style="margin-bottom:8px;${en.possibleDuplicate ? 'border:1.5px solid var(--red);' : ''}">
         <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${en.dsrNo}</span>
           <span style="display:flex;gap:6px;align-items:center;">
             ${en.possibleDuplicate ? '<span class="kd-pill red" style="font-size:9.5px;">⚠️ Possible Duplicate</span>' : ''}
+            ${i >= excessFrom_ ? '<span class="kd-pill" style="background:#fff3e0;color:#c97a10;font-size:9.5px;">Excess</span>' : ''}
             <span class="kd-pill gold">${en.paymentStatus || '—'}</span>
           </span>
         </div>
@@ -14638,6 +14657,7 @@ async function loadExtraDsrDetailBody(employee, date) {
           ])}</tbody></table>
         </div>
         <div class="btn-row" style="padding:0 14px 12px;">
+          ${(i >= excessFrom_ && frqIsMis_()) ? `<button class="btn-sm" data-emp="${escHtml(employee)}" data-date="${date}" onclick="extraDsrAddCount_(this)">Add To DSR Count</button>` : ''}
           <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;" onclick="extraDsrEditEntry(${i})">✏️ Edit</button>
           <button class="btn-secondary" style="width:auto;padding:7px 14px;font-size:12px;margin-bottom:0;color:var(--red);border-color:var(--red);" onclick="extraDsrConfirmDelete(${i})">🗑️ Delete</button>
         </div>
