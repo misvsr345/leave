@@ -33852,10 +33852,54 @@ async function mtUrls_(force) {
   return MT_URLS_;
 }
 const MT_NEEDS_ = { wt: ['walkin', 'Walk-in / KPI'], loy: ['loyalty', 'Loyalty'], mkt: ['marketing', 'Marketing'] };
+// Walk-in / KPI tools need no web app link: the request goes into the Portal_Requests sheet and the Walkintrack
+// script's 1-minute watcher runs it, then writes the result back (the same way Missing DSR rebuilds work).
+async function mtWalkCall_(tool, args) {
+  if (tool === 'empNames') {
+    try { await ensureDirectEmpCache_(); } catch (e) {}
+    return { ok: true, names: directEmpCache.map(e => e.name).sort((a, b) => a.localeCompare(b)) };
+  }
+  if (tool === 'cfgGet') return { ok: false, error: 'Not available here' };
+  const q = await jsonpReliable(kpiEmpParams('admin', { page: 'walkToolRequestAPI', tool: tool, payload: JSON.stringify(args || {}), by: state.adminName || 'MIS' }));
+  if (!q || !q.ok) return { ok: false, error: (q && q.error) || 'Could not queue the request' };
+  const t0 = Date.now();
+  while (Date.now() - t0 < 8 * 60 * 1000) {
+    await new Promise(r => setTimeout(r, 4000));
+    const st = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', mode: 'status', id: q.id })).catch(() => null);
+    if (!st || !st.ok) continue;
+    if (st.status === 'Done' || st.status === 'Error') {
+      let msg = String(st.note || ''), raw = null;
+      if (msg.charAt(0) === '{') { try { raw = JSON.parse(msg); } catch (e) {} }
+      if (raw && raw.msg !== undefined) msg = String(raw.msg);
+      return st.status === 'Done' ? Object.assign({}, raw || {}, { ok: true, msg: msg, raw: raw }) : { ok: false, error: msg, msg: msg };
+    }
+  }
+  return { ok: false, error: 'Still running. Check again in a few minutes.' };
+}
+// Loyalty tools: same queue, run by the Loyalty script's 1-minute watcher. The note holds the full JSON result.
+async function mtLoyCall_(tool, args) {
+  const q = await jsonpReliable(kpiEmpParams('admin', { page: 'loyToolRequestAPI', tool: tool, payload: JSON.stringify(args || {}), by: state.adminName || 'MIS' }));
+  if (!q || !q.ok) return { ok: false, error: (q && q.error) || 'Could not queue the request' };
+  const t0 = Date.now();
+  while (Date.now() - t0 < 8 * 60 * 1000) {
+    await new Promise(r => setTimeout(r, 4000));
+    const st = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', mode: 'status', id: q.id })).catch(() => null);
+    if (!st || !st.ok) continue;
+    if (st.status === 'Done' || st.status === 'Error') {
+      let raw = null;
+      try { raw = JSON.parse(String(st.note || '')); } catch (e) {}
+      if (!raw) return { ok: false, error: String(st.note || 'Failed') };
+      return Object.assign({ raw: raw }, raw);
+    }
+  }
+  return { ok: false, error: 'Still running. Check again in a few minutes.' };
+}
 async function mtCall_(ep, tool, args) {
   args = args || {};
   const role = state.adminRole || 'MIS';
   let url, res;
+  if (ep === 'wt') return mtWalkCall_(tool, args);
+  if (ep === 'loy') return mtLoyCall_(tool, args);
   if (ep === 'dsr') {
     const q = Object.keys(args).map(k => '&' + encodeURIComponent(k) + '=' + encodeURIComponent(args[k])).join('');
     res = await _fetchWithTimeout(DSR_GAS_URL + '?action=dsrToolsAPI&callerRole=' + encodeURIComponent(role) + '&tool=' + encodeURIComponent(tool) + q, {}, 300000).then(r => r.json());
