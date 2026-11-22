@@ -14559,9 +14559,9 @@ function renderExtraDsrResults() {
     const list = groups[emp], totalExtra = list.reduce((a, f) => a + (Number(f.extraCount) || 0), 0);
     html += `<div class="kd-card" style="border-left:3px solid var(--orange,#c97a10);">
       <div class="kd-head"><span class="kd-name">${properCase(emp)}</span><span class="kd-pill" style="background:#fff3e0;color:#c97a10;">${totalExtra} Extra DSR</span></div>
-      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>DSR Entries</th><th>Walk-In Purchases</th><th>Extra</th><th></th></tr></thead><tbody>` +
-      list.map(f => `<tr style="cursor:pointer;" onclick="showExtraDsrDetail('${escJs(f.employee)}','${f.date}')"><td>${fmtDMY(f.date)}</td><td>${f.dsrEntries}</td><td>${f.walkinPurchased}</td><td style="color:#c97a10;font-weight:700;">+${f.extraCount}</td><td><button class="btn-sm" onclick="event.stopPropagation();showExtraDsrDetail('${escJs(f.employee)}','${f.date}')">View</button></td></tr>`).join('') +
-      `</tbody></table></div></div>`;
+      <div class="kd-table-wrap"><table class="kd-table"><thead><tr><th>Date</th><th>DSR Entries</th><th>Walk-In Purchases</th><th>Extra</th></tr></thead><tbody>` +
+      list.map(f => `<tr><td>${fmtDMY(f.date)}</td><td>${f.dsrEntries}</td><td>${f.walkinPurchased}</td><td style="color:#c97a10;font-weight:700;">+${f.extraCount}</td></tr>`).join('') +
+      `</tbody></table></div><div style="margin-top:8px;"><button class="btn-sm" onclick="showExtraDsrEmp('${escJs(emp)}')">View</button></div></div>`;
   });
   html += '</div>';
   box.innerHTML = html;
@@ -14574,13 +14574,19 @@ function renderExtraDsrResults() {
 let __extraDsrEntries = []; // populated fresh each time the detail modal opens — Edit/Delete below index into THIS array
 
 function extraDsrBack_() { try { goBackOneStep('admin'); } catch (e) { showAdminPage('extra-dsr'); } }
-async function showExtraDsrDetail(employee, date) {
+// One View per employee: every excess DSR of that employee (all flagged dates) on one page.
+async function showExtraDsrEmp(employee) {
+  const dates = (__extraDsrAllFlagged || []).filter(f => f.employee === employee).map(f => f.date).sort().reverse();
   showAdminPage('extra-dsr-detail');
   const t = document.getElementById('extraDsrDetailTitle');
-  if (t) t.textContent = '🧾 ' + properCase(employee) + ' — ' + fmtDMY(date);
+  if (t) t.textContent = '🧾 ' + properCase(employee) + ' — Extra DSRs';
   const body = document.getElementById('extraDsrDetailBody');
-  body.dataset.employee = employee; body.dataset.date = date;
-  await loadExtraDsrDetailBody(employee, date);
+  body.dataset.employee = employee; body.dataset.dates = dates.join(',');
+  await loadExtraDsrDetailBody(employee, dates);
+}
+function extraDsrReload_() {
+  const b = document.getElementById('extraDsrDetailBody');
+  return loadExtraDsrDetailBody(b.dataset.employee, String(b.dataset.dates || '').split(',').filter(Boolean));
 }
 
 // MIS: count one excess DSR of this employee/date (purchases +1 at the same time).
@@ -14591,80 +14597,59 @@ function extraDsrAddCount_(btn) {
   btn.disabled = true; btn.textContent = 'Adding...';
   jsonpReliable(kpiEmpParams('admin', { page: 'dsrExcessAddAPI', empName: emp, iso: d, by: state.adminName || state.empName || 'MIS' })).then(async res => {
     if (!res || !res.ok) { toast((res && res.error) || 'Could not add', 'error'); btn.disabled = false; btn.textContent = 'Add To DSR Count'; return; }
-    toast('✅ Added to the DSR count' + (res.remaining > 0 ? ' (' + res.remaining + ' excess left)' : ''), 'success');
+    toast('✅ Added to the DSR count', 'success');
     if (res.kpiRefresh === 'queued') toast('KPI and DSR Status will update in about a minute', 'success');
-    await loadExtraDsrDetailBody(emp, d);
+    await extraDsrReload_();
     loadExtraDsrCheck();
   }).catch(() => { toast('Network error. Check before retrying.', 'error'); btn.disabled = false; btn.textContent = 'Add To DSR Count'; });
 }
 
-// Separated from showExtraDsrDetail so Edit/Delete can call this same
-// refresh after their own action completes, without closing and
-// re-opening the whole modal (a jarring flash for something that
-// should feel instant).
-async function loadExtraDsrDetailBody(employee, date) {
+// Renders all excess DSRs of one employee for the given dates. Edit/Delete reload this same view afterwards.
+async function loadExtraDsrDetailBody(employee, dates) {
   const body = document.getElementById('extraDsrDetailBody');
+  if (!Array.isArray(dates)) dates = String(dates || '').split(',').filter(Boolean);
   body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading entries...</div>';
   try {
-    const res = await jsonp({ page: 'dsrEntriesForEmpDateJSON', employee, date });
-    if (!res || !res.ok) { body.innerHTML = '<p style="color:var(--red);">Could not load entries.</p>'; return; }
-    __extraDsrEntries = res.entries || [];
-    if (!__extraDsrEntries.length) { body.innerHTML = '<p>No entries found for this employee/date.</p>'; return; }
-    // v-add (BRO: "duplicate unte duplicate ani kuda chupinchali" —
-    // possibleDuplicate comes from the backend, same customer + same
-    // item name appearing more than once on this date).
-    let html = `<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">${__extraDsrEntries.length} DSR entr${__extraDsrEntries.length === 1 ? 'y' : 'ies'} on this date. Check the timestamps and customer names below — an old sale re-entered under today's date, or a genuine duplicate, is usually easy to spot once you see them side by side.</p>`;
-
-    // v-add (BRO: "aa date lo unna walkintrack purchase details and dsr
-    // lo unna dsr entry details oka table laga kanipinchali" — a direct
-    // side-by-side table of exactly what both sources say for this
-    // employee+date, so the mismatch is obvious at a glance before
-    // scrolling into the individual DSR entry cards below).
-    const wk = res.walkin;
-    html += `<div class="kd-table-wrap" style="margin-bottom:6px;"><table class="kd-table"><thead><tr><th>Source</th><th>Deals</th><th>Golden</th><th>Loyalty</th><th>Purchased</th><th>Non-Purchased</th></tr></thead><tbody>
-      <tr><td><b>Walk-in Track</b></td><td>${wk ? wk.deals : '—'}</td><td>${wk ? wk.golden : '—'}</td><td>${wk ? wk.loyalty : '—'}</td><td>${wk ? wk.purchased : '—'}</td><td>${wk ? wk.nonPurchased : '—'}</td></tr>
-      <tr><td><b>DSR Entries</b></td><td colspan="5">${__extraDsrEntries.length} item row${__extraDsrEntries.length === 1 ? '' : 's'} — DSR No${__extraDsrEntries.length === 1 ? '' : 's'}: ${[...new Set(__extraDsrEntries.map(en => en.dsrNo))].join(', ')}</td></tr>
-      </tbody></table></div>`;
-    // Same customer + same mobile on this date = ONE DSR (same rule as the counting). Rows without a usable mobile group by DSR No.
-    const groups = [], gIdx = {};
-    __extraDsrEntries.forEach((en, i) => {
-      const mob = String(en.mobileNumber || '').replace(/\D/g, ''), nm = String(en.customerName || '').trim().toLowerCase();
-      const key = (mob.length >= 10 && nm) ? 'c:' + mob + '|' + nm : 'd:' + en.dsrNo;
-      if (gIdx[key] === undefined) { gIdx[key] = groups.length; groups.push({ items: [] }); }
-      groups[gIdx[key]].items.push({ en, i });
+    const results = await Promise.all(dates.map(d => jsonp({ page: 'dsrEntriesForEmpDateJSON', employee, date: d }).catch(() => null)));
+    __extraDsrEntries = [];
+    let html = '', totalExcess = 0;
+    dates.forEach((d, di) => {
+      const res = results[di];
+      if (!res || !res.ok) { html += `<div style="font-weight:700;margin:10px 0 4px;">${fmtDMY(d)}</div><p style="color:var(--red);font-size:12px;">Could not load this date.</p>`; return; }
+      const ents = res.entries || [], wk = res.walkin;
+      const items = ents.map(en => { __extraDsrEntries.push(en); return { en, i: __extraDsrEntries.length - 1 }; });
+      // Same customer + same mobile on a date = ONE DSR (same rule as the counting); no usable mobile = by DSR No.
+      const groups = [], gIdx = {};
+      items.forEach(x => {
+        const mob = String(x.en.mobileNumber || '').replace(/\D/g, ''), nm = String(x.en.customerName || '').trim().toLowerCase();
+        const key = (mob.length >= 10 && nm) ? 'c:' + mob + '|' + nm : 'd:' + x.en.dsrNo;
+        if (gIdx[key] === undefined) { gIdx[key] = groups.length; groups.push({ items: [] }); }
+        groups[gIdx[key]].items.push(x);
+      });
+      const purchasedN = Math.max(0, wk ? (Number(wk.purchased) || 0) : 0);
+      const exFrom = Math.min(groups.length, purchasedN), exN = groups.length - exFrom;
+      totalExcess += exN;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;"><span style="font-weight:800;font-size:13px;">📅 ${fmtDMY(d)}</span><span style="font-size:11.5px;color:var(--text3);">Walk-in purchases: <b>${wk ? wk.purchased : '—'}</b> · DSRs: <b>${groups.length}</b> · Excess: <b style="color:#c97a10;">${exN}</b></span></div>`;
+      if (!exN) { html += '<p style="font-size:12px;color:var(--green,#2e7d32);margin:0 0 6px;">No excess DSR on this date.</p>'; return; }
+      groups.slice(exFrom).forEach(g => {
+        const f = g.items[0].en, nos = [...new Set(g.items.map(x => x.en.dsrNo))].join(', ');
+        const dup = g.items.some(x => x.en.possibleDuplicate);
+        html += `<div class="dsr-receipt-card" style="margin-bottom:10px;${dup ? 'border:1.5px solid var(--red);' : ''}">
+          <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${escHtml(nos)}</span>
+            <span style="display:flex;gap:6px;align-items:center;">${dup ? '<span class="kd-pill red" style="font-size:9.5px;">⚠️ Possible Duplicate</span>' : ''}<span class="kd-pill" style="background:#fff3e0;color:#c97a10;font-size:9.5px;">Excess</span></span>
+          </div>
+          <div class="dsr-receipt-body">
+            <div class="dsr-cust-name">${properCase(f.customerName) || '—'}</div>
+            <table class="pv-table"><tbody>${pvRows([['Mobile', f.mobileNumber ? fmtPhone(f.mobileNumber) : ''], ['Time', f.timestamp]])}</tbody></table>
+            <div class="kd-table-wrap" style="margin-top:8px;"><table class="kd-table"><thead><tr><th>Item</th><th>Weight</th><th>Tag No</th><th></th></tr></thead><tbody>` +
+            g.items.map(x => `<tr><td>${escHtml((x.en.type || '—') + ' — ' + (properCase(x.en.itemName) || '—'))}</td><td>${x.en.weight ? escHtml(x.en.weight) + 'g' : '—'}</td><td>${escHtml(x.en.tagNo || '—')}</td><td style="white-space:nowrap;"><button class="btn-sm" onclick="extraDsrEditEntry(${x.i})">Edit</button> <button class="btn-sm" style="color:var(--red);" onclick="extraDsrConfirmDelete(${x.i})">Delete</button></td></tr>`).join('') +
+            `</tbody></table></div>
+          </div>
+          ${frqIsMis_() ? `<div style="padding:0 14px 12px;"><button class="btn-sm" data-emp="${escHtml(employee)}" data-date="${d}" onclick="extraDsrAddCount_(this)">Add To DSR Count</button></div>` : ''}
+        </div>`;
+      });
     });
-    const purchasedN = Math.max(0, wk ? (Number(wk.purchased) || 0) : 0);
-    const excessGroupFrom = Math.min(groups.length, purchasedN);
-    const excessN = groups.length - excessGroupFrom;
-    html += excessN > 0
-      ? `<p style="font-size:12px;font-weight:700;color:#c97a10;margin:0 0 8px;">${excessN} excess DSR${excessN === 1 ? '' : 's'} (not counted)</p>`
-      : '<p style="font-size:12px;font-weight:700;color:var(--green,#2e7d32);margin:0 0 8px;">No excess DSR on this date.</p>';
-    groups.forEach((g, gi) => {
-      const f = g.items[0].en, isEx = gi >= excessGroupFrom;
-      const nos = [...new Set(g.items.map(x => x.en.dsrNo))].join(', ');
-      const dup = g.items.some(x => x.en.possibleDuplicate);
-      html += `<div class="dsr-receipt-card" style="margin-bottom:10px;${dup ? 'border:1.5px solid var(--red);' : ''}">
-        <div class="dsr-receipt-hd"><span class="dsr-receipt-id">🧾 ${escHtml(nos)}</span>
-          <span style="display:flex;gap:6px;align-items:center;">
-            ${dup ? '<span class="kd-pill red" style="font-size:9.5px;">⚠️ Possible Duplicate</span>' : ''}
-            ${isEx ? '<span class="kd-pill" style="background:#fff3e0;color:#c97a10;font-size:9.5px;">Excess</span>' : '<span class="kd-pill gold" style="font-size:9.5px;">Counted</span>'}
-          </span>
-        </div>
-        <div class="dsr-receipt-body">
-          <div class="dsr-cust-name">${properCase(f.customerName) || '—'}</div>
-          <table class="pv-table"><tbody>${pvRows([
-            ['Mobile', f.mobileNumber ? fmtPhone(f.mobileNumber) : ''],
-            ['Time', f.timestamp],
-            ['Items', String(g.items.length)]
-          ])}</tbody></table>
-          <div class="kd-table-wrap" style="margin-top:8px;"><table class="kd-table"><thead><tr><th>Item</th><th>Weight</th><th>Tag No</th><th></th></tr></thead><tbody>` +
-          g.items.map(x => `<tr><td>${escHtml((x.en.type || '—') + ' — ' + (properCase(x.en.itemName) || '—'))}</td><td>${x.en.weight ? escHtml(x.en.weight) + 'g' : '—'}</td><td>${escHtml(x.en.tagNo || '—')}</td><td style="white-space:nowrap;"><button class="btn-sm" onclick="extraDsrEditEntry(${x.i})">Edit</button> <button class="btn-sm" style="color:var(--red);" onclick="extraDsrConfirmDelete(${x.i})">Delete</button></td></tr>`).join('') +
-          `</tbody></table></div>
-        </div>
-        ${(isEx && frqIsMis_()) ? `<div style="padding:0 14px 12px;"><button class="btn-sm" data-emp="${escHtml(employee)}" data-date="${date}" onclick="extraDsrAddCount_(this)">Add To DSR Count</button></div>` : ''}
-      </div>`;
-    });
-    body.innerHTML = html;
+    body.innerHTML = `<p style="font-size:12px;font-weight:700;color:#c97a10;margin:0 0 4px;">${totalExcess} excess DSR${totalExcess === 1 ? '' : 's'} (not counted)</p>` + html;
   } catch (e) {
     body.innerHTML = `<p style="color:var(--red);">Could not load. ${e.message}</p>`;
   }
@@ -14728,7 +14713,7 @@ async function extraDsrSaveEdit(i) {
       toast('💾 DSR entry updated', 'success');
       if (modal) modal.remove();
       const bodyEl = document.getElementById('extraDsrDetailBody');
-      await loadExtraDsrDetailBody(bodyEl.dataset.employee, bodyEl.dataset.date);
+      await extraDsrReload_();
       loadExtraDsrCheck(); // refresh the underlying flagged-list counts too
     } else {
       toast((res && res.error) || 'Update failed', 'error');
@@ -14770,7 +14755,7 @@ async function extraDsrDeleteEntry(i) {
     if (res && res.ok) {
       toast('🗑️ DSR entry deleted', 'success');
       const bodyEl = document.getElementById('extraDsrDetailBody');
-      await loadExtraDsrDetailBody(bodyEl.dataset.employee, bodyEl.dataset.date);
+      await extraDsrReload_();
       loadExtraDsrCheck();
     } else {
       toast((res && res.error) || 'Delete failed', 'error');
