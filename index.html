@@ -21307,12 +21307,14 @@ function showDsrMissingDetail(idx) {
       // DSR IDs counted for this date (Bill Date = this date), each with the date it was actually entered
       const crPart = parts.find(x => x.indexOf('X:') === 0);
       const crHtml = crPart ? ' <span style="color:var(--text3);font-weight:400;">· ' + crPart.substring(2) + ' excess (not counted)</span>' : '';
+      const dPart = parts.find(x => x.indexOf('D:') === 0);
+      const dHtml = dPart ? ' <span style="color:var(--text3);font-weight:400;">· ' + dPart.substring(2) + ' direct silver (not counted)</span>' : '';
       const idPart = parts.find(x => x.indexOf('I:') === 0);
       const idHtml = idPart ? '<div style="margin-top:4px;font-weight:400;font-size:11px;color:var(--text2);line-height:1.6;">' + idPart.substring(2).split(',').filter(Boolean).map(t => {
         const k = t.split('@'); const en = k[1] ? ' · Entered ' + fmtDMY(k[1]) : '';
         return '<div>' + escHtml_(k[0]) + ' <span style="color:var(--text3);">· Bill ' + fmtDMY(d) + en + '</span></div>';
       }).join('') + '</div>' : '';
-      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing${extra}${crHtml}${idHtml}</td></tr>`;
+      return `<tr><td>${fmtDMY(d)}</td><td style="color:var(--red);">${missCount} missing${extra}${crHtml}${dHtml}${idHtml}</td></tr>`;
     }).join('') + `</tbody></table>`;
   }
   div.innerHTML = `<div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto;">
@@ -29317,8 +29319,37 @@ function dsrfSubmit(who) {
     return;
   }
 
-  window['__dsrPendingRows_' + who] = rows;
-  dsrfShowPreview(who, rows);
+  const goPreview = () => { window['__dsrPendingRows_' + who] = rows; dsrfShowPreview(who, rows); };
+  if (isOutletForm || isRDR) { goPreview(); return; }
+  dsrSilverAsk_(who, rows, empName, goPreview);
+}
+
+// A Silver-only DSR for an employee whose Silver is not credited: ask once whether the customer saw Gold or
+// Diamond first, and save the answer with every Silver item of the DSR (seenGoldDiamond = Yes / No).
+function dsrSilverAsk_(who, rows, empName, done) {
+  const hasSilver = rows.some(r => r.type === 'Silver');
+  const hasOther = rows.some(r => r.type === 'Gold' || r.type === 'Diamond');
+  if (!hasSilver || hasOther) { done(); return; }
+  const cache = window.__dsrSilverRule = window.__dsrSilverRule || {};
+  const key = String(empName || '').toLowerCase();
+  const ask = () => {
+    const old = document.getElementById('dsrSilverAskModal'); if (old) old.remove();
+    const div = document.createElement('div');
+    div.id = 'dsrSilverAskModal'; div.className = 'modal-overlay show';
+    div.innerHTML = '<div class="modal-box" style="max-width:340px;"><div class="modal-title">🥈 Silver Customer</div>'
+      + '<div style="font-size:13.5px;margin:8px 0 14px;">Did The Customer See Gold Or Diamond First?</div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      + '<button class="btn-sm" id="dsrSilverNo">No</button><button class="btn-sm btn-modify" id="dsrSilverYes">Yes</button></div></div>';
+    document.body.appendChild(div);
+    const pick = ans => { rows.forEach(r => { if (r.type === 'Silver') r.seenGoldDiamond = ans; }); div.remove(); done(); };
+    document.getElementById('dsrSilverYes').onclick = () => pick('Yes');
+    document.getElementById('dsrSilverNo').onclick = () => pick('No');
+  };
+  if (key in cache) { if (cache[key]) done(); else ask(); return; }
+  jsonpReliable({ page: 'dsrSilverRuleAPI', empName: empName }).then(res => {
+    cache[key] = !(res && res.ok && res.silverCredited === false);
+    if (cache[key]) done(); else ask();
+  }).catch(() => done());
 }
 
 // ══════════════════════════════════════
