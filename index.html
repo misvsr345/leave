@@ -21377,6 +21377,12 @@ function adjSubmit(idx) {
     (res.done || []).forEach(d => { document.querySelectorAll('.adjChk').forEach(c => { if (c.dataset.date === d.date) { c.checked = false; c.disabled = true; const lb = c.closest('label'); if (lb) lb.style.opacity = '.4'; } }); });
     adjLoad();
     try { loadDsrMissing(window.__adjWho || 'admin', document.getElementById('adjStart').value, document.getElementById('adjEnd').value); } catch (e) {}
+    // The Missing DSR and KPI sheets rebuild in the background right after an adjustment; reload the lists
+    // twice so the final numbers show up without the user having to refresh.
+    if (Number(res.created) > 0 && res.kpiRefresh === 'queued') {
+      const w = window.__adjWho || 'admin', st = document.getElementById('adjStart') ? document.getElementById('adjStart').value : '', en = document.getElementById('adjEnd') ? document.getElementById('adjEnd').value : '';
+      [25000, 55000].forEach(ms => setTimeout(() => { try { if (document.getElementById('dsrMissingBox-' + w)) loadDsrMissing(w, st, en); } catch (e) {} }, ms));
+    }
   }).catch(() => { toast('Network error — check Missing DSR before retrying', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Adjust the DSR'; } });
 }
 
