@@ -14629,7 +14629,8 @@ async function loadExtraDsrDetailBody(employee, dates) {
       const res = results[di];
       if (!res || !res.ok) { html += `<div style="font-weight:700;margin:10px 0 4px;">${fmtDMY(d)}</div><p style="color:var(--red);font-size:12px;">Could not load this date.</p>`; return; }
       const ents = res.entries || [], wk = res.walkin;
-      const items = ents.map(en => { __extraDsrEntries.push(en); return { en, i: __extraDsrEntries.length - 1 }; });
+      const items = ents.map(en => { __extraDsrEntries.push(en); return { en, i: __extraDsrEntries.length - 1 }; }).filter(x => !x.en.dupExtra);
+      const dupHidden = ents.filter(en => en.dupExtra).length;
       // Same customer + same mobile on a date = ONE DSR (same rule as the counting); no usable mobile = by DSR No.
       const groups = [], gIdx = {};
       items.forEach(x => {
@@ -14642,7 +14643,9 @@ async function loadExtraDsrDetailBody(employee, dates) {
       const exFrom = Math.min(groups.length, purchasedN), exN = groups.length - exFrom;
       totalExcess += exN;
       html += `<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;"><span style="font-weight:800;font-size:13px;">📅 ${fmtDMY(d)}</span><span style="font-size:11.5px;color:var(--text3);">Walk-in purchases: <b>${wk ? wk.purchased : '—'}</b> · DSRs: <b>${groups.length}</b> · Excess: <b style="color:#c97a10;">${exN}</b></span></div>`;
-      if (!exN) { html += '<p style="font-size:12px;color:var(--green,#2e7d32);margin:0 0 6px;">No excess DSR on this date.</p>'; return; }
+      if (!exN) html += '<p style="font-size:12px;color:var(--green,#2e7d32);margin:0 0 6px;">No excess DSR on this date.</p>';
+      if (dupHidden) html += `<p style="font-size:11.5px;color:var(--text3);margin:0 0 6px;">${dupHidden} repeated tag entr${dupHidden === 1 ? 'y' : 'ies'} ignored (see Duplicate Tag No).</p>`;
+      if (!exN) return;
       groups.slice(exFrom).forEach(g => {
         const f = g.items[0].en, nos = [...new Set(g.items.map(x => x.en.dsrNo))].join(', ');
         const dup = g.items.some(x => x.en.possibleDuplicate);
