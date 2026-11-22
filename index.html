@@ -34816,11 +34816,16 @@ async function dpStockBody_() {
     dpTable_(['Counter', 'Pcs · Weight (g)'], (r.counters || []).map(c => [escHtml(c.counter), ((c.total || {}).pcs || 0) + ' · ' + ((c.total || {}).wt || 0).toFixed(3)]));
 }
 async function dpWalkinBody_() {
-  const today = toYMD(new Date());
-  const r = await jsonpReliable({ page: 'walkinTrackTableAPI', role: 'ADMIN', start: today, end: today });
+  // Walk-in data for a day is due by 12:00 noon the next day: today's entry is never asked about; from noon on,
+  // ask about YESTERDAY's entry only when it is still missing.
+  const now = new Date();
+  if (now.getHours() < 12) return null;
+  const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const ymd = toYMD(y);
+  const r = await jsonpReliable({ page: 'walkinTrackTableAPI', role: 'ADMIN', start: ymd, end: ymd });
   if (!r || !r.ok) throw new Error((r && r.error) || 'No data');
   if ((r.rows || []).length) return null; // entries exist: no popup
-  return '<div style="border:1.5px solid var(--gold);border-radius:8px;padding:10px 12px;margin:8px 0;background:var(--purple-bg);font-size:13px;"><b>No walk-in entry yet today</b> (' + today + '). Walk-in data is not up to date.</div>';
+  return '<div style="border:1.5px solid var(--gold);border-radius:8px;padding:10px 12px;margin:8px 0;background:var(--purple-bg);font-size:13px;"><b>Walk-in entry missing for ' + fmtDMY(ymd) + '</b>. It was due by 12:00 noon today. Please enter it.</div>';
 }
 async function dpKpiBody_() {
   const r = await jsonpReliable(kpiEmpParams('admin', { page: 'kpiTillDateJSON' }));
