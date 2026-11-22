@@ -21370,12 +21370,39 @@ function adjLoad() {
       rows.push({ employee: r.employee, ents: ents, totalMissing: ents.reduce((a, x) => a + x.miss, 0) });
     });
     window.__adjRows = rows;
-    if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR in this range.</p></div>'; return; }
+    // MIS only: DSRs entered beyond a date's purchases (not counted); each can be added to the DSR count
+    const exc = [];
+    if (window.__adjWho !== 'emp' && frqIsMis_()) {
+      (res.rows || []).forEach(r => Object.entries(r.perDate || {}).forEach(([d, v]) => {
+        const parts = String(v).split('|'), xp = parts.find(t => t.indexOf('X:') === 0), n = xp ? parseInt(xp.substring(2), 10) || 0 : 0;
+        if (n > 0) exc.push({ emp: r.employee, d: d, n: n, p: (parts.find(t => t.indexOf('P:') === 0) || '').substring(2), e: (parts.find(t => t.indexOf('E:') === 0) || '').substring(2) });
+      }));
+      exc.sort((a, b) => a.emp.localeCompare(b.emp) || a.d.localeCompare(b.d));
+    }
+    const excHtml = exc.length ? '<div style="margin-top:16px;font-weight:700;font-size:13px;">Excess DSRs (Not Counted)</div>'
+      + '<div class="kd-note">Entered beyond that date\'s purchases. Add one to the DSR count and that date\'s purchases go up by 1.</div>'
+      + '<div style="overflow-x:auto;"><table class="pv-table"><thead><tr><th>Employee</th><th>Date</th><th>Excess</th><th></th></tr></thead><tbody>'
+      + exc.map(x => '<tr><td>' + escHtml(properCase(x.emp)) + '</td><td>' + fmtDMY(x.d) + '</td><td style="color:var(--text3);">' + x.n + ' <span style="font-size:11px;">(🛍️ ' + escHtml(x.p) + ' · 🧾 ' + escHtml(x.e) + ')</span></td><td><button class="btn-sm btn-modify" data-emp="' + escHtml(x.emp) + '" data-date="' + x.d + '" onclick="dsrExcessAdd_(this)">Add To DSR Count</button></td></tr>').join('')
+      + '</tbody></table></div>' : '';
+    if (!rows.length) { box.innerHTML = '<div class="empty-state"><p>✅ No missing DSR in this range.</p></div>' + excHtml; return; }
     const bulk = window.__adjWho === 'emp' ? '' : `<div style="margin-bottom:8px;"><button class="btn-sm" onclick="adjBulkOpen()">☑️ Select All Employees</button></div>`;
     box.innerHTML = bulk + rows.map((r, i) => `<div class="kd-card kd-danger" style="cursor:pointer;" onclick="adjOpenEmp(${i})">
       <div class="kd-head"><span class="kd-name">${properCase(r.employee)}</span><span class="kd-pill red">🚫 ${r.totalMissing} Missing</span></div>
-      <div style="font-size:10.5px;color:var(--purple,#6b21a8);font-weight:600;">Tap to select dates →</div></div>`).join('');
+      <div style="font-size:10.5px;color:var(--purple,#6b21a8);font-weight:600;">Tap to select dates →</div></div>`).join('') + excHtml;
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p></div>'; });
+}
+// MIS: count one excess DSR (its date's purchases go up by 1 at the same time).
+function dsrExcessAdd_(btn) {
+  if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
+  const emp = btn.dataset.emp, d = btn.dataset.date;
+  if (!confirm('Add 1 excess DSR of ' + properCase(emp) + ' on ' + fmtDMY(d) + ' to the DSR count? Purchases for that date will also increase by 1.')) return;
+  btn.disabled = true; btn.textContent = 'Adding...';
+  jsonpReliable(kpiEmpParams('admin', { page: 'dsrExcessAddAPI', empName: emp, iso: d, by: state.adminName || state.empName || 'MIS' })).then(res => {
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not add', 'error'); btn.disabled = false; btn.textContent = 'Add To DSR Count'; return; }
+    toast('✅ Added to the DSR count' + (res.remaining > 0 ? ' (' + res.remaining + ' excess left)' : ''), 'success');
+    if (res.kpiRefresh === 'queued') toast('KPI and DSR Status will update in about a minute', 'success');
+    adjLoad();
+  }).catch(() => { toast('Network error. Check before retrying.', 'error'); btn.disabled = false; btn.textContent = 'Add To DSR Count'; });
 }
 function adjRowsHtml_(r, cls) {
   return r.ents.map(x => `<tr><td style="width:28px;"><input type="checkbox" class="${cls}" data-emp="${escHtml(r.employee)}" data-date="${x.d}" data-n="${x.miss}"${cls === 'adjBulkChk' ? ' checked' : ''}></td><td>${fmtDMY(x.d)}</td><td style="color:var(--red);">${x.miss} missing <span style="color:var(--text3);font-weight:400;">(🛍️ ${x.pu} · 🧾 ${x.en})</span></td></tr>`).join('');
@@ -28938,7 +28965,7 @@ function renderWalkinTrackTable(who, rows) {
     <td style="padding:5px 8px;white-space:nowrap;">${r.date}</td>
     ${isAdmin ? `<td style="padding:5px 8px;font-weight:600;white-space:nowrap;">${properCase(r.employee)}</td>` : ''}
     <td class="wt-cell" data-k="deals" style="padding:5px 8px;text-align:center;">${r.deals}</td>
-    <td class="wt-cell" data-k="purchased" style="padding:5px 8px;text-align:center;">${r.purchased}</td>
+    <td class="wt-cell" data-k="purchased" data-v="${r.purchased}" style="padding:5px 8px;text-align:center;${r.addedPurch ? 'background:#FFE082;font-weight:700;color:#3a2a00;' : ''}"${r.addedPurch ? ' title="' + r.addedPurch + ' added from excess DSR"' : ''}>${r.purchased}${r.addedPurch ? ' <span style="font-size:10px;font-weight:600;">(+' + r.addedPurch + ')</span>' : ''}</td>
     <td class="wt-cell" data-k="nonPurchased" style="padding:5px 8px;text-align:center;">${r.nonPurchased}</td>
     <td class="wt-cell" data-k="googleReview" style="padding:5px 8px;text-align:center;">${r.googleReview}</td>
     <td class="wt-cell" data-k="instagram" style="padding:5px 8px;text-align:center;">${r.instagram}</td>
@@ -28999,7 +29026,7 @@ function startWalkinRowEdit(rowNum) {
   const tr = document.getElementById('wtRow-' + rowNum);
   if (!tr) return;
   tr.querySelectorAll('.wt-cell').forEach(td => {
-    const val = td.textContent.trim();
+    const val = td.dataset.v !== undefined ? td.dataset.v : td.textContent.trim();
     td.dataset.orig = val;
     td.innerHTML = `<input type="number" min="0" value="${val}" style="width:56px;padding:3px;text-align:center;border:1px solid var(--purple);border-radius:5px;">`;
   });
