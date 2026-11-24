@@ -1966,6 +1966,9 @@ input, textarea, select, option, td, pre, code { text-transform: none; }
 #pwrModal.show .vsr-pg-bar button,
 #gaEditModal.show .vsr-pg-bar button { margin-top: 0; }
 </style>
+<style id="vsrPageTop2">
+#blModal.show > .modal-box, #slModal.show > .modal-box, #fmModal.show > .modal-box, #dsrEditCtlModal.show > .modal-box, #mailIssModal.show > .modal-box, #pwrModal.show > .modal-box, #gaEditModal.show > .modal-box { padding-top: 14px !important; }
+</style>
 <style id="vsrPageRich">
 /* Page-style windows: bordered card, clear title, bordered rows and inputs */
 #blModal.show > .modal-box,
@@ -35624,30 +35627,36 @@ function dpTick_() {
   setTimeout(() => walk(document.body), 400);
 })();
 
-// ---- Tool / data windows as full pages: add a "← Back" bar ----
+// ---- Tool / data windows as full pages: no bar inside the page, the floating Back / Home buttons do the job ----
+// While one of these windows is open, the portal's own floating Back and Home buttons (draggable, placed wherever
+// the user likes) are shown above it: Back closes the window, Home closes it and goes to the Home page.
 (function () {
   const IDS = ['blModal', 'slModal', 'fmModal', 'dsrEditCtlModal', 'mailIssModal', 'pwrModal', 'gaEditModal'];
   const STATIC = ['dsrEditCtlModal', 'mailIssModal', 'pwrModal'];
-  function pageify() {
-    IDS.forEach(id => {
-      const el = document.getElementById(id);
-      if (!el || !el.classList.contains('show')) return;
-      const box = el.firstElementChild; if (!box || box.querySelector(':scope > .vsr-pg-bar')) return;
-      const bar = document.createElement('div'); bar.className = 'vsr-pg-bar';
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-secondary'; b.textContent = '← Back';
-      b.onclick = function () { el.classList.remove('show'); if (STATIC.indexOf(id) < 0) el.remove(); };
-      const h = document.createElement('button'); h.type = 'button'; h.className = 'btn-secondary'; h.textContent = '🏠 Home'; h.style.marginLeft = '8px';
-      h.onclick = function () {
-        el.classList.remove('show'); if (STATIC.indexOf(id) < 0) el.remove();
-        const adm = document.getElementById('adminApp');
-        const isAdm = !!(adm && adm.classList.contains('active'));
-        try { (isAdm ? showAdminPage : showEmpPage)('modulepicker'); } catch (e) {}
-      };
-      bar.appendChild(b); bar.appendChild(h); box.insertBefore(bar, box.firstChild);
-    });
+  let active = '';
+  function openId() {
+    for (let i = 0; i < IDS.length; i++) { const el = document.getElementById(IDS[i]); if (el && el.classList.contains('show')) return IDS[i]; }
+    return '';
+  }
+  function whoNow() { const adm = document.getElementById('adminApp'); return (adm && adm.classList.contains('active')) ? 'admin' : 'emp'; }
+  function closeIt(id) { const el = document.getElementById(id); if (!el) return; el.classList.remove('show'); if (STATIC.indexOf(id) < 0) el.remove(); }
+  function sync() {
+    const id = openId(), who = whoNow();
+    const back = document.getElementById(who === 'admin' ? 'adminBackFab' : 'empBackFab');
+    const home = document.getElementById(who === 'admin' ? 'adminHomeFab' : 'empHomeFab');
+    if (id) {
+      active = id;
+      if (back) { back.classList.add('show'); back.style.zIndex = 1000; back.textContent = '← Back'; back.onclick = function () { closeIt(id); }; }
+      if (home) { home.classList.add('show'); home.style.zIndex = 1000; home.onclick = function () { closeIt(id); try { (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker'); } catch (e) {} }; }
+    } else if (active) {
+      active = '';
+      [back, home].forEach(f => { if (f) f.style.zIndex = ''; });
+      if (home) home.onclick = function () { (who === 'admin' ? showAdminPage : showEmpPage)('modulepicker'); };
+      try { updateBackFabs(who, state['_currentPage_' + (who === 'admin' ? 'admin' : 'emp')]); } catch (e) {}
+    }
   }
   let t = 0;
-  new MutationObserver(() => { if (!t) t = setTimeout(() => { t = 0; try { pageify(); } catch (e) {} }, 40); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(() => { if (!t) t = setTimeout(() => { t = 0; try { sync(); } catch (e) {} }, 40); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
 
 // ══════════════════════════════════════
