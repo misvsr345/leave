@@ -28419,21 +28419,23 @@ function gpPayPick_(who, key) {
 function gpOpenForm_(who) {
   const c = GP_[who].sel, box = document.getElementById('gpOpen-' + who); if (!c || !box) return;
   const total = (GP_[who].list || {}).total || 11, today = ymdLocalToday_();
-  let g = '';
-  for (let k = 1; k <= total; k++) g += `<div class="form-row" style="margin:0;"><label style="font-size:11px;">EMI ${k}</label><input type="date" class="gpOpenDt-${who}" value="${(c.emi && c.emi[k - 1]) || ''}" max="${today}"></div>`;
+  let opts = '<option value="">Choose...</option>';
+  for (let k = 1; k <= total; k++) opts += `<option value="${k}"${k === c.paid && c.paid ? ' selected' : ''}>${k} EMI${k > 1 ? 's' : ''} paid</option>`;
   box.innerHTML = `<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px;"><div style="font-weight:800;font-size:13px;margin-bottom:4px;">Enter All EMIs Together</div>
-    <div class="kd-note">Fill the paid date for every EMI that is already paid. Blank boxes are left as they are. To remove a wrong entry use Reverse.</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:8px 0;">${g}</div>
+    <div class="kd-note">Choose how many EMIs are already paid and the date of the last one. EMI 1 to that number are filled at once. Already saved EMIs are not changed.</div>
+    <div class="form-2col"><div class="form-row"><label>EMIs Paid</label><select id="gpOpenCnt-${who}">${opts}</select></div>
+    <div class="form-row"><label>Last Paid Date</label><input type="date" id="gpOpenLast-${who}" value="${c.last || ''}" max="${today}"></div></div>
     <div class="form-row"><label>Amount For Each EMI (₹)</label><input type="number" id="gpOpenAmt-${who}" value="${c.amount || ''}" inputmode="numeric"></div>
     <button class="btn-primary" id="gpOpenSave-${who}" style="padding:8px 14px;font-size:13px;width:auto;" onclick="gpOpenSave_('${who}')">💾 Save All</button></div>`;
 }
 async function gpOpenSave_(who) {
   const c = GP_[who].sel; if (!c) return;
-  const dates = Array.from(document.querySelectorAll('.gpOpenDt-' + who)).map(x => x.value || '');
-  if (!dates.some(x => x)) { toast('Enter at least one date.', 'info'); return; }
+  const cnt = document.getElementById('gpOpenCnt-' + who).value, last = document.getElementById('gpOpenLast-' + who).value;
+  if (!cnt) { toast('Choose how many EMIs are paid.', 'info'); return; }
+  if (!last) { toast('Enter the last paid date.', 'info'); return; }
   const btn = document.getElementById('gpOpenSave-' + who); btn.disabled = true;
   try {
-    const r = await jsonpReliable(gpParams_(who, { page: 'gpOpenSaveAPI', key: c.key, dates: JSON.stringify(dates), amount: document.getElementById('gpOpenAmt-' + who).value }));
+    const r = await jsonpReliable(gpParams_(who, { page: 'gpOpenSaveAPI', key: c.key, count: cnt, last: last, amount: document.getElementById('gpOpenAmt-' + who).value }));
     if (!r || r.ok === false) { toast((r && r.error) || 'Could not save.', 'error'); btn.disabled = false; return; }
     toast(r.message || 'Saved', 'success');
     gpPayMount_(who);
