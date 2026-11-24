@@ -13174,6 +13174,10 @@ async function flushDsrOfflineQueue() {
           console.log('[DSR Sync] Item synced OK. DSR ID:', result.dsrId);
           const dsrNotifyLabel2 = item.action === 'saveOutletIssue' ? 'Outlet Issue' : item.action === 'saveReturnDamageRepair' ? 'Return/Damage/Repair' : 'DSR Entry';
           const dsrR0b = (item.rows && item.rows[0]) || {};
+          if (item.action !== 'saveOutletIssue' && item.action !== 'saveReturnDamageRepair') {
+            // Tell the portal at once so the Missing / Pending DSR list drops this entry without waiting for the report rebuild.
+            try { jsonpReliable({ page: 'dsrSavedAPI', empName: dsrR0b.employeeName || '', iso: String(dsrR0b.billDate || '').substring(0, 10) }).catch(() => {}); } catch (eSv) {}
+          }
           _mailOfflineBackupImageToMis_(dsrNotifyLabel2, dsrR0b.employeeName, dsrR0b.customerName || (item.rows || []).length + ' item(s)', item.backupImg, item.savedAt);
         }
       } catch (e) {
