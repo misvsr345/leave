@@ -28331,7 +28331,7 @@ function gpPayRender_(who) {
       <input type="checkbox" ${on ? 'checked' : ''} onchange="gpCrmToggle_('${who}', this.checked)"> Send Golden EMI Due Calls To CRM Today</label>
       <span style="font-size:11px;color:var(--text3);">${on ? 'On — due customers go to the CRM list.' : 'Off — keep it off until old payment data is updated.'}</span></div>`;
   }
-  const types = Array.from(new Set(((GP_[who].list || {}).items || []).filter(c => c.status === 'Active' || c.status === 'Stopped').map(c => c.type))).sort();
+  const types = Array.from(new Set(((GP_[who].list || {}).items || []).filter(c => c.status !== 'Inactive').map(c => c.type))).sort();
   h += `<div class="card"><div class="form-2col"><div class="form-row"><label>Golden Aura Type</label>
       <select id="gpType-${who}" onchange="gpTypeChg_('${who}')"><option value="">Choose...</option>${types.map(t => `<option>${escHtml(t)}</option>`).join('')}</select></div>
       <div class="form-row"><label>Plan No</label><select id="gpNo-${who}" onchange="gpNoChg_('${who}')"><option value="">Choose type first</option></select></div></div>
@@ -28367,8 +28367,8 @@ function gpPayTable_(rows, mode) {
 function gpTypeChg_(who) {
   const t = document.getElementById('gpType-' + who).value, sel = document.getElementById('gpNo-' + who);
   GP_[who].sel = null; document.getElementById('gpForm-' + who).innerHTML = '';
-  const items = ((GP_[who].list || {}).items || []).filter(c => (c.status === 'Active' || c.status === 'Stopped') && c.type === t).sort((a, b) => Number(a.no) - Number(b.no));
-  sel.innerHTML = '<option value="">Choose...</option>' + items.map(c => `<option value="${escHtml(c.key)}">${escHtml(String(c.no))} - ${escHtml(c.name)}${c.status === 'Stopped' ? ' (Stopped)' : ''}</option>`).join('');
+  const items = ((GP_[who].list || {}).items || []).filter(c => c.type === t).sort((a, b) => Number(a.no) - Number(b.no));
+  sel.innerHTML = '<option value="">Choose...</option>' + items.map(c => `<option value="${escHtml(c.key)}">${escHtml(String(c.no))} - ${escHtml(c.name)}${c.status === 'Stopped' ? ' (Stopped)' : c.status === 'Plan Closed' ? ' (Plan Closed)' : ''}</option>`).join('');
 }
 function gpNoChg_(who) {
   const k = document.getElementById('gpNo-' + who).value;
@@ -28397,6 +28397,11 @@ function gpPayPick_(who, key) {
   const c = ((GP_[who].list || {}).items || []).find(x => x.key === key); if (!c) return;
   GP_[who].sel = c;
   document.getElementById('gpResults-' + who).innerHTML = '';
+  if (c.status === 'Plan Closed') {
+    document.getElementById('gpForm-' + who).innerHTML = `<div style="background:#eaf7ee;border:1px solid #9bd3ae;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px;">
+      <b>✅ Plan Closed</b> — ${escHtml(c.name)} · ${escHtml(c.type)} #${escHtml(String(c.no))}<br>All ${(GP_[who].list || {}).total || 11} EMIs are paid. Last paid on ${gpDmy_(c.last)}. No follow-up is needed.</div>`;
+    return;
+  }
   const total = (GP_[who].list || {}).total || 11;
   let opts = '';
   for (let k = 1; k <= total; k++) opts += `<option value="${k}"${k === c.nextEmi ? ' selected' : ''}>EMI ${k}</option>`;
