@@ -7396,6 +7396,7 @@ function restoreSession() {
     document.getElementById('empDisplayNameBadge').textContent = '👤 ' + (state.empName || saved.empName || 'Employee');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('empApp').classList.add('active');
+    try { chatStart_(); } catch (eC) {}
     document.getElementById('empModulePickerName').textContent = saved.empName || 'Employee';
     document.getElementById('empModulePickerMeta').textContent = [saved.empId, saved.empDesig, saved.empDept, saved.empCounter].filter(Boolean).join(' · ');
     // v-fix: resume whichever page was open before the refresh, instead of
@@ -7403,7 +7404,6 @@ function restoreSession() {
     { const lastPageEmp = getLastPage('emp');
       showEmpPage((lastPageEmp && document.getElementById('emp-' + lastPageEmp)) ? lastPageEmp : 'modulepicker'); }
     loadEmpData();
-    chatStart_();
     checkEmpLoyaltyAccess();
     applyEmpGranularRestrictions();
     setTimeout(function () { verifySessionPwd_(true); }, 800);
@@ -7419,6 +7419,7 @@ function restoreSession() {
         document.getElementById('adminDisplayNameBadge').textContent = '🛡️ ' + (state.adminName || saved.adminName || 'Admin');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('adminApp').classList.add('active');
+    try { chatStart_(); } catch (eC) {}
     document.getElementById('adminModulePickerName').textContent = saved.adminName || saved.adminRole || 'Admin';
     document.getElementById('adminModulePickerMeta').textContent = [saved.adminRole, saved.adminDesig].filter(Boolean).join(' · ');
     // v-fix: resume whichever page was open before the refresh, instead of
@@ -7427,7 +7428,6 @@ function restoreSession() {
       showAdminPage((lastPageAdmin && document.getElementById('admin-' + lastPageAdmin)) ? lastPageAdmin : 'modulepicker'); }
     applyAdminRoleRestrictions().catch(function () {}).then(function () { try { startAdminEventAlert_(); } catch (eAl) {} });
     loadAdminData();
-    chatStart_();
     setTimeout(function () { verifySessionPwd_(true); }, 800);
     return true;
   }
@@ -7966,6 +7966,7 @@ async function empLogin() {
         document.getElementById('empDisplayNameBadge').textContent = '👤 ' + (state.empName || 'Employee');
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('empApp').classList.add('active');
+        try { chatStart_(); } catch (eC) {}
         document.getElementById('empPassInput').value = '';
         document.getElementById('empModulePickerName').textContent = state.empName || 'Employee';
         document.getElementById('empModulePickerMeta').textContent = [state.empId, state.empDesig, state.empDept, state.empCounter].filter(Boolean).join(' · ');
@@ -7974,7 +7975,6 @@ async function empLogin() {
         if (res.mail && res.mail.need) mailGateShow_(res.mail);
         loadEmpData();
         checkLoyaltyAlerts('emp');
-        chatStart_();
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
         checkEmpMissingDsrPopup();
@@ -8054,6 +8054,7 @@ async function adminLogin() {
         document.getElementById('adminDisplayNameBadge').textContent = '🛡️ ' + (state.adminName || 'Admin');
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('adminApp').classList.add('active');
+        try { chatStart_(); } catch (eC) {}
         document.getElementById('adminModulePickerName').textContent = state.adminName || state.adminRole || 'Admin';
         document.getElementById('adminModulePickerMeta').textContent = [state.adminRole, state.adminDesig].filter(Boolean).join(' · ');
         showAdminPage('modulepicker');
@@ -8066,7 +8067,6 @@ async function adminLogin() {
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
         checkBlockedLeavesPopup_();
-        chatStart_();
         checkFormPendingPopup_();
         checkLoyaltyPendingValidationPopup_();
         checkGoldenPendingPopup_();
@@ -10684,7 +10684,7 @@ function chatEnsureUi_() {
     + '.chatSect{font-weight:800;font-size:11.5px;letter-spacing:.6px;padding:10px 14px 2px;color:' + CHAT_GREEN_ + ';}'
     + '.chatSendCard{background:#fff;border-top:1px solid #e3e6e8;border-radius:18px 18px 0 0;padding:10px 14px 12px;box-shadow:0 -3px 10px rgba(0,0,0,.1);}'
     + '.chatGo{width:100%;border:none;border-radius:24px;padding:10px;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#00a884,#008069);box-shadow:0 3px 8px rgba(0,128,105,.4);}'
-    + '#chatLauncher{position:fixed;z-index:940;right:14px;bottom:150px;touch-action:none;width:50px;height:50px;border-radius:50%;background:' + CHAT_GREEN_ + ';color:#fff;border:2px solid #fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer;}'
+    + '#chatLauncher{position:fixed;z-index:1001;right:14px;bottom:150px;touch-action:none;width:50px;height:50px;border-radius:50%;background:' + CHAT_GREEN_ + ';color:#fff;border:2px solid #fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer;}'
     + '#chatLauncher .chatLBadge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;}';
   document.head.appendChild(st);
   const p = document.createElement('div'); p.id = 'chatPanel';
@@ -10942,17 +10942,65 @@ async function chatLoadMsgs_(first) {
       const d = document.createElement('div'); d.setAttribute('data-m', '1');
       d.style.cssText = 'display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin:2px 0;';
       d.innerHTML = '<div style="max-width:80%;background:' + (mine ? '#d9fdd3' : '#fff') + ';border-radius:' + (mine ? '8px 0 8px 8px' : '0 8px 8px 8px') + ';padding:5px 8px 3px;font-size:14.5px;text-align:left;word-break:break-word;box-shadow:0 1px 1px rgba(0,0,0,.13);">'
+        + '<span class="chatMore" onclick="chatMsgMenu_(this)" title="Delete" style="float:right;margin:-2px -2px 0 6px;padding:0 4px;font-size:13px;color:#8696a0;cursor:pointer;">⌄</span>'
         + (mine || !isGroup ? '' : '<div style="font-size:12px;font-weight:700;color:#06795f;">' + escHtml_(properCase(m.name)) + '</div>')
         + (m.img ? '<img src="' + escHtml_(m.img) + '" style="max-width:100%;max-height:240px;border-radius:6px;display:block;margin:2px 0 3px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')" alt="">' : '')
         + (m.text ? '<span style="white-space:pre-wrap;">' + escHtml_(m.text) + '</span>' : '')
         + '<span style="float:right;margin:6px 0 0 10px;font-size:10.5px;color:#667781;">' + hm + (mine ? ' <span class="chatTick" data-ts="' + m.ts + '" style="font-size:12px;letter-spacing:-2px;">✓</span>' : '') + '</span><div style="clear:both;"></div></div>';
+      d.setAttribute('data-bts', m.ts); d.setAttribute('data-id', m.id || ''); d.setAttribute('data-mine', mine ? '1' : '');
+      if (m.del) chatTombstone_(d);
       wrap.appendChild(d);
       CHAT_S_.after = Math.max(CHAT_S_.after, m.ts);
     });
     chatUpdateTicks_(r.others || []);
+    (r.dels || []).forEach(ts => { const el = wrap.querySelector('[data-bts="' + ts + '"]'); if (el && !el.getAttribute('data-del')) chatTombstone_(el); });
     if (atBottom) body.scrollTop = body.scrollHeight;
     if (r.msgs.length && (incoming || first) && CHAT_S_.open) { chatPost_({ action: 'chatRead', me: me.key, convId: CHAT_S_.convId }, 15000).then(() => { chatTick_(true); }).catch(() => {}); }
   } catch (e) { if (first && wrap) wrap.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message || 'Could not load') + '</div>'; }
+}
+// Deleted message: shows a grey note instead of the text, ticks and menu keep only "Delete For Me".
+function chatTombstone_(d) {
+  d.setAttribute('data-del', '1');
+  const box = d.firstElementChild; if (!box) return;
+  const tm = box.querySelector('span[style*="float:right"][style*="font-size:10.5px"]');
+  const hm = tm ? tm.textContent.replace(/[✓\s]+$/, '') : '';
+  const more = box.querySelector('.chatMore');
+  box.innerHTML = '';
+  if (more) box.appendChild(more);
+  const t = document.createElement('span'); t.style.cssText = 'color:#667781;font-style:italic;'; t.textContent = '🚫 This message was deleted';
+  box.appendChild(t);
+  const h = document.createElement('span'); h.style.cssText = 'float:right;margin:6px 0 0 10px;font-size:10.5px;color:#667781;'; h.textContent = hm;
+  box.appendChild(h);
+  const c = document.createElement('div'); c.style.clear = 'both'; box.appendChild(c);
+}
+// Small menu on a message: Delete For Me (everyone can), Delete For Everyone (sender only, not already deleted).
+function chatMsgMenu_(btn) {
+  const d = btn.closest('[data-m]'); if (!d) return;
+  const id = d.getAttribute('data-id'); if (!id) { toast('Please wait, the message is still sending', 'info'); return; }
+  const mine = d.getAttribute('data-mine') === '1', gone = d.getAttribute('data-del') === '1';
+  const old = document.getElementById('chatDelMenu'); if (old) old.remove();
+  const m = document.createElement('div'); m.id = 'chatDelMenu';
+  m.style.cssText = 'position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:20px;';
+  m.innerHTML = '<div style="background:#fff;border-radius:12px;padding:14px;width:250px;max-width:100%;box-shadow:0 8px 30px rgba(0,0,0,.3);">'
+    + '<div style="font-weight:700;font-size:14px;margin-bottom:10px;color:#111b21;">Delete Message?</div>'
+    + (mine && !gone ? '<button type="button" class="btn-sm" id="chatDelAll" style="display:block;width:100%;margin-bottom:6px;color:#b3261e;">Delete For Everyone</button>' : '')
+    + '<button type="button" class="btn-sm" id="chatDelMe" style="display:block;width:100%;margin-bottom:6px;color:#b3261e;">Delete For Me</button>'
+    + '<button type="button" class="btn-sm" id="chatDelNo" style="display:block;width:100%;">Cancel</button></div>';
+  document.body.appendChild(m);
+  const close = () => m.remove();
+  m.onclick = ev => { if (ev.target === m) close(); };
+  document.getElementById('chatDelNo').onclick = close;
+  document.getElementById('chatDelMe').onclick = () => { close(); chatDeleteMsg_(d, id, 'me'); };
+  const a = document.getElementById('chatDelAll'); if (a) a.onclick = () => { close(); chatDeleteMsg_(d, id, 'all'); };
+}
+async function chatDeleteMsg_(d, id, scope) {
+  try {
+    const me = chatMe_();
+    const r = await chatPost_({ action: 'chatDelete', me: me.key, msgId: id, scope: scope }, 30000);
+    if (!r || !r.ok) throw new Error((r && r.error) || 'Could not delete');
+    if (scope === 'me') d.remove(); else chatTombstone_(d);
+    try { chatTick_(true); } catch (e) {}
+  } catch (e) { toast(e.message || 'Could not delete. Please try again.', 'error'); }
 }
 // WhatsApp style ticks on my messages: one grey tick = sent, two grey = the other person is online, two blue = read.
 function chatUpdateTicks_(others) {
@@ -12021,6 +12069,7 @@ function dutySlotMode_() {
   return null;
 }
 function checkDutyAssignmentPopup_(force) {
+  return; // Duty Assigned / Daily Shop Open & Close popups are switched off permanently (the Stock Check List popup stays)
   try {
     const who = dutyPopupWho_();
     if (!who || !navigator.onLine) return;
@@ -12066,7 +12115,7 @@ function showDutyAssignmentPopup_(slot, duty, mode, done) {
 }
 
 // ── Stock Check List: duty assignment popup (everyone) + variance popup (all admins, once) ────────────────
-function checkStockPopups_() { try { checkStockVariancePopup_(); } catch (e) {} }
+function checkStockPopups_() { try { checkStockVariancePopup_(); } catch (e) {} try { checkStockDutyPopup_(); } catch (e) {} }
 function _stockMeaningful_(v) { const t = String(v || '').trim(); return !!t && t !== '-' && t !== '—' && !/^n\/?a$/i.test(t); }
 // Stock Check List reminders. Opening: 10:00 AM - 3:00 PM, Closing: 8:00 PM - midnight, only until it is submitted.
 // Staff of a section = names on the DUTY sheet (Opening + Closing merged). The person on duty today is asked every 10 minutes
