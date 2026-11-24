@@ -10567,7 +10567,7 @@ function flrGroups_() {
   const seen = {}, out = [];
   document.querySelectorAll('.flrRow').forEach(r => {
     if (r.querySelector('.flrEx').checked) return;
-    const f = r.querySelector('.flrFloor').value.trim(), g = r.querySelector('.flrGroup').value.trim();
+    const g = r.querySelector('.flrGroup').value.trim(), f = g.toLowerCase() === 'admin' ? '' : r.querySelector('.flrFloor').value.trim();
     if (!f && !g) return;
     const k = f.toLowerCase() + '|' + g.toLowerCase(); if (seen[k]) return; seen[k] = 1; out.push({ floor: f, group: g });
   });
