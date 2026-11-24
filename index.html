@@ -10806,6 +10806,7 @@ function chatOpenTarget_(t) {
   document.getElementById('chatFileCam').onchange = function () { chatPickImage_(this); };
   document.getElementById('chatSendBtn').onclick = chatSend_;
   const inp = document.getElementById('chatInput');
+  inp.onkeydown = function (ev) { if (ev.key === 'Enter' && !ev.shiftKey && window.innerWidth >= 700) { ev.preventDefault(); chatSend_(); } };
   inp.oninput = function () { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 100) + 'px'; };
   chatLoadMsgs_(true);
   if (t.kind === 'conv' || t.kind === 'dm') CHAT_POLL_ = setInterval(() => { if (CHAT_S_.view !== 'thread') { chatStopThread_(); return; } chatLoadMsgs_(false); }, 5000);
@@ -10840,7 +10841,7 @@ async function chatLoadMsgs_(first) {
       const day = chatDayLabel_(m.ts);
       if (day !== CHAT_S_.lastDay) { CHAT_S_.lastDay = day; const s = document.createElement('div'); s.style.cssText = 'text-align:center;margin:10px 0 6px;'; s.innerHTML = '<span style="background:#fff;color:#54656f;font-size:11.5px;padding:4px 11px;border-radius:8px;box-shadow:0 1px 1px rgba(0,0,0,.1);">' + escHtml_(day) + '</span>'; wrap.appendChild(s); }
       const dd = new Date(m.ts), hm = String(dd.getHours()).padStart(2, '0') + ':' + String(dd.getMinutes()).padStart(2, '0');
-      const d = document.createElement('div');
+      const d = document.createElement('div'); d.setAttribute('data-m', '1');
       d.style.cssText = 'display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin:2px 0;';
       d.innerHTML = '<div style="max-width:80%;background:' + (mine ? '#d9fdd3' : '#fff') + ';border-radius:' + (mine ? '8px 0 8px 8px' : '0 8px 8px 8px') + ';padding:5px 8px 3px;font-size:14.5px;text-align:left;word-break:break-word;box-shadow:0 1px 1px rgba(0,0,0,.13);">'
         + (mine || !isGroup ? '' : '<div style="font-size:12px;font-weight:700;color:#06795f;">' + escHtml_(properCase(m.name)) + '</div>')
@@ -10867,28 +10868,59 @@ async function chatPickImage_(inputEl) {
   } catch (e) { toast('Could not read the photo', 'error'); chip.style.display = 'none'; }
   inputEl.value = '';
 }
+let CHAT_SENDING_ = false;
 async function chatSend_() {
-  const t = CHAT_S_.target, me = chatMe_(), inp = document.getElementById('chatInput'), btn = document.getElementById('chatSendBtn');
+  if (CHAT_SENDING_) return;
+  const t = CHAT_S_.target, me = chatMe_(), inp = document.getElementById('chatInput');
   const text = inp ? inp.value.trim() : '';
-  if (!text && !CHAT_S_.img) { toast('Type a message or choose a photo', 'error'); return; }
-  const body = { action: 'chatSend', me: me.key, meName: me.name, text: text };
-  if (CHAT_S_.img) { body.imageBase64 = CHAT_S_.img.base64; body.imageMime = CHAT_S_.img.mime; }
+  if (!text && !CHAT_S_.img) return;
+  const cid = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const body = { action: 'chatSend', me: me.key, meName: me.name, text: text, cid: cid };
+  const img = CHAT_S_.img;
+  if (img) { body.imageBase64 = img.base64; body.imageMime = img.mime; }
   if (t.kind === 'conv') { body.mode = 'conv'; body.convId = t.id; }
   else if (t.kind === 'dm') { body.mode = 'dm'; body.to = [t.to]; }
   else if (t.kind === 'broadcast') { body.mode = 'broadcast'; body.to = t.to; }
   else { body.mode = 'group'; body.to = t.to; body.groupName = t.title; }
-  btn.disabled = true;
+  CHAT_SENDING_ = true;
+  const simple = (t.kind === 'conv' || t.kind === 'dm');
+  let opt = null;
+  const clearBox = () => { if (inp) { inp.value = ''; inp.style.height = 'auto'; } CHAT_S_.img = null; const chip = document.getElementById('chatImgChip'); if (chip) chip.style.display = 'none'; };
+  if (simple) {
+    // Show the message at once; the server copy replaces it when the send is confirmed.
+    clearBox();
+    const wrap = document.getElementById('chatMsgs'), bd = chatBody_();
+    if (wrap) {
+      if (!wrap.querySelector('[data-m]')) wrap.innerHTML = '';
+      const dd = new Date(), hm = String(dd.getHours()).padStart(2, '0') + ':' + String(dd.getMinutes()).padStart(2, '0');
+      opt = document.createElement('div'); opt.className = 'chatOpt';
+      opt.style.cssText = 'display:flex;justify-content:flex-end;margin:2px 0;opacity:.7;';
+      opt.innerHTML = '<div style="max-width:80%;background:#d9fdd3;border-radius:8px 0 8px 8px;padding:5px 8px 3px;font-size:14.5px;word-break:break-word;box-shadow:0 1px 1px rgba(0,0,0,.13);">'
+        + (img ? '<img src="' + img.preview + '" style="max-width:100%;max-height:200px;border-radius:6px;display:block;margin:2px 0 3px;" alt="">' : '')
+        + (text ? '<span style="white-space:pre-wrap;">' + escHtml_(text) + '</span>' : '')
+        + '<span style="float:right;margin:6px 0 0 10px;font-size:10.5px;color:#667781;">' + hm + ' 🕓</span><div style="clear:both;"></div></div>';
+      wrap.appendChild(opt); if (bd) bd.scrollTop = bd.scrollHeight;
+    }
+  }
   try {
-    const r = await chatPost_(body, 60000);
-    if (!r || !r.ok) throw new Error((r && r.error) || 'Could not send');
-    if (inp) { inp.value = ''; inp.style.height = 'auto'; }
-    CHAT_S_.img = null; const chip = document.getElementById('chatImgChip'); if (chip) chip.style.display = 'none';
-    if (t.kind === 'broadcast') { toast('Sent to ' + r.sent + ' people', 'success'); chatShowList_(); return; }
-    if (t.kind === 'group') { chatOpenTarget_({ kind: 'conv', id: r.convIds[0], title: t.title, type: 'GROUP', members: [] }); return; }
+    let r = null, lastErr = null;
+    for (let k = 0; k < 2 && !(r && r.ok); k++) { // one automatic retry with the same id, so a lost reply never sends twice
+      try { r = await chatPost_(body, 60000); } catch (e) { lastErr = e; }
+    }
+    if (!r) throw (lastErr || new Error('Could not send'));
+    if (!r.ok) throw new Error(r.error || 'Could not send');
+    if (!simple) clearBox();
+    if (t.kind === 'broadcast') { toast('Sent to ' + r.sent + ' people', 'success'); chatShowList_(); CHAT_SENDING_ = false; return; }
+    if (t.kind === 'group') { chatOpenTarget_({ kind: 'conv', id: r.convIds[0], title: t.title, type: 'GROUP', members: [] }); CHAT_SENDING_ = false; return; }
     await chatLoadMsgs_(false);
-    const bd = chatBody_(); if (bd) bd.scrollTop = bd.scrollHeight;
-  } catch (e) { toast(e.message || 'Could not send', 'error'); }
-  btn.disabled = false;
+    if (opt && opt.parentNode) opt.parentNode.removeChild(opt);
+    const bd2 = chatBody_(); if (bd2) bd2.scrollTop = bd2.scrollHeight;
+  } catch (e) {
+    if (opt && opt.parentNode) opt.parentNode.removeChild(opt);
+    if (simple && inp && !inp.value) { inp.value = text; }
+    toast(e.message || 'Could not send. Please try again.', 'error');
+  }
+  CHAT_SENDING_ = false;
 }
 
 // ---- background: presence, unread badge, login popup ----
