@@ -9321,6 +9321,7 @@ function showEmpPage(page, opts) {
   if(page==='golden-aura-new') renderGoldenAuraForm('emp');
   if(page==='golden-aura-list') loadGoldenAuraList('emp');
   if(page==='golden-pay') gpPayMount_('emp');
+  if(page==='golden-aura') { try { gpApplyTiles_(); } catch (eGp) {} }
   if(page==='stock') loadStockDashboard('emp');
   if(page==='dailyshop') loadDailyShopChecklist('emp');
   if(page==='stock-retail') loadStockDetail('emp','Retail','today');
@@ -17460,6 +17461,7 @@ function showAdminPage(page, opts) {
   if(page==='golden-aura-new') renderGoldenAuraForm('admin');
   if(page==='golden-aura-list') loadGoldenAuraList('admin');
   if(page==='golden-pay') gpPayMount_('admin');
+  if(page==='golden-aura') { try { gpApplyTiles_(); } catch (eGp) {} }
   if(page==='golden-aura-validation') gaValLoad_();
   if(page==='stock') loadStockDashboard('admin');
   if(page==='dailyshop') loadDailyShopChecklist('admin');
