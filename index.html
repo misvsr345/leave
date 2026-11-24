@@ -2228,13 +2228,11 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <div class="home-header-name" id="empModulePickerName">Employee</div>
         <div class="home-header-sub" id="empModulePickerMeta"></div>
       </div>
-      <div id="snapCard-emp" class="snap-card" style="display:none;"></div>
-      <div id="progCard-emp" class="snap-card" style="display:none;"></div>
       <div id="celebCard-emp" class="celeb-card" style="display:none;"></div>
       <div class="quick-actions-section">
         <div class="quick-actions-title">📊 Dashboard</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="empQAChat" onclick="showEmpPage('chat')"><span class="quick-action-icon">💬</span><div class="quick-action-label">Chat <span class="chatBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Message anyone, photos, groups</div></div>
+          <div class="quick-action-btn" id="empQAChat" onclick="chatOpen_()"><span class="quick-action-icon">💬</span><div class="quick-action-label">Chat <span class="chatBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Message anyone, photos, groups</div></div>
           <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
@@ -2725,10 +2723,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
          in JS: groups entries by type into separate bordered tables, each with Time/Icon/Message
          columns, Message carrying the full detail (same fields as the MIS digest mail for that
          entry). 7-day retention unchanged. -->
-    <div class="page-section" id="emp-chat">
-      <div class="section-hdr"><span class="section-title2">💬 Chat</span></div>
-      <div id="chatRoot-emp"></div>
-    </div>
     <div class="page-section" id="emp-notifications">
       <div class="section-hdr"><span class="section-title2">🔔 Notifications</span>
         <button class="btn-sm btn-view" onclick="clearNotifHistory_()">🗑️ Clear</button>
@@ -3248,13 +3242,11 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <div class="home-header-name" id="adminModulePickerName">Admin</div>
         <div class="home-header-sub" id="adminModulePickerMeta"></div>
       </div>
-      <div id="snapCard-admin" class="snap-card" style="display:none;"></div>
-      <div id="progCard-admin" class="snap-card" style="display:none;"></div>
       <div id="celebCard-admin" class="celeb-card" style="display:none;"></div>
       <div class="quick-actions-section">
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="adminQAChat" onclick="showAdminPage('chat')"><span class="quick-action-icon">💬</span><div class="quick-action-label">Chat <span class="chatBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Message anyone, photos, groups</div></div>
+          <div class="quick-action-btn" id="adminQAChat" onclick="chatOpen_()"><span class="quick-action-icon">💬</span><div class="quick-action-label">Chat <span class="chatBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Message anyone, photos, groups</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -3755,10 +3747,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
          in JS: groups entries by type into separate bordered tables, each with Time/Icon/Message
          columns, Message carrying the full detail (same fields as the MIS digest mail for that
          entry). 7-day retention unchanged. -->
-    <div class="page-section" id="admin-chat">
-      <div class="section-hdr"><span class="section-title2">💬 Chat</span></div>
-      <div id="chatRoot-admin"></div>
-    </div>
     <div class="page-section" id="admin-notifications">
       <div class="section-hdr"><span class="section-title2">🔔 Notifications</span>
         <button class="btn-sm btn-view" onclick="clearNotifHistory_()">🗑️ Clear</button>
@@ -8130,6 +8118,7 @@ setInterval(function () {
 }, 700);
 function logout(who, reason) {
   closeAllPopups_();
+  try { chatLogout_(); } catch (eCh) {}
   try { const mg = document.getElementById('mailGateModal'); if (mg) mg.classList.remove('show'); } catch (eMg) {}
   if (who === 'admin' && misPopupPollTimer_) { clearInterval(misPopupPollTimer_); misPopupPollTimer_ = null; }
   if (who === 'admin') { try { for (const k in HLT_SEEN) delete HLT_SEEN[k]; HLT_ITEMS = []; document.getElementById('healthAlertModal').classList.remove('show'); } catch (eH) {} }
@@ -9115,7 +9104,6 @@ function goBackOneStep(who) {
   if (who === 'admin' && current === 'mtpage') { mtPageBack_(); return; }
   if (who === 'admin' && current === 'settings' && window.__settingsReturn) { const r = window.__settingsReturn; window.__settingsReturn = null; showAdminPage(r, { isBack: true }); return; }
   if (current === 'dsr-edit') { dsrEditClose_(who); return; }
-  if (current === 'chat' && CHAT_S_.view !== 'list') { chatShowList_(); return; }
   // v-fix: Settings' own sub-views (Access/Store Data/Auto-Logout) aren't
   // separate pages — they're all still page 'settings' — so step back into
   // the Settings landing menu first instead of jumping straight to main Home.
@@ -9308,7 +9296,6 @@ function showEmpPage(page, opts) {
     window.__ncFormInitialized = true;
   }
   if(page==='events') initEventsBrowser('emp');
-  if(page==='chat') chatEnter_('emp');
   if(page==='trend') renderTrend();
   if(page==='profile') renderEmpProfile();
   if(page==='blocked') renderEmpBlockedDates();
@@ -10408,12 +10395,14 @@ async function awAct_(n, act) {
 }
 
 // ══════════════════════════════════════
-// CHAT — one-to-one, broadcast, group, photos. Birthday / marriage anniversary popup with Wish and Chat.
+// CHAT — a WhatsApp-style floating window: one-to-one, broadcast, group, photos. It can be minimized and the portal
+// used meanwhile; a round 💬 button (with unread count) brings it back. Birthday / marriage anniversary popup with Wish and Chat.
 // Data lives in the Stock backend (Chat_Convs / Chat_Msgs sheets); messages older than 30 days are removed.
 // MIS can also see who is online now.
 // ══════════════════════════════════════
 let CHAT_DIR_ = null, CHAT_ONLINE_ = {}, CHAT_LAST_UNREAD_ = 0, CHAT_UNREAD_POPPED_ = false, CHAT_POLL_ = null;
-const CHAT_S_ = { who: '', view: 'list', target: null, convId: '', after: 0, img: null, members: [] };
+const CHAT_S_ = { open: false, view: 'list', target: null, convId: '', after: 0, img: null, members: [], lastDay: '' };
+const CHAT_GREEN_ = '#008069';
 function chatMe_() {
   if (state.__loginKind === 'admin') return { key: 'adm:' + String(state.adminEmail || '').toLowerCase(), name: state.adminName || state.adminRole || 'Admin', who: 'admin' };
   return { key: 'emp:' + String(state.empId || ''), name: state.empName || state.empId || 'Employee', who: 'emp' };
@@ -10435,29 +10424,85 @@ function chatDir_() {
   }).catch(e => { CHAT_DIR_ = null; throw e; });
   return CHAT_DIR_;
 }
-function chatRoot_() { return document.getElementById('chatRoot-' + CHAT_S_.who); }
-function chatDot_(key) { return chatIsMis_() ? '<span title="' + (CHAT_ONLINE_[key] ? 'Online' : 'Offline') + '" style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:' + (CHAT_ONLINE_[key] ? '#16a34a' : '#b8b0c4') + ';"></span>' : ''; }
+function chatInitials_(n) { const p = String(n || '?').trim().split(/\s+/); return ((p[0] || '?')[0] + ((p[1] || '')[0] || '')).toUpperCase(); }
+function chatAvatar_(name, key, size) {
+  const s = size || 38, dot = (key && chatIsMis_()) ? '<span style="position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:' + (CHAT_ONLINE_[key] ? '#25d366' : '#b8b0c4') + ';"></span>' : '';
+  return '<span style="position:relative;display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;width:' + s + 'px;height:' + s + 'px;border-radius:50%;background:#cfd8dc;color:#37474f;font-weight:700;font-size:' + Math.round(s * 0.38) + 'px;">' + escHtml_(chatInitials_(name)) + dot + '</span>';
+}
 function chatSetBadges_(n) {
   document.querySelectorAll('.chatBadge').forEach(b => { b.textContent = n || ''; b.style.display = n ? 'inline-block' : 'none'; });
+  const l = document.getElementById('chatLauncher'); if (l) { const b = l.querySelector('.chatLBadge'); if (b) { b.textContent = n || ''; b.style.display = n ? 'flex' : 'none'; } }
 }
 
-// ---- entering / leaving the page ----
-function chatEnter_(who) {
-  CHAT_S_.who = who; CHAT_S_.view = 'list'; CHAT_S_.target = null;
-  chatShowList_();
+// ---- the window and its launcher ----
+function chatEnsureUi_() {
+  if (document.getElementById('chatPanel')) return;
+  const st = document.createElement('style'); st.id = 'chatCss';
+  st.textContent = '#chatPanel{position:fixed;z-index:950;display:none;flex-direction:column;background:#efeae2;overflow:hidden;left:0;right:0;top:0;bottom:0;}'
+    + '@media (min-width:700px){#chatPanel{left:auto;top:auto;right:16px;bottom:16px;width:390px;height:600px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);}}'
+    + '#chatPanel.show{display:flex;} #chatPanel textarea{font-family:inherit;} #chatPanel button{cursor:pointer;}'
+    + '#chatHead{background:' + CHAT_GREEN_ + ';color:#fff;display:flex;align-items:center;gap:8px;padding:8px 10px;flex:0 0 auto;}'
+    + '#chatHead .cb{background:transparent;border:none;color:#fff;font-size:18px;padding:4px 8px;border-radius:8px;width:auto;}'
+    + '#chatBody{flex:1;min-height:0;overflow:auto;} #chatBar{flex:0 0 auto;}'
+    + '#chatLauncher{position:fixed;z-index:940;right:14px;bottom:90px;width:50px;height:50px;border-radius:50%;background:' + CHAT_GREEN_ + ';color:#fff;border:2px solid #fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer;}'
+    + '#chatLauncher .chatLBadge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;}';
+  document.head.appendChild(st);
+  const p = document.createElement('div'); p.id = 'chatPanel';
+  p.innerHTML = '<div id="chatHead"></div><div id="chatBody"></div><div id="chatBar"></div>';
+  document.body.appendChild(p);
+  const l = document.createElement('button'); l.id = 'chatLauncher'; l.type = 'button'; l.title = 'Chat';
+  l.innerHTML = '💬<span class="chatLBadge"></span>'; l.onclick = () => chatOpen_();
+  document.body.appendChild(l);
 }
+function chatLauncherShow_(on) { chatEnsureUi_(); const l = document.getElementById('chatLauncher'); if (l) l.style.display = (on && !CHAT_S_.open) ? 'flex' : 'none'; }
+function chatOpen_() {
+  chatEnsureUi_();
+  CHAT_S_.open = true;
+  document.getElementById('chatPanel').classList.add('show');
+  chatLauncherShow_(false);
+  if (CHAT_S_.view === 'list' || !CHAT_S_.target) chatShowList_();
+  else if (CHAT_S_.view === 'thread' && CHAT_S_.convId) chatLoadMsgs_(false);
+}
+function chatMinimize_() {
+  CHAT_S_.open = false;
+  const p = document.getElementById('chatPanel'); if (p) p.classList.remove('show');
+  chatLauncherShow_(!!vsrActiveWho_());
+}
+function chatClose_() { chatStopThread_(); CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null; chatMinimize_(); }
+function chatLogout_() {
+  try { chatStopThread_(); if (window.__chatTimer) { clearInterval(window.__chatTimer); window.__chatTimer = null; } } catch (e) {}
+  CHAT_S_.open = false; CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null; CHAT_DIR_ = null; CHAT_ONLINE_ = {};
+  const p = document.getElementById('chatPanel'); if (p) p.classList.remove('show');
+  const l = document.getElementById('chatLauncher'); if (l) l.style.display = 'none';
+  chatSetBadges_(0);
+}
+function chatHead_(opts) {
+  const h = document.getElementById('chatHead'); if (!h) return;
+  h.innerHTML = (opts.back ? '<button class="cb" id="chBack" title="Back">←</button>' : '')
+    + (opts.avatar || '') + '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml_(opts.title || 'Chat') + '</div>'
+    + (opts.sub ? '<div style="font-size:11.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml_(opts.sub) + '</div>' : '') + '</div>'
+    + (opts.newBtn ? '<button class="cb" id="chNew" title="New chat">✏️</button>' : '')
+    + '<button class="cb" id="chMin" title="Minimize">–</button><button class="cb" id="chClose" title="Close">✕</button>';
+  const b = document.getElementById('chBack'); if (b) b.onclick = opts.back;
+  const n = document.getElementById('chNew'); if (n) n.onclick = chatShowNew_;
+  document.getElementById('chMin').onclick = chatMinimize_;
+  document.getElementById('chClose').onclick = chatClose_;
+}
+function chatBar_(html) { const b = document.getElementById('chatBar'); if (b) b.innerHTML = html || ''; }
+function chatBody_() { return document.getElementById('chatBody'); }
+
+// ---- conversation list ----
 function chatShowList_() {
-  chatStopThread_();
+  chatEnsureUi_(); chatStopThread_();
   CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null;
-  const root = chatRoot_(); if (!root) return;
-  const mis = chatIsMis_();
-  root.innerHTML = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">'
-    + '<button class="btn-sm btn-view" id="chatNewBtn">✏️ New Chat</button></div>'
-    + (mis ? '<div class="card" id="chatOnlineCard" style="margin-bottom:10px;padding:8px 12px;font-size:12.5px;"><b>🟢 Online Now</b> <span id="chatOnlineList" style="opacity:.8;">Checking...</span></div>' : '')
-    + '<div id="chatListBox"><div class="loading"><span class="spinner"></span>Loading...</div></div>';
-  document.getElementById('chatNewBtn').onclick = chatShowNew_;
+  chatHead_({ title: 'Chat', newBtn: true });
+  chatBar_('');
+  const body = chatBody_(); if (!body) return;
+  body.style.background = '#fff';
+  body.innerHTML = (chatIsMis_() ? '<div id="chatOnlineCard" style="padding:8px 12px;font-size:12.5px;background:#f0f2f5;border-bottom:1px solid #e2e2e2;"><b>🟢 Online Now</b> <span id="chatOnlineList" style="opacity:.8;">Checking...</span></div>' : '')
+    + '<div id="chatListBox"><div class="loading" style="padding:20px;"><span class="spinner"></span>Loading...</div></div>';
   chatLoadList_();
-  if (mis) chatRefreshOnline_();
+  if (chatIsMis_()) chatRefreshOnline_();
 }
 async function chatLoadList_() {
   const me = chatMe_();
@@ -10467,28 +10512,36 @@ async function chatLoadList_() {
     const box = document.getElementById('chatListBox'); if (!box) return;
     if (!r || !r.ok) throw new Error((r && r.error) || 'Could not load chats');
     CHAT_LAST_UNREAD_ = r.unread || 0; chatSetBadges_(CHAT_LAST_UNREAD_);
-    if (!r.items.length) { box.innerHTML = '<div class="empty-state"><span class="emoji">💬</span><p>No chats yet. Tap New Chat to start.</p></div>'; return; }
+    if (!r.items.length) { box.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#667781;font-size:13px;"><div style="font-size:40px;">💬</div>No chats yet.<br>Tap ✏️ to start a chat.</div>'; return; }
     box.innerHTML = r.items.map((c, n) => {
       const other = c.type === 'DM' ? (c.members.filter(m => m.k !== me.key)[0] || {}) : null;
-      return '<div class="card chat-row" data-n="' + n + '" style="cursor:pointer;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">'
-        + '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13.5px;">' + (other ? chatDot_(other.k) : '👥 ') + escHtml_(properCase(c.title)) + '</div>'
-        + '<div style="font-size:12px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (c.last.mine ? 'You: ' : (c.type === 'GROUP' ? escHtml_(properCase(c.last.name)) + ': ' : '')) + escHtml_(c.last.text) + '</div></div>'
-        + '<div style="text-align:right;font-size:10.5px;opacity:.7;">' + escHtml_(c.last.at) + (c.unread ? '<br><span style="background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + c.unread + '</span>' : '') + '</div></div>';
+      return '<div class="chat-row" data-n="' + n + '" style="cursor:pointer;padding:9px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f0f0f0;">'
+        + (other ? chatAvatar_(c.title, other.k, 44) : chatAvatar_('👥', '', 44))
+        + '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml_(properCase(c.title)) + '</div>'
+        + '<div style="font-size:12.5px;color:#667781;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (c.last.mine ? 'You: ' : (c.type === 'GROUP' ? escHtml_(properCase(c.last.name)) + ': ' : '')) + escHtml_(c.last.text) + '</div></div>'
+        + '<div style="text-align:right;font-size:11px;color:' + (c.unread ? '#25d366' : '#667781') + ';">' + escHtml_(chatShortTime_(c.ts)) + (c.unread ? '<br><span style="display:inline-block;margin-top:3px;background:#25d366;color:#fff;border-radius:10px;min-width:20px;padding:1px 6px;font-size:11px;font-weight:700;text-align:center;">' + c.unread + '</span>' : '') + '</div></div>';
     }).join('');
     box.querySelectorAll('.chat-row').forEach(el => { el.onclick = () => { const c = r.items[+el.getAttribute('data-n')]; chatOpenTarget_({ kind: 'conv', id: c.id, title: c.title, type: c.type, members: c.members }); }; });
-  } catch (e) { const box = document.getElementById('chatListBox'); if (box) box.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+  } catch (e) { const box = document.getElementById('chatListBox'); if (box) box.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message || 'Could not load') + '</div>'; }
+}
+function chatShortTime_(ts) {
+  const d = new Date(ts), t = new Date(), y = new Date(); y.setDate(t.getDate() - 1);
+  const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  if (d.toDateString() === t.toDateString()) return hm;
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
 }
 async function chatRefreshOnline_() {
   if (!chatIsMis_()) return;
   try {
     const dir = await chatDir_();
-    const keys = dir.employees.concat(dir.admins).map(x => x.key);
-    const r = await chatPost_({ action: 'chatOnline', keys: keys }, 20000);
+    const all = dir.employees.concat(dir.admins);
+    const r = await chatPost_({ action: 'chatOnline', keys: all.map(x => x.key) }, 20000);
     if (!r || !r.ok) return;
     CHAT_ONLINE_ = {}; r.online.forEach(k => { CHAT_ONLINE_[k] = 1; });
     const el = document.getElementById('chatOnlineList');
     if (el) {
-      const names = dir.employees.concat(dir.admins).filter(x => CHAT_ONLINE_[x.key]).map(x => properCase(x.name));
+      const names = all.filter(x => CHAT_ONLINE_[x.key]).map(x => properCase(x.name));
       el.innerHTML = names.length ? '(' + names.length + ') ' + names.map(escHtml_).join(', ') : 'Nobody else right now.';
     }
   } catch (e) {}
@@ -10498,40 +10551,43 @@ async function chatRefreshOnline_() {
 async function chatShowNew_() {
   chatStopThread_();
   CHAT_S_.view = 'new';
-  const root = chatRoot_(); if (!root) return;
-  root.innerHTML = '<div class="loading"><span class="spinner"></span>Loading people...</div>';
+  chatHead_({ title: 'New Chat', back: chatShowList_ });
+  chatBar_('');
+  const body = chatBody_(); if (!body) return;
+  body.style.background = '#fff';
+  body.innerHTML = '<div class="loading" style="padding:20px;"><span class="spinner"></span>Loading people...</div>';
   let dir;
-  try { dir = await chatDir_(); } catch (e) { root.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message) + '</span>'; return; }
+  try { dir = await chatDir_(); } catch (e) { body.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message) + '</div>'; return; }
   if (CHAT_S_.view !== 'new') return;
   if (chatIsMis_()) await chatRefreshOnline_();
   const me = chatMe_();
-  const row = (x, kind) => '<label style="display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;border-bottom:1px solid var(--border,#E2D9EE);">'
-    + '<input type="checkbox" class="chatPick" data-k="' + escHtml_(x.key) + '" data-n="' + escHtml_(x.name) + '" data-g="' + kind + '"> ' + chatDot_(x.key) + escHtml_(properCase(x.name)) + '<span style="opacity:.6;font-size:11px;"> ' + escHtml_(x.sub || '') + '</span></label>';
-  root.innerHTML = '<div class="card" style="padding:10px 12px;">'
-    + '<div style="font-weight:800;margin-bottom:6px;">Send To</div>'
-    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;"><button class="btn-sm" id="chatAllEmp">All Employees</button><button class="btn-sm" id="chatAllAdm">All Admins</button><button class="btn-sm" id="chatClear">Clear</button></div>'
-    + '<input type="text" id="chatFind" placeholder="Search name..." style="width:100%;margin-bottom:6px;">'
-    + '<div id="chatPickBox" style="max-height:300px;overflow:auto;border:1px solid var(--border,#E2D9EE);border-radius:8px;padding:4px 8px;">'
-    + '<div style="font-weight:700;font-size:12px;margin:4px 0;">Employees</div>' + dir.employees.filter(x => x.key !== me.key).map(x => row(x, 'e')).join('')
-    + '<div style="font-weight:700;font-size:12px;margin:8px 0 4px;">Admins</div>' + dir.admins.filter(x => x.key !== me.key).map(x => row(x, 'a')).join('') + '</div>'
-    + '<div id="chatSelCount" style="font-size:12px;margin:8px 0;opacity:.8;">Selected: 0</div>'
-    + '<div style="font-size:12.5px;margin-bottom:8px;"><label style="display:block;margin-bottom:4px;"><input type="radio" name="chatHow" value="broadcast" checked> Send To Each Separately (Broadcast) — replies come only to you</label>'
-    + '<label style="display:block;"><input type="radio" name="chatHow" value="group"> Create A Group — everyone sees every reply</label></div>'
-    + '<input type="text" id="chatGroupName" maxlength="40" placeholder="Group name" style="width:100%;margin-bottom:8px;display:none;">'
-    + '<button class="btn-primary" style="width:auto;padding:7px 20px;" id="chatGo">Continue</button></div>';
-  const boxes = () => Array.from(root.querySelectorAll('.chatPick'));
-  const upd = () => { document.getElementById('chatSelCount').textContent = 'Selected: ' + boxes().filter(b => b.checked).length; };
-  root.querySelectorAll('.chatPick').forEach(b => { b.onchange = upd; });
+  const row = (x, kind) => '<label style="display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:14px;border-bottom:1px solid #f0f0f0;cursor:pointer;">'
+    + '<input type="checkbox" class="chatPick" data-k="' + escHtml_(x.key) + '" data-n="' + escHtml_(x.name) + '" data-g="' + kind + '"> ' + chatAvatar_(x.name, x.key, 34) + '<span style="flex:1;min-width:0;">' + escHtml_(properCase(x.name)) + '<span style="display:block;font-size:11px;color:#667781;">' + escHtml_(x.sub || '') + '</span></span></label>';
+  body.innerHTML = '<div style="position:sticky;top:0;background:#fff;padding:8px 12px;border-bottom:1px solid #e9e9e9;z-index:2;">'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"><button class="btn-sm" id="chatAllEmp">All Employees</button><button class="btn-sm" id="chatAllAdm">All Admins</button><button class="btn-sm" id="chatClear">Clear</button></div>'
+    + '<input type="text" id="chatFind" placeholder="Search name..." style="width:100%;"></div>'
+    + '<div style="font-weight:700;font-size:12px;padding:8px 12px 2px;color:' + CHAT_GREEN_ + ';">EMPLOYEES</div>' + dir.employees.filter(x => x.key !== me.key).map(x => row(x, 'e')).join('')
+    + '<div style="font-weight:700;font-size:12px;padding:8px 12px 2px;color:' + CHAT_GREEN_ + ';">ADMINS</div>' + dir.admins.filter(x => x.key !== me.key).map(x => row(x, 'a')).join('')
+    + '<div style="height:150px;"></div>';
+  chatBar_('<div style="background:#f0f2f5;border-top:1px solid #ddd;padding:8px 12px;">'
+    + '<div id="chatSelCount" style="font-size:12px;margin-bottom:4px;color:#667781;">Selected: 0</div>'
+    + '<div style="font-size:12.5px;margin-bottom:6px;"><label style="margin-right:10px;"><input type="radio" name="chatHow" value="broadcast" checked> Broadcast (replies only to you)</label>'
+    + '<label><input type="radio" name="chatHow" value="group"> Group</label></div>'
+    + '<input type="text" id="chatGroupName" maxlength="40" placeholder="Group name" style="width:100%;margin-bottom:6px;display:none;">'
+    + '<button class="btn-primary" style="width:auto;padding:7px 22px;background:' + CHAT_GREEN_ + ';" id="chatGo">Continue</button></div>');
+  const boxes = () => Array.from(body.querySelectorAll('.chatPick'));
+  const upd = () => { const e = document.getElementById('chatSelCount'); if (e) e.textContent = 'Selected: ' + boxes().filter(b => b.checked).length; };
+  body.querySelectorAll('.chatPick').forEach(b => { b.onchange = upd; });
   document.getElementById('chatAllEmp').onclick = () => { boxes().filter(b => b.getAttribute('data-g') === 'e').forEach(b => { b.checked = true; }); upd(); };
   document.getElementById('chatAllAdm').onclick = () => { boxes().filter(b => b.getAttribute('data-g') === 'a').forEach(b => { b.checked = true; }); upd(); };
   document.getElementById('chatClear').onclick = () => { boxes().forEach(b => { b.checked = false; }); upd(); };
   document.getElementById('chatFind').oninput = function () { const q = this.value.trim().toLowerCase(); boxes().forEach(b => { b.closest('label').style.display = (!q || b.getAttribute('data-n').toLowerCase().indexOf(q) > -1) ? 'flex' : 'none'; }); };
-  root.querySelectorAll('input[name=chatHow]').forEach(r => { r.onchange = () => { document.getElementById('chatGroupName').style.display = (root.querySelector('input[name=chatHow]:checked').value === 'group') ? '' : 'none'; }; });
+  document.querySelectorAll('#chatBar input[name=chatHow]').forEach(r => { r.onchange = () => { document.getElementById('chatGroupName').style.display = (document.querySelector('#chatBar input[name=chatHow]:checked').value === 'group') ? '' : 'none'; }; });
   document.getElementById('chatGo').onclick = () => {
     const sel = boxes().filter(b => b.checked).map(b => ({ k: b.getAttribute('data-k'), n: b.getAttribute('data-n') }));
     if (!sel.length) { toast('Choose at least one person', 'error'); return; }
     if (sel.length === 1) { chatOpenTarget_({ kind: 'dm', to: sel[0], title: sel[0].n }); return; }
-    const how = root.querySelector('input[name=chatHow]:checked').value;
+    const how = document.querySelector('#chatBar input[name=chatHow]:checked').value;
     if (how === 'group') {
       const gn = (document.getElementById('chatGroupName').value || '').trim();
       if (!gn) { toast('Enter a group name', 'error'); return; }
@@ -10543,67 +10599,91 @@ async function chatShowNew_() {
 // ---- a conversation ----
 function chatDmId_(a, b) { return 'dm:' + [String(a), String(b)].sort().join('|'); }
 function chatOpenTarget_(t) {
+  chatEnsureUi_();
+  if (!CHAT_S_.open) { CHAT_S_.open = true; document.getElementById('chatPanel').classList.add('show'); chatLauncherShow_(false); }
   chatStopThread_();
-  CHAT_S_.view = 'thread'; CHAT_S_.target = t; CHAT_S_.after = 0; CHAT_S_.img = null; CHAT_S_.members = t.members || [];
+  CHAT_S_.view = 'thread'; CHAT_S_.target = t; CHAT_S_.after = 0; CHAT_S_.img = null; CHAT_S_.members = t.members || []; CHAT_S_.lastDay = '';
   CHAT_S_.convId = t.kind === 'conv' ? t.id : (t.kind === 'dm' ? chatDmId_(chatMe_().key, t.to.k) : '');
-  const root = chatRoot_(); if (!root) return;
-  const sub = t.kind === 'broadcast' ? 'Broadcast — each person gets it privately, replies come only to you' : (t.kind === 'group' ? 'New group — ' + t.to.length + ' people' : '');
-  root.innerHTML = '<div class="card" style="padding:8px 12px;margin-bottom:6px;"><div style="font-weight:800;font-size:14px;" id="chatTitle">' + escHtml_(properCase(t.title || 'Chat')) + '</div>'
-    + '<div id="chatSub" style="font-size:11.5px;opacity:.7;">' + escHtml_(sub) + '</div></div>'
-    + '<div id="chatMsgs" style="height:calc(100vh - 360px);min-height:240px;overflow:auto;border:1px solid var(--border,#E2D9EE);border-radius:10px;padding:6px;background:#fff;margin-bottom:8px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>'
-    + '<div id="chatImgChip" style="display:none;font-size:12px;margin-bottom:6px;"></div>'
-    + '<div style="display:flex;gap:6px;align-items:flex-end;"><button class="btn-sm" id="chatPhotoBtn" title="Send a photo">📷</button>'
-    + '<input type="file" accept="image/*" id="chatFile" style="display:none;">'
-    + '<textarea id="chatInput" maxlength="600" rows="2" placeholder="Type a message..." style="flex:1;min-width:0;"></textarea>'
-    + '<button class="btn-primary" style="width:auto;padding:8px 16px;" id="chatSendBtn">Send</button></div>';
-  document.getElementById('chatPhotoBtn').onclick = () => document.getElementById('chatFile').click();
-  document.getElementById('chatFile').onchange = chatPickImage_;
+  const sub = t.kind === 'broadcast' ? 'Broadcast — replies come only to you' : (t.kind === 'group' ? 'New group — ' + t.to.length + ' people' : (t.type === 'GROUP' ? 'Group' : ''));
+  const otherKey = t.kind === 'dm' ? t.to.k : (t.kind === 'conv' && t.type === 'DM' ? ((t.members || []).filter(m => m.k !== chatMe_().key)[0] || {}).k : '');
+  chatHead_({ title: properCase(t.title || 'Chat'), sub: sub, back: chatShowList_, avatar: chatAvatar_(t.title || 'C', otherKey, 36) });
+  const body = chatBody_();
+  body.style.background = '#efeae2';
+  body.innerHTML = '<div id="chatMsgs" style="padding:8px 10px;min-height:100%;"><div class="loading" style="padding:20px;"><span class="spinner"></span>Loading...</div></div>';
+  chatBar_('<div id="chatImgChip" style="display:none;background:#f0f2f5;padding:6px 12px;font-size:12px;"></div>'
+    + '<div style="display:flex;gap:6px;align-items:flex-end;padding:6px 8px;background:#f0f2f5;">'
+    + '<div style="flex:1;min-width:0;display:flex;align-items:flex-end;gap:2px;background:#fff;border-radius:22px;padding:4px 8px;">'
+    + '<textarea id="chatInput" maxlength="600" rows="1" placeholder="Message" style="flex:1;min-width:0;border:none;outline:none;resize:none;font-size:15px;max-height:100px;padding:6px 4px;background:transparent;"></textarea>'
+    + '<button type="button" id="chatGalleryBtn" title="Photo" style="background:none;border:none;font-size:20px;padding:4px 6px;width:auto;">📎</button>'
+    + '<button type="button" id="chatCamBtn" title="Camera" style="background:none;border:none;font-size:20px;padding:4px 6px;width:auto;">📷</button></div>'
+    + '<button type="button" id="chatSendBtn" title="Send" style="width:44px;height:44px;border-radius:50%;border:none;background:' + CHAT_GREEN_ + ';color:#fff;font-size:18px;flex:0 0 auto;">➤</button></div>'
+    + '<input type="file" accept="image/*" id="chatFile" style="display:none;"><input type="file" accept="image/*" capture="environment" id="chatFileCam" style="display:none;">');
+  document.getElementById('chatGalleryBtn').onclick = () => document.getElementById('chatFile').click();
+  document.getElementById('chatCamBtn').onclick = () => document.getElementById('chatFileCam').click();
+  document.getElementById('chatFile').onchange = function () { chatPickImage_(this); };
+  document.getElementById('chatFileCam').onchange = function () { chatPickImage_(this); };
   document.getElementById('chatSendBtn').onclick = chatSend_;
+  const inp = document.getElementById('chatInput');
+  inp.oninput = function () { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 100) + 'px'; };
   chatLoadMsgs_(true);
-  if (t.kind === 'conv' || t.kind === 'dm') CHAT_POLL_ = setInterval(() => { if (CHAT_S_.view !== 'thread' || state['_currentPage_' + CHAT_S_.who] !== 'chat') { chatStopThread_(); return; } chatLoadMsgs_(false); }, 5000);
+  if (t.kind === 'conv' || t.kind === 'dm') CHAT_POLL_ = setInterval(() => { if (CHAT_S_.view !== 'thread') { chatStopThread_(); return; } chatLoadMsgs_(false); }, 5000);
 }
 function chatStopThread_() { if (CHAT_POLL_) { clearInterval(CHAT_POLL_); CHAT_POLL_ = null; } }
+function chatDayLabel_(ts) {
+  const d = new Date(ts), t = new Date(), y = new Date(); y.setDate(t.getDate() - 1);
+  if (d.toDateString() === t.toDateString()) return 'Today';
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
 async function chatLoadMsgs_(first) {
-  const me = chatMe_(), box = document.getElementById('chatMsgs');
-  if (!box || !CHAT_S_.convId) { if (box) box.innerHTML = '<div style="opacity:.6;font-size:12px;padding:8px;">No messages yet. Say hello!</div>'; return; }
+  const me = chatMe_(), wrap = document.getElementById('chatMsgs'), body = chatBody_();
+  if (!wrap) return;
+  if (!CHAT_S_.convId) { wrap.innerHTML = '<div style="text-align:center;margin:20px 0;"><span style="background:#fff3c4;color:#54656f;font-size:12px;padding:5px 12px;border-radius:8px;">Type a message to start</span></div>'; return; }
   try {
     const r = await chatGet_('chatMessages', { me: me.key, convId: CHAT_S_.convId, after: CHAT_S_.after });
     if (!r || !r.ok) throw new Error((r && r.error) || 'Could not load');
     if (CHAT_S_.view !== 'thread') return;
-    if (r.conv) { CHAT_S_.members = r.conv.members; const t = CHAT_S_.target; if (t && t.kind === 'conv' && r.conv.type === 'GROUP') { const s = document.getElementById('chatSub'); if (s) s.textContent = r.conv.members.map(m => properCase(m.n)).join(', '); } }
-    const isGroup = !!(r.conv && r.conv.type === 'GROUP') || (CHAT_S_.target && CHAT_S_.target.type === 'GROUP');
-    const atBottom = first || (box.scrollTop + box.clientHeight >= box.scrollHeight - 40);
-    if (first) box.innerHTML = '';
-    if (!r.msgs.length && first) { box.innerHTML = '<div style="opacity:.6;font-size:12px;padding:8px;">No messages yet. Say hello!</div>'; return; }
-    const ph = box.querySelector('[data-empty]'); if (ph) ph.remove();
+    if (r.conv) {
+      CHAT_S_.members = r.conv.members;
+      const t = CHAT_S_.target;
+      if (t && t.kind === 'conv' && r.conv.type === 'GROUP') chatHead_({ title: properCase(r.conv.name || t.title), sub: r.conv.members.map(m => properCase(m.n)).join(', '), back: chatShowList_, avatar: chatAvatar_('👥', '', 36) });
+    }
+    const isGroup = !!(r.conv && r.conv.type === 'GROUP') || !!(CHAT_S_.target && (CHAT_S_.target.type === 'GROUP' || CHAT_S_.target.kind === 'group'));
+    const atBottom = first || (body.scrollTop + body.clientHeight >= body.scrollHeight - 60);
+    if (first) wrap.innerHTML = '';
+    if (!r.msgs.length && first) { wrap.innerHTML = '<div style="text-align:center;margin:20px 0;"><span style="background:#fff3c4;color:#54656f;font-size:12px;padding:5px 12px;border-radius:8px;">No messages yet. Say hello!</span></div>'; return; }
     let incoming = false;
     r.msgs.forEach(m => {
       const mine = m.from === me.key; if (!mine) incoming = true;
+      const day = chatDayLabel_(m.ts);
+      if (day !== CHAT_S_.lastDay) { CHAT_S_.lastDay = day; const s = document.createElement('div'); s.style.cssText = 'text-align:center;margin:10px 0 6px;'; s.innerHTML = '<span style="background:#fff;color:#54656f;font-size:11.5px;padding:4px 11px;border-radius:8px;box-shadow:0 1px 1px rgba(0,0,0,.1);">' + escHtml_(day) + '</span>'; wrap.appendChild(s); }
+      const dd = new Date(m.ts), hm = String(dd.getHours()).padStart(2, '0') + ':' + String(dd.getMinutes()).padStart(2, '0');
       const d = document.createElement('div');
-      d.style.cssText = 'display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin:4px 0;';
-      d.innerHTML = '<div style="max-width:82%;background:' + (mine ? 'rgba(201,162,39,.25)' : 'rgba(128,128,128,.15)') + ';border-radius:10px;padding:5px 9px;font-size:13px;text-align:left;word-break:break-word;">'
-        + (mine || !isGroup ? '' : '<b style="font-size:11px;">' + escHtml_(properCase(m.name)) + '</b><br>')
-        + (m.img ? '<img src="' + escHtml_(m.img) + '" style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin-bottom:3px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')" alt="">' : '')
-        + escHtml_(m.text) + '<div style="font-size:10px;opacity:.55;text-align:right;">' + escHtml_(m.at) + '</div></div>';
-      box.appendChild(d);
+      d.style.cssText = 'display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin:2px 0;';
+      d.innerHTML = '<div style="max-width:80%;background:' + (mine ? '#d9fdd3' : '#fff') + ';border-radius:' + (mine ? '8px 0 8px 8px' : '0 8px 8px 8px') + ';padding:5px 8px 3px;font-size:14.5px;text-align:left;word-break:break-word;box-shadow:0 1px 1px rgba(0,0,0,.13);">'
+        + (mine || !isGroup ? '' : '<div style="font-size:12px;font-weight:700;color:#06795f;">' + escHtml_(properCase(m.name)) + '</div>')
+        + (m.img ? '<img src="' + escHtml_(m.img) + '" style="max-width:100%;max-height:240px;border-radius:6px;display:block;margin:2px 0 3px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')" alt="">' : '')
+        + (m.text ? '<span style="white-space:pre-wrap;">' + escHtml_(m.text) + '</span>' : '')
+        + '<span style="float:right;margin:6px 0 0 10px;font-size:10.5px;color:#667781;">' + hm + '</span><div style="clear:both;"></div></div>';
+      wrap.appendChild(d);
       CHAT_S_.after = Math.max(CHAT_S_.after, m.ts);
     });
-    if (atBottom) box.scrollTop = box.scrollHeight;
-    if (r.msgs.length && (incoming || first)) { chatPost_({ action: 'chatRead', me: me.key, convId: CHAT_S_.convId }, 15000).then(() => { chatTick_(true); }).catch(() => {}); }
-  } catch (e) { if (first && box) box.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+    if (atBottom) body.scrollTop = body.scrollHeight;
+    if (r.msgs.length && (incoming || first) && CHAT_S_.open) { chatPost_({ action: 'chatRead', me: me.key, convId: CHAT_S_.convId }, 15000).then(() => { chatTick_(true); }).catch(() => {}); }
+  } catch (e) { if (first && wrap) wrap.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message || 'Could not load') + '</div>'; }
 }
-async function chatPickImage_() {
-  const f = document.getElementById('chatFile').files[0]; if (!f) return;
+async function chatPickImage_(inputEl) {
+  const f = inputEl.files && inputEl.files[0]; if (!f) return;
   if (!/^image\//.test(f.type)) { toast('Please choose an image', 'error'); return; }
   const chip = document.getElementById('chatImgChip');
   try {
     chip.style.display = ''; chip.textContent = 'Preparing photo...';
     const packed = await compressBgImage_(f);
     CHAT_S_.img = { base64: packed.base64, mime: packed.mime, preview: URL.createObjectURL(f) };
-    chip.innerHTML = '<img src="' + CHAT_S_.img.preview + '" style="height:46px;border-radius:6px;vertical-align:middle;"> Photo ready <button class="btn-sm" id="chatImgX">✕</button>';
+    chip.innerHTML = '<img src="' + CHAT_S_.img.preview + '" style="height:50px;border-radius:6px;vertical-align:middle;"> Photo ready <button class="btn-sm" id="chatImgX" style="width:auto;">✕</button>';
     document.getElementById('chatImgX').onclick = () => { CHAT_S_.img = null; chip.style.display = 'none'; };
   } catch (e) { toast('Could not read the photo', 'error'); chip.style.display = 'none'; }
-  document.getElementById('chatFile').value = '';
+  inputEl.value = '';
 }
 async function chatSend_() {
   const t = CHAT_S_.target, me = chatMe_(), inp = document.getElementById('chatInput'), btn = document.getElementById('chatSendBtn');
@@ -10615,18 +10695,18 @@ async function chatSend_() {
   else if (t.kind === 'dm') { body.mode = 'dm'; body.to = [t.to]; }
   else if (t.kind === 'broadcast') { body.mode = 'broadcast'; body.to = t.to; }
   else { body.mode = 'group'; body.to = t.to; body.groupName = t.title; }
-  btn.disabled = true; btn.textContent = 'Sending...';
+  btn.disabled = true;
   try {
     const r = await chatPost_(body, 60000);
     if (!r || !r.ok) throw new Error((r && r.error) || 'Could not send');
-    if (inp) inp.value = '';
+    if (inp) { inp.value = ''; inp.style.height = 'auto'; }
     CHAT_S_.img = null; const chip = document.getElementById('chatImgChip'); if (chip) chip.style.display = 'none';
     if (t.kind === 'broadcast') { toast('Sent to ' + r.sent + ' people', 'success'); chatShowList_(); return; }
     if (t.kind === 'group') { chatOpenTarget_({ kind: 'conv', id: r.convIds[0], title: t.title, type: 'GROUP', members: [] }); return; }
     await chatLoadMsgs_(false);
-    const box = document.getElementById('chatMsgs'); if (box) box.scrollTop = box.scrollHeight;
+    const bd = chatBody_(); if (bd) bd.scrollTop = bd.scrollHeight;
   } catch (e) { toast(e.message || 'Could not send', 'error'); }
-  btn.disabled = false; btn.textContent = 'Send';
+  btn.disabled = false;
 }
 
 // ---- background: presence, unread badge, login popup ----
@@ -10635,21 +10715,21 @@ async function chatTick_(quick) {
     const who = vsrActiveWho_(); if (!who || !navigator.onLine) return;
     const me = chatMe_();
     if (!me.key || me.key === 'emp:' || me.key === 'adm:') return;
+    chatLauncherShow_(true);
     if (!quick) chatPost_({ action: 'chatPing', me: me.key }, 12000).catch(() => {});
     const r = await chatGet_('chatList', { me: me.key });
     if (!r || !r.ok) return;
     const was = CHAT_LAST_UNREAD_;
     CHAT_LAST_UNREAD_ = r.unread || 0; chatSetBadges_(CHAT_LAST_UNREAD_);
-    const onChat = state['_currentPage_' + who] === 'chat';
-    if (CHAT_LAST_UNREAD_ > was && !onChat && CHAT_UNREAD_POPPED_) { try { toast('💬 New message', 'info'); } catch (e) {} }
+    if (CHAT_LAST_UNREAD_ > was && !CHAT_S_.open && CHAT_UNREAD_POPPED_) { try { toast('💬 New message', 'info'); } catch (e) {} }
     if (CHAT_LAST_UNREAD_ > 0 && !CHAT_UNREAD_POPPED_) {
       CHAT_UNREAD_POPPED_ = true;
-      _queueAutoPopup_(() => chatUnreadPopup_(CHAT_LAST_UNREAD_, who));
+      _queueAutoPopup_(() => chatUnreadPopup_(CHAT_LAST_UNREAD_));
     }
-    if (onChat && CHAT_S_.view === 'list') { chatLoadList_(); if (chatIsMis_()) chatRefreshOnline_(); }
+    if (CHAT_S_.open && CHAT_S_.view === 'list') { chatLoadList_(); if (chatIsMis_()) chatRefreshOnline_(); }
   } catch (e) {}
 }
-function chatUnreadPopup_(n, who) {
+function chatUnreadPopup_(n) {
   const old = document.getElementById('chatUnreadModal'); if (old) old.remove();
   const d = document.createElement('div');
   d.id = 'chatUnreadModal'; d.className = 'modal-overlay show';
@@ -10658,10 +10738,11 @@ function chatUnreadPopup_(n, who) {
     + '<div style="display:flex;gap:8px;justify-content:center;"><button class="btn-primary" style="width:auto;padding:6px 18px;" id="chatUnreadOpen">Open Chat</button>'
     + '<button class="btn-secondary" style="width:auto;padding:6px 18px;" id="chatUnreadLater">Later</button></div></div>';
   document.body.appendChild(d);
-  document.getElementById('chatUnreadOpen').onclick = () => { d.remove(); (who === 'admin' ? showAdminPage : showEmpPage)('chat'); };
+  document.getElementById('chatUnreadOpen').onclick = () => { d.remove(); _drainAutoPopupQueue_(); chatOpen_(); };
   document.getElementById('chatUnreadLater').onclick = () => { d.remove(); _drainAutoPopupQueue_(); };
 }
 function chatStart_() {
+  chatEnsureUi_();
   CHAT_UNREAD_POPPED_ = false; CHAT_LAST_UNREAD_ = 0;
   setTimeout(() => chatTick_(false), 2500);
   if (!window.__chatTimer) window.__chatTimer = setInterval(() => chatTick_(false), 30000);
@@ -10736,7 +10817,6 @@ function bdShowPopup_() {
   }; });
   d.querySelectorAll('[data-c]').forEach(b => { b.onclick = () => {
     const x = rows[+b.getAttribute('data-c')]; d.remove(); _drainAutoPopupQueue_();
-    const who = me.who; (who === 'admin' ? showAdminPage : showEmpPage)('chat');
     chatOpenTarget_({ kind: 'dm', to: { k: x.emp.key, n: x.emp.name }, title: x.emp.name });
   }; });
   document.getElementById('bdClose').onclick = () => {
@@ -11660,7 +11740,7 @@ function showDutyAssignmentPopup_(slot, duty, mode, done) {
 }
 
 // ── Stock Check List: duty assignment popup (everyone) + variance popup (all admins, once) ────────────────
-function checkStockPopups_() { try { checkStockDutyPopup_(); checkStockVariancePopup_(); } catch (e) {} }
+function checkStockPopups_() { try { checkStockVariancePopup_(); } catch (e) {} }
 function _stockMeaningful_(v) { const t = String(v || '').trim(); return !!t && t !== '-' && t !== '—' && !/^n\/?a$/i.test(t); }
 // Stock Check List reminders. Opening: 10:00 AM - 3:00 PM, Closing: 8:00 PM - midnight, only until it is submitted.
 // Staff of a section = names on the DUTY sheet (Opening + Closing merged). The person on duty today is asked every 10 minutes
@@ -11733,11 +11813,21 @@ function checkStockVariancePopup_() {
   jsonpReliable({ page: 'stockVarianceLogJSON' }).then(res => {
     if (!res || !res.ok) return;
     const sig = r => [r.alertTime, r.code, r.openingValue, r.closingValue].join('|');
-    const fresh = (res.rows || []).filter(r => String(r.alertTime || '').indexOf(today) === 0 && seen.indexOf(sig(r)) === -1);
+    const cntKey = 'stockVarCnt_' + String(state.adminEmail || 'admin').toLowerCase();
+    let cnt = {}; try { cnt = JSON.parse(localStorage.getItem(cntKey) || '{}'); } catch (e) {}
+    const todays = (res.rows || []).filter(r => String(r.alertTime || '').indexOf(today) === 0);
+    const fresh = todays.filter(r => (cnt[sig(r)] || 0) < 2);
+    // A variance seen twice only gets a notification entry, never a popup again
+    todays.filter(r => (cnt[sig(r)] || 0) === 2 && seen.indexOf('n:' + sig(r)) === -1).forEach(r => {
+      try { logNotifHistory_('⚠️', 'Stock Variance: ' + escHtml_(String(r.code || '')) + ' — Opening ' + escHtml_(String(r.openingValue)) + ', Closing ' + escHtml_(String(r.closingValue)), 'alert'); } catch (e) {}
+      seen.push('n:' + sig(r));
+    });
+    try { localStorage.setItem(seenKey, JSON.stringify(seen.slice(-500))); } catch (e) {}
     if (!fresh.length) return;
     _queueAutoPopup_(() => {
       showStockVariancePopup_(fresh);
-      try { localStorage.setItem(seenKey, JSON.stringify(seen.concat(fresh.map(sig)).slice(-500))); } catch (e) {}
+      fresh.forEach(r => { cnt[sig(r)] = (cnt[sig(r)] || 0) + 1; });
+      try { localStorage.setItem(cntKey, JSON.stringify(cnt)); } catch (e) {}
     });
   }).catch(() => {});
 }
@@ -16985,7 +17075,6 @@ function showAdminPage(page, opts) {
   if(page==='loyalty-incenthist') loadLoyaltyIncentiveHistory();
   if(page==='loyalty-issues') loadLoyaltyCardIssues();
   if(page==='events') initEventsBrowser('admin');
-  if(page==='chat') chatEnter_('admin');
   if(page==='balance') renderBalance();
   if(page==='direct') loadDirectActionPage();
   if(page==='blocked') loadBlockedDatesPage();
@@ -35918,6 +36007,7 @@ async function celebLoad_() {
 // ══════════════════════════════════════
 let SNAP_AT_ = 0;
 async function snapLoad_(force) {
+  return; // Removed permanently
   try {
     if (!force && Date.now() - SNAP_AT_ < 120000) return;
     const adminOn = !!(document.getElementById('adminApp') && document.getElementById('adminApp').classList.contains('active'));
@@ -36021,6 +36111,7 @@ function notifClear_() { notifWrite_({ seen: Date.now(), items: [] }); notifOpen
 // ══════════════════════════════════════
 let PROG_AT_ = 0;
 async function progLoad_(force) {
+  return; // Removed permanently
   try {
     if (!force && Date.now() - PROG_AT_ < 300000) return;
     const adminOn = !!(document.getElementById('adminApp') && document.getElementById('adminApp').classList.contains('active'));
