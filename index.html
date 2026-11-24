@@ -3953,17 +3953,32 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
             <p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;">Optional — shows behind the login card instead of the plain purple. Upload a photo any time; set its expiry date separately below, whenever you want — once it passes, this is removed automatically and the login page goes back to the default purple theme on its own. You can also remove it yourself any time with the Remove Image button, no need to wait for the expiry.</p>
             <img id="storeBgPreview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Current background">
             <input type="file" accept="image/*" id="storeBgFileInput" onchange="onStoreBgFileChosen(this)" style="display:none;">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Image 1</div>
             <div style="display:flex;gap:8px;margin-bottom:12px;">
-              <button class="btn-sm btn-view" style="flex:1;" onclick="document.getElementById('storeBgFileInput').click()">Upload Image</button>
-              <button class="btn-sm" style="flex:1;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">Remove Image</button>
+              <button class="btn-sm btn-view" style="flex:1;" onclick="document.getElementById('storeBgFileInput').click()">Upload Image 1</button>
+              <button class="btn-sm" style="flex:1;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg_()">Remove Image 1</button>
             </div>
             <div id="storeBgUploadStatus" style="font-size:11px;margin-bottom:10px;"></div>
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform: capitalize;letter-spacing:1px;margin-bottom:6px;">Expiry Date</label>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform: capitalize;letter-spacing:1px;margin-bottom:6px;">Image 1 Expiry Date</label>
             <div style="display:flex;gap:6px;align-items:stretch;flex-wrap:nowrap;">
               <input type="date" id="storeBgExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
               <button class="btn-sm btn-view" style="flex:0 0 auto;width:auto;padding:0 12px;font-size:11.5px;" onclick="onSaveBgExpiry_()">Save Expiry</button>
             </div>
-            <div id="storeBgExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
+            <div id="storeBgExpiryStatus" style="font-size:11px;margin:8px 0 14px;color:var(--text3);">No background image set (login page shows the default purple theme).</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Image 2 (Swaps With Image 1 Every Minute)</div>
+            <img id="storeBg2Preview" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Second background">
+            <input type="file" accept="image/*" id="storeBg2FileInput" onchange="onStoreBg2FileChosen(this)" style="display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <button class="btn-sm btn-view" style="flex:1;" onclick="document.getElementById('storeBg2FileInput').click()">Upload Image 2</button>
+              <button class="btn-sm" style="flex:1;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreBg2_()">Remove Image 2</button>
+            </div>
+            <div id="storeBg2UploadStatus" style="font-size:11px;margin-bottom:10px;"></div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform: capitalize;letter-spacing:1px;margin-bottom:6px;">Image 2 Expiry Date</label>
+            <div style="display:flex;gap:6px;align-items:stretch;flex-wrap:nowrap;">
+              <input type="date" id="storeBg2ExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
+              <button class="btn-sm btn-view" style="flex:0 0 auto;width:auto;padding:0 12px;font-size:11.5px;" onclick="onSaveBg2Expiry_()">Save Expiry</button>
+            </div>
+            <div id="storeBg2ExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No second background image set.</div>
           </div>
         </div>
 
@@ -7496,6 +7511,19 @@ function applyStoreSettingsToUI_(s) {
     if (s.bgImageUrl) { bgPreview.src = s.bgImageUrl; bgPreview.style.display = ''; }
     else bgPreview.style.display = 'none';
   }
+  const bg2Preview = document.getElementById('storeBg2Preview');
+  if (bg2Preview) {
+    if (s.bgImage2Url) { bg2Preview.src = s.bgImage2Url; bg2Preview.style.display = ''; }
+    else bg2Preview.style.display = 'none';
+  }
+  const bg2Status = document.getElementById('storeBg2ExpiryStatus');
+  if (bg2Status) {
+    bg2Status.textContent = !s.bgImage2Url
+      ? 'No second background image set.'
+      : s.bgImage2Expiry
+        ? ('Active - auto-removes after ' + s.bgImage2Expiry)
+        : 'Active - no expiry date set yet. Pick one above and tap Save Expiry.';
+  }
   if (bgStatus) {
     bgStatus.textContent = !s.bgImageUrl
       ? 'No background image set (login page shows the default purple theme).'
@@ -7510,19 +7538,32 @@ function applyStoreSettingsToUI_(s) {
 // ravali". The backend itself stops returning bgImageUrl once the expiry date passes (checked
 // on every storeSettings read), so this function just reflects whatever it's told — image if
 // given one, the existing CSS gradient (untouched) if not.
+let loginBgTimer_ = null, loginBgList_ = [], loginBgIdx_ = 0;
 function applyLoginBgImage_(s) {
   const bgLayer = document.getElementById('loginBgLayer');
   const toggleBtn = document.getElementById('loginBgToggleBtn');
   if (!bgLayer) return;
-  // v-fix (BRO: "mali image ravadam ledu" — switched from CSS multi-layer background trickery
-  // to a plain <img> with object-fit:contain, which is simpler and far less fragile. The purple
-  // gradient lives on #loginBgLayer's own CSS background (see stylesheet), so it always shows
-  // through wherever the photo's own aspect ratio leaves a gap — never empty/white space.
   const img = document.getElementById('loginBgImg');
-  if (s.bgImageUrl && img) {
-    img.src = s.bgImageUrl;
+  const list = [s.bgImageUrl, s.bgImage2Url].filter(Boolean);
+  const same = list.length === loginBgList_.length && list.every((u, i) => u === loginBgList_[i]);
+  if (same && loginBgTimer_ !== undefined && (list.length < 2 || loginBgTimer_)) return; // nothing changed
+  loginBgList_ = list;
+  if (loginBgTimer_) { clearInterval(loginBgTimer_); loginBgTimer_ = null; }
+  if (list.length && img) {
+    loginBgIdx_ = 0;
+    img.style.transition = 'opacity .8s ease';
+    img.style.opacity = '1';
+    img.src = list[0];
     img.style.display = 'block';
     if (toggleBtn) toggleBtn.style.display = 'flex';
+    if (list.length > 1) {
+      list.forEach(u => { const pre = new Image(); pre.src = u; }); // preload so the swap is instant
+      loginBgTimer_ = setInterval(() => {
+        loginBgIdx_ = (loginBgIdx_ + 1) % loginBgList_.length;
+        img.style.opacity = '0';
+        setTimeout(() => { img.src = loginBgList_[loginBgIdx_]; img.style.opacity = '1'; }, 800);
+      }, 60000);
+    }
   } else {
     if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
     if (toggleBtn) toggleBtn.style.display = 'none';
@@ -7680,6 +7721,84 @@ async function onSaveBgExpiry_() {
   } catch (err) {
     if (statusEl) { statusEl.textContent = 'Could not save expiry date — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
     toast('Could not save expiry date', 'error');
+  }
+}
+
+// Second login background image: same crop + compress + upload as image 1, with its own expiry date.
+async function onSaveBg2Expiry_() {
+  const expiryEl = document.getElementById('storeBg2ExpiryInput');
+  const expiry = expiryEl ? expiryEl.value : '';
+  const statusEl = document.getElementById('storeBg2ExpiryStatus');
+  if (!expiry) { toast('Pick an expiry date first', 'error'); return; }
+  if (expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); return; }
+  if (statusEl) { statusEl.textContent = 'Saving expiry date...'; statusEl.style.color = 'var(--text3)'; }
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveStoreSettings', setBgExpiry2Only: true, bgImage2Expiry: expiry })
+    }, 25000).then(r => r.json());
+    if (res && res.ok) {
+      applyStoreSettingsToUI_(res.settings);
+      try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+      toast('Expiry date saved', 'success');
+    } else { throw new Error((res && res.error) || 'Save failed'); }
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = 'Could not save expiry date - ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+    toast('Could not save expiry date', 'error');
+  }
+}
+
+
+function onStoreBg2FileChosen(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
+  const statusEl = document.getElementById('storeBg2UploadStatus');
+  if (statusEl) { statusEl.textContent = 'Preparing image...'; statusEl.style.color = 'var(--text3)'; }
+  (async () => {
+    try {
+      const rawDataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error || new Error('Could not read file'));
+        r.readAsDataURL(file);
+      });
+      const croppedDataUrl = await new Promise((resolve) => { showCropModal_(rawDataUrl, resolve); });
+      const packed = await compressBgImage_(_dataUrlToBlob_(croppedDataUrl));
+      if (statusEl) statusEl.textContent = 'Uploading...';
+      const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveStoreSettings', bgImage2Base64: packed.base64, bgImage2MimeType: packed.mime })
+      }, 60000).then(r => r.json());
+      if (res && res.ok) {
+        applyStoreSettingsToUI_(res.settings);
+        try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+        if (statusEl) { statusEl.textContent = 'Image 2 saved. The login page swaps the two images every minute.'; statusEl.style.color = 'var(--green)'; }
+        toast('Background image 2 updated', 'success');
+      } else { throw new Error((res && res.error) || 'Upload failed'); }
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = 'Upload failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+      toast('Background upload failed', 'error');
+    } finally { inputEl.value = ''; }
+  })();
+}
+async function onRemoveStoreBg2_() {
+  const statusEl = document.getElementById('storeBg2UploadStatus');
+  if (statusEl) { statusEl.textContent = 'Removing...'; statusEl.style.color = 'var(--text3)'; }
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveStoreSettings', removeBgImage2: true })
+    }, 25000).then(r => r.json());
+    if (res && res.ok) {
+      applyStoreSettingsToUI_(res.settings);
+      try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+      if (statusEl) { statusEl.textContent = 'Image 2 removed.'; statusEl.style.color = 'var(--green)'; }
+      toast('Background image 2 removed', 'success');
+    } else { throw new Error((res && res.error) || 'Remove failed'); }
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = 'Remove failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+    toast('Could not remove image 2', 'error');
   }
 }
 
@@ -10177,13 +10296,19 @@ function showEmpFormPopup_(url) {
     + '<button class="btn-secondary" style="width:100%;" onclick="document.getElementById(\'empFormPopupModal\').remove();_drainAutoPopupQueue_();">Later</button></div>';
   document.body.appendChild(div);
 }
-function leaveBlockedMsg_(text) {
+function leaveBlockedMsg_(text, list, allowable) {
   const old = document.getElementById('leaveBlockedMsgModal'); if (old) old.remove();
   const div = document.createElement('div');
   div.id = 'leaveBlockedMsgModal'; div.className = 'modal-overlay show';
+  const reasons = (Array.isArray(list) && list.length) ? list : [text];
+  const ask = allowable === false
+    ? 'This leave cannot be submitted. Please contact your Manager and MIS.'
+    : 'Your leave cannot be submitted for the reason above. Please ask MIS to allow it. A request has already been sent to MIS.';
   div.innerHTML = '<div class="modal-box" style="max-width:380px;"><div class="modal-title">🚫 Leave Not Submitted</div>'
-    + '<div style="font-size:13.5px;line-height:1.5;margin:8px 0 14px;">' + escHtml_(text) + '</div>'
-    + '<button class="btn-primary" style="width:100%;" onclick="document.getElementById(\'leaveBlockedMsgModal\').remove()">OK</button></div>';
+    + '<div style="background:#fdecea;border:1.5px solid #b3261e;border-radius:8px;padding:8px 11px;margin:8px 0;font-size:13px;line-height:1.5;color:#b3261e;font-weight:800;">'
+    + reasons.map(x => '🔴 ' + escHtml_(x)).join('<br>') + '</div>'
+    + '<div style="font-size:12.5px;line-height:1.5;margin:6px 0 14px;">' + escHtml_(ask) + '</div>'
+    + '<button class="btn-sm" onclick="document.getElementById(\'leaveBlockedMsgModal\').remove()">OK</button></div>';
   document.body.appendChild(div);
 }
 function leaveWarnHtml_(l) {
@@ -10488,7 +10613,8 @@ async function confirmSubmitLeave() {
           showMultiSegmentResultPopup(res);
           loadEmpData();
         } else {
-          toast(res.reason || 'Submission failed', 'error');
+          if (res && res.blocked && res.reason) leaveBlockedMsg_(res.reason, res.reasonsList, res.allowable);
+          else toast(res.reason || 'Submission failed', 'error');
           _reportSubmitError_('Leave Application', 'backend-reject', res.reason || 'Submission failed');
         }
         return;
@@ -10500,7 +10626,7 @@ async function confirmSubmitLeave() {
         showLeaveResultPopup(res); // immediate popup with the REAL outcome (Pending/Approved/Rejected/Absent), not a generic toast
         loadEmpData(); // background — refreshes My Leaves once data arrives
       } else {
-        if (res && (res.blocked || res.message === 'Not allowed') && res.reason) leaveBlockedMsg_(res.reason);
+        if (res && (res.blocked || res.message === 'Not allowed') && res.reason) leaveBlockedMsg_(res.reason, res.reasonsList, res.allowable);
         else toast(res.reason || 'Submission failed', 'error');
         _reportSubmitError_('Leave Application', 'backend-reject', res.reason || 'Submission failed');
       }
