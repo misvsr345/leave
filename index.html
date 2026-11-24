@@ -3276,6 +3276,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
           <div class="quick-action-btn" id="adminQALeaveTools" onclick="mtPageEnter_('leavetools')"><span class="quick-action-icon">🧰</span><div class="quick-action-label">Leave Tools</div><div class="quick-action-sub">Resend mail, bulk, holiday, fixes</div></div>
           <div class="quick-action-btn mt-mis-tile" id="adminQABlockedLeaves" style="display:none;" onclick="blOpen_()"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Leaves</div><div class="quick-action-sub">Stopped at submit — Allow / Decline</div></div>
+          <div class="quick-action-btn mt-mis-tile" id="adminQAAbsentWatch" style="display:none;" onclick="showAdminPage('absent-watch')"><span class="quick-action-icon">🛡️</span><div class="quick-action-label">Absent Watch</div><div class="quick-action-sub">Permission rule after Absent</div></div>
           <div class="quick-action-btn" id="adminQALeaveLimits" onclick="leaveLimitsOpen_()"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Leave Types &amp; Limits</div><div class="quick-action-sub">Allowed types, Special limit / month</div></div>
           <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
           <div class="quick-action-btn" id="adminQABlocked" onclick="showAdminPage('blocked')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Dates</div><div class="quick-action-sub">Dates &amp; weekdays</div></div>
@@ -3979,6 +3980,25 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
               <button class="btn-sm btn-view" style="flex:0 0 auto;width:auto;padding:0 12px;font-size:11.5px;" onclick="onSaveBg2Expiry_()">Save Expiry</button>
             </div>
             <div id="storeBg2ExpiryStatus" style="font-size:11px;margin-top:8px;color:var(--text3);">No second background image set.</div>
+            <div style="border-top:1px solid var(--border,rgba(128,128,128,.3));margin:14px 0 10px;"></div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Event Image (Birthday / Celebration — Popup After Login)</div>
+            <img id="storeEvPreview" style="width:100%;max-height:110px;object-fit:cover;border-radius:8px;display:none;margin-bottom:10px;" alt="Event image">
+            <input type="file" accept="image/*" id="storeEvFileInput" onchange="onStoreEvFileChosen(this)" style="display:none;">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Employee</label>
+            <select id="storeEvEmp" class="uniform-select" style="width:100%;margin-bottom:8px;"><option value="">-- Select An Employee --</option></select>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Event Title</label>
+            <input type="text" id="storeEvTitle" value="Birthday" placeholder="e.g. Birthday, Work Anniversary" style="width:100%;margin-bottom:8px;">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Expiry Date</label>
+            <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:8px;">
+              <input type="date" id="storeEvExpiryInput" class="uniform-select" style="flex:1 1 auto;min-width:0;padding:6px 4px;font-size:11.5px;">
+              <button class="btn-sm btn-view" style="flex:0 0 auto;width:auto;padding:0 12px;font-size:11.5px;" onclick="onSaveEvExpiry_()">Save Expiry</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <button class="btn-sm btn-view" style="flex:1;" onclick="onEvUploadClick_()">Upload Event Image</button>
+              <button class="btn-sm" style="flex:1;color:var(--red);border-color:var(--red);" onclick="onRemoveStoreEv_()">Remove Event Image</button>
+            </div>
+            <div id="storeEvStatus" style="font-size:11px;margin-bottom:8px;color:var(--text3);">No event image set.</div>
+            <div id="storeEvWishes" style="font-size:11.5px;"></div>
           </div>
         </div>
 
@@ -4042,6 +4062,17 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
 
     <!-- v-add (BRO: "leave status wise monthly data — absent evaru
          evaru epudu unnaru, salary deduction kosam") -->
+    <!-- ABSENT WATCH (MIS only) -->
+    <div class="page-section" id="admin-absent-watch">
+      <div class="section-hdr"><span class="section-title2">🛡️ Absent Watch</span>
+        <span onclick="awLoad_()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
+      </div>
+      <div class="card">
+        <div class="kd-note" style="text-align:left;">After an Absent is marked, the employee needs your permission for new leaves: 1 Absent = next 1 leave; 2 Absents within 30 days = every leave for 30 days; 3 Absents within 45 days = next 6 leaves. An Allow works for one leave only.</div>
+        <div id="awBody" style="margin-top:8px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+    </div>
+
     <div class="page-section" id="admin-monthly-absent">
       <div class="section-hdr"><span class="section-title2">📋 Monthly Absent Report</span>
         <span onclick="loadMonthlyAbsentReport()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
@@ -7516,6 +7547,7 @@ function applyStoreSettingsToUI_(s) {
     if (s.bgImage2Url) { bg2Preview.src = s.bgImage2Url; bg2Preview.style.display = ''; }
     else bg2Preview.style.display = 'none';
   }
+  try { evApplySettings_(s); evLoginPoster_(s); } catch (e) {}
   const bg2Status = document.getElementById('storeBg2ExpiryStatus');
   if (bg2Status) {
     bg2Status.textContent = !s.bgImage2Url
@@ -7925,6 +7957,7 @@ async function empLogin() {
         if (res.mail && res.mail.need) mailGateShow_(res.mail);
         loadEmpData();
         checkLoyaltyAlerts('emp');
+        checkEventPopup_();
         checkEmpLoyaltyAccess();
         applyEmpGranularRestrictions();
         checkEmpMissingDsrPopup();
@@ -8016,6 +8049,7 @@ async function adminLogin() {
         checkWalkinMissingAlert();
         checkPendingLeavePopup_();
         checkBlockedLeavesPopup_();
+        checkEventPopup_();
         checkFormPendingPopup_();
         checkLoyaltyPendingValidationPopup_();
         checkGoldenPendingPopup_();
@@ -8996,7 +9030,7 @@ const SECTION_LABEL_MAP = {
   // Monthly Absent Report; Leads: Customer Events/Flagged Numbers) but had
   // no entry here, so "← Back" skipped their section's home page entirely
   // and jumped straight to the main Home instead.
-  'monthly-absent': 'Leave',
+  'monthly-absent': 'Leave', 'absent-watch': 'Leave',
   loyalty: 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-upcoming': 'Loyalty Card',
@@ -10343,6 +10377,369 @@ async function lcsSave_() {
     toast('✅ Limits saved', 'success');
     const m = document.getElementById('slModal'); if (m) m.remove();
   } catch (e) { toast('❌ ' + (e.message || 'Save failed'), 'error'); }
+}
+
+// ---- Absent Watch (MIS): who needs permission for leaves because of recent Absents ----
+let AW_ITEMS_ = [];
+async function awLoad_() {
+  const body = document.getElementById('awBody'); if (!body) return;
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'absentWatchListAPI' }, pwrCaller_()));
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not load');
+    AW_ITEMS_ = res.items || [];
+    if (!AW_ITEMS_.length) { body.innerHTML = '<div class="empty-state"><span class="emoji">👍</span><p>No Absent records.</p></div>'; return; }
+    body.innerHTML = dpTable_(['Employee', 'Status', ''], AW_ITEMS_.map((i, n) => [
+      '<div style="text-align:left;"><b>' + escHtml_(properCase(i.name)) + '</b><br><span style="opacity:.7;">Absents: ' + i.absents30 + ' in 30 days, ' + i.absents45 + ' in 45 days' + (i.last ? '<br>Last: ' + escHtml_(i.last) : '') + '</span></div>',
+      '<div style="text-align:left;color:' + (i.active ? '#b3261e' : '#16a34a') + ';font-weight:700;">' + escHtml_(i.label) + '</div>',
+      '<div style="display:flex;flex-direction:column;gap:4px;">'
+        + '<button class="btn-sm" onclick="awAct_(' + n + ',\'reset\')">Reset</button>'
+        + '<button class="btn-sm" onclick="awAct_(' + n + ',\'' + (i.manual === 'On' ? 'auto' : 'on') + '\')">' + (i.manual === 'On' ? 'Set Auto' : 'Force On') + '</button>'
+        + '<button class="btn-sm" onclick="awAct_(' + n + ',\'' + (i.manual === 'Off' ? 'auto' : 'off') + '\')">' + (i.manual === 'Off' ? 'Set Auto' : 'Exempt') + '</button>'
+      + '</div>']));
+  } catch (e) { body.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+}
+async function awAct_(n, act) {
+  const i = AW_ITEMS_[n]; if (!i) return;
+  if (act === 'reset' && !confirm('Reset the Absent restriction for ' + properCase(i.name) + '?')) return;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'absentWatchActAPI', empId: i.empId, name: i.name, act: act }, pwrCaller_()));
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not update', 'error'); return; }
+    toast(res.message || 'Done', 'success');
+    awLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); }
+}
+
+// ---- Event (birthday) image: MIS uploads it for one employee, everyone can wish, the employee sees the wishes ----
+function evMe_() {
+  if (state.__loginKind === 'admin') return { key: 'adm:' + String(state.adminEmail || '').toLowerCase(), name: state.adminName || state.adminRole || 'Admin', empId: '', nm: String(state.adminName || '').trim().toLowerCase() };
+  return { key: 'emp:' + String(state.empId || ''), name: state.empName || state.empId || 'Employee', empId: String(state.empId || ''), nm: String(state.empName || '').trim().toLowerCase() };
+}
+function evIsMine_(s) {
+  const me = evMe_();
+  if (me.empId && s.evEmpId && String(s.evEmpId) === me.empId) return true;
+  return !!(me.nm && s.evEmpName && String(s.evEmpName).trim().toLowerCase() === me.nm);
+}
+function evApplySettings_(s) {
+  const pv = document.getElementById('storeEvPreview');
+  if (pv) { if (s.evImageUrl) { pv.src = s.evImageUrl; pv.style.display = ''; } else pv.style.display = 'none'; }
+  const st = document.getElementById('storeEvStatus');
+  if (st) st.textContent = !s.evImageUrl ? 'No event image set.'
+    : ('Active — ' + (s.evTitle || 'Event') + ' for ' + properCase(s.evEmpName || '') + (s.evImageExpiry ? '. Auto-removes after ' + s.evImageExpiry + '.' : '. No expiry date set yet.'));
+  const sel = document.getElementById('storeEvEmp');
+  if (sel && sel.options.length <= 1) {
+    const build = () => {
+      const prev = sel.value;
+      const list = (directEmpCache || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      sel.innerHTML = '<option value="">-- Select An Employee --</option>' + list.map(e => '<option value="' + escHtml_(e.empId) + '" data-n="' + escHtml_(e.name) + '">' + escHtml_(properCase(e.name)) + ' (' + escHtml_(e.empId) + ')</option>').join('');
+      if (prev) sel.value = prev;
+    };
+    if (directEmpCache && directEmpCache.length) build();
+    else ensureDirectEmpCache_().then(build).catch(() => {});
+  }
+  const wb = document.getElementById('storeEvWishes');
+  if (wb) {
+    if (!s.evId) { wb.innerHTML = ''; return; }
+    jsonpEvWishes_(s.evId).then(r => {
+      if (!r || !r.ok) return;
+      wb.innerHTML = '<b>Wishes (' + r.count + ')</b>' + (r.count ? '<br>' + r.wishes.map(w => escHtml_(properCase(w.name)) + ' — ' + escHtml_(w.text || '') + ' · ' + escHtml_(w.at)).join('<br>') : ' — none yet');
+    }).catch(() => {});
+  }
+}
+function jsonpEvWishes_(evId, mine) {
+  return _fetchWithTimeout(STOCK_GAS_URL + '?action=eventWishes&evId=' + encodeURIComponent(evId) + '&me=' + encodeURIComponent(evMe_().key) + (mine ? '&mine=1' : ''), {}, 15000).then(r => r.json());
+}
+function onEvUploadClick_() {
+  const sel = document.getElementById('storeEvEmp');
+  if (!sel || !sel.value) { toast('Select the employee first', 'error'); return; }
+  document.getElementById('storeEvFileInput').click();
+}
+function onStoreEvFileChosen(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { toast('Please choose an image file', 'error'); return; }
+  const sel = document.getElementById('storeEvEmp');
+  const opt = sel && sel.options[sel.selectedIndex];
+  const empId = sel ? sel.value : '', empName = opt ? (opt.getAttribute('data-n') || '') : '';
+  const title = (document.getElementById('storeEvTitle').value || 'Birthday').trim();
+  const expiry = document.getElementById('storeEvExpiryInput').value || '';
+  const statusEl = document.getElementById('storeEvStatus');
+  if (!empId || !empName) { toast('Select the employee first', 'error'); inputEl.value = ''; return; }
+  if (expiry && expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); inputEl.value = ''; return; }
+  if (statusEl) { statusEl.textContent = 'Preparing image...'; statusEl.style.color = 'var(--text3)'; }
+  (async () => {
+    try {
+      const rawDataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error || new Error('Could not read file'));
+        r.readAsDataURL(file);
+      });
+      const croppedDataUrl = await new Promise((resolve) => { showCropModal_(rawDataUrl, resolve); });
+      const packed = await compressBgImage_(_dataUrlToBlob_(croppedDataUrl));
+      if (statusEl) statusEl.textContent = 'Uploading...';
+      const body = { action: 'saveStoreSettings', evImageBase64: packed.base64, evImageMimeType: packed.mime, evEmpId: empId, evEmpName: empName, evTitle: title };
+      if (expiry) body.evImageExpiry = expiry;
+      const res = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }, 60000).then(r => r.json());
+      if (res && res.ok) {
+        applyStoreSettingsToUI_(res.settings);
+        try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+        toast('Event image saved. Everyone will see it after login.', 'success');
+      } else { throw new Error((res && res.error) || 'Upload failed'); }
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = 'Upload failed — ' + (err.message || err); statusEl.style.color = 'var(--red)'; }
+      toast('Event image upload failed', 'error');
+    } finally { inputEl.value = ''; }
+  })();
+}
+async function onSaveEvExpiry_() {
+  const expiry = (document.getElementById('storeEvExpiryInput') || {}).value || '';
+  if (!expiry) { toast('Pick an expiry date first', 'error'); return; }
+  if (expiry < todayYmd_()) { toast('Expiry date must be today or later', 'error'); return; }
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveStoreSettings', setEvExpiryOnly: true, evImageExpiry: expiry }) }, 25000).then(r => r.json());
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Save failed');
+    applyStoreSettingsToUI_(res.settings);
+    try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+    toast('Expiry date saved', 'success');
+  } catch (err) { toast(err.message || 'Could not save expiry date', 'error'); }
+}
+async function onRemoveStoreEv_() {
+  if (!confirm('Remove the event image and its wishes popup?')) return;
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveStoreSettings', removeEvImage: true }) }, 25000).then(r => r.json());
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Remove failed');
+    applyStoreSettingsToUI_(res.settings);
+    try { localStorage.setItem(STORE_SETTINGS_CACHE_KEY, JSON.stringify(res.settings)); } catch (e) {}
+    toast('Event image removed', 'success');
+  } catch (err) { toast(err.message || 'Could not remove', 'error'); }
+}
+
+// Event poster. On the login page everyone sees it (view only, no wishing). After login a colleague can wish
+// (message window with emojis); the event employee reads the wishes and can reply to one or to all.
+// Close asks: Skip (comes again next time) or Close Permanently. Once wished / once all replied, it stops.
+let EV_CTX_ = null;
+const EV_EMOJIS_ = ['🎂', '🎉', '🎁', '🥳', '😊', '❤️', '👏', '🙏', '✨', '🌹', '💐', '👍'];
+function evPermGet_(k) { try { return !!(JSON.parse(localStorage.getItem('vsrEvPerm') || '{}')[k]); } catch (e) { return false; } }
+function evPermSet_(k) { try { const o = JSON.parse(localStorage.getItem('vsrEvPerm') || '{}'); o[k] = 1; localStorage.setItem('vsrEvPerm', JSON.stringify(o)); } catch (e) {} }
+function evChatBubble_(who, text, at, extra) {
+  return '<div style="text-align:left;background:rgba(128,128,128,.12);border-radius:10px;padding:6px 10px;margin:5px 0;font-size:12.5px;">'
+    + '<b>' + escHtml_(properCase(who)) + '</b> <span style="opacity:.55;font-size:11px;">' + escHtml_(at || '') + '</span><br>' + escHtml_(text) + (extra || '') + '</div>';
+}
+// Poster on the login page: view only.
+function evLoginPoster_(s) {
+  try {
+    if (!s || !s.evId || !s.evImageUrl) return;
+    if (window.__evPreShown === s.evId) return;
+    setTimeout(() => {
+      const lp = document.getElementById('loginPage');
+      if (!lp || lp.style.display === 'none') return;           // already logged in (saved session)
+      if (window.__evPreShown === s.evId || evPermGet_(s.evId + '|guest')) return;
+      window.__evPreShown = s.evId;
+      evShowPoster_(s, { guest: true });
+    }, 1500);
+  } catch (e) {}
+}
+function evPosterHtml_(s, withWish) {
+  const who = properCase(s.evEmpName || '');
+  return '<div style="position:relative;margin-bottom:8px;"><img src="' + escHtml_(s.evImageUrl) + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:10px;display:block;" alt="">'
+    + (withWish ? '<button class="btn-primary" style="position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:auto;padding:7px 18px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4);" onclick="evCompose_(\'wish\')">🎁 Wish ' + escHtml_(who) + '</button>' : '') + '</div>';
+}
+function evShowPoster_(s, opt) {
+  const old = document.getElementById('evPopupModal'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'evPopupModal'; div.className = 'modal-overlay show'; div.style.zIndex = 9000;
+  const who = properCase(s.evEmpName || ''), title = escHtml_(s.evTitle || 'Event');
+  div.innerHTML = '<div class="modal-box" style="max-width:380px;text-align:center;"><div class="modal-title">🎉 ' + title + ' — ' + escHtml_(who) + '</div>'
+    + evPosterHtml_(s, false)
+    + '<div style="font-size:12px;opacity:.75;margin-bottom:8px;">Log in to send your wishes.</div>'
+    + '<button class="btn-secondary" style="width:auto;padding:6px 18px;" id="evPreClose">Close</button></div>';
+  document.body.appendChild(div);
+  document.getElementById('evPreClose').onclick = () => evAskClose_(() => { div.remove(); }, () => { evPermSet_(s.evId + '|guest'); div.remove(); });
+}
+// Close options: Skip (shows again next time) or Close Permanently.
+function evAskClose_(onSkip, onPerm) {
+  const old = document.getElementById('evAskModal'); if (old) old.remove();
+  const d = document.createElement('div');
+  d.id = 'evAskModal'; d.className = 'modal-overlay show'; d.style.zIndex = 9500;
+  d.innerHTML = '<div class="modal-box" style="max-width:320px;text-align:center;"><div class="modal-title">Close This Poster?</div>'
+    + '<div style="font-size:12.5px;margin-bottom:10px;">Skip shows it again next time. Close Permanently never shows it again on this device.</div>'
+    + '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">'
+    + '<button class="btn-primary" style="width:auto;padding:6px 14px;" id="evAskSkip">Skip</button>'
+    + '<button class="btn-secondary" style="width:auto;padding:6px 14px;" id="evAskPerm">Close Permanently</button>'
+    + '<button class="btn-secondary" style="width:auto;padding:6px 14px;" id="evAskBack">Cancel</button></div></div>';
+  document.body.appendChild(d);
+  document.getElementById('evAskSkip').onclick = () => { d.remove(); onSkip(); };
+  document.getElementById('evAskPerm').onclick = () => { d.remove(); onPerm(); };
+  document.getElementById('evAskBack').onclick = () => d.remove();
+}
+// Message window with emojis. mode: 'wish' | 'reply' (target = wish index or 'ALL').
+function evCompose_(mode, target) {
+  const c = EV_CTX_; if (!c) return;
+  const old = document.getElementById('evComposeModal'); if (old) old.remove();
+  const who = properCase(c.s.evEmpName || '');
+  const heading = mode === 'wish' ? 'Wish ' + who : (target === 'ALL' ? 'Reply To Everyone' : 'Reply To ' + properCase(c.w.wishes[target].name));
+  const d = document.createElement('div');
+  d.id = 'evComposeModal'; d.className = 'modal-overlay show'; d.style.zIndex = 9600;
+  d.innerHTML = '<div class="modal-box" style="max-width:360px;"><div class="modal-title">' + escHtml_(heading) + '</div>'
+    + '<textarea id="evComposeText" maxlength="200" rows="4" placeholder="Type your message..." style="width:100%;margin-bottom:6px;"></textarea>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">' + EV_EMOJIS_.map(e => '<button type="button" class="btn-sm" style="font-size:18px;padding:2px 6px;" onclick="evAddEmoji_(\'' + e + '\')">' + e + '</button>').join('') + '</div>'
+    + '<div style="display:flex;gap:8px;justify-content:center;"><button class="btn-primary" style="width:auto;padding:6px 18px;" id="evComposeSend">Send</button>'
+    + '<button class="btn-secondary" style="width:auto;padding:6px 18px;" onclick="document.getElementById(\'evComposeModal\').remove()">Cancel</button></div></div>';
+  document.body.appendChild(d);
+  document.getElementById('evComposeSend').onclick = () => evSubmit_(mode, target);
+  try { document.getElementById('evComposeText').focus(); } catch (e) {}
+}
+function evAddEmoji_(e) {
+  const t = document.getElementById('evComposeText'); if (!t) return;
+  const st = t.selectionStart == null ? t.value.length : t.selectionStart, en = t.selectionEnd == null ? st : t.selectionEnd;
+  t.value = t.value.slice(0, st) + e + t.value.slice(en);
+  t.focus(); t.selectionStart = t.selectionEnd = st + e.length;
+}
+async function evSubmit_(mode, target) {
+  const c = EV_CTX_, btn = document.getElementById('evComposeSend'), text = ((document.getElementById('evComposeText') || {}).value || '').trim();
+  if (mode === 'reply' && !text) { toast('Type a reply first', 'error'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  const body = mode === 'wish'
+    ? { action: 'eventWish', evId: c.s.evId, me: c.me.key, fromName: c.me.name, text: text }
+    : { action: 'eventReply', evId: c.s.evId, me: c.me.key, fromName: c.me.name, toKey: target === 'ALL' ? 'ALL' : c.w.wishes[target].key, text: text };
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }, 25000).then(r => r.json());
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not send');
+    const m = document.getElementById('evComposeModal'); if (m) m.remove();
+    if (mode === 'wish') {
+      toast('🎁 Your wish has been sent', 'success');
+      const p = document.getElementById('evPopupModal'); if (p) p.remove();
+      _drainAutoPopupQueue_();
+    } else {
+      toast(target === 'ALL' ? 'Reply sent to everyone' : 'Reply sent', 'success');
+      c.w = Object.assign(res, { gone: false });
+      evShowPopup_();
+    }
+  } catch (e) { toast(e.message || 'Could not send', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Send'; } }
+}
+async function evMarkSeen_(c) {
+  try { await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'eventSeen', evId: c.s.evId, me: c.me.key, mine: !!c.mine }) }, 15000); } catch (e) {}
+}
+async function checkEventPopup_() {
+  try {
+    if (!navigator.onLine) return;
+    const sRes = await _fetchWithTimeout(STOCK_GAS_URL + '?action=storeSettings', {}, 12000).then(r => r.json());
+    const s = sRes && sRes.ok && sRes.settings;
+    if (!s || !s.evId || !s.evImageUrl) return;
+    const me = evMe_(), mine = evIsMine_(s);
+    const w = await jsonpEvWishes_(s.evId, mine);
+    if (!w || !w.ok || w.gone) return;
+    const k = s.evId + '|' + me.key;
+    if (mine) {
+      if (evPermGet_(k)) return;
+      if (w.count > 0 && !w.unseenWishes && w.threads.every(t => t.replied)) return;   // everyone answered, nothing new
+      if (w.unseenWishes) { try { logNotifHistory_('🎉', w.unseenWishes + ' new message(s) for your ' + escHtml_(s.evTitle || 'event'), 'other'); } catch (e) {} }
+      EV_CTX_ = { s: s, w: w, mine: true, k: k, me: me };
+    } else if (w.unseenReplies) {
+      try { logNotifHistory_('💬', 'New message from ' + escHtml_(properCase(s.evEmpName || '')), 'other'); } catch (e) {}
+      EV_CTX_ = { s: s, w: w, mine: false, k: k, me: me, replyMode: true };
+    } else {
+      if (w.iWished || evPermGet_(k)) return;
+      EV_CTX_ = { s: s, w: w, mine: false, k: k, me: me };
+    }
+    _queueAutoPopup_(() => evShowPopup_());
+  } catch (e) {}
+}
+function evShowPopup_() {
+  const c = EV_CTX_; if (!c) return;
+  const old = document.getElementById('evPopupModal'); if (old) old.remove();
+  const s = c.s, w = c.w;
+  const div = document.createElement('div');
+  div.id = 'evPopupModal'; div.className = 'modal-overlay show';
+  const who = properCase(s.evEmpName || ''), title = escHtml_(s.evTitle || 'Event');
+  const lastOf = t => t.msgs[t.msgs.length - 1];
+  let head, bodyHtml = '', imgHtml = evPosterHtml_(s, !c.mine && !c.replyMode);
+  if (c.mine) {
+    head = 'Happy ' + title + ', ' + escHtml_(who) + '!';
+    const ths = w.threads || [];
+    bodyHtml = '<div style="max-height:230px;overflow:auto;">'
+      + (ths.length ? ths.map(t => { const m = lastOf(t); return evChatBubble_(t.name, m.text, m.at,
+          '<div style="margin-top:4px;">' + (t.unseen ? '<span style="color:#b3261e;font-size:11px;font-weight:700;">' + t.unseen + ' new</span> ' : '') + (t.replied ? '<span style="color:#16a34a;font-size:11px;">Replied ✓</span> ' : '')
+          + '<button class="btn-sm" style="font-size:11px;" onclick="evOpenChat_(\'' + escHtml_(t.key) + '\')">💬 Chat</button></div>'); }).join('')
+        : '<div style="font-size:12px;opacity:.75;margin:8px 0;">Wishes from your colleagues will appear here.</div>') + '</div>'
+      + (ths.length && !ths.every(t => t.replied) ? '<div style="margin-top:8px;"><button class="btn-primary" style="width:auto;padding:6px 16px;" onclick="evCompose_(\'reply\',\'ALL\')">Reply To All</button></div>' : '');
+  } else if (c.replyMode) {
+    head = title + ' — ' + escHtml_(who);
+    const t = (w.threads || [])[0];
+    bodyHtml = (t ? t.msgs.slice(-3).map(m => evChatBubble_(m.toE ? 'You' : m.from, m.text, m.at)).join('') : '')
+      + '<div style="margin-top:6px;"><button class="btn-primary" style="width:auto;padding:6px 16px;" onclick="evOpenChat_(\'' + escHtml_(c.me.key) + '\')">💬 Open Chat</button></div>';
+  } else {
+    head = title + ' — ' + escHtml_(who);
+  }
+  div.innerHTML = '<div class="modal-box" style="max-width:380px;text-align:center;"><div class="modal-title">🎉 ' + head + '</div>' + imgHtml + bodyHtml
+    + '<div style="display:flex;gap:8px;justify-content:center;"><button class="btn-secondary" style="width:auto;padding:6px 18px;margin-top:8px;" id="evCloseBtn">Close</button></div></div>';
+  document.body.appendChild(div);
+  document.getElementById('evCloseBtn').onclick = () => {
+    const done = () => { const m = document.getElementById('evPopupModal'); if (m) m.remove(); _drainAutoPopupQueue_(); };
+    const finished = c.replyMode || (c.mine && w.count > 0 && (w.threads || []).every(t => t.replied));
+    if (finished) { evMarkSeen_(c); done(); return; }
+    evAskClose_(() => { if (c.mine) evMarkSeen_(c); done(); }, () => { evPermSet_(c.k); if (c.mine) evMarkSeen_(c); done(); });
+  };
+}
+// Two-way chat box. The event employee opens it per wisher; a wisher opens their own conversation. Refreshes every few seconds.
+let EV_CHAT_TIMER_ = null, EV_CHAT_KEY_ = '';
+function evOpenChat_(wKey) {
+  const c = EV_CTX_; if (!c) return;
+  EV_CHAT_KEY_ = wKey;
+  const old = document.getElementById('evChatModal'); if (old) old.remove();
+  const d = document.createElement('div');
+  d.id = 'evChatModal'; d.className = 'modal-overlay show'; d.style.zIndex = 9700;
+  d.innerHTML = '<div class="modal-box" style="max-width:380px;"><div class="modal-title" id="evChatTitle">Chat</div>'
+    + '<div id="evChatMsgs" style="height:240px;overflow:auto;border:1px solid rgba(128,128,128,.3);border-radius:10px;padding:6px;margin-bottom:8px;"></div>'
+    + '<textarea id="evChatInput" maxlength="200" rows="2" placeholder="Type a message..." style="width:100%;margin-bottom:6px;"></textarea>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' + EV_EMOJIS_.map(e => '<button type="button" class="btn-sm" style="font-size:17px;padding:2px 6px;" onclick="evChatEmoji_(\'' + e + '\')">' + e + '</button>').join('') + '</div>'
+    + '<div style="display:flex;gap:8px;justify-content:center;"><button class="btn-primary" style="width:auto;padding:6px 18px;" id="evChatSend">Send</button>'
+    + '<button class="btn-secondary" style="width:auto;padding:6px 18px;" id="evChatClose">Close</button></div></div>';
+  document.body.appendChild(d);
+  document.getElementById('evChatSend').onclick = evChatSend_;
+  document.getElementById('evChatClose').onclick = () => { if (EV_CHAT_TIMER_) { clearInterval(EV_CHAT_TIMER_); EV_CHAT_TIMER_ = null; } d.remove(); };
+  evRenderChat_(true);
+  if (EV_CHAT_TIMER_) clearInterval(EV_CHAT_TIMER_);
+  EV_CHAT_TIMER_ = setInterval(async () => {
+    if (!document.getElementById('evChatModal')) { clearInterval(EV_CHAT_TIMER_); EV_CHAT_TIMER_ = null; return; }
+    try { const r = await jsonpEvWishes_(c.s.evId, c.mine); if (r && r.ok && !r.gone) { c.w = r; evRenderChat_(false); } } catch (e) {}
+  }, 8000);
+}
+function evChatEmoji_(e) {
+  const t = document.getElementById('evChatInput'); if (!t) return;
+  const st = t.selectionStart == null ? t.value.length : t.selectionStart, en = t.selectionEnd == null ? st : t.selectionEnd;
+  t.value = t.value.slice(0, st) + e + t.value.slice(en);
+  t.focus(); t.selectionStart = t.selectionEnd = st + e.length;
+}
+function evRenderChat_(first) {
+  const c = EV_CTX_, box = document.getElementById('evChatMsgs'); if (!c || !box) return;
+  const t = (c.w.threads || []).filter(x => x.key === EV_CHAT_KEY_)[0];
+  const title = document.getElementById('evChatTitle');
+  if (title) title.textContent = '💬 ' + (c.mine ? properCase(t ? t.name : '') : properCase(c.s.evEmpName || ''));
+  const msgs = t ? t.msgs : [];
+  const atBottom = first || (box.scrollTop + box.clientHeight >= box.scrollHeight - 30);
+  box.innerHTML = msgs.map(m => {
+    const mineMsg = c.mine ? !m.toE : m.toE;
+    return '<div style="display:flex;justify-content:' + (mineMsg ? 'flex-end' : 'flex-start') + ';margin:4px 0;"><div style="max-width:80%;background:' + (mineMsg ? 'rgba(201,162,39,.25)' : 'rgba(128,128,128,.15)') + ';border-radius:10px;padding:5px 9px;font-size:12.5px;text-align:left;">'
+      + (mineMsg ? '' : '<b style="font-size:11px;">' + escHtml_(properCase(m.from)) + '</b><br>') + escHtml_(m.text) + '<div style="font-size:10px;opacity:.55;text-align:right;">' + escHtml_(m.at) + '</div></div></div>';
+  }).join('') || '<div style="opacity:.6;font-size:12px;padding:8px;">No messages yet.</div>';
+  if (atBottom) box.scrollTop = box.scrollHeight;
+  evMarkSeen_(c);
+}
+async function evChatSend_() {
+  const c = EV_CTX_, inp = document.getElementById('evChatInput'), btn = document.getElementById('evChatSend');
+  const text = inp ? inp.value.trim() : '';
+  if (!text) { toast('Type a message first', 'error'); return; }
+  if (btn) btn.disabled = true;
+  try {
+    const res = await _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'eventMsg', evId: c.s.evId, me: c.me.key, fromName: c.me.name, mine: !!c.mine, toKey: c.mine ? EV_CHAT_KEY_ : '', text: text }) }, 25000).then(r => r.json());
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not send');
+    c.w = Object.assign(res, { gone: false });
+    if (inp) inp.value = '';
+    evRenderChat_(true);
+  } catch (e) { toast(e.message || 'Could not send', 'error'); }
+  if (btn) btn.disabled = false;
 }
 async function blOpen_() {
   const old = document.getElementById('blModal'); if (old) old.remove();
@@ -16594,6 +16991,7 @@ function showAdminPage(page, opts) {
   if(page==='marketing-entry') { mkePre_ = 'mka'; mkeInit_(); }
   if(page==='new-employee') loadNewEmployeePage();
   if(page==='monthly-absent') loadMonthlyAbsentReport();
+  if(page==='absent-watch') awLoad_();
   if(page==='profile') { renderAdminProfile(); populateViewEmpDropdown(); }
   if(page==='login-activity') loadLoginActivity('admin');
   if(page==='empwise') loadEmployeeWisePage();
