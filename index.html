@@ -2232,7 +2232,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
       <div class="quick-actions-section">
         <div class="quick-actions-title">📊 Dashboard</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="empQAChat" onclick="chatOpen_()"><span class="quick-action-icon">💬</span><div class="quick-action-label">Chat <span class="chatBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Message anyone, photos, groups</div></div>
           <div class="quick-action-btn" id="empQALeaveModule" onclick="showEmpPage('overview')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Apply, view &amp; track</div></div>
           <div class="quick-action-btn" id="empQALeadsModule" onclick="showEmpPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Today's calling leads</div></div>
           <div class="quick-action-btn" id="empQALoyaltyModule" onclick="showEmpPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search &amp; my incentive</div></div>
@@ -3246,7 +3245,6 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
       <div class="quick-actions-section">
         <div class="quick-actions-title">⚡ All Sections</div>
         <div class="quick-actions-grid">
-          <div class="quick-action-btn" id="adminQAChat" onclick="chatOpen_()"><span class="quick-action-icon">💬</span><div class="quick-action-label">Chat <span class="chatBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Message anyone, photos, groups</div></div>
           <div class="quick-action-btn" onclick="showAdminPage('dashboard')"><span class="quick-action-icon">🏖️</span><div class="quick-action-label">Leave</div><div class="quick-action-sub">Approvals &amp; reports</div></div>
           <div class="quick-action-btn" id="adminQALeads" onclick="showAdminPage('leads')"><span class="quick-action-icon">👥</span><div class="quick-action-label">Leads</div><div class="quick-action-sub">Assignment, overdue &amp; quotas</div></div>
           <div class="quick-action-btn" id="adminQALoyalty" onclick="showAdminPage('loyalty')"><span class="quick-action-icon">💳</span><div class="quick-action-label">Loyalty Card</div><div class="quick-action-sub">Search, dashboard &amp; reports</div></div>
@@ -3277,6 +3275,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
           <div class="quick-action-btn" id="adminQAEvents" onclick="showAdminPage('events')"><span class="quick-action-icon">📆</span><div class="quick-action-label">Events</div><div class="quick-action-sub">Birthdays &amp; holidays</div></div>
           <div class="quick-action-btn" id="adminQALeaveTools" onclick="mtPageEnter_('leavetools')"><span class="quick-action-icon">🧰</span><div class="quick-action-label">Leave Tools</div><div class="quick-action-sub">Resend mail, bulk, holiday, fixes</div></div>
           <div class="quick-action-btn mt-mis-tile" id="adminQABlockedLeaves" style="display:none;" onclick="blOpen_()"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Blocked Leaves</div><div class="quick-action-sub">Stopped at submit — Allow / Decline</div></div>
+          <div class="quick-action-btn mt-mis-tile" id="adminQAFloorLimits" style="display:none;" onclick="showAdminPage('floor-limits')"><span class="quick-action-icon">🏢</span><div class="quick-action-label">Floor Leave Limits</div><div class="quick-action-sub">Leave limit per floor</div></div>
           <div class="quick-action-btn mt-mis-tile" id="adminQAAbsentWatch" style="display:none;" onclick="showAdminPage('absent-watch')"><span class="quick-action-icon">🛡️</span><div class="quick-action-label">Absent Watch</div><div class="quick-action-sub">Permission rule after Absent</div></div>
           <div class="quick-action-btn" id="adminQALeaveLimits" onclick="leaveLimitsOpen_()"><span class="quick-action-icon">🗂️</span><div class="quick-action-label">Leave Types &amp; Limits</div><div class="quick-action-sub">Allowed types, Special limit / month</div></div>
           <div class="quick-action-btn" id="adminQADirect" onclick="showAdminPage('direct')"><span class="quick-action-icon">🎯</span><div class="quick-action-label">Direct Action</div><div class="quick-action-sub">Approve/Absent/Reject</div></div>
@@ -4045,6 +4044,26 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
     <!-- v-add (BRO: "leave status wise monthly data — absent evaru
          evaru epudu unnaru, salary deduction kosam") -->
     <!-- ABSENT WATCH (MIS only) -->
+    <div class="page-section" id="admin-dsr-block">
+      <div class="section-hdr"><span class="section-title2">⛔ DSR Block</span>
+        <span onclick="dsrbLoad_()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
+      </div>
+      <div class="card">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;"><input type="checkbox" id="dsrbToggle" onchange="dsrbToggle_(this)"> DSR Block On</label>
+        <div class="kd-note" style="text-align:left;">When On, an employee with pending DSRs cannot make a new DSR, Loyalty Card or Golden Plan entry until the pending DSRs are entered. Allow Once lets one entry through, then it blocks again.</div>
+        <div id="dsrbBody" style="margin-top:8px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+    </div>
+    <div class="page-section" id="admin-floor-limits">
+      <div class="section-hdr"><span class="section-title2">🏢 Floor Leave Limits</span>
+        <span onclick="flrLoad_()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
+      </div>
+      <div class="card">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;"><input type="checkbox" id="flrToggle" checked> Floor Limits On</label>
+        <div class="kd-note" style="text-align:left;">Set each counter's floor and group (for example Wholesale or Retail). Employees of one floor group are counted together, so Wholesale and Retail never mix. Except counters are never counted or limited. When a limit is full, the leave needs MIS permission.</div>
+        <div id="flrBody" style="margin-top:8px;"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+      </div>
+    </div>
     <div class="page-section" id="admin-absent-watch">
       <div class="section-hdr"><span class="section-title2">🛡️ Absent Watch</span>
         <span onclick="awLoad_()" title="Refresh" style="cursor:pointer;font-size:12px;padding:0;opacity:0.75;">🔄</span>
@@ -4196,6 +4215,7 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
         <div class="quick-action-btn" id="adminQADsrToday" onclick="showAdminPage('dsr-today')"><span class="quick-action-icon">📝</span><div class="quick-action-label">Today's DSR Entries</div><div class="quick-action-sub">Entries filed today — all staff</div></div>
         <div class="quick-action-btn" id="adminQADsrStatus" onclick="showAdminPage('dsr-status')"><span class="quick-action-icon">📶</span><div class="quick-action-label">Yesterday's Status</div><div class="quick-action-sub">DSR % — all staff, yesterday</div></div>
         <div class="quick-action-btn mt-mis-tile" id="adminQADsrEditReq" style="display:none;" onclick="dsrEditCtlOpen_()"><span class="quick-action-icon">✏️</span><div class="quick-action-label">Edit Requests <span id="decBadge" style="display:none;background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;"></span></div><div class="quick-action-sub">Edit requests and approvals</div></div>
+        <div class="quick-action-btn mt-mis-tile" id="adminQADsrBlock" style="display:none;" onclick="showAdminPage('dsr-block')"><span class="quick-action-icon">⛔</span><div class="quick-action-label">DSR Block</div><div class="quick-action-sub">Block entries when DSR pending</div></div>
         <div class="quick-action-btn" id="adminQADsrMissing" onclick="showAdminPage('dsr-missing')"><span class="quick-action-icon">🚫</span><div class="quick-action-label">Missing DSR</div><div class="quick-action-sub">Dates not entered</div></div>
         <div class="quick-action-btn" id="adminQADsrDateRange" onclick="showAdminPage('dsr-daterange')"><span class="quick-action-icon">🗓️</span><div class="quick-action-label">Date to Date</div><div class="quick-action-sub">This month so far — or pick your own range</div></div>
         <div class="quick-action-btn" id="adminQADsrAdvOrder" onclick="showAdminPage('dsr-advorder')"><span class="quick-action-icon">⏳</span><div class="quick-action-label">Advance &amp; Order Placed</div><div class="quick-action-sub">Pending pickups — all staff</div></div>
@@ -9014,7 +9034,7 @@ const SECTION_LABEL_MAP = {
   // Monthly Absent Report; Leads: Customer Events/Flagged Numbers) but had
   // no entry here, so "← Back" skipped their section's home page entirely
   // and jumped straight to the main Home instead.
-  'monthly-absent': 'Leave', 'absent-watch': 'Leave',
+  'monthly-absent': 'Leave', 'absent-watch': 'Leave', 'floor-limits': 'Leave', 'dsr-block': 'DSR',
   loyalty: 'Loyalty Card', 'loyalty-newcard': 'Loyalty Card',
   'loyalty-leaderboard': 'Loyalty Card', 'loyalty-search': 'Loyalty Card', 'loyalty-stats': 'Loyalty Card',
   'loyalty-upcoming': 'Loyalty Card',
@@ -10395,6 +10415,150 @@ async function awAct_(n, act) {
 }
 
 // ══════════════════════════════════════
+// DSR PENDING BLOCK (MIS page) + the gate in front of DSR / Loyalty Card / Golden Plan entries
+// ══════════════════════════════════════
+let DSRB_ITEMS_ = [], DSRB_ON_ = false;
+async function dsrbLoad_() {
+  const body = document.getElementById('dsrbBody'); if (!body) return;
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'dsrBlockListAPI' }, pwrCaller_()));
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not load');
+    DSRB_ITEMS_ = res.items || []; DSRB_ON_ = !!res.on;
+    const tg = document.getElementById('dsrbToggle'); if (tg) { tg.checked = DSRB_ON_; }
+    if (!DSRB_ITEMS_.length) { body.innerHTML = '<div class="empty-state"><span class="emoji">👍</span><p>No pending DSR right now.</p></div>'; return; }
+    body.innerHTML = dpTable_(['Employee', 'Pending Dates', ''], DSRB_ITEMS_.map((i, n) => [
+      '<div style="text-align:left;"><b>' + escHtml_(properCase(i.name)) + '</b>' + (i.mode === 'Exempt' ? '<br><span style="color:#16a34a;font-weight:700;">Exempt</span>' : '') + (i.allow ? '<br><span style="color:#b45309;font-weight:700;">Allowed once</span>' : '') + '</div>',
+      '<div style="text-align:left;">' + (i.total ? '<b>' + i.total + '</b> pending<br><span style="opacity:.75;">' + escHtml_(i.dates.join(', ')) + '</span>' : '—') + '</div>',
+      '<div style="display:flex;flex-direction:column;gap:4px;">'
+        + '<button class="btn-sm" onclick="dsrbAct_(' + n + ',\'' + (i.allow ? 'cancelallow' : 'allow') + '\')">' + (i.allow ? 'Cancel Allow' : 'Allow Once') + '</button>'
+        + '<button class="btn-sm" onclick="dsrbAct_(' + n + ',\'' + (i.mode === 'Exempt' ? 'auto' : 'exempt') + '\')">' + (i.mode === 'Exempt' ? 'Set Auto' : 'Exempt') + '</button>'
+      + '</div>']));
+  } catch (e) { body.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+}
+async function dsrbToggle_(el) {
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'dsrBlockActAPI', act: 'toggle', value: el.checked ? '1' : '0' }, pwrCaller_()));
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not update', 'error'); el.checked = !el.checked; return; }
+    toast(res.message || 'Done', 'success'); dsrbLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); el.checked = !el.checked; }
+}
+async function dsrbAct_(n, act) {
+  const i = DSRB_ITEMS_[n]; if (!i) return;
+  try {
+    const res = await jsonpReliable(Object.assign({ page: 'dsrBlockActAPI', name: i.name, act: act }, pwrCaller_()));
+    if (!res || !res.ok) { toast((res && res.error) || 'Could not update', 'error'); return; }
+    toast(res.message || 'Done', 'success'); dsrbLoad_();
+  } catch (e) { toast('Connection error. Try again.', 'error'); }
+}
+// Returns true when the entry may go ahead.
+async function dsrbGate_(emp, billDate) {
+  emp = String(emp || '').trim(); if (!emp || !navigator.onLine) return true;
+  try {
+    const tk = 'dsrbPass_' + emp.toLowerCase();
+    let last = 0; try { last = parseInt(sessionStorage.getItem(tk) || '0', 10); } catch (e) {}
+    if (last && Date.now() - last < 180000) return true;
+    const r = await jsonpReliable({ page: 'dsrBlockCheckAPI', empName: emp, billDate: billDate || '' });
+    if (!r || !r.ok || !r.blocked) { if (r && r.usedAllow) { try { sessionStorage.setItem(tk, String(Date.now())); } catch (e) {} } return true; }
+    dsrbPopup_(r.pending || []);
+    return false;
+  } catch (e) { return true; }
+}
+function dsrbPopup_(pend) {
+  const old = document.getElementById('dsrbPopup'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'dsrbPopup'; d.className = 'modal-overlay show';
+  d.innerHTML = '<div class="modal-box" style="max-width:360px;text-align:center;"><div class="modal-title">⛔ Pending DSR</div>'
+    + '<div style="font-size:13px;margin-bottom:6px;">Please enter your pending DSR first. New DSR, Loyalty Card and Golden Plan entries are blocked until then.</div>'
+    + dpTable_(['Date', 'Pending'], pend.map(p => [escHtml_(p.date), String(p.missing)]))
+    + '<div style="display:flex;gap:8px;justify-content:center;margin-top:6px;"><button class="btn-primary" style="width:auto;padding:6px 18px;" id="dsrbGo">Enter Old DSR</button>'
+    + '<button class="btn-secondary" style="width:auto;padding:6px 18px;" id="dsrbClose">Close</button></div></div>';
+  document.body.appendChild(d);
+  document.getElementById('dsrbClose').onclick = () => d.remove();
+  document.getElementById('dsrbGo').onclick = () => {
+    d.remove();
+    const adm = state.__loginKind === 'admin', who = adm ? 'admin' : 'emp';
+    try { (adm ? showAdminPage : showEmpPage)('dsr-newentry'); } catch (e) {}
+    setTimeout(() => { const el = document.getElementById('dsrfBillDate-' + who); if (el && pend[0]) el.value = pend[0].ymd; }, 400);
+  };
+}
+(function () {
+  function wrap(name, getEmp, getDate) {
+    const o = window[name]; if (typeof o !== 'function') return;
+    window[name] = async function () {
+      const a = arguments;
+      let ok = true;
+      try { ok = await dsrbGate_(getEmp.apply(null, a), getDate ? getDate.apply(null, a) : ''); } catch (e) { ok = true; }
+      if (!ok) return;
+      return o.apply(this, a);
+    };
+  }
+  const own = () => (state.__loginKind === 'admin' ? '' : (state.empName || ''));
+  wrap('dsrfSubmit', who => dsrfEmpDisplayName(who), who => (dsrfGv('dsrfBillDate-' + who) || ''));
+  wrap('submitNewLoyaltyCard', own);
+  wrap('submitLoyaltyCardEdit', own);
+  wrap('submitGoldenAura', who => (who === 'admin' ? ((document.getElementById('gaEmpSel-admin') || {}).value || '') : (state.empName || '')));
+})();
+
+// ══════════════════════════════════════
+// FLOOR LEAVE LIMITS (MIS page)
+// ══════════════════════════════════════
+let FLR_ = { counters: [], limits: [] };
+async function flrLoad_() {
+  const body = document.getElementById('flrBody'); if (!body) return;
+  body.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const r = await jsonpReliable(Object.assign({ page: 'floorLimitsListAPI' }, pwrCaller_()));
+    if (!r || !r.ok) throw new Error((r && r.error) || 'Could not load');
+    FLR_ = { counters: r.counters || [], limits: r.limits || [] };
+    const tg = document.getElementById('flrToggle'); if (tg) tg.checked = !!r.on;
+    flrRender_();
+  } catch (e) { body.innerHTML = '<span style="color:var(--red);">' + escHtml_(e.message || 'Could not load') + '</span>'; }
+}
+function flrGroups_() {
+  const seen = {}, out = [];
+  document.querySelectorAll('.flrRow').forEach(r => {
+    if (r.querySelector('.flrEx').checked) return;
+    const f = r.querySelector('.flrFloor').value.trim(), g = r.querySelector('.flrGroup').value.trim();
+    if (!f) return;
+    const k = f.toLowerCase() + '|' + g.toLowerCase(); if (seen[k]) return; seen[k] = 1; out.push({ floor: f, group: g });
+  });
+  return out.sort((a, b) => (a.floor + a.group).localeCompare(b.floor + b.group));
+}
+function flrRender_() {
+  const body = document.getElementById('flrBody'); if (!body) return;
+  const opt = (v, cur) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + (v || 'None') + '</option>';
+  const rows = FLR_.counters.slice().sort((a, b) => String(a.counter).localeCompare(String(b.counter))).map(c =>
+    '<div class="flrRow" data-c="' + escHtml_(c.counter) + '" style="display:flex;gap:6px;align-items:center;margin:5px 0;flex-wrap:wrap;">'
+    + '<div style="flex:1 1 120px;font-weight:700;font-size:13px;">' + escHtml_(c.counter) + '</div>'
+    + '<select class="flrFloor" onchange="flrGroupsUi_()" style="padding:5px;width:120px;">' + opt('', c.floor) + opt('Ground Floor', c.floor) + opt('1st Floor', c.floor) + '</select>'
+    + '<input class="flrGroup" onchange="flrGroupsUi_()" placeholder="Group" value="' + escHtml_(c.group || '') + '" style="padding:5px;width:100px;">'
+    + '<label style="font-size:12px;"><input type="checkbox" class="flrEx" onchange="flrGroupsUi_()"' + (c.except ? ' checked' : '') + '> Except</label></div>').join('');
+  body.innerHTML = '<div style="font-weight:800;margin:4px 0;">1. Counters</div>' + rows
+    + '<div style="font-weight:800;margin:12px 0 4px;">2. Limit Per Day</div><div id="flrLimits"></div>'
+    + '<button class="btn-primary" style="width:auto;padding:7px 22px;margin-top:10px;" onclick="flrSave_()">Save</button>';
+  flrGroupsUi_();
+}
+function flrGroupsUi_() {
+  const box = document.getElementById('flrLimits'); if (!box) return;
+  const cur = {}; box.querySelectorAll('.flrLim').forEach(i => { cur[i.getAttribute('data-k')] = i.value; });
+  const old = {}; FLR_.limits.forEach(l => { old[String(l.floor).toLowerCase() + '|' + String(l.group || '').toLowerCase()] = l.limit; });
+  const gs = flrGroups_();
+  box.innerHTML = gs.length ? gs.map(g => { const k = g.floor.toLowerCase() + '|' + g.group.toLowerCase(), v = cur[k] !== undefined ? cur[k] : (old[k] || '');
+    return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="flex:1;font-size:13px;font-weight:600;">' + escHtml_(g.floor + (g.group ? ' — ' + g.group : '')) + '</div><input type="number" min="0.5" step="0.5" class="flrLim" data-k="' + escHtml_(k) + '" data-f="' + escHtml_(g.floor) + '" data-g="' + escHtml_(g.group) + '" value="' + escHtml_(String(v)) + '" placeholder="No limit" style="width:90px;padding:5px;"></div>'; }).join('')
+    : '<div style="opacity:.7;font-size:12.5px;">Choose a floor for the counters above.</div>';
+}
+async function flrSave_() {
+  const rows = Array.from(document.querySelectorAll('.flrRow')).map(r => ({ counter: r.getAttribute('data-c'), floor: r.querySelector('.flrFloor').value, group: r.querySelector('.flrGroup').value.trim(), except: r.querySelector('.flrEx').checked }));
+  const limits = Array.from(document.querySelectorAll('.flrLim')).filter(i => parseFloat(i.value) > 0).map(i => ({ floor: i.getAttribute('data-f'), group: i.getAttribute('data-g'), limit: parseFloat(i.value) }));
+  const on = (document.getElementById('flrToggle') || {}).checked ? '1' : '0';
+  try {
+    const r = await jsonpReliable(Object.assign({ page: 'floorLimitsSaveAPI', rows: JSON.stringify(rows), limits: JSON.stringify(limits), on: on }, pwrCaller_()));
+    if (!r || !r.ok) throw new Error((r && r.error) || 'Save failed');
+    toast('Floor limits saved', 'success'); flrLoad_();
+  } catch (e) { toast(e.message || 'Save failed', 'error'); }
+}
+
+// ══════════════════════════════════════
 // CHAT — a WhatsApp-style floating window: one-to-one, broadcast, group, photos. It can be minimized and the portal
 // used meanwhile; a round 💬 button (with unread count) brings it back. Birthday / marriage anniversary popup with Wish and Chat.
 // Data lives in the Stock backend (Chat_Convs / Chat_Msgs sheets); messages older than 30 days are removed.
@@ -10415,13 +10579,15 @@ function chatGet_(action, params) {
 function chatPost_(body, ms) {
   return _fetchWithTimeout(STOCK_GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }, ms || 30000).then(r => r.json());
 }
+let CHAT_DIR_DATA_ = null;
 function chatDir_() {
   if (CHAT_DIR_) return CHAT_DIR_;
   CHAT_DIR_ = jsonpReliable({ page: 'chatDirectoryAPI' }).then(r => {
     if (!r || !r.ok) throw new Error((r && r.error) || 'Could not load people');
     const by = (a, b) => String(a.name).localeCompare(String(b.name));
-    return { employees: (r.employees || []).slice().sort(by), admins: (r.admins || []).slice().sort(by) };
-  }).catch(e => { CHAT_DIR_ = null; throw e; });
+    CHAT_DIR_DATA_ = { employees: (r.employees || []).slice().sort(by), admins: (r.admins || []).slice().sort(by) };
+    return CHAT_DIR_DATA_;
+  }).catch(e => { CHAT_DIR_ = null; CHAT_DIR_DATA_ = null; throw e; });
   return CHAT_DIR_;
 }
 function chatInitials_(n) { const p = String(n || '?').trim().split(/\s+/); return ((p[0] || '?')[0] + ((p[1] || '')[0] || '')).toUpperCase(); }
@@ -10443,12 +10609,23 @@ function chatEnsureUi_() {
     + '#chatPanel.show{display:flex;} #chatPanel textarea{font-family:inherit;} #chatPanel button{cursor:pointer;}'
     + '#chatHead{background:' + CHAT_GREEN_ + ';color:#fff;display:flex;align-items:center;gap:8px;padding:8px 10px;flex:0 0 auto;}'
     + '#chatHead .cb{background:transparent;border:none;color:#fff;font-size:18px;padding:4px 8px;border-radius:8px;width:auto;}'
-    + '#chatBody{flex:1;min-height:0;overflow:auto;} #chatBar{flex:0 0 auto;}'
+    + '#chatBody{flex:1;min-height:0;overflow:auto;} #chatBar{flex:0 0 auto;position:relative;}'
+    + '#chatFab{position:absolute;right:16px;bottom:18px;width:54px;height:54px;border-radius:50%;background:' + CHAT_GREEN_ + ';color:#fff;border:none;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:3;}'
+    + '#chatPanel.listview #chatFab{display:flex;}'
+    + '.chatChip{background:#e7f5f1;color:#075e54;border:1.5px solid #b7ded5;border-radius:18px;padding:6px 14px;font-size:12.5px;font-weight:700;width:auto;}'
+    + '.chatSearch{width:100%;box-sizing:border-box;border:1.5px solid #d7dde0;border-radius:22px;padding:9px 16px;font-size:14px;outline:none;background:#f6f8f9;box-shadow:inset 0 1px 2px rgba(0,0,0,.06);}'
+    + '.chatSearch:focus{border-color:' + CHAT_GREEN_ + ';background:#fff;}'
+    + '.chatPerson{display:flex;align-items:center;gap:10px;margin:6px 10px;padding:8px 12px;font-size:14px;border:1px solid #e6eaec;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;}'
+    + '.chatPerson input{accent-color:' + CHAT_GREEN_ + ';width:18px;height:18px;}'
+    + '.chatSect{font-weight:800;font-size:11.5px;letter-spacing:.6px;padding:10px 14px 2px;color:' + CHAT_GREEN_ + ';}'
+    + '.chatSendCard{background:#fff;border-top:1px solid #e3e6e8;border-radius:18px 18px 0 0;padding:10px 14px 12px;box-shadow:0 -3px 10px rgba(0,0,0,.1);}'
+    + '.chatGo{width:100%;border:none;border-radius:24px;padding:10px;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#00a884,#008069);box-shadow:0 3px 8px rgba(0,128,105,.4);}'
     + '#chatLauncher{position:fixed;z-index:940;right:14px;bottom:90px;width:50px;height:50px;border-radius:50%;background:' + CHAT_GREEN_ + ';color:#fff;border:2px solid #fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer;}'
     + '#chatLauncher .chatLBadge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;}';
   document.head.appendChild(st);
   const p = document.createElement('div'); p.id = 'chatPanel';
-  p.innerHTML = '<div id="chatHead"></div><div id="chatBody"></div><div id="chatBar"></div>';
+  p.innerHTML = '<div id="chatHead"></div><div id="chatBody"></div><div id="chatBar"></div><button type="button" id="chatFab" title="New chat">✏️</button>';
+  p.querySelector('#chatFab').onclick = function () { chatShowNew_(); };
   document.body.appendChild(p);
   const l = document.createElement('button'); l.id = 'chatLauncher'; l.type = 'button'; l.title = 'Chat';
   l.innerHTML = '💬<span class="chatLBadge"></span>'; l.onclick = () => chatOpen_();
@@ -10471,20 +10648,19 @@ function chatMinimize_() {
 function chatClose_() { chatStopThread_(); CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null; chatMinimize_(); }
 function chatLogout_() {
   try { chatStopThread_(); if (window.__chatTimer) { clearInterval(window.__chatTimer); window.__chatTimer = null; } } catch (e) {}
-  CHAT_S_.open = false; CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null; CHAT_DIR_ = null; CHAT_ONLINE_ = {};
+  CHAT_S_.open = false; CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null; CHAT_DIR_ = null; CHAT_DIR_DATA_ = null; CHAT_ONLINE_ = {};
   const p = document.getElementById('chatPanel'); if (p) p.classList.remove('show');
   const l = document.getElementById('chatLauncher'); if (l) l.style.display = 'none';
   chatSetBadges_(0);
 }
 function chatHead_(opts) {
   const h = document.getElementById('chatHead'); if (!h) return;
+  { const pn = document.getElementById('chatPanel'); if (pn && !opts.keepList) pn.classList.remove('listview'); }
   h.innerHTML = (opts.back ? '<button class="cb" id="chBack" title="Back">←</button>' : '')
     + (opts.avatar || '') + '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml_(opts.title || 'Chat') + '</div>'
     + (opts.sub ? '<div style="font-size:11.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml_(opts.sub) + '</div>' : '') + '</div>'
-    + (opts.newBtn ? '<button class="cb" id="chNew" title="New chat">✏️</button>' : '')
-    + '<button class="cb" id="chMin" title="Minimize">–</button><button class="cb" id="chClose" title="Close">✕</button>';
+        + '<button class="cb" id="chMin" title="Minimize">–</button><button class="cb" id="chClose" title="Close">✕</button>';
   const b = document.getElementById('chBack'); if (b) b.onclick = opts.back;
-  const n = document.getElementById('chNew'); if (n) n.onclick = chatShowNew_;
   document.getElementById('chMin').onclick = chatMinimize_;
   document.getElementById('chClose').onclick = chatClose_;
 }
@@ -10495,12 +10671,15 @@ function chatBody_() { return document.getElementById('chatBody'); }
 function chatShowList_() {
   chatEnsureUi_(); chatStopThread_();
   CHAT_S_.view = 'list'; CHAT_S_.target = null; CHAT_S_.img = null;
-  chatHead_({ title: 'Chat', newBtn: true });
+  chatHead_({ title: 'Chat', keepList: true });
   chatBar_('');
+  { const pn = document.getElementById('chatPanel'); if (pn) pn.classList.add('listview'); }
   const body = chatBody_(); if (!body) return;
   body.style.background = '#fff';
   body.innerHTML = (chatIsMis_() ? '<div id="chatOnlineCard" style="padding:8px 12px;font-size:12.5px;background:#f0f2f5;border-bottom:1px solid #e2e2e2;"><b>🟢 Online Now</b> <span id="chatOnlineList" style="opacity:.8;">Checking...</span></div>' : '')
     + '<div id="chatListBox"><div class="loading" style="padding:20px;"><span class="spinner"></span>Loading...</div></div>';
+  chatBar_('<button type="button" id="chatFab" title="New chat" style="position:absolute;right:16px;bottom:16px;width:54px;height:54px;border-radius:50%;border:none;background:#25d366;color:#fff;font-size:22px;box-shadow:0 3px 10px rgba(0,0,0,.35);z-index:5;">✏️</button>');
+  document.getElementById('chatFab').onclick = chatShowNew_;
   chatLoadList_();
   if (chatIsMis_()) chatRefreshOnline_();
 }
@@ -10521,6 +10700,7 @@ async function chatLoadList_() {
         + '<div style="font-size:12.5px;color:#667781;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (c.last.mine ? 'You: ' : (c.type === 'GROUP' ? escHtml_(properCase(c.last.name)) + ': ' : '')) + escHtml_(c.last.text) + '</div></div>'
         + '<div style="text-align:right;font-size:11px;color:' + (c.unread ? '#25d366' : '#667781') + ';">' + escHtml_(chatShortTime_(c.ts)) + (c.unread ? '<br><span style="display:inline-block;margin-top:3px;background:#25d366;color:#fff;border-radius:10px;min-width:20px;padding:1px 6px;font-size:11px;font-weight:700;text-align:center;">' + c.unread + '</span>' : '') + '</div></div>';
     }).join('');
+    box.insertAdjacentHTML('beforeend', '<div style="height:80px;"></div>');
     box.querySelectorAll('.chat-row').forEach(el => { el.onclick = () => { const c = r.items[+el.getAttribute('data-n')]; chatOpenTarget_({ kind: 'conv', id: c.id, title: c.title, type: c.type, members: c.members }); }; });
   } catch (e) { const box = document.getElementById('chatListBox'); if (box) box.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message || 'Could not load') + '</div>'; }
 }
@@ -10554,27 +10734,29 @@ async function chatShowNew_() {
   chatHead_({ title: 'New Chat', back: chatShowList_ });
   chatBar_('');
   const body = chatBody_(); if (!body) return;
-  body.style.background = '#fff';
-  body.innerHTML = '<div class="loading" style="padding:20px;"><span class="spinner"></span>Loading people...</div>';
-  let dir;
-  try { dir = await chatDir_(); } catch (e) { body.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message) + '</div>'; return; }
-  if (CHAT_S_.view !== 'new') return;
-  if (chatIsMis_()) await chatRefreshOnline_();
+  body.style.background = '#f0f2f5';
+  let dir = CHAT_DIR_DATA_;
+  if (!dir) {
+    body.innerHTML = '<div class="loading" style="padding:20px;"><span class="spinner"></span>Loading people...</div>';
+    try { dir = await chatDir_(); } catch (e) { body.innerHTML = '<div style="padding:14px;color:#b3261e;">' + escHtml_(e.message) + '</div>'; return; }
+    if (CHAT_S_.view !== 'new') return;
+  }
   const me = chatMe_();
-  const row = (x, kind) => '<label style="display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:14px;border-bottom:1px solid #f0f0f0;cursor:pointer;">'
-    + '<input type="checkbox" class="chatPick" data-k="' + escHtml_(x.key) + '" data-n="' + escHtml_(x.name) + '" data-g="' + kind + '"> ' + chatAvatar_(x.name, x.key, 34) + '<span style="flex:1;min-width:0;">' + escHtml_(properCase(x.name)) + '<span style="display:block;font-size:11px;color:#667781;">' + escHtml_(x.sub || '') + '</span></span></label>';
-  body.innerHTML = '<div style="position:sticky;top:0;background:#fff;padding:8px 12px;border-bottom:1px solid #e9e9e9;z-index:2;">'
-    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"><button class="btn-sm" id="chatAllEmp">All Employees</button><button class="btn-sm" id="chatAllAdm">All Admins</button><button class="btn-sm" id="chatClear">Clear</button></div>'
-    + '<input type="text" id="chatFind" placeholder="Search name..." style="width:100%;"></div>'
-    + '<div style="font-weight:700;font-size:12px;padding:8px 12px 2px;color:' + CHAT_GREEN_ + ';">EMPLOYEES</div>' + dir.employees.filter(x => x.key !== me.key).map(x => row(x, 'e')).join('')
-    + '<div style="font-weight:700;font-size:12px;padding:8px 12px 2px;color:' + CHAT_GREEN_ + ';">ADMINS</div>' + dir.admins.filter(x => x.key !== me.key).map(x => row(x, 'a')).join('')
-    + '<div style="height:150px;"></div>';
-  chatBar_('<div style="background:#f0f2f5;border-top:1px solid #ddd;padding:8px 12px;">'
-    + '<div id="chatSelCount" style="font-size:12px;margin-bottom:4px;color:#667781;">Selected: 0</div>'
-    + '<div style="font-size:12.5px;margin-bottom:6px;"><label style="margin-right:10px;"><input type="radio" name="chatHow" value="broadcast" checked> Broadcast (replies only to you)</label>'
-    + '<label><input type="radio" name="chatHow" value="group"> Group</label></div>'
-    + '<input type="text" id="chatGroupName" maxlength="40" placeholder="Group name" style="width:100%;margin-bottom:6px;display:none;">'
-    + '<button class="btn-primary" style="width:auto;padding:7px 22px;background:' + CHAT_GREEN_ + ';" id="chatGo">Continue</button></div>');
+  const row = (x, kind) => '<label class="chatPerson">'
+    + '<input type="checkbox" class="chatPick" data-k="' + escHtml_(x.key) + '" data-n="' + escHtml_(x.name) + '" data-g="' + kind + '"> ' + chatAvatar_(x.name, x.key, 38) + '<span style="flex:1;min-width:0;font-weight:600;">' + escHtml_(properCase(x.name)) + '<span style="display:block;font-size:11px;font-weight:400;color:#667781;">' + escHtml_(x.sub || '') + '</span></span></label>';
+  body.innerHTML = '<div style="position:sticky;top:0;background:#f0f2f5;padding:10px 12px 8px;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.08);">'
+    + '<input type="text" id="chatFind" class="chatSearch" placeholder="Search name..." style="margin-bottom:8px;">'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="chatChip" id="chatAllEmp">All Employees</button><button class="chatChip" id="chatAllAdm">All Admins</button><button class="chatChip" id="chatClear" style="background:#fff;">Clear</button></div></div>'
+    + '<div class="chatSect">EMPLOYEES</div>' + dir.employees.filter(x => x.key !== me.key).map(x => row(x, 'e')).join('')
+    + '<div class="chatSect">ADMINS</div>' + dir.admins.filter(x => x.key !== me.key).map(x => row(x, 'a')).join('')
+    + '<div style="height:20px;"></div>';
+  chatBar_('<div class="chatSendCard">'
+    + '<div id="chatSelCount" style="font-size:12px;margin-bottom:6px;color:#667781;font-weight:700;">Selected: 0</div>'
+    + '<div style="font-size:12.5px;margin-bottom:8px;display:flex;gap:8px;"><label class="chatChip" style="flex:1;text-align:center;"><input type="radio" name="chatHow" value="broadcast" checked> Broadcast</label>'
+    + '<label class="chatChip" style="flex:1;text-align:center;"><input type="radio" name="chatHow" value="group"> Group</label></div>'
+    + '<input type="text" id="chatGroupName" class="chatSearch" maxlength="40" placeholder="Group name" style="margin-bottom:8px;display:none;">'
+    + '<button class="chatGo" id="chatGo">Continue</button></div>');
+  if (chatIsMis_()) chatRefreshOnline_();
   const boxes = () => Array.from(body.querySelectorAll('.chatPick'));
   const upd = () => { const e = document.getElementById('chatSelCount'); if (e) e.textContent = 'Selected: ' + boxes().filter(b => b.checked).length; };
   body.querySelectorAll('.chatPick').forEach(b => { b.onchange = upd; });
@@ -10744,6 +10926,7 @@ function chatUnreadPopup_(n) {
 function chatStart_() {
   chatEnsureUi_();
   CHAT_UNREAD_POPPED_ = false; CHAT_LAST_UNREAD_ = 0;
+  setTimeout(() => { chatDir_().catch(() => {}); }, 1500);
   setTimeout(() => chatTick_(false), 2500);
   if (!window.__chatTimer) window.__chatTimer = setInterval(() => chatTick_(false), 30000);
   setTimeout(() => bdCheck_(0), 3000);
@@ -17086,6 +17269,8 @@ function showAdminPage(page, opts) {
   if(page==='new-employee') loadNewEmployeePage();
   if(page==='monthly-absent') loadMonthlyAbsentReport();
   if(page==='absent-watch') awLoad_();
+  if(page==='floor-limits') flrLoad_();
+  if(page==='dsr-block') dsrbLoad_();
   if(page==='profile') { renderAdminProfile(); populateViewEmpDropdown(); }
   if(page==='login-activity') loadLoginActivity('admin');
   if(page==='empwise') loadEmployeeWisePage();
