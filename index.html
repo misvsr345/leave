@@ -3446,6 +3446,14 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
       <div id="loyPendingValContent"></div>
     </div>
 
+    <div class="page-section" id="admin-loyalty-doc-view">
+      <div class="section-hdr"><span class="section-title2" id="loyDocViewTitle">Document</span></div>
+      <div class="card" style="padding:10px 12px;">
+        <div style="margin-bottom:8px;"><button class="btn-sm btn-view" id="loyDocDeepBtn" style="width:auto;padding:4px 12px;font-size:11px;" onclick="loyDocDeepToggle_()">🔍 View Deep</button></div>
+        <div id="loyDocViewBox" style="text-align:center;overflow:auto;max-height:calc(100vh - 230px);"><img id="loyDocViewImg" alt="" style="max-width:100%;height:auto;border-radius:6px;"></div>
+      </div>
+    </div>
+
     <!-- LOYALTY: Leaderboard (admin) -->
     <div class="page-section" id="admin-loyalty-leaderboard">
       <div class="section-hdr"><span class="section-title2">🏆 Loyalty Card Leaderboard</span></div>
@@ -20267,13 +20275,7 @@ function loadLoyaltyPendingValidation() {
               <tr><td>Card Number</td><td class="loy-hl-val">${c.cardNo}</td></tr>
               <tr><td>Card Issued Date</td><td>${c.cardDate}</td></tr>
             </table>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
-              ${c.custPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.custPhotoUrl)}')">📷 Customer Photo</button>` : ''}
-              ${c.sigPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.sigPhotoUrl)}')">✍️ Signature</button>` : ''}
-              ${c.aadhaarFrontUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.aadhaarFrontUrl)}')">🪪 Aadhaar Front</button>` : ''}
-              ${c.aadhaarBackUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.aadhaarBackUrl)}')">🪪 Aadhaar Back</button>` : ''}
-              ${c.panPhotoUrl ? `<button class="btn-sm btn-view" style="font-size:11px;" onclick="openLoyaltyImage(event,'${escJs(c.panPhotoUrl)}')">🪪 PAN</button>` : ''}
-            </div>
+            ${loyDocStrip_(c)}
             <div style="display:flex;gap:8px;margin-top:8px;">
               <button class="btn-sm btn-view" style="flex:1;font-size:11px;" onclick="loyOpenEditForm('${escJs(c.cardNo)}','${escJs(c.cardType)}','admin','pending-validation')">✏️ Edit</button>
               <button class="btn-sm" style="flex:1;font-size:11px;color:var(--green);border-color:var(--green);" onclick="loySetValidation_('${escJs(c.cardNo)}','${escJs(c.cardType)}','Valid',this)">✅ Valid</button>
@@ -20281,8 +20283,56 @@ function loadLoyaltyPendingValidation() {
             </div>
           </div>
         </div>`).join('');
+      loyDocLoadAll_(content);
     })
     .catch(err => { summary.innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p></div>'; });
+}
+
+// Pending Validation: every document photo of a card loads by itself and is shown on the card at once.
+// Tap a photo to open it on its own page; "View Deep" there shows it at full resolution.
+const LOY_IMG_CACHE_ = {};
+function loyDocStrip_(c) {
+  const docs = [['Customer Photo', c.custPhotoUrl], ['Signature', c.sigPhotoUrl], ['Aadhaar Front', c.aadhaarFrontUrl], ['Aadhaar Back', c.aadhaarBackUrl], ['PAN', c.panPhotoUrl]].filter(d => d[1]);
+  if (!docs.length) return '';
+  return '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">' + docs.map(d =>
+    '<div style="text-align:center;"><div style="font-size:10.5px;font-weight:700;color:var(--text3);margin-bottom:3px;">' + d[0] + '</div>'
+    + '<div class="loy-doc-box" data-url="' + escHtml_(d[1]) + '" data-label="' + d[0] + '" onclick="loyDocOpen_(this)" style="min-height:90px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;background:var(--bg2,rgba(0,0,0,.04));cursor:pointer;overflow:hidden;font-size:11px;color:var(--text3);">Loading...</div></div>').join('') + '</div>';
+}
+function loyDocFetch_(url) {
+  if (LOY_IMG_CACHE_[url]) return LOY_IMG_CACHE_[url];
+  return LOY_IMG_CACHE_[url] = jsonpReliable({ page: 'loyaltyGetImageAPI', url: url }).then(res => {
+    const d = res && res.ok ? res.data : '';
+    if (!d) throw new Error('none');
+    return d;
+  }).catch(e => { delete LOY_IMG_CACHE_[url]; throw e; });
+}
+function loyDocLoadAll_(root) {
+  const boxes = Array.prototype.slice.call(root.querySelectorAll('.loy-doc-box'));
+  let idx = 0;
+  const worker = () => {
+    const b = boxes[idx++]; if (!b) return Promise.resolve();
+    return loyDocFetch_(b.getAttribute('data-url')).then(d => {
+      if (d.indexOf('data:') === 0) { b.innerHTML = '<img src="' + d + '" alt="" style="width:100%;max-height:220px;object-fit:contain;display:block;">'; b.setAttribute('data-ok', '1'); }
+      else { b.textContent = 'Preview not available'; }
+    }).catch(() => { b.textContent = 'Could not load'; }).then(worker);
+  };
+  worker(); worker(); worker();
+}
+function loyDocOpen_(box) {
+  if (box.getAttribute('data-ok') !== '1') return;
+  const url = box.getAttribute('data-url');
+  loyDocFetch_(url).then(d => {
+    document.getElementById('loyDocViewTitle').textContent = box.getAttribute('data-label') || 'Document';
+    const img = document.getElementById('loyDocViewImg'); img.src = d; img.style.maxWidth = '100%';
+    document.getElementById('loyDocDeepBtn').textContent = '🔍 View Deep';
+    showAdminPage('loyalty-doc-view');
+  }).catch(() => toast('Could not open the photo', 'error'));
+}
+function loyDocDeepToggle_() {
+  const img = document.getElementById('loyDocViewImg'), btn = document.getElementById('loyDocDeepBtn');
+  const deep = img.style.maxWidth === 'none';
+  img.style.maxWidth = deep ? '100%' : 'none';
+  btn.textContent = deep ? '🔍 View Deep' : '↙ Fit To Screen';
 }
 
 function loySetValidation_(cardNo, cardType, status, btnEl) {
