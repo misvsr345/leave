@@ -22295,11 +22295,10 @@ function loadDsrStatus(who) {
   }).catch(() => { box.innerHTML = '<div class="empty-state"><p>Could not load.</p><button class="btn-secondary" style="margin-top:8px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;line-height:36px;" onclick="loadDsrStatus(\'" + who + "\')" title="Retry">🔄</button></div>'; });
 }
 
-function loadDsrMissing(who, start, end) {
+function loadDsrMissing(who, start, end, silent) {
   const box = document.getElementById('dsrMissingBox-' + who);
   dsrMissBuildInit_(who);
-  hideExportBtn(box.id);
-  box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  if (!silent) { hideExportBtn(box.id); box.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; } // a silent reload keeps the old list on screen until the fresh one is ready
   // v-fix (corrected): the real Missing DSR mail uses a
   // Purchases-vs-DSR-Entered reconciliation (WALKINTRACK.txt's
   // runDSRMissingDatewiseReport) — an earlier attempt here wrongly
@@ -22617,16 +22616,17 @@ function dsrRangeResultHtml(res) {
 function dsrMissBuildInit_(who) {
   const w = document.getElementById('dsrMissBuildWrap-' + who);
   if (!w || who !== 'admin') return;
-  if (window.__dsrMissBusy && Date.now() - (window.__dsrMissBusyAt || 0) > 90000) window.__dsrMissBusy = false; // never stay stuck
+  if (window.__dsrMissBusy && Date.now() - (window.__dsrMissBusyAt || 0) > 120000) window.__dsrMissBusy = false; // never stay stuck
   if (!frqIsMis_()) { w.innerHTML = ''; return; }
-  w.innerHTML = '<button class="btn-sm" id="dsrMissBuildBtn-admin" onclick="dsrMissBuild_(\'admin\')" title="Build the Missing DSR sheet for the selected dates (or the running month) and reload">' + (window.__dsrMissBusy ? 'Generating...' : '🔄 Generate') + '</button> <span id="dsrMissBuildMsg-admin" style="font-size:11.5px;color:var(--text3);"></span>';
-  const b = document.getElementById('dsrMissBuildBtn-admin'); if (b && window.__dsrMissBusy) b.disabled = true;
+  // One refresh button, emoji only. It rebuilds the Missing DSR sheet and then shows the fresh list.
+  w.innerHTML = '<button class="btn-sm" id="dsrMissBuildBtn-admin" onclick="dsrMissBuild_(\'admin\')" title="Refresh: rebuild the Missing DSR sheet and show fresh data" style="padding:4px 9px;"><span id="dsrMissSpin-admin" style="display:inline-block;">🔄</span></button>';
+  dsrMissBuildState_(who, !!window.__dsrMissBusy, '');
 }
 function dsrMissBuildState_(who, busy, msg) {
   window.__dsrMissBusy = !!busy; window.__dsrMissBusyAt = busy ? Date.now() : 0;
-  const b = document.getElementById('dsrMissBuildBtn-' + who), m = document.getElementById('dsrMissBuildMsg-' + who);
-  if (b) { b.disabled = !!busy; b.textContent = busy ? 'Generating...' : '🔄 Generate'; }
-  if (m) m.textContent = msg || '';
+  const b = document.getElementById('dsrMissBuildBtn-' + who), sp = document.getElementById('dsrMissSpin-' + who);
+  if (b) { b.disabled = !!busy; b.style.opacity = busy ? '.6' : '1'; }
+  if (sp) sp.style.animation = busy ? 'spin 1s linear infinite' : '';
 }
 async function dsrMissBuild_(who) {
   if (!frqIsMis_()) { toast('MIS login only', 'error'); return; }
@@ -22637,27 +22637,27 @@ async function dsrMissBuild_(who) {
   const custom = !!(s && e);
   if (!custom) { const t = new Date(); s = toYMD(new Date(t.getFullYear(), t.getMonth(), 1)); e = toYMD(t); }
   if (s > e) { toast('Start date is after the end date', 'error'); return; }
-  // The list below stays visible while the report is built; only the button and a small status line change.
-  dsrMissBuildState_(who, true, 'Working, this can take about a minute...');
+  // The list below stays visible while the report is rebuilt; only the refresh emoji spins.
+  dsrMissBuildState_(who, true, '');
   try {
     const r = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', start: s, end: e, by: state.adminName || state.empName || 'MIS' }));
     if (!r || !r.ok) throw new Error((r && r.error) || 'Request failed');
     // The Walk-in / KPI script picks the request up within a minute; wait for it to finish.
     let status = 'Pending', note = '';
-    for (let i = 0; i < 15 && (status === 'Pending' || status === 'Running'); i++) {
-      await new Promise(res => setTimeout(res, 4000));
+    for (let i = 0; i < 40 && (status === 'Pending' || status === 'Running'); i++) {
+      await new Promise(res => setTimeout(res, 3000));
       const q = await jsonpReliable(kpiEmpParams('admin', { page: 'dsrMissingRequestAPI', mode: 'status', id: r.id })).catch(() => null);
       if (q && q.ok) { status = q.status; note = q.note || ''; }
     }
-    if (status === 'Done') toast('✅ Missing DSR report generated', 'success');
+    if (status === 'Done') toast('✅ Missing DSR refreshed', 'success');
     else if (status === 'Error') throw new Error(note || 'The report could not be generated');
-    else toast('Report is being built in the background. The list below is reloaded; tap Generate again if it still looks old.', 'success');
+    else toast('The sheet is still being rebuilt. Tap 🔄 again in a minute.', 'success');
   } catch (err) {
     toast('⚠️ ' + (err && err.message ? err.message : 'Could not generate'), 'error');
   } finally {
     // Whatever happened, the buttons and the list come back to normal.
     dsrMissBuildState_(who, false, '');
-    try { if (custom) loadDsrMissing(who, s, e); else loadDsrMissing(who); } catch (e2) {}
+    try { if (custom) loadDsrMissing(who, s, e, true); else loadDsrMissing(who, '', '', true); } catch (e2) {}
   }
 }
 
