@@ -7605,7 +7605,14 @@ function applyLoginBgImage_(s) {
   const toggleBtn = document.getElementById('loginBgToggleBtn');
   if (!bgLayer) return;
   const img = document.getElementById('loginBgImg');
-  const list = [s.bgImageUrl, s.bgImage2Url].filter(Boolean);
+  // Expired images are dropped here too, so a cached copy of the settings never shows one past its expiry date.
+  const bgLive_ = (url, exp) => {
+    if (!url) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(exp || ''));
+    if (m && new Date(+m[1], +m[2] - 1, +m[3], 23, 59, 59).getTime() < Date.now()) return '';
+    return url;
+  };
+  const list = [bgLive_(s.bgImageUrl, s.bgImageExpiry), bgLive_(s.bgImage2Url, s.bgImage2Expiry)].filter(Boolean);
   const same = list.length === loginBgList_.length && list.every((u, i) => u === loginBgList_[i]);
   if (same && loginBgTimer_ !== undefined && (list.length < 2 || loginBgTimer_)) return; // nothing changed
   loginBgList_ = list;
@@ -10708,7 +10715,7 @@ function chatAvatar_(name, key, size) {
 }
 function chatSetBadges_(n) {
   document.querySelectorAll('.chatBadge').forEach(b => { b.textContent = n || ''; b.style.display = n ? 'inline-block' : 'none'; });
-  const l = document.getElementById('chatLauncher'); if (l) { const b = l.querySelector('.chatLBadge'); if (b) { b.textContent = n || ''; b.style.display = n ? 'flex' : 'none'; } }
+  const l = document.getElementById('chatLauncher'); if (l) { const b = l.querySelector('.chatLBadge'); if (b) { b.textContent = n > 99 ? '99+' : (n || ''); b.style.display = n ? 'flex' : 'none'; } }
 }
 
 // ---- the window and its launcher ----
@@ -10732,7 +10739,7 @@ function chatEnsureUi_() {
     + '.chatSendCard{background:#fff;border-top:1px solid #e3e6e8;border-radius:18px 18px 0 0;padding:10px 14px 12px;box-shadow:0 -3px 10px rgba(0,0,0,.1);}'
     + '.chatGo{width:100%;border:none;border-radius:24px;padding:10px;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#00a884,#008069);box-shadow:0 3px 8px rgba(0,128,105,.4);}'
     + '#chatLauncher{position:fixed;z-index:1001;right:14px;bottom:150px;touch-action:none;width:50px;height:50px;border-radius:50%;background:' + CHAT_GREEN_ + ';color:#fff;border:2px solid #fff;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer;}'
-    + '#chatLauncher .chatLBadge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;}';
+    + '#chatLauncher .chatLBadge{position:absolute;top:-8px;right:-8px;z-index:2;box-shadow:0 0 0 2px #fff;min-width:20px;height:20px;border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;}';
   document.head.appendChild(st);
   const p = document.createElement('div'); p.id = 'chatPanel';
   p.innerHTML = '<div id="chatHead"></div><div id="chatBody"></div><div id="chatBar"></div><button type="button" id="chatFab" title="New chat">✏️</button>';
@@ -10745,7 +10752,7 @@ function chatEnsureUi_() {
 }
 // Chat is on for everybody; it has no Access setting.
 function chatBlocked_() { return false; }
-function chatLauncherShow_(on) { chatEnsureUi_(); const l = document.getElementById('chatLauncher'); if (l) l.style.display = (on && !CHAT_S_.open && !chatBlocked_()) ? 'flex' : 'none'; }
+function chatLauncherShow_(on) { chatEnsureUi_(); const l = document.getElementById('chatLauncher'); if (l) l.style.display = (on && !CHAT_S_.open && !chatBlocked_()) ? 'flex' : 'none'; try { chatSetBadges_(CHAT_LAST_UNREAD_ || 0); } catch (e) {} }
 function chatOpen_() {
   if (chatBlocked_()) { toast('Chat is not available for you', 'error'); return; }
   chatEnsureUi_();
@@ -11169,7 +11176,8 @@ function chatStart_() {
   CHAT_UNREAD_POPPED_ = false; CHAT_LAST_UNREAD_ = 0;
   setTimeout(() => { chatDir_().catch(() => {}); }, 1500);
   setTimeout(() => chatTick_(false), 2500);
-  if (!window.__chatTimer) window.__chatTimer = setInterval(() => chatTick_(false), 30000);
+  if (!window.__chatTimer) window.__chatTimer = setInterval(() => chatTick_(true), 15000);
+  if (!window.__chatVisWatch) { window.__chatVisWatch = true; document.addEventListener('visibilitychange', () => { if (!document.hidden) { try { chatTick_(true); } catch (e) {} } }); window.addEventListener('focus', () => { try { chatTick_(true); } catch (e) {} }); }
   setTimeout(() => bdCheck_(0), 3000);
 }
 
