@@ -2412,6 +2412,13 @@ div[style*="display: flex"] > .btn-primary:not([style*="flex"]):not([style*="wid
           </div>
         </div>
 
+        <div class="form-row" id="leaveCertRow" style="display:none;">
+          <label>Medical Certificate Or Prescription (Rx) <span style="color:var(--red);">*</span></label>
+          <div style="font-size:11.5px;color:var(--text3);margin-bottom:6px;">Please upload a clear photo of your medical certificate or prescription to submit this Sick Leave. MIS will review it.</div>
+          <input type="file" id="leaveCertFile" accept="image/*" onchange="leaveCertPick_(this)" style="font-size:12px;">
+          <div id="leaveCertStatus" style="font-size:11.5px;margin-top:5px;color:var(--text3);"></div>
+        </div>
+
         <div class="form-row" id="authorityRow" style="display:none;">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text);font-weight:700;">
             <input type="checkbox" id="applyAuthMetCheck" onchange="onAuthMetChange()" style="width:19px;height:19px;flex-shrink:0;accent-color:var(--purple);cursor:pointer;">
@@ -9845,8 +9852,55 @@ async function confirmModify() {
 // ══════════════════════════════════════
 // APPLY LEAVE
 // ══════════════════════════════════════
+// Sick Leave: when a recent Absent record, pending DSR dates or the group limit would stop the leave,
+// a medical certificate or prescription photo is required, and Submit stays off until it is uploaded.
+window.__leaveCert_ = { needed: false, url: '', busy: false };
+function leaveCertSync_() {
+  const c = window.__leaveCert_, row = document.getElementById('leaveCertRow');
+  const lt = document.getElementById('applyLeaveType').value;
+  const need = lt === 'Sick Leave' && c.needed;
+  if (row) row.style.display = need ? 'block' : 'none';
+  const btn = document.getElementById('applySubmitBtn'), ack = document.getElementById('ackNotices');
+  if (btn && ack) btn.disabled = !ack.checked || (need && (!c.url || c.busy));
+}
+async function leaveCertCheck_(startDate, endDate) {
+  const c = window.__leaveCert_;
+  if (document.getElementById('applyLeaveType').value !== 'Sick Leave') { c.needed = false; c.url = ''; leaveCertSync_(); return false; }
+  try {
+    const r = await jsonpReliable({ page: 'leaveCertNeededAPI', empId: state.empId, name: state.empName, counter: state.empCounter, startDate: startDate || '', endDate: endDate || '' });
+    c.needed = !!(r && r.needed);
+  } catch (e) { /* the server checks again on submit */ }
+  if (!c.needed) c.url = '';
+  leaveCertSync_();
+  return c.needed;
+}
+function leaveCertPick_(inp) {
+  const f = inp.files && inp.files[0], c = window.__leaveCert_, st = document.getElementById('leaveCertStatus');
+  if (!f) return;
+  c.url = ''; c.busy = true; leaveCertSync_(); st.style.color = 'var(--text3)'; st.textContent = 'Uploading...';
+  const rd = new FileReader();
+  rd.onload = () => {
+    const im = new Image();
+    im.onload = async () => {
+      try {
+        const k = Math.min(1, 1400 / Math.max(im.width, im.height));
+        const cv = document.createElement('canvas'); cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        const resp = await _fetchWithTimeout(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ page: 'leaveUploadCertAPI', name: state.empName, photo: cv.toDataURL('image/jpeg', 0.8) }) }, 60000);
+        const j = await resp.json();
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Upload failed');
+        c.url = j.url; st.style.color = 'var(--green)'; st.textContent = '✅ Uploaded';
+      } catch (err) { st.style.color = 'var(--red)'; st.textContent = 'Could not upload. Please try again.'; }
+      c.busy = false; leaveCertSync_();
+    };
+    im.onerror = () => { c.busy = false; st.style.color = 'var(--red)'; st.textContent = 'This file is not a valid photo.'; leaveCertSync_(); };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
 function onLeaveTypeChange() {
   const lt = document.getElementById('applyLeaveType').value;
+  try { leaveCertCheck_(); } catch (e) {}
   const isDual = lt === 'Emergency Leave' || lt === 'Special Permission Leave';
   document.getElementById('authorityRow').style.display = isDual ? 'block' : 'none';
   if (!isDual) {
@@ -9889,6 +9943,7 @@ function onModeChange() {
 function onAckChange() {
   const checked = document.getElementById('ackNotices').checked;
   document.getElementById('applySubmitBtn').disabled = !checked;
+  try { leaveCertSync_(); } catch (e) {}
   document.getElementById('ackHint').style.display = checked ? 'none' : 'block';
 }
 
@@ -10205,12 +10260,21 @@ async function submitLeave() {
   }
 
   const first = segments[0];
+  if (lt === 'Sick Leave') {
+    await leaveCertCheck_(first.startDate, first.endDate);
+    if (window.__leaveCert_.needed && !window.__leaveCert_.url) {
+      toast('Please upload your medical certificate or prescription (Rx) to submit Sick Leave', 'error');
+      const cr = document.getElementById('leaveCertRow'); if (cr) cr.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+  }
   const data = {
     page: 'submitLeaveAPI', employeeNumber: state.empId, name: state.empName, email: state.empEmail,
     department: state.empDept, designation: state.empDesig, counter: state.empCounter,
     startDate: first.startDate, endDate: first.endDate, leaveType: lt, leaveMode: first.leaveMode, halfDay: first.halfDay,
     authorityMet: authMet, authorityName: authWho, purpose: purpose, leaveAddress: address
   };
+  if (lt === 'Sick Leave' && window.__leaveCert_.url) data.certUrl = window.__leaveCert_.url;
 
   // Mixed Leave (or, in principle, any case with more than one segment)
   // goes through the multi-segment endpoint — each date becomes its own
@@ -11712,6 +11776,7 @@ function showMultiSegmentResultPopup(res) {
 
 function resetApplyForm() {
   document.getElementById('applyLeaveType').value = '';
+  window.__leaveCert_ = { needed: false, url: '', busy: false }; try { document.getElementById('leaveCertFile').value = ''; document.getElementById('leaveCertStatus').textContent = ''; leaveCertSync_(); } catch (e) {}
   document.getElementById('applyStartDate').value = todayYMD();
   document.getElementById('applyStartDateMulti').value = todayYMD();
   document.getElementById('applyEndDate').value = todayYMD();
@@ -34349,7 +34414,7 @@ function adminLeaveCardHTML(l) {
   let actions = `<button class="btn-sm btn-view" id="viewAdminBtn_${idSuffix}" onclick="openLeaveDetailModal('${escJs(l.leaveId)}', true)">👁 View</button>`;
   if(showApprovalActions) {
     actions += `
-      <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" onclick="adminApprove(${l.row},'${escJs(l.leaveId)}','${escJs(l.empId)}')">✅ Approve</button>
+      <button class="btn-sm btn-approve" id="apprBtn_${l.leaveId}" ${(l.medCert && !l.medCertVerified) ? 'disabled title="Verify the attached Rx first" style="opacity:.45;"' : ''} onclick="adminApprove(${l.row},'${escJs(l.leaveId)}','${escJs(l.empId)}')">✅ Approve</button>
       <button class="btn-sm btn-reject" id="rejBtn_${l.leaveId}" onclick="openAdminReject(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">❌ Reject</button>
       <button class="btn-sm btn-absent" id="absBtn_${l.leaveId}" onclick="openAdminAbsent(${l.row},'${escJs(l.leaveId)}','${escJs(l.name)}')">⚠️ Mark Absent</button>
     `;
@@ -34412,6 +34477,7 @@ function adminLeaveCardHTML(l) {
     <div style="font-size:12px;color:var(--text2);margin-top:4px;">🗂️ ${l.type}</div>
     ${l.authorityName && isPending ? `<div style="background:#fff8e1;border:1.5px solid var(--gold);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:12px;"><b style="color:#92400e;">🔑 Authority: </b><b style="color:var(--text);">${l.authorityName}</b></div>` : ''}
     ${isPending || l.status === 'MIS_Approved' ? leaveWarnHtml_(l) : ''}
+    ${l.medCert ? `<div id="certRow_${idSuffix}" style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><span class="pill" id="certPill_${idSuffix}" style="background:${l.medCertVerified ? 'var(--green-bg,#dcfce7)' : '#fff8e1'};color:${l.medCertVerified ? 'var(--green)' : '#92400e'};">${l.medCertVerified ? '✔ Rx Verified' : '📎 Rx Attached'}</span><button class="btn-sm btn-view" style="width:auto;padding:3px 10px;font-size:11px;" onclick="event.stopPropagation();window.open('${escJs(l.medCert)}','_blank')">View Rx</button>${(!l.medCertVerified && isMIS) ? `<button class="btn-sm btn-view" id="certVerifyBtn_${idSuffix}" style="width:auto;padding:3px 10px;font-size:11px;" onclick="event.stopPropagation();leaveCertVerify_('${escJs(l.leaveId)}','${idSuffix}',this)">✔ Verify</button>` : ''}</div>` : ''}
     ${l.purpose?`<div class="leave-card-reason">${l.purpose.substring(0,60)}...</div>`:''}
     ${rejectionBlock}
     ${subStaffTag}
@@ -34524,6 +34590,19 @@ async function confirmAdminModify() {
 // removal) plus a full reload, so the Pending list clears right away
 // instead of waiting for the next manual refresh.
 // ══════════════════════════════════════
+async function leaveCertVerify_(leaveId, idSuffix, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const res = await jsonpReliable({ page: 'leaveCertVerifyAPI', leaveId: leaveId, adminEmail: state.adminEmail, role: state.adminRole });
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Could not verify');
+    const l = (window.__adminLeaveCache || {})[leaveId]; if (l) l.medCertVerified = res.verified;
+    const pill = document.getElementById('certPill_' + idSuffix);
+    if (pill) { pill.textContent = '✔ Rx Verified'; pill.style.color = 'var(--green)'; pill.style.background = 'var(--green-bg,#dcfce7)'; }
+    if (btn) btn.remove();
+    const ap = document.getElementById('apprBtn_' + leaveId); if (ap) { ap.disabled = false; ap.style.opacity = ''; ap.removeAttribute('title'); }
+    toast('✔ Certificate verified. You can approve now.', 'success');
+  } catch (err) { if (btn) btn.disabled = false; toast(err.message || 'Could not verify', 'error'); }
+}
 async function adminApprove(row, leaveId, empId) {
   if (isLocked('appr_' + leaveId)) return;
   const idem = makeIdemKey(['approve', leaveId, row, state.adminEmail]);
